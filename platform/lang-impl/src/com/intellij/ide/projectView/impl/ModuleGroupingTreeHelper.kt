@@ -42,33 +42,34 @@ import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreeNode
 
 /**
- * Provides methods to build trees where nodes are grouped by modules (and optionally by module groups). 
+ * Provides methods to build trees where nodes are grouped by modules (and optionally by module groups). Type parameter M specified class
+ * of modules (may be [Module] if real modules are shown, or [com.intellij.openapi.module.ModuleDescription] if loaded and unloaded modules are shown.
  *
  * @author nik
  */
-class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
+class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
   private val groupingEnabled: Boolean,
-  private val grouper: ModuleGrouper,
+  private val grouping: ModuleGroupingImplementation<M>,
   private val moduleGroupNodeFactory: (ModuleGroup) -> N,
-  private val moduleNodeFactory: (Module, ModuleGrouper) -> N,
+  private val moduleNodeFactory: (M) -> N,
   private val nodeComparator: Comparator<in N>
 ) {
   private val nodeForGroup = HashMap<ModuleGroup, N>()
-  private val nodeData = HashMap<N, ModuleTreeNodeData>()
+  private val nodeData = HashMap<N, ModuleTreeNodeData<M>>()
 
   companion object {
     @JvmStatic
-    fun <N : MutableTreeNode> forEmptyTree(groupingEnabled: Boolean, grouper: ModuleGrouper,
-                                           moduleGroupNodeFactory: (ModuleGroup) -> N, moduleNodeFactory: (Module, ModuleGrouper) -> N,
-                                           nodeComparator: Comparator<in N>) =
-      ModuleGroupingTreeHelper(groupingEnabled, grouper, moduleGroupNodeFactory, moduleNodeFactory, nodeComparator)
+    fun <M: Any, N : MutableTreeNode> forEmptyTree(groupingEnabled: Boolean, grouping: ModuleGroupingImplementation<M>,
+                                                   moduleGroupNodeFactory: (ModuleGroup) -> N, moduleNodeFactory: (M) -> N,
+                                                   nodeComparator: Comparator<in N>) =
+      ModuleGroupingTreeHelper(groupingEnabled, grouping, moduleGroupNodeFactory, moduleNodeFactory, nodeComparator)
 
     @JvmStatic
-    fun <N : MutableTreeNode> forTree(rootNode: N, moduleGroupByNode: (N) -> ModuleGroup?, moduleByNode: (N) -> Module?,
-                                      groupingEnabled: Boolean, grouper: ModuleGrouper,
-                                      moduleGroupNodeFactory: (ModuleGroup) -> N, moduleNodeFactory: (Module, ModuleGrouper) -> N,
-                                      nodeComparator: Comparator<in N>): ModuleGroupingTreeHelper<N> {
-      val helper = ModuleGroupingTreeHelper(groupingEnabled, grouper, moduleGroupNodeFactory, moduleNodeFactory, nodeComparator)
+    fun <M: Any, N : MutableTreeNode> forTree(rootNode: N, moduleGroupByNode: (N) -> ModuleGroup?, moduleByNode: (N) -> M?,
+                                              groupingEnabled: Boolean, grouping: ModuleGroupingImplementation<M>,
+                                              moduleGroupNodeFactory: (ModuleGroup) -> N, moduleNodeFactory: (M) -> N,
+                                              nodeComparator: Comparator<in N>): ModuleGroupingTreeHelper<M, N> {
+      val helper = ModuleGroupingTreeHelper(groupingEnabled, grouping, moduleGroupNodeFactory, moduleNodeFactory, nodeComparator)
       TreeUtil.traverse(rootNode) { node ->
         @Suppress("UNCHECKED_CAST")
         val group = moduleGroupByNode(node as N)
@@ -83,19 +84,25 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
       }
       return helper
     }
+
+    @JvmStatic
+    fun createDefaultGrouping(grouper: ModuleGrouper) = object : ModuleGroupingImplementation<Module> {
+      override fun getGroupPath(m: Module) = grouper.getGroupPath(m)
+      override fun getModuleAsGroupPath(m: Module) = grouper.getModuleAsGroupPath(m)
+    }
   }
 
-  fun createModuleNodes(modules: Collection<Module>, rootNode: N, model: DefaultTreeModel): List<N> {
+  fun createModuleNodes(modules: Collection<M>, rootNode: N, model: DefaultTreeModel): List<N> {
     val nodes = modules.map { createModuleNode(it, rootNode, model) }
     TreeUtil.sortRecursively(rootNode, nodeComparator)
     model.nodeStructureChanged(rootNode)
     return nodes
   }
 
-  private fun createModuleNode(module: Module, rootNode: N, model: DefaultTreeModel): N {
-    val group = ModuleGroup(grouper.getGroupPath(module))
+  private fun createModuleNode(module: M, rootNode: N, model: DefaultTreeModel): N {
+    val group = ModuleGroup(grouping.getGroupPath(module))
     val parentNode = getOrCreateNodeForModuleGroup(group, rootNode, model, true)
-    val moduleNode = moduleNodeFactory(module, grouper)
+    val moduleNode = moduleNodeFactory(module)
     insertModuleNode(moduleNode, parentNode, module, model, true)
     return moduleNode
   }
@@ -103,7 +110,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
   /**
    * If [bulkOperation] is true, no events will be fired and new node will be added into arbitrary place in the children list
    */
-  private fun insertModuleNode(moduleNode: N, parentNode: N, module: Module, model: DefaultTreeModel, bulkOperation: Boolean) {
+  private fun insertModuleNode(moduleNode: N, parentNode: N, module: M, model: DefaultTreeModel, bulkOperation: Boolean) {
     val moduleAsGroup = moduleAsGroup(module)
     if (moduleAsGroup != null) {
       val oldModuleGroupNode = nodeForGroup[moduleAsGroup]
@@ -122,7 +129,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
     insertNode(moduleNode, parentNode, model, bulkOperation)
   }
 
-  private fun moduleAsGroup(module: Module) = grouper.getModuleAsGroupPath(module)?.let(::ModuleGroup)
+  private fun moduleAsGroup(module: M) = grouping.getModuleAsGroupPath(module)?.let(::ModuleGroup)
 
   private fun moveChildren(fromNode: N, toNode: N, model: DefaultTreeModel) {
     val children = TreeUtil.listChildren(fromNode)
@@ -150,7 +157,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
         node = moduleGroupNodeFactory(current)
         insertNode(node, parentNode, model, bulkOperation)
         nodeForGroup[current] = node
-        nodeData[node] = ModuleTreeNodeData(null,group)
+        nodeData[node] = ModuleTreeNodeData<M>(null,group)
       }
       parentNode = node
     }
@@ -174,14 +181,14 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
     createModuleNodes(modules, rootNode, model)
   }
 
-  fun moveModuleNodesToProperGroup(nodes: List<Pair<N, Module>>, rootNode: N, model: DefaultTreeModel, tree: JTree) {
+  fun moveModuleNodesToProperGroup(nodes: List<Pair<N, M>>, rootNode: N, model: DefaultTreeModel, tree: JTree) {
     nodes.forEach {
       moveModuleNodeToProperGroup(it.first, it.second, rootNode, model, tree)
     }
   }
 
-  fun moveModuleNodeToProperGroup(node: N, module: Module, rootNode: N, model: DefaultTreeModel, tree: JTree): N {
-    val actualGroup = ModuleGroup(grouper.getGroupPath(module))
+  fun moveModuleNodeToProperGroup(node: N, module: M, rootNode: N, model: DefaultTreeModel, tree: JTree): N {
+    val actualGroup = ModuleGroup(grouping.getGroupPath(module))
     val parent = node.parent
     val nodeAsGroup = nodeData[node]?.group
     val expectedParent = if (groupingEnabled && !actualGroup.groupPathList.isEmpty()) nodeForGroup[actualGroup] else rootNode
@@ -205,7 +212,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
     removeEmptySyntheticModuleGroupNodes(parent, model)
 
     val newParent = getOrCreateNodeForModuleGroup(actualGroup, rootNode, model, false)
-    val newNode = moduleNodeFactory(module, grouper)
+    val newNode = moduleNodeFactory(module)
     insertModuleNode(newNode, newParent, module, model, false)
 
     if (wasSelected) {
@@ -220,6 +227,7 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
     while (parent is MutableTreeNode && parent in nodeData && nodeData[parent]?.module == null && parent.childCount == 0) {
       val grandParent = parent.parent
       model.removeNodeFromParent(parent)
+      @Suppress("UNCHECKED_CAST")
       removeNode(parent as N)
       parent = grandParent
     }
@@ -242,4 +250,9 @@ class ModuleGroupingTreeHelper<N: MutableTreeNode> private constructor(
   fun getGroupByNodeMap() = nodeData.mapValues { it.value.group }.filterValues { it != null }
 }
 
-private class ModuleTreeNodeData(val module: Module?, val group: ModuleGroup?)
+private class ModuleTreeNodeData<M>(val module: M?, val group: ModuleGroup?)
+
+interface ModuleGroupingImplementation<M: Any> {
+  fun getGroupPath(m: M): List<String>
+  fun getModuleAsGroupPath(m: M): List<String>?
+}

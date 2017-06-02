@@ -25,6 +25,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.ModuleGroupingImplementation;
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
@@ -221,8 +222,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private void createProjectNodes() {
     ModuleGrouper moduleGrouper = getModuleGrouper();
-    ModuleGroupingTreeHelper<MyNode> helper = ModuleGroupingTreeHelper.forEmptyTree(!myHideModuleGroups && !myFlattenModules,
-                                                                                    moduleGrouper, ModuleStructureConfigurable::createModuleGroupNode, this::createModuleNode, getNodeComparator());
+    ModuleGroupingTreeHelper<Module, MyNode> helper = ModuleGroupingTreeHelper.forEmptyTree(!myHideModuleGroups && !myFlattenModules,
+                                                                                    ModuleGroupingTreeHelper.createDefaultGrouping(moduleGrouper),
+                                                                                    ModuleStructureConfigurable::createModuleGroupNode,
+                                                                                    m -> createModuleNode(m, moduleGrouper), getNodeComparator());
     helper.createModuleNodes(Arrays.asList(myModuleManager.getModules()), myRoot, getTreeModel());
     if (containsSecondLevelNodes(myRoot)) {
       myTree.setShowsRootHandles(true);
@@ -290,7 +293,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
       nodes.add(Pair.create(node, module));
     }
-    ModuleGroupingTreeHelper<MyNode> helper = createGroupingHelper();
+    ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper();
     helper.moveModuleNodesToProperGroup(nodes, myRoot, getTreeModel(), myTree);
     return true;
   }
@@ -300,11 +303,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @NotNull
-  private ModuleGroupingTreeHelper<MyNode> createGroupingHelper() {
+  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper() {
+    ModuleGrouper grouper = getModuleGrouper();
+    ModuleGroupingImplementation<Module> grouping = ModuleGroupingTreeHelper.createDefaultGrouping(grouper);
     return ModuleGroupingTreeHelper.forTree(myRoot, (node) -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
                                             (node) -> node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null,
-                                            !myHideModuleGroups && !myFlattenModules, getModuleGrouper(), ModuleStructureConfigurable::createModuleGroupNode,
-                                            this::createModuleNode, getNodeComparator());
+                                            !myHideModuleGroups && !myFlattenModules,
+                                            grouping, ModuleStructureConfigurable::createModuleGroupNode,
+                                            module -> createModuleNode(module, grouper), getNodeComparator());
   }
 
   @Override
@@ -656,7 +662,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       boolean autoScrollWasEnabled = myAutoScrollEnabled;
       try {
         myAutoScrollEnabled = false;
-        ModuleGroupingTreeHelper<MyNode> helper = createGroupingHelper();
+        ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper();
         MyNode newNode = helper.moveModuleNodeToProperGroup(this, getModule(), myRoot, treeModel, myTree);
         treeModel.reload(newNode);
       }
