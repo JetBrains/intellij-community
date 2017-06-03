@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ArchiveHandler {
+public abstract class ArchiveHandler1 {
   public static final long DEFAULT_LENGTH = 0L;
   public static final long DEFAULT_TIMESTAMP = -1L;
 
@@ -55,6 +55,11 @@ public abstract class ArchiveHandler {
       this.length = length;
       this.timestamp = timestamp;
     }
+    
+    @Deprecated
+    public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
+      this(parent, (CharSequence) shortName, isDirectory, length, timestamp);
+    }
   }
 
   private final File myPath;
@@ -63,7 +68,7 @@ public abstract class ArchiveHandler {
   private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
   private boolean myCorrupted;
 
-  protected ArchiveHandler(@NotNull String path) {
+  protected ArchiveHandler1(@NotNull String path) {
     myPath = new File(path);
   }
 
