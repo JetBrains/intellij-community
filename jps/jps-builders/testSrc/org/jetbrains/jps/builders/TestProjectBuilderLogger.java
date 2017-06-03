@@ -55,6 +55,7 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
   public void clearFilesData() {
     myCompiledFiles.clear();
     myDeletedFiles.clear();
+    myLogLines.clear();
   }
 
   public void clearLog() {
