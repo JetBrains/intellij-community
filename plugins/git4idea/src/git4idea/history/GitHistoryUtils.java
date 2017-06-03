@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -53,6 +54,8 @@ import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.SHAHash;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -637,7 +640,10 @@ public class GitHistoryUtils {
    */
   @NotNull
   public static List<VcsFileRevision> history(@NotNull Project project, @NotNull FilePath path, String... parameters) throws VcsException {
-    final VirtualFile root = GitUtil.getGitRoot(path);
+    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
+    if (root == null) {
+      throw new VcsException("The file " + path + " is not under vcs.");
+    }
     return history(project, path, root, parameters);
   }
 
