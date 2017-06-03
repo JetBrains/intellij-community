@@ -225,7 +225,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
-      recursive.addAll(ContainerUtil.map(extension.getRootsToWatch(), VirtualFile::getPath));
+      recursive.addAll(ContainerUtil.map(extension.getRootsToWatch(myProject), VirtualFile::getPath));
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {
