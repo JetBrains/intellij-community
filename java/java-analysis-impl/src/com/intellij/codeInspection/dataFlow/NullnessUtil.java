@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -35,13 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.patterns.PsiJavaPatterns.psiMember;
-import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
-import static com.intellij.patterns.StandardPatterns.or;
-
 public class NullnessUtil {
-  private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
-    or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
 
   static Boolean calcCanBeNull(DfaVariableValue value) {
     PsiModifierListOwner var = value.getPsiVariable();
@@ -50,8 +43,7 @@ public class NullnessUtil {
       return toBoolean(nullability);
     }
 
-    Nullness defaultNullability =
-      value.getFactory().isUnknownMembersAreNullable() && MEMBER_OR_METHOD_PARAMETER.accepts(var) ? Nullness.NULLABLE : Nullness.UNKNOWN;
+    Nullness defaultNullability = value.getFactory().suggestNullabilityForNonAnnotatedMember(var);
 
     if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
       PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();

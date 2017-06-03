@@ -579,8 +579,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
       Nullness nullability = myReturnTypeNullability.get(instruction);
-      if (nullability == Nullness.UNKNOWN && factory.isUnknownMembersAreNullable()) {
-        nullability = Nullness.NULLABLE;
+      PsiMethod targetMethod = instruction.getTargetMethod();
+      if (nullability == Nullness.UNKNOWN && targetMethod != null) {
+        nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
       }
       return factory.createTypeValue(type, nullability);
     }
