@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Represents a lattice product of a constant {@link #value} and all {@link #ids}.
@@ -226,26 +227,33 @@ final class Pending implements Result {
 }
 
 final class Effects implements Result {
+  @NotNull final DataValue returnValue;
   @NotNull final Set<EffectQuantum> effects;
 
-  Effects(@NotNull Set<EffectQuantum> effects) {
+  Effects(@NotNull DataValue returnValue, @NotNull Set<EffectQuantum> effects) {
+    this.returnValue = returnValue;
     this.effects = effects;
+  }
+
+  Stream<EKey> dependencies() {
+    return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    return this.effects.equals(((Effects)o).effects);
+    Effects that = (Effects)o;
+    return this.returnValue.equals(that.returnValue) && this.effects.equals(that.effects);
   }
 
   @Override
   public int hashCode() {
-    return effects.hashCode();
+    return effects.hashCode() * 31 + returnValue.hashCode();
   }
 
   @Override
   public String toString() {
-    return "Effects["+effects.size()+"]";
+    return "Effects[" + effects.size() + "|" + returnValue + "]";
   }
 }

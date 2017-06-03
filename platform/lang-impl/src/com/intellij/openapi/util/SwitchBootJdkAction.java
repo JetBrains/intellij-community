@@ -65,7 +65,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   @NotNull
   private static File getBundledJDKFile() {
-    return new File(SystemInfo.isMac ? "jdk" : "jre" + ((SystemInfo.is64Bit)? "64" : ""));
+    return new File(SystemInfo.isMac ? "jdk" : "jre" + (JdkBundle.runtimeBitness == Bitness.x64 ? "64" : ""));
   }
 
   @Override

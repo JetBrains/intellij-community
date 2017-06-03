@@ -17,6 +17,7 @@ package git4idea.rebase
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
@@ -69,7 +70,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     // allow editing only in the current branch
-    val branches = data.containingBranchesGetter.getContainingBranchesFromCache(commit.root, commit.id)
+    val branches = log.getContainingBranches(commit.id, commit.root)
     if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
       if (!branches.contains(HEAD)) {
         e.presentation.isEnabled = false
@@ -126,11 +127,13 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
     val branchesGetter = data.containingBranchesGetter
-    return branchesGetter.getContainingBranchesFromCache(root, hash) ?:
-           branchesGetter.getContainingBranchesSynchronously(root, hash)
+    return branchesGetter.getContainingBranchesQuickly(root, hash) ?:
+           ProgressManager.getInstance().runProcessWithProgressSynchronously<List<String>, RuntimeException>({
+               branchesGetter.getContainingBranchesSynchronously(root, hash)
+           }, "Searching for branches containing the selected commit", true, data.project)
   }
 
-  protected fun findProtectedRemoteBranch(repository: GitRepository, branches: List<String>): String? {
+  protected fun findProtectedRemoteBranch(repository: GitRepository, branches: Collection<String>): String? {
     val settings = GitSharedSettings.getInstance(repository.project)
     // protected branches hold patterns for branch names without remote names
     return repository.branches.remoteBranches.

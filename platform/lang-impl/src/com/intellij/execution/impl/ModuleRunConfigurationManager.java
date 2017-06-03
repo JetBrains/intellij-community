@@ -32,8 +32,10 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +44,9 @@ import java.util.stream.Collectors;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
+  @NonNls
+  @NotNull
+  private static final String STORE_LOCAL_REGISTRY_OPTION = "ruby.store.local.run.conf.in.modules";
   private static final String SHARED = "shared";
   private static final String LOCAL = "local";
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
@@ -83,10 +88,14 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   @Override
   public Element getState() {
     try {
-      return new Element("state")
-        .addContent(writeExternal(new Element(SHARED), true))
-        .addContent(writeExternal(new Element(LOCAL), false))
-        ;
+      Element element = new Element("state")
+        .addContent(writeExternal(new Element(SHARED), true));
+
+      if (Registry.is(STORE_LOCAL_REGISTRY_OPTION)) {
+        element.addContent(writeExternal(new Element(LOCAL), false));
+      }
+
+      return element;
     }
     catch (WriteExternalException e1) {
       LOG.error(e1);

@@ -75,9 +75,6 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
     final DataContext context = e.getDataContext();
     final IpnbFileEditor ipnbEditor = IpnbFileEditor.DATA_KEY.getData(context);
     final Presentation presentation = e.getPresentation();
-    if (ipnbEditor == null) {
-      presentation.setEnabledAndVisible(false);
-    }
-    presentation.setEnabledAndVisible(true);
+    presentation.setEnabledAndVisible(ipnbEditor != null);
   }
 }

@@ -387,14 +387,17 @@ public class FrameWrapper implements Disposable, DataProvider {
 
       boolean setMenuOnFrame = SystemInfo.isMac;
 
-      if (SystemInfo.isLinux && "Unity".equals(System.getenv("XDG_CURRENT_DESKTOP"))) {
-        try {
-          Class.forName("com.jarego.jayatana.Agent");
-          setMenuOnFrame = true;
-        }
-        catch (ClassNotFoundException e) {
-          // ignore
-        }
+      if (SystemInfo.isLinux) {
+        final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+        if ("Unity".equals(desktop) || "Unity:Unity7".equals(desktop)) {
+         try {
+           Class.forName("com.jarego.jayatana.Agent");
+           setMenuOnFrame = true;
+         }
+         catch (ClassNotFoundException e) {
+           // ignore
+         }
+       }
       }
 
       if (setMenuOnFrame) {

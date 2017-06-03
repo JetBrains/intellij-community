@@ -352,6 +352,15 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     doTest(); 
   }
 
+  public void testNullabilityDefaultVsMethodImplementing() {
+    addJavaxDefaultNullabilityAnnotations(myFixture);
+    
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public static void addJavaxDefaultNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
     fixture.addClass("package javax.annotation;" +
                      "@javax.annotation.meta.TypeQualifierDefault(java.lang.annotation.ElementType.PARAMETER) @javax.annotation.Nonnull " +

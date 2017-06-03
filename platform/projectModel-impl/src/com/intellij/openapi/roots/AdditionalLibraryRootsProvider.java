@@ -43,7 +43,7 @@ public abstract class AdditionalLibraryRootsProvider {
    * instead of {@code Module}. E.g. JavaScript libraries can be associated with files or folders allowing more
    * fine-grained control.
    *
-   * @param project  Project instance
+   * @param project Project instance
    * @return a collection of {@link SyntheticLibrary}
    */
   @NotNull
@@ -66,10 +66,11 @@ public abstract class AdditionalLibraryRootsProvider {
    * Each root provided by this method makes VFS update slower.
    * Please, avoid returning a lot of watched roots, especially if they have complicated internal structure.
    *
+   * @param project Project instance
    * @see com.intellij.openapi.roots.WatchedRootsProvider
    */
   @NotNull
-  public Collection<VirtualFile> getRootsToWatch() {
+  public Collection<VirtualFile> getRootsToWatch(@NotNull Project project) {
     return Collections.emptyList();
   }
 

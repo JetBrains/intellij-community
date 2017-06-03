@@ -606,8 +606,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     @Override
     public void visitParameter(String name, int access) {
-      if ((access & Opcodes.ACC_SYNTHETIC) == 0 && myParamNameIndex < myParamCount) {
-        setName(name, myParamNameIndex);
+      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && myParamNameIndex < myParamCount) {
+        setParameterName(name, myParamNameIndex);
         myParamNameIndex++;
       }
     }
@@ -618,14 +618,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         // long and double variables increase the index by 2, not by 1
         int paramIndex = index - myIgnoreCount == myUsedParamSize ? myUsedParamCount : index - myIgnoreCount;
         if (paramIndex < myParamCount) {
-          setName(name, paramIndex);
+          setParameterName(name, paramIndex);
           myUsedParamCount = paramIndex + 1;
           myUsedParamSize += "D".equals(desc) || "J".equals(desc) ? 2 : 1;
         }
       }
     }
 
-    private void setName(String name, int paramIndex) {
+    private void setParameterName(String name, int paramIndex) {
       if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
         PsiParameterStubImpl stub = myParamStubs[paramIndex];
         if (stub != null) stub.setName(name);

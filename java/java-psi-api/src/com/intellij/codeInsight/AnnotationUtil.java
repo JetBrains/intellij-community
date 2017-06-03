@@ -156,7 +156,7 @@ public class AnnotationUtil {
     return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
   }
 
-  public static <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(final T element) {
+  public static <T extends PsiModifierListOwner> List<T> getSuperAnnotationOwners(@NotNull T element) {
     return CachedValuesManager.getCachedValue(element, () -> {
       Set<PsiModifierListOwner> result = ContainerUtil.newLinkedHashSet();
       if (element instanceof PsiMethod) {

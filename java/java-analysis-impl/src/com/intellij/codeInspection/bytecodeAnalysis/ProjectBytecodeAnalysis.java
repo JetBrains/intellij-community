@@ -27,11 +27,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -303,7 +302,7 @@ public class ProjectBytecodeAnalysis {
     final PuritySolver puritySolver = new PuritySolver();
     collectPurityEquations(key.withDirection(Pure), puritySolver);
 
-    Map<EKey, Set<EffectQuantum>> puritySolutions = puritySolver.solve();
+    Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
@@ -358,17 +357,14 @@ public class ProjectBytecodeAnalysis {
         for (DirectionResultPair pair : equations.results) {
           int dirKey = pair.directionKey;
           if (dirKey == hKey.dirKey) {
-            Set<EffectQuantum> effects = ((Effects)pair.result).effects;
+            Effects effects = (Effects)pair.result;
             puritySolver.addEquation(new EKey(hKey.method, dirKey, stable, false), effects);
-            for (EffectQuantum effect : effects) {
-              if (effect instanceof EffectQuantum.CallQuantum) {
-                EKey depKey = ((EffectQuantum.CallQuantum)effect).key;
-                if (!queued.contains(depKey)) {
-                  queue.push(depKey);
-                  queued.add(depKey);
-                }
+            effects.dependencies().forEach(depKey -> {
+              if (!queued.contains(depKey)) {
+                queue.push(depKey);
+                queued.add(depKey);
               }
-            }
+            });
           }
         }
       }
@@ -480,7 +476,17 @@ public class ProjectBytecodeAnalysis {
       String packageName = StringUtil.getPackageName(internalClassName, '/').replace('/', '.');
       String className = StringUtil.getShortName(internalClassName, '/');
       PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
-      if (aPackage == null) return null;
+      if (aPackage == null) {
+        PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope
+          .allScope(myProject));
+        if(psiClass != null) {
+          PsiModifierListOwner compiledClass = PsiUtil.preferCompiledElement(psiClass);
+          if(compiledClass instanceof ClsClassImpl) {
+            return compiledClass.getContainingFile().getVirtualFile();
+          }
+        }
+        return null;
+      }
       String classFileName = className + ".class";
       for (PsiDirectory directory : aPackage.getDirectories()) {
         VirtualFile file = directory.getVirtualFile().findChild(classFileName);

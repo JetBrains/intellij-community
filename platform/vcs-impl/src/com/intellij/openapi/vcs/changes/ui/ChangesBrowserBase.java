@@ -377,7 +377,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
         showDiff();
       }
     };
-    ActionUtil.copyFrom(myDiffAction, "ChangesView.Diff");
+    ActionUtil.copyFrom(myDiffAction, IdeActions.ACTION_SHOW_DIFF_COMMON);
     myDiffAction.registerCustomShortcutSet(myViewer, null);
     toolBarGroup.add(myDiffAction);
   }

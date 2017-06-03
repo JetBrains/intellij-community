@@ -81,7 +81,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerImpl");
   private static final Key<String> DISPOSED_MODULE_NAME = Key.create("DisposedNeverAddedModuleName");
-  private static final String MODULE_GROUP_SEPARATOR = "/";
+  public static final String MODULE_GROUP_SEPARATOR = "/";
 
   protected final Project myProject;
   protected final MessageBus myMessageBus;
@@ -985,7 +985,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     Module[] modules = getModules();
     List<ModuleDescription> descriptions = new ArrayList<>(modules.length + myUnloadedModules.size());
     for (Module module : modules) {
-      descriptions.add(new LoadedModuleDescription(module));
+      descriptions.add(new LoadedModuleDescriptionImpl(module));
     }
     descriptions.addAll(myUnloadedModules.values());
     return descriptions;
@@ -1014,7 +1014,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       else {
         Module module = findModuleByName(name);
         if (module != null) {
-          LoadedModuleDescription description = new LoadedModuleDescription(module);
+          LoadedModuleDescriptionImpl description = new LoadedModuleDescriptionImpl(module);
           ModuleSaveItem saveItem = new ModuleSaveItem(module);
           ModulePath modulePath = new ModulePath(saveItem.getModuleFilePath(), saveItem.getGroupPathString());
           VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();

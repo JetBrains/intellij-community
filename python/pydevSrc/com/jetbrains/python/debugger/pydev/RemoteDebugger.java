@@ -7,6 +7,7 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -320,17 +321,19 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public void execute(@NotNull final AbstractCommand command) {
-    if (command instanceof ResumeOrStepCommand) {
-      final String threadId = ((ResumeOrStepCommand)command).getThreadId();
-      clearTempVariables(threadId);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (command instanceof ResumeOrStepCommand) {
+        final String threadId = ((ResumeOrStepCommand)command).getThreadId();
+        clearTempVariables(threadId);
+      }
 
-    try {
-      command.execute();
-    }
-    catch (PyDebuggerException e) {
-      LOG.error(e);
-    }
+      try {
+        command.execute();
+      }
+      catch (PyDebuggerException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   boolean sendFrame(final ProtocolFrame frame) {

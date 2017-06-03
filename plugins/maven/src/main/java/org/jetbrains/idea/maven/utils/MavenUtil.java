@@ -975,7 +975,7 @@ public class MavenUtil {
     if (isPomFileName(file.getName())) return true;
     if (!isPotentialPomFile(file.getPath())) return false;
 
-    if (project == null) return false;
+    if (project == null || !project.isInitialized()) return false;
 
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
     if (mavenProjectsManager.findProject(file) != null) return true;

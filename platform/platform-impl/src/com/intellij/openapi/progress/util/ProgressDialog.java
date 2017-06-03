@@ -18,8 +18,6 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
@@ -423,9 +421,7 @@ class ProgressDialog implements Disposable {
       super.init();
       setUndecorated(true);
       getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-      if (! UIUtil.isUnderWin10LookAndFeel()) {
-        myPanel.setBorder(PopupBorder.Factory.create(true, true));
-      }
+      myPanel.setBorder(PopupBorder.Factory.create(true, true));
     }
 
     @Override

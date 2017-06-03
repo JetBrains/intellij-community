@@ -95,7 +95,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
 
   private static Result hash(Result result, MessageDigest md) {
     if(result instanceof Effects) {
-      return new Effects(StreamEx.of(((Effects)result).effects).map(effect -> hash(effect, md)).toSet());
+      Effects effects = (Effects)result;
+      return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(effect -> hash(effect, md)).toSet());
     } else if(result instanceof Pending) {
       return new Pending(ContainerUtil.map(((Pending)result).delta, component -> hash(component, md)));
     }
@@ -513,6 +514,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
 
     @Override
     public String toString() {
+      if(ourTotalCount.get() == 0) {
+        return "";
+      }
       return String.format(Locale.ENGLISH, "Classes: %d\nBytes: %d\nBytes per class: %.2f%n", ourTotalCount.get(), ourTotalSize.get(),
                            ((double)ourTotalSize.get()) / ourTotalCount.get());
     }

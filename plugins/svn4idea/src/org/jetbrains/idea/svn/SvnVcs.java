@@ -51,7 +51,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.SoftHashMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -95,9 +94,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.emptyList;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -777,19 +777,19 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
+  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
-    final List<MyPair<S>> infos = new ArrayList<>(in.size());
-    final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl)getSvnFileUrlMapping();
-    final List<S> notMatched = new LinkedList<>();
+    List<MyPair<S>> infos = newArrayList();
+    List<S> notMatched = newArrayList();
     for (S s : in) {
-      final VirtualFile vf = convertor.convert(s);
+      VirtualFile vf = convertor.apply(s);
       if (vf == null) continue;
 
-      final File ioFile = virtualToIoFile(vf);
-      SVNURL url = mapping.getUrlForFile(ioFile);
+      File ioFile = virtualToIoFile(vf);
+      SVNURL url = getSvnFileUrlMapping().getUrlForFile(ioFile);
       if (url == null) {
         url = SvnUtil.getUrl(this, ioFile);
         if (url == null) {
@@ -799,21 +799,19 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
       infos.add(new MyPair<>(vf, url.toString(), s));
     }
-    final List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
+    List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
     List<S> converted = map(filtered, MyPair::getSrc);
-    if (!notMatched.isEmpty()) {
-      // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
-      converted.addAll(notMatched);
-    }
-    return converted;
+
+    // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
+    return concat(converted, notMatched);
   }
 
   private static class MyPair<T> implements RootUrlPair {
-    private final VirtualFile myFile;
-    private final String myUrl;
+    @NotNull private final VirtualFile myFile;
+    @NotNull private final String myUrl;
     private final T mySrc;
 
-    private MyPair(VirtualFile file, String url, T src) {
+    private MyPair(@NotNull VirtualFile file, @NotNull String url, T src) {
       myFile = file;
       myUrl = url;
       mySrc = src;
@@ -823,11 +821,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       return mySrc;
     }
 
+    @NotNull
     @Override
     public VirtualFile getVirtualFile() {
       return myFile;
     }
 
+    @NotNull
     @Override
     public String getUrl() {
       return myUrl;

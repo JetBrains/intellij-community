@@ -57,7 +57,6 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
-  private boolean mySchemesPanelEnabled;
   private boolean myIsDisposed = false;
   private final Action mySetFromAction = new AbstractAction("Set from...") {
     @Override
@@ -81,7 +80,6 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     myModel = model;
     myFactory = factory;
     mySchemesPanel = new CodeStyleSchemesPanel(model);
-    mySchemesPanelEnabled = schemesPanelEnabled;
     myProperties = PropertiesComponent.getInstance();
 
     model.addListener(new CodeStyleSettingsListener(){
@@ -134,7 +132,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     JPanel top = new JPanel();
     top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
 
-    if (mySchemesPanelEnabled) {
+    if (schemesPanelEnabled) {
       JPanel linkPanel = new JPanel();
       linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
       linkPanel.add(Box.createVerticalGlue());

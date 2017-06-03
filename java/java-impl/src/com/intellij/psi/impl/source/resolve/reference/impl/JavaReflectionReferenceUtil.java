@@ -91,6 +91,7 @@ public class JavaReflectionReferenceUtil {
   public static final String LOAD_CLASS = "loadClass";
   public static final String GET_CLASS = "getClass";
   public static final String NEW_INSTANCE = "newInstance";
+  public static final String TYPE = "TYPE";
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
@@ -144,6 +145,19 @@ public class JavaReflectionReferenceUtil {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass resolvedElement = resolveResult.getElement();
       if (!isJavaLangClass(resolvedElement)) return null;
+
+      if (context instanceof PsiReferenceExpression && TYPE.equals(((PsiReferenceExpression)context).getReferenceName())) {
+        final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
+        if (resolved instanceof PsiField) {
+          final PsiField field = (PsiField)resolved;
+          if (field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.STATIC)) {
+            final PsiPrimitiveType unboxedType = tryUnbox(field.getContainingClass(), (PsiClassType)type);
+            if (unboxedType != null) {
+              return ReflectiveType.create(unboxedType);
+            }
+          }
+        }
+      }
       final PsiTypeParameter[] parameters = resolvedElement.getTypeParameters();
       if (parameters.length == 1) {
         final PsiType typeArgument = resolveResult.getSubstitutor().substitute(parameters[0]);
@@ -279,6 +293,19 @@ public class JavaReflectionReferenceUtil {
       .filter(PsiAssignmentExpression.class)
       .find(expression -> VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field));
     return assignment != null ? assignment.getRExpression() : null;
+  }
+
+  @Nullable
+  private static PsiPrimitiveType tryUnbox(@Nullable PsiClass psiClass, @NotNull PsiClassType originalType) {
+    if (psiClass != null && TypeConversionUtil.isPrimitiveWrapper(psiClass.getQualifiedName())) {
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      final PsiClassType classType = factory.createType(psiClass, PsiSubstitutor.EMPTY, originalType.getLanguageLevel());
+      final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(classType);
+      if (unboxedType != null) {
+        return unboxedType;
+      }
+    }
+    return null;
   }
 
   private static PsiClass findClass(@NotNull String qualifiedName, @NotNull PsiElement context) {

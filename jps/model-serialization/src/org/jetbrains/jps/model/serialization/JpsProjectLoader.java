@@ -303,17 +303,22 @@ public class JpsProjectLoader extends JpsLoaderBase {
     try {
       final List<String> classpathDirs = new ArrayList<>();
       for (Future<Pair<Path, Element>> moduleFile : futureModuleFilesContents) {
-        final String classpathDir = moduleFile.get().getSecond().getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-        if (classpathDir != null) {
-          classpathDirs.add(classpathDir);
+        Element rootElement = moduleFile.get().getSecond();
+        if (rootElement != null) {
+          final String classpathDir = rootElement.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
+          if (classpathDir != null) {
+            classpathDirs.add(classpathDir);
+          }
         }
       }
 
       List<Future<JpsModule>> futures = new ArrayList<>();
       for (final Future<Pair<Path, Element>> futureModuleFile : futureModuleFilesContents) {
         final Pair<Path, Element> moduleFile = futureModuleFile.get();
-        futures.add(ourThreadPool.submit(
-          () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
+        if (moduleFile.getSecond() != null) {
+          futures.add(ourThreadPool.submit(
+            () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
+        }
       }
       for (Future<JpsModule> future : futures) {
         JpsModule module = future.get();

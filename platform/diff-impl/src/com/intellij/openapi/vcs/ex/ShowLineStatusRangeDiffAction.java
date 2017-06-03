@@ -22,6 +22,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +42,7 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   public ShowLineStatusRangeDiffAction(@NotNull LineStatusTrackerBase lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
     myLineStatusTracker = lineStatusTracker;
     myRange = range;
-    ActionUtil.copyFrom(this, "ChangesView.Diff");
+    ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
   }
 
   public void update(final AnActionEvent e) {

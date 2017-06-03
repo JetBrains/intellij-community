@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module.impl
+package com.intellij.diff.actions;
 
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleDescription
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.ExtendableAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 
-/**
- * @author nik
- */
-class LoadedModuleDescription(private val module: Module): ModuleDescription {
-  override val name: String
-    get() = module.name
+public class ShowDiffAction extends ExtendableAction implements DumbAware {
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.diff.actions.ShowDiffAction.ExtensionProvider");
 
-  override val dependencyModuleNames: List<String>
-    get() = ModuleRootManager.getInstance(module).dependencyModuleNames.asList()
+  public ShowDiffAction() {
+    super(EP_NAME);
+  }
 }

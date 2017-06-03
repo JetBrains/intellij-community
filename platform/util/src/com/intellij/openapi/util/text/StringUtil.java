@@ -2518,6 +2518,23 @@ public class StringUtil extends StringUtilRt {
     return res;
   }
 
+  @Contract(pure = true)
+  public static int getIgnoreCaseOccurrenceCount(@NotNull String text, @NotNull String s) {
+    int res = 0;
+    int i = 0;
+    while (i < text.length()) {
+      i = indexOfIgnoreCase(text, s, i);
+      if (i >= 0) {
+        res++;
+        i++;
+      }
+      else {
+        break;
+      }
+    }
+    return res;
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String fixVariableNameDerivedFromPropertyName(@NotNull String name) {

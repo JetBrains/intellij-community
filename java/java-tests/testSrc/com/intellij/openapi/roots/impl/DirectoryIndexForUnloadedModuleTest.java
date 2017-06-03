@@ -39,7 +39,14 @@ public class DirectoryIndexForUnloadedModuleTest extends DirectoryIndexTestCase 
 
     ModuleManager.getInstance(myProject).setUnloadedModules(Arrays.asList("unloaded"));
 
-    assertExcluded(file, null);
-    assertExcluded(contentRoot, null);
+    assertFromUnloadedModule(file, "unloaded");
+    assertFromUnloadedModule(contentRoot, "unloaded");
+  }
+
+  private void assertFromUnloadedModule(VirtualFile file, String moduleName) {
+    DirectoryInfo info = myIndex.getInfoForFile(file);
+    assertTrue(info.toString(), info.isExcluded(file));
+    assertNull(info.getModule());
+    assertEquals(moduleName, info.getUnloadedModuleName());
   }
 }

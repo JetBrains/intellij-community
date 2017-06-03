@@ -425,7 +425,7 @@ public class FindUtil {
     }
   }
 
-  public static void replace(final Project project, final Editor editor) {
+  public static void replace(@NotNull Project project, @NotNull Editor editor) {
     final FindManager findManager = FindManager.getInstance(project);
     final FindModel model = findManager.getFindInFileModel().clone();
     final String s = editor.getSelectionModel().getSelectedText();
@@ -489,11 +489,11 @@ public class FindUtil {
     });
   }
 
-  public static boolean replace(Project project, Editor editor, int offset, FindModel model) {
+  public static boolean replace(@NotNull Project project, @NotNull Editor editor, int offset, @NotNull FindModel model) {
     return replace(project, editor, offset, model, (range, replace) -> true);
   }
 
-  public static boolean replace(Project project, Editor editor, int offset, FindModel model, ReplaceDelegate delegate) {
+  public static boolean replace(@NotNull Project project, @NotNull Editor editor, int offset, @NotNull FindModel model, ReplaceDelegate delegate) {
     Document document = editor.getDocument();
 
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
@@ -516,8 +516,13 @@ public class FindUtil {
     return true;
   }
 
-  private static void doReplace(Project project, final Editor editor, final FindModel aModel, final Document document, int caretOffset,
-                                   boolean toPrompt, ReplaceDelegate delegate) {
+  private static void doReplace(@NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull FindModel aModel,
+                                @NotNull Document document,
+                                int caretOffset,
+                                boolean toPrompt,
+                                ReplaceDelegate delegate) {
     FindManager findManager = FindManager.getInstance(project);
     final FindModel model = aModel.clone();
     int occurrences = 0;
@@ -590,7 +595,13 @@ public class FindUtil {
     }
 
     if (replaced) {
-      if (!toPrompt) {
+      if (toPrompt) {
+        if (caretOffset > document.getTextLength()) {
+          caretOffset = document.getTextLength();
+        }
+        editor.getCaretModel().moveToOffset(caretOffset);
+      }
+      else {
         CharSequence text = document.getCharsSequence();
         final StringBuilder newText = new StringBuilder(document.getTextLength());
         Collections.sort(rangesToChange, Comparator.comparingInt(o -> o.getFirst().getStartOffset()));
@@ -623,14 +634,6 @@ public class FindUtil {
           }
         }), null, document);
       }
-      else {
-        if (reallyReplaced) {
-          if (caretOffset > document.getTextLength()) {
-            caretOffset = document.getTextLength();
-          }
-          editor.getCaretModel().moveToOffset(caretOffset);
-        }
-      }
     }
 
     ReplaceInProjectManager.reportNumberReplacedOccurrences(project, occurrences);
@@ -640,10 +643,7 @@ public class FindUtil {
   private static boolean selectionMayContainRange(SelectionModel selection, TextRange range) {
     int[] starts = selection.getBlockSelectionStarts();
     int[] ends = selection.getBlockSelectionEnds();
-    if (starts.length == 0) {
-      return false;
-    }
-    return new TextRange(starts[0], ends[starts.length - 1]).contains(range);
+    return starts.length != 0 && new TextRange(starts[0], ends[starts.length - 1]).contains(range);
   }
 
   private static boolean selectionStrictlyContainsRange(SelectionModel selection, TextRange range) {
@@ -832,7 +832,7 @@ public class FindUtil {
 
   public static TextRange doReplace(final Project project,
                                     final Document document,
-                                    final FindModel model,
+                                    @NotNull FindModel model,
                                     FindResult result,
                                     @NotNull String stringToReplace,
                                     boolean reallyReplace,

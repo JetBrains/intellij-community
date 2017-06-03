@@ -86,4 +86,12 @@ public abstract class DirectoryInfo {
 
   @Nullable
   public abstract Module getModule();
+
+  /**
+   * Return name of an unloaded module to which content this file or directory belongs
+   * or {@code null} if it doesn't belong to an unloaded module.
+   * @see com.intellij.openapi.module.UnloadedModuleDescription
+   */
+  @Nullable
+  public abstract String getUnloadedModuleName();
 }

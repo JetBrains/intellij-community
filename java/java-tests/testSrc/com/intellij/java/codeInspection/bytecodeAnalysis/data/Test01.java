@@ -163,6 +163,19 @@ public class Test01 {
     return copy;
   }
 
+  @ExpectNotNull
+  @ExpectContract(pure = true)
+  public static long[] copyAndModify(@ExpectNotNull long[] input) {
+    long[] copy = copyOfRange(input, 0, input.length);
+    copy[0] = 1;
+    set(copy);
+    return copy;
+  }
+
+  private static void set(@ExpectNotNull long[] copy) {
+    copy[1] = 2;
+  }
+
   @ExpectContract(pure = true)
   public static <I, O> O[] copyOfRangeObject(@ExpectNotNull I[] arr, int from, int to, @ExpectNotNull Class<? extends O[]> newType) {
     int diff = to - from;

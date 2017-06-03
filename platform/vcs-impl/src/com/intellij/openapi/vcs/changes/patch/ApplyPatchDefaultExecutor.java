@@ -87,7 +87,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   public static void applyAdditionalInfoBefore(final Project project,
                                                @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                               CommitContext commitContext) {
+                                               @Nullable CommitContext commitContext) {
     applyAdditionalInfoImpl(project, additionalInfo, commitContext,
                             infoGroup -> infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
   }
@@ -101,7 +101,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   private static void applyAdditionalInfoImpl(final Project project,
                                               @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
-                                              CommitContext commitContext, final Consumer<InfoGroup> worker) {
+                                              @Nullable CommitContext commitContext, final Consumer<InfoGroup> worker) {
     final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
     if (extensions.length == 0) return;
     if (additionalInfo != null) {
@@ -129,9 +129,9 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     private final PatchEP myPatchEP;
     private final String myPath;
     private final CharSequence myContent;
-    private final CommitContext myCommitContext;
+   @Nullable private final CommitContext myCommitContext;
 
-    private InfoGroup(PatchEP patchEP, String path, CharSequence content, CommitContext commitContext) {
+    private InfoGroup(PatchEP patchEP, String path, CharSequence content, @Nullable CommitContext commitContext) {
       myPatchEP = patchEP;
       myPath = path;
       myContent = content;

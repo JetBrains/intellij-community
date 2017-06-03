@@ -99,7 +99,7 @@ import java.util.List;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
-import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction.createAppliedTextPatch;
+import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
@@ -153,7 +153,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     DnDSupport.createBuilder(myTree).disableAsTarget().setImageProvider(this::createDraggedImage).setBeanProvider(this::createDragStartBean)
       .install();
 
-    final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
+    final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
     showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
     final EditSourceAction editSourceAction = new EditSourceAction();
     editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
@@ -165,7 +165,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       protected boolean onDoubleClick(MouseEvent e) {
         DataContext dc = DataManager.getInstance().getDataContext(myTree);
         if (getShelveChanges(dc).isEmpty() && getBinaryShelveChanges(dc).isEmpty()) return false;
-        DiffShelvedChangesAction.showShelvedChangesDiff(dc);
+        DiffShelvedChangesActionProvider.showShelvedChangesDiff(dc);
         return true;
       }
     }.installOn(myTree);
@@ -744,12 +744,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyShelvedPreviewProcessor extends CacheDiffRequestProcessor<ShelvedWrapper> implements DiffPreviewUpdateProcessor {
 
-    @NotNull private final DiffShelvedChangesAction.PatchesPreloader myPreloader;
+    @NotNull private final DiffShelvedChangesActionProvider.PatchesPreloader myPreloader;
     @Nullable private ShelvedWrapper myCurrentShelvedElement;
 
     public MyShelvedPreviewProcessor(@NotNull Project project) {
       super(project);
-      myPreloader = new DiffShelvedChangesAction.PatchesPreloader(project);
+      myPreloader = new DiffShelvedChangesActionProvider.PatchesPreloader(project);
       Disposer.register(project, this);
     }
 
@@ -820,11 +820,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       try {
         ShelvedChange shelvedChange = provider.getShelvedChange();
         if (shelvedChange != null) {
-          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, new CommitContext())));
+          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, null)));
         }
 
         DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
         ShelvedBinaryFile binaryFile = assertNotNull(provider.getBinaryFile());
+        if (binaryFile.AFTER_PATH == null) {
+          throw new DiffRequestProducerException("Content for '" + getRequestName(provider) + "' was removed");
+        }
         byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
         FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
         return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),

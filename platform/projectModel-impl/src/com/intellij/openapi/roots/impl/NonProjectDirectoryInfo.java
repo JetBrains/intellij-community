@@ -113,6 +113,11 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
     return null;
   }
 
+  @Override
+  public String getUnloadedModuleName() {
+    return null;
+  }
+
   public int getSourceRootTypeId() {
     return 0;
   }

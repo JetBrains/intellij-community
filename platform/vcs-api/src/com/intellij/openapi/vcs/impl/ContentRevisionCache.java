@@ -191,7 +191,9 @@ public class ContentRevisionCache {
     throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
     byte[] bytes = cache.getBytes(path, number, vcsKey, type);
-    if (bytes != null) return bytes;
+    if (bytes != null) {
+      return bytes;
+    }
 
     checkLocalFileSize(path);
     bytes = loader.compute();
@@ -336,5 +338,13 @@ public class ContentRevisionCache {
   public static enum UniqueType {
     REPOSITORY_CONTENT,
     REMOTE_CONTENT
+  }
+
+  public void clearAll() {
+    synchronized (myLock) {
+      ++ myCounter;
+      myCurrentRevisionsCache.clear();
+      myCache.clear();
+    }
   }
 }

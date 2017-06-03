@@ -34,8 +34,9 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
                                           VirtualFile libraryClassRoot, boolean inModuleSource, boolean inLibrarySource, boolean isExcluded,
                                           int sourceRootTypeId,
                                           @Nullable FileTypeAssocTable<Boolean> contentExcludePatterns,
-                                          @Nullable FileTypeAssocTable<Boolean> libraryExcludePatterns) {
-    super(root, module, contentRoot, sourceRoot, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, sourceRootTypeId);
+                                          @Nullable FileTypeAssocTable<Boolean> libraryExcludePatterns,
+                                          @Nullable String unloadedModuleName) {
+    super(root, module, contentRoot, sourceRoot, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, sourceRootTypeId, unloadedModuleName);
     myContentExcludePatterns = contentExcludePatterns;
     myLibraryExcludePatterns = libraryExcludePatterns;
     LOG.assertTrue(myContentExcludePatterns != null || myLibraryExcludePatterns != null,
