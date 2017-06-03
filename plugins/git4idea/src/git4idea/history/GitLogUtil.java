@@ -93,12 +93,12 @@ public class GitLogUtil {
     });
   }
 
-  public static void readCommits(@NotNull Project project,
-                                 @NotNull VirtualFile root,
-                                 @NotNull List<String> parameters,
-                                 @NotNull Consumer<VcsUser> userConsumer,
-                                 @NotNull Consumer<VcsRef> refConsumer,
-                                 @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+  public static void readTimedCommits(@NotNull Project project,
+                                      @NotNull VirtualFile root,
+                                      @NotNull List<String> parameters,
+                                      @NotNull Consumer<VcsUser> userConsumer,
+                                      @NotNull Consumer<VcsRef> refConsumer,
+                                      @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
