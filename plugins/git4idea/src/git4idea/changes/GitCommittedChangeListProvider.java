@@ -40,6 +40,7 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -187,7 +188,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     VirtualFile root = repository.getRoot();
 
     String[] hashParameters = GitHistoryUtils.formHashParameters(repository.getVcs(), Collections.singleton(number.asString()));
-    List<GitCommit> gitCommits = GitHistoryUtils.collectFullDetails(myProject, root, hashParameters);
+    List<GitCommit> gitCommits = GitLogUtil.collectFullDetails(myProject, root, hashParameters);
     if (gitCommits.size() != 1) {
       return null;
     }

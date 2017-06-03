@@ -402,7 +402,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
     expected = ContainerUtil.reverse(expected);
 
-    List<String> actualHashes = ContainerUtil.map(GitHistoryUtils.collectFullDetails(myProject, myRepo.getRoot(),
+    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, myRepo.getRoot(),
                                                                                  "--max-count=" + commitCount),
                                                   detail -> detail.getId().asString());
 
