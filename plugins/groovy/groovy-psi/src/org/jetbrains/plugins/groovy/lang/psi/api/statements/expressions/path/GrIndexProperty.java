@@ -18,9 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyPolyVariantReference;
 
 public interface GrIndexProperty extends GrExpression {
 

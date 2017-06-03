@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.psi.api;
 
 import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 /**
  * Same as {@link PsiPolyVariantReference} but returns {@link GroovyResolveResult}.
@@ -29,4 +29,9 @@ public interface GroovyPolyVariantReference extends PsiPolyVariantReference {
   @NotNull
   @Override
   GroovyResolveResult[] multiResolve(boolean incompleteCode);
+
+  @NotNull
+  default GroovyResolveResult advancedResolve() {
+    return PsiImplUtil.extractUniqueResult(multiResolve(false));
+  }
 }

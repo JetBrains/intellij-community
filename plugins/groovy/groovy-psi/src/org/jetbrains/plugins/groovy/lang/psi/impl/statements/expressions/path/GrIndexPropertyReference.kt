@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiPolyVariantReferenceBase
 import com.intellij.psi.PsiType
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListType
 import org.jetbrains.plugins.groovy.lang.psi.util.isClassLiteral
 import org.jetbrains.plugins.groovy.lang.psi.util.isSimpleArrayAccess
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyPolyVariantReference
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
 class GrIndexPropertyReference(element: GrIndexPropertyImpl, val rhs: Boolean)

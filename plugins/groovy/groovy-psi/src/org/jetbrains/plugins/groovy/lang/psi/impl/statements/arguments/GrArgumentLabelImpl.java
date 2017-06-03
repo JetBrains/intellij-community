@@ -217,12 +217,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
   }
 
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
-  }
-
   @Override
   @NotNull
   public String getCanonicalText() {
