@@ -36,16 +36,20 @@ import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitCommit;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.GitTextHandler;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -264,6 +268,17 @@ public class GitLogUtil {
     List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
                                     Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    readRecordsFromHandler(project, root, withRefs, withChanges, converter, handler, parameters);
+  }
+
+  private static void readRecordsFromHandler(@NotNull Project project,
+                                             @NotNull VirtualFile root,
+                                             boolean withRefs,
+                                             boolean withChanges,
+                                             @NotNull Consumer<GitLogRecord> converter,
+                                             @NotNull GitLineHandler handler,
+                                             @NotNull String... parameters)
+    throws VcsException {
     GitLogParser parser = createParserForDetails(handler, project, withRefs, withChanges, parameters);
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
@@ -323,5 +338,50 @@ public class GitLogUtil {
     h.endOptions();
 
     return parser;
+  }
+
+  public static void readFullDetailsForHashes(@NotNull Project project,
+                                              @NotNull VirtualFile root,
+                                              @NotNull GitVcs vcs,
+                                              @NotNull Consumer<? super GitCommit> commitConsumer,
+                                              @NotNull List<String> hashes) throws VcsException {
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
+      @Override
+      public void consume(@NotNull List<GitLogRecord> records) {
+        commitConsumer.consume(createCommit(project, root, records, factory));
+      }
+    };
+    List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") ?
+                                    Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+
+    Ref<Exception> inputError = new Ref<>();
+    handler.setInputProcessor(stream -> {
+      try (OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset())) {
+        for (String hash : hashes) {
+          writer.write(hash);
+          writer.write(System.lineSeparator());
+        }
+        writer.write(System.lineSeparator());
+        writer.flush();
+      }
+      catch (IOException e) {
+        inputError.set(e);
+      }
+      return false;
+    });
+
+    readRecordsFromHandler(project, root, false, true, recordCollector, handler,
+                           GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk", "--stdin");
+    recordCollector.finish();
+
+    if (!inputError.isNull()) {
+      throw new VcsException(inputError.get());
+    }
   }
 }
