@@ -400,13 +400,13 @@ public class JavaDocInfoGenerator {
   public static String generateSignature(PsiElement element) {
     StringBuilder buf = new StringBuilder();
     if (element instanceof PsiClass) {
-      if (generateClassSignature(buf, (PsiClass)element, false)) return null;
+      if (generateClassSignature(buf, (PsiClass)element, SignaturePlace.ToolTip)) return null;
     } 
     else if (element instanceof PsiField) {
-      generateFieldSignature(buf, (PsiField)element, false);
+      generateFieldSignature(buf, (PsiField)element, SignaturePlace.ToolTip);
     }
     else if (element instanceof PsiMethod) {
-      generateMethodSignature(buf, (PsiMethod)element, false, true);
+      generateMethodSignature(buf, (PsiMethod)element, SignaturePlace.ToolTip);
     }
     return buf.toString();
   }
@@ -477,8 +477,10 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append("<PRE>");
-    if (generateClassSignature(buffer, aClass, true)) return;
+    if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
     buffer.append("</PRE>");
+
+    new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
 
     PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
@@ -489,8 +491,9 @@ public class JavaDocInfoGenerator {
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
 
-  private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, boolean generateLink) {
-    generateAnnotations(buffer, aClass, generateLink, true, false);
+  private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
+    boolean generateLink = place == SignaturePlace.Javadoc;
+    generateAnnotations(buffer, aClass, place, true);
     String modifiers = PsiFormatUtil.formatModifiers(aClass, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
@@ -628,8 +631,10 @@ public class JavaDocInfoGenerator {
     generateLinkToParentIfNeeded(buffer, field);
 
     buffer.append("<PRE>");
-    generateFieldSignature(buffer, field, true);
+    generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
     buffer.append("</PRE>");
+
+    new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
 
     ColorUtil.appendColorPreview(field, buffer);
 
@@ -641,8 +646,10 @@ public class JavaDocInfoGenerator {
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
 
-  private static void generateFieldSignature(StringBuilder buffer, PsiField field, boolean generateLink) {
-    generateAnnotations(buffer, field, generateLink, true, false);
+  private static void generateFieldSignature(StringBuilder buffer, PsiField field, SignaturePlace place) {
+    boolean generateLink = place == SignaturePlace.Javadoc;
+    generateAnnotations(buffer, field, place, true);
+
     String modifiers = PsiFormatUtil.formatModifiers(field, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
@@ -876,13 +883,13 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static void generateAnnotations(@NotNull StringBuilder buffer,
-                                          @NotNull PsiModifierListOwner owner,
-                                          boolean generateLink,
-                                          boolean splitAnnotations,
-                                          boolean useShortNames) {
+  private static void generateAnnotations(StringBuilder buffer, 
+                                          PsiModifierListOwner owner, 
+                                          SignaturePlace place, 
+                                          boolean splitAnnotations) {
+    AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
-      anno.generateAnnotation(buffer, generateLink, useShortNames);
+      anno.generateAnnotation(buffer, format);
 
       buffer.append("&nbsp;");
       if (splitAnnotations) buffer.append("\n");
@@ -908,7 +915,7 @@ public class JavaDocInfoGenerator {
       buffer.append(modifiers);
       buffer.append(" ");
     }
-    generateAnnotations(buffer, parameter, true, true, false);
+    generateAnnotations(buffer, parameter, SignaturePlace.Javadoc, true);
     generateType(buffer, parameter.getType(), parameter);
     buffer.append(" ");
     buffer.append("<b>");
@@ -916,6 +923,8 @@ public class JavaDocInfoGenerator {
     appendInitializer(buffer, parameter);
     buffer.append("</b>");
     buffer.append("</PRE>");
+
+    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations();
 
     final PsiElement method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class, PsiLambdaExpression.class);
 
@@ -943,8 +952,10 @@ public class JavaDocInfoGenerator {
     generateLinkToParentIfNeeded(buffer, method);
 
     buffer.append("<PRE>");
-    generateMethodSignature(buffer, method, true, false);
+    generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
     buffer.append("</PRE>");
+
+    new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
 
     PsiDocComment comment = getMethodDocComment(method);
 
@@ -983,8 +994,10 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static void generateMethodSignature(StringBuilder buffer, PsiMethod method, boolean generateLink, boolean useShortNames) {
-    generateAnnotations(buffer, method, generateLink, true, useShortNames);
+  private static void generateMethodSignature(StringBuilder buffer, PsiMethod method, SignaturePlace place) {
+    boolean useShortNames = place == SignaturePlace.ToolTip;
+    boolean generateLink = place == SignaturePlace.Javadoc;
+    generateAnnotations(buffer, method, place, true);
     String modifiers = PsiFormatUtil.formatModifiers(method, PsiFormatUtilBase.JAVADOC_MODIFIERS_ONLY);
     int indent = 0;
     if (!modifiers.isEmpty()) {
@@ -1017,7 +1030,7 @@ public class JavaDocInfoGenerator {
     PsiParameter[] parms = method.getParameterList().getParameters();
     for (int i = 0; i < parms.length; i++) {
       PsiParameter parm = parms[i];
-      generateAnnotations(buffer, parm, generateLink, false, useShortNames);
+      generateAnnotations(buffer, parm, place, false);
       generateType(buffer, parm.getType(), method, generateLink, useShortNames);
       buffer.append("&nbsp;");
       if (parm.getName() != null) {
@@ -1744,7 +1757,7 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private static void generateLink(StringBuilder buffer, PsiElement element, String label, boolean plainLink) {
+  static void generateLink(StringBuilder buffer, PsiElement element, String label, boolean plainLink) {
     String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
     if (refText != null) {
       DocumentationManagerUtil.createHyperlink(buffer, element, refText, label, plainLink);
@@ -2179,5 +2192,9 @@ public class JavaDocInfoGenerator {
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       myBuffer.append(StringUtil.escapeXml(expression.getText()));
     }
+  }
+  
+  private enum SignaturePlace {
+    Javadoc, ToolTip
   }
 }

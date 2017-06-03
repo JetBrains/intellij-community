@@ -66,37 +66,40 @@ class AnnotationDocGenerator {
     return Flow.class.getName().equals(annoQName);
   }
 
-  void generateAnnotation(StringBuilder buffer, boolean generateLink, boolean useShortNames) {
-    boolean inferred = AnnotationUtil.isInferredAnnotation(myAnnotation);
-    boolean external = AnnotationUtil.isExternalAnnotation(myAnnotation);
+  boolean isExternal() {
+    return AnnotationUtil.isExternalAnnotation(myAnnotation);
+  }
 
+  boolean isInferred() {
+    return AnnotationUtil.isInferredAnnotation(myAnnotation);
+  }
+
+  void generateAnnotation(StringBuilder buffer, AnnotationFormat format) {
     String qualifiedName = myAnnotation.getQualifiedName();
-    if (myTargetClass != null &&
-        qualifiedName != null && JavaDocUtil.findReferenceTarget(myOwner.getManager(), qualifiedName, myOwner) != null) {
-      if (inferred) buffer.append("<i>");
-      PsiClassType type = JavaPsiFacade.getElementFactory(myOwner.getProject()).createType(myTargetClass, PsiSubstitutor.EMPTY);
-      buffer.append("@");
-      if (inferred && !generateLink) {
-        buffer.append(type.getPresentableText());
-      }
-      else {
-        JavaDocInfoGenerator.generateType(buffer, type, myOwner, generateLink, useShortNames && !external);
-      }
-      generateAnnotationAttributes(buffer, generateLink);
-      if (inferred) buffer.append("</i>");
+    PsiClassType type =
+      myTargetClass != null && qualifiedName != null && JavaDocUtil.findReferenceTarget(myOwner.getManager(), qualifiedName, myOwner) != null
+      ? JavaPsiFacade.getElementFactory(myOwner.getProject()).createType(myTargetClass, PsiSubstitutor.EMPTY)
+      : null;
+    
+    boolean red = type == null && !myResolveNotPossible && !isInferred() && !isExternal();
+
+    if (isInferred()) buffer.append("<i>");
+    if (red) buffer.append("<font color=red>");
+
+    boolean generateLink = format != AnnotationFormat.ToolTip;
+    boolean forceShortNames = format != AnnotationFormat.JavaDocComplete;
+
+    buffer.append("@");
+    String name = forceShortNames ? myNameReference.getReferenceName() : myNameReference.getText();
+    if (type != null && generateLink) {
+      JavaDocInfoGenerator.generateLink(buffer, myTargetClass, name, false);
+    } else {
+      buffer.append(name);
     }
-    else if (external || myResolveNotPossible) {
-      if (inferred) buffer.append("<i>");
-      String annoText = inferred ? "@" + myNameReference.getReferenceName() + myAnnotation.getParameterList().getText()
-                                 : myAnnotation.getText();
-      buffer.append(XmlStringUtil.escapeString(annoText));
-      if (inferred) buffer.append("</i>");
-    }
-    else {
-      buffer.append("<font color=red>");
-      buffer.append(XmlStringUtil.escapeString(myAnnotation.getText()));
-      buffer.append("</font>");
-    }
+    if (red) buffer.append("</font>");
+
+    generateAnnotationAttributes(buffer, generateLink);
+    if (isInferred()) buffer.append("</i>");
   }
 
   private void generateAnnotationAttributes(StringBuilder buffer, boolean generateLink) {
@@ -188,4 +191,8 @@ class AnnotationDocGenerator {
     }
     return infos;
   }
+}
+
+enum AnnotationFormat {
+  ToolTip, JavaDocShort, JavaDocComplete
 }
