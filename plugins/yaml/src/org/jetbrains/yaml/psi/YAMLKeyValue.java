@@ -27,6 +27,7 @@ public interface YAMLKeyValue extends YAMLPsiElement, PsiNamedElement, PomTarget
   @NotNull
   String getValueText();
   
+  @Nullable
   YAMLMapping getParentMapping();
 
   void setValue(@NotNull YAMLValue value);
