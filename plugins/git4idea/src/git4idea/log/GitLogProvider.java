@@ -320,7 +320,7 @@ public class GitLogProvider implements VcsLogProvider {
     final GitBekParentFixer parentFixer = GitBekParentFixer.prepare(root, this);
     Set<VcsUser> userRegistry = newHashSet();
     Set<VcsRef> refs = newHashSet();
-    GitLogUtil.readCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
+    GitLogUtil.readTimedCommits(myProject, root, parameters, new CollectConsumer<>(userRegistry), new CollectConsumer<>(refs),
                            commit -> commitConsumer.consume(parentFixer.fixCommit(commit)));
     return new LogDataImpl(refs, userRegistry);
   }
@@ -509,8 +509,8 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
-    GitLogUtil.readCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
-                           EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
+    GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
+                                EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
   }
 

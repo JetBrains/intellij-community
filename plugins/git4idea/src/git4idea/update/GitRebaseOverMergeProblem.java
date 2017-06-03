@@ -80,8 +80,8 @@ public class GitRebaseOverMergeProblem {
 
     String range = baseRef + ".." + currentRef;
     try {
-      GitLogUtil.readCommits(project, root, Arrays.asList(range, "--merges"),
-                             EmptyConsumer.getInstance(), EmptyConsumer.getInstance(), detectingConsumer);
+      GitLogUtil.readTimedCommits(project, root, Arrays.asList(range, "--merges"),
+                                  EmptyConsumer.getInstance(), EmptyConsumer.getInstance(), detectingConsumer);
     }
     catch (VcsException e) {
       LOG.warn("Couldn't get git log --merges " + range, e);
