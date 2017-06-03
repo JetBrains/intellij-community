@@ -52,9 +52,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.intellij.lang.annotations.Flow;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -131,7 +129,7 @@ public class JavaDocInfoGenerator {
 
         PsiElement[] elements;
         PsiElement[] rawElements = pair.first.getDataElements();
-        if (dropFirst && rawElements != null && rawElements.length > 0) {
+        if (dropFirst && rawElements.length > 0) {
           elements = new PsiElement[rawElements.length - 1];
           System.arraycopy(rawElements, 1, elements, 0, elements.length);
         }
@@ -883,160 +881,12 @@ public class JavaDocInfoGenerator {
                                           boolean generateLink,
                                           boolean splitAnnotations,
                                           boolean useShortNames) {
-    final PsiModifierList ownerModifierList = owner.getModifierList();
-    if (ownerModifierList == null) return;
-    generateAnnotations(buffer, owner, ownerModifierList.getAnnotations(), false, generateLink, splitAnnotations, useShortNames);
-    PsiAnnotation[] externalAnnotations = ExternalAnnotationsManager.getInstance(owner.getProject()).findExternalAnnotations(owner);
-    if (externalAnnotations == null) {
-      externalAnnotations = PsiAnnotation.EMPTY_ARRAY;
-    }
-    PsiAnnotation[] inferredAnnotations = InferredAnnotationsManager.getInstance(owner.getProject()).findInferredAnnotations(owner);
-    externalAnnotations = ArrayUtil.mergeArrays(externalAnnotations, inferredAnnotations, PsiAnnotation.ARRAY_FACTORY);
-    generateAnnotations(buffer, owner, externalAnnotations, true, generateLink, splitAnnotations, useShortNames);
-  }
+    for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
+      anno.generateAnnotation(buffer, generateLink, useShortNames);
 
-  private static void generateAnnotations(StringBuilder buffer,
-                                          PsiModifierListOwner owner,
-                                          PsiAnnotation[] annotations,
-                                          boolean external,
-                                          boolean generateLink, boolean splitAnnotations, boolean useShortNames) {
-    PsiManager manager = owner.getManager();
-
-    Set<String> shownAnnotations = ContainerUtil.newHashSet();
-
-    for (PsiAnnotation annotation : annotations) {
-      final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
-      if (nameReferenceElement == null) continue;
-      PsiElement resolved = null;
-      boolean resolveNotPossible = false;
-      try {
-        resolved = nameReferenceElement.resolve();
-      }
-      catch (IndexNotReadyException e) {
-        LOG.debug(e);
-        resolveNotPossible = true;
-      }
-      if (isNonDocumentedAnnotation(annotation, resolved)) continue;
-
-      boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
-      String qualifiedName = annotation.getQualifiedName();
-      if (!(shownAnnotations.add(qualifiedName) || isRepeatableAnnotationType(resolved))) {
-        continue;
-      }
-
-      if (resolved instanceof PsiClass && 
-          qualifiedName != null && JavaDocUtil.findReferenceTarget(owner.getManager(), qualifiedName, owner) != null) {
-        final PsiClass annotationType = (PsiClass)resolved;
-        if (inferred) buffer.append("<i>");
-        final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
-        buffer.append("@");
-        if (inferred && !generateLink) {
-          buffer.append(type.getPresentableText());
-        }
-        else {
-          generateType(buffer, type, owner, generateLink, useShortNames && !external);
-        }
-        generateAnnotationAttributes(buffer, generateLink, annotation);
-        if (inferred) buffer.append("</i>");
-        buffer.append("&nbsp;");
-      }
-      else if (external || resolveNotPossible) {
-        if (inferred) buffer.append("<i>");
-        String annoText = inferred ? "@" + annotation.getNameReferenceElement().getReferenceName() + annotation.getParameterList().getText()
-                                   : annotation.getText();
-        buffer.append(XmlStringUtil.escapeString(annoText));
-        if (inferred) buffer.append("</i>");
-        buffer.append("&nbsp;");
-      }
-      else {
-        buffer.append("<font color=red>");
-        buffer.append(XmlStringUtil.escapeString(annotation.getText()));
-        buffer.append("</font>");
-        buffer.append("&nbsp;");
-      }
+      buffer.append("&nbsp;");
       if (splitAnnotations) buffer.append("\n");
     }
-  }
-
-  private static void generateAnnotationAttributes(StringBuilder buffer, boolean generateLink, PsiAnnotation annotation) {
-    final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    if (attributes.length > 0) {
-      buffer.append("(");
-      boolean first = true;
-      for (PsiNameValuePair pair : attributes) {
-        if (!first) buffer.append(",&nbsp;");
-        first = false;
-        generateAnnotationAttribute(buffer, generateLink, pair);
-      }
-      buffer.append(")");
-    }
-  }
-
-  private static void generateAnnotationAttribute(StringBuilder buffer, boolean generateLink, PsiNameValuePair pair) {
-    final String name = pair.getName();
-    if (name != null) {
-      buffer.append(name);
-      buffer.append(" = ");
-    }
-    final PsiAnnotationMemberValue value = pair.getValue();
-    if (value != null) {
-      if (value instanceof PsiArrayInitializerMemberValue) {
-        buffer.append("{");
-        boolean firstMember = true;
-        for(PsiAnnotationMemberValue memberValue:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-          if (!firstMember) buffer.append(",");
-          firstMember = false;
-          appendLinkOrText(buffer, memberValue, generateLink);
-        }
-        buffer.append("}");
-      }
-      else {
-        appendLinkOrText(buffer, value, generateLink);
-      }
-    }
-  }
-
-
-  private static void appendLinkOrText(StringBuilder buffer,
-                                       PsiAnnotationMemberValue memberValue,
-                                       boolean generateLink) {
-    if (generateLink && memberValue instanceof PsiQualifiedReferenceElement) {
-      String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
-      PsiElement resolve = null;
-      try {
-        resolve = ((PsiQualifiedReferenceElement)memberValue).resolve();
-      }
-      catch (IndexNotReadyException e) {
-        LOG.debug(e);
-      }
-
-      if (resolve instanceof PsiField) {
-        PsiField field = (PsiField)resolve;
-        PsiClass aClass = field.getContainingClass();
-        int startOfPropertyNamePosition = text.lastIndexOf('.');
-
-        if (startOfPropertyNamePosition != -1) {
-          text = text.substring(0, startOfPropertyNamePosition) + '#' + text.substring(startOfPropertyNamePosition + 1);
-        }
-        else {
-          if (aClass != null) text = aClass.getQualifiedName() + '#' + field.getName();
-        }
-        generateLink(buffer, text, aClass != null? aClass.getName() + '.' + field.getName():null, memberValue, false);
-        return;
-      }
-    }
-
-    buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
-  }
-
-  private static boolean isNonDocumentedAnnotation(@NotNull PsiAnnotation annotation, @Nullable PsiElement resolved) {
-    return resolved instanceof PsiClass
-           ? !isDocumentedAnnotationType((PsiClass)resolved)
-           : isKnownNonDocumented(annotation.getQualifiedName());
-  }
-
-  private static boolean isKnownNonDocumented(String annoQName) {
-    return Flow.class.getName().equals(annoQName);
   }
 
   public static boolean isDocumentedAnnotationType(@NotNull PsiClass resolved) {
@@ -1904,7 +1754,7 @@ public class JavaDocInfoGenerator {
   /**
    * @return Length of the generated label.
    */
-  private static int generateLink(StringBuilder buffer, String refText, String label, @NotNull PsiElement context, boolean plainLink) {
+  static int generateLink(StringBuilder buffer, String refText, String label, @NotNull PsiElement context, boolean plainLink) {
     if (label == null) {
       PsiManager manager = context.getManager();
       label = JavaDocUtil.getLabelText(manager.getProject(), manager, refText, context);
