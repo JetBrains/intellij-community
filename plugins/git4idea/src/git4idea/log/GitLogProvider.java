@@ -342,9 +342,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    VcsFileUtil.foreachChunk(hashes, 1, hashesChunk -> {
-      GitLogUtil.readFullDetails(myProject, root, commitConsumer, GitHistoryUtils.formHashParameters(myVcs, hashesChunk));
-    });
+
+        GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes);
   }
 
   @NotNull

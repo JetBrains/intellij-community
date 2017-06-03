@@ -510,7 +510,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   private class IndexingRequest {
     private static final int MAGIC_NUMBER = 150000;
-    private static final int BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private final Map<VirtualFile, TIntHashSet> myCommits;
     private final boolean myFull;
@@ -577,7 +577,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                                @NotNull IntStream commits) {
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
-      // (we have up to 150K commits here that will occupy up to 18Mb as Strings).
+      // a batch of 20k will occupy ~2.4Mb
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
         counter.indicator.checkCanceled();
 
