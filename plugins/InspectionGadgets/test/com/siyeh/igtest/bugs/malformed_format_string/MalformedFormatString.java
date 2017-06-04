@@ -3,6 +3,7 @@ package com.siyeh.igtest.bugs.malformed_format_string;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Formattable;
 
 public class MalformedFormatString {
 
@@ -115,5 +116,17 @@ public class MalformedFormatString {
         System.out.printf("%h %<H", 15);
         System.out.printf("%c %<C", '\u00A9');
         System.out.printf("%o %<o", 15);
+    }
+}
+class A {
+    void m(Formattable f) {
+        // each one fails, but inspection doesn't find the problems
+        String.format("%#s", <warning descr="Argument type 'int' does not match the type of the format specifier '%#s'">0</warning>);
+        String.format("%#s", <warning descr="Argument type 'float' does not match the type of the format specifier '%#s'">0.5f</warning>);
+        String.format("%#S", <warning descr="Argument type 'String' does not match the type of the format specifier '%#S'">"hello"</warning>);
+        String.format("%#S", <warning descr="Argument type 'int' does not match the type of the format specifier '%#S'">new Object().hashCode()</warning>);
+
+        // should be OK
+        String.format("%#s", f);
     }
 }
