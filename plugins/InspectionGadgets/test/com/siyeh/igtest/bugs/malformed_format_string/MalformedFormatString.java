@@ -124,6 +124,16 @@ public class MalformedFormatString {
     public String highlightBothArguments() {
         return String.format("count 1: %f, count 2: %f", <warning descr="Argument type 'int' does not match the type of the format specifier '%f'">count1</warning>, <warning descr="Argument type 'int' does not match the type of the format specifier '%f'">count2</warning>);
     }
+
+    void arrayArguments() {
+        String.format("%c", new Object[]{'a'});
+        String.<warning descr="Too many arguments for format string (found: 2, expected: 1)">format</warning>("%c", new Object[]{'a', 'b'});
+        String.<warning descr="Too few arguments for format string (found: 1, expected: 2)">format</warning>("%c %c", new Object[]{'a'});
+        Object[] array = new Object[]{<warning descr="Argument type 'String' does not match the type of the format specifier '%#s'">"the void"</warning>};
+        String.format("%#s", array);
+        Object[] array2 = {<warning descr="Argument type 'String' does not match the type of the format specifier '%#s'">"the void"</warning>};
+        String.format("%#s", array2);
+    }
 }
 class A {
     void m(Formattable f) {
