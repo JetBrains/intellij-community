@@ -176,7 +176,6 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
         }
         if (validator != null && !validator.valid(argumentType)) {
           registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
-          return;
         }
       }
     }

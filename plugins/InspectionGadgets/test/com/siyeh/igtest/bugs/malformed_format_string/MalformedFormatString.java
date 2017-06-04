@@ -117,6 +117,13 @@ public class MalformedFormatString {
         System.out.printf("%c %<C", '\u00A9');
         System.out.printf("%o %<o", 15);
     }
+
+    private int count1;
+    private int count2;
+
+    public String highlightBothArguments() {
+        return String.format("count 1: %f, count 2: %f", <warning descr="Argument type 'int' does not match the type of the format specifier '%f'">count1</warning>, <warning descr="Argument type 'int' does not match the type of the format specifier '%f'">count2</warning>);
+    }
 }
 class A {
     void m(Formattable f) {
