@@ -20,6 +20,7 @@ import com.google.common.collect.PeekingIterator;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,12 +29,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
+import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.NameSuggesterUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
@@ -42,10 +47,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -70,6 +72,8 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       positionalParamAnchor++;
     }
     final List<Pair<Integer, PyParameterInfo>> newParameters = new ArrayList<>();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callExpression.getContainingFile());
+    final Set<String> usedParamNames = new HashSet<>();
     for (PyExpression arg : mapping.getUnmappedArguments()) {
       if (arg instanceof PyKeywordArgument) {
         final String defaultValueText;
@@ -84,11 +88,9 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
                                       new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), defaultValueText, true)));
       }
       else {
-        final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callExpression.getContainingFile());
-        final PyType type = context.getType(arg);
-        final String typeName = type != null && type.getName() != null ? type.getName() : PyNames.OBJECT;
-        final String paramName = PyRefactoringUtil.selectUniqueNameFromType(typeName, function.getStatementList());
+        final String paramName = generateParameterName(arg, function, usedParamNames, context);
         newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, "", false)));
+        usedParamNames.add(paramName);
       }
     }
     return new PyChangeSignatureQuickFix(function, newParameters, mapping.getCallExpression());
@@ -141,9 +143,9 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> {
       return info.getOldIndex() == -1 ? "<b>" + info.getName() + "</b>" : info.getName();
     }, ", ");
-    return "<html>" +
-           PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")") +
-           "</html>";
+
+    final String message = PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")");
+    return XmlStringUtil.wrapInHtml(message);
   }
 
   @Nullable
@@ -181,6 +183,30 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         originalCall.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, null);
       }
     }
+  }
+
+  @NotNull
+  private static String generateParameterName(@NotNull PyExpression argumentValue,
+                                              @NotNull PyFunction function,
+                                              @NotNull Set<String> usedParameterNames,
+                                              @NotNull TypeEvalContext context) {
+    PyType type = context.getType(argumentValue);
+    if (type instanceof PyUnionType) {
+      type = ContainerUtil.find(((PyUnionType)type).getMembers(), Conditions.instanceOf(PyClassType.class));
+    }
+    final String typeName = type != null && type.getName() != null ? type.getName() : "object";
+
+    final Collection<String> suggestions = NameSuggesterUtil.generateNamesByType(typeName);
+    final String shortestName = ContainerUtil.getFirstItem(suggestions);
+    assert shortestName != null;
+
+    String result = shortestName;
+    int counter = 1;
+    while (!PyRefactoringUtil.isValidNewName(result, function.getStatementList()) || usedParameterNames.contains(result)) {
+      result = shortestName + counter;
+      counter++;
+    }
+    return result;
   }
 
   @NotNull
