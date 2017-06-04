@@ -25,6 +25,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -55,14 +56,14 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   }
 
   @Override
-  protected boolean acceptFilter(Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
+  protected boolean acceptFilter(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
     try {
       VirtualFilePointer filePointer = getFilePointer();
       if (!filePointer.isValid()) {
         return false;
       }
       VirtualFile file = filePointer.getFile();
-      if (file != null && file.isValid() && filter.first.contains(file, getProject(), filter.second)) {
+      if (file != null && file.isValid() && filter != null && filter.first.contains(file, getProject(), filter.second)) {
         applyFilter(true);
         return true;
       }
