@@ -1,4 +1,5 @@
 # coding=utf-8
+import os
 import re
 import sys
 
@@ -8,11 +9,17 @@ from _pytest.config import get_plugin_manager
 from _jb_runner_tools import jb_start_tests, jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING
 from teamcity import pytest_plugin
 
+def set_up_django_environ():
+    import django
+    # TODO pass PYCHARM_DJANGO_SETTINGS_MODULE into py.test runner if enable django support
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", os.environ.get('PYCHARM_DJANGO_SETTINGS_MODULE', "settings"))
+    django.setup()
 
 
 if __name__ == '__main__':
     path, targets, additional_args = jb_start_tests()
     sys.argv += additional_args
+    set_up_django_environ()
     joined_targets = jb_patch_separator(targets, fs_glue="/", python_glue="::", fs_to_python_glue=".py::")
     # When file is launched in py.test it should be file.py: you can't provide it as bare module
     joined_targets = [t + ".py" if ":" not in t else t for t in joined_targets]
