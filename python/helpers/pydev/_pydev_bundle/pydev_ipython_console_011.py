@@ -36,6 +36,7 @@ except ImportError:
 from IPython.core import release
 
 from _pydev_bundle.pydev_imports import xmlrpclib
+from _pydevd_bundle.pydevd_constants import dict_keys
 
 default_pydev_banner_parts = default_banner_parts
 
@@ -139,8 +140,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     # Things related to exceptions
     #-------------------------------------------------------------------------
 
-    def showtraceback(self, exc_tuple=None, filename=None, tb_offset=None,
-                  exception_only=False):
+    def showtraceback(self, *args, **kwargs):
         # IPython does a lot of clever stuff with Exceptions. However mostly
         # it is related to IPython running in a terminal instead of an IDE.
         # (e.g. it prints out snippets of code around the stack trace)
@@ -331,8 +331,8 @@ class _PyDevFrontEnd:
     def update(self, globals, locals):
         ns = self.ipython.user_ns
 
-        for ind in ['_oh', '_ih', '_dh', '_sh', 'In', 'Out', 'get_ipython', 'exit', 'quit']:
-            locals[ind] = ns[ind]
+        for key in dict_keys(self.ipython.user_ns):
+            locals[key] = ns[key]
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)
