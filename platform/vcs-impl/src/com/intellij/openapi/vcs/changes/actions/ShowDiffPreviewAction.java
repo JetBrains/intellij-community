@@ -16,24 +16,11 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 
 public abstract class ShowDiffPreviewAction extends ToggleAction implements DumbAware {
-  private boolean myState;
-
   public ShowDiffPreviewAction() {
     super("Preview Diff", null, AllIcons.Actions.DiffPreview);
-  }
-
-  @Override
-  public boolean isSelected(AnActionEvent e) {
-    return myState;
-  }
-
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    myState = state;
   }
 }
