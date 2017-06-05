@@ -34,7 +34,7 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
+    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     String valueToSwitch = expressionStatement.getExpression().getText();
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory.createStatementFromText("switch (" + valueToSwitch + ") {}", null);
@@ -47,17 +47,10 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
-    return expressionStatement != null && isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
-  }
-
-  private static PsiExpressionStatement resolveExpressionStatement(PsiElement element) {
-    if (element instanceof PsiExpressionStatement) {
-      return (PsiExpressionStatement)element;
-    } else {
-      PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-      return psiStatement instanceof PsiExpressionStatement ? (PsiExpressionStatement)psiStatement : null;
-    }
+    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
+    return expressionStatement != null &&
+           expressionStatement.getParent() instanceof PsiCodeBlock &&
+           isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
 
   private static boolean isValidTypeForSwitch(@Nullable PsiType type, PsiElement context) {
