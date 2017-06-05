@@ -65,6 +65,8 @@ public class StandardManifestHeaderParsers implements HeaderParserProvider {
     myParsers.put("Can-Redefine-Classes", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Retransform-Classes", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Set-Native-Method-Prefix", StandardHeaderParser.INSTANCE);
+    myParsers.put("Automatic-Module-Name", StandardHeaderParser.INSTANCE);
+    myParsers.put("Multi-Release", StandardHeaderParser.INSTANCE);
   }
 
   @NotNull
