@@ -51,7 +51,6 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
@@ -64,8 +63,8 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
 
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
-  private val settingsSavingComponents = CopyOnWriteArrayList<SettingsSavingComponent>()
-
+  private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>();
+  
   internal open val project: Project?
     get() = null
 
