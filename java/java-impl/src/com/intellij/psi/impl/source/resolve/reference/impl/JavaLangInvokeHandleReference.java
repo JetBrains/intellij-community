@@ -19,13 +19,16 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,9 +100,25 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return field != null && filter.value(field) ? field : null;
   }
 
-  private static PsiElement resolveMethod(@NotNull String name, @NotNull PsiClass psiClass, Condition<? super PsiMethod> filter) {
-    final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
-    return ContainerUtil.find(methods, filter);
+  private PsiElement resolveMethod(@NotNull String name, @NotNull PsiClass psiClass, Condition<? super PsiMethod> filter) {
+    PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+    if (methods.length != 0) {
+      methods = ContainerUtil.filter(methods, filter).toArray(PsiMethod.EMPTY_ARRAY);
+      if (methods.length > 1) {
+        final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
+        if (definitionCall != null) {
+          final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
+          if (arguments.length > 2) {
+            final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[2]);
+            final ReflectiveSignature expectedSignature = JavaLangInvokeHandleSignatureInspection.composeMethodSignature(typeExpression);
+            if (expectedSignature != null) {
+              return ContainerUtil.find(methods, method -> expectedSignature.equals(getMethodSignature(method)));
+            }
+          }
+        }
+      }
+    }
+    return methods.length != 0 ? methods[0] : null;
   }
 
   @NotNull

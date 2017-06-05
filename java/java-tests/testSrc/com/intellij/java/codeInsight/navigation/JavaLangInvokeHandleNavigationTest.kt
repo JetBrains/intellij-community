@@ -16,10 +16,13 @@
 package com.intellij.java.codeInsight.navigation
 
 import com.intellij.psi.PsiMember
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.intellij.lang.annotations.Language
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.NonNls
 
 /**
  * @author Pavel.Dolgov
@@ -74,6 +77,64 @@ class JavaLangInvokeHandleNavigationTest : LightCodeInsightFixtureTestCase() {
   fun testStaticSetter6() = doNegativeTest("pf1", STATIC_SETTER)
   fun testStaticSetter7() = doNegativeTest("m1", STATIC_SETTER)
 
+  fun testOverloadedBothPublic() = doTestOverloaded(
+    """public class Overloaded {
+  public void foo(int n) {}
+  public void foo(String s) {}
+}""", VIRTUAL, "java.lang.String")
+
+  fun testOverloadedFirstPublic() = doTestOverloaded(
+    """public class Overloaded {
+  public void foo(int n) {}
+  void foo(String s) {}
+}""", VIRTUAL, "int")
+
+  fun testOverloadedSecondPublic() = doTestOverloaded(
+    """public class Overloaded {
+  void foo(int n) {}
+  public void foo(String s) {}
+}""", VIRTUAL, "java.lang.String")
+
+  fun testOverloadedInherited() {
+    myFixture.addClass("""public class OverloadedParent {
+  public static void foo(String s) {}
+}""")
+
+    doTestOverloaded(
+      """public class Overloaded extends OverloadedParent {
+  public static void foo(int n) {}
+}""", STATIC, "java.lang.String")
+  }
+
+  fun testOverloadedStatic() = doTestOverloaded(
+    """public class Overloaded {
+  public static void foo(int n) {}
+  public static void foo(String s) {}
+}""", STATIC, "java.lang.String")
+
+
+  private fun doTestOverloaded(@NonNls @Language("JAVA") classText: String, function: String, vararg expectedParameterTypes: String) {
+    myFixture.addClass(classText)
+
+    val methodType = arrayOf("void", *expectedParameterTypes).map { "$it.class" }.joinToString(", ")
+    val member = doTestImpl("foo", """
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+class Main {
+  void foo() throws ReflectiveOperationException {
+    MethodHandles.Lookup lookup = MethodHandles.lookup();
+    lookup.$function(Overloaded.class, "<caret>foo", MethodType.methodType($methodType));
+  }
+}""")
+
+    TestCase.assertTrue("Is method", member is PsiMethod)
+    val parameters = (member as PsiMethod).parameterList.parameters
+    TestCase.assertEquals("Parameter count", expectedParameterTypes.size, parameters.size)
+    for (i in 0 until expectedParameterTypes.size) {
+      TestCase.assertEquals("Parameter $i", expectedParameterTypes[i], parameters[i].type.canonicalText)
+    }
+  }
+
 
   private fun doTest(name: String,
                      @MagicConstant(stringValues = arrayOf(VIRTUAL, STATIC, SPECIAL,
@@ -83,7 +144,7 @@ class JavaLangInvokeHandleNavigationTest : LightCodeInsightFixtureTestCase() {
     doTestImpl(name, getMainClassText(name, function))
   }
 
-  private fun doTestImpl(name: String, mainClassText: String) {
+  private fun doTestImpl(name: String, mainClassText: String): PsiMember {
     val reference = getReference(mainClassText)
     TestCase.assertEquals("Reference text", name, reference.canonicalText)
     val resolved = reference.resolve()
@@ -91,6 +152,7 @@ class JavaLangInvokeHandleNavigationTest : LightCodeInsightFixtureTestCase() {
     TestCase.assertTrue("Target is a member", resolved is PsiMember)
     val member = resolved as PsiMember?
     TestCase.assertEquals("Target name", name, member!!.name)
+    return member
   }
 
   private fun doNegativeTest(name: String,

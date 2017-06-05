@@ -18,9 +18,11 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection;
+import com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -28,10 +30,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
@@ -73,17 +72,29 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             }
 
             case GET_METHOD: {
-              final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
-              final PsiMethod publicMethod = ContainerUtil.find(methods, method -> isRegularMethod(method) && isPublic(method));
-              if (publicMethod != null) {
-                return publicMethod;
+              PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+              if (methods.length > 1) {
+                methods =
+                  ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPublic(method))
+                    .toArray(PsiMethod.EMPTY_ARRAY);
+                if (methods.length > 1) {
+                  return findOverloadedMethod(methods);
+                }
               }
-              return ContainerUtil.find(methods, method -> isRegularMethod(method));
+              return methods.length != 0 ? methods[0] : null;
             }
 
             case GET_DECLARED_METHOD: {
-              final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
-              return ContainerUtil.find(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
+              PsiMethod[] methods = psiClass.findMethodsByName(name, false);
+              if (methods.length > 1) {
+                methods =
+                  ContainerUtil.filter(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
+                    .toArray(PsiMethod.EMPTY_ARRAY);
+                if (methods.length > 1) {
+                  return findOverloadedMethod(methods);
+                }
+              }
+              return methods.length != 0 ? methods[0] : null;
             }
           }
         }
@@ -153,6 +164,18 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Contract("null, _ -> false")
   private static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
     return member != null && (member.getContainingClass() == psiClass || isPublic(member));
+  }
+
+  @Nullable
+  private PsiElement findOverloadedMethod(PsiMethod[] methods) {
+    final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
+    if (definitionCall != null) {
+      final List<ReflectiveType> parameterTypes = JavaReflectionInvocationInspection.getReflectionMethodParameterTypes(definitionCall, 1);
+      if (parameterTypes != null) {
+        return JavaReflectionMemberAccessInspection.matchMethod(methods, parameterTypes);
+      }
+    }
+    return null;
   }
 
   @Override
