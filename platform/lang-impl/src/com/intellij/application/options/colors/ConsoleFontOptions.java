@@ -31,8 +31,13 @@ public class ConsoleFontOptions extends FontOptions {
 
   @Nullable
   @Override
-  protected String getInheritFontTitle() {
-    return "editor font";
+  protected String getInheritedFontTitle() {
+    return "Scheme font";
+  }
+
+  @Override
+  protected String getOverwriteFontTitle() {
+    return "Set console font for color scheme";
   }
 
   @Override
@@ -53,6 +58,11 @@ public class ConsoleFontOptions extends FontOptions {
   @Override
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getConsoleFontPreferences();
+  }
+
+  @Override
+  protected FontPreferences getBaseFontPreferences() {
+    return getCurrentScheme().getFontPreferences();
   }
 
   @Override
