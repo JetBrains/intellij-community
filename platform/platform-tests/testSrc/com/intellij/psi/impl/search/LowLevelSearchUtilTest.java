@@ -74,4 +74,25 @@ public class LowLevelSearchUtilTest extends TestCase {
       }
     }).assertTiming();
   }
+
+  public void testMergeSortedArrays() {
+    TIntArrayList x1 = new TIntArrayList(new int[]{0, 2, 4, 6});
+    TIntArrayList y1 = new TIntArrayList(new int[]{0, 2, 4, 6});
+    TIntArrayList x2 = new TIntArrayList(new int[]{1, 2, 2});
+    TIntArrayList y2 = new TIntArrayList(new int[]{1, 2, 3});
+    IndexPatternSearcher.mergeSortedArrays(x1, y1, x2, y2);
+    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 2, 4, 6}), x1);
+    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 3, 4, 6}), y1);
+    x2 = new TIntArrayList(new int[]{1, 2, 2});
+    y2 = new TIntArrayList(new int[]{1, 2, 3});
+    IndexPatternSearcher.mergeSortedArrays(x1, y1, x2, y2);
+    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 2, 4, 6}), x1);
+    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 3, 4, 6}), y1);
+
+    x2 = new TIntArrayList(new int[]{-1, -1, -2});
+    y2 = new TIntArrayList(new int[]{-1, -2, -3});
+    IndexPatternSearcher.mergeSortedArrays(x1, y1, x2, y2);
+    assertEquals(new TIntArrayList(new int[]{-1, -1, -2, 0, 1, 2, 2, 4, 6}), x1);
+    assertEquals(new TIntArrayList(new int[]{-1, -2, -3, 0, 1, 2, 3, 4, 6}), y1);
+  }
 }

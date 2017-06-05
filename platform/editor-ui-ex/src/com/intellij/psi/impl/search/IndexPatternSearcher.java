@@ -39,7 +39,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +168,58 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       return;
     }
 
-    ContainerUtil.mergeSortedArrays(commentStarts, commentEnds, commentStartsList, commentEndsList);
+    mergeSortedArrays(commentStarts, commentEnds, commentStartsList, commentEndsList);
+  }
+
+  /**
+   * Merge sorted points, which are sorted by x and with equal x by y.
+   * Result is put to x1 y1.
+   */
+  static void mergeSortedArrays(@NotNull TIntArrayList x1,
+                                @NotNull TIntArrayList y1,
+                                @NotNull TIntArrayList x2,
+                                @NotNull TIntArrayList y2) {
+    TIntArrayList newX = new TIntArrayList();
+    TIntArrayList newY = new TIntArrayList();
+
+    int i = 0;
+    int j = 0;
+
+    while (i < x1.size() && j < x2.size()) {
+      if (x1.get(i) < x2.get(j) || x1.get(i) == x2.get(j) && y1.get(i) < y2.get(j)) {
+        newX.add(x1.get(i));
+        newY.add(y1.get(i));
+        i++;
+      }
+      else if (x1.get(i) > x2.get(j) || x1.get(i) == x2.get(j) && y1.get(i) > y2.get(j)) {
+        newX.add(x2.get(j));
+        newY.add(y2.get(j));
+        j++;
+      }
+      else { //equals
+        newX.add(x1.get(i));
+        newY.add(y1.get(i));
+        i++;
+        j++;
+      }
+    }
+
+    while (i < x1.size()) {
+      newX.add(x1.get(i));
+      newY.add(y1.get(i));
+      i++;
+    }
+
+    while (j < x2.size()) {
+      newX.add(x2.get(j));
+      newY.add(y2.get(j));
+      j++;
+    }
+
+    x1.clear();
+    y1.clear();
+    x1.add(newX.toNativeArray());
+    y1.add(newY.toNativeArray());
   }
 
   private static void findComments(final Lexer lexer,
