@@ -46,6 +46,11 @@ public class ResolverFactory {
         return new AllMatchResolver();
       case "noneMatch":
         return new NoneMatchResolver();
+      case "max":
+      case "min":
+      case "findAny":
+      case "findFirst":
+        return new OptionalResolver();
       default:
         return new SimplePeekCallTraceResolver();
     }
