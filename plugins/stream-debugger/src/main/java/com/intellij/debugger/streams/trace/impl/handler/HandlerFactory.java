@@ -52,10 +52,11 @@ public class HandlerFactory {
       case "anyMatch":
       case "noneMatch":
         return new MatchHandler(call);
-    }
-
-    if (GenericTypeUtil.isOptional(call.getResultType())) {
-      return new OptionalTerminatorHandler(call, resultExpression);
+      case "max":
+      case "min":
+      case "findAny":
+      case "findFirst":
+        return new OptionalTerminatorHandler(call, resultExpression);
     }
 
     return new TerminatorHandler(call.getTypeBefore());
