@@ -112,9 +112,9 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
    * @param extraParameters new parameters anchored by indexes of the existing parameters they should be inserted <em>after</em>
    *                        (-1 in case they should precede the first parameter)
    */
-  public PyChangeSignatureQuickFix(@NotNull PyFunction function,
-                                   @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters,
-                                   @Nullable PyCallExpression expression) {
+  private PyChangeSignatureQuickFix(@NotNull PyFunction function,
+                                    @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters,
+                                    @Nullable PyCallExpression expression) {
     super(function);
     myExtraParameters = ContainerUtil.sorted(extraParameters, Comparator.comparingInt(p -> p.getFirst()));
     if (expression != null) {
