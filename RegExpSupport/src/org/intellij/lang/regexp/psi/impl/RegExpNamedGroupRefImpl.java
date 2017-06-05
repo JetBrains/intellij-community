@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpTT;
@@ -53,15 +52,12 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   @Nullable
   public RegExpGroup resolve() {
     final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<>(
-      new PsiElementFilter() {
-        @Override
-        public boolean isAccepted(PsiElement element) {
-          if (!(element instanceof RegExpGroup)) {
-            return false;
-          }
-          final RegExpGroup group = (RegExpGroup)element;
-          return group.isAnyNamedGroup() && Comparing.equal(getGroupName(), group.getGroupName());
+      element -> {
+        if (!(element instanceof RegExpGroup)) {
+          return false;
         }
+        final RegExpGroup group = (RegExpGroup)element;
+        return group.isAnyNamedGroup() && Comparing.equal(getGroupName(), group.getGroupName());
       }
     );
     PsiTreeUtil.processElements(getContainingFile(), processor);
@@ -142,16 +138,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       @NotNull
       public Object[] getVariants() {
         final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<>(
-          new PsiElementFilter() {
-            @Override
-            public boolean isAccepted(PsiElement element) {
-              if (!(element instanceof RegExpGroup)) {
-                return false;
-              }
-              final RegExpGroup regExpGroup = (RegExpGroup)element;
-              return regExpGroup.isAnyNamedGroup();
-            }
-          }
+          e -> e instanceof RegExpGroup && ((RegExpGroup)e).isAnyNamedGroup()
         );
         PsiTreeUtil.processElements(getContainingFile(), processor);
         return processor.toArray();
