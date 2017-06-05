@@ -493,12 +493,16 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static BreadcrumbsProvider getInfoProvider(@NotNull Language language) {
-    for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
-      for (Language supported : provider.getLanguages()) {
-        if (supported.isKindOf(language)) {
-          return provider;
+    BreadcrumbsProvider[] providers = BreadcrumbsProvider.EP_NAME.getExtensions();
+    while (language != null) {
+      for (BreadcrumbsProvider provider : providers) {
+        for (Language supported : provider.getLanguages()) {
+          if (language.is(supported)) {
+            return provider;
+          }
         }
       }
+      language = language.getBaseLanguage();
     }
     return null;
   }

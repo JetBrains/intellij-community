@@ -309,7 +309,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
    * from arguments of MethodType.methodType(Class...) and MethodType.genericMethodType(int, boolean?)
    */
   @Nullable
-  private static ReflectiveSignature composeMethodSignature(@Nullable PsiExpression methodTypeExpression) {
+  public static ReflectiveSignature composeMethodSignature(@Nullable PsiExpression methodTypeExpression) {
     final PsiExpression typeDefinition = findDefinition(methodTypeExpression);
     if (typeDefinition instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)typeDefinition;

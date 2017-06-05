@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -187,7 +188,7 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
 
   public Pair<Document, List<AnswerPlaceholder>> getPlaceholders(String name, boolean useLength, boolean removeMarkers) {
     try {
-      String text = FileUtil.loadFile(new File(getBasePath(), name));
+      String text = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBasePath(), name)));
       Document tempDocument = EditorFactory.getInstance().createDocument(text);
       if (removeMarkers) {
         EditorTestUtil.extractCaretAndSelectionMarkers(tempDocument);

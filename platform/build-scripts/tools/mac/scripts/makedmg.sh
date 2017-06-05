@@ -36,6 +36,26 @@ stat ${EXPLODED}/DSStorePlaceHolder
 echo "Creating unpacked r/w disk image ${VOLNAME}..."
 hdiutil create -srcfolder ./${EXPLODED} -volname "$VOLNAME" -anyowners -nospotlight -quiet -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW $2.temp.dmg
 
+# check if the image already mounted
+if [ -d "/Volumes/$VOLNAME" ]; then
+  attempt=1
+  limit=5
+  while [ $attempt -le $limit ]
+  do
+    echo "/Volumes/$VOLNAME - the image is already mounted. This build will wait for unmount for 1 min (up to 5 times)."
+    sleep 60;
+    if [ -d "/Volumes/$VOLNAME" ]; then
+      let "attempt += 1"
+      if [ $attempt -eq $limit ]; then
+        echo "/Volumes/$VOLNAME - the image is still mounted. By the reason the build will be stopped."
+        rm -rf ${EXPLODED}
+        rm -f $2.temp.dmg
+        exit 1
+      fi
+    fi
+  done
+fi
+
 # mount this image
 echo "Mounting unpacked r/w disk image..."
 device=$(hdiutil attach -readwrite -noverify -noautoopen $2.temp.dmg | egrep '^/dev/' | sed 1q | awk '{print $1.dmg}')

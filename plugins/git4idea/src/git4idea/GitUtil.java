@@ -368,8 +368,9 @@ public class GitUtil {
   public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
     File root = filePath.getIOFile();
     while (root != null) {
-      File gitDir = findGitDir(root);
-      if (gitDir != null) return LocalFileSystem.getInstance().findFileByIoFile(root);
+      if (isGitRoot(root)) {
+        return LocalFileSystem.getInstance().findFileByIoFile(root);
+      }
       root = root.getParentFile();
     }
     return null;

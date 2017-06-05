@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * Holds <a href="http://semver.org">Semantic Version</a>.
  */
 public final class SemVer implements Comparable<SemVer> {
+  /** @deprecated */
   public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
 
   private final String myRawVersion;

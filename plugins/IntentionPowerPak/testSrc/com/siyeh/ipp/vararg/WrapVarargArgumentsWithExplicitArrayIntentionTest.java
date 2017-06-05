@@ -58,4 +58,16 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
       "    }\n" +
       "}");
   }
+  
+  public void testNonReifiable() {
+    doTestIntentionNotAvailable(
+      "" +
+      "import java.util.*;\n" +
+      "class Y {\n" +
+      "    <T> void m(Set<T>... t){}\n" +
+      "    public static void run(Set<?> s) {\n" +
+      "        m(/*_Wrap vararg arguments with explicit array creation*/s);\n" +
+      "    }\n" +
+      "}");
+  }
 }

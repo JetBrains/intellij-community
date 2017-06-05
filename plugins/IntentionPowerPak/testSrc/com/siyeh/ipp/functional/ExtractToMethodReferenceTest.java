@@ -54,6 +54,10 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
     assertIntentionNotAvailable();
   }
 
+  public void testEmptyCodeBlock() throws Exception {
+    doTest();
+  }
+
   public void testUsedLocalVariables() throws Exception {
     assertIntentionNotAvailable();
   }

@@ -205,6 +205,7 @@ public class PyDataViewerPanel extends JPanel {
       if (myTable.getColumnCount() > 0) {
         myTable.setDefaultRenderer(myTable.getColumnClass(0), cellRenderer);
       }
+      myTable.setShowColumns(strategy.showColumnHeader());
     });
   }
 
