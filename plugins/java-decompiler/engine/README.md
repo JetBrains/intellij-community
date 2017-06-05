@@ -14,8 +14,8 @@ Fernflower is licenced under the Apache Licence Version 2.0. It can be found her
 
 java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>
 
-* means 0 or more times
-+ means 1 or more times
+\* means 0 or more times\
+\+ means 1 or more times
 
 <source>: file or directory with files to be decompiled. Directories are recursively scanned. Allowed file extensions are class, zip and jar.
           Sources prefixed with -e= mean "library" files that won't be decompiled, but taken into account when analysing relationships between 
