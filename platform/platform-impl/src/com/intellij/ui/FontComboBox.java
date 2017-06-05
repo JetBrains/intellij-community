@@ -16,9 +16,11 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ui.FontInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -40,11 +42,11 @@ public final class FontComboBox extends ComboBox {
   }
 
   public FontComboBox(boolean withAllStyles) {
-    this(withAllStyles, true);
+    this(withAllStyles, true, false);
   }
 
-  public FontComboBox(boolean withAllStyles, boolean filterNonLatin) {
-    super(new Model(withAllStyles, filterNonLatin));
+  public FontComboBox(boolean withAllStyles, boolean filterNonLatin, boolean noFontItem) {
+    super(new Model(withAllStyles, filterNonLatin, noFontItem));
     Dimension size = getPreferredSize();
     size.width = size.height * 8;
     setPreferredSize(size);
@@ -68,8 +70,12 @@ public final class FontComboBox extends ComboBox {
     return item == null ? null : item.toString();
   }
 
-  public void setFontName(String item) {
+  public void setFontName(@Nullable String item) {
     myModel.setSelectedItem(item);
+  }
+
+  public boolean isNoFontSelected() {
+    return myModel.isNoFontSelected();
   }
 
   @Override
@@ -84,12 +90,14 @@ public final class FontComboBox extends ComboBox {
   }
 
   private static final class Model extends AbstractListModel implements ComboBoxModel {
+    private final NoFontItem NO_FONT_ITEM;
     private volatile List<FontInfo> myAllFonts = Collections.emptyList();
     private volatile List<FontInfo> myMonoFonts = Collections.emptyList();
     private boolean myMonospacedOnly;
     private Object mySelectedItem;
 
-    private Model(boolean withAllStyles, boolean filterNonLatin) {
+    private Model(boolean withAllStyles, boolean filterNonLatin, boolean noFontItem) {
+      NO_FONT_ITEM = noFontItem ? new NoFontItem() : null;
       Application application = ApplicationManager.getApplication();
       if (application == null || application.isUnitTestMode()) {
         setFonts(FontInfo.getAll(withAllStyles), filterNonLatin);
@@ -132,17 +140,22 @@ public final class FontComboBox extends ComboBox {
     }
 
     @Override
-    public void setSelectedItem(Object item) {
-      if (item instanceof FontInfo) {
-        FontInfo info = getInfo(item);
-        if (info == null) {
-          List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
-          item = list.isEmpty() ? null : list.get(0);
-        }
+    public void setSelectedItem(@Nullable Object item) {
+      if (item == null && NO_FONT_ITEM != null) {
+        item = NO_FONT_ITEM;
       }
-      if (item instanceof String) {
-        FontInfo info = getInfo(item);
-        if (info != null) item = info;
+      else {
+        if (item instanceof FontInfo) {
+          FontInfo info = getInfo(item);
+          if (info == null) {
+            List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
+            item = list.isEmpty() ? null : list.get(0);
+          }
+        }
+        if (item instanceof String) {
+          FontInfo info = getInfo(item);
+          if (info != null) item = info;
+        }
       }
       if (!(mySelectedItem == null ? item == null : mySelectedItem.equals(item))) {
         mySelectedItem = item;
@@ -150,16 +163,28 @@ public final class FontComboBox extends ComboBox {
       }
     }
 
+    public boolean isNoFontSelected() {
+      return getSelectedItem() == NO_FONT_ITEM;
+    }
+
     @Override
     public int getSize() {
       List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
-      return mySelectedItem instanceof String ? 1 + list.size() : list.size();
+      int size = list.size();
+      if (mySelectedItem instanceof String)  size ++;
+      if (NO_FONT_ITEM != null) size++;
+      return size;
     }
 
     @Override
     public Object getElementAt(int index) {
+      int i = index;
+      if (NO_FONT_ITEM != null) {
+        if (index == 0) return NO_FONT_ITEM;
+        i --;
+      }
       List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
-      return 0 <= index && index < list.size() ? list.get(index) : mySelectedItem;
+      return 0 <= i && i < list.size() ? list.get(i) : mySelectedItem;
     }
 
     private FontInfo getInfo(Object item) {
@@ -169,6 +194,13 @@ public final class FontComboBox extends ComboBox {
         }
       }
       return null;
+    }
+
+    private final static class NoFontItem {
+      @Override
+      public String toString() {
+        return ApplicationBundle.message("settings.editor.font.none");
+      }
     }
   }
 }
