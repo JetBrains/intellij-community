@@ -116,7 +116,7 @@ public abstract class AstPath extends SubstrateRef {
         super.visitComposite(composite);
       }
     });
-    parent.putUserData(PATH_CHILDREN, children.toArray(new CompositeElement[0]));
+    parent.putUserData(PATH_CHILDREN, children.isEmpty() ? CompositeElement.EMPTY_ARRAY : children.toArray(CompositeElement.EMPTY_ARRAY));
   }
 
   public static void invalidatePaths(@NotNull LazyParseableElement scope) {
