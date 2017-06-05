@@ -86,7 +86,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   @Nullable private final Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
-  private Runnable myGenericSelectionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
   private TreeState myNonFlatTreeState;
 
@@ -194,11 +193,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   }
 
   public void addSelectionListener(final Runnable runnable) {
-    myGenericSelectionListener = runnable;
     addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        myGenericSelectionListener.run();
+        runnable.run();
       }
     });
   }
