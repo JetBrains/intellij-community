@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
@@ -28,7 +29,7 @@ public class HandlerFactory {
 
   @NotNull
   public static TraceExpressionBuilderImpl.IntermediateCallTraceHandler createIntermediate(int number,
-                                                                                     @NotNull IntermediateStreamCall call) {
+                                                                                           @NotNull IntermediateStreamCall call) {
     final String callName = call.getName();
     switch (callName) {
       case "distinct":
@@ -44,13 +45,19 @@ public class HandlerFactory {
   }
 
   @NotNull
-  public static TraceExpressionBuilderImpl.TerminatorCallTraceHandler create(@NotNull TerminatorStreamCall call) {
+  public static TraceExpressionBuilderImpl.TerminatorCallTraceHandler create(@NotNull TerminatorStreamCall call,
+                                                                             @NotNull String resultExpression) {
     switch (call.getName()) {
       case "allMatch":
       case "anyMatch":
       case "noneMatch":
         return new MatchHandler(call);
     }
+
+    if (GenericTypeUtil.isOptional(call.getResultType())) {
+      return new OptionalTerminatorHandler(call, resultExpression);
+    }
+
     return new TerminatorHandler(call.getTypeBefore());
   }
 }

@@ -66,7 +66,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   public String createTraceExpression(@NotNull StreamChain chain) {
     final ProducerCallTraceHandler producerHandler = HandlerFactory.create(chain.getProducerCall());
     final List<IntermediateCallTraceHandler> intermediateHandlers = getHandlers(chain.getIntermediateCalls());
-    final TerminatorCallTraceHandler terminatorHandler = HandlerFactory.create(chain.getTerminationCall());
+    final TerminatorCallTraceHandler terminatorHandler = HandlerFactory.create(chain.getTerminationCall(), "evaluationResult[0]");
 
     final StreamChain traceChain = buildTraceChain(chain, producerHandler, intermediateHandlers, terminatorHandler);
 
@@ -162,18 +162,25 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final GenericType resultType = chain.getTerminationCall().getResultType();
 
     final String resultExpression;
+    final String additionalDeclarations;
+    final String additionalEvaluation;
     if (resultType.equals(GenericType.VOID)) {
-      final String resultInitialization = "new Object[1];" + LINE_SEPARATOR;
-      resultExpression = resultInitialization + chain.getText() + ";" + LINE_SEPARATOR;
+      additionalDeclarations = "";
+      additionalEvaluation = chain.getText() + ";" + LINE_SEPARATOR;
+      resultExpression = "new Object[1]";
     }
     else {
-      resultExpression =
-        "new " + resultType.getVariableTypeName() + "[] { " + chain.getText() + " };" + LINE_SEPARATOR;
+      final String resultArrayType = resultType.getVariableTypeName() + "[]";
+      additionalDeclarations = resultArrayType + " evaluationResult = new " + resultType.getVariableTypeName() +  "[1];" + LINE_SEPARATOR;
+      additionalEvaluation = "evaluationResult = new " + resultArrayType + " {" + chain.getText() + "};" + LINE_SEPARATOR;
+      resultExpression = "evaluationResult";
     }
 
     return "Object streamResult = null;" + LINE_SEPARATOR +
+           additionalDeclarations +
            "try {" + LINE_SEPARATOR +
-           "  streamResult = " + resultExpression + LINE_SEPARATOR +
+           additionalEvaluation +
+           "  streamResult = " + resultExpression + ";" + LINE_SEPARATOR +
            "}" + LINE_SEPARATOR +
            "catch(Throwable t) {" + LINE_SEPARATOR +
            "  streamResult = new Throwable[]{t};" + LINE_SEPARATOR +
