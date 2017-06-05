@@ -38,6 +38,11 @@ public class A {
   public A(){}
   public A(String name){}
 }
+
+public class A2 {
+  String name;
+  int age;
+}
 ''')
   }
 
@@ -80,6 +85,57 @@ class B {
 class B {
   @Newify(value = A, auto = false)
   def a (){ return A.<warning>new</warning>()}
+}
+"""
+  }
+
+  void testAutoNewifyImplicitConstructor() {
+    testHighlighting """
+@Newify
+class B {
+  def a = A2.new()
+}
+"""
+    testHighlighting """
+@Newify
+class B {
+  def a = A2.new<warning>("B")</warning>
+}
+"""
+
+    testHighlighting """
+@Newify
+class B {
+  def a = A2.new(name :"bar")
+}
+"""
+
+    testHighlighting """
+class B {
+  @Newify(B)
+  def b = B()
+}
+"""
+
+    testHighlighting """
+class B {
+  @Newify
+  def a = B.new()
+}
+"""
+
+    testHighlighting """
+class B2 {
+  String str
+  @Newify
+  def a = B2.new(str: "B2")
+}
+"""
+
+    testHighlighting """
+class B {
+  @Newify(value = A2, auto = false)
+  def a (){ return A2.<warning>new</warning>()}
 }
 """
   }
@@ -147,6 +203,19 @@ class B {
 @Newify(A)
 class B {
   def a = A.<caret>
+}
+"""
+    fixture.completeBasic()
+    fixture.lookupElementStrings.with {
+      assert contains("new")
+    }
+  }
+
+  void testNewifyLookupImplicitConstructor() {
+    fixture.configureByText 'a.groovy', """
+@Newify
+class B {
+  def b = B.<caret>
 }
 """
     fixture.completeBasic()

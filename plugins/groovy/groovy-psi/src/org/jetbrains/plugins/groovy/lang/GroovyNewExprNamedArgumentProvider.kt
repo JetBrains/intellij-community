@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 
 class GroovyNewExprNamedArgumentProvider : GroovyConstructorNamedArgumentProvider() {
 
-  internal override fun getCorrespondingClasses(call: GrCall, resolveResult: GroovyResolveResult): List<PsiClass> {
+  override fun getCorrespondingClasses(call: GrCall, resolveResult: GroovyResolveResult): List<PsiClass> {
     val newExpr = call as? GrNewExpression ?: return emptyList()
     val resolve = resolveResult.element
     (resolve as? PsiMethod)?.let {

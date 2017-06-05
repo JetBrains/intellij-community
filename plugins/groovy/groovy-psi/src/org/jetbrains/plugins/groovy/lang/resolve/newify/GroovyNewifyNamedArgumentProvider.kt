@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang
+package org.jetbrains.plugins.groovy.lang.resolve.newify
 
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiMirrorElement
+import org.jetbrains.plugins.groovy.lang.GroovyConstructorNamedArgumentProvider
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 
 class GroovyNewifyNamedArgumentProvider : GroovyConstructorNamedArgumentProvider() {
-  internal override fun getCorrespondingClasses(call: GrCall, resolveResult: GroovyResolveResult): List<PsiClass> {
-    val prototype = (resolveResult.element as? PsiMirrorElement)?.prototype as? PsiMethod ?: return emptyList()
-    if (!prototype.isConstructor) return emptyList()
-    return prototype.containingClass?.let { listOf(it) } ?: emptyList()
+  override fun getCorrespondingClasses(call: GrCall, resolveResult: GroovyResolveResult): List<PsiClass> {
+    val resolved = (resolveResult.element as? NewifyMemberContributor.NewifiedConstructor) ?: return emptyList()
+    return resolved.containingClass?.let { listOf(it) } ?: emptyList()
   }
 }
