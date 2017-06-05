@@ -2,11 +2,6 @@
 class Test {
   static final ThreadLocal<Integer> field;
   static {
-    field = new ThreadLocal<Integer>() {
-        @Override
-        protected Integer initialValue() {
-            return new Integer(0);
-        }
-    };
+    field = ThreadLocal.withInitial(() -> new Integer(0));
   }
 }

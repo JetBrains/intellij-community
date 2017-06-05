@@ -158,25 +158,37 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     final String boxedTypeName = from instanceof PsiPrimitiveType ? ((PsiPrimitiveType)from).getBoxedTypeName() : from.getCanonicalText();
     List<PsiVariable> toMakeFinal = TypeConversionRuleUtil.getVariablesToMakeFinal(initializer);
     if (toMakeFinal == null) return null;
-    return new WrappingWithInnerClassOrLambdaDescriptor("$qualifier$", "new " +
-                                                       to.getCanonicalText() +
-                                                       "() {\n" +
-                                                       "@Override \n" +
-                                                       "protected " +
-                                                       boxedTypeName +
-                                                       " initialValue() {\n" +
-                                                       "  return " +
-                                                       (PsiUtil.isLanguageLevel5OrHigher(initializer)
-                                                        ? initializer.getText()
-                                                        : (from instanceof PsiPrimitiveType ? "new " +
-                                                                                              ((PsiPrimitiveType)from).getBoxedTypeName() +
-                                                                                              "(" +
-                                                                                              initializer.getText() +
-                                                                                              ")" : initializer.getText())) +
-                                                       ";\n" +
-                                                       "}\n" +
-                                                       "}", initializer,
+    return new WrappingWithInnerClassOrLambdaDescriptor("$qualifier$",
+                                                        createThreadLocalInitializerReplacement(to, from, initializer, boxedTypeName),
+                                                        initializer,
                                                         toMakeFinal);
+  }
+
+  private static String createThreadLocalInitializerReplacement(PsiType to,
+                                                                  PsiType from,
+                                                                  PsiExpression initializer,
+                                                                  String boxedTypeName) {
+    if (PsiUtil.isLanguageLevel8OrHigher(initializer)) {
+      return "java.lang.ThreadLocal.withInitial(() -> " + initializer.getText() + ")";
+    }
+    return "new " +
+           to.getCanonicalText() +
+           "() {\n" +
+           "@Override \n" +
+           "protected " +
+           boxedTypeName +
+           " initialValue() {\n" +
+           "  return " +
+           (PsiUtil.isLanguageLevel5OrHigher(initializer)
+                          ? initializer.getText()
+                          : (from instanceof PsiPrimitiveType ? "new " +
+                                                                ((PsiPrimitiveType)from).getBoxedTypeName() +
+                                                                "(" +
+                                                                initializer.getText() +
+                                                                ")" : initializer.getText())) +
+           ";\n" +
+           "}\n" +
+           "}";
   }
 
   private static String toPrimitive(String replaceByArg, PsiType from, PsiElement context) {
