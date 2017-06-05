@@ -21,10 +21,7 @@ import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NonNls;
@@ -145,8 +142,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonnegativeIntegralValues();
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
-    myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 8];
-    mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 4];
+    myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtil.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8];
+    mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtil.EMPTY_BYTE_ARRAY:new byte[myParentValueRefOffset + 4];
 
     myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
       @Override
