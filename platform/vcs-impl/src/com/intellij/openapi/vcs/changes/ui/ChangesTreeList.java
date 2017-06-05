@@ -272,6 +272,9 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   }
 
   public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject.isDisposed()) return;
+
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     TreeState state = null;
     if (!myAlwaysExpandList) {
@@ -286,55 +289,47 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       return;
     }
 
-    final Runnable runnable = () -> {
-      if (myProject.isDisposed()) return;
-      TreeUtil.expandAll(ChangesTreeList.this);
+    TreeUtil.expandAll(ChangesTreeList.this);
 
-      int selectedTreeRow = -1;
+    int selectedTreeRow = -1;
 
-      if (myShowCheckboxes) {
-        if (myIncludedChanges.size() > 0) {
-          ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-          Enumeration enumeration = root.depthFirstEnumeration();
+    if (myShowCheckboxes) {
+      if (myIncludedChanges.size() > 0) {
+        ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
+        Enumeration enumeration = root.depthFirstEnumeration();
 
-          while (enumeration.hasMoreElements()) {
-            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            @SuppressWarnings("unchecked")
-            final CheckboxTree.NodeState state1 = getNodeStatus(node);
-            if (node != root && state1 == CheckboxTree.NodeState.CLEAR) {
-              collapsePath(new TreePath(node.getPath()));
-            }
+        while (enumeration.hasMoreElements()) {
+          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+          @SuppressWarnings("unchecked")
+          final CheckboxTree.NodeState state1 = getNodeStatus(node);
+          if (node != root && state1 == CheckboxTree.NodeState.CLEAR) {
+            collapsePath(new TreePath(node.getPath()));
           }
+        }
 
-          enumeration = root.depthFirstEnumeration();
-          while (enumeration.hasMoreElements()) {
-            ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-            @SuppressWarnings("unchecked")
-            final CheckboxTree.NodeState state1 = getNodeStatus(node);
-            if (state1 == CheckboxTree.NodeState.FULL && node.isLeaf()) {
-              selectedTreeRow = getRowForPath(new TreePath(node.getPath()));
-              break;
-            }
+        enumeration = root.depthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+          ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+          @SuppressWarnings("unchecked")
+          final CheckboxTree.NodeState state1 = getNodeStatus(node);
+          if (state1 == CheckboxTree.NodeState.FULL && node.isLeaf()) {
+            selectedTreeRow = getRowForPath(new TreePath(node.getPath()));
+            break;
           }
         }
       }
-      if (toSelect != null) {
-        int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
-        if (rowInTree > -1) {
-          selectedTreeRow = rowInTree;
-        }
-      }
-
-      if (selectedTreeRow >= 0) {
-        setSelectionRow(selectedTreeRow);
-      }
-      TreeUtil.showRowCentered(ChangesTreeList.this, selectedTreeRow, false);
-    };
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    } else {
-      SwingUtilities.invokeLater(runnable);
     }
+    if (toSelect != null) {
+      int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+      if (rowInTree > -1) {
+        selectedTreeRow = rowInTree;
+      }
+    }
+
+    if (selectedTreeRow >= 0) {
+      setSelectionRow(selectedTreeRow);
+    }
+    TreeUtil.showRowCentered(ChangesTreeList.this, selectedTreeRow, false);
   }
 
   private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
