@@ -195,7 +195,9 @@ public class HighlightMethodUtil {
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (isJdk15 && TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
+      if (isJdk15 && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(), 
+                                                                      methodSignature.getSubstitutor(), 
+                                                                      () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
         return null;
       }
     }
