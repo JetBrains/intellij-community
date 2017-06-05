@@ -1,5 +1,7 @@
 package com.intellij.refactoring.typeMigration.rules;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -8,9 +10,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ThreadLocalConversionRule extends TypeConversionRule {
   private static final Logger LOG = Logger.getInstance(ThreadLocalConversionRule.class);
@@ -150,7 +156,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
 
   public static TypeConversionDescriptor wrapWithNewExpression(PsiType to, PsiType from, PsiExpression initializer) {
     final String boxedTypeName = from instanceof PsiPrimitiveType ? ((PsiPrimitiveType)from).getBoxedTypeName() : from.getCanonicalText();
-    return new TypeConversionDescriptor("$qualifier$", "new " +
+    List<PsiVariable> toMakeFinal = TypeConversionRuleUtil.getVariablesToMakeFinal(initializer);
+    if (toMakeFinal == null) return null;
+    return new WrappingWithInnerClassOrLambdaDescriptor("$qualifier$", "new " +
                                                        to.getCanonicalText() +
                                                        "() {\n" +
                                                        "@Override \n" +
@@ -167,7 +175,8 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                                               ")" : initializer.getText())) +
                                                        ";\n" +
                                                        "}\n" +
-                                                       "}", initializer);
+                                                       "}", initializer,
+                                                        toMakeFinal);
   }
 
   private static String toPrimitive(String replaceByArg, PsiType from, PsiElement context) {
@@ -221,5 +230,27 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return toBoxed(arg, from, context);
   }
 
+  private static class WrappingWithInnerClassOrLambdaDescriptor extends TypeConversionDescriptor {
+    private final List<PsiVariable> myVariablesToMakeFinal;
 
+    private WrappingWithInnerClassOrLambdaDescriptor(@NonNls final String stringToReplace,
+                                                     @NonNls final String replaceByString,
+                                                     final PsiExpression expression,
+                                                     @NotNull List<PsiVariable> toMakeFinal) {
+      super(stringToReplace, replaceByString, expression);
+      myVariablesToMakeFinal = toMakeFinal;
+    }
+
+    @Override
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
+      PsiExpression replaced = super.replace(expression, evaluator);
+      boolean atLeastJava8 = PsiUtil.isLanguageLevel8OrHigher(replaced);
+      for (PsiVariable var : myVariablesToMakeFinal) {
+        if (!atLeastJava8 || !HighlightControlFlowUtil.isEffectivelyFinal(var, replaced, null)) {
+          VariableAccessFromInnerClassFix.fixAccess(var, replaced);
+        }
+      }
+      return replaced;
+    }
+  }
 }
