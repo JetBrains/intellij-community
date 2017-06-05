@@ -289,7 +289,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
         return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, StringUtil.notNullize(ext));
       }
       else {
-        return dir.createChildData(LocalFileSystem.getInstance(), fileNameExt);
+        return dir.findOrCreateChildData(LocalFileSystem.getInstance(), fileNameExt);
       }
     });
   }
