@@ -428,9 +428,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, disposable);
         paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, disposable);
 
-        File parentsStorage = getStorageFile(INDEX, PARENTS, logId, getVersion());
+        File parentsStorage = getStorageFile(INDEX, PARENTS, logId, version);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
-                                          new IntListDataExternalizer(), Page.PAGE_SIZE, getVersion());
+                                          new IntListDataExternalizer(), Page.PAGE_SIZE, version);
         Disposer.register(disposable, () -> catchAndWarn(parents::close));
       }
       catch (Throwable t) {
