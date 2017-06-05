@@ -16,7 +16,9 @@
 package com.intellij.debugger.streams.wrapper;
 
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -27,7 +29,23 @@ import java.util.stream.Collectors;
  * @author Vitaliy.Bibaev
  */
 public class TraceUtil {
+
   public static List<TraceElement> sortedByTime(@NotNull Collection<TraceElement> values) {
     return values.stream().sorted(Comparator.comparing(TraceElement::getTime)).collect(Collectors.toList());
+  }
+
+  @Nullable
+  public static Object extractKey(@NotNull TraceElement element) {
+    final Value value = element.getValue();
+    if (!(value instanceof PrimitiveValue)) return value;
+    if (value instanceof IntegerValue) return ((IntegerValue)value).value();
+    if (value instanceof DoubleValue) return ((DoubleValue)value).value();
+    if (value instanceof LongValue) return ((LongValue)value).value();
+    if (value instanceof BooleanValue) return ((BooleanValue)value).value();
+    if (value instanceof ByteValue) return ((ByteValue)value).value();
+    if (value instanceof CharValue) return ((CharValue)value).value();
+    if (value instanceof FloatValue) return ((FloatValue)value).value();
+
+    throw new RuntimeException("unknown primitive value: " + value.type().name());
   }
 }
