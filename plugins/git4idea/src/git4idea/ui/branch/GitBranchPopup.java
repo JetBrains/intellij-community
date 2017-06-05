@@ -23,6 +23,7 @@ import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +43,7 @@ import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.stream.Collectors.toList;
 
@@ -63,8 +65,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
     final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
     Condition<AnAction> preselectActionCondition = action -> {
-      if (action instanceof GitBranchPopupActions.LocalBranchActions) {
-        GitBranchPopupActions.LocalBranchActions branchAction = (GitBranchPopupActions.LocalBranchActions)action;
+     GitBranchPopupActions.LocalBranchActions branchAction = getBranchAction(action);
+      if (branchAction != null) {
         String branchName = branchAction.getBranchName();
 
         String recentBranch;
@@ -83,6 +85,13 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       return false;
     };
     return new GitBranchPopup(currentRepository, GitUtil.getRepositoryManager(project), vcsSettings, preselectActionCondition);
+  }
+
+  @Nullable
+  private static GitBranchPopupActions.LocalBranchActions getBranchAction(@NotNull AnAction action) {
+    AnAction resultAction =
+      action instanceof EmptyAction.MyDelegatingActionGroup ? ((EmptyAction.MyDelegatingActionGroup)action).getDelegate() : action;
+    return tryCast(resultAction, GitBranchPopupActions.LocalBranchActions.class);
   }
 
   private GitBranchPopup(@NotNull GitRepository currentRepository,
