@@ -31,14 +31,6 @@ public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentSta
     return ServiceManager.getService(XmlFoldingSettings.class);
   }
 
-  public XmlFoldingSettings() {
-    // todo: remove after 2017.1 release
-    CssFoldingSettings cssFoldingSettings = CssFoldingSettings.getInstance();
-    if (cssFoldingSettings != null) {
-      myState.COLLAPSE_DATA_URI = cssFoldingSettings.isCollapseDataUri();
-    }
-  }
-
   @Override
   public boolean isCollapseXmlTags() {
     return myState.COLLAPSE_XML_TAGS;
