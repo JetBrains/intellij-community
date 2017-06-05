@@ -83,18 +83,12 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     for (final PsiMethod oMethod : OverridingMethodsSearch.search(psiMethod)) {
       replaceReturnStatements(oMethod);
     }
-    final PsiParameter[] params = psiMethod.getParameterList().getParameters();
-    final ParameterInfoImpl[] infos = new ParameterInfoImpl[params.length];
-    for (int i = 0; i < params.length; i++) {
-      PsiParameter param = params[i];
-      infos[i] = new ParameterInfoImpl(i, param.getName(), param.getType());
-    }
-
+    
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
                                                                       psiMethod,
                                                                       false, null, psiMethod.getName(),
                                                                       PsiType.VOID,
-                                                                      infos);
+                                                                      ParameterInfoImpl.fromMethod(psiMethod));
 
     csp.run();
   }

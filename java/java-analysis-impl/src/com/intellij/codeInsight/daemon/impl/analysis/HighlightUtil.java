@@ -1579,11 +1579,13 @@ public class HighlightUtil extends HighlightUtilBase {
         final PsiElement parent = expr.getParent();
         final PsiElement resolved = parent instanceof PsiReferenceExpression ? ((PsiReferenceExpression)parent).resolve() : null;
 
+        PsiClass containingClass =
+          ObjectUtils.notNull(resolved instanceof PsiMethod ? ((PsiMethod)resolved).getContainingClass() : null, aClass);
         for (PsiClass superClass : classT.getSupers()) {
-          if (superClass.isInheritor(aClass, true)) {
+          if (superClass.isInheritor(containingClass, true)) {
             String cause = null;
-            if (superClass.isInterface()) {
-              cause = "redundant interface " + format(aClass) + " is extended by ";
+            if (superClass.isInheritor(aClass, true) && superClass.isInterface()) {
+              cause = "redundant interface " + format(containingClass) + " is extended by ";
             }
             else if (resolved instanceof PsiMethod &&
                      MethodSignatureUtil.findMethodBySuperMethod(superClass, (PsiMethod)resolved, true) != resolved) {
