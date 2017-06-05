@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.type;
 
+import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,4 +34,9 @@ public interface GenericType {
   GenericType LONG = new GenericTypeImpl("long", "java.lang.Long");
   GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
   GenericType VOID = new GenericTypeImpl("void", "java.lang.Void");
+
+  GenericType OPTIONAL = new ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL);
+  GenericType OPTIONAL_INT = new ClassTypeImpl("java.lang.OptionalInt");
+  GenericType OPTIONAL_LONG = new ClassTypeImpl("java.lang.OptionalLong");
+  GenericType OPTIONAL_DOUBLE = new ClassTypeImpl("java.lang.OptionalDouble");
 }
