@@ -24,6 +24,7 @@ import java.util.Objects;
  */
 public class GenericTypeImpl implements GenericType {
   private final String myPrimitiveName;
+  private final String myGenericName;
 
   @Override
   public int hashCode() {
@@ -43,8 +44,6 @@ public class GenericTypeImpl implements GenericType {
 
     return false;
   }
-
-  private final String myGenericName;
 
   GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName) {
     myPrimitiveName = primitiveName;
