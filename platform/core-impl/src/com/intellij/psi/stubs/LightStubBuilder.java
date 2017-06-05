@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
@@ -44,29 +43,26 @@ public class LightStubBuilder implements StubBuilder {
     if (tree == null) {
       FileType fileType = file.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
-        LOG.error("File is not of LanguageFileType: " + fileType + ", " + file);
+        LOG.error("File is not of LanguageFileType: " + file + ", " + fileType);
         return null;
       }
-      assert file instanceof PsiFileImpl;
-      final IFileElementType contentType = ((PsiFileImpl)file).getElementTypeForStubBuilder();
-      if (contentType == null) {
+      if (!(file instanceof PsiFileImpl)) {
+        LOG.error("Unexpected PsiFile instance: " + file + ", " + file.getClass());
+        return null;
+      }
+      if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) {
         LOG.error("File is not of IStubFileElementType: " + file);
         return null;
       }
 
-      final FileASTNode node = file.getNode();
-      if (node.getElementType() instanceof ILightStubFileElementType) {
-        tree = node.getLighterAST();
-      }
-      else {
-        tree = new TreeBackedLighterAST(node);
-      }
-    } else {
+      FileASTNode node = file.getNode();
+      tree = node.getElementType() instanceof ILightStubFileElementType ? node.getLighterAST() : new TreeBackedLighterAST(node);
+    }
+    else {
       FORCED_AST.set(null);
     }
-    if (tree == null) return null;
 
-    final StubElement rootStub = createStubForFile(file, tree);
+    StubElement rootStub = createStubForFile(file, tree);
     buildStubTree(tree, tree.getRoot(), rootStub);
     return rootStub;
   }
