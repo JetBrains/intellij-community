@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -243,7 +244,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       int start = document.getLineStartOffset(line);
       int end = document.getLineEndOffset(line);
       int cacheSize = (end - start) / CACHE_FREQUENCY;
-      int[] cache = new int[cacheSize];
+      int[] cache = ArrayUtil.newIntArray(cacheSize);
       CharSequence text = document.getImmutableCharSequence();
       int column = 0;
       boolean hasTabsOrSurrogates = false;
