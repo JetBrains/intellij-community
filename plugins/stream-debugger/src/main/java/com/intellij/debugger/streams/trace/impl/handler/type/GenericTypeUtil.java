@@ -18,12 +18,19 @@ package com.intellij.debugger.streams.trace.impl.handler.type;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class GenericTypeUtil {
+  private static final Set<GenericType> OPTIONAL_TYPES = StreamEx
+    .of(GenericType.OPTIONAL, GenericType.OPTIONAL_INT, GenericType.OPTIONAL_LONG, GenericType.OPTIONAL_DOUBLE)
+    .toSet();
 
   @NotNull
   public static GenericType fromStreamPsiType(@NotNull PsiType streamPsiType) {
@@ -42,6 +49,29 @@ public class GenericTypeUtil {
     if (PsiType.DOUBLE.equals(type)) return GenericType.DOUBLE;
     if (PsiType.LONG.equals(type)) return GenericType.LONG;
     if (PsiType.BOOLEAN.equals(type)) return GenericType.BOOLEAN;
+    return new ClassTypeImpl(TypeConversionUtil.erasure(type).getCanonicalText());
+  }
+
+  public static boolean isOptional(@NotNull GenericType type) {
+    return OPTIONAL_TYPES.contains(type);
+  }
+
+  @NotNull
+  public static GenericType unwrapOptional(@NotNull GenericType type) {
+    assert isOptional(type);
+
+    if (type.equals(GenericType.OPTIONAL_INT)) {
+      return GenericType.INT;
+    }
+
+    if (type.equals(GenericType.OPTIONAL_LONG)) {
+      return GenericType.DOUBLE;
+    }
+
+    if (type.equals(GenericType.OPTIONAL_DOUBLE)) {
+      return GenericType.DOUBLE;
+    }
+
     return GenericType.OBJECT;
   }
 }
