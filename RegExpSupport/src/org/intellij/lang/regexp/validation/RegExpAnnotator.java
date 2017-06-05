@@ -20,7 +20,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -35,7 +37,9 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public final class RegExpAnnotator extends RegExpElementVisitor implements Annotator {
@@ -43,6 +47,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph", "lower", "print", "punct", "space", "upper", "word", "xdigit");
   private AnnotationHolder myHolder;
   private final RegExpLanguageHosts myLanguageHosts;
+  private final Key<Map<String, RegExpGroup>> NAMED_GROUP_MAP = new Key<>("REG_EXP_NAMED_GROUP_MAP");
 
   public RegExpAnnotator() {
     myLanguageHosts = RegExpLanguageHosts.getInstance();
@@ -287,6 +292,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (name != null && !myLanguageHosts.isValidGroupName(name, group)) {
       final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
       if (node != null) myHolder.createErrorAnnotation(node, "Invalid group name");
+    }
+    final AnnotationSession session = myHolder.getCurrentAnnotationSession();
+    final Map<String, RegExpGroup> namedGroups = NAMED_GROUP_MAP.get(session, new HashMap<>());
+    if (namedGroups.isEmpty()) session.putUserData(NAMED_GROUP_MAP, namedGroups);
+    if (namedGroups.put(name, group) != null) {
+      final ASTNode node = group.getNode().findChildByType(RegExpTT.NAME);
+      if (node != null) myHolder.createErrorAnnotation(node, "Group with name '" + name + "' already defined");
     }
     final RegExpGroup.Type groupType = group.getType();
     if (groupType == RegExpGroup.Type.POSITIVE_LOOKBEHIND || groupType == RegExpGroup.Type.NEGATIVE_LOOKBEHIND) {
