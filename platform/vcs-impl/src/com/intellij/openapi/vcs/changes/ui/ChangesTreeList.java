@@ -256,7 +256,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     treeUI.setRightChildIndent(!isFlat ? UIUtil.getTreeRightChildIndent() : 0);
   }
 
-  protected boolean isCurrentModelFlat() {
+  private boolean isCurrentModelFlat() {
     boolean isFlat = true;
     Enumeration enumeration = getRoot().depthFirstEnumeration();
 
