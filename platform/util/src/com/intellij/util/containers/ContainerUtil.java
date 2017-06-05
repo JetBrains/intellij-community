@@ -657,58 +657,6 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> List<T> mergeSortedArrays(@NotNull T[] list1, @NotNull T[] list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems, @Nullable Processor<? super T> filter) {
-    int index1 = 0;
-    int index2 = 0;
-    List<T> result = new ArrayList<T>(list1.length + list2.length);
-
-    while (index1 < list1.length || index2 < list2.length) {
-      if (index1 >= list1.length) {
-        T t = list2[index2++];
-        if (filter != null && !filter.process(t)) continue;
-        result.add(t);
-      }
-      else if (index2 >= list2.length) {
-        T t = list1[index1++];
-        if (filter != null && !filter.process(t)) continue;
-        result.add(t);
-      }
-      else {
-        T element1 = list1[index1];
-        if (filter != null && !filter.process(element1)) {
-          index1++;
-          continue;
-        }
-        T element2 = list2[index2];
-        if (filter != null && !filter.process(element2)) {
-          index2++;
-          continue;
-        }
-        int c = comparator.compare(element1, element2);
-        if (c < 0) {
-          result.add(element1);
-          index1++;
-        }
-        else if (c > 0) {
-          result.add(element2);
-          index2++;
-        }
-        else {
-          result.add(element1);
-          if (!mergeEqualItems) {
-            result.add(element2);
-          }
-          index1++;
-          index2++;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  @NotNull
-  @Contract(pure=true)
   public static <T> List<T> subList(@NotNull List<T> list, int from) {
     return list.subList(from, list.size());
   }
@@ -2378,17 +2326,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
-  @Contract(pure=true)
-  public static <T> boolean processRecursively(final T root, @NotNull PairProcessor<T, List<T>> processor) {
-    final LinkedList<T> list = new LinkedList<T>();
-    list.add(root);
-    while (!list.isEmpty()) {
-      final T o = list.removeFirst();
-      if (!processor.process(o, list)) return false;
-    }
-    return true;
-  }
-
   @Contract("null -> null; !null -> !null")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
@@ -2604,7 +2541,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
-    ContainerUtilRt.addIfNotNull(element, result);
+    addIfNotNull(result,element);
   }
 
   public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
