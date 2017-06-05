@@ -34,6 +34,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
+import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -101,8 +102,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       RenameUtil.doRenameGenericNamedElement(method, changeInfo.getNewName(), usages, null);
     }
     if (element == null) return false;
+
     if (element.getParent() instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)element.getParent();
+      // Don't modify the call that was the cause of Change Signature invocation
+      if (call.getUserData(PyChangeSignatureQuickFix.CHANGE_SIGNATURE_ORIGINAL_CALL) != null) {
+        return true;
+      }
       final PyArgumentList argumentList = call.getArgumentList();
       if (argumentList != null) {
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(element.getProject());

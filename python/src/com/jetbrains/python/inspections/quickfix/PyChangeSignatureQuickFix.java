@@ -20,10 +20,13 @@ import com.google.common.collect.PeekingIterator;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -48,7 +51,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
-  private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
+  public static final Key<Boolean> CHANGE_SIGNATURE_ORIGINAL_CALL = Key.create("CHANGE_SIGNATURE_ORIGINAL_CALL");
 
   @NotNull
   public static PyChangeSignatureQuickFix forMismatchedCall(@NotNull PyArgumentsMapping mapping) {
@@ -88,26 +91,39 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, "", false)));
       }
     }
-    return new PyChangeSignatureQuickFix(function, newParameters);
+    return new PyChangeSignatureQuickFix(function, newParameters, mapping.getCallExpression());
   }
-
 
   @NotNull
   public static PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
     final int paramLength = function.getParameterList().getParameters().length;
     final int complementaryParamLength = complementary.getParameterList().getParameters().length;
+    final List<Pair<Integer, PyParameterInfo>> extraParams;
     if (complementaryParamLength > paramLength) {
-      return new PyChangeSignatureQuickFix(function,
-                                           Collections.singletonList(Pair.create(paramLength - 1,
-                                                                                 new PyParameterInfo(-1, "**kwargs", "", false))));
+      extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(-1, "**kwargs", "", false)));
     }
-    return new PyChangeSignatureQuickFix(function, Collections.emptyList());
+    else {
+      extraParams = Collections.emptyList();
+    }
+    return new PyChangeSignatureQuickFix(function, extraParams, null);
   }
 
 
-  public PyChangeSignatureQuickFix(@NotNull PyFunction function, @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters) {
+  private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
+  private final SmartPsiElementPointer<PyCallExpression> myOriginalCallExpression;
+
+
+  public PyChangeSignatureQuickFix(@NotNull PyFunction function,
+                                   @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters,
+                                   @Nullable PyCallExpression expression) {
     super(function);
     myExtraParameters = ContainerUtil.sorted(extraParameters, Comparator.comparingInt(p -> p.getFirst()));
+    if (expression != null) {
+      myOriginalCallExpression = SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(expression);
+    }
+    else {
+      myOriginalCallExpression = null;
+    }
   }
 
   @NotNull
@@ -148,11 +164,22 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.createRefactoringProcessor().run();
+    final PyCallExpression originalCall = myOriginalCallExpression.getElement();
+    try {
+      if (originalCall != null) {
+        originalCall.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);
+      }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        dialog.createRefactoringProcessor().run();
+      }
+      else {
+        dialog.show();
+      }
     }
-    else {
-      dialog.show();
+    finally {
+      if (originalCall != null) {
+        originalCall.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, null);
+      }
     }
   }
 

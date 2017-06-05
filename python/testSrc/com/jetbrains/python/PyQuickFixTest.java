@@ -647,6 +647,11 @@ public class PyQuickFixTest extends PyTestCase {
                           "           \"((/(?P<bar>.+))?))\")");
   }
 
+  // PY-8174
+  public void testAddKeywordAndPositionalParameters() {
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of", true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
