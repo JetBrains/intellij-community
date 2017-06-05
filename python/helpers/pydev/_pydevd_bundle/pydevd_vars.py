@@ -603,8 +603,9 @@ def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     for col in range(cols):
         col_label = get_label(df.axes[1].values[col]) if dim > 1 else str(col)
         bounds = col_bounds[col]
+        col_format = "%" + col_to_format(col)
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
-               (str(col), col_label, dtypes[col], col_to_format(col), bounds[1], bounds[0])
+               (str(col), col_label, dtypes[col], col_to_format(col), col_format % bounds[1], col_format % bounds[0])
     for row in range(rows):
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), get_label(df.axes[0].values[row]))
     xml += "</headerdata>\n"
