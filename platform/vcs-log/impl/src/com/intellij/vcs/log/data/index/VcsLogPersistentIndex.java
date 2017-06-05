@@ -415,11 +415,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       try {
         int version = getVersion();
 
-        File commitsStorage = getStorageFile(INDEX, COMMITS, logId, version, true);
+        File commitsStorage = getStorageFile(INDEX, COMMITS, logId, version);
         commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
         Disposer.register(disposable, () -> catchAndWarn(commits::close));
 
-        File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION, true);
+        File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION);
         messages = new PersistentHashMap<>(messagesStorage, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
         Disposer.register(disposable, () -> catchAndWarn(messages::close));
@@ -428,9 +428,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, disposable);
         paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, disposable);
 
-        File parentsStorage = getStorageFile(INDEX, PARENTS, logId, getVersion(), true);
+        File parentsStorage = getStorageFile(INDEX, PARENTS, logId, version);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
-                                          new IntListDataExternalizer(), Page.PAGE_SIZE, getVersion());
+                                          new IntListDataExternalizer(), Page.PAGE_SIZE, version);
         Disposer.register(disposable, () -> catchAndWarn(parents::close));
       }
       catch (Throwable t) {

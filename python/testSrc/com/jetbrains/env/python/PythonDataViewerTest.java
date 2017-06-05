@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -70,6 +71,20 @@ public class PythonDataViewerTest extends PyEnvTestCase {
         doTest("frame2", 4, 4, arrayChunk -> {
           List<ArrayChunk.ColHeader> headers = arrayChunk.getColHeaders();
           assertSameElements(headers.stream().map(ArrayChunk.ColHeader::getLabel).toArray(), "1/1", "1/B", "2/1", "2/B");
+        });
+      }
+    });
+  }
+
+  @Test
+  @Staging
+  public void testSeries() throws Exception {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("series", 4, 1, arrayChunk -> {
+          List<String> labels = arrayChunk.getRowLabels();
+          assertSameElements(labels, "s/2", "s/3", "d/2", "d/3");
         });
       }
     });

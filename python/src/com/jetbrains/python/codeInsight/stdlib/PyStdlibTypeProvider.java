@@ -151,7 +151,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
-        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]");
+        return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
       }
     }
     return null;
@@ -163,7 +163,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context).getMappedParameters(), callSite);
+        final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
+        return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite, context);
       }
       else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
@@ -279,21 +280,21 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget,
-                                          @NotNull TypeEvalContext context,
-                                          @Nullable PsiElement anchor) {
+  static PyType getNamedTupleType(@NotNull PsiElement referenceTarget,
+                                  @NotNull TypeEvalContext context,
+                                  @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final PyTargetExpressionStub stub = target.getStub();
 
       if (stub != null) {
-        return getNamedTupleTypeFromStub(target, stub.getCustomStub(PyNamedTupleStub.class), 1);
+        return getNamedTupleTypeFromStub(target, stub.getCustomStub(PyNamedTupleStub.class), PyNamedTupleType.DefinitionLevel.NEW_TYPE);
       } else {
-        return getNamedTupleTypeFromAST(target, context, 1);
+        return getNamedTupleTypeFromAST(target, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE);
       }
     }
     else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
-      return getNamedTupleTypeFromAST((PyCallExpression)anchor, context, 2);
+      return getNamedTupleTypeFromAST((PyCallExpression)anchor, context, PyNamedTupleType.DefinitionLevel.AS_SUPERCLASS);
     }
     return null;
   }
@@ -301,7 +302,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static Ref<PyType> getOpenFunctionType(@NotNull String callQName,
                                                  @NotNull Map<PyExpression, PyNamedParameter> arguments,
-                                                 @NotNull PsiElement anchor) {
+                                                 @NotNull PsiElement anchor,
+                                                 @NotNull TypeEvalContext context) {
     String mode = "r";
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter parameter = entry.getValue();
@@ -319,20 +321,20 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
     if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName) || "_io.open".equals(callQName)) {
       if (mode.contains("b")) {
-        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE));
+        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE, context));
       }
       else {
-        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE));
+        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE, context));
       }
     }
 
-    return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE));
+    return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE, context));
   }
 
   @Nullable
   private static PyType getNamedTupleTypeFromStub(@NotNull PsiElement referenceTarget,
                                                   @Nullable PyNamedTupleStub stub,
-                                                  int definitionLevel) {
+                                                  @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (stub == null) {
       return null;
     }
@@ -349,7 +351,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNamedTupleTypeFromAST(@NotNull PyTargetExpression expression,
                                                  @NotNull TypeEvalContext context,
-                                                 int definitionLevel) {
+                                                 @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (context.maySwitchToAST(expression)) {
       return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
     }
@@ -360,7 +362,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNamedTupleTypeFromAST(@NotNull PyCallExpression expression,
                                                  @NotNull TypeEvalContext context,
-                                                 int definitionLevel) {
+                                                 @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (context.maySwitchToAST(expression)) {
       return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
     }

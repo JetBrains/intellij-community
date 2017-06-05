@@ -180,6 +180,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInaccessibleThroughWildcard() { doTest7Incompatibility(false);}
   public void testInconvertibleTypes() { doTest5(false); }
   public void testIncompatibleReturnType() { doTest5(false); }
+  
   public void testContinueInferenceAfterFirstRawResult() { doTest5(false); }
   public void testDoNotAcceptLowerBoundIfRaw() { doTest5(false); }
   public void testStaticOverride() { doTest5(false); }
@@ -342,6 +343,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA71582() { doTest5(false); }
   public void testIDEA65377() { doTest5(false); }
   public void testIDEA113526() { doTest5(true); }
+  public void testIncompatibleReturnTypeBounds() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA116493() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA117827() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
   public void testIDEA118037() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }

@@ -34,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
 
@@ -65,7 +64,6 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                  ? " in " + DvcsUtil.getShortRepositoryName(currentRepository) : "";
     myPopup = new BranchActionGroupPopup(title + myRepoTitleInfo, myProject, preselectActionCondition, createActions(), dimensionKey);
     initBranchSyncPolicyIfNotInitialized();
-    setCurrentBranchInfo();
     warnThatBranchesDivergedIfNeeded();
   }
 
@@ -84,11 +82,6 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
         myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.DONT_SYNC);
       }
     }
-  }
-
-  protected void setCurrentBranchInfo() {
-    String branchText = "Current branch : ";
-    myPopup.setAdText(branchText + myCurrentRepository.getCurrentBranchName(), SwingConstants.CENTER);
   }
 
   private void notifyAboutSyncedBranches() {
@@ -144,9 +137,13 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private void warnThatBranchesDivergedIfNeeded() {
-    if (myRepositoryManager.moreThanOneRoot() && myMultiRootBranchConfig.diverged() && userWantsSyncControl()) {
+    if (isBranchesDiverged()) {
       myPopup.setWarning("Branches have diverged");
     }
+  }
+
+  protected boolean isBranchesDiverged() {
+    return myRepositoryManager.moreThanOneRoot() && myMultiRootBranchConfig.diverged() && userWantsSyncControl();
   }
 
   @NotNull

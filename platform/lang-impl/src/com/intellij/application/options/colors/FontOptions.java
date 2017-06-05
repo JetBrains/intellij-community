@@ -21,9 +21,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,24 +43,53 @@ public class FontOptions extends AbstractFontOptionsPanel {
   @NotNull private final ColorAndFontOptions myOptions;
 
   private @Nullable JCheckBox myInheritFontCheckbox;
+  private @Nullable JLabel myBaseFontInfoLabel;
+
+  private final static int FONT_PANEL_LEFT_OFFSET = 15;
 
   public FontOptions(@NotNull ColorAndFontOptions options) {
     myOptions = options;
   }
 
   @Nullable
-  protected String getInheritFontTitle() {
-    return "default font";
+  protected String getInheritedFontTitle() {
+    return "Default font";
+  }
+
+  protected String getOverwriteFontTitle() {
+    return "Set font for color scheme";
   }
 
   @Override
-  protected void initControls() {
-    createInheritCheckBox();
-    super.initControls();
+  protected JComponent createControls() {
+    Component inheritBox = createInheritCheckBox();
+    if (inheritBox != null) {
+      JPanel topPanel = new JPanel(new GridBagLayout());
+      GridBagConstraints c = new GridBagConstraints();
+      c.gridx = 0;
+      c.gridy = 0;
+      c.gridwidth = 2;
+      c.insets = JBUI.insets(BASE_INSET, BASE_INSET, ADDITIONAL_VERTICAL_GAP, 0);
+      c.anchor = GridBagConstraints.LINE_START;
+      topPanel.add(inheritBox, c);
+      c.gridy = 1;
+      c.gridx = 0;
+      c.gridwidth = 1;
+      c.insets = JBUI.emptyInsets();
+      topPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(FONT_PANEL_LEFT_OFFSET, 0))), c);
+      c.gridx = 1;
+      c.anchor = GridBagConstraints.NORTHWEST;
+      topPanel.add(createFontSettingsPanel(), c);
+      return topPanel;
+    }
+    else {
+      return super.createControls();
+    }
   }
 
-  private void createInheritCheckBox() {
-    if (getInheritFontTitle() != null) {
+  @Nullable
+  private Component createInheritCheckBox() {
+    if (getInheritedFontTitle() != null) {
       JPanel inheritPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       inheritPanel.setBorder(BorderFactory.createEmptyBorder());
       myInheritFontCheckbox = new JCheckBox();
@@ -68,17 +101,40 @@ public class FontOptions extends AbstractFontOptionsPanel {
         }
       });
       inheritPanel.add(myInheritFontCheckbox);
-      inheritPanel.add(new JLabel("Use "));
-      inheritPanel.add(createHyperlinkLabel());
-
-      add(inheritPanel, "newline, span");
-      add(new JSeparator(), "newline, growx, span");
+      inheritPanel.add(new JLabel(getOverwriteFontTitle()));
+      inheritPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(5,0))));
+      inheritPanel.add(grayed(new JLabel("(")));
+      inheritPanel.add(grayed(createHyperlinkLabel()));
+      inheritPanel.add(grayed(new JLabel(": ")));
+      myBaseFontInfoLabel = grayed(new JLabel("?"));
+      inheritPanel.add(myBaseFontInfoLabel);
+      inheritPanel.add(grayed(new JLabel(")")));
+      return inheritPanel;
     }
+    return null;
+  }
+
+  private static JLabel grayed(JLabel label) {
+    label.setForeground(JBColor.GRAY);
+    return label;
+  }
+
+  private String getBaseFontInfo() {
+    StringBuilder sb = new StringBuilder();
+    FontPreferences basePrefs = getBaseFontPreferences();
+    sb.append(basePrefs.getFontFamily());
+    sb.append(',');
+    sb.append(basePrefs.getSize(basePrefs.getFontFamily()));
+    return sb.toString();
+  }
+
+  protected FontPreferences getBaseFontPreferences() {
+    return AppEditorFontOptions.getInstance().getFontPreferences();
   }
 
   @NotNull
   private JLabel createHyperlinkLabel() {
-    HoverHyperlinkLabel label = new HoverHyperlinkLabel(getInheritFontTitle());
+    HoverHyperlinkLabel label = new HoverHyperlinkLabel(getInheritedFontTitle());
     label.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -153,6 +209,9 @@ public class FontOptions extends AbstractFontOptionsPanel {
     if (myInheritFontCheckbox != null) {
       myInheritFontCheckbox.setEnabled(!isReadOnly());
       myInheritFontCheckbox.setSelected(isDelegating());
+    }
+    if (myBaseFontInfoLabel != null) {
+      myBaseFontInfoLabel.setText(getBaseFontInfo());
     }
   }
 

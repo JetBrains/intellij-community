@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -131,20 +132,32 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
     if (definition instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression definitionCall = (PsiMethodCallExpression)definition;
       if (methodPredicate.test(definitionCall)) {
-        final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
-
-        if (arguments.length == argumentOffset + 1) {
-          final PsiExpression[] arrayElements = getVarargAsArray(arguments[argumentOffset]);
-          if (arrayElements != null) {
-            return Arrays.asList(arrayElements);
-          }
-        }
-        if (arguments.length >= argumentOffset) {
-          return Arrays.asList(arguments).subList(argumentOffset, arguments.length);
-        }
+        return getRequiredMethodArguments(definitionCall, argumentOffset);
       }
     }
     return null;
+  }
+
+  private static List<PsiExpression> getRequiredMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
+    final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
+
+    if (arguments.length == argumentOffset + 1) {
+      final PsiExpression[] arrayElements = getVarargAsArray(arguments[argumentOffset]);
+      if (arrayElements != null) {
+        return Arrays.asList(arrayElements);
+      }
+    }
+    if (arguments.length >= argumentOffset) {
+      return Arrays.asList(arguments).subList(argumentOffset, arguments.length);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<ReflectiveType> getReflectionMethodParameterTypes(@NotNull PsiMethodCallExpression definitionCall,
+                                                                       int argumentOffset) {
+    List<PsiExpression> arguments = getRequiredMethodArguments(definitionCall, argumentOffset);
+    return arguments != null ? ContainerUtil.map(arguments, type -> getReflectiveType(type)) : null;
   }
 
   @Nullable

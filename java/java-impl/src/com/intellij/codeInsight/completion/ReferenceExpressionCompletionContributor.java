@@ -213,13 +213,18 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   @Nullable
-  public static PsiReferenceExpression createMockReference(final PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+  static PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem) {
+    return createMockReference(place, qualifierType, qualifierItem, ".");
+  }
+
+  @Nullable
+  static PsiReferenceExpression createMockReference(PsiElement place, @NotNull PsiType qualifierType, LookupElement qualifierItem, String separator) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getProject());
     if (qualifierItem.getObject() instanceof PsiClass) {
       final String qname = ((PsiClass)qualifierItem.getObject()).getQualifiedName();
       if (qname == null) return null;
       
-      final String text = qname + ".xxx";
+      String text = qname + separator + "xxx";
       try {
         final PsiExpression expr = factory.createExpressionFromText(text, place);
         if (expr instanceof PsiReferenceExpression) {
@@ -233,7 +238,7 @@ public class ReferenceExpressionCompletionContributor {
       }
     }
 
-    return (PsiReferenceExpression) factory.createExpressionFromText("xxx.xxx", JavaCompletionUtil
+    return (PsiReferenceExpression) factory.createExpressionFromText("xxx" + separator + "xxx", JavaCompletionUtil
       .createContextWithXxxVariable(place, qualifierType));
   }
 

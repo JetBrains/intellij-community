@@ -31,9 +31,9 @@ public class RootAction<T extends Repository> extends ActionGroup implements Pop
 
   @NotNull protected final T myRepository;
   @NotNull private final ActionGroup myGroup;
-  @NotNull private final String myBranchText;
+  @Nullable private final String myBranchText;
 
-  public RootAction(@NotNull T repository, @NotNull ActionGroup actionsGroup, @NotNull String branchText) {
+  public RootAction(@NotNull T repository, @NotNull ActionGroup actionsGroup, @Nullable String branchText) {
     super("", true);
     myRepository = repository;
     myGroup = actionsGroup;
@@ -42,17 +42,12 @@ public class RootAction<T extends Repository> extends ActionGroup implements Pop
   }
 
   @NotNull
-  public String getCaption() {
-    return "Current branch in " + DvcsUtil.getShortRepositoryName(myRepository) + ": " + getInfoText();
-  }
-
-  @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myGroup.getChildren(e);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getInfoText() {
     return myBranchText;

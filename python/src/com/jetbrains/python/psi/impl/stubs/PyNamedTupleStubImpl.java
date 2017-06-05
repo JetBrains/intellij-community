@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,21 @@
  */
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,22 +74,22 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
       return null;
     }
 
-    final QualifiedName namedTupleQName = getNamedTupleQName(calleeReference);
+    final Pair<QualifiedName, NamedTupleModule> calleeNameAndModule = getCalleeNameAndNTModule(calleeReference);
 
-    if (namedTupleQName != null) {
+    if (calleeNameAndModule != null) {
       final String name = resolveTupleName(expression);
 
       if (name == null) {
         return null;
       }
 
-      final List<String> fields = resolveTupleFields(expression);
+      final List<String> fields = resolveTupleFields(expression, calleeNameAndModule.getSecond());
 
       if (fields == null) {
         return null;
       }
 
-      return new PyNamedTupleStubImpl(namedTupleQName, name, fields);
+      return new PyNamedTupleStubImpl(calleeNameAndModule.getFirst(), name, fields);
     }
 
     return null;
@@ -144,14 +148,14 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static QualifiedName getNamedTupleQName(@NotNull PyReferenceExpression referenceExpression) {
-    final QualifiedName name = getFullyQualifiedNamedTupleQName(referenceExpression);
+  private static Pair<QualifiedName, NamedTupleModule> getCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
+    final Pair<QualifiedName, NamedTupleModule> name = getFullyQCalleeNameAndNTModule(referenceExpression);
 
     if (name != null) {
       return name;
     }
 
-    return getImportedNamedTupleQName(referenceExpression);
+    return getImportedCalleeNameAndNTModule(referenceExpression);
   }
 
   @Nullable
@@ -165,6 +169,13 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
     // Point = namedtuple(("Point"), ...)
 
+    // name = "Point"
+    // Point = NamedTuple(name, ...)
+
+    // Point = NamedTuple("Point", ...)
+
+    // Point = NamedTuple(("Point"), ...)
+
     final PyExpression nameExpression = PyPsiUtils.flattenParens(callExpression.getArgument(0, PyExpression.class));
 
     if (nameExpression instanceof PyReferenceExpression) {
@@ -175,27 +186,15 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static List<String> resolveTupleFields(@NotNull PyCallExpression callExpression) {
-    // SUPPORTED CASES:
-
-    // fields = ["x", "y"]
-    // Point = namedtuple(..., fields)
-
-    // Point = namedtuple(..., "x y")
-
-    // Point = namedtuple(..., ("x y"))
-
-    // Point = namedtuple(..., "x, y")
-
-    // Point = namedtuple(..., ["x", "y"])
-
-    final PyExpression fieldsExpression = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
-
-    if (fieldsExpression instanceof PyReferenceExpression) {
-      return extractFields(fullResolveLocally((PyReferenceExpression)fieldsExpression));
+  private static List<String> resolveTupleFields(@NotNull PyCallExpression callExpression, @NotNull NamedTupleModule module) {
+    switch (module) {
+      case TYPING:
+        return resolveTypingNTFields(callExpression);
+      case COLLECTIONS:
+        return resolveCollectionsNTFields(callExpression);
+      default:
+        return null;
     }
-
-    return extractFields(fieldsExpression);
   }
 
   @NotNull
@@ -214,7 +213,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static QualifiedName getFullyQualifiedNamedTupleQName(@NotNull PyReferenceExpression referenceExpression) {
+  private static Pair<QualifiedName, NamedTupleModule> getFullyQCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
     // SUPPORTED CASES:
 
     // import collections
@@ -223,14 +222,27 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     // import collections as c
     // Point = c.namedtuple(...)
 
-    if (PyNames.NAMEDTUPLE.equals(referenceExpression.getName())) {
+    // import typing
+    // ... = typing.NamedTuple(...)
+
+    // import typing as t
+    // ... = t.NamedTuple(...)
+
+    final String referenceName = referenceExpression.getName();
+    final NamedTupleModule module = PyNames.NAMEDTUPLE.equals(referenceName)
+                                    ? NamedTupleModule.COLLECTIONS
+                                    : PyTypingTypeProvider.NAMEDTUPLE_SIMPLE.equals(referenceName)
+                                      ? NamedTupleModule.TYPING
+                                      : null;
+
+    if (module != null) {
       final PyExpression qualifier = referenceExpression.getQualifier();
 
       if (qualifier instanceof PyReferenceExpression) {
         final PyReferenceExpression qualifierReference = (PyReferenceExpression)qualifier;
 
-        if (!qualifierReference.isQualified() && resolvesToCollections(qualifierReference)) {
-          return QualifiedName.fromComponents(qualifierReference.getName(), referenceExpression.getName());
+        if (!qualifierReference.isQualified() && resolvesToModule(qualifierReference, module)) {
+          return Pair.createNonNull(QualifiedName.fromComponents(qualifierReference.getName(), referenceName), module);
         }
       }
     }
@@ -239,7 +251,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static QualifiedName getImportedNamedTupleQName(@NotNull PyReferenceExpression referenceExpression) {
+  private static Pair<QualifiedName, NamedTupleModule> getImportedCalleeNameAndNTModule(@NotNull PyReferenceExpression referenceExpression) {
     // SUPPORTED CASES:
 
     // from collections import namedtuple
@@ -248,18 +260,31 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     // from collections import namedtuple as NT
     // Point = NT(...)
 
+    // from typing import NamedTuple
+    // Point = NamedTuple(...)
+
+    // from typing import NamedTuple as NT
+    // Point = NT(...)
+
     for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
+        final QualifiedName importedQName = importElement.getImportedQName();
 
-        if (equals(importElement.getImportedQName(), PyNames.NAMEDTUPLE)) {
+        final NamedTupleModule module = equals(importedQName, PyNames.NAMEDTUPLE)
+                                        ? NamedTupleModule.COLLECTIONS
+                                        : equals(importedQName, PyTypingTypeProvider.NAMEDTUPLE_SIMPLE)
+                                          ? NamedTupleModule.TYPING
+                                          : null;
+
+        if (module != null) {
           final PyStatement importStatement = importElement.getContainingImportStatement();
 
           if (importStatement instanceof PyFromImportStatement) {
             final PyFromImportStatement fromImportStatement = (PyFromImportStatement)importStatement;
 
-            if (equals(fromImportStatement.getImportSourceQName(), PyNames.COLLECTIONS)) {
-              return QualifiedName.fromComponents(referenceExpression.getName());
+            if (equals(fromImportStatement.getImportSourceQName(), module.getModuleName())) {
+              return Pair.createNonNull(QualifiedName.fromComponents(referenceExpression.getName()), module);
             }
           }
         }
@@ -269,12 +294,12 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return null;
   }
 
-  private static boolean resolvesToCollections(@NotNull PyReferenceExpression referenceExpression) {
+  private static boolean resolvesToModule(@NotNull PyReferenceExpression referenceExpression, @NotNull NamedTupleModule module) {
     for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
 
-        if (equals(importElement.getImportedQName(), PyNames.COLLECTIONS)) {
+        if (equals(importElement.getImportedQName(), module.getModuleName())) {
           return true;
         }
       }
@@ -305,32 +330,98 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   @Nullable
-  private static List<String> extractFields(@Nullable PyExpression expression) {
-    if (expression == null) {
-      return null;
-    }
+  private static List<String> resolveCollectionsNTFields(@NotNull PyCallExpression callExpression) {
+    // SUPPORTED CASES:
 
-    final List<String> listValue = PyUtil.strListValue(expression);
+    // fields = ["x", "y"]
+    // Point = namedtuple(..., fields)
 
-    if (listValue != null) {
-      return listValue;
-    }
+    // Point = namedtuple(..., "x y")
 
-    return extractFields(PyPsiUtils.strValue(expression));
+    // Point = namedtuple(..., ("x y"))
+
+    // Point = namedtuple(..., "x, y")
+
+    // Point = namedtuple(..., ["x", "y"])
+
+    final PyExpression fields = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
+
+    final PyExpression resolvedFields = fields instanceof PyReferenceExpression
+                                        ? fullResolveLocally((PyReferenceExpression)fields)
+                                        : fields;
+
+    final List<String> listValue = PyUtil.strListValue(resolvedFields);
+    if (listValue != null) return listValue;
+
+    final String resolvedFieldsValue = PyPsiUtils.strValue(resolvedFields);
+    if (resolvedFieldsValue == null) return null;
+
+    return StreamEx
+      .of(StringUtil.tokenize(resolvedFieldsValue, ", ").iterator())
+      .toList();
   }
 
   @Nullable
-  private static List<String> extractFields(@Nullable String fieldsString) {
-    if (fieldsString == null) {
-      return null;
+  private static List<String> resolveTypingNTFields(@NotNull PyCallExpression callExpression) {
+    // SUPPORTED CASES:
+
+    // fields = [("x", str), ("y", int)]
+    // Point = NamedTuple(..., fields)
+
+    // Point = NamedTuple(..., [("x", str), ("y", int)])
+
+    // Point = NamedTuple(..., x=str, y=int)
+
+    final PyExpression secondArgument = PyPsiUtils.flattenParens(callExpression.getArgument(1, PyExpression.class));
+
+    if (secondArgument instanceof PyKeywordArgument) {
+      final PyExpression[] arguments = callExpression.getArguments();
+      return StreamEx
+        .of(arguments, 1, arguments.length)
+        .select(PyKeywordArgument.class)
+        .map(PyKeywordArgument::getKeyword)
+        .toList();
+    } else {
+      final PyExpression resolvedFields = secondArgument instanceof PyReferenceExpression
+                                          ? fullResolveLocally((PyReferenceExpression)secondArgument)
+                                          : secondArgument;
+      if (!(resolvedFields instanceof PySequenceExpression)) return null;
+
+      final List<String> result = new ArrayList<>();
+
+      for (PyExpression element : ((PySequenceExpression)resolvedFields).getElements()) {
+        if (!(element instanceof PyParenthesizedExpression)) return null;
+
+        final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
+        if (!(contained instanceof PyTupleExpression)) return null;
+
+        final PyExpression[] nameAndType = ((PyTupleExpression)contained).getElements();
+        final PyExpression name = ArrayUtil.getFirstElement(nameAndType);
+        if (nameAndType.length != 2 || !(name instanceof PyStringLiteralExpression)) return null;
+
+        result.add(((PyStringLiteralExpression)name).getStringValue());
+      }
+
+      return result;
     }
+  }
 
-    final List<String> result = new ArrayList<>();
+  private enum NamedTupleModule {
 
-    for (String name : StringUtil.tokenize(fieldsString, ", ")) {
-      result.add(name);
-    }
+    COLLECTIONS {
+      @Override
+      public String getModuleName() {
+        return PyNames.COLLECTIONS;
+      }
+    },
 
-    return result;
+    TYPING {
+      @Override
+      public String getModuleName() {
+        return PyTypingTypeProvider.TYPING;
+      }
+    };
+
+    public abstract String getModuleName();
   }
 }

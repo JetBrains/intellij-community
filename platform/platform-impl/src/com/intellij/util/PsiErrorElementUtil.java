@@ -20,11 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -39,9 +35,7 @@ public class PsiErrorElementUtil {
   public static boolean hasErrors(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return ReadAction.compute(() -> {
       if (project.isDisposed() || !virtualFile.isValid()) return false;
-
-      PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(project);
-      PsiFile psiFile = psiManager.getFileManager().findFile(virtualFile);
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       return psiFile != null && hasErrors(psiFile);
     });
   }

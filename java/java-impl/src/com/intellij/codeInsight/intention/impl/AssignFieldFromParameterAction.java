@@ -46,7 +46,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
       return false;
     }
     final PsiField field = findFieldToAssign(project, myParameter);
-    if (field == null) return false;
+    if (field == null || type == null || !field.getType().isAssignableFrom(type)) return false;
     if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 

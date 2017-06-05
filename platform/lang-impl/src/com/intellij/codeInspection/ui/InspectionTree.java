@@ -56,9 +56,9 @@ public class InspectionTree extends Tree {
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
-  public InspectionTree(@NotNull Project project,
-                        @NotNull GlobalInspectionContextImpl context,
+  public InspectionTree(@NotNull GlobalInspectionContextImpl context,
                         @NotNull InspectionResultsView view) {
+    Project project = context.getProject();
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
     myExcludedManager = view.getExcludedManager();

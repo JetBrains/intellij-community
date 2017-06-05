@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class PyStringFormatInspection extends PyInspection {
                 final PyType elementType = tupleType.getElementType(i);
                 if (elementType != null) {
                   final String typeName = myFormatSpec.get(String.valueOf(i + 1));
-                  final PyType type = typeName != null ? PyTypeParser.getTypeByName(problemTarget, typeName) : null;
+                  final PyType type = typeName != null ? PyTypeParser.getTypeByName(problemTarget, typeName, myTypeEvalContext) : null;
                   checkTypeCompatible(problemTarget, elementType, type);
                 }
               }
@@ -171,7 +171,7 @@ public class PyStringFormatInspection extends PyInspection {
         else if (PyUtil.instanceOf(rightExpression, PySequenceExpression.class, PyComprehensionElement.class)) {
           if (s != null) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
-                                PyTypeParser.getTypeByName(problemTarget, s));
+                                PyTypeParser.getTypeByName(problemTarget, s, myTypeEvalContext));
             return 1;
           }
         }
@@ -184,7 +184,7 @@ public class PyStringFormatInspection extends PyInspection {
           if (PyTypeChecker.match(listType, type, myTypeEvalContext)
               || PyTypeChecker.match(stringType, type, myTypeEvalContext)) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
-                                PyTypeParser.getTypeByName(problemTarget, s));
+                                PyTypeParser.getTypeByName(problemTarget, s, myTypeEvalContext));
             return 1;
           }
           PySliceItem sliceItem = ((PySliceExpression)rightExpression).getSliceItem();
@@ -328,7 +328,7 @@ public class PyStringFormatInspection extends PyInspection {
                                        @NotNull final String expectedTypeName,
                                        @NotNull PsiElement problemTarget) {
         final PyType actual = myTypeEvalContext.getType(expression);
-        final PyType expected = PyTypeParser.getTypeByName(problemTarget, expectedTypeName);
+        final PyType expected = PyTypeParser.getTypeByName(problemTarget, expectedTypeName, myTypeEvalContext);
         if (actual != null) {
           checkTypeCompatible(problemTarget, actual, expected);
         }
