@@ -657,6 +657,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of", true, true);
   }
 
+  // PY-8174
+  public void testAddParameterDefaultValues() {
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of", true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

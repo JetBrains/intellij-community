@@ -76,20 +76,14 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     final Set<String> usedParamNames = new HashSet<>();
     for (PyExpression arg : mapping.getUnmappedArguments()) {
       if (arg instanceof PyKeywordArgument) {
-        final String defaultValueText;
         final PyExpression value = ((PyKeywordArgument)arg).getValueExpression();
-        if (value != null && PyRefactoringUtil.isSimpleExpression(value) && !value.textContains('\n')) {
-          defaultValueText = value.getText();
-        }
-        else {
-          defaultValueText = ApplicationManager.getApplication().isUnitTestMode() ? "None" : "";
-        }
+        final String valueText = value != null ? value.getText() : "";
         newParameters.add(Pair.create(parameters.length - 1,
-                                      new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), defaultValueText, true)));
+                                      new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
       }
       else {
         final String paramName = generateParameterName(arg, function, usedParamNames, context);
-        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, "", false)));
+        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, arg.getText(), false)));
         usedParamNames.add(paramName);
       }
     }
@@ -109,12 +103,15 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     }
     return new PyChangeSignatureQuickFix(function, extraParams, null);
   }
-
-
+  
   private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
   private final SmartPsiElementPointer<PyCallExpression> myOriginalCallExpression;
 
 
+  /**
+   * @param extraParameters new parameters anchored by indexes of the existing parameters they should be inserted <em>after</em>
+   *                        (-1 in case they should precede the first parameter)
+   */
   public PyChangeSignatureQuickFix(@NotNull PyFunction function,
                                    @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters,
                                    @Nullable PyCallExpression expression) {
