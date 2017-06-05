@@ -17,8 +17,10 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -661,7 +663,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(i1, <b>i</b>, <b>i3</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
   }
 
   // PY-8174
@@ -712,7 +714,9 @@ public class PyQuickFixTest extends PyTestCase {
     final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(quickFixName);
     if (available) {
       if (intentionActions.isEmpty()) {
-        throw new AssertionError("Quickfix \"" + quickFixName + "\" is not available");
+        final List<String> intentionNames = ContainerUtil.map(myFixture.getAvailableIntentions(), IntentionAction::getText);
+        throw new AssertionError("Quickfix starting with \"" + quickFixName + "\" is not available. " +
+                                 "Available intentions:\n" + StringUtil.join(intentionNames, "\n"));
       }
       if (intentionActions.size() > 1) {
         throw new AssertionError("There are more than one quickfix with the name \"" + quickFixName + "\"");

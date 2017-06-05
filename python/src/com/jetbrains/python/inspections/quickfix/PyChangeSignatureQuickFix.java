@@ -187,15 +187,21 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
                                               @NotNull PyFunction function,
                                               @NotNull Set<String> usedParameterNames,
                                               @NotNull TypeEvalContext context) {
-    PyType type = context.getType(argumentValue);
-    if (type instanceof PyUnionType) {
-      type = ContainerUtil.find(((PyUnionType)type).getMembers(), Conditions.instanceOf(PyClassType.class));
+    final Collection<String> suggestions = new LinkedHashSet<>();
+    final PyCallExpression callExpr = as(argumentValue, PyCallExpression.class);
+    final PyElement referenceElem = as(callExpr != null ? callExpr.getCallee() : argumentValue, PyReferenceExpression.class);
+    if (referenceElem != null) {
+      suggestions.addAll(NameSuggesterUtil.generateNames(referenceElem.getText()));
     }
-    final String typeName = type != null && type.getName() != null ? type.getName() : "object";
-
-    final Collection<String> suggestions = NameSuggesterUtil.generateNamesByType(typeName);
-    final String shortestName = ContainerUtil.getFirstItem(suggestions);
-    assert shortestName != null;
+    if (suggestions.isEmpty()) {
+      PyType type = context.getType(argumentValue);
+      if (type instanceof PyUnionType) {
+        type = ContainerUtil.find(((PyUnionType)type).getMembers(), Conditions.instanceOf(PyClassType.class));
+      }
+      final String typeName = type != null && type.getName() != null ? type.getName() : "object";
+      suggestions.addAll(NameSuggesterUtil.generateNamesByType(typeName));
+    }
+    final String shortestName = Collections.min(suggestions, Comparator.comparingInt(String::length));
 
     String result = shortestName;
     int counter = 1;

@@ -1,6 +1,5 @@
-def func(i1, i, i3):
+def func(i1, i, i3, num):
     i2 = 'Spam'
 
 
-x = 42 or 'str'
-func(1, 2, x)
+func(1, 2, 42 or 'str', get_num())
