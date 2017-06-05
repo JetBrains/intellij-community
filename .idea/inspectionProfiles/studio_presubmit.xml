@@ -744,7 +744,7 @@
     <inspection_tool class="ReturnFromFinallyBlockJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ReturnOfInnerClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="ReturnSeparatedFromComputation" enabled="false" level="INFORMATION" enabled_by_default="false" />
-    <inspection_tool class="SSBasedInspection" enabled="false" level="WARNING" enabled_by_default="false">
+    <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="false">
       <searchConfiguration name="SwingUtilities.invokeLater" text="SwingUtilities.invokeLater($runnable$)" recursive="false" caseInsensitive="false" type="JAVA">
         <constraint name="Instance" regexp="SwingUtilities" minCount="0" target="true" within="" contains="" />
         <constraint name="MethodCall" within="" contains="" />
