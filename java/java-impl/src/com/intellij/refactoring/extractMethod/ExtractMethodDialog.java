@@ -124,6 +124,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (canBeChainedConstructor) {
       myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
     }
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
 
     init();
   }
@@ -308,28 +309,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
     //optionsPanel.add(new JLabel("Options: "));
 
-    if (myStaticFlag || myCanBeStatic) {
-      myMakeStatic.setEnabled(!myStaticFlag);
-      myMakeStatic.setSelected(myStaticFlag);
-      if (myVariableData.hasInstanceFields()) {
-        myMakeStatic.setText(RefactoringBundle.message("declare.static.pass.fields.checkbox"));
-      }
-      myMakeStatic.addItemListener(e -> {
-        if (myVariableData.hasInstanceFields()) {
-          myVariableData.setPassFields(myMakeStatic.isSelected());
-          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-          updateVarargsEnabled();
-          createParametersPanel();
-        }
-        updateSignature();
-      });
-      optionsPanel.add(myMakeStatic);
-    } else {
-      myMakeStatic.setSelected(false);
-      myMakeStatic.setEnabled(false);
-    }
-    final Border emptyBorder = IdeBorderFactory.createEmptyBorder(5, 0, 5, 4);
-    myMakeStatic.setBorder(emptyBorder);
+    createStaticOptions(optionsPanel, RefactoringBundle.message("declare.static.pass.fields.checkbox"));
 
     myFoldParameters.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldParameters.setVisible(myVariableData.isFoldable());
@@ -344,6 +324,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       updateSignature();
     });
     optionsPanel.add(myFoldParameters);
+    final Border emptyBorder = IdeBorderFactory.createEmptyBorder(5, 0, 5, 4);
     myFoldParameters.setBorder(emptyBorder);
 
     boolean canBeVarargs = false;
@@ -394,6 +375,30 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     return optionsPanel;
   }
 
+  protected void createStaticOptions(JPanel optionsPanel, String passFieldsAsParamsLabel) {
+    if (myStaticFlag || myCanBeStatic) {
+      myMakeStatic.setEnabled(!myStaticFlag);
+      myMakeStatic.setSelected(myStaticFlag);
+      if (myVariableData.hasInstanceFields()) {
+        myMakeStatic.setText(passFieldsAsParamsLabel);
+      }
+      myMakeStatic.addItemListener(e -> {
+        if (myVariableData.hasInstanceFields()) {
+          myVariableData.setPassFields(myMakeStatic.isSelected());
+          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+          updateVarargsEnabled();
+          createParametersPanel();
+        }
+        updateSignature();
+      });
+      optionsPanel.add(myMakeStatic);
+    } else {
+      myMakeStatic.setSelected(false);
+      myMakeStatic.setEnabled(false);
+    }
+    myMakeStatic.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 4));
+  }
+
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
     final PsiMethod containingMethod = getContainingMethod();
@@ -432,7 +437,8 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   @Override
   @NotNull
   public String getVisibility() {
-    return myTargetClass.isInterface() ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
+    return myTargetClass.isInterface() || myVisibilityPanel == null 
+           ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
 
   @Override

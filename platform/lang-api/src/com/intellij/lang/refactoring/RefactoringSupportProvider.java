@@ -102,6 +102,15 @@ public abstract class RefactoringSupportProvider {
   }
 
   /**
+   * @return handler for introducing functional locals in this language
+   * @see ContextAwareActionHandler
+   * @see RefactoringActionHandler
+   */
+  public RefactoringActionHandler getIntroduceFunctionalVariableHandler() {
+    return null;
+  }
+
+  /**
    * @return  handler for pulling up members in this language
    * @see com.intellij.refactoring.RefactoringActionHandler
    */

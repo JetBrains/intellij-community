@@ -549,8 +549,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
-    final List<VariableData> variables = myInputVariables.getInputVariables();
-    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
+    setDataFromInputVariables();
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
@@ -606,6 +605,11 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
       }
     };
+  }
+
+  public void setDataFromInputVariables() {
+    final List<VariableData> variables = myInputVariables.getInputVariables();
+    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
   }
 
   public PsiExpression[] findOccurrences() {
@@ -1350,7 +1354,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         }
         list.add(parm);
       }
-      else {
+      else if (defineVariablesForUnselectedParameters()){
         @NonNls StringBuilder buffer = new StringBuilder();
         if (isFinal) {
           buffer.append("final ");
@@ -1380,6 +1384,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     return (PsiMethod)myStyleManager.reformat(newMethod);
+  }
+
+  protected boolean defineVariablesForUnselectedParameters() {
+    return true;
   }
 
   private void copyParamAnnotations(PsiParameter parm) {
@@ -1735,6 +1743,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myExtractedMethod;
   }
 
+  public void setMethodName(String methodName) {
+    myMethodName = methodName;
+  }
+
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {
@@ -1830,5 +1842,9 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public PsiVariable[] getOutputVariables() {
     return myOutputVariables;
+  }
+  
+  public void setMethodVisibility(String methodVisibility) {
+    myMethodVisibility = methodVisibility;
   }
 }

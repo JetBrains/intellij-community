@@ -613,18 +613,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiElement anchorStatement = RefactoringUtil.getParentStatement(physicalElement != null ? physicalElement : expr, false);
 
-    if (anchorStatement == null) {
-      return parentStatementNotFound(project, editor);
-    }
-    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE)) return false;
-
-    final PsiElement tempContainer = anchorStatement.getParent();
-
-    if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
-      showErrorMessage(project, editor, message);
-      return false;
-    }
+    PsiElement tempContainer = checkAnchorStatement(project, editor, anchorStatement);
+    if (tempContainer == null) return false;
 
     final PsiFile file = anchorStatement.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
@@ -764,6 +754,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
     return wasSucceed[0];
+  }
+
+  protected PsiElement checkAnchorStatement(Project project, Editor editor, PsiElement anchorStatement) {
+    if (anchorStatement == null) {
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
+      showErrorMessage(project, editor, message);
+      return null;
+    }
+    if (checkAnchorBeforeThisOrSuper(project, editor, anchorStatement, REFACTORING_NAME, HelpID.INTRODUCE_VARIABLE)) return null;
+
+    final PsiElement tempContainer = anchorStatement.getParent();
+
+    if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
+      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
+      showErrorMessage(project, editor, message);
+      return null;
+    }
+    return tempContainer;
   }
 
   protected JavaReplaceChoice getOccurrencesChoice() {
@@ -1108,12 +1116,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return parent instanceof PsiStatement ? factory.createStatementFromText(text, parent) :
                                             parent instanceof PsiCodeBlock ? factory.createCodeBlockFromText(text, parent) 
                                                                            : factory.createExpressionFromText(text, parent);
-  }
-
-  private boolean parentStatementNotFound(final Project project, Editor editor) {
-    String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
-    showErrorMessage(project, editor, message);
-    return false;
   }
 
   protected boolean invokeImpl(Project project, PsiLocalVariable localVariable, Editor editor) {
