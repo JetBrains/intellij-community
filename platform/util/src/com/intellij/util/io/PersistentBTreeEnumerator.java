@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -554,7 +555,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     @Override
     byte[] getRecordBuffer(@NotNull PersistentBTreeEnumerator enumerator) {
       if (myBuffer == null) {
-        myBuffer = new byte[enumerator.myInlineKeysNoMapping ? 0:RECORD_SIZE];
+        myBuffer = enumerator.myInlineKeysNoMapping ? ArrayUtil.EMPTY_BYTE_ARRAY : new byte[RECORD_SIZE];
       }
       return myBuffer;
     }
