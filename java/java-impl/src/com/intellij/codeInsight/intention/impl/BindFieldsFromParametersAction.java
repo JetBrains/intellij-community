@@ -226,7 +226,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         if (calledMethod != null && calledMethod.isConstructor()) {
           for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
             if (arg instanceof PsiReferenceExpression) {
-              ContainerUtil.addIfNotNull(((PsiReferenceExpression)arg).resolve(), resolvedInSuperOrThis);
+              ContainerUtil.addIfNotNull(resolvedInSuperOrThis, ((PsiReferenceExpression)arg).resolve());
             }
           }
         }
