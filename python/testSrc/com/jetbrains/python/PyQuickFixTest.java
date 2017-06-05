@@ -648,18 +648,18 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   // PY-8174
-  public void testAddKeywordAndPositionalParameters() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of", true, true);
+  public void testChangeSignatureKeywordAndPositionalParameters() {
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of f(x, foo, <b>bar</b>)</html>", true, true);
   }
 
   // PY-8174
-  public void testAddSeveralPositionalParametersWithSameArgumentType() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of", true, true);
+  public void testChangeSignatureNewParametersNames() {
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(i1, <b>i</b>, <b>i3</b>)</html>", true, true);
   }
 
   // PY-8174
-  public void testAddParameterDefaultValues() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of", true, true);
+  public void testChangeSignatureParametersDefaultValues() {
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
   }
 
   @Override
