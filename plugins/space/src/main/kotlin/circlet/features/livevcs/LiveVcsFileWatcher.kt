@@ -21,10 +21,10 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.*
 import klogging.*
-import runtime.*
-import runtime.TextChange
 import runtime.async.*
 import runtime.reactive.*
+import runtime.text.*
+import runtime.text.TextChange
 import java.awt.*
 
 private val log = KLoggers.logger("app-idea/LiveVcsFileWatcher.kt")
@@ -317,7 +317,6 @@ class LiveVcsFileWatcher(private val project: Project,
             }
         }
     }
-
 }
 
 fun VirtualFile.getRelativePath(vcsManager: ProjectLevelVcsManager): String {
