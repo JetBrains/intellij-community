@@ -59,17 +59,32 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
   }
 
   public static void record(AnActionEvent event) {
+    _record(event, false);
+   }
+
+  public static void recordDoubleShortcut(AnActionEvent event) {
+    _record(event, true);
+  }
+
+  private static void _record(AnActionEvent event, boolean isDoubleShortcut) {
     InputEvent e = event.getInputEvent();
     if (e instanceof KeyEvent) {
       KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)e), null);
       String key = KeymapUtil.getShortcutText(shortcut);
-      ShortcutsCollector collector = getInstance();
-
-      if (collector == null) return; //no shortcuts stats for the IDE
-
-      Map<String, Integer> values = collector.getState().myValues;
-      values.put(key, ContainerUtil.getOrElse(values, key, 0) + 1);
+      if (isDoubleShortcut) {
+        key = SystemInfo.isMac ? key + key : key + "+" + key;
+      }
+      incValue(key);
     }
+  }
+
+  private static void incValue(String key) {
+    ShortcutsCollector collector = getInstance();
+
+    if (collector == null) return; //no shortcuts stats for the IDE
+
+    Map<String, Integer> values = collector.getState().myValues;
+    values.put(key, ContainerUtil.getOrElse(values, key, 0) + 1);
   }
 
 
