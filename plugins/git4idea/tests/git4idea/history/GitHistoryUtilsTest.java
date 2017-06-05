@@ -402,10 +402,11 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
     expected = ContainerUtil.reverse(expected);
 
-    List<String> actualMessages =
-      GitHistoryUtils.collectDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
+    List<String> actualHashes = ContainerUtil.map(GitHistoryUtils.collectFullDetails(myProject, myRepo.getRoot(),
+                                                                                 "--max-count=" + commitCount),
+                                                  detail -> detail.getId().asString());
 
-    assertEquals(expected, actualMessages);
+    assertEquals(expected, actualHashes);
   }
 
   private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws IOException, VcsException {

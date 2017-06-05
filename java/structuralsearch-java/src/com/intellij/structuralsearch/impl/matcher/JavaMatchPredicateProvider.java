@@ -18,12 +18,11 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 
 import java.util.Set;
 
-public class JavaMatchPredicateProvider extends MatchPredicateProvider{
+public class JavaMatchPredicateProvider extends MatchPredicateProvider {
   @Override
   public void collectPredicates(MatchVariableConstraint constraint, String name, MatchOptions options, Set<MatchPredicate> predicates) {
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {

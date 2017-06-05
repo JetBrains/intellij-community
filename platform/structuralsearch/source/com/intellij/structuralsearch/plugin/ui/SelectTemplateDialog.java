@@ -259,7 +259,7 @@ public class SelectTemplateDialog extends DialogWrapper {
       String replacement;
 
       if (configuration instanceof ReplaceConfiguration) {
-        replacement = ((ReplaceConfiguration)configuration).getOptions().getReplacement();
+        replacement = ((ReplaceConfiguration)configuration).getReplaceOptions().getReplacement();
       }
       else {
         replacement = configuration.getMatchOptions().getSearchPattern();

@@ -156,6 +156,7 @@ public class MatchOptions implements JDOMExternalizable {
     this.scope = scope;
   }
 
+  @Override
   public void writeExternal(Element element) {
     element.setAttribute(TEXT_ATTRIBUTE_NAME, pattern);
     if (!looseMatching) {
@@ -184,6 +185,7 @@ public class MatchOptions implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void readExternal(Element element) {
     pattern = element.getAttribute(TEXT_ATTRIBUTE_NAME).getValue();
 
@@ -212,8 +214,7 @@ public class MatchOptions implements JDOMExternalizable {
 
     attr = element.getAttribute(FILE_TYPE_ATTR_NAME);
     if (attr!=null) {
-      String value = attr.getValue();
-      myFileType = getFileTypeByName(value);
+      myFileType = getFileTypeByName(attr.getValue());
     }
 
     attr = element.getAttribute(DIALECT_ATTR_NAME);
@@ -223,13 +224,10 @@ public class MatchOptions implements JDOMExternalizable {
 
     // @TODO deserialize scope
 
-    List<Element> elements = element.getChildren(CONSTRAINT_TAG_NAME);
-    if (elements!=null && !elements.isEmpty()) {
-      for (final Element element1 : elements) {
-        final MatchVariableConstraint constraint = new MatchVariableConstraint();
-        constraint.readExternal(element1);
-        addVariableConstraint(constraint);
-      }
+    for (final Element element1 : element.getChildren(CONSTRAINT_TAG_NAME)) {
+      final MatchVariableConstraint constraint = new MatchVariableConstraint();
+      constraint.readExternal(element1);
+      addVariableConstraint(constraint);
     }
   }
 

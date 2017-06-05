@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.shelf;
+package com.intellij.diff.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.ExtendableAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 
-public class DiffShelvedChangesWithLocalAction extends DiffShelvedChangesAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    showShelvedChangesDiff(e.getDataContext(), true);
+public class ShowDiffAction extends ExtendableAction implements DumbAware {
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.diff.actions.ShowDiffAction.ExtensionProvider");
+
+  public ShowDiffAction() {
+    super(EP_NAME);
   }
 }

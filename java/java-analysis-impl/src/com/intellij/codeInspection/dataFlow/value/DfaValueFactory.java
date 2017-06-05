@@ -16,10 +16,12 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiMember;
+import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
+import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
   private final List<DfaValue> myValues = ContainerUtil.newArrayList();
@@ -57,8 +63,17 @@ public class DfaValueFactory {
     return myHonorFieldInitializers;
   }
 
-  public boolean isUnknownMembersAreNullable() {
-    return myUnknownMembersAreNullable;
+  private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
+    or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
+
+
+  @NotNull
+  public Nullness suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
+    if (myUnknownMembersAreNullable && MEMBER_OR_METHOD_PARAMETER.accepts(member) && AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
+      return Nullness.NULLABLE;
+    }
+    
+    return Nullness.UNKNOWN;
   }
 
   @NotNull

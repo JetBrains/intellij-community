@@ -317,7 +317,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(CommonActionsManager.getInstance().createExportToTextFileAction(new DependenciesExporterToTextFile()));
     group.add(new ContextHelpAction("dependency.viewer.tool.window"));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PackageDependencies", group, true);
     return toolbar.getComponent();
   }
 

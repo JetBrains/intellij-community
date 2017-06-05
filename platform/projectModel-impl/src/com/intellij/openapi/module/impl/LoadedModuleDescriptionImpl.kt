@@ -15,14 +15,14 @@
  */
 package com.intellij.openapi.module.impl
 
+import com.intellij.openapi.module.LoadedModuleDescription
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.roots.ModuleRootManager
 
 /**
  * @author nik
  */
-class LoadedModuleDescription(private val module: Module): ModuleDescription {
+class LoadedModuleDescriptionImpl(override val module: Module): LoadedModuleDescription {
   override val name: String
     get() = module.name
 

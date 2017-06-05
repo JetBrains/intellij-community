@@ -35,11 +35,9 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.MatchPredicateProvider;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
@@ -523,7 +521,7 @@ public class PatternCompiler {
     if (handler.getPredicate()==null) {
       handler.setPredicate(predicate);
     } else {
-      handler.setPredicate(new BinaryPredicate(handler.getPredicate(), predicate, false));
+      handler.setPredicate(new AndPredicate(handler.getPredicate(), predicate));
     }
   }
 }

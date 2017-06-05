@@ -143,7 +143,7 @@ public class UIUtil {
     NamedScriptableDefinition namedScriptableDefinition = options == null ? null : options.getVariableConstraint(varname);
 
     final ReplacementVariableDefinition replacementVariableDefinition =
-      config instanceof ReplaceConfiguration ? ((ReplaceConfiguration)config).getOptions().getVariableDefinition(varname) : null;
+      config instanceof ReplaceConfiguration ? ((ReplaceConfiguration)config).getReplaceOptions().getVariableDefinition(varname) : null;
     if (replacementVariableDefinition != null) namedScriptableDefinition = replacementVariableDefinition;
 
     return getShortParamString(namedScriptableDefinition);

@@ -152,7 +152,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     group.add(new FilterAction());
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_ALL));
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COLLAPSE_ALL));
-    group.add(ActionManager.getInstance().getAction("Diff.UpdatedFiles"));
+    group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON));
   }
 
   protected JComponent createCenterPanel() {

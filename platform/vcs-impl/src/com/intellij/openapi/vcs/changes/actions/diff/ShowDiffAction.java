@@ -19,13 +19,8 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -40,9 +35,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ShowDiffAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(ShowDiffAction.class);
+public class ShowDiffAction implements AnActionExtensionProvider {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return true;
+  }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -66,6 +65,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return false;
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
@@ -110,7 +110,8 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
     if (needsConversion) {
       ChangeListManager.getInstance(project).invokeAfterUpdate(performer, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
-                                                               ActionsBundle.actionText("ChangesView.Diff"), ModalityState.current());
+                                                               ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
+                                                               ModalityState.current());
     }
     else {
       performer.run();

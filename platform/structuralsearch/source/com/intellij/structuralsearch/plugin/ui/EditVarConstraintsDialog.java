@@ -369,7 +369,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
-    final ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getOptions();
+    final ReplaceOptions replaceOptions = ((ReplaceConfiguration)configuration).getReplaceOptions();
     final String realVariableName = stripReplacementVarDecoration(varName);
     ReplacementVariableDefinition variableDefinition = replaceOptions.getVariableDefinition(realVariableName);
 
@@ -390,7 +390,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     if (isReplacementVariable(varName)) {
       final ReplacementVariableDefinition definition =
-        ((ReplaceConfiguration)myConfiguration).getOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
+        ((ReplaceConfiguration)myConfiguration).getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
 
       restoreScriptCode(definition);
       setSearchConstraintsVisible(false);

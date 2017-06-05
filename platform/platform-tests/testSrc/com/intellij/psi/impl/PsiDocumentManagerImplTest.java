@@ -37,6 +37,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -791,6 +795,33 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     PsiFile file2 = getPsiManager().findFile(virtualFile);
     assertEquals(PlainTextLanguage.INSTANCE, file2.getLanguage());
+  }
+
+  public void testAsyncCommitHappensInProgressStartedFromTransaction() throws IOException {
+    PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    Document document = file.getViewProvider().getDocument();
+
+    Semaphore semaphore = new Semaphore(1);
+    TransactionGuard.submitTransaction(getTestRootDisposable(), () -> {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        document.insertString(0, "x");
+
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, "Title", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            getPsiDocumentManager().commitAndRunReadAction(() -> semaphore.up());
+          }
+        }, new ProgressWindow(false, myProject));
+      });
+    });
+    int iteration = 0;
+    while (!semaphore.waitFor(10)) {
+      UIUtil.dispatchAllInvocationEvents();
+      if (++iteration > 3000) {
+        printThreadDump();
+        fail("Couldn't wait for commit");
+      }
+    }
   }
 
   private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {

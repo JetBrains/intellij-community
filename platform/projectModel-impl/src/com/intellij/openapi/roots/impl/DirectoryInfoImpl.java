@@ -34,9 +34,10 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   protected final boolean myInLibrarySource;
   protected final boolean myExcluded;
   private final byte mySourceRootTypeId;
+  private final String myUnloadedModuleName;
 
   DirectoryInfoImpl(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot, VirtualFile libraryClassRoot,
-                    boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, int sourceRootTypeId) {
+                    boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, int sourceRootTypeId, @Nullable String unloadedModuleName) {
     myRoot = root;
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
@@ -45,6 +46,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     myInModuleSource = inModuleSource;
     myInLibrarySource = inLibrarySource;
     myExcluded = isExcluded;
+    myUnloadedModuleName = unloadedModuleName;
     if (sourceRootTypeId > MAX_ROOT_TYPE_ID) {
       throw new IllegalArgumentException(
         "Module source root type id " + sourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
@@ -133,6 +135,11 @@ public class DirectoryInfoImpl extends DirectoryInfo {
 
   public int getSourceRootTypeId() {
     return mySourceRootTypeId;
+  }
+
+  @Override
+  public String getUnloadedModuleName() {
+    return myUnloadedModuleName;
   }
 
   @NotNull

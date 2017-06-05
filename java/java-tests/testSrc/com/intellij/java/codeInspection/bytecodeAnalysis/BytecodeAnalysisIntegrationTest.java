@@ -156,8 +156,8 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     setUpExternalUpAnnotations();
     openDecompiledClass("java.lang.Boolean");
     checkHasGutter("<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "@org.jetbrains.annotations.Contract(&quot;null-&gt;false&quot;)&nbsp;\n" +
-                   "private static&nbsp;boolean&nbsp;<b>toBoolean</b>(@org.jetbrains.annotations.Nullable&nbsp;String&nbsp;var0)</html>");
+                   "@Contract(&quot;null-&gt;false&quot;)&nbsp;\n" +
+                   "private static&nbsp;boolean&nbsp;<b>toBoolean</b>(@Nullable&nbsp;String&nbsp;var0)</html>");
   }
 
   private void checkHasGutter(String expectedText) {

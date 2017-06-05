@@ -1036,20 +1036,20 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NotNull
   public static List<TextFilePatch> loadPatches(Project project,
                                                 final String patchPath,
-                                                CommitContext commitContext) throws IOException, PatchSyntaxException {
+                                                @Nullable CommitContext commitContext) throws IOException, PatchSyntaxException {
     return loadPatches(project, patchPath, commitContext, true);
   }
 
   @NotNull
   static List<? extends FilePatch> loadPatchesWithoutContent(Project project,
                                                              final String patchPath,
-                                                             CommitContext commitContext) throws IOException, PatchSyntaxException {
+                                                             @Nullable CommitContext commitContext) throws IOException, PatchSyntaxException {
     return loadPatches(project, patchPath, commitContext, false);
   }
 
   private static List<TextFilePatch> loadPatches(Project project,
                                                  final String patchPath,
-                                                 CommitContext commitContext,
+                                                 @Nullable CommitContext commitContext,
                                                  boolean loadContent) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath), CharsetToolkit.UTF8);
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text), loadContent);

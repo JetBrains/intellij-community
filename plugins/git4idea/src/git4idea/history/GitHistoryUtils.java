@@ -41,6 +41,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -718,8 +719,8 @@ public class GitHistoryUtils {
     }
     final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
-      collectDetails(project, root, true, false, record -> {
-        GitCommit commit = createCommit(project, root, record, factory);
+      collectMetadata(project, root, record -> {
+        GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
           if (!refs.add(ref)) {
@@ -745,7 +746,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return collectDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
+    return collectFullDetails(project, root, parameters);
   }
 
   @NotNull
@@ -770,7 +771,7 @@ public class GitHistoryUtils {
     if (withChanges) {
       h.addParameters("-M", /*find and report renames*/
                       "--name-status",
-                      "-c" /*single diff for merge commits, only showing files that were modified from both parents*/);
+                      "-m" /*merge commits show diff with all parents (ie for merge with 3 parents we are going to have 3 separate entries, one for each parent)*/);
     }
     h.endOptions();
 
@@ -778,17 +779,15 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static <T> List<T> collectDetails(@NotNull Project project,
-                                           @NotNull VirtualFile root,
-                                           boolean withRefs,
-                                           boolean withChanges,
-                                           @NotNull NullableFunction<GitLogRecord, T> converter,
-                                           String... parameters) throws VcsException {
+  public static List<VcsCommitMetadata> collectMetadata(@NotNull Project project,
+                                                        @NotNull VirtualFile root,
+                                                        @NotNull NullableFunction<GitLogRecord, VcsCommitMetadata> converter,
+                                                        String... parameters) throws VcsException {
 
-    List<T> commits = ContainerUtil.newArrayList();
+    List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+      loadRecords(project, root, true, false, record -> commits.add(converter.fun(record)), parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -800,26 +799,49 @@ public class GitHistoryUtils {
     return commits;
   }
 
-  public static void loadDetails(@NotNull Project project,
-                                 @NotNull VirtualFile root,
-                                 @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                                 @NotNull String... parameters) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return;
-    }
+  @NotNull
+  public static List<GitCommit> collectFullDetails(@NotNull Project project,
+                                                   @NotNull VirtualFile root,
+                                                   String... parameters) throws VcsException {
 
-    loadDetails(project, root, false, true, record -> commitConsumer.consume(createCommit(project, root, record, factory)), parameters);
+    List<GitCommit> commits = ContainerUtil.newArrayList();
+    try {
+      loadDetails(project, root, commits::add, parameters);
+    }
+    catch (VcsException e) {
+      if (commits.isEmpty()) {
+        throw e;
+      }
+      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
+    }
+    return commits;
   }
 
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
+                                 @NotNull Consumer<? super GitCommit> commitConsumer,
+                                 @NotNull String... parameters) throws VcsException {
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    RecordCollector recordCollector = new RecordCollector(project, root) {
+      @Override
+      public void consume(@NotNull List<GitLogRecord> records) {
+        commitConsumer.consume(createCommit(project, root, records, factory));
+      }
+    };
+    loadRecords(project, root, false, true, recordCollector, parameters);
+    recordCollector.finish();
+  }
+
+  public static void loadRecords(@NotNull Project project,
+                                 @NotNull VirtualFile root,
                                  boolean withRefs,
                                  boolean withChanges,
                                  @NotNull Consumer<GitLogRecord> converter,
-                                 String... parameters)
-    throws VcsException {
-
+                                 String... parameters) throws VcsException {
     List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
                                     Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
@@ -852,18 +874,19 @@ public class GitHistoryUtils {
     if (!parseError.isNull()) {
       throw new VcsException(parseError.get());
     }
-
     sw.report();
   }
 
   @NotNull
-  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLogRecord record,
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
                                         @NotNull VcsLogObjectsFactory factory) {
+    GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
     List<Hash> parents = getParentHashes(factory, record);
+
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         record.getStatusInfos());
+                         ContainerUtil.map(records, GitLogRecord::getStatusInfos));
   }
 
   @NotNull
@@ -919,6 +942,108 @@ public class GitHistoryUtils {
     }
     else {
       return GitRevisionNumber.resolve(project, root, output);
+    }
+  }
+
+  /*
+   * This class collects records for one commit and sends them together for processing.
+   * It also deals with problems with `-m` flag, when `git log` does not provide empty records when a commit is not different from one of the parents.
+   */
+  private static abstract class RecordCollector implements Consumer<GitLogRecord> {
+    @NotNull private final Project myProject;
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
+
+    protected RecordCollector(@NotNull Project project, @NotNull VirtualFile root) {
+      myProject = project;
+      myRoot = root;
+    }
+
+    @Override
+    public void consume(@NotNull GitLogRecord record) {
+      String[] parents = record.getParentsHashes();
+      if (parents.length <= 1) {
+        consume(Collections.singletonList(record));
+      }
+      else {
+        myHashToRecord.putValue(record.getHash(), record);
+        if (parents.length == myHashToRecord.get(record.getHash()).size()) {
+          processCollectedRecords();
+        }
+      }
+    }
+
+    private void processCollectedRecords() {
+      // there is a surprising (or not really surprising, depending how to look at it) problem with `-m` option
+      // despite what is written in git-log documentation, it does not always output a record for each parent of a merge commit
+      // if a merge commit has no changes with one of the parents, nothing is output for that parent
+      // there is no way of knowing which parent it is just from git-log output
+      // if we did not use custom pretty format, line `from <hash>` would appear in the record header
+      // but we use, so there is no hash in the record header
+      // and there is no format option to display it
+      // so the solution is to run another git log command and get tree hashes for all participating commits
+      // tree hashes allow to determine, which parent of the commit in question is the same as the commit itself and create an empty record for it
+      for (String hash : myHashToRecord.keySet()) {
+        ArrayList<GitLogRecord> records = ContainerUtil.newArrayList(notNull(myHashToRecord.get(hash)));
+        GitLogRecord firstRecord = records.get(0);
+        if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
+          if (!fillWithEmptyRecords(records)) continue; // skipping commit altogether on error
+        }
+        consume(records);
+      }
+      myHashToRecord.clear();
+    }
+
+    public void finish() {
+      processCollectedRecords();
+    }
+
+    public abstract void consume(@NotNull List<GitLogRecord> records);
+
+    /*
+       * This method calculates tree hashes for a commit and its parents and places an empty record for parents that have same tree hash.
+       */
+    private boolean fillWithEmptyRecords(@NotNull List<GitLogRecord> records) {
+      GitLogRecord firstRecord = records.get(0);
+      String commit = firstRecord.getHash();
+      String[] parents = firstRecord.getParentsHashes();
+
+      List<String> hashes = ContainerUtil.newArrayList(parents);
+      hashes.add(commit);
+
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+      GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
+      handler.setStdoutSuppressed(true);
+      handler.addParameters(parser.getPretty());
+      handler.addParameters(formHashParameters(notNull(GitVcs.getInstance(myProject)), hashes));
+      handler.endOptions();
+
+      try {
+        String output = handler.run();
+
+        List<GitLogRecord> hashAndTreeRecords = parser.parse(output);
+        Map<String, String> hashToTreeMap = ContainerUtil.map2Map(hashAndTreeRecords,
+                                                                  record -> Pair.create(record.getHash(), record.getTreeHash()));
+        String commitTreeHash = hashToTreeMap.get(commit);
+        LOG.assertTrue(commitTreeHash != null, "Could not get tree hash for commit " + commit);
+
+        for (int parentIndex = 0; parentIndex < parents.length; parentIndex++) {
+          String parent = parents[parentIndex];
+          // sometimes a merge commit is identical to all its parents
+          // in this case, we get one empty record
+          String parentTreeHash = hashToTreeMap.get(parent);
+          LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
+          if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
+            records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), ContainerUtil.emptyList(),
+                                                      firstRecord.isSupportsRawBody()));
+          }
+        }
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+        return false;
+      }
+      return true;
     }
   }
 

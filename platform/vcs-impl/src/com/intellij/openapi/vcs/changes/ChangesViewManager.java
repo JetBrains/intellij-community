@@ -73,7 +73,6 @@ import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -83,7 +82,7 @@ import static java.util.stream.Collectors.toList;
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
-  public static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
+  private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
   private JPanel myProgressLabel;
@@ -176,7 +175,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
     EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
+    EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
     DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewToolbar");
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
@@ -478,9 +477,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private class ToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      super.setSelected(e, state);
-      assertNotNull(mySplitterComponent).setDetailsOn(state);
+      mySplitterComponent.setDetailsOn(state);
       VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
   }
 

@@ -207,7 +207,10 @@ public class RootIndex {
     }
     for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
-        ContainerUtil.addIfNotNull(info.excludedFromProject, pointer.getFile());
+        VirtualFile contentRoot = pointer.getFile();
+        if (contentRoot != null) {
+          info.contentRootOfUnloaded.put(contentRoot, description.getName());
+        }
       }
     }
     return info;
@@ -563,6 +566,7 @@ public class RootIndex {
     @NotNull final Set<VirtualFile> libraryOrSdkSources = ContainerUtil.newHashSet();
     @NotNull final Set<VirtualFile> libraryOrSdkClasses = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
+    @NotNull final Map<VirtualFile, String> contentRootOfUnloaded = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<>();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
@@ -578,6 +582,7 @@ public class RootIndex {
       LinkedHashSet<VirtualFile> result = ContainerUtil.newLinkedHashSet();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());
+      result.addAll(contentRootOfUnloaded.keySet());
       result.addAll(excludedFromLibraries.keySet());
       result.addAll(excludedFromModule.keySet());
       result.addAll(excludedFromProject);
@@ -604,7 +609,7 @@ public class RootIndex {
         if (module != null && (excludedFrom != module || underExcludedSourceRoot && sourceRootOwners.contains(module))) {
           return root;
         }
-        if (excludedFrom != null || excludedFromProject.contains(root)) {
+        if (excludedFrom != null || excludedFromProject.contains(root) || contentRootOfUnloaded.containsKey(root)) {
           if (sourceRootOwners != null) {
             underExcludedSourceRoot = true;
           }
@@ -643,7 +648,7 @@ public class RootIndex {
     @Nullable
     private VirtualFile findNearestContentRootForExcluded(@NotNull List<VirtualFile> hierarchy) {
       for (VirtualFile root : hierarchy) {
-        if (contentRootOf.containsKey(root)) {
+        if (contentRootOf.containsKey(root) || contentRootOfUnloaded.containsKey(root)) {
           return root;
         }
       }
@@ -809,15 +814,16 @@ public class RootIndex {
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
     Module module = info.contentRootOf.get(nearestContentRoot);
+    String unloadedModuleName = info.contentRootOfUnloaded.get(nearestContentRoot);
     FileTypeAssocTable<Boolean> contentExcludePatterns = moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
     FileTypeAssocTable<Boolean> libraryExcludePatterns = getLibraryExclusionPatterns(librarySourceRootInfo);
 
     DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExcludePatterns != null
                                   ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, libraryClassRoot,
                                                                          inModuleSources, inLibrarySource, !inProject, typeId,
-                                                                         contentExcludePatterns, libraryExcludePatterns)
+                                                                         contentExcludePatterns, libraryExcludePatterns, unloadedModuleName)
                                   : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources,
-                                                          inLibrarySource, !inProject, typeId);
+                                                          inLibrarySource, !inProject, typeId, unloadedModuleName);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 

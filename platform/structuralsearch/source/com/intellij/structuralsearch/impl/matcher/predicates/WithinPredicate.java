@@ -25,7 +25,6 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 
@@ -58,7 +57,7 @@ public class WithinPredicate extends MatchPredicate {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
     final List<MatchResult> results = matcher.matchByDownUp(matchedNode, myMatchOptions);
     for (MatchResult result : results) {
       if (PsiTreeUtil.isAncestor(result.getMatch(), matchedNode, false)) {

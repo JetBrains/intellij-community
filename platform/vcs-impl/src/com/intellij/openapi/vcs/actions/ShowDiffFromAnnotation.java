@@ -17,9 +17,9 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.icons.AllIcons;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -62,9 +62,7 @@ class ShowDiffFromAnnotation extends DumbAwareAction implements UpToDateLineNumb
   private boolean myEnabled;
 
   ShowDiffFromAnnotation(final FileAnnotation fileAnnotation, final AbstractVcs vcs, final VirtualFile file) {
-    super(ActionsBundle.message("action.Diff.UpdatedFiles.text"),
-          ActionsBundle.message("action.Diff.UpdatedFiles.description"),
-          AllIcons.Actions.Diff);
+    ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     myFileAnnotation = fileAnnotation;
     myVcs = vcs;
     myFile = file;

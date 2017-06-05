@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -125,7 +124,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount,
-                                                            final Consumer<GitCommittedChangeList> consumer)
+                                       final Consumer<GitCommittedChangeList> consumer)
     throws VcsException {
     GitRepositoryLocation l = (GitRepositoryLocation)location;
     final Long beforeRev = settings.getChangeBeforeFilter();
@@ -187,9 +186,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }
     VirtualFile root = repository.getRoot();
 
-    List<VcsFullCommitDetails> gitCommits = ContainerUtil.newArrayList();
-    GitHistoryUtils.loadDetails(myProject, root, gitCommits::add,
-                                GitHistoryUtils.formHashParameters(repository.getVcs(), Collections.singleton(number.asString())));
+    String[] hashParameters = GitHistoryUtils.formHashParameters(repository.getVcs(), Collections.singleton(number.asString()));
+    List<GitCommit> gitCommits = GitHistoryUtils.collectFullDetails(myProject, root, hashParameters);
     if (gitCommits.size() != 1) {
       return null;
     }

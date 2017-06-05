@@ -92,7 +92,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     myContextSet = contextSet;
   }
 
-  static JavaValue create(JavaValue parent,
+  public static JavaValue create(JavaValue parent,
                           @NotNull ValueDescriptorImpl valueDescriptor,
                           @NotNull EvaluationContextImpl evaluationContext,
                           NodeManagerImpl nodeManager,
@@ -365,11 +365,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void setRemaining(int remaining) {
-            node.tooManyChildren(remaining);
-          }
-
-          @Override
           public void initChildrenArrayRenderer(ArrayRenderer renderer) {
             renderer.START_INDEX = myCurrentChildrenStart;
             renderer.END_INDEX = myCurrentChildrenStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
@@ -407,6 +402,36 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                                  @NotNull SimpleTextAttributes attributes,
                                  @Nullable XDebuggerTreeNodeHyperlink link) {
             node.setMessage(message, icon, attributes, link);
+          }
+
+          @Override
+          public void addChildren(@NotNull XValueChildrenList children, boolean last) {
+            node.addChildren(children, last);
+          }
+
+          @Override
+          public void tooManyChildren(int remaining) {
+            node.tooManyChildren(remaining);
+          }
+
+          @Override
+          public void setAlreadySorted(boolean alreadySorted) {
+            node.setAlreadySorted(alreadySorted);
+          }
+
+          @Override
+          public void setErrorMessage(@NotNull String errorMessage) {
+            node.setErrorMessage(errorMessage);
+          }
+
+          @Override
+          public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
+            node.setErrorMessage(errorMessage, link);
+          }
+
+          @Override
+          public boolean isObsolete() {
+            return node.isObsolete();
           }
         }, myEvaluationContext);
       }

@@ -22,7 +22,6 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
 
@@ -94,11 +93,10 @@ public final class RegExpPredicate extends MatchPredicate {
    * @return true if matching was successful and false otherwise
    */
   @Override
-  public boolean match(PsiElement node, PsiElement matchedNode, int start, int end, MatchContext context) {
+  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
     if (matchedNode==null) return false;
-    String text;
 
-    text = myNodeTextGenerator != null ? myNodeTextGenerator.getText(matchedNode) : getMeaningfulText(matchedNode);
+    String text = myNodeTextGenerator != null ? myNodeTextGenerator.getText(matchedNode) : getMeaningfulText(matchedNode);
 
     boolean result = doMatch(text, start, end, context, matchedNode);
 
@@ -118,11 +116,6 @@ public final class RegExpPredicate extends MatchPredicate {
   public static String getMeaningfulText(PsiElement matchedNode) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(matchedNode);
     return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
-  }
-
-  @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return match(patternNode,matchedNode,0,-1,context);
   }
 
   boolean doMatch(String text, MatchContext context, PsiElement matchedElement) {

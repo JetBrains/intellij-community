@@ -211,9 +211,9 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result;
   }
 
-  private ActionToolbar createRevisionsToolbar(ActionGroup actions) {
+  private static ActionToolbar createRevisionsToolbar(ActionGroup actions) {
     ActionManager am = ActionManager.getInstance();
-    return am.createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    return am.createActionToolbar("HistoryDialogRevisions", actions, true);
   }
 
   private ActionGroup createRevisionsActions() {

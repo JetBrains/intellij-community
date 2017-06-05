@@ -59,7 +59,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.*;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
@@ -152,6 +152,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       myIndexStorage.trigrams.update(index, detail);
       myIndexStorage.users.update(index, detail);
       myIndexStorage.paths.update(index, detail);
+      myIndexStorage.parents.put(index, ContainerUtil.map(detail.getParents(), p -> myStorage.getCommitIndex(p, detail.getRoot())));
+      // we know the whole graph without timestamps now
 
       myIndexStorage.commits.put(index);
     }
@@ -167,6 +169,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myIndexStorage.trigrams.flush();
         myIndexStorage.users.flush();
         myIndexStorage.paths.flush();
+        myIndexStorage.parents.force();
         myIndexStorage.commits.flush();
       }
     }
@@ -391,9 +394,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final String INPUTS = "inputs";
     private static final String COMMITS = "commits";
     private static final String MESSAGES = "messages";
+    private static final String PARENTS = "parents";
     private static final int MESSAGES_VERSION = 0;
     @NotNull public final PersistentSet<Integer> commits;
     @NotNull public final PersistentMap<Integer, String> messages;
+    @NotNull public final PersistentMap<Integer, List<Integer>> parents;
     @NotNull public final VcsLogMessagesTrigramIndex trigrams;
     @NotNull public final VcsLogUserIndex users;
     @NotNull public final VcsLogPathsIndex paths;
@@ -422,6 +427,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, disposable);
         users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, disposable);
         paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, disposable);
+
+        File parentsStorage = getStorageFile(INDEX, PARENTS, logId, getVersion(), true);
+        parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
+                                          new IntListDataExternalizer(), Page.PAGE_SIZE, getVersion());
+        Disposer.register(disposable, () -> catchAndWarn(parents::close));
       }
       catch (Throwable t) {
         Disposer.dispose(disposable);

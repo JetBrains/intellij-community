@@ -28,10 +28,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -39,7 +36,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -77,18 +73,25 @@ import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.cre
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class DiffShelvedChangesAction extends AnAction implements DumbAware {
-
+public class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
   private static final String DIFF_WITH_BASE_ERROR = "Base content not found or not applicable.";
   public static final String SHELVED_VERSION = "Shelved Version";
   public static final String BASE_VERSION = "Base Version";
   public static final String CURRENT_VERSION = "Current Version";
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY) != null ||
+           e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     showShelvedChangesDiff(e.getDataContext());
   }
 
@@ -178,7 +181,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     final String base = project.getBasePath();
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader(project);
-
+    final CommitContext commitContext = new CommitContext();
     for (final ShelvedChange shelvedChange : changesFromFirstList) {
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
@@ -197,7 +200,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
             throws DiffRequestProducerException, ProcessCanceledException {
             try {
-              TextFilePatch patch = preloader.getPatch(shelvedChange, new CommitContext());
+              TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
               PatchDiffRequest patchDiffRequest =
                 new PatchDiffRequest(createAppliedTextPatch(patch), getName(), VcsBundle.message("patch.apply.conflict.patch"));
               DiffUtil.addNotification(createNotification("Cannot find local file for '" + chooseNotNull(beforePath, afterPath) + "'"),
@@ -222,10 +225,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           }
           if (isNewFile) return createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
 
-          final CommitContext commitContext;
           final TextFilePatch patch;
           try {
-            commitContext = new CommitContext();
             patch = preloader.getPatch(shelvedChange, commitContext);
           }
           catch (VcsException e) {
@@ -244,7 +245,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           DiffContentFactory contentFactory = DiffContentFactory.getInstance();
           DiffContent leftContent = withLocal
                                     ? contentFactory.create(project, file)
-                                    : contentFactory.create(project, patch.getSingleHunkPatchText());
+                                    : contentFactory.create(project, patch.getSingleHunkPatchText(), file);
           return new SimpleDiffRequest(getName(), leftContent,
                                        contentFactory.createEmpty(),
                                        withLocal ? CURRENT_VERSION : SHELVED_VERSION, null);
@@ -268,8 +269,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
             DiffContentFactory contentFactory = DiffContentFactory.getInstance();
             DiffContent leftContent = withLocal
                                       ? contentFactory.create(project, file)
-                                      : contentFactory.create(project, assertNotNull(texts.getBase()));
-            return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(project, texts.getPatched()),
+                                      : contentFactory.create(project, assertNotNull(texts.getBase()), file);
+            return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(project, texts.getPatched(), file),
                                          withLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
           }
           else {
@@ -307,7 +308,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
 
     @NotNull
     @CalledInBackground
-    public TextFilePatch getPatch(final ShelvedChange shelvedChange, @NotNull CommitContext commitContext) throws VcsException {
+    public TextFilePatch getPatch(final ShelvedChange shelvedChange, @Nullable CommitContext commitContext) throws VcsException {
       String patchPath = shelvedChange.getPatchPath();
       if (getInfoFromCache(patchPath) == null || isPatchFileChanged(patchPath)) {
         readFilePatchAndUpdateCaches(patchPath, commitContext);
@@ -333,7 +334,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       }
     }
 
-    private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @NotNull CommitContext commitContext) throws VcsException {
+    private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @Nullable CommitContext commitContext) throws VcsException {
       try {
         myLock.writeLock().lock();
         myFilePatchesMap.put(patchPath, new PatchInfo(ShelveChangesManager.loadPatches(myProject, patchPath, commitContext),

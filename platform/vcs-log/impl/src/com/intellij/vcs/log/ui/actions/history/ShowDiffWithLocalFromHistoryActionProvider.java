@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.actions.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -27,7 +28,18 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowDiffWithLocalFromHistoryAction extends FileHistorySingleCommitAction {
+public class ShowDiffWithLocalFromHistoryActionProvider extends FileHistorySingleCommitAction implements AnActionExtensionProvider {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    e.getPresentation().setDescription("Compare selected revision with the local version of the file");
+  }
 
   @Override
   protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {

@@ -79,6 +79,10 @@
       <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
     </action>
 
+    <action id="IntroduceFunctionalVariable" class="com.intellij.refactoring.actions.IntroduceFunctionalVariableAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceFunctionalParameter"/>
+    </action>
+
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>

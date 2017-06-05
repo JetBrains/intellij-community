@@ -56,13 +56,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.ExceptionEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -577,9 +581,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     @Override
-    public void setRemaining(int remaining) {}
-
-    @Override
     public void initChildrenArrayRenderer(ArrayRenderer renderer) {}
 
     @Override
@@ -590,6 +591,38 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         }
       }
       updateUI(false);
+    }
+
+    @Override
+    public void addChildren(@NotNull XValueChildrenList children, boolean last) {
+    }
+
+    @Override
+    public void tooManyChildren(int remaining) {
+    }
+
+    @Override
+    public void setAlreadySorted(boolean alreadySorted) {
+    }
+
+    @Override
+    public void setErrorMessage(@NotNull String errorMessage) {
+    }
+
+    @Override
+    public void setErrorMessage(@NotNull String errorMessage, @Nullable XDebuggerTreeNodeHyperlink link) {
+    }
+
+    @Override
+    public void setMessage(@NotNull String message,
+                           @Nullable Icon icon,
+                           @NotNull SimpleTextAttributes attributes,
+                           @Nullable XDebuggerTreeNodeHyperlink link) {
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return false;
     }
   }
 
