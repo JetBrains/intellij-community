@@ -146,6 +146,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
         if (selectNext) {
           ((IpnbFilePanel)parent).selectNext(this, true);
         }
+        ((IpnbFilePanel)parent).revalidateAndRepaint();
       }
     }
   }
@@ -286,5 +287,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   public JTextArea getEditableTextArea() {
     return myEditableTextArea;
+  }
+
+  public void dispose() {
+    removeAll();
   }
 }

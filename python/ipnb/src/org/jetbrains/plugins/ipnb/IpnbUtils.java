@@ -55,7 +55,7 @@ public class IpnbUtils {
 
   public static JComponent createHtmlPanel(@NotNull final String source, int width, IpnbFilePanel parent) {
     if (hasFx()) {
-      return IpnbJfxUtils.createHtmlPanel(source, width, parent);
+      return IpnbJfxUtils.createHtmlPanel(source, width);
     }
     return createNonJfxPanel(source);
   }
