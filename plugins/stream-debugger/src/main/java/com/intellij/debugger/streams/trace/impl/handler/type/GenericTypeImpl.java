@@ -25,6 +25,7 @@ import java.util.Objects;
 public class GenericTypeImpl implements GenericType {
   private final String myPrimitiveName;
   private final String myGenericName;
+  private final String myDefaultValue;
 
   @Override
   public int hashCode() {
@@ -45,9 +46,10 @@ public class GenericTypeImpl implements GenericType {
     return false;
   }
 
-  GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName) {
+  GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName, @NotNull String defaultValue) {
     myPrimitiveName = primitiveName;
     myGenericName = genericName;
+    myDefaultValue = defaultValue;
   }
 
   @NotNull
@@ -60,5 +62,11 @@ public class GenericTypeImpl implements GenericType {
   @Override
   public String getGenericTypeName() {
     return myGenericName;
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultValue() {
+    return myDefaultValue;
   }
 }

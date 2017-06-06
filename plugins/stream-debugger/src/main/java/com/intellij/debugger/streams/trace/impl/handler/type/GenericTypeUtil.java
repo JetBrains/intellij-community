@@ -20,6 +20,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -52,7 +53,8 @@ public class GenericTypeUtil {
     return new ClassTypeImpl(TypeConversionUtil.erasure(type).getCanonicalText());
   }
 
-  public static boolean isOptional(@NotNull GenericType type) {
+  @Contract(pure = true)
+  private static boolean isOptional(@NotNull GenericType type) {
     return OPTIONAL_TYPES.contains(type);
   }
 
