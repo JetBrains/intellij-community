@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -29,9 +25,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author max
+ */
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
-  @Nullable
-  private final ProjectFileIndex myIndex;
+  private final @Nullable ProjectFileIndex myIndex;
 
   public JavaSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
     super(delegate);
@@ -57,5 +55,4 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     return myIndex.isInSourceContent(file) ||
            myBaseScope.isForceSearchingInLibrarySources() && myIndex.isInLibrarySource(file);
   }
-
 }
