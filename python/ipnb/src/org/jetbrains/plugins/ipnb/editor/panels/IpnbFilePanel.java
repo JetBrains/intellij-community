@@ -75,6 +75,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private final List<IpnbEditablePanel> myIpnbPanels = Lists.newArrayList();
 
   @Nullable private IpnbEditablePanel mySelectedCellPanel;
+  private int mySelectedIndex;
   private IpnbEditablePanel myBufferPanel;
   private int myInitialSelection = 0;
   private boolean mySynchronize;
@@ -161,6 +162,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       myIpnbFile = IpnbParser.parseIpnbFile(myDocument, myVirtualFile);
       myIpnbPanels.clear();
       mySelectedCellPanel = null;
+      mySelectedIndex = -1;
       if (myIpnbFile.getCells().isEmpty()) {
         CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
           createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
@@ -689,6 +691,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
     else {
       mySelectedCellPanel = null;
+      mySelectedIndex = -1;
       repaint();
     }
   }
@@ -731,6 +734,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       mySelectedCellPanel.setEditing(false);
     }
     mySelectedCellPanel = ipnbPanel;
+    mySelectedIndex = myIpnbPanels.indexOf(ipnbPanel);
     myQueue.queue(new Update("Jupyter.Repaint", HIGH_PRIORITY) {
       @Override
       public void run() {
@@ -759,9 +763,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public int getSelectedIndex() {
-    final IpnbEditablePanel selectedCellPanel = getSelectedCellPanel();
-    final int selectedIndex = myIpnbPanels.indexOf(selectedCellPanel);
-    return selectedIndex == -1 ? myInitialSelection : selectedIndex;
+    return mySelectedIndex == -1 ? myInitialSelection : mySelectedIndex;
   }
 
   @Nullable
