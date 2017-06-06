@@ -38,7 +38,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 @State(
-  name = "ToolbarClicksCollector",
+  name = "ShortcutsCollector",
   storages = @Storage(value = "statistics.shortcuts.xml", roamingType = RoamingType.DISABLED)
 )
 public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCollector.MyState> {
