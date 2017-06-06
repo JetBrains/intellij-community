@@ -171,7 +171,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     }
     else {
       final String resultArrayType = resultType.getVariableTypeName() + "[]";
-      additionalDeclarations = resultArrayType + " evaluationResult = new " + resultType.getVariableTypeName() +  "[1];" + LINE_SEPARATOR;
+      additionalDeclarations = resultArrayType + " evaluationResult = new " + resultType.getVariableTypeName() + "[] {" + LINE_SEPARATOR +
+                               resultType.getDefaultValue() + LINE_SEPARATOR +
+                               "};" + LINE_SEPARATOR;
       additionalEvaluation = "evaluationResult = new " + resultArrayType + " {" + chain.getText() + "};" + LINE_SEPARATOR;
       resultExpression = "evaluationResult";
     }

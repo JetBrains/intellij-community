@@ -22,23 +22,12 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class OptionalTerminatorHandler implements TraceExpressionBuilderImpl.TerminatorCallTraceHandler {
-  private static final Map<GenericType, String> TYPE_2_DEFAULT_VALUE = new HashMap<>();
-
-  static {
-    TYPE_2_DEFAULT_VALUE.put(GenericType.INT, "0");
-    TYPE_2_DEFAULT_VALUE.put(GenericType.DOUBLE, "0.");
-    TYPE_2_DEFAULT_VALUE.put(GenericType.LONG, "0L");
-    TYPE_2_DEFAULT_VALUE.put(GenericType.OBJECT, "null");
-  }
-
   private final TerminatorHandler myTerminatorHandler;
   private final GenericType myOptionalType;
   private final String myResultExpression;
@@ -77,7 +66,7 @@ public class OptionalTerminatorHandler implements TraceExpressionBuilderImpl.Ter
   private String buildOptionalExpression() {
     final String optionalContentExpression = String.format("new %s[] { %s.orElse(%s)}", myOptionalType.getVariableTypeName(),
                                                            myResultExpression,
-                                                           TYPE_2_DEFAULT_VALUE.get(myOptionalType));
+                                                           myOptionalType.getDefaultValue());
     return String.format("new Object[] { new boolean[] { %s.isPresent() }, %s }", myResultExpression, optionalContentExpression);
   }
 }
