@@ -13,7 +13,7 @@ map
     after: 2
 findAny
     before: 2
-    after: nothing
+    after: 2147483646
 mappings for Stream.of
   direct:
     no
@@ -26,9 +26,9 @@ mappings for map
     1 <- 2
 mappings for findAny
   direct:
-    2 -> nothing
+    2 -> 2147483646
   reverse:
-    empty
+    2 <- 2147483646
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

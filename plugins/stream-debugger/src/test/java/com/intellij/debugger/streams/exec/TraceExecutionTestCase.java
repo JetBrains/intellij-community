@@ -130,6 +130,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+            System.out.println(traceExpression);
             complete(chain, null, message, FailureReason.COMPILATION);
           }
         });
