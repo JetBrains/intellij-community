@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
 import com.intellij.openapi.module.*
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.NaturalComparator
@@ -52,7 +53,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
   private val statusLabel = JBLabel()
 
   init {
-    title = "Load/Unload Modules"
+    title = ProjectBundle.message("module.load.unload.dialog.title")
     loadedModulesTree.fillTree(moduleDescriptions.values.filter { it is LoadedModuleDescriptionImpl })
     loadedModulesTree.selectNodes(selectedModules?.mapTo(HashSet<String>()) { it.name } ?: emptySet<String>())
     unloadedModulesTree.fillTree(moduleDescriptions.values.filter { it is UnloadedModuleDescription })
@@ -61,10 +62,10 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
 
   override fun createCenterPanel(): JComponent? {
     val buttonsPanel = JPanel(VerticalFlowLayout())
-    val moveToUnloadedButton = JButton("Unload >")
-    val moveToLoadedButton = JButton("< Load")
-    val moveAllToUnloadedButton = JButton("Unload All >")
-    val moveAllToLoadedButton = JButton("< Load All")
+    val moveToUnloadedButton = JButton(ProjectBundle.message("module.unload.button.text"))
+    val moveToLoadedButton = JButton(ProjectBundle.message("module.load.button.text"))
+    val moveAllToUnloadedButton = JButton(ProjectBundle.message("module.unload.all.button.text"))
+    val moveAllToLoadedButton = JButton(ProjectBundle.message("module.load.all.button.text"))
     moveToUnloadedButton.addActionListener {
       moveSelectedNodes(loadedModulesTree, unloadedModulesTree)
     }
@@ -84,8 +85,8 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
 
     val gridBag = GridBag().setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 1.0)
     val mainPanel = JPanel(GridBagLayout())
-    mainPanel.add(JBLabel("Loaded modules"), gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
-    mainPanel.add(JBLabel("Unloaded modules"), gridBag.next().next().anchor(GridBagConstraints.WEST))
+    mainPanel.add(JBLabel(ProjectBundle.message("module.loaded.label.text")), gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
+    mainPanel.add(JBLabel(ProjectBundle.message("module.unloaded.label.text")), gridBag.next().next().anchor(GridBagConstraints.WEST))
 
     mainPanel.add(JBScrollPane(loadedModulesTree.tree), gridBag.nextLine().next().weighty(1.0).fillCell())
     mainPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.CENTER))
