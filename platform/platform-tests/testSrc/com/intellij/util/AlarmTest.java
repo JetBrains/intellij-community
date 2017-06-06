@@ -107,7 +107,7 @@ public class AlarmTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    System.out.println("before: "+before.size()+"; after: "+after.size());
+    LOG.debug("before: "+before.size()+"; after: "+after.size());
     assertTrue(after.size() - before.size() < 10);
   }
 
@@ -163,7 +163,7 @@ public class AlarmTest extends PlatformTestCase {
     String s = sb.toString();
     long elapsed = System.currentTimeMillis() - start;
     if (elapsed > delay/2) {
-      System.out.println("No no no no this agent is so overloaded I quit");
+      System.err.println("No no no no this agent is so overloaded I quit");
       return;
     }
     assertEquals(2, alarm.getActiveRequestCount());

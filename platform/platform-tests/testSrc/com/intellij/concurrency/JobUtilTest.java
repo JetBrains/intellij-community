@@ -59,7 +59,7 @@ public class JobUtilTest extends PlatformTestCase {
     long elapsed = System.currentTimeMillis() - start;
     int expected = 2 * (9950 + 50 * 1000) / JobSchedulerImpl.CORES_COUNT;
     String message = "Elapsed: " + elapsed + "; expected: " + expected;
-    System.out.println(message);
+    LOG.debug(message);
     assertTrue(message, elapsed < expected);
   }
 
@@ -119,7 +119,7 @@ public class JobUtilTest extends PlatformTestCase {
       });
       if (exception.get() != null) throw exception.get();
       long finish = System.currentTimeMillis();
-      System.out.println("Elapsed: "+(finish-start)+"ms");
+      LOG.debug("Elapsed: "+(finish-start)+"ms");
       assertEquals(list.size(), COUNT.get());
     }
   }
@@ -137,7 +137,7 @@ public class JobUtilTest extends PlatformTestCase {
         return true;
       });
       long finish = System.currentTimeMillis();
-      System.out.println("Elapsed: "+(finish-start)+"ms");
+      LOG.debug("Elapsed: "+(finish-start)+"ms");
       assertEquals(list.size()*list.size(), COUNT.get());
     }
   }
@@ -192,7 +192,7 @@ public class JobUtilTest extends PlatformTestCase {
       final List<Object> objects = Collections.nCopies(100000000, null);
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
         if (COUNT.incrementAndGet() == 100000) {
-          System.out.println("PCE");
+          LOG.debug("PCE");
           throw new MyException();
         }
         return true;
@@ -208,7 +208,7 @@ public class JobUtilTest extends PlatformTestCase {
     final List<Object> objects = Collections.nCopies(100000000, null);
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
       if (COUNT.incrementAndGet() == 100000) {
-        System.out.println("PCE");
+        LOG.debug("PCE");
         return false;
       }
       return true;
@@ -240,7 +240,7 @@ public class JobUtilTest extends PlatformTestCase {
         success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
           boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ilist, null, false, integer -> {
             if (busySleep(1) == 1000) {
-              System.out.println("PCE");
+              LOG.debug("PCE");
               throw new MyException();
             }
             return true;
@@ -253,7 +253,7 @@ public class JobUtilTest extends PlatformTestCase {
       catch (MyException ignored) {
       }
       long finish = System.currentTimeMillis();
-      System.out.println("Elapsed: "+(finish-start)+"ms");
+      LOG.debug("Elapsed: "+(finish-start)+"ms");
       //assertEquals(list.size()*list.size(), COUNT.get());
       assertFalse(success);
     }
@@ -306,7 +306,7 @@ public class JobUtilTest extends PlatformTestCase {
       return true;
     };
     for (int i=0; i<10/*0*/; i++) {
-      System.out.println("i = " + i);
+      LOG.debug("i = " + i);
       processorCalled.set(0);
       final ProgressIndicator indicator = new EmptyProgressIndicator();
       int N = 10000;
