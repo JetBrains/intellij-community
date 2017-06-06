@@ -244,8 +244,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     public Map<Integer, List<ChangeData>> map(@NotNull VcsFullCommitDetails inputData) {
       Map<Integer, List<ChangeData>> result = new THashMap<>();
 
-      int size = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
-      for (int parent = 0; parent < size; parent++) {
+      // its not exactly parents count since it is very convenient to assume that initial commit has one parent
+      int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
+      for (int parent = 0; parent < parentsCount; parent++) {
         Collection<Couple<String>> moves;
         Collection<String> changedPaths;
         if (inputData instanceof VcsIndexableDetails) {
@@ -273,7 +274,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         });
         getParentPaths(changedPaths).forEach(changedPath -> {
           try {
-            addChangeToResult(result, finalParent, changedPath, null);
+            addChangeToResult(result, finalParent, parentsCount, changedPath, null);
           }
           catch (IOException e) {
             myFatalErrorConsumer.consume(e);
@@ -281,7 +282,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         });
         moves.forEach(renamedPaths -> {
           try {
-            addChangeToResult(result, finalParent, renamedPaths.second, renamedPaths.first);
+            addChangeToResult(result, finalParent, parentsCount, renamedPaths.second, renamedPaths.first);
           }
           catch (IOException e) {
             myFatalErrorConsumer.consume(e);
@@ -289,48 +290,54 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
         });
       }
 
-      for (int pathId : result.keySet()) {
-        fillDataWithNulls(result, size, pathId);
-      }
-
       return result;
     }
 
-    private void addChangeToResult(@NotNull Map<Integer, List<ChangeData>> result, int parent,
-                                   @NotNull String afterPath, @Nullable String beforePath) throws IOException {
+    private void addChangeToResult(@NotNull Map<Integer, List<ChangeData>> commitChangesMap, int parent,
+                                   int parentsCount, @NotNull String afterPath, @Nullable String beforePath) throws IOException {
       int afterId = myPathsEnumerator.enumerate(afterPath);
-      List<ChangeData> data = fillDataWithNulls(result, parent, afterId);
+      List<ChangeData> changeDataList = getOrCreateChangeDataListForPath(commitChangesMap, afterId, parentsCount);
       if (beforePath == null) {
-        data.add(new ChangeData(ChangeKind.MODIFIED, -1));
+        addChange(changeDataList, parent, new ChangeData(ChangeKind.MODIFIED, -1));
       }
       else {
         int beforeId = myPathsEnumerator.enumerate(beforePath);
         if (beforeId == afterId && !SystemInfo.isFileSystemCaseSensitive) {
           // case only rename in case insensitive file system
           // since ids for before and after paths are the same we just treating this rename as a modification
-          data.add(new ChangeData(ChangeKind.MODIFIED, -1));
+          addChange(changeDataList, parent, new ChangeData(ChangeKind.MODIFIED, -1));
         }
         else {
-          data.add(new ChangeData(ChangeKind.RENAMED_TO, beforeId));
-          List<ChangeData> beforeData = fillDataWithNulls(result, parent, beforeId);
-          beforeData.add(new ChangeData(ChangeKind.RENAMED_FROM, afterId));
+          addChange(changeDataList, parent, new ChangeData(ChangeKind.RENAMED_TO, beforeId));
+          List<ChangeData> beforeChangeDataList = getOrCreateChangeDataListForPath(commitChangesMap, beforeId, parentsCount);
+          addChange(beforeChangeDataList, parent, new ChangeData(ChangeKind.RENAMED_FROM, afterId));
         }
       }
     }
 
     @NotNull
-    private static List<ChangeData> fillDataWithNulls(@NotNull Map<Integer, List<ChangeData>> result,
-                                                      int parent, int pathId) {
-      List<ChangeData> data = result.get(pathId);
-      if (data == null) {
-        data = ContainerUtil.newSmartList();
-        result.put(pathId, data);
+    private static List<ChangeData> getOrCreateChangeDataListForPath(@NotNull Map<Integer, List<ChangeData>> pathIdToChangeDataListsMap,
+                                                                     int pathId, int parentsCount) {
+      List<ChangeData> changeDataList = pathIdToChangeDataListsMap.get(pathId);
+      if (changeDataList == null) {
+        changeDataList = ContainerUtil.newSmartList();
+        for (int i = 0; i < parentsCount; i++) {
+          changeDataList.add(null);
+        }
+        pathIdToChangeDataListsMap.put(pathId, changeDataList);
       }
-      for (int i = data.size(); i < parent; i++) {
-        data.add(null);
+      return changeDataList;
+    }
+
+    private static void addChange(@NotNull List<ChangeData> changeDataList, int parentIndex, @NotNull ChangeData change) {
+      ChangeData existingChange = changeDataList.get(parentIndex);
+      // most of the time, existing change is null
+      // but in case insensitive fs it is possible to have several changes for one file
+      // example two changes: R: abc -> AAA, D: aaa
+      // in this case we keep rename information
+      if (existingChange == null || (existingChange.kind != ChangeKind.RENAMED_FROM && existingChange.kind != ChangeKind.RENAMED_TO)) {
+        changeDataList.set(parentIndex, change);
       }
-      LOG.assertTrue(data.size() == parent);
-      return data;
     }
 
     @NotNull
