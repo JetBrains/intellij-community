@@ -179,7 +179,7 @@ private class ModuleDescriptionsTree(project: Project) {
     paths.forEach { tree.expandPath(it) }
     tree.selectionModel.selectionPaths = paths.toTypedArray()
     if (paths.isNotEmpty()) {
-      tree.makeVisible(paths.first())
+      TreeUtil.showRowCentered(tree, tree.getRowForPath(paths.first()), false, true)
     }
   }
 }
