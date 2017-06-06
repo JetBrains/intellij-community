@@ -20,7 +20,6 @@ import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.markdown4j.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -67,7 +66,7 @@ public class IpnbJfxUtils {
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width, IpnbFilePanel parent) {
+  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
 
     final JFXPanel javafxPanel = new JFXPanel() {
       @Override
@@ -90,14 +89,14 @@ public class IpnbJfxUtils {
         engine.setOnStatusChanged(event -> {
           final String data = event.getData();
           if (data != null && data.isEmpty()) {
-            adjustHeight(webView, javafxPanel, source, parent);
+            adjustHeight(webView, javafxPanel, source);
           }
         });
       }
       else {
         engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
           if (newValue == Worker.State.SUCCEEDED) {
-            adjustHeight(webView, javafxPanel, source, parent);
+            adjustHeight(webView, javafxPanel, source);
           }
         });
       }
@@ -233,7 +232,7 @@ public class IpnbJfxUtils {
     }
   }
 
-  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source, IpnbFilePanel parent) {
+  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source) {
     final WebEngine engine = webView.getEngine();
     final Document document = engine.getDocument();
     if (document != null) {
@@ -245,9 +244,7 @@ public class IpnbJfxUtils {
         int width = wcsize.getIntWidth();
         if (width < javafxPanel.getWidth()) width = javafxPanel.getWidth();
         if (height <= 0 || width <= 0) return;
-        webView.setPrefWidth(wcsize.getWidth());
-        webView.setMinWidth(wcsize.getWidth());
-        int count = 1;
+        int count = 0;
         if (source.contains("```")) {
           count += 1;
         }
@@ -276,12 +273,8 @@ public class IpnbJfxUtils {
 
         final Dimension size = new Dimension(
           width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
-        UIUtil.invokeLaterIfNeeded(() -> {
-          javafxPanel.setPreferredSize(size);
-          javafxPanel.setMinimumSize(size);
-          javafxPanel.invalidate();
-          parent.revalidateAndRepaint();
-        });
+        javafxPanel.setPreferredSize(size);
+        javafxPanel.setMinimumSize(size);
       }
     }
   }

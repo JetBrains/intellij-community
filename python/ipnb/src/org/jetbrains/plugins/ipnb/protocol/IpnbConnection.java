@@ -36,11 +36,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * @author vlan
- *         <p>
- *         To be removed
- */
 public class IpnbConnection {
   private static final Logger LOG = Logger.getInstance(IpnbConnection.class);
   

@@ -52,13 +52,11 @@ public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
         final Image image = ((ImageIcon)icon).getImage();
         if (getWidth() < image.getWidth(null)) {
           g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+          image.flush();
         }
         else {
           super.paintComponent(g);
         }
-      }
-      else {
-        super.paintComponent(g);
       }
     }
   }

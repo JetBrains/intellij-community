@@ -38,11 +38,9 @@ import java.util.List;
  */
 public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   private final VirtualFile myFile;
-
   private final String myName;
 
   private final JBLoadingPanel myEditorPanel;
-
   private final IpnbFilePanel myIpnbFilePanel;
   private final Document myDocument;
   private ComboBox myCellTypeCombo;
@@ -81,7 +79,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
     myIpnbFilePanel = createIpnbEditorPanel(project, vFile);
-    Disposer.register(this, myIpnbFilePanel);
     final JPanel controlPanel = createControlPanel();
     myEditorPanel.add(controlPanel, BorderLayout.NORTH);
     myScrollPane = ScrollPaneFactory.createScrollPane(myIpnbFilePanel);
@@ -380,6 +377,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   @Override
   public void dispose() {
+    Disposer.dispose(myIpnbFilePanel);
   }
 
   public abstract static class CellSelectionListener {

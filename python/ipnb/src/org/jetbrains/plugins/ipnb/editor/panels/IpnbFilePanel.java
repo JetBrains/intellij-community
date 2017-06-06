@@ -145,6 +145,14 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public void dispose() {
     myDocument.removeDocumentListener(myDocumentListener);
     Disposer.dispose(myBusConnection);
+    for (IpnbEditablePanel panel : myIpnbPanels) {
+      panel.dispose();
+    }
+    myIpnbPanels.clear();
+    myIpnbFile = null;
+    mySelectedCellPanel = null;
+    myBufferPanel = null;
+    removeAll();
   }
 
   private void readFromFile(boolean showError) {

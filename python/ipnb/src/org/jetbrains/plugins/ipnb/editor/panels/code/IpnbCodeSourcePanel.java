@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -28,7 +27,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.HorizontalLayout;
@@ -52,12 +51,12 @@ import java.awt.event.*;
 public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> implements IpnbEditorPanel {
   private Editor myEditor;
   @NotNull private final Project myProject;
-  @NotNull private final IpnbCodePanel myParent;
+  @NotNull private final SoftReference<IpnbCodePanel> myParent;
 
   public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final IpnbCodeCell cell) {
     super(cell, new HorizontalLayout(5));
     myProject = project;
-    myParent = parent;
+    myParent = new SoftReference<>(parent);
     final JComponent panel = createViewPanel();
     add(panel);
     addRightClickMenu();
@@ -69,7 +68,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
 
   @NotNull
   public IpnbCodePanel getIpnbCodePanel() {
-    return myParent;
+    return SoftReference.dereference(myParent);
   }
 
   @Override
@@ -78,29 +77,30 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     return myEditor;
   }
 
+  public void dispose() {
+    removeAll();
+    EditorFactory.getInstance().releaseEditor(myEditor);
+    myEditor = null;
+  }
+
   @Override
   protected JComponent createViewPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBackground(UIUtil.isUnderDarcula() ? IpnbEditorUtil.getBackground() : Gray._247);
 
     myEditor = IpnbEditorUtil.createPythonCodeEditor(myProject, this);
-    Disposer.register(myParent.getFileEditor(), new Disposable() {
-      @Override
-      public void dispose() {
-        EditorFactory.getInstance().releaseEditor(myEditor);
-      }
-    });
+    final IpnbCodePanel codePanel = getIpnbCodePanel();
     final JComponent component = myEditor.getComponent();
     final JComponent contentComponent = myEditor.getContentComponent();
 
-    new IpnbRunCellAction(myParent.getFileEditor()).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("shift ENTER")), contentComponent);
-    new IpnbRunCellInplaceAction(myParent.getFileEditor()).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl ENTER")), contentComponent);
+    new IpnbRunCellAction(codePanel.getFileEditor()).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("shift ENTER")), contentComponent);
+    new IpnbRunCellInplaceAction(codePanel.getFileEditor()).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl ENTER")), contentComponent);
 
     contentComponent.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        final Container parent = myParent.getParent();
+        final Container parent = codePanel.getParent();
         if (keyCode == KeyEvent.VK_ESCAPE && parent instanceof IpnbFilePanel) {
           getIpnbCodePanel().setEditing(false);
           parent.repaint();
@@ -109,7 +109,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       }
 
       private void updateVisibleArea(boolean up) {
-        final IpnbFileEditor fileEditor = myParent.getFileEditor();
+        final IpnbFileEditor fileEditor = codePanel.getFileEditor();
         final IpnbFilePanel ipnbPanel = fileEditor.getIpnbFilePanel();
         final Rectangle rect = ipnbPanel.getVisibleRect();
 
@@ -129,13 +129,13 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       @Override
       public void keyReleased(KeyEvent e) {
         final int keyCode = e.getKeyCode();
-        final Container parent = myParent.getParent();
+        final Container parent = codePanel.getParent();
 
         final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
         contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
         panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
-        myParent.revalidate();
-        myParent.repaint();
+        codePanel.revalidate();
+        codePanel.repaint();
         panel.revalidate();
         panel.repaint();
 
@@ -161,10 +161,10 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
       @Override
       public void mousePressed(MouseEvent e) {
         if (InputEvent.CTRL_DOWN_MASK == e.getModifiersEx()) return;
-        final Container ipnbFilePanel = myParent.getParent();
+        final Container ipnbFilePanel = codePanel.getParent();
         if (ipnbFilePanel instanceof IpnbFilePanel) {
-          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(myParent, true);
-          myParent.switchToEditing();
+          ((IpnbFilePanel)ipnbFilePanel).setSelectedCell(codePanel, true);
+          codePanel.switchToEditing();
         }
         UIUtil.requestFocus(contentComponent);
       }
@@ -174,8 +174,8 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     contentComponent.addHierarchyListener(new HierarchyListener() {
       @Override
       public void hierarchyChanged(HierarchyEvent e) {
-        final Container parent = myParent.getParent();
-        if (parent != null) {
+        final Container parent = codePanel.getParent();
+        if (parent != null && myEditor != null) {
           final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
           contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
           panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
@@ -185,9 +185,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     contentComponent.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {
       @Override
       public void ancestorResized(HierarchyEvent e) {
-        final Container parent = myParent.getParent();
+        final Container parent = codePanel.getParent();
         final Component component = e.getChanged();
-        if (parent != null && component instanceof IpnbFilePanel) {
+        if (parent != null && component instanceof IpnbFilePanel && myEditor != null) {
           final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
           contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
           panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
@@ -208,7 +208,8 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (SwingUtilities.isRightMouseButton(mouseEvent) && mouseEvent.getClickCount() == 1) {
           final ListPopup menu = createPopupMenu(new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(),
-                                                                        new IpnbSplitCellAction(), new IpnbToggleLineNumbersAction(myParent)));
+                                                                        new IpnbSplitCellAction(),
+                                                                        new IpnbToggleLineNumbersAction(myParent.get())));
           menu.show(RelativePoint.fromScreen(e.getMouseEvent().getLocationOnScreen()));
         }
       }
