@@ -71,7 +71,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   private static PersistentEnumeratorBase<String> createPathsEnumerator(@NotNull String logId) throws IOException {
-    File storageFile = PersistentUtil.getStorageFile(INDEX, INDEX_PATHS_IDS, logId, getVersion(), true);
+    File storageFile = PersistentUtil.getStorageFile(INDEX, INDEX_PATHS_IDS, logId, getVersion());
     return new PersistentBTreeEnumerator<>(storageFile, SystemInfo.isFileSystemCaseSensitive ? EnumeratorStringDescriptor.INSTANCE
                                                                                              : new ToLowerCaseStringDescriptor(),
                                            Page.PAGE_SIZE, null, getVersion());
@@ -309,7 +309,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
           // case only rename in case insensitive file system
           // since ids for before and after paths are the same we just treating this rename as a modification
           data.add(new ChangeData(ChangeKind.MODIFIED, -1));
-        } else {
+        }
+        else {
           data.add(new ChangeData(ChangeKind.RENAMED_TO, beforeId));
           List<ChangeData> beforeData = fillDataWithNulls(result, parent, beforeId);
           beforeData.add(new ChangeData(ChangeKind.RENAMED_FROM, afterId));

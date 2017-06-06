@@ -233,4 +233,8 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testGenericKwargs() {
     doTest();
   }
+
+  public void testTypingNamedTupleAsParameter() {
+    doTest();
+  }
 }

@@ -163,7 +163,7 @@ public class PyDocumentationBuilder {
   private void buildFromParameter(@NotNull final TypeEvalContext context, @Nullable final PsiElement outerElement,
                                   @NotNull final PsiElement elementDefinition) {
     myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(elementDefinition, false)));
-    final boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition);
+    final boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)elementDefinition, context);
     if (outerElement instanceof PyExpression) {
       final PyType type = context.getType((PyExpression)outerElement);
       if (type != null) {
@@ -409,11 +409,11 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private void addPredefinedMethodDoc(PyFunction fun, String mothodName) {
+  private void addPredefinedMethodDoc(PyFunction fun, String methodName) {
     final PyClassType objectType = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objectType != null) {
       final PyClass objectClass = objectType.getPyClass();
-      final PyFunction predefinedMethod = objectClass.findMethodByName(mothodName, false, null);
+      final PyFunction predefinedMethod = objectClass.findMethodByName(methodName, false, null);
       if (predefinedMethod != null) {
         final PyStringLiteralExpression predefinedDocstring = getEffectiveDocStringExpression(predefinedMethod);
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
@@ -468,9 +468,10 @@ public class PyDocumentationBuilder {
    * Adds type and description representation from function docstring
    *
    * @param parameter parameter of a function
+   * @param context type evaluation context
    * @return true if type from docstring was added
    */
-  private boolean addTypeAndDescriptionFromDocstring(@NotNull final PyNamedParameter parameter) {
+  private boolean addTypeAndDescriptionFromDocstring(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
     final PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     if (function != null) {
       final String docString = PyPsiUtils.strValue(getEffectiveDocStringExpression(function));
@@ -480,7 +481,7 @@ public class PyDocumentationBuilder {
       final String description = typeAndDescr.second;
 
       if (type != null) {
-        final PyType pyType = PyTypeParser.getTypeByName(parameter, type);
+        final PyType pyType = PyTypeParser.getTypeByName(parameter, type, context);
         if (pyType instanceof PyClassType) {
           myBody.addItem(": ").addWith(new LinkWrapper(PythonDocumentationProvider.LINK_TYPE_PARAM), $(pyType.getName()));
         }

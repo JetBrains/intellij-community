@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
@@ -153,7 +154,7 @@ public class GenerationUtil {
                                                    @NotNull GrNamedArgument[] namedArgs,
                                                    @NotNull GrClosableBlock[] closureArgs,
                                                    @NotNull GroovyPsiElement psiContext) {
-    GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
+    GroovyResolveResult call = EmptyGroovyResolveResult.INSTANCE;
 
     final PsiType type;
     if (caller == null) {

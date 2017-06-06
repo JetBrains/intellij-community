@@ -12,6 +12,8 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +40,13 @@ public class AtomicConversionRule extends TypeConversionRule {
   }
 
   private static boolean isAtomicTypeMigration(PsiType from, PsiClassType to, PsiExpression context) {
-    if (PsiType.INT.equals(from) && to.getCanonicalText().equals(AtomicInteger.class.getName())) {
+    if (PsiType.INT.isAssignableFrom(from) && to.getCanonicalText().equals(AtomicInteger.class.getName())) {
+      return true;
+    }
+    if (PsiType.LONG.isAssignableFrom(from) && to.getCanonicalText().equals(AtomicLong.class.getName())) {
       return true;
     }
     if (from.equals(PsiType.INT.createArrayType()) && to.getCanonicalText().equals(AtomicIntegerArray.class.getName())) {
-      return true;
-    }
-    if (PsiType.LONG.equals(from) && to.getCanonicalText().equals(AtomicLong.class.getName())) {
       return true;
     }
     if (from.equals(PsiType.LONG.createArrayType()) && to.getCanonicalText().equals(AtomicLongArray.class.getName())) {
@@ -342,6 +344,9 @@ public class AtomicConversionRule extends TypeConversionRule {
     if (context instanceof PsiArrayAccessExpression) {
       return new TypeConversionDescriptor("$qualifier$[$idx$]", "$qualifier$.get($idx$)", (PsiExpression)context);
     }
+    if (parent instanceof PsiReferenceExpression && isReferenceToLengthField((PsiReferenceExpression)parent)) {
+      return new TypeConversionDescriptor("$qualifier$.length", "$qualifier$.length()", (PsiExpression)parent);
+    }
     return null;
   }
 
@@ -436,6 +441,15 @@ public class AtomicConversionRule extends TypeConversionRule {
       }
     }
     return null;
+  }
+
+  private static boolean isReferenceToLengthField(@NotNull PsiReferenceExpression refExpr) {
+    if (!"length".equals(refExpr.getReferenceName())) {
+      return false;
+    }
+    PsiClass aClass = JavaPsiFacade.getElementFactory(refExpr.getProject()).getArrayClass(PsiUtil.getLanguageLevel(refExpr));
+    PsiField lengthField = ObjectUtils.notNull(aClass.findFieldByName(HardcodedMethodConstants.LENGTH, false));
+    return refExpr.isReferenceTo(lengthField);
   }
 
 }

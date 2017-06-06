@@ -17,6 +17,7 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
   private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
   private boolean myEnableTestingFromSamples = false;
+  public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
 
   public StudySettings() {
   }
@@ -53,6 +54,14 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
     myUser = user;
     ApplicationManager.getApplication().getMessageBus().syncPublisher(SETTINGS_CHANGED).settingsChanged();
     updateStepicUserWidget();
+  }
+
+  public boolean shouldUseJavaFx() {
+    return myShouldUseJavaFx;
+  }
+
+  public void setShouldUseJavaFx(boolean shouldUseJavaFx) {
+    this.myShouldUseJavaFx = shouldUseJavaFx;
   }
 
   private static void updateStepicUserWidget() {

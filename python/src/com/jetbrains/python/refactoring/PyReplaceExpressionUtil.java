@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PythonStringUtil;
-import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -154,7 +152,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
         final PyType valueType = context.getType(formatValue);
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(oldExpression);
         final PyType tupleType = builtinCache.getTupleType();
-        final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping");
+        final PyType mappingType = PyTypeParser.getTypeByName(null, "collections.Mapping", context);
         if (!PyTypeChecker.match(tupleType, valueType, context) ||
             (mappingType != null && !PyTypeChecker.match(mappingType, valueType, context))) {
           return replaceSubstringWithSingleValueFormatting(oldExpression, textRange, prefix, suffix, formatValue, newText, substitutions);
@@ -322,12 +320,12 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       builder.append("(");
     }
     if (!leftQuote.endsWith(prefix)) {
-      builder.append(prefix + rightQuote + " + ");
+      builder.append(prefix).append(rightQuote).append(" + ");
     }
     final int pos = builder.toString().length();
     builder.append(newText);
     if (!rightQuote.startsWith(suffix)) {
-      builder.append(" + " + leftQuote + suffix);
+      builder.append(" + ").append(leftQuote).append(suffix);
     }
     if (hasSubstitutions) {
       builder.append(")");

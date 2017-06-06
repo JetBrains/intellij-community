@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.internal.statistic.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -260,6 +261,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
         myActionManagerEx.fireBeforeActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
         action.actionPerformed(anActionEvent);
         myActionManagerEx.fireAfterActionPerformed(action, anActionEvent.getDataContext(), anActionEvent);
+        ShortcutsCollector.recordDoubleShortcut(anActionEvent);
         return true;
       }
       finally {

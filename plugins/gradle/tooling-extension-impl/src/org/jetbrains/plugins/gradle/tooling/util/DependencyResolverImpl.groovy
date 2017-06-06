@@ -32,7 +32,6 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentSelector
-import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.result.*
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.specs.Specs
@@ -44,6 +43,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.language.base.artifact.SourcesArtifact
 import org.gradle.language.java.artifact.JavadocArtifact
 import org.gradle.plugins.ide.idea.IdeaPlugin
+import org.gradle.util.GUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -210,6 +210,9 @@ class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> result = new ArrayList<>()
 
     // resolve compile dependencies
+    def isMainSourceSet = sourceSet.name == SourceSet.MAIN_SOURCE_SET_NAME
+    String deprecatedCompileConfigurationName = isMainSourceSet ? "compile" : GUtil.toCamelCase(sourceSet.name) + "Compile"
+    def deprecatedCompileConfiguration = myProject.configurations.findByName(deprecatedCompileConfigurationName)
     def compileConfigurationName = sourceSet.compileConfigurationName
     def compileClasspathConfiguration = myProject.configurations.findByName(compileConfigurationName + 'Classpath')
     def originCompileConfiguration = myProject.configurations.findByName(compileConfigurationName)
@@ -238,17 +241,17 @@ class DependencyResolverImpl implements DependencyResolver {
 
       // since version 3.4 compileOnly no longer extends compile
       // so, we can use compileOnly configuration for the check
+      Object[] resolvedObjArray = resolvedObj instanceof Collection ? ((Collection)resolvedObj).toArray() : [resolvedObj]
       if (isJavaLibraryPluginSupported) {
-        if (compileOnlyConfiguration != null &&
-            (resolvedObj instanceof Collection ? compileOnlyConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
-             compileOnlyConfiguration.contains(resolvedObj))) {
-          ((AbstractExternalDependency)it).scope = providedScope
+        if (compileOnlyConfiguration != null && compileOnlyConfiguration.containsAll(resolvedObjArray)) {
+          // deprecated 'compile' configuration still can be used
+          if (deprecatedCompileConfiguration == null || !deprecatedCompileConfiguration.containsAll(resolvedObjArray)) {
+            ((AbstractExternalDependency)it).scope = providedScope
+          }
         }
       }
       else {
-        if (checkCompileOnlyDeps &&
-            (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
-             !originCompileConfiguration.contains(resolvedObj))) {
+        if (checkCompileOnlyDeps && !originCompileConfiguration.containsAll(resolvedObjArray)) {
           ((AbstractExternalDependency)it).scope = providedScope
         }
       }

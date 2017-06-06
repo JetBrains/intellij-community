@@ -245,7 +245,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
           DiffContentFactory contentFactory = DiffContentFactory.getInstance();
           DiffContent leftContent = withLocal
                                     ? contentFactory.create(project, file)
-                                    : contentFactory.create(project, patch.getSingleHunkPatchText());
+                                    : contentFactory.create(project, patch.getSingleHunkPatchText(), file);
           return new SimpleDiffRequest(getName(), leftContent,
                                        contentFactory.createEmpty(),
                                        withLocal ? CURRENT_VERSION : SHELVED_VERSION, null);
@@ -269,8 +269,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
             DiffContentFactory contentFactory = DiffContentFactory.getInstance();
             DiffContent leftContent = withLocal
                                       ? contentFactory.create(project, file)
-                                      : contentFactory.create(project, assertNotNull(texts.getBase()));
-            return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(project, texts.getPatched()),
+                                      : contentFactory.create(project, assertNotNull(texts.getBase()), file);
+            return new SimpleDiffRequest(getName(), leftContent, contentFactory.create(project, texts.getPatched(), file),
                                          withLocal ? CURRENT_VERSION : BASE_VERSION, SHELVED_VERSION);
           }
           else {

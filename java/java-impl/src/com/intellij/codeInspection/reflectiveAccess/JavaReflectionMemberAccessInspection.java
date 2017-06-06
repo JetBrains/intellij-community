@@ -279,6 +279,11 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
     final List<ReflectiveType> argumentTypes =
       ContainerUtil.map(methodArguments.expressions, JavaReflectionReferenceUtil::getReflectiveType);
 
+    return matchMethod(methods, argumentTypes);
+  }
+
+  @Nullable
+  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<ReflectiveType> argumentTypes) {
     int mismatchCount = Integer.MAX_VALUE;
     PsiMethod bestGuess = null;
     for (PsiMethod method : methods) {

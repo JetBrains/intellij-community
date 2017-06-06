@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
     if (name != null) {
       final String typeName = PySignatureCacheManager.getInstance(param.getProject()).findParameterType(func, name);
       if (typeName != null) {
-        final PyType type = PyTypeParser.getTypeByName(param, typeName);
+        final PyType type = PyTypeParser.getTypeByName(param, typeName, context);
         if (type != null) {
           return Ref.create(PyDynamicallyEvaluatedType.create(type));
         }
@@ -51,7 +51,7 @@ public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
       if (signature != null && signature.getReturnType() != null) {
         final String typeName = signature.getReturnType().getTypeQualifiedName();
         if (typeName != null) {
-          final PyType type = PyTypeParser.getTypeByName(function, typeName);
+          final PyType type = PyTypeParser.getTypeByName(function, typeName, context);
           if (type != null) {
             return Ref.create(PyDynamicallyEvaluatedType.create(type));
           }

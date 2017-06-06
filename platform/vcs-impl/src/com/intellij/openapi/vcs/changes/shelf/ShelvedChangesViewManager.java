@@ -108,6 +108,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
+  private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
@@ -247,21 +248,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
-    ShowDiffPreviewAction diffPreviewAction = new ShowDiffPreviewAction() {
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        super.setSelected(e, state);
-        assertNotNull(mySplitterComponent).setDetailsOn(state);
-        VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN = state;
-      }
-    };
-    actionGroup.add(diffPreviewAction, new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
+    actionGroup.add(new MyToggleDetailsAction(), new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
 
     MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject);
-    mySplitterComponent =
-      new PreviewDiffSplitterComponent(pane, changeProcessor, "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION",
-                                       VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN);
-    diffPreviewAction.setSelected(null, mySplitterComponent.isDetailsOn());
+    mySplitterComponent = new PreviewDiffSplitterComponent(pane, changeProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION,
+                                                           VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
@@ -740,6 +731,19 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     String imageText = "Unshelve changes";
     Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+  }
+
+  private class MyToggleDetailsAction extends ShowDiffPreviewAction {
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySplitterComponent.setDetailsOn(state);
+      VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN = state;
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN;
+    }
   }
 
   private class MyShelvedPreviewProcessor extends CacheDiffRequestProcessor<ShelvedWrapper> implements DiffPreviewUpdateProcessor {

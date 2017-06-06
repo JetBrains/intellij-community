@@ -139,7 +139,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.renameRefactorings");
   }
 
-  private static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
+  public static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
     if (psiFile == null) {
       return true;
     }

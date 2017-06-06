@@ -212,37 +212,37 @@ class Test88 {
   void testCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toList') })
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testStaticallyImportedCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('collect(toList())') })
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testAllCollectors() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())'
     selectItem(myItems.find { it.lookupString.contains('toCollection') })
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('empty') })
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testCallBeforeLambda() {
     configureByTestName()
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testLambdaInAmbiguousCall() {
@@ -264,13 +264,13 @@ class Test88 {
   void testNoSemicolonAfterVoidMethodInLambda() {
     configureByTestName()
     myFixture.type('l\t')
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testFinishMethodReferenceWithColon() {
     configureByTestName()
     myFixture.type(':')
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testPreferLocalsOverMethodRefs() {
@@ -286,14 +286,22 @@ class Test88 {
                        "}")
     configureByTestName()
     myFixture.type('\n')
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
   void testOverrideMethodAsDefault() {
     configureByTestName()
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'default void run'
     myFixture.type('\t')
-    checkResultByFile(getTestName(false) + "_after.java")
+    checkResultByFileName()
   }
 
+  void testChainedMethodReference() {
+    configureByTestName()
+    checkResultByFileName()
+  }
+
+  private checkResultByFileName() {
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 }

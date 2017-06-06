@@ -473,6 +473,11 @@ public class PyCallExpressionHelper {
   @Nullable
   private static Ref<? extends PyType> getCallTargetReturnType(@NotNull PyCallExpression call, @NotNull PsiElement target,
                                                                @NotNull TypeEvalContext context) {
+    final PyType providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
+    if (providedOverridingType instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedOverridingType).getCallType(context, call));
+    }
+
     PyClass cls = null;
     PyFunction init = null;
     if (target instanceof PyClass) {

@@ -50,7 +50,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public final Map<Task, List<UserTest>> myUserTests = new HashMap<>();
 
-  public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
 
@@ -230,14 +229,6 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
 
   public static StudyTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, StudyTaskManager.class);
-  }
-
-  public boolean shouldUseJavaFx() {
-    return myShouldUseJavaFx;
-  }
-
-  public void setShouldUseJavaFx(boolean shouldUseJavaFx) {
-    this.myShouldUseJavaFx = shouldUseJavaFx;
   }
 
   public StudyToolWindow.StudyToolWindowMode getToolWindowMode() {

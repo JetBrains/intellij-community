@@ -55,6 +55,10 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     doTestNotAvailable();
   }
 
+  public void testNotAvailableInForUpdate() {
+    doTestNotAvailable();
+  }
+
   private void doTestString() {
     final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLanguageLevel = languageLevelProjectExtension.getLanguageLevel();

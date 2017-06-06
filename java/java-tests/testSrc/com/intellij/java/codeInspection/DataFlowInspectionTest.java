@@ -360,6 +360,17 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
+  
+  public void testTypeQualifierNickname() {
+    addJavaxNullabilityAnnotations(myFixture);
+
+    myFixture.addClass("package bar;" +
+                       "import javax.annotation.meta.*;" +
+                       "@TypeQualifierNickname() @javax.annotation.NonNull(when = Maybe.MAYBE) " +
+                       "public @interface NullableNick {}");
+    
+    doTest();
+  }
 
   public static void addJavaxDefaultNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
     fixture.addClass("package javax.annotation;" +
@@ -371,12 +382,23 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   }
 
   public static void addJavaxNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
-    fixture.addClass("package javax.annotation;" +
-                     "public @interface Nonnull {}");
-    fixture.addClass("package javax.annotation;" +
-                     "public @interface Nullable {}");
     fixture.addClass("package javax.annotation.meta;" +
                      "public @interface TypeQualifierDefault { java.lang.annotation.ElementType[] value() default {};}");
+    fixture.addClass("package javax.annotation.meta;" +
+                     "public enum When { ALWAYS, UNKNOWN, MAYBE, NEVER }");
+    fixture.addClass("package javax.annotation.meta;" +
+                     "public @interface TypeQualifierNickname {}");
+
+    fixture.addClass("package javax.annotation;" +
+                     "import javax.annotation.meta.*;" +
+                     "public @interface Nonnull {" +
+                     "  When when() default When.ALWAYS;" +
+                     "}");
+    fixture.addClass("package javax.annotation;" +
+                     "import javax.annotation.meta.*;" +
+                     "@TypeQualifierNickname " +
+                     "@Nonnull(when = When.UNKNOWN) " +
+                     "public @interface Nullable {}");
   }
 
   public void testCustomTypeQualifierDefault() {

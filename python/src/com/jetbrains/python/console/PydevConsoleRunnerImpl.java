@@ -48,7 +48,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
@@ -784,7 +783,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     SoftWrapAction() {
       super(ActionsBundle.actionText("EditorToggleUseSoftWraps"), ActionsBundle.actionDescription("EditorToggleUseSoftWraps"),
             AllIcons.Actions.ToggleSoftWrap);
-      myConsoleView.getEditor().getSettings().setUseSoftWraps(isSelected);
+      updateEditors();
     }
 
     @Override
@@ -792,16 +791,15 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       return isSelected;
     }
 
+    private void updateEditors() {
+      myConsoleView.getEditor().getSettings().setUseSoftWraps(isSelected);
+      myConsoleView.getConsoleEditor().getSettings().setUseSoftWraps(isSelected);
+    }
+
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       isSelected = state;
-      EditorSettings editorSettings = getConsoleView().getEditor().getSettings();
-      if (isSelected) {
-        editorSettings.setUseSoftWraps(true);
-      }
-      else {
-        editorSettings.setUseSoftWraps(false);
-      }
+      updateEditors();
       myConsoleSettings.setUseSoftWraps(isSelected);
     }
   }

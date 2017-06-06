@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,17 +39,25 @@ import java.util.Set;
  * @author yole
  */
 public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
+
+  @NotNull
+  private final PsiElement myDeclaration;
+
+  @NotNull
   private final String myName;
 
-  // 2 - namedtuple call itself
-  // 1 - return type of namedtuple call, aka namedtuple class
-  // 0 - namedtuple instance
-  private final int myDefinitionLevel;
-  private final PsiElement myDeclaration;
+  @NotNull
   private final List<String> myFields;
 
-  public PyNamedTupleType(PyClass tupleClass, PsiElement declaration, String name, List<String> fields, int definitionLevel) {
-    super(tupleClass, definitionLevel > 0);
+  @NotNull
+  private final DefinitionLevel myDefinitionLevel;
+
+  public PyNamedTupleType(@NotNull PyClass tupleClass,
+                          @NotNull PsiElement declaration,
+                          @NotNull String name,
+                          @NotNull List<String> fields,
+                          @NotNull DefinitionLevel definitionLevel) {
+    super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
     myDeclaration = declaration;
     myFields = fields;
     myName = name;
@@ -76,7 +84,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    List<Object> result = new ArrayList<>();
+    final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
     for (String field : myFields) {
       result.add(LookupElementBuilder.create(field));
@@ -84,6 +92,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return ArrayUtil.toObjectArray(result);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;
@@ -97,22 +106,30 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    if (myDefinitionLevel > 0) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel - 1);
+    if (myDefinitionLevel == DefinitionLevel.AS_SUPERCLASS) {
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
     }
+    else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE);
+    }
+
     return null;
   }
 
   @NotNull
   @Override
   public PyClassType toInstance() {
-    return myDefinitionLevel == 1 ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, 0) : this;
+    return myDefinitionLevel == DefinitionLevel.NEW_TYPE
+           ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE)
+           : this;
   }
 
   @NotNull
   @Override
   public PyClassLikeType toClass() {
-    return myDefinitionLevel == 0 ? this : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, 1);
+    return myDefinitionLevel == DefinitionLevel.INSTANCE
+           ? this
+           : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
   }
 
   @Override
@@ -136,5 +153,12 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @NotNull
   public List<String> getElementNames() {
     return Collections.unmodifiableList(myFields);
+  }
+
+  public enum DefinitionLevel {
+
+    AS_SUPERCLASS,
+    NEW_TYPE,
+    INSTANCE
   }
 }

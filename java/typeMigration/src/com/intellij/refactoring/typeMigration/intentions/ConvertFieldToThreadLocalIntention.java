@@ -115,7 +115,9 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
         }
 
         PsiExpression initializer = psiField.getInitializer();
-        if (initializer == null) {
+
+        if (initializer == null &&
+            !psiField.hasModifierProperty(PsiModifier.FINAL)) {
           final PsiType type = psiField.getType();
           String initializerText = null;
           if (PsiType.BOOLEAN.equals(type)) {

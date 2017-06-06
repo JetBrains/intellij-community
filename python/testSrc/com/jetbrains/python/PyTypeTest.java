@@ -1677,6 +1677,18 @@ public class PyTypeTest extends PyTestCase {
                     "        return get_class()");
   }
 
+  // PY-7322
+  public void testNamedTupleParameterInDocString() {
+    doTest("Point",
+           "from collections import namedtuple\n" +
+           "Point = namedtuple('Point', ('x', 'y'))\n" +
+           "def takes_a_point(point):\n" +
+           "    \"\"\"\n" +
+           "    :type point: Point\n" +
+           "    \"\"\"\n" +
+           "    expr = point");
+  }
+
   // PY-22919
   public void testMaxListKnownElements() {
     doTest("int",

@@ -979,6 +979,39 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("2.12+")
+  public void testCompileOnlyAndCompileScope() throws Exception {
+    createSettingsFile("include 'app'\n");
+    importProject(
+      "apply plugin: 'java'\n" +
+      "dependencies {\n" +
+      "  compileOnly project(':app')\n" +
+      "  compile 'junit:junit:4.11'\n" +
+      "}\n" +
+      "project(':app') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  repositories {\n" +
+      "    mavenCentral()\n" +
+      "  }\n" +
+      "  dependencies {\n" +
+      "    compile 'junit:junit:4.11'\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project", "project_main", "project_test", "app", "app_main", "app_test");
+
+    assertModuleModuleDepScope("project_main", "app_main", DependencyScope.PROVIDED);
+    assertModuleLibDepScope("project_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project_main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("project_test", "project_main");
+    assertModuleModuleDepScope("project_test", "project_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+  }
+
+  @Test
   @TargetVersions("3.4+")
   public void testJavaLibraryPluginConfigurations() throws Exception {
     createSettingsFile("include 'project1'\n" +

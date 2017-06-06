@@ -40,11 +40,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -165,7 +167,7 @@ public class PsiUtil {
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
-                                     PsiMethod method,
+                                     @NotNull PsiMethod method,
                                      PsiSubstitutor substitutor,
                                      PsiElement place,
                                      final boolean eraseParameterTypes) {
@@ -174,30 +176,18 @@ public class PsiUtil {
   }
 
   public static GrClosureSignatureUtil.ApplicabilityResult isApplicableConcrete(@Nullable PsiType[] argumentTypes,
-                                                                                PsiMethod method,
+                                                                                @NotNull PsiMethod method,
                                                                                 PsiSubstitutor substitutor,
                                                                                 PsiElement place,
                                                                                 final boolean eraseParameterTypes) {
     if (argumentTypes == null) return GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable;
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes);
 
-    //check for default constructor
-    if (method.isConstructor() || handleMirrorMethod(method).isConstructor()) {
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 0 && argumentTypes.length == 1) {
-        return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP)
-               ? GrClosureSignatureUtil.ApplicabilityResult.applicable
-               : GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
-      }
-      if (parameters.length == 1 &&
-          argumentTypes.length == 0 &&
-          InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
-        return GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
-      }
-    }
-    LOG.assertTrue(signature != null);
     GrClosureSignatureUtil.ApplicabilityResult result =
-      GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, place);
+      GroovyApplicabilityProvider.checkProviders(argumentTypes, method, substitutor, place, eraseParameterTypes);
+    if (result != null) return result;
+
+   result = GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, place);
     if (result != GrClosureSignatureUtil.ApplicabilityResult.inapplicable) {
       return result;
     }
@@ -210,17 +200,6 @@ public class PsiUtil {
       }
     }
     return GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
-  }
-
-  @NotNull
-  public static PsiMethod handleMirrorMethod(@NotNull PsiMethod method) {
-    if (method instanceof PsiMirrorElement) {
-      PsiElement prototype = ((PsiMirrorElement)method).getPrototype();
-      if (prototype instanceof PsiMethod) {
-       return  (PsiMethod)prototype;
-      }
-    }
-    return method;
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
@@ -1254,7 +1233,7 @@ public class PsiUtil {
 
   @NotNull
   public static ResolveResult getAccessObjectClass(GrExpression expression) {
-    if (isThisOrSuperRef(expression)) return GroovyResolveResult.EMPTY_RESULT;
+    if (isThisOrSuperRef(expression)) return EmptyGroovyResolveResult.INSTANCE;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
@@ -1265,7 +1244,7 @@ public class PsiUtil {
         return resolveResult;
       }
     }
-    return GroovyResolveResult.EMPTY_RESULT;
+    return EmptyGroovyResolveResult.INSTANCE;
   }
 
   public static boolean isReferenceWithoutQualifier(@Nullable PsiElement element, @NotNull String name) {

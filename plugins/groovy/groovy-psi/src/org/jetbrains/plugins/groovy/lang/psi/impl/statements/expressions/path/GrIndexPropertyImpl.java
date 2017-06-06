@@ -25,6 +25,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyPolyVariantReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 /**

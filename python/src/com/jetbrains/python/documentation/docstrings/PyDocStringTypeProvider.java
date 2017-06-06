@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
     if (docString != null) {
       final String typeText = docString.getParamType(param.getName());
       if (StringUtil.isNotEmpty(typeText)) {
-        final Ref<PyType> typeRef = parseType(func, typeText);
+        final Ref<PyType> typeRef = parseType(func, typeText, context);
 
         if (param.isPositionalContainer()) {
           return Ref.create(PyTypeUtil.toPositionalContainerType(param, typeRef.get()));
@@ -63,7 +63,7 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
       if (docString != null) {
         final String typeText = docString.getReturnType();
         if (StringUtil.isNotEmpty(typeText)) {
-          return parseType(callable, typeText);
+          return parseType(callable, typeText, context);
         }
       }
     }
@@ -71,8 +71,8 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static Ref<PyType> parseType(@NotNull PyCallable callable, String typeText) {
-    final PyType type = PyTypeParser.getTypeByName(callable, typeText);
+  private static Ref<PyType> parseType(@NotNull PyCallable callable, @NotNull String typeText, @NotNull TypeEvalContext context) {
+    final PyType type = PyTypeParser.getTypeByName(callable, typeText, context);
     if (type != null) {
       type.assertValid("from docstring");
     }

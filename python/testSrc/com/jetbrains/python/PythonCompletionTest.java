@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1134,6 +1134,62 @@ public class PythonCompletionTest extends PyTestCase {
     assertNotNull(suggested);
     assertContainsElements(suggested, "__import__");
     assertDoesntContain(suggested, "_T", "_KT");
+  }
+
+  // PY-18246
+  public void testTypingNamedTupleCreatedViaCallInstance() {
+    myFixture.copyDirectoryToProject("../typing", "");
+
+    final List<String> suggested = doTestByText(
+      "from typing import NamedTuple\n" +
+      "EmployeeRecord = NamedTuple('EmployeeRecord', [\n" +
+      "    ('name', str),\n" +
+      "    ('age', int),\n" +
+      "    ('title', str),\n" +
+      "    ('department', str)\n" +
+      "])\n" +
+      "e = EmployeeRecord('n', 'a', 't', 'd')\n" +
+      "e.<caret>"
+    );
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "name", "age", "title", "department");
+  }
+
+  // PY-18246
+  public void testTypingNamedTupleCreatedViaKwargsCallInstance() {
+    myFixture.copyDirectoryToProject("../typing", "");
+
+    final List<String> suggested = doTestByText(
+      "from typing import NamedTuple\n" +
+      "EmployeeRecord = NamedTuple('EmployeeRecord', name=str, age=int, title=str, department=str)\n" +
+      "e = EmployeeRecord('n', 'a', 't', 'd')\n" +
+      "e.<caret>"
+    );
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "name", "age", "title", "department");
+  }
+
+  // PY-18246
+  public void testTypingNamedTupleCreatedViaInheritanceInstance() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        myFixture.copyDirectoryToProject("../typing", "");
+
+        final List<String> suggested = doTestByText(
+          "from typing import NamedTuple\n" +
+          "class EmployeeRecord(NamedTuple):\n" +
+          "    name: str\n" +
+          "    age: int\n" +
+          "    title: str\n" +
+          "    department: str\n" +
+          "e = EmployeeRecord('n', 'a', 't', 'd')\n" +
+          "e.<caret>"
+        );
+        assertNotNull(suggested);
+        assertContainsElements(suggested, "name", "age", "title", "department");
+      }
+    );
   }
 
   // PY-21519

@@ -15,9 +15,7 @@
  */
 package com.intellij.java.codeInsight.navigation;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
@@ -93,6 +91,70 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
                  "}");
   }
 
+  public void testOverloadedMethodBothPublic() {
+    doTestOverloadedMethod("foo",
+                           "class Overloaded {\n" +
+                           "  public void foo() {}\n" +
+                           "  public void foo(String s) {}\n" +
+                           "}", false, "java.lang.String");
+  }
+
+  public void testOverloadedMethodPublicFirst() {
+    doTestOverloadedMethod("foo",
+                           "class Overloaded {\n" +
+                           "  public void foo() {}\n" +
+                           "  void foo(String s) {}\n" +
+                           "}", false);
+  }
+
+  public void testOverloadedMethodPublicSecond() {
+    doTestOverloadedMethod("foo",
+                           "class Overloaded {\n" +
+                           "  void foo() {}\n" +
+                           "  public void foo(String s) {}\n" +
+                           "}", false, "java.lang.String");
+  }
+
+  public void testOverloadedDeclaredMethod() {
+    doTestOverloadedMethod("foo",
+                           "class Overloaded {\n" +
+                           "  public void foo() {}\n" +
+                           "  public void foo(String s) {}\n" +
+                           "}", true, "java.lang.String");
+  }
+
+  public void testOverloadedInheritedMethod() {
+    doTestOverloadedMethod("bar",
+                           "class OverloadedParent {" +
+                           "  public void bar(String s) {}\n" +
+                           "}" +
+                           "" +
+                           "class Overloaded extends OverloadedParent {\n" +
+                           "  public void bar() {}\n" +
+                           "}", false, "java.lang.String");
+  }
+
+  private void doTestOverloadedMethod(String name,
+                                      @NotNull @NonNls @Language("JAVA") String classText,
+                                      boolean isDeclared,
+                                      String... expectedParameterTypes) {
+    myFixture.addClass(classText);
+
+    PsiMember member = doTestImpl(name,
+                                  "class Main {" +
+                                  "  void main() {" +
+                                  "    Overloaded.class.get" + (isDeclared?"Declared":"") + "Method(\"<caret>"+name+"\", String.class);" +
+                                  "  }" +
+                                  "}");
+    assertTrue("Target is a method", member instanceof PsiMethod);
+    PsiMethod method = (PsiMethod)member;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    assertEquals("Parameter count", expectedParameterTypes.length, parameters.length);
+    for (int i = 0; i < expectedParameterTypes.length; i++) {
+      assertEquals("Parameter type " + i, expectedParameterTypes[i], parameters[0].getType().getCanonicalText());
+    }
+  }
+
 
   private void doTest(String name,
                       @MagicConstant(stringValues = {FIELD, METHOD, DF, DM}) String type) {
@@ -104,7 +166,7 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
     doTestImpl(name, mainClassText);
   }
 
-  private void doTestImpl(String name, String mainClassText) {
+  private PsiMember doTestImpl(String name, @NotNull @NonNls @Language("JAVA") String mainClassText) {
     PsiReference reference = getReference(mainClassText);
     assertEquals("Reference text", name, reference.getCanonicalText());
     PsiElement resolved = reference.resolve();
@@ -112,6 +174,7 @@ public class JavaReflectionNavigationTest extends LightCodeInsightFixtureTestCas
     assertTrue("Target is a member", resolved instanceof PsiMember);
     PsiMember member = (PsiMember)resolved;
     assertEquals("Target name", name, member.getName());
+    return member;
   }
 
   private void doNegativeTest(String name,

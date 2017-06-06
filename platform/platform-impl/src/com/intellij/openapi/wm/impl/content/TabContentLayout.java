@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +17,30 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
-import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 class TabContentLayout extends ContentLayout {
 
   static final int MORE_ICON_BORDER = 6;
   LayoutData myLastLayout;
-
-  JPopupMenu myPopup;
-  final PopupMenuListener myPopupListener;
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
@@ -71,8 +64,6 @@ class TabContentLayout extends ContentLayout {
   TabContentLayout(ToolWindowContentUi ui) {
     super(ui);
 
-    myPopupListener = new MyPopupListener();
-
     new BaseButtonBehavior(myUi) {
       protected void execute(final MouseEvent e) {
         if (!myUi.isCurrent(TabContentLayout.this)) return;
@@ -80,7 +71,7 @@ class TabContentLayout extends ContentLayout {
         if (myLastLayout != null) {
           final Rectangle moreRect = myLastLayout.moreRect;
           if (moreRect != null && moreRect.contains(e.getPoint())) {
-            showPopup();
+            showPopup(e, ContainerUtil.filter(myTabs, myLastLayout.toDrop::contains));
           }
         }
       }
@@ -109,41 +100,10 @@ class TabContentLayout extends ContentLayout {
     myIdLabel = null;
   }
 
-  private void showPopup() {
-    myPopup = new JBPopupMenu();
-    myPopup.addPopupMenuListener(myPopupListener);
-
-    ArrayList<ContentTabLabel> tabs = myTabs;
-
-    for (final ContentTabLabel each : tabs) {
-      final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
-      if (myUi.myManager.isSelected(each.myContent)) {
-        item.setSelected(true);
-      }
-      item.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          myUi.myManager.setSelectedContent(each.myContent, true);
-        }
-      });
-      myPopup.add(item);
-    }
-    myPopup.show(myUi, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
-  }
-
-
-  private class MyPopupListener implements PopupMenuListener {
-    public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
-    }
-
-    public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-      if (myPopup != null) {
-        myPopup.removePopupMenuListener(this);
-      }
-      myPopup = null;
-    }
-
-    public void popupMenuCanceled(final PopupMenuEvent e) {
-    }
+  private static void showPopup(MouseEvent e, List<ContentTabLabel> tabs) {
+    final List<Content> contentsToShow = ContainerUtil.map(tabs, ContentTabLabel::getContent);
+    final SelectContentStep step = new SelectContentStep(contentsToShow);
+    JBPopupFactory.getInstance().createListPopup(step).show(new RelativePoint(e));
   }
 
   @Override
@@ -173,7 +133,7 @@ class TabContentLayout extends ContentLayout {
         myLastLayout.contentCount == manager.getContentCount()) {
       for (ContentTabLabel each : myTabs) {
         if (!each.isValid()) break;
-        if (each.myContent == selected && each.getBounds().width != 0) {
+        if (each.getContent() == selected && each.getBounds().width != 0) {
           data = myLastLayout;
           data.fullLayout = false;
         }
@@ -294,7 +254,7 @@ class TabContentLayout extends ContentLayout {
     int moreRectWidth;
 
     ArrayList<ContentTabLabel> toLayout = new ArrayList<>();
-    ArrayList<ContentTabLabel> toDrop = new ArrayList<>();
+    Collection<ContentTabLabel> toDrop = new HashSet<>();
 
     Rectangle moreRect;
 
@@ -429,11 +389,11 @@ class TabContentLayout extends ContentLayout {
     myUi.removeAll();
 
     myUi.add(myIdLabel);
-    myUi.initMouseListeners(myIdLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi);
 
     for (ContentTabLabel each : myTabs) {
       myUi.add(each);
-      myUi.initMouseListeners(each, myUi);
+      ToolWindowContentUi.initMouseListeners(each, myUi);
     }
     
     myCached.clear();

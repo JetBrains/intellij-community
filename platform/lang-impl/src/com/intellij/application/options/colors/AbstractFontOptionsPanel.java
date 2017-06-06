@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FontComboBox;
@@ -32,7 +31,6 @@ import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,9 +59,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   @NotNull private final JTextField myEditorFontSizeField = new JTextField(4);
   @NotNull private final JTextField myLineSpacingField = new JTextField(4);
   private final FontComboBox myPrimaryCombo = new FontComboBox();
-  private final JCheckBox myUseSecondaryFontCheckbox = new JCheckBox(ApplicationBundle.message("secondary.font"));
   private final JCheckBox myEnableLigaturesCheckbox = new JCheckBox(ApplicationBundle.message("use.ligatures"));
-  private final FontComboBox mySecondaryCombo = new FontComboBox(false, false);
+  private final FontComboBox mySecondaryCombo = new FontComboBox(false, false, true);
 
   @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
@@ -72,30 +69,72 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   private JLabel myPrimaryLabel;
   private JLabel mySizeLabel;
 
+  protected final static int ADDITIONAL_VERTICAL_GAP = 12;
+  protected final static int BASE_INSET = 5;
+  private JLabel mySecondaryFontLabel;
+  private JLabel myLineSpacingLabel;
 
   protected AbstractFontOptionsPanel() {
-    setLayout(new MigLayout("ins 0, gap 5, flowx"));
-    initControls();
+    setLayout(new FlowLayout(FlowLayout.LEFT));
+    add(createControls());
+  }
+
+  protected JComponent createControls() {
+    return createFontSettingsPanel();
   }
 
   @SuppressWarnings("unchecked")
-  protected void initControls() {
-    add(myOnlyMonospacedCheckBox, "newline 10, sgx b, sx 2");
+  protected final JPanel createFontSettingsPanel() {
+    Insets baseInsets = getInsets(0, 0);
 
+    JPanel fontPanel = new JPanel(new GridBagLayout());
+    GridBagConstraints c = new GridBagConstraints();
+    c.anchor = GridBagConstraints.WEST;
+    c.insets = baseInsets;
+
+    c.gridx = 0;
+    c.gridy = 0;
     myPrimaryLabel = new JLabel(ApplicationBundle.message("primary.font"));
-    add(myPrimaryLabel, "newline, ax right");
-    add(myPrimaryCombo, "sgx b");
-    mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
-    add(mySizeLabel, "gapleft 20");
-    add(myEditorFontSizeField);
-    add(new JLabel(ApplicationBundle.message("editbox.line.spacing")), "gapleft 20");
-    add(myLineSpacingField);
+    fontPanel.add(myPrimaryLabel, c);
 
-    add(new JLabel(ApplicationBundle.message("label.fallback.fonts.list.description"),
-                   MessageType.INFO.getDefaultIcon(),
-                   SwingConstants.LEFT), "newline, sx 5");
-    add(myUseSecondaryFontCheckbox, "newline, ax right");
-    add(mySecondaryCombo, "sgx b");
+    c.gridx = 1;
+    fontPanel.add(myPrimaryCombo, c);
+
+    c.gridx = 2;
+    c.insets = getInsets(0, BASE_INSET);
+    fontPanel.add(myOnlyMonospacedCheckBox, c);
+
+    c.gridx = 0;
+    c.gridy = 1;
+    c.insets = baseInsets;
+    mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
+    fontPanel.add(mySizeLabel, c);
+
+    c.gridx = 1;
+    fontPanel.add(myEditorFontSizeField, c);
+
+    c.gridx = 0;
+    c.gridy = 2;
+    myLineSpacingLabel = new JLabel(ApplicationBundle.message("editbox.line.spacing"));
+    myLineSpacingLabel.setLabelFor(myLineSpacingField);
+    fontPanel.add(myLineSpacingLabel, c);
+    c.gridx = 1;
+    fontPanel.add(myLineSpacingField,c);
+
+    c.gridy = 3;
+    c.gridx = 0;
+    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, 0);
+    mySecondaryFontLabel = new JLabel(ApplicationBundle.message("secondary.font"));
+    mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
+    fontPanel.add(mySecondaryFontLabel, c);
+    c.gridx = 1;
+    fontPanel.add(mySecondaryCombo, c);
+    c.gridx = 2;
+    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, BASE_INSET);
+    JLabel fallbackLabel = new JLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
+    fallbackLabel.setEnabled(false);
+    fontPanel.add(fallbackLabel, c);
+
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
     myEnableLigaturesCheckbox.setBorder(null);
     panel.add(myEnableLigaturesCheckbox);
@@ -108,10 +147,14 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
     warningIcon.setVisible(!SystemInfo.isJetBrainsJvm);
     panel.add(warningIcon);
-    add(panel, "newline, sx 2");
+    c.gridx = 0;
+    c.gridy = 4;
+    c.gridwidth = 2;
+    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, 0);
+    c.insets.bottom = BASE_INSET;
+    fontPanel.add(panel, c);
 
     myOnlyMonospacedCheckBox.setBorder(null);
-    myUseSecondaryFontCheckbox.setBorder(null);
     mySecondaryCombo.setEnabled(false);
 
     myOnlyMonospacedCheckBox.setSelected(EditorColorsManager.getInstance().isUseOnlyMonospacedFonts());
@@ -126,10 +169,6 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     mySecondaryCombo.setMonospacedOnly(myOnlyMonospacedCheckBox.isSelected());
     mySecondaryCombo.setRenderer(RENDERER);
 
-    myUseSecondaryFontCheckbox.addActionListener(e -> {
-      mySecondaryCombo.setEnabled(myUseSecondaryFontCheckbox.isSelected());
-      syncFontFamilies();
-    });
     ItemListener itemListener = this::syncFontFamilies;
     myPrimaryCombo.addItemListener(itemListener);
     mySecondaryCombo.addItemListener(itemListener);
@@ -198,6 +237,11 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
         updateDescription(true);
       }
     });
+    return fontPanel;
+  }
+
+  private static Insets getInsets(int extraTopSpacing, int extraLeftSpacing) {
+    return JBUI.insets(BASE_INSET + extraTopSpacing, BASE_INSET + extraLeftSpacing, 0, 0);
   }
 
   protected void setDelegatingPreferences(boolean isDelegating) {
@@ -249,7 +293,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       modifiableFontPreferences.clearFonts();
       modifiableFontPreferences.setUseLigatures(myEnableLigaturesCheckbox.isSelected());
       String primaryFontFamily = myPrimaryCombo.getFontName();
-      String secondaryFontFamily = mySecondaryCombo.isEnabled() ? mySecondaryCombo.getFontName() : null;
+      String secondaryFontFamily = mySecondaryCombo.isNoFontSelected() ? null : mySecondaryCombo.getFontName();
       int fontSize = getFontSizeFromField();
       if (primaryFontFamily != null) {
         if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
@@ -276,7 +320,6 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();
     myPrimaryCombo.setFontName(fontPreferences.getFontFamily());
     boolean isThereSecondaryFont = fontFamilies.size() > 1;
-    myUseSecondaryFontCheckbox.setSelected(isThereSecondaryFont);
     mySecondaryCombo.setFontName(isThereSecondaryFont ? fontFamilies.get(1) : null);
     myEditorFontSizeField.setText(String.valueOf(fontPreferences.getSize(fontPreferences.getFontFamily())));
 
@@ -285,12 +328,13 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     boolean readOnly = isReadOnlyColorScheme || !(getFontPreferences() instanceof ModifiableFontPreferences);
     myPrimaryCombo.setEnabled(!readOnly);
     myPrimaryLabel.setEnabled(!readOnly);
-    mySecondaryCombo.setEnabled(isThereSecondaryFont && !readOnly);
+    mySecondaryCombo.setEnabled(!readOnly);
+    mySecondaryFontLabel.setEnabled(!readOnly);
     myOnlyMonospacedCheckBox.setEnabled(!readOnly);
     myLineSpacingField.setEnabled(!readOnly);
+    myLineSpacingLabel.setEnabled(!readOnly);
     myEditorFontSizeField.setEnabled(!readOnly);
     mySizeLabel.setEnabled(!readOnly);
-    myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
     myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetBrainsJvm);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());

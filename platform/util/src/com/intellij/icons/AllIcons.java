@@ -1289,6 +1289,7 @@ public class AllIcons {
     public static final Icon Push = IconLoader.getIcon("/vcs/push.png"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.png"); // 16x16
     public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png"); // 16x16
+    public static final Icon RestoreDefaultSize = IconLoader.getIcon("/vcs/restoreDefaultSize.png"); // 16x16
     public static final Icon Shelve = IconLoader.getIcon("/vcs/Shelve.png"); // 16x16
     public static final Icon ShelveSilent = IconLoader.getIcon("/vcs/shelveSilent.png"); // 16x16
     public static final Icon ShowUnversionedFiles = IconLoader.getIcon("/vcs/ShowUnversionedFiles.png"); // 16x16

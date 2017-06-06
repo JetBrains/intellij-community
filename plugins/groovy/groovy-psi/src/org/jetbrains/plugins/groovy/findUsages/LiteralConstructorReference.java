@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -190,7 +191,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
 
     if (constructorCandidates.length == 0) {
       final GroovyResolveResult result = GroovyResolveResultImpl.from(classResolveResult);
-      if (result != GroovyResolveResult.EMPTY_RESULT) return new GroovyResolveResult[]{result};
+      if (result != EmptyGroovyResolveResult.INSTANCE) return new GroovyResolveResult[]{result};
     }
     return constructorCandidates;
   }

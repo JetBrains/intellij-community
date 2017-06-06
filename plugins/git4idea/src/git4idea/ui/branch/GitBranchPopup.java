@@ -23,6 +23,7 @@ import com.intellij.dvcs.ui.RootAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +35,6 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -43,6 +43,7 @@ import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.stream.Collectors.toList;
 
@@ -64,8 +65,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   static GitBranchPopup getInstance(@NotNull final Project project, @NotNull GitRepository currentRepository) {
     final GitVcsSettings vcsSettings = GitVcsSettings.getInstance(project);
     Condition<AnAction> preselectActionCondition = action -> {
-      if (action instanceof GitBranchPopupActions.LocalBranchActions) {
-        GitBranchPopupActions.LocalBranchActions branchAction = (GitBranchPopupActions.LocalBranchActions)action;
+     GitBranchPopupActions.LocalBranchActions branchAction = getBranchAction(action);
+      if (branchAction != null) {
         String branchName = branchAction.getBranchName();
 
         String recentBranch;
@@ -86,30 +87,19 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     return new GitBranchPopup(currentRepository, GitUtil.getRepositoryManager(project), vcsSettings, preselectActionCondition);
   }
 
+  @Nullable
+  private static GitBranchPopupActions.LocalBranchActions getBranchAction(@NotNull AnAction action) {
+    AnAction resultAction =
+      action instanceof EmptyAction.MyDelegatingActionGroup ? ((EmptyAction.MyDelegatingActionGroup)action).getDelegate() : action;
+    return tryCast(resultAction, GitBranchPopupActions.LocalBranchActions.class);
+  }
+
   private GitBranchPopup(@NotNull GitRepository currentRepository,
                          @NotNull GitRepositoryManager repositoryManager,
                          @NotNull GitVcsSettings vcsSettings,
                          @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
           preselectActionCondition, DIMENSION_SERVICE_KEY);
-  }
-
-  @Override
-  protected void setCurrentBranchInfo() {
-    String currentBranchText = "Current branch";
-    if (myRepositoryManager.moreThanOneRoot()) {
-      if (myMultiRootBranchConfig.diverged()) {
-        currentBranchText += " in " + DvcsUtil.getShortRepositoryName(myCurrentRepository) + ": " +
-                             GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
-      }
-      else {
-        currentBranchText += ": " + myMultiRootBranchConfig.getCurrentBranch();
-      }
-    }
-    else {
-      currentBranchText += ": " + GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
-    }
-    myPopup.setAdText(currentBranchText, SwingConstants.CENTER);
   }
 
   @Override
@@ -122,11 +112,19 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
-    List<BranchActionGroup> localBranchActions =
-      myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
-        .collect(toList());
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions), SHOW_ALL_LOCALS_KEY, true);
+    List<BranchActionGroup> localBranchActions = myMultiRootBranchConfig.getLocalBranchNames().stream()
+      .map(l -> createLocalBranchActions(allRepositories, l))
+      .filter(Objects::nonNull)
+      .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .collect(toList());
+    int topShownBranches = getNumOfTopShownBranches(localBranchActions);
+    String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
+    if (currentBranch != null) {
+      localBranchActions
+        .add(0, new GitBranchPopupActions.CurrentBranchActions(myProject, allRepositories, currentBranch, myCurrentRepository));
+      topShownBranches++;
+    }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, localBranchActions, topShownBranches, SHOW_ALL_LOCALS_KEY, true);
     popupGroup.addSeparator("Common Remote Branches");
 
     List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
@@ -154,7 +152,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addSeparator("Repositories");
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(),
-                                    GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
+                                    isBranchesDiverged() ? GitBranchUtil.getDisplayableBranchText(repo) : null)).collect(toList());
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
     return popupGroup;

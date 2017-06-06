@@ -709,7 +709,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private void doImportAction(final DataContext dataContext) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return super.isFileVisible(file, showHiddenFiles) &&

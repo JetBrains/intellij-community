@@ -887,6 +887,12 @@ class Aa {
 }
 ''')
 
+    fixture.addClass('''
+class Cc {
+  String name;
+}
+''')
+
     def resolved = configureByText("""
 @Newify(Aa)
 class B {
@@ -894,6 +900,16 @@ class B {
 }
 """).resolve()
     assertInstanceOf(resolved, PsiMethod)
+    assertEquals "Aa", (resolved as PsiMethod).returnType.canonicalText
+
+    resolved = configureByText("""
+@Newify(Cc)
+class B {
+  def a = C<caret>c()
+}
+""").resolve()
+    assertInstanceOf(resolved, PsiMethod)
+    assertEquals "Cc", (resolved as PsiMethod).returnType.canonicalText
 
     resolved = configureByText("""
 @Newify(Aa)
@@ -903,6 +919,7 @@ class B {
 """).resolve()
 
     assertInstanceOf(resolved, PsiMethod)
+    assertEquals "Aa", (resolved as PsiMethod).returnType.canonicalText
 
     resolved = configureByText("""
 class B {
@@ -912,6 +929,7 @@ class B {
 """).resolve()
 
     assertInstanceOf(resolved, PsiMethod)
+    assertEquals "Aa", (resolved as PsiMethod).returnType.canonicalText
 
     resolved = configureByText("""
 class B {
@@ -921,6 +939,7 @@ class B {
 """).resolve()
 
     assertInstanceOf(resolved, PsiMethod)
+    assertEquals "Aa", (resolved as PsiMethod).returnType.canonicalText
 
     resolved = configureByText("""
 class B {

@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -486,6 +487,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }
     return null;
+  }
+
+  @Nullable
+  public static PyType getReferenceTypeFromOverridingProviders(@NotNull PsiElement target,
+                                                               @NotNull TypeEvalContext context,
+                                                               @Nullable PsiElement anchor) {
+    return StreamEx
+      .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+      .select(PyOverridingTypeProvider.class)
+      .map(provider -> provider.getReferenceType(target, context, anchor))
+      .findFirst(Objects::nonNull)
+      .orElse(null);
   }
 
   @Nullable
