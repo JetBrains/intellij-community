@@ -57,6 +57,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
       @Override
       public void pass(PsiElement[] elements) {
+        if (elements.length == 0) {
+          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
+          showErrorMessage(project , editor, message);
+          return;
+        }
         PsiElement anchorStatement = RefactoringUtil.getParentStatement(elements[0], false);
         PsiElement tempContainer = checkAnchorStatement(project, editor, anchorStatement);
         if (tempContainer == null) return;
