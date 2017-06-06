@@ -148,6 +148,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (virtualFile == null) return null;
 
     return ReadAction.compute(() -> {
+      if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
       if (child == null || !child.isValid()) return null;
       PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
