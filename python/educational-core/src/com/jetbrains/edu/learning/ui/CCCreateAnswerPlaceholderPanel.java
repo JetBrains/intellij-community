@@ -58,7 +58,8 @@ public class CCCreateAnswerPlaceholderPanel {
     myHintsPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
     ((GridLayoutManager)myHintsPanel.getLayout()).setHGap(1);
 
-    myHintTextArea.setFont(myPlaceholderTextArea.getFont());
+    myHintTextArea.setFont(UIUtil.getLabelFont());
+    myPlaceholderTextArea.setFont(UIUtil.getLabelFont());
     myHintTextArea.addFocusListener(createFocusListenerToSetDefaultHintText());
 
     actionsPanel.add(createHintToolbarComponent(), BorderLayout.WEST);
