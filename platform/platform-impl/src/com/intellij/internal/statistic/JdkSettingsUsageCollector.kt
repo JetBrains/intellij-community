@@ -25,8 +25,21 @@ import java.lang.management.ManagementFactory
 class JdkSettingsUsageCollector: UsagesCollector() {
   override fun getUsages(): Set<UsageDescriptor> {
     return ManagementFactory.getRuntimeMXBean().inputArguments
+      .map { s -> hideUserPath(s) }
       .map { s -> UsageDescriptor(s) }
       .toSet()
+  }
+
+  val keysWithPath = arrayOf("-Didea.home.path", "-Didea.launcher.bin.path", "-Didea.plugins.path", "-Xbootclasspath",
+    "-Djb.vmOptionsFile", "-XX ErrorFile", "-XX HeapDumpPath", "	-Didea.launcher.bin.path", "-agentlib:jdwp")
+
+  private fun hideUserPath(key: String): String {
+    @Suppress("LoopToCallChain")
+    for (s in keysWithPath) {
+      if (key.startsWith(s)) return "$s ..."
+    }
+
+    return key
   }
 
   override fun getGroupId(): GroupDescriptor {
