@@ -277,7 +277,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
             return null;
           }
           JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
-          createStaticOptions(optionsPanel, "Pass fields as params");
+          createStaticOptions(optionsPanel, RefactoringBundle.message("introduce.functional.variable.pass.fields.checkbox"));
           return optionsPanel;
         }
 
