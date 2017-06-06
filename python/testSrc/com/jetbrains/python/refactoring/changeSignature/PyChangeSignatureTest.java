@@ -303,6 +303,35 @@ public class PyChangeSignatureTest extends PyTestCase {
                           LanguageLevel.PYTHON35);
   }
 
+  // PY-24288
+  public void testKeywordParameterAlreadyExists() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                              new PyParameterInfo(-1, "foo", "None", true),
+                                              new PyParameterInfo(1, "**kwargs", null, false)));
+  }
+
+  
+  // PY-24480
+  public void testAddParameterBeforeVararg() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(-1, "x", "42", false),
+                                              new PyParameterInfo(0, "*args", null, false)));
+  }
+
+  // PY-24479
+  public void testRemoveParameterBeforeVararg() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                              new PyParameterInfo(2, "*args", null, false)));
+  }
+
+  // PY-16683
+  public void testKeywordOnlyParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                                new PyParameterInfo(1, "*args", null, false),
+                                                new PyParameterInfo(-1, "foo", "None", false)));
+    });
+  }
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);
@@ -355,7 +384,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyFunction newFunction = PyChangeSignatureHandler.getSuperMethod(function);
     assertNotNull(newFunction);
     final PyMethodDescriptor method = new PyMethodDescriptor(newFunction);
-    final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);
+    final TestPyChangeSignatureDialog dialog = new TestPyChangeSignatureDialog(newFunction.getProject(), method);                                                                                                                                                                                                     
     try {
       if (newName != null) {
         dialog.setNewName(newName);
