@@ -115,7 +115,7 @@ public abstract class IndentationParser implements PsiParser {
           }
           if (isCustomTagDelimiter(type)) {
             builder.advanceLexer();
-            eolSeen = true;
+            stack.push(new BlockInfo(currentIndent, builder.mark(), type));
           }
           if (eolSeen) {
             if (startLineMarker != null) {
