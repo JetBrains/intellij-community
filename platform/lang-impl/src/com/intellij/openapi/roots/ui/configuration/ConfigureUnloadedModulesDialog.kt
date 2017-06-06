@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBLabel
@@ -99,13 +100,24 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
   private fun moveAllNodes(from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
     from.removeAllNodes()
     to.fillTree(moduleDescriptions.values)
+    IdeFocusManager.getInstance(project).requestFocus(to.tree, true).doWhenDone {
+      to.tree.selectionPath = to.tree.getPathForRow(0)
+    }
   }
 
   private fun moveSelectedNodes(from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
     val selected = from.selectedModules
+    val oldSelectedRow = from.tree.selectionModel.leadSelectionRow
     from.removeModules(selected)
     val modules = to.addModules(selected)
     modules.firstOrNull()?.let { TreeUtil.selectNode(to.tree, it)}
+    IdeFocusManager.getInstance(project).requestFocus(from.tree, true).doWhenDone {
+      from.tree.selectionModel.selectionPath = from.tree.getPathForRow(oldSelectedRow.coerceAtMost(from.tree.rowCount-1))
+    }
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return loadedModulesTree.tree
   }
 
   override fun doOKAction() {
