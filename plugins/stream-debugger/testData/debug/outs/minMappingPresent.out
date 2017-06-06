@@ -9,7 +9,7 @@ Stream.of
     after: 1,2,3
 min
     before: 1,2,3
-    after: nothing
+    after: 2147483646
 mappings for Stream.of
   direct:
     no
@@ -21,10 +21,9 @@ mappings for min
   direct:
     1 -> nothing
     2 -> nothing
-    3 -> nothing
+    3 -> 2147483646
   reverse:
-    empty
-wrong
+    3 <- 2147483646
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
