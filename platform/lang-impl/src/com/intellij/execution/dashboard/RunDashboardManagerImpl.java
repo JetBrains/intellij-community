@@ -377,6 +377,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     }
 
     @Override
+    public boolean hasMultipleTabs() {
+      return myDashboardContentManager.getContents().length > 1;
+    }
+
+    @Override
     public String getTitlePrefix() {
       return myTitlePrefix;
     }

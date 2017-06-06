@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
@@ -28,7 +27,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -76,7 +74,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
-  private boolean myShouldNotShowPopup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -354,7 +351,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     group.add(myPreviousTabAction);
     group.add(myShowContent);
 
-    if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
+    if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
       group.addAction(createSplitTabsAction((TabbedContent)content));
     }
 
@@ -509,69 +506,17 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void toggleContentPopup() {
-    if (myShouldNotShowPopup) {
-      myShouldNotShowPopup = false;
-      return;
-    }
-    final Ref<AnAction> selected = Ref.create();
-    final Ref<AnAction> selectedTab = Ref.create();
     final Content[] contents = myManager.getContents();
     final Content selectedContent = myManager.getSelectedContent();
-    final AnAction[] actions = new AnAction[contents.length];
-    for (int i = 0; i < actions.length; i++) {
-      final Content content = contents[i];
-      if (content instanceof TabbedContent) {
-        final TabbedContent tabbedContent = (TabbedContent)content;
 
-        final List<Pair<String, JComponent>> tabs = ((TabbedContent)content).getTabs();
-        final AnAction[] tabActions = new AnAction[tabs.size()];
-        for (int j = 0; j < tabActions.length; j++) {
-          final int index = j;
-          tabActions[j] = new DumbAwareAction(tabs.get(index).first) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-              myManager.setSelectedContent(tabbedContent);
-              tabbedContent.selectContent(index);
-            }
-          };
-        }
-        final DefaultActionGroup group = new DefaultActionGroup(tabActions);
-        group.getTemplatePresentation().setText(((TabbedContent)content).getTitlePrefix());
-        group.setPopup(true);
-        actions[i] = group;
-        if (content == selectedContent) {
-          selected.set(group);
-          final int selectedIndex = ContentUtilEx.getSelectedTab(tabbedContent);
-          if (selectedIndex != -1) {
-            selectedTab.set(tabActions[selectedIndex]);
-          }
-        }
-      } else {
-        actions[i] = new DumbAwareAction() {
-          {
-            getTemplatePresentation().setText(content.getTabName(), false);
-          }
+    final SelectContentStep step = new SelectContentStep(contents);
+    step.setDefaultOptionIndex(myManager.getIndexOfContent(selectedContent));
 
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            myManager.setSelectedContent(content, true, true);
-          }
-        };
-        if (content == selectedContent) {
-          selected.set(actions[i]);
-        }
-      }
-    }
-
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions),
-                                                                                DataManager.getInstance()
-                                                                                  .getDataContext(myManager.getComponent()), false, true,
-                                                                                true, null, -1, action -> action == selected.get() || action == selectedTab.get());
-
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {
-      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(() -> popup.handleSelect(true), 30);
+      new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(() -> popup.handleSelect(false), 50);
     }
   }
 }
