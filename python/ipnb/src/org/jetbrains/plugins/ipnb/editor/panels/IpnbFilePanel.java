@@ -34,6 +34,7 @@ import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
+  public static final Topic<EditingModeChangeListener> TOPIC = Topic.create("IPNB.EditingMode", EditingModeChangeListener.class);
   private final DocumentListener myDocumentListener;
   private final Document myDocument;
   private final MessageBusConnection myBusConnection;
@@ -129,6 +131,12 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
                                   executeSaveFileCommand();
                                 }
                               });
+
+    myBusConnection.subscribe(TOPIC, (wasInEditing, isEditing) -> {
+      if (wasInEditing && !isEditing) {
+        executeSaveFileCommand();
+    }
+  });
   }
 
   public void executeSaveFileCommand() {
@@ -878,5 +886,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public Document getDocument() {
     return myDocument;
+  }
+
+  @FunctionalInterface
+  public interface EditingModeChangeListener {
+    void modeChanged(boolean wasInEditing, boolean isEditing);
   }
 }

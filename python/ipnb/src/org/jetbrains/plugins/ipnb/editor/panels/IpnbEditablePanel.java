@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
@@ -203,6 +204,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public void setEditing(boolean editing) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(IpnbFilePanel.TOPIC).modeChanged(myEditing, editing);
     myEditing = editing;
     setBorder(BorderFactory.createLineBorder(editing ? JBColor.GREEN : JBColor.GRAY));
   }
