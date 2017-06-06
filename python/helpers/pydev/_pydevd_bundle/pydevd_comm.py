@@ -146,6 +146,7 @@ CMD_INPUT_REQUESTED = 147
 CMD_GET_DESCRIPTION = 148
 
 CMD_PROCESS_CREATED = 149
+CMD_SHOW_CYTHON_WARNING = 150
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -204,6 +205,7 @@ ID_TO_MEANING = {
     '148': 'CMD_GET_DESCRIPTION',
 
     '149': 'CMD_PROCESS_CREATED',
+    '150': 'CMD_SHOW_CYTHON_WARNING',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -590,6 +592,12 @@ class NetCommandFactory:
         cmdText = '<process/>'
         return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
+    def make_show_cython_warning_message(self):
+        try:
+            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, '')
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
     def make_custom_frame_created_message(self, frameId, frameDescription):
         frameDescription = pydevd_xml.make_valid_xml_value(frameDescription)
         cmdText = '<xml><thread name="%s" id="%s"/></xml>' % (frameDescription, frameId)
@@ -827,7 +835,6 @@ class NetCommandFactory:
             return NetCommand(CMD_INPUT_REQUESTED, 0, started)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
-
 
     def make_exit_message(self):
         try:
