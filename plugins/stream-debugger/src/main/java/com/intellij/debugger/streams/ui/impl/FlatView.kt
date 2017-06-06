@@ -21,6 +21,7 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
+import com.intellij.debugger.streams.wrapper.StreamCallType
 import java.awt.Component
 import java.awt.GridLayout
 import javax.swing.JPanel
@@ -39,7 +40,8 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[index + 1])
       val mappingPane = MappingPane(controller.nextCall!!.name, valuesBefore, mapping)
 
-      val view = PositionsAwareCollectionView(" ", evaluationContext, controller.values, valuesBefore)
+      val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext)
+      val view = PositionsAwareCollectionView(" ", tree, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
@@ -68,9 +70,20 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     }
 
     lastValues?.let {
-      val terminationController = controllers.last()
-      val view = PositionsAwareCollectionView(" ", evaluationContext, terminationController.values, it)
-      terminationController.register(view)
+      val lastController = controllers.last()
+
+      val prevCall = lastController.prevCall
+      val tree: CollectionTree
+      if (prevCall != null && prevCall.type == StreamCallType.TERMINATOR) {
+        val values = lastController.values
+        assert(values.size == 1)
+        tree = SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext)
+      }
+      else {
+        tree = CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext)
+      }
+      val view = PositionsAwareCollectionView(" ", tree, it)
+      lastController.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
           prevMappingPane?.repaint()

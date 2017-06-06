@@ -23,7 +23,8 @@ import javax.swing.JTree
 /**
  * @author Vitaliy.Bibaev
  */
-class ExceptionView(context: EvaluationContextImpl, ex: TraceElement) : CollectionView("Cause", context, listOf(ex.value), listOf(ex)) {
+class ExceptionView(context: EvaluationContextImpl, ex: TraceElement)
+  : CollectionView("Cause", SingleElementTree(ex.value!!, listOf(ex), context)) {
   init {
     instancesTree.cellRenderer = object : TraceTreeCellRenderer() {
       override fun customizeCellRenderer(tree: JTree,

@@ -159,6 +159,11 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     expandNodesOnLoad(node -> node == root);
   }
 
+  CollectionTree(@NotNull List<TraceElement> traceElements,
+                 @NotNull EvaluationContextImpl evaluationContext) {
+    this(traceElements.stream().map(TraceElement::getValue).collect(Collectors.toList()), traceElements, evaluationContext);
+  }
+
   @Override
   public void clearSelection() {
     myIgnoreInternalSelectionEvents = true;

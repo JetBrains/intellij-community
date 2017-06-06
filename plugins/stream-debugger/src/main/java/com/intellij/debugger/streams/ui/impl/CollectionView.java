@@ -37,13 +37,11 @@ public class CollectionView extends JPanel implements Disposable, TraceContainer
   private final CollectionTree myInstancesTree;
 
   CollectionView(@NotNull String header,
-                 @NotNull EvaluationContextImpl evaluationContext,
-                 @NotNull List<Value> values,
-                 @NotNull List<TraceElement> traceElements) {
+                 @NotNull CollectionTree collectionTree) {
     super(new BorderLayout());
     add(new JBLabel(header), BorderLayout.NORTH);
 
-    myInstancesTree = new CollectionTree(values, traceElements, evaluationContext);
+    myInstancesTree = collectionTree;
 
     final JBScrollPane scroll = new JBScrollPane(myInstancesTree);
 
