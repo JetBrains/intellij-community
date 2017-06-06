@@ -49,10 +49,14 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     }
 
     if (JavaClassFileType.INSTANCE == file.getFileType()) {
-      return myIndex.isInLibraryClasses(file);
+      return myIndex.isInLibraryClasses(file) && !isVersioned(file);
     }
 
     return myIndex.isInSourceContent(file) ||
            myBaseScope.isForceSearchingInLibrarySources() && myIndex.isInLibrarySource(file);
+  }
+
+  private static boolean isVersioned(VirtualFile file) {
+    return file.getPath().contains("/META-INF/versions/");
   }
 }
