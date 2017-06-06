@@ -80,8 +80,8 @@ public abstract class GroovyNamedArgumentProvider {
 
   @Nullable
   public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
-                                                                                  @Nullable String argumentName,
-                                                                                  boolean forCompletion) {
+                                                                                       @Nullable String argumentName,
+                                                                                       boolean forCompletion) {
     Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<String, NamedArgumentDescriptor>() {
       @Override
       public NamedArgumentDescriptor put(String key, NamedArgumentDescriptor value) {
@@ -105,15 +105,17 @@ public abstract class GroovyNamedArgumentProvider {
     else {
       boolean mapExpected = false;
       for (GroovyResolveResult result : callVariants) {
+        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
+          namedArgumentProvider.getNamedArguments(call, result, argumentName, forCompletion, namedArguments);
+        }
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
 
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
-          PsiMethod mirror = PsiUtil.handleMirrorMethod(method);
           PsiParameter[] parameters = method.getParameterList().getParameters();
 
-          if (!mirror.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;
+          if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;
 
           mapExpected = true;
 
@@ -129,10 +131,6 @@ public abstract class GroovyNamedArgumentProvider {
               }
             }
           }
-        }
-
-        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-          namedArgumentProvider.getNamedArguments(call, result, argumentName, forCompletion, namedArguments);
         }
 
         if (element instanceof GrVariable &&

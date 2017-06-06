@@ -52,7 +52,7 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
   private static final String METACLASS = "metaClass";
 
   @NotNull
-  abstract List<PsiClass> getCorrespondingClasses(@NotNull GrCall call, @NotNull GroovyResolveResult resolveResult);
+  public abstract List<PsiClass> getCorrespondingClasses(@NotNull GrCall call, @NotNull GroovyResolveResult resolveResult);
 
   @Override
   public void getNamedArguments(@NotNull GrCall call,
@@ -74,7 +74,6 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
 
       processClass(call, classType, argumentName, result);
     }
-
   }
 
 
