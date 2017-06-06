@@ -769,9 +769,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnknownGuard" displayName="Unknown @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.concurrencyAnnotations.UnknownGuardInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="BoxForComparison" displayName="Unnecessary boxing to compare primitives"
+    <localInspection groupPath="Java" language="JAVA" shortName="UseCompareMethod" displayName="'compare()' method can be used to compare primitives"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.BoxForComparisonInspection" />
+                     implementationClass="com.intellij.codeInspection.UseCompareMethodInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="ComparatorResultComparison"
                      bundle="messages.InspectionsBundle" key="inspection.comparator.result.comparison.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
