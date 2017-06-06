@@ -85,10 +85,12 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   @SuppressWarnings("unchecked")
   protected final JPanel createFontSettingsPanel() {
+    Insets baseInsets = getInsets(0, 0);
+
     JPanel fontPanel = new JPanel(new GridBagLayout());
     GridBagConstraints c = new GridBagConstraints();
     c.anchor = GridBagConstraints.WEST;
-    c.insets = JBUI.insets(BASE_INSET, BASE_INSET, 0, 0);
+    c.insets = baseInsets;
 
     c.gridx = 0;
     c.gridy = 0;
@@ -99,10 +101,12 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     fontPanel.add(myPrimaryCombo, c);
 
     c.gridx = 2;
+    c.insets = getInsets(0, BASE_INSET);
     fontPanel.add(myOnlyMonospacedCheckBox, c);
 
     c.gridx = 0;
     c.gridy = 1;
+    c.insets = baseInsets;
     mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
     fontPanel.add(mySizeLabel, c);
 
@@ -119,13 +123,14 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
     c.gridy = 3;
     c.gridx = 0;
-    c.insets = JBUI.insets(BASE_INSET + ADDITIONAL_VERTICAL_GAP, BASE_INSET, 0, 0);
+    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, 0);
     mySecondaryFontLabel = new JLabel(ApplicationBundle.message("secondary.font"));
     mySecondaryFontLabel.setLabelFor(mySecondaryCombo);
     fontPanel.add(mySecondaryFontLabel, c);
     c.gridx = 1;
     fontPanel.add(mySecondaryCombo, c);
     c.gridx = 2;
+    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, BASE_INSET);
     JLabel fallbackLabel = new JLabel(ApplicationBundle.message("label.fallback.fonts.list.description"));
     fallbackLabel.setEnabled(false);
     fontPanel.add(fallbackLabel, c);
@@ -145,6 +150,8 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     c.gridx = 0;
     c.gridy = 4;
     c.gridwidth = 2;
+    c.insets = getInsets(ADDITIONAL_VERTICAL_GAP, 0);
+    c.insets.bottom = BASE_INSET;
     fontPanel.add(panel, c);
 
     myOnlyMonospacedCheckBox.setBorder(null);
@@ -231,6 +238,10 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
       }
     });
     return fontPanel;
+  }
+
+  private static Insets getInsets(int extraTopSpacing, int extraLeftSpacing) {
+    return JBUI.insets(BASE_INSET + extraTopSpacing, BASE_INSET + extraLeftSpacing, 0, 0);
   }
 
   protected void setDelegatingPreferences(boolean isDelegating) {

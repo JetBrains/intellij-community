@@ -69,7 +69,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
       c.gridx = 0;
       c.gridy = 0;
       c.gridwidth = 2;
-      c.insets = JBUI.insets(BASE_INSET, BASE_INSET, ADDITIONAL_VERTICAL_GAP, 0);
+      c.insets = JBUI.insets(BASE_INSET * 2, BASE_INSET, ADDITIONAL_VERTICAL_GAP, 0);
       c.anchor = GridBagConstraints.LINE_START;
       topPanel.add(inheritBox, c);
       c.gridy = 1;
@@ -102,7 +102,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
       });
       inheritPanel.add(myInheritFontCheckbox);
       inheritPanel.add(new JLabel(getOverwriteFontTitle()));
-      inheritPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(5,0))));
+      inheritPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(10,0))));
       inheritPanel.add(grayed(new JLabel("(")));
       inheritPanel.add(grayed(createHyperlinkLabel()));
       inheritPanel.add(grayed(new JLabel(": ")));
