@@ -250,7 +250,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     final PsiElement[] elements = new PsiElement[items.size()];
     int index = 0;
     for (PsiCrumb item : items) {
-      elements[index++] = item.element;
+      elements[index++] = item.anchor.retrieve();
     }
     return elements;
   }
@@ -396,6 +396,10 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateCrumbs(final LogicalPosition position) {
     if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+      if (!breadcrumbs.isShowing()) {
+        breadcrumbs.setCrumbs(null);
+        return;
+      }
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         return;
       }
