@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -102,8 +102,8 @@ public class PsiConcatenationUtil {
     formatParameters.add(getBoxedArgument(expression));
   }
 
-  private static PsiExpression getBoxedArgument(PsiExpression arg) throws IncorrectOperationException {
-    arg = PsiUtil.deparenthesizeExpression(arg);
+  private static PsiExpression getBoxedArgument(PsiExpression arg) {
+    arg = unwrapExpression(arg);
     assert arg != null;
     if (PsiUtil.isLanguageLevel5OrHigher(arg)) {
       return arg;
@@ -130,4 +130,35 @@ public class PsiConcatenationUtil {
     return newExpr;
   }
 
+  @Nullable
+  private static PsiExpression unwrapExpression(PsiExpression expression) {
+    while (true) {
+      if (expression instanceof PsiParenthesizedExpression) {
+        expression = ((PsiParenthesizedExpression)expression).getExpression();
+        continue;
+      }
+      if (expression instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+        final PsiType castType = typeCastExpression.getType();
+        if (TypeConversionUtil.isNumericType(castType)) {
+          final PsiExpression operand = typeCastExpression.getOperand();
+          if (operand == null) {
+            return expression;
+          }
+          final PsiType operandType = operand.getType();
+          if (operandType == null) {
+            return expression;
+          }
+          final int castRank = TypeConversionUtil.getTypeRank(castType);
+          final int operandRank = TypeConversionUtil.getTypeRank(operandType);
+          if (castRank < operandRank || castRank == TypeConversionUtil.CHAR_RANK && operandRank != castRank) {
+            return expression;
+          }
+        }
+        expression = typeCastExpression.getOperand();
+        continue;
+      }
+      return expression;
+    }
+  }
 }
