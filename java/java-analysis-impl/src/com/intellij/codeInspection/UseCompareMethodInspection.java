@@ -217,6 +217,29 @@ public class UseCompareMethodInspection extends BaseJavaBatchLocalInspectionTool
     return null;
   }
 
+  @Contract("null -> null")
+  private static CompareInfo fromCall(PsiMethodCallExpression call) {
+    if (call == null) return null;
+    PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+    if (nameElement == null) return null;
+    String name = nameElement.getText();
+    if (!"compareTo".equals(name)) return null;
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if (args.length != 1) return null;
+    PsiExpression arg = args[0];
+    PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+    if (qualifier == null) return null;
+    PsiClassType boxedType = getBoxedType(call);
+    if (boxedType == null) return null;
+    PsiPrimitiveType primitiveType = PsiPrimitiveType.getUnboxedType(boxedType);
+    if (!isTypeConvertible(primitiveType, call)) return null;
+    PsiExpression left = extractPrimitive(boxedType, primitiveType, qualifier);
+    if (left == null) return null;
+    PsiExpression right = extractPrimitive(boxedType, primitiveType, arg);
+    if (right == null) return null;
+    return new CompareInfo(call, call, left, right, boxedType);
+  }
+
   @Nullable
   static PsiClassType getBoxedType(PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
@@ -264,6 +287,13 @@ public class UseCompareMethodInspection extends BaseJavaBatchLocalInspectionTool
     return expression != null && expression.getType() instanceof PsiPrimitiveType ? expression : null;
   }
 
+  @Contract("null, _ -> false")
+  private static boolean isTypeConvertible(PsiType type, PsiElement context) {
+    return type instanceof PsiPrimitiveType && (PsiType.DOUBLE.equals(type) ||
+                                                PsiType.FLOAT.equals(type) ||
+                                                PsiUtil.isLanguageLevel7OrHigher(context));
+  }
+
   static class CompareInfo {
     final PsiElement myTemplate;
     final PsiExpression myToReplace;
@@ -292,36 +322,6 @@ public class UseCompareMethodInspection extends BaseJavaBatchLocalInspectionTool
         ct.replaceAndRestoreComments(toReplace, myTemplate);
       }
     }
-  }
-
-  @Contract("null -> null")
-  private static CompareInfo fromCall(PsiMethodCallExpression call) {
-    if (call == null) return null;
-    PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
-    if (nameElement == null) return null;
-    String name = nameElement.getText();
-    if (!"compareTo".equals(name)) return null;
-    PsiExpression[] args = call.getArgumentList().getExpressions();
-    if (args.length != 1) return null;
-    PsiExpression arg = args[0];
-    PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-    if (qualifier == null) return null;
-    PsiClassType boxedType = getBoxedType(call);
-    if (boxedType == null) return null;
-    PsiPrimitiveType primitiveType = PsiPrimitiveType.getUnboxedType(boxedType);
-    if (!isTypeConvertible(primitiveType, call)) return null;
-    PsiExpression left = extractPrimitive(boxedType, primitiveType, qualifier);
-    if (left == null) return null;
-    PsiExpression right = extractPrimitive(boxedType, primitiveType, arg);
-    if (right == null) return null;
-    return new CompareInfo(call, call, left, right, boxedType);
-  }
-
-  @Contract("null, _ -> false")
-  private static boolean isTypeConvertible(PsiType type, PsiElement context) {
-    return type instanceof PsiPrimitiveType && (PsiType.DOUBLE.equals(type) ||
-                                                PsiType.FLOAT.equals(type) ||
-                                                PsiUtil.isLanguageLevel7OrHigher(context));
   }
 
   private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
