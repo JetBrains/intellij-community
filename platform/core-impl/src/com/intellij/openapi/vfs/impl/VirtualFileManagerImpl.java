@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -59,7 +60,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       registerFileSystem(fileSystem);
     }
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled() && !ApplicationInfoImpl.isInStressTest()) {
       addVirtualFileListener(new LoggingListener());
     }
 
