@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 import javax.swing.*;
@@ -27,5 +28,11 @@ public class IpnbRunCellAction extends IpnbRunCellBaseAction {
     final IpnbFilePanel component = myFileEditor.getIpnbFilePanel();
     component.executeSaveFileCommand();
     runCell(component, true);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    IpnbEditablePanel panel = myFileEditor.getIpnbFilePanel().getSelectedCellPanel();
+    e.getPresentation().setEnabled(panel != null && !panel.isEditing());
   }
 }
