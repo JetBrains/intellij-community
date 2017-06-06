@@ -22,11 +22,37 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaSliceProvider implements SliceLanguageSupportProvider {
+import java.util.Collection;
+import java.util.Collections;
+
+public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsageTransformer {
   @NotNull
   @Override
   public SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     return JavaSliceUsage.createRootUsage(element, params);
+  }
+
+  @Nullable
+  @Override
+  public Collection<SliceUsage> transform(@NotNull SliceUsage usage) {
+    if (usage instanceof JavaSliceUsage) return null;
+
+    PsiElement element = usage.getElement();
+    SliceUsage parent = usage.getParent();
+
+    if (usage.params.dataFlowToThis && element instanceof PsiMethod) {
+      return SliceUtil.collectMethodReturnValues(
+        parent,
+        parent instanceof JavaSliceUsage ? ((JavaSliceUsage)parent).getSubstitutor() : PsiSubstitutor.EMPTY,
+        (PsiMethod) element
+      );
+    }
+
+    if (!(element instanceof PsiExpression || element instanceof PsiVariable)) return null;
+    SliceUsage newUsage = parent != null
+                        ? new JavaSliceUsage(element, parent, PsiSubstitutor.EMPTY, 0, "")
+                        : createRootUsage(element, usage.params);
+    return Collections.singletonList(newUsage);
   }
 
   @Nullable
