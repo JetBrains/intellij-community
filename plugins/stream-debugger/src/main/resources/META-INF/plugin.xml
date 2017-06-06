@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -34,9 +34,10 @@
     ]]></description>
 
   <change-notes><![CDATA[
-      0.1.1 <br>
+      0.1.2 <br>
         <ul>
-            <li> Improve lines drawing </li>
+            <li> Add transitions for toArray/collect/find*/*Match terminal methods </li>
+            <li> Support stream with nulls </li>
             <li> Minor fixes and improvements </li>
         </ul>
     ]]>
