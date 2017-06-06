@@ -34,6 +34,9 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.xml.util.XmlStringUtil
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.util.*
@@ -84,16 +87,20 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     buttonsPanel.add(moveAllToUnloadedButton)
     buttonsPanel.add(moveAllToLoadedButton)
 
-    val gridBag = GridBag().setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 1.0)
-    val mainPanel = JPanel(GridBagLayout())
-    mainPanel.add(JBLabel(ProjectBundle.message("module.loaded.label.text")), gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
-    mainPanel.add(JBLabel(ProjectBundle.message("module.unloaded.label.text")), gridBag.next().next().anchor(GridBagConstraints.WEST))
+    val mainPanel = JPanel(BorderLayout())
+    val gridBag = GridBag().setDefaultWeightX(0, 0.5).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 0.5)
+    val treesPanel = JPanel(GridBagLayout())
+    treesPanel.add(JBLabel(ProjectBundle.message("module.loaded.label.text")), gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
+    treesPanel.add(JBLabel(ProjectBundle.message("module.unloaded.label.text")), gridBag.next().next().anchor(GridBagConstraints.WEST))
 
-    mainPanel.add(JBScrollPane(loadedModulesTree.tree), gridBag.nextLine().next().weighty(1.0).fillCell())
-    mainPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.CENTER))
-    mainPanel.add(JBScrollPane(unloadedModulesTree.tree), gridBag.next().weighty(1.0).fillCell())
-    mainPanel.add(statusLabel, gridBag.nextLine().next().coverLine().anchor(GridBagConstraints.WEST))
-
+    treesPanel.add(JBScrollPane(loadedModulesTree.tree), gridBag.nextLine().next().weighty(1.0).fillCell())
+    treesPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.CENTER))
+    treesPanel.add(JBScrollPane(unloadedModulesTree.tree), gridBag.next().weighty(1.0).fillCell())
+    mainPanel.add(treesPanel, BorderLayout.CENTER)
+    statusLabel.text = XmlStringUtil.wrapInHtml(ProjectBundle.message("module.unloaded.explanation"))
+    mainPanel.add(statusLabel, BorderLayout.SOUTH)
+    //current label text looks better when it's split on 2.5 lines, so set size of the whole component accordingly
+    mainPanel.preferredSize = Dimension(Math.max(treesPanel.preferredSize.width, statusLabel.preferredSize.width*2/5), treesPanel.preferredSize.height)
     return mainPanel
   }
 
