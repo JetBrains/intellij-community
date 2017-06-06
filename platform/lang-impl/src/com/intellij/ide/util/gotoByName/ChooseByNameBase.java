@@ -126,7 +126,7 @@ public abstract class ChooseByNameBase {
   private JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
-  private final MyListModel<Object> myListModel = new MyListModel<>();
+  private final SmartPointerListModel<Object> myListModel = new SmartPointerListModel<>();
   protected final JList<Object> myList = new JBList<>(myListModel);
   private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
   private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
@@ -1043,25 +1043,6 @@ public abstract class ChooseByNameBase {
   @NonNls
   protected String statisticsContext() {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
-  }
-
-  private static class MyListModel<T> extends CollectionListModel<T> implements ModelDiff.Model<T> {
-    @Override
-    public void addToModel(int idx, T element) {
-      add(Math.min(idx, getSize()), element);
-    }
-
-    @Override
-    public void addAllToModel(int index, List<T> elements) {
-      addAll(Math.min(index, getSize()), elements);
-    }
-
-    @Override
-    public void removeRangeFromModel(int start, int end) {
-      if (start < getSize() && !isEmpty()) {
-        removeRange(start, Math.min(end, getSize() - 1));
-      }
-    }
   }
 
   private class ListUpdater {
