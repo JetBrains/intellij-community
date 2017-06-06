@@ -111,7 +111,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     manager.addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
-        updateCrumbs();
+        queueUpdate();
       }
     }, this);
 
