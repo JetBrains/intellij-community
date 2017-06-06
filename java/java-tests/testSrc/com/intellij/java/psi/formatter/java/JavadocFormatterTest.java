@@ -986,6 +986,22 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_JdWithTabs() {
+    doClassTest(
+      "\t/**\n" +
+      "\t \t *\n" +
+      "\t \t *\n" +
+      "\t \t */\n" +
+      "\tvoid check() {\n" +
+      "\t}",
+      "/**\n" +
+      " *\n" +
+      " *\n" +
+      " */\n" +
+      "void check() {\n" +
+      "}"
+    );
+  }
 
 
 }

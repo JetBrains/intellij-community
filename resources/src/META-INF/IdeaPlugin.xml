@@ -1452,7 +1452,6 @@
     <preFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.FormatCommentsProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.BracePostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.ImportPostFormatProcessor"/>
-    <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.TabPostFormatProcessor"/>
     <codeInspection.InspectionExtension implementation="com.intellij.codeInspection.ex.JavaInspectionExtensionsFactory"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>
