@@ -213,13 +213,16 @@ public class SettingsImpl implements EditorSettings {
     return myRightMargin != null ? myRightMargin.intValue() :
            CodeStyleFacade.getInstance(project).getRightMargin(myLanguage);
   }
-  
+
   @Nullable
-  private static Language getDocumentLanguage(@Nullable Project project, @NotNull Document document) {
-     if (project != null) {
+  private static Language getDocumentLanguage(@NotNull Project project, @NotNull Document document) {
+    if (!project.isDisposed()) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
       PsiFile file = documentManager.getPsiFile(document);
       if (file != null) return file.getLanguage();
+    }
+    else {
+      LOG.warn("Attempting to get a language for document on a disposed project: " + project.getName());
     }
     return null;
   }
