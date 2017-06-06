@@ -57,7 +57,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
 
   @Override
   public Collection<PsiJavaModule> get(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiJavaModule.class);
+    Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope, true), PsiJavaModule.class);
     if (modules.size() > 1) {
       modules = filterVersions(project, modules);
     }

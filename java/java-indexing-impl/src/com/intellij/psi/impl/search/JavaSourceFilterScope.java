@@ -30,12 +30,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   private final @Nullable ProjectFileIndex myIndex;
+  private final boolean myIncludeVersions;
 
-  public JavaSourceFilterScope(@NotNull final GlobalSearchScope delegate) {
+  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate) {
+    this(delegate, false);
+  }
+
+  public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions) {
     super(delegate);
-
     Project project = getProject();
     myIndex = project == null ? null : ProjectRootManager.getInstance(project).getFileIndex();
+    myIncludeVersions = includeVersions;
   }
 
   @Override
@@ -49,7 +54,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     }
 
     if (JavaClassFileType.INSTANCE == file.getFileType()) {
-      return myIndex.isInLibraryClasses(file) && !isVersioned(file);
+      return myIndex.isInLibraryClasses(file) && (myIncludeVersions || !isVersioned(file));
     }
 
     return myIndex.isInSourceContent(file) ||
