@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
+import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,17 +107,20 @@ public class RawTypeCanBeGenericInspection extends BaseJavaBatchLocalInspectionT
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement().getParent();
       if (element instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)element;
-        final PsiTypeElement typeElement = variable.getTypeElement();
-        if (typeElement != null) {
-          final PsiType type = getSuggestedType(variable);
-          if (type != null) {
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
-            typeElement.replace(factory.createTypeElement(type));
-          }
+        final PsiType type = getSuggestedType(variable);
+        if (type != null) {
+          final TypeMigrationRules rules = new TypeMigrationRules();
+          rules.setBoundScope(PsiSearchHelper.SERVICE.getInstance(project).getUseScope(variable));
+          TypeMigrationProcessor.runHighlightingTypeMigration(project, null, rules, variable, type, false);
         }
       }
     }

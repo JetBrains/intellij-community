@@ -16,7 +16,6 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -35,12 +34,18 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
-import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.Function;
+import com.intellij.util.Functions;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -137,7 +142,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (hasFailedConversions()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new RuntimeException(StringUtil.join(myLabeler.getFailedConversionsReport(), "\n"));
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(Arrays.asList(myLabeler.getFailedConversionsReport()));
       }
       FailedConversionsDialog dialog = new FailedConversionsDialog(myLabeler.getFailedConversionsReport(), myProject);
       if (!dialog.showAndGet()) {
