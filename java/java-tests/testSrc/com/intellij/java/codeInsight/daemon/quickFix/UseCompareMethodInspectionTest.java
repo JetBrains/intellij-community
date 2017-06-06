@@ -16,17 +16,17 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.BoxForComparisonInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.UseCompareMethodInspection;
 import org.jetbrains.annotations.NotNull;
 
 
-public class BoxForComparisonInspectionTest extends LightQuickFixParameterizedTestCase {
+public class UseCompareMethodInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new BoxForComparisonInspection(),
+      new UseCompareMethodInspection(),
     };
   }
 
@@ -34,6 +34,6 @@ public class BoxForComparisonInspectionTest extends LightQuickFixParameterizedTe
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/boxForComparison";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/useCompareMethod";
   }
 }
