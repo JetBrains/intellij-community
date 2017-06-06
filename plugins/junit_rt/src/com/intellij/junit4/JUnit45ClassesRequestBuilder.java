@@ -61,6 +61,7 @@ public class JUnit45ClassesRequestBuilder {
             protected JUnit4Builder junit4Builder() {
               return new JUnit4Builder() {
                 public Runner runnerForClass(Class testClass) throws Throwable {
+                  if (!recursively) return super.runnerForClass(testClass);
                   try {
                     Method ignored = BlockJUnit4ClassRunner.class.getDeclaredMethod("isIgnored", new Class[]{FrameworkMethod.class});
                     if (ignored != null) {
