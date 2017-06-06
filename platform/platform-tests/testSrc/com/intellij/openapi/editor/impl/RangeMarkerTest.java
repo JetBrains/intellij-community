@@ -1130,7 +1130,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
+    PlatformTestUtil.startPerformanceTest("highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
       List<RangeHighlighterEx> list = new ArrayList<>();
       CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<>(list);
       for (int i=0; i<N-1;i++) {
@@ -1298,7 +1298,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM", 15000, ()->{
+    PlatformTestUtil.startPerformanceTest("RM.getStartOffset", 15000, ()->{
       doc.insertString(0, " ");
       for (int i=0; i<1000; i++) {
         for (RangeMarker rm : markers) {
@@ -1321,7 +1321,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM", 20000, ()->{
+    PlatformTestUtil.startPerformanceTest("RM.getStartOffset", 20000, ()->{
       doc.insertString(0, " ");
       for (int i=0; i<1000; i++) {
         for (int j = 0; j < markers.size(); j++) {
@@ -1346,7 +1346,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM", 10000, ()->{
+    PlatformTestUtil.startPerformanceTest("insert/delete string", 10000, ()->{
       for (int i=0; i<15000; i++) {
         doc.insertString(0, " ");
         doc.deleteString(0, 1);
@@ -1361,7 +1361,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 100_000;
     List<RangeMarker> markers = new ArrayList<>(N);
-    PlatformTestUtil.startPerformanceTest("RM", 2000, ()->{
+    PlatformTestUtil.startPerformanceTest("createRM", 2000, ()->{
       for (int i = 0; i < N; i++) {
         int start = i % doc.getTextLength();
         int end = start + 1;
@@ -1384,7 +1384,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM", 2000, ()->{
+    PlatformTestUtil.startPerformanceTest("processRangeMarkersOverlappingWith", 2000, ()->{
       for (int it=0;it<50;it++) {
         for (int i=1; i<doc.getTextLength()-1;i++) {
           List<RangeMarker> overlaps = new ArrayList<>();

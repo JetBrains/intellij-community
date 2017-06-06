@@ -58,14 +58,14 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   }
 
   public void testReformatCodeFragment() throws Exception {
-    PlatformTestUtil.startPerformanceTest("reformat code fragment is slow", 6300,
+    PlatformTestUtil.startPerformanceTest("reformat code fragment", 6300,
                                           () -> checkFormattingDoesNotProduceException("performance")).useLegacyScaling().assertTiming();
   }
 
   public void testPerformance3() throws Exception {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("Fix xml formatter performance problem 3", 6800, createTestRunnable()).useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("xml formatter", 6800, createTestRunnable()).useLegacyScaling().assertTiming();
 
       highlight();
 
@@ -102,7 +102,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance4() throws Exception {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("Fix xml formatter performance problem 4", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("xml formatter", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
     }
     finally {
       editorManager.closeFile(editorManager.getSelectedFiles()[0]);
@@ -123,7 +123,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance5() throws Exception {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("Fix xml formatter performance problem 5", 10000, createTestRunnable()).useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("xml formatter", 10000, createTestRunnable()).useLegacyScaling().assertTiming();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();
@@ -136,7 +136,7 @@ public class XmlPerformanceFormatterTest extends XmlFormatterTestBase {
   public void testPerformance6() throws Exception {
     final FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     try {
-      PlatformTestUtil.startPerformanceTest("Fix xml formatter performance problem 6", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("xml formatter", 20000, createTestRunnable()).useLegacyScaling().assertTiming();
     }
     finally {
       final VirtualFile[] selectedFiles = editorManager.getSelectedFiles();

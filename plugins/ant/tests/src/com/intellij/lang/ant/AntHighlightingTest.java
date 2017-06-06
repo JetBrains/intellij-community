@@ -110,7 +110,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       myIgnoreInfos = true;
-      PlatformTestUtil.startPerformanceTest("Should be quite performant !", 25000, () -> doDoTest(true, false)).useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 25000, () -> doDoTest(true, false)).useLegacyScaling().assertTiming();
     }
     finally {
       myIgnoreInfos = false;

@@ -119,7 +119,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    PlatformTestUtil.startPerformanceTest("Reparse is not incremental", 10000, {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, {
       story.toCharArray().each {
         myFixture.type it
         PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -139,7 +139,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).usesAllCPUCores().useLegacyScaling().assertTiming()
+    IdeaTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
   void testDeeplyNestedClosures() {
@@ -273,7 +273,7 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).usesAllCPUCores().useLegacyScaling().assertTiming()
+    IdeaTestUtil.startPerformanceTest(getTestName(false), 300, configureAndComplete(text)).usesAllCPUCores().useLegacyScaling().assertTiming()
   }
 
   void testClosureRecursion() {

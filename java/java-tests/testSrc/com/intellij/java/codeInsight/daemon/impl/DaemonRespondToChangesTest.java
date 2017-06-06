@@ -1224,7 +1224,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     text.append(".toString();<caret>}");
     configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("too many tree visitors", 30000, () -> {
+    PlatformTestUtil.startPerformanceTest("tree visitors", 30000, () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
       type("kjhgas");
