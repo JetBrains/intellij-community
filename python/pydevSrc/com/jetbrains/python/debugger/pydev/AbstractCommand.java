@@ -55,6 +55,7 @@ public abstract class AbstractCommand<T> {
   public static final int INPUT_REQUESTED = 147;
 
   public static final int PROCESS_CREATED = 149;
+  public static final int SHOW_CYTHON_WARNING = 150;
 
   public static final int ERROR = 901;
 
@@ -204,6 +205,10 @@ public abstract class AbstractCommand<T> {
 
   public static boolean isInputRequested(final int command) {
     return command == INPUT_REQUESTED;
+  }
+
+  public static boolean isShowWarningCommand(final int command) {
+    return command == SHOW_CYTHON_WARNING;
   }
 
   public static boolean isExitEvent(final int command) {
