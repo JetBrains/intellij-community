@@ -793,6 +793,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void performCopy(@NotNull DataContext dataContext) {
+      executeSaveFileCommand();
       copyCell();
     }
 
