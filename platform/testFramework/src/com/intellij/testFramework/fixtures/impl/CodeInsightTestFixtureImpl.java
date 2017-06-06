@@ -117,6 +117,7 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
@@ -1791,8 +1792,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     final Language language = element.getContainingFile().getLanguage();
 
-    final BreadcrumbsProvider provider = ContainerUtil.find(BreadcrumbsProvider.EP_NAME.getExtensions(),
-                                                            p -> Arrays.asList(p.getLanguages()).contains(language));
+    final BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
+
     if (provider == null) {
       return Collections.emptyList();
     }

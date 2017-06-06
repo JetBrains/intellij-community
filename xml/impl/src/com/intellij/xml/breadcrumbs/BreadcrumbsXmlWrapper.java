@@ -48,6 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -241,7 +242,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider) {
     Language language = element.getLanguage();
     if (!EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.getID())) return defaultProvider;
-    BreadcrumbsProvider provider = getInfoProvider(language);
+    BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
     return provider == null ? defaultProvider : provider;
   }
 
@@ -418,11 +419,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     Language baseLang = viewProvider.getBaseLanguage();
     if (checkSettings && !settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
 
-    BreadcrumbsProvider provider = getInfoProvider(baseLang);
+    BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(baseLang);
     if (provider == null) {
       for (Language language : viewProvider.getLanguages()) {
         if (!checkSettings || settings.isBreadcrumbsShownFor(language.getID())) {
-          provider = getInfoProvider(language);
+          provider = BreadcrumbsUtil.getInfoProvider(language);
           if (provider != null) break;
         }
       }
@@ -489,22 +490,6 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     }
     myEditor = null;
     breadcrumbs.setCrumbs(null);
-  }
-
-  @Nullable
-  private static BreadcrumbsProvider getInfoProvider(@NotNull Language language) {
-    BreadcrumbsProvider[] providers = BreadcrumbsProvider.EP_NAME.getExtensions();
-    while (language != null) {
-      for (BreadcrumbsProvider provider : providers) {
-        for (Language supported : provider.getLanguages()) {
-          if (language.is(supported)) {
-            return provider;
-          }
-        }
-      }
-      language = language.getBaseLanguage();
-    }
-    return null;
   }
 
   private static class MyUpdate extends Update {
