@@ -21,5 +21,11 @@ package com.intellij.ide.projectView;
 public interface ProjectViewSettings extends ViewSettings {
   boolean isShowExcludedFiles();
 
+  /**
+   * If <code>true</code> then {@link com.intellij.ide.projectView.impl.NestingTreeStructureProvider} will modify the tree presentation
+   * according to the rules managed by {@link com.intellij.ide.projectView.impl.ProjectViewFileNestingService}: some peer files will be
+   * shown as nested, for example generated <code>foo.js</code> and <code>foo.js.map</code> file nodes will be shown as children of the
+   * original <code>foo.ts</code> node in the Project View.
+   */
   default boolean isUseFileNestingRules() {return true;}
 }
