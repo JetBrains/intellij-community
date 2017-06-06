@@ -67,7 +67,7 @@ public class GenericTypeUtil {
     }
 
     if (type.equals(GenericType.OPTIONAL_LONG)) {
-      return GenericType.DOUBLE;
+      return GenericType.LONG;
     }
 
     if (type.equals(GenericType.OPTIONAL_DOUBLE)) {
