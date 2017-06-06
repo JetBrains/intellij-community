@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -246,11 +247,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     return provider == null ? defaultProvider : provider;
   }
 
-  private static PsiElement[] toPsiElementArray(Collection<PsiCrumb> items) {
-    final PsiElement[] elements = new PsiElement[items.size()];
+  private static PsiElement[] toPsiElementArray(Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs) {
+    PsiElement[] elements = new PsiElement[pairs.size()];
     int index = 0;
-    for (PsiCrumb item : items) {
-      elements[index++] = item.element;
+    for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
+      elements[index++] = pair.first;
     }
     return elements;
   }
@@ -276,18 +277,20 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
                                                                final Editor editor,
                                                                final Project project,
                                                                final BreadcrumbsProvider defaultInfoProvider) {
-    final LinkedList<PsiCrumb> result =
+    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
       getLineElements(editor.logicalPositionToOffset(position), file, project, defaultInfoProvider);
 
-    if (result == null) return null;
+    if (pairs == null) return null;
 
-    final PsiElement[] elements = toPsiElementArray(result);
-    final CrumbPresentation[] presentations = getCrumbPresentations(elements);
-    if (presentations != null) {
-      int i = 0;
-      for (PsiCrumb item : result) {
-        item.presentation = presentations[i++];
+    ArrayList<PsiCrumb> result = new ArrayList<>(pairs.size());
+    CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
+    int index = 0;
+    for (Pair<PsiElement, BreadcrumbsProvider> pair : pairs) {
+      PsiCrumb crumb = new PsiCrumb(pair.first, pair.second);
+      if (presentations != null && 0 <= index && index < presentations.length) {
+        crumb.presentation = presentations[index++];
       }
+      result.add(crumb);
     }
 
     return result;
@@ -295,24 +298,24 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsProvider infoProvider) {
-    final LinkedList<PsiCrumb> lineElements = getLineElements(offset, file, project, infoProvider);
-    return lineElements != null ? toPsiElementArray(lineElements) : null;
+    Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(offset, file, project, infoProvider);
+    return pairs == null ? null : toPsiElementArray(pairs);
   }
 
   @Nullable
-  private static LinkedList<PsiCrumb> getLineElements(final int offset,
-                                                      VirtualFile file,
-                                                      Project project,
-                                                      BreadcrumbsProvider defaultInfoProvider) {
+  private static Collection<Pair<PsiElement, BreadcrumbsProvider>> getLineElements(int offset,
+                                                                                   VirtualFile file,
+                                                                                   Project project,
+                                                                                   BreadcrumbsProvider defaultInfoProvider) {
     PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider);
     if (element == null) return null;
 
-    final LinkedList<PsiCrumb> result = new LinkedList<>();
+    LinkedList<Pair<PsiElement, BreadcrumbsProvider>> result = new LinkedList<>();
     while (element != null) {
       BreadcrumbsProvider provider = findProviderForElement(element, defaultInfoProvider);
 
       if (provider != null && provider.acceptElement(element)) {
-        result.addFirst(new PsiCrumb(element, provider));
+        result.addFirst(Pair.create(element, provider));
       }
 
       element = getParent(element, provider);
@@ -396,6 +399,10 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateCrumbs(final LogicalPosition position) {
     if (myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+      if (!breadcrumbs.isShowing()) {
+        breadcrumbs.setCrumbs(null);
+        return;
+      }
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         return;
       }
