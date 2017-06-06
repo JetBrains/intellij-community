@@ -147,6 +147,17 @@ BITS=$?
 "$RM" -f "$VERSION_LOG"
 test ${BITS} -eq 0 && BITS="64" || BITS=""
 
+#----------------------------------------------------------------------
+# Set platform enviroment variables for IDE
+#----------------------------------------------------------------------
+if [ "$OS_TYPE" = "Linux" ] ; then
+  case "$XDG_CURRENT_DESKTOP" in
+    *Unity*)
+      export JAYATANA_FORCE=true
+      ;;
+  esac
+fi
+
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
 # ---------------------------------------------------------------------
