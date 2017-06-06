@@ -39,6 +39,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,6 +60,9 @@ public class PyCythonExtensionWarning {
 
 
   public static void showCythonExtensionWarning(@NotNull Project project) {
+    if (shouldSuppressNotification(project)) {
+      return;
+    }
     Notification notification =
       new Notification(CYTHON_WARNING_GROUP_ID, "Python Debugger Extension Available", WARNING_MESSAGE,
                        NotificationType.INFORMATION, createListener(project));
@@ -80,6 +84,21 @@ public class PyCythonExtensionWarning {
         }
       }
     };
+  }
+
+  private static boolean shouldSuppressNotification(@NotNull Project project) {
+    final RunManager runManager = RunManager.getInstance(project);
+    final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
+    if (selectedConfiguration == null) {
+      return true;
+    }
+    final RunConfiguration configuration = selectedConfiguration.getConfiguration();
+    if (!(configuration instanceof AbstractPythonRunConfiguration)) {
+      return true;
+    }
+    AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
+    // Temporarily disable notification for Remote interpreters
+    return PySdkUtil.isRemote(runConfiguration.getSdk());
   }
 
   private static void showErrorDialog(Project project, String message) {
