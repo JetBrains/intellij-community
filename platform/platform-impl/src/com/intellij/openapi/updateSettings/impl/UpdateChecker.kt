@@ -262,7 +262,8 @@ object UpdateChecker {
   private fun collectUpdateablePlugins(): MutableMap<PluginId, IdeaPluginDescriptor> {
     val updateable = ContainerUtil.newTroveMap<PluginId, IdeaPluginDescriptor>()
 
-    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled || it.allowBundledUpdate()}.associateBy { it.pluginId }
+    // Android Studio: we do not allow updating bundled plugins (such as Android Support, Kotlin, etc).
+    updateable += PluginManagerCore.getPlugins().filter { !it.isBundled /* || it.allowBundledUpdate() */}.associateBy { it.pluginId }
 
     val onceInstalled = PluginManager.getOnceInstalledIfExists()
     if (onceInstalled != null) {
