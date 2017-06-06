@@ -27,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,12 +47,10 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       setIcon(descriptor.getIcon());
     }
 
-    PresentationData presentation =
-      node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor)node).getPresentation() :
-      node instanceof NavigationItem ? ObjectUtils.tryCast(((NavigationItem)node).getPresentation(), PresentationData.class) :
-      null;
+    ItemPresentation p0 = getPresentation(node);
 
-    if (presentation != null) {
+    if (p0 instanceof PresentationData) {
+      PresentationData presentation = (PresentationData)p0;
       Color color = node instanceof NodeDescriptor ? ((NodeDescriptor)node).getColor() : null;
       setIcon(presentation.getIcon(false));
 
@@ -114,6 +111,13 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     if (!AbstractTreeUi.isLoadingNode(value)) {
       SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
     }
+  }
+
+  @Nullable
+  protected ItemPresentation getPresentation(Object node) {
+    return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor)node).getPresentation() :
+           node instanceof NavigationItem ? ((NavigationItem)node).getPresentation() :
+           null;
   }
 
   @NotNull
