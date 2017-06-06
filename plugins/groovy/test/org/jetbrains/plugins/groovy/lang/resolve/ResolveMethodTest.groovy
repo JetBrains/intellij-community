@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -2363,7 +2363,7 @@ SourceConcrete.someOtherStatic<caret>Method()
     def results = ref.multiResolve(false)
     assert results.length > 0
     results.each {
-      assert it instanceof GroovyMethodResult
+      assert it instanceof GroovyMethodResultImpl
       def computer = it.substitutorComputer
       assert computer instanceof NotNullCachedComputableWrapper
       assert !computer.computed
