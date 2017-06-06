@@ -714,6 +714,8 @@ java_library(
     name = "KotlinTest",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/base/bazel:kotlin-test"],
+    runtime_deps = ["//tools/base/bazel:kotlin-test"],
 )
 
 java_library(
@@ -960,6 +962,8 @@ java_library(
     name = "cucumber-testing",
     tags = ["managed"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:cucumber-jvm-deps-1.0.3"],
+    runtime_deps = ["//tools/idea/lib:cucumber-jvm-deps-1.0.3"],
 )
 
 java_library(
