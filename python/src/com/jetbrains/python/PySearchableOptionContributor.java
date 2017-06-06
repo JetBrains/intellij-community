@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.configuration;
+package com.jetbrains.python;
 
 import com.intellij.ide.ui.search.SearchableOptionContributor;
 import com.intellij.ide.ui.search.SearchableOptionProcessor;
@@ -23,6 +23,12 @@ public class PySearchableOptionContributor extends SearchableOptionContributor {
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {
     processIntegratedTools(processor);
+
+    processProjectSettings(processor);
+  }
+
+  private static void processProjectSettings(SearchableOptionProcessor processor) {
+    processor.addOptions("Python interpreter", "Project interpreter", "Python interpreter", "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable", "Project interpreter", true);
   }
 
   private static void processIntegratedTools(SearchableOptionProcessor processor) {
