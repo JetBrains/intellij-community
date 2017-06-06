@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -99,6 +100,8 @@ private fun methodIndex(method: PsiMethodImpl): Int {
   val file = method.containingFile as PsiFileImpl
   val stubTree = try {
     file.stubTree ?: file.calcStubTree()
+  } catch (e: ProcessCanceledException) {
+    throw e
   } catch (e: RuntimeException) {
     throw RuntimeException("While inferring contract for " + PsiUtil.getMemberQualifiedName(method), e)
   }
