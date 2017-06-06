@@ -248,7 +248,7 @@ class FormatDecode {
       }
       storeValidator(allowed, pos, parameters, argumentCount);
     }
-    if (i < formatString.length() - 1) {
+    if (i < formatString.length()) {
       checkText(formatString.substring(i));
     }
 

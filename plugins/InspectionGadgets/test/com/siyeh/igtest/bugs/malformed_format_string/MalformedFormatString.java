@@ -7,16 +7,15 @@ import java.util.Formattable;
 
 public class MalformedFormatString {
 
-    public void foo()
-    {
-        String.<warning descr="Too many arguments for format string (found: 1, expected: 0)">format</warning>("%", 3.0);
-        System.out.<warning descr="Too many arguments for format string (found: 1, expected: 0)">printf</warning>("%", 3.0);
+    public void foo() {
+        String.format(<warning descr="Format string '\"%\"' is malformed">"%"</warning>, 3.0);
+        System.out.printf(<warning descr="Format string '\"%\"' is malformed">"%"</warning>, 3.0);
         System.out.printf(<warning descr="Illegal format string specifier: unknown conversion in '%q'">"%q"</warning>, 3.0);
         System.out.printf("%d", <warning descr="Argument type 'double' does not match the type of the format specifier '%d'">3.0</warning>);
         System.out.printf(new Locale(""),"%d%s", <warning descr="Argument type 'double' does not match the type of the format specifier '%d'">3.0</warning>, "foo");
     }
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
         String local = "hmm";
 
         String good = String.format("%s %s", 1, 2); // this is valid according to the inspector (correct)
@@ -60,6 +59,7 @@ public class MalformedFormatString {
     void badStrings() {
         // bad format specifier
         String.format(<warning descr="Format string '\"%) %n\"' is malformed">"%) %n"</warning>);
+        String.format(<warning descr="Format string '\"%d%\"' is malformed">"%d%"</warning>, 1);
 
         // flags on newline not allowed
         String.format(<warning descr="Illegal format string specifier: flag '(' not allowed in '%(n'">"%(n"</warning>);
