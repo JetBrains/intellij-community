@@ -53,13 +53,7 @@ static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* str
 	if (!SetHandleInformation(hPipe, HANDLE_FLAG_INHERIT, TRUE))
 	{
 		return GetLastError();
-	}
-
-	// Fix CRT
-	if (_dup2(_open_osfhandle((intptr_t)hPipe, _O_WTEXT | _O_TEXT), _fileno(stream)) != 0)
-	{
-		return errno;
-	}
+	}		
 
 	// Fix Win32API
 	DWORD hStdHandleToChange = ELEV_DESCR_GET_HANDLE(nDescriptor);
