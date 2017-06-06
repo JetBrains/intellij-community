@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
@@ -479,7 +480,10 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
       if (source instanceof DataProvider) {
         final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
         if (selectedItem instanceof IntentionActionWithTextCaching) {
-          final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
+          IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
+          if (action instanceof IntentionActionDelegate) {
+            action = ((IntentionActionDelegate)action).getDelegate();
+          }
           if (action instanceof SuppressIntentionActionFromFix) {
             if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
               final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
