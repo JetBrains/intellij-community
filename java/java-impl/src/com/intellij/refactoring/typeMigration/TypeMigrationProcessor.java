@@ -52,14 +52,14 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
 
-  private PsiElement[] myRoot;
+  private PsiElement[] myRoots;
   private final Function<PsiElement, PsiType> myRootTypes;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
   public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final Function<PsiElement, PsiType> rootTypes, final TypeMigrationRules rules) {
     super(project);
-    myRoot = roots;
+    myRoots = roots;
     myRules = rules;
     myRootTypes = rootTypes;
   }
@@ -135,7 +135,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
-    return new TypeMigrationViewDescriptor(myRoot[0]);
+    return new TypeMigrationViewDescriptor(myRoots[0]);
   }
 
   @Override
@@ -164,24 +164,24 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void previewRefactoring(@NotNull final UsageInfo[] usages) {
-    MigrationPanel panel = new MigrationPanel(myRoot, myLabeler, myProject, isPreviewUsages());
+    MigrationPanel panel = new MigrationPanel(myRoots, myLabeler, myProject, isPreviewUsages());
     String name;
-    if (myRoot.length == 1) {
-      String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoot[0])).getPresentableText();
-      String toType = myRootTypes.fun(myRoot[0]).getPresentableText();
+    if (myRoots.length == 1) {
+      String fromType = assertNotNull(TypeMigrationLabeler.getElementType(myRoots[0])).getPresentableText();
+      String toType = myRootTypes.fun(myRoots[0]).getPresentableText();
       String text;
-      text = getPresentation(myRoot[0]);
+      text = getPresentation(myRoots[0]);
       name = "Migrate Type of " + text + " from \'" + fromType + "\' to \'" + toType + "\'";
     } else {
-      final int rootsInPresentationCount = myRoot.length > MAX_ROOT_IN_PREVIEW_PRESENTATION ? MAX_ROOT_IN_PREVIEW_PRESENTATION : myRoot.length;
+      final int rootsInPresentationCount = myRoots.length > MAX_ROOT_IN_PREVIEW_PRESENTATION ? MAX_ROOT_IN_PREVIEW_PRESENTATION : myRoots.length;
       String[] rootsPresentation = new String[rootsInPresentationCount];
       for (int i = 0; i < rootsInPresentationCount; i++) {
-        final PsiElement root = myRoot[i];
+        final PsiElement root = myRoots[i];
         rootsPresentation[i] = root instanceof PsiNamedElement ? ((PsiNamedElement)root).getName() : root.getText();
       }
       rootsPresentation = StringUtil.surround(rootsPresentation, "\'", "\'");
       name = "Migrate Type of " + StringUtil.join(rootsPresentation, ", ");
-      if (myRoot.length > MAX_ROOT_IN_PREVIEW_PRESENTATION) {
+      if (myRoots.length > MAX_ROOT_IN_PREVIEW_PRESENTATION) {
         name += "...";
       }
     }
@@ -216,18 +216,18 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     myLabeler = new TypeMigrationLabeler(myRules, myRootTypes);
 
     try {
-      return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoot);
+      return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);
     }
     catch (TypeMigrationLabeler.MigrateException e) {
       setPreviewUsages(true);
       myLabeler.clearStopException();
-      return myLabeler.getMigratedUsages(false, myRoot);
+      return myLabeler.getMigratedUsages(false, myRoots);
     }
   }
 
   @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
-    myRoot = elements;
+    myRoots = elements;
   }
 
   @Override
