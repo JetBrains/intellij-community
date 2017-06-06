@@ -76,6 +76,9 @@ public class FunctionalInterfaceSuggester {
     }
 
     return suggestFunctionalInterfaces(method, aClass -> {
+      if (!JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(aClass, method, null)) {
+        return null;
+      }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
       if (interfaceMethod != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
