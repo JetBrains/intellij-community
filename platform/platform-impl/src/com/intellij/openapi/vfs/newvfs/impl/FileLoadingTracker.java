@@ -37,7 +37,7 @@ class FileLoadingTracker {
 
   private static List<String> getPathsToTrack() {
     try {
-      return StringUtil.split(Registry.stringValue("file.system.trace.loading"), ":");
+      return StringUtil.split(Registry.stringValue("file.system.trace.loading"), ";");
     }
     catch (MissingResourceException e) {
       return Collections.emptyList();
