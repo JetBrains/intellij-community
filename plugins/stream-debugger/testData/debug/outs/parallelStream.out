@@ -17,52 +17,118 @@ sorted
     after: 29,30,31,32,33,34,35,36,37,38,39,40,41,42
 toArray
     before: 29,30,31,32,33,34,35,36,37,38,39,40,41,42
-    after: nothing
+    after: 43,44,45,46,47,48,49,50,51,52,53,54,55,56
+mappings for ints.stream
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 5
+    nothing <- 7
+    nothing <- 9
+    nothing <- 11
+    nothing <- 13
+    nothing <- 15
+    nothing <- 17
+    nothing <- 19
+    nothing <- 21
+    nothing <- 23
+    nothing <- 25
+    nothing <- 27
 mappings for parallel
-    nothing -> 1 -> nothing
-    nothing -> 3 -> nothing
-    nothing -> 5 -> nothing
-    nothing -> 7 -> nothing
-    nothing -> 9 -> nothing
-    nothing -> 11 -> nothing
-    nothing -> 13 -> nothing
-    nothing -> 15 -> nothing
-    nothing -> 17 -> nothing
-    nothing -> 19 -> nothing
-    nothing -> 21 -> nothing
-    nothing -> 23 -> nothing
-    nothing -> 25 -> nothing
-    nothing -> 27 -> nothing
+  direct:
+    1 -> nothing
+    3 -> nothing
+    5 -> nothing
+    7 -> nothing
+    9 -> nothing
+    11 -> nothing
+    13 -> nothing
+    15 -> nothing
+    17 -> nothing
+    19 -> nothing
+    21 -> nothing
+    23 -> nothing
+    25 -> nothing
+    27 -> nothing
+  reverse:
+    nothing <- 2
+    nothing <- 4
+    nothing <- 6
+    nothing <- 8
+    nothing <- 10
+    nothing <- 12
+    nothing <- 14
+    nothing <- 16
+    nothing <- 18
+    nothing <- 20
+    nothing <- 22
+    nothing <- 24
+    nothing <- 26
+    nothing <- 28
 mappings for sorted
-    nothing -> 2 -> 29
-    nothing -> 4 -> 30
-    nothing -> 6 -> 31
-    nothing -> 8 -> 32
-    nothing -> 10 -> 35
-    nothing -> 12 -> 37
-    nothing -> 14 -> 38
-    nothing -> 16 -> 39
-    nothing -> 18 -> 33
-    nothing -> 20 -> 34
-    nothing -> 22 -> 36
-    nothing -> 24 -> 41
-    nothing -> 26 -> 40
-    nothing -> 28 -> 42
+  direct:
+    2 -> 29
+    4 -> 30
+    6 -> 31
+    8 -> 32
+    10 -> 35
+    12 -> 37
+    14 -> 38
+    16 -> 39
+    18 -> 33
+    20 -> 34
+    22 -> 36
+    24 -> 41
+    26 -> 40
+    28 -> 42
+  reverse:
+    2 <- 29
+    4 <- 30
+    6 <- 31
+    8 <- 32
+    18 <- 33
+    20 <- 34
+    10 <- 35
+    22 <- 36
+    12 <- 37
+    14 <- 38
+    16 <- 39
+    26 <- 40
+    24 <- 41
+    28 <- 42
 mappings for toArray
-    2 -> 29 -> nothing
-    4 -> 30 -> nothing
-    6 -> 31 -> nothing
-    8 -> 32 -> nothing
-    18 -> 33 -> nothing
-    20 -> 34 -> nothing
-    10 -> 35 -> nothing
-    22 -> 36 -> nothing
-    12 -> 37 -> nothing
-    14 -> 38 -> nothing
-    16 -> 39 -> nothing
-    26 -> 40 -> nothing
-    24 -> 41 -> nothing
-    28 -> 42 -> nothing
+  direct:
+    29 -> 43
+    30 -> 44
+    31 -> 45
+    32 -> 46
+    33 -> 47
+    34 -> 48
+    35 -> 49
+    36 -> 50
+    37 -> 51
+    38 -> 52
+    39 -> 53
+    40 -> 54
+    41 -> 55
+    42 -> 56
+  reverse:
+    29 <- 43
+    30 <- 44
+    31 <- 45
+    32 <- 46
+    33 <- 47
+    34 <- 48
+    35 <- 49
+    36 <- 50
+    37 <- 51
+    38 <- 52
+    39 <- 53
+    40 <- 54
+    41 <- 55
+    42 <- 56
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -12,10 +12,20 @@ DoubleStream.of
 sum
     before: 1,2,3
     after: nothing
+mappings for DoubleStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
 mappings for sum
-    nothing -> 1 -> nothing
-    nothing -> 2 -> nothing
-    nothing -> 3 -> nothing
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

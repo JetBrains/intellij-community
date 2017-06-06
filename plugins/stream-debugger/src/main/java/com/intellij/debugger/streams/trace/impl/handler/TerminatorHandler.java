@@ -19,13 +19,12 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class TerminatorHandler extends CallTraceHandlerBase {
+public class TerminatorHandler extends HandlerBase.Terminator {
   private final PeekTracerHandler myPeekTracerHandler;
 
   TerminatorHandler(@NotNull GenericType beforeType) {
@@ -42,12 +41,6 @@ public class TerminatorHandler extends CallTraceHandlerBase {
   @Override
   public List<IntermediateStreamCall> additionalCallsBefore() {
     return myPeekTracerHandler.additionalCallsBefore();
-  }
-
-  @NotNull
-  @Override
-  public List<IntermediateStreamCall> additionalCallsAfter() {
-    return Collections.emptyList();
   }
 
   @NotNull

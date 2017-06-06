@@ -23,9 +23,7 @@ import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.impl.handler.HandlerFactory;
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,6 +38,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -65,9 +64,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   @NotNull
   @Override
   public String createTraceExpression(@NotNull StreamChain chain) {
-    final StreamCallTraceHandler producerHandler = HandlerFactory.create(chain.getProducerCall());
-    final List<StreamCallTraceHandler> intermediateHandlers = getHandlers(chain.getIntermediateCalls());
-    final StreamCallTraceHandler terminatorHandler = HandlerFactory.create(chain.getTerminationCall());
+    final ProducerCallTraceHandler producerHandler = HandlerFactory.create(chain.getProducerCall());
+    final List<IntermediateCallTraceHandler> intermediateHandlers = getHandlers(chain.getIntermediateCalls());
+    final TerminatorCallTraceHandler terminatorHandler = HandlerFactory.create(chain.getTerminationCall(), "evaluationResult[0]");
 
     final StreamChain traceChain = buildTraceChain(chain, producerHandler, intermediateHandlers, terminatorHandler);
 
@@ -100,9 +99,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
   @NotNull
   private static StreamChain buildTraceChain(@NotNull StreamChain chain,
-                                             @NotNull StreamCallTraceHandler producerHandler,
-                                             @NotNull List<StreamCallTraceHandler> intermediateCallHandlers,
-                                             @NotNull StreamCallTraceHandler terminatorHandler) {
+                                             @NotNull ProducerCallTraceHandler producerHandler,
+                                             @NotNull List<IntermediateCallTraceHandler> intermediateCallHandlers,
+                                             @NotNull TerminatorCallTraceHandler terminatorHandler) {
     final List<IntermediateStreamCall> newIntermediateCalls = new ArrayList<>();
     final ProducerStreamCall producerCall = chain.getProducerCall();
 
@@ -114,21 +113,26 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
     for (int i = 0, callCount = intermediateCallHandlers.size(); i < callCount; i++) {
       final IntermediateStreamCall call = intermediateCalls.get(i);
-      final StreamCallTraceHandler handler = intermediateCallHandlers.get(i);
+      final IntermediateCallTraceHandler handler = intermediateCallHandlers.get(i);
 
       newIntermediateCalls.addAll(handler.additionalCallsBefore());
 
-      newIntermediateCalls.add(call);
+      newIntermediateCalls.add(handler.transformCall(call));
       newIntermediateCalls.add(createTimePeekCall(call.getTypeAfter()));
 
       newIntermediateCalls.addAll(handler.additionalCallsAfter());
     }
 
     newIntermediateCalls.addAll(terminatorHandler.additionalCallsBefore());
-    final GenericType typeBefore = chain.getTerminationCall().getTypeBefore();
-    newIntermediateCalls.add(new IntermediateStreamCallImpl("sequential", "()", typeBefore, typeBefore, TextRange.EMPTY_RANGE));
+    final TerminatorStreamCall terminatorCall = chain.getTerminationCall();
+    final GenericType typeBefore = terminatorCall.getTypeBefore();
+    newIntermediateCalls.add(new IntermediateStreamCallImpl("sequential", Collections.emptyList(),
+                                                            typeBefore, typeBefore, TextRange.EMPTY_RANGE));
 
-    return new StreamChainImpl(producerCall, newIntermediateCalls, chain.getTerminationCall(), chain.getContext());
+    return new StreamChainImpl(producerHandler.transformCall(producerCall),
+                               newIntermediateCalls,
+                               terminatorHandler.transformCall(terminatorCall),
+                               chain.getContext());
   }
 
   @NotNull
@@ -136,9 +140,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     return new PeekCall("x -> time.incrementAndGet()", elementType);
   }
 
-  private static String buildDeclarations(@NotNull StreamCallTraceHandler producerHandler,
-                                          @NotNull List<StreamCallTraceHandler> intermediateCallsHandlers,
-                                          @NotNull StreamCallTraceHandler terminatorHandler) {
+  private static String buildDeclarations(@NotNull ProducerCallTraceHandler producerHandler,
+                                          @NotNull List<IntermediateCallTraceHandler> intermediateCallsHandlers,
+                                          @NotNull TerminatorCallTraceHandler terminatorHandler) {
     final StringBuilder builder = new StringBuilder();
     builder.append("final long startTime = java.lang.System.nanoTime();" + LINE_SEPARATOR);
     final int resultArraySize = 2 + intermediateCallsHandlers.size();
@@ -158,18 +162,27 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final GenericType resultType = chain.getTerminationCall().getResultType();
 
     final String resultExpression;
+    final String additionalDeclarations;
+    final String additionalEvaluation;
     if (resultType.equals(GenericType.VOID)) {
-      final String resultInitialization = "new Object[1];" + LINE_SEPARATOR;
-      resultExpression = resultInitialization + chain.getText() + ";" + LINE_SEPARATOR;
+      additionalDeclarations = "";
+      additionalEvaluation = chain.getText() + ";" + LINE_SEPARATOR;
+      resultExpression = "new Object[1]";
     }
     else {
-      resultExpression =
-        "new " + resultType.getVariableTypeName() + "[] { " + chain.getText() + " };" + LINE_SEPARATOR;
+      final String resultArrayType = resultType.getVariableTypeName() + "[]";
+      additionalDeclarations = resultArrayType + " evaluationResult = new " + resultType.getVariableTypeName() + "[] {" + LINE_SEPARATOR +
+                               resultType.getDefaultValue() + LINE_SEPARATOR +
+                               "};" + LINE_SEPARATOR;
+      additionalEvaluation = "evaluationResult = new " + resultArrayType + " {" + chain.getText() + "};" + LINE_SEPARATOR;
+      resultExpression = "evaluationResult";
     }
 
     return "Object streamResult = null;" + LINE_SEPARATOR +
+           additionalDeclarations +
            "try {" + LINE_SEPARATOR +
-           "  streamResult = " + resultExpression + LINE_SEPARATOR +
+           additionalEvaluation +
+           "  streamResult = " + resultExpression + ";" + LINE_SEPARATOR +
            "}" + LINE_SEPARATOR +
            "catch(Throwable t) {" + LINE_SEPARATOR +
            "  streamResult = new Throwable[]{t};" + LINE_SEPARATOR +
@@ -177,17 +190,17 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   }
 
   @NotNull
-  private static String buildFillInfo(StreamCallTraceHandler producerHandler,
-                                      List<StreamCallTraceHandler> intermediateCallsHandlers,
-                                      StreamCallTraceHandler terminatorHandler) {
+  private static String buildFillInfo(ProducerCallTraceHandler producerHandler,
+                                      List<IntermediateCallTraceHandler> intermediateCallsHandlers,
+                                      TerminatorCallTraceHandler terminatorHandler) {
     final StringBuilder builder = new StringBuilder();
 
-    final Iterator<StreamCallTraceHandler> iterator =
-      StreamEx.of(producerHandler).append(intermediateCallsHandlers).append(terminatorHandler).iterator();
+    final Iterator<TraceHandler> iterator =
+      StreamEx.of((TraceHandler)producerHandler).append(intermediateCallsHandlers).append(terminatorHandler).iterator();
 
     int i = 0;
     while (iterator.hasNext()) {
-      final StreamCallTraceHandler handler = iterator.next();
+      final TraceHandler handler = iterator.next();
       builder.append("{").append(LINE_SEPARATOR);
       builder.append(handler.prepareResult());
       builder.append(String.format("info[%d] = %s;", i, handler.getResultExpression())).append(LINE_SEPARATOR);
@@ -202,8 +215,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   }
 
   @NotNull
-  private static List<StreamCallTraceHandler> getHandlers(@NotNull List<IntermediateStreamCall> intermediateCalls) {
-    final List<StreamCallTraceHandler> result = new ArrayList<>();
+  private static List<IntermediateCallTraceHandler> getHandlers(@NotNull List<IntermediateStreamCall> intermediateCalls) {
+    final List<IntermediateCallTraceHandler> result = new ArrayList<>();
 
     int i = 1;
     for (final IntermediateStreamCall call : intermediateCalls) {
@@ -214,16 +227,31 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     return result;
   }
 
-  public interface StreamChainTraceHandler extends TraceHandler {
-    @NotNull
-    String getTraceExpression(@NotNull StreamChain chain);
-  }
-
-  public interface StreamCallTraceHandler extends TraceHandler {
+  private interface BeforeCallsInserter {
     @NotNull
     List<IntermediateStreamCall> additionalCallsBefore();
+  }
 
+  private interface AfterCallsInserter {
     @NotNull
     List<IntermediateStreamCall> additionalCallsAfter();
+  }
+
+
+  private interface CallTransformer<T extends StreamCall> {
+    @NotNull
+    default T transformCall(@NotNull T call) {
+      return call;
+    }
+  }
+
+  public interface ProducerCallTraceHandler extends TraceHandler, AfterCallsInserter, CallTransformer<ProducerStreamCall> {
+  }
+
+  public interface IntermediateCallTraceHandler
+    extends TraceHandler, BeforeCallsInserter, AfterCallsInserter, CallTransformer<IntermediateStreamCall> {
+  }
+
+  public interface TerminatorCallTraceHandler extends TraceHandler, BeforeCallsInserter, CallTransformer<TerminatorStreamCall> {
   }
 }

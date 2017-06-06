@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler.type;
 
+import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,10 +28,18 @@ public interface GenericType {
   @NotNull
   String getGenericTypeName();
 
-  GenericType BOOLEAN = new GenericTypeImpl("boolean", "java.lang.Boolean");
-  GenericType INT = new GenericTypeImpl("int", "java.lang.Integer");
-  GenericType DOUBLE = new GenericTypeImpl("double", "java.lang.Double");
-  GenericType LONG = new GenericTypeImpl("long", "java.lang.Long");
+  @NotNull
+  String getDefaultValue();
+
+  GenericType BOOLEAN = new GenericTypeImpl("boolean", "java.lang.Boolean", "false");
+  GenericType INT = new GenericTypeImpl("int", "java.lang.Integer", "0");
+  GenericType DOUBLE = new GenericTypeImpl("double", "java.lang.Double", "0.");
+  GenericType LONG = new GenericTypeImpl("long", "java.lang.Long", "0L");
   GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
-  GenericType VOID = new GenericTypeImpl("void", "java.lang.Void");
+  GenericType VOID = new GenericTypeImpl("void", "java.lang.Void", "null");
+
+  GenericType OPTIONAL = new ClassTypeImpl(CommonClassNames.JAVA_UTIL_OPTIONAL);
+  GenericType OPTIONAL_INT = new ClassTypeImpl("java.util.OptionalInt");
+  GenericType OPTIONAL_LONG = new ClassTypeImpl("java.util.OptionalLong");
+  GenericType OPTIONAL_DOUBLE = new ClassTypeImpl("java.util.OptionalDouble");
 }

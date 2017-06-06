@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.chain.positive;
 
+import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.psi.PsiElement;
@@ -47,7 +48,7 @@ public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase 
   }
 
   public void testReferenceType() throws Exception {
-    doTest(GenericType.OBJECT);
+    doTest(new ClassTypeImpl("int[]"));
   }
 
   @NotNull

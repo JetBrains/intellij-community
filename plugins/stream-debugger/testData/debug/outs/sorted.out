@@ -13,37 +13,87 @@ sorted
     after: 15,16,17,18,19,20,21,22,23,24,25,26,27,28
 toArray
     before: 15,16,17,18,19,20,21,22,23,24,25,26,27,28
-    after: nothing
+    after: 29,30,31,32,33,34,35,36,37,38,39,40,41,42
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 4
+    nothing <- 5
+    nothing <- 6
+    nothing <- 7
+    nothing <- 8
+    nothing <- 9
+    nothing <- 10
+    nothing <- 11
+    nothing <- 12
+    nothing <- 13
+    nothing <- 14
 mappings for sorted
-    nothing -> 1 -> 21
-    nothing -> 2 -> 15
-    nothing -> 3 -> 17
-    nothing -> 4 -> 22
-    nothing -> 5 -> 23
-    nothing -> 6 -> 24
-    nothing -> 7 -> 25
-    nothing -> 8 -> 16
-    nothing -> 9 -> 18
-    nothing -> 10 -> 19
-    nothing -> 11 -> 26
-    nothing -> 12 -> 27
-    nothing -> 13 -> 28
-    nothing -> 14 -> 20
+  direct:
+    1 -> 21
+    2 -> 15
+    3 -> 17
+    4 -> 22
+    5 -> 23
+    6 -> 24
+    7 -> 25
+    8 -> 16
+    9 -> 18
+    10 -> 19
+    11 -> 26
+    12 -> 27
+    13 -> 28
+    14 -> 20
+  reverse:
+    2 <- 15
+    8 <- 16
+    3 <- 17
+    9 <- 18
+    10 <- 19
+    14 <- 20
+    1 <- 21
+    4 <- 22
+    5 <- 23
+    6 <- 24
+    7 <- 25
+    11 <- 26
+    12 <- 27
+    13 <- 28
 mappings for toArray
-    2 -> 15 -> nothing
-    8 -> 16 -> nothing
-    3 -> 17 -> nothing
-    9 -> 18 -> nothing
-    10 -> 19 -> nothing
-    14 -> 20 -> nothing
-    1 -> 21 -> nothing
-    4 -> 22 -> nothing
-    5 -> 23 -> nothing
-    6 -> 24 -> nothing
-    7 -> 25 -> nothing
-    11 -> 26 -> nothing
-    12 -> 27 -> nothing
-    13 -> 28 -> nothing
+  direct:
+    15 -> 29
+    16 -> 30
+    17 -> 31
+    18 -> 32
+    19 -> 33
+    20 -> 34
+    21 -> 35
+    22 -> 36
+    23 -> 37
+    24 -> 38
+    25 -> 39
+    26 -> 40
+    27 -> 41
+    28 -> 42
+  reverse:
+    15 <- 29
+    16 <- 30
+    17 <- 31
+    18 <- 32
+    19 <- 33
+    20 <- 34
+    21 <- 35
+    22 <- 36
+    23 <- 37
+    24 <- 38
+    25 <- 39
+    26 <- 40
+    27 <- 41
+    28 <- 42
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

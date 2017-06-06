@@ -21,6 +21,7 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
+import com.intellij.debugger.streams.wrapper.StreamCallType
 import java.awt.Component
 import java.awt.GridLayout
 import javax.swing.JPanel
@@ -37,9 +38,10 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     var lastValues: List<ValueWithPositionImpl>? = null
     for ((index, controller) in controllers.subList(0, controllers.size - 1).withIndex()) {
       val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[index + 1])
-      val mappingPane = MappingPane(controller.call.name, valuesBefore, mapping)
+      val mappingPane = MappingPane(controller.nextCall!!.name, valuesBefore, mapping)
 
-      val view = PositionsAwareCollectionView(" ", evaluationContext, valuesBefore)
+      val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext)
+      val view = PositionsAwareCollectionView(" ", tree, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
@@ -68,8 +70,20 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     }
 
     lastValues?.let {
-      val view = PositionsAwareCollectionView(" ", evaluationContext, it)
-      controllers.last().register(view)
+      val lastController = controllers.last()
+
+      val prevCall = lastController.prevCall
+      val tree: CollectionTree
+      if (prevCall != null && prevCall.type == StreamCallType.TERMINATOR) {
+        val values = lastController.values
+        assert(values.size == 1)
+        tree = SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext)
+      }
+      else {
+        tree = CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext)
+      }
+      val view = PositionsAwareCollectionView(" ", tree, it)
+      lastController.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
           prevMappingPane?.repaint()
@@ -90,10 +104,10 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     val prevValues = mutableListOf<ValueWithPositionImpl>()
     val mapping = mutableMapOf<ValueWithPositionImpl, MutableSet<ValueWithPositionImpl>>()
 
-    for (element in resolvedTrace.values) {
+    for (element in trace) {
       val prevValue = getValue(element)
       prevValues += prevValue
-      for (nextElement in resolvedTrace.getNextValues(element)) {
+      for (nextElement in getNextValues(element)) {
         val nextValue = getValue(nextElement)
         mapping.computeIfAbsent(prevValue, { mutableSetOf() }) += nextValue
         mapping.computeIfAbsent(nextValue, { mutableSetOf() }) += prevValue
@@ -105,7 +119,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       resultMapping.put(key, mapping[key]!!.toList())
     }
 
-    return LinkedValuesWithPositions(prevValues, nextController.values.map { getValue(it) }, object : LinkedValuesMapping {
+    return LinkedValuesWithPositions(prevValues, nextController.trace.map { getValue(it) }, object : LinkedValuesMapping {
       override fun getLinkedValues(value: ValueWithPosition): List<ValueWithPosition>? {
         return resultMapping[value]
       }

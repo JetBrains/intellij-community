@@ -18,6 +18,8 @@ package com.intellij.debugger.streams.wrapper;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -26,7 +28,7 @@ public interface MethodCall {
   String getName();
 
   @NotNull
-  String getArguments();
+  List<CallArgument> getArguments();
 
   @NotNull
   TextRange getTextRange();

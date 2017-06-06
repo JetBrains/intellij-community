@@ -19,15 +19,35 @@ sorted
     after: 4,5,6
 collect
     before: 4,5,6
-    after: nothing
+    after: 7,8,9
+mappings for Stream
+      .of(1, 2, 3, 4, 5, 6).map(x -> x * x).collect(Collectors.toList())
+      .stream().filter(x -> x % 2 == 0).collect(Collectors.toList())
+      .stream
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
 mappings for sorted
-    nothing -> 1 -> 4
-    nothing -> 2 -> 5
-    nothing -> 3 -> 6
+  direct:
+    1 -> 4
+    2 -> 5
+    3 -> 6
+  reverse:
+    1 <- 4
+    2 <- 5
+    3 <- 6
 mappings for collect
-    1 -> 4 -> nothing
-    2 -> 5 -> nothing
-    3 -> 6 -> nothing
+  direct:
+    4 -> 7
+    5 -> 8
+    6 -> 9
+  reverse:
+    4 <- 7
+    5 <- 8
+    6 <- 9
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

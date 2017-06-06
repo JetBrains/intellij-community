@@ -18,22 +18,16 @@ package com.intellij.debugger.streams.psi.impl;
 import com.intellij.debugger.streams.psi.StreamChainTransformer;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
-import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl;
-import com.intellij.debugger.streams.wrapper.impl.ProducerStreamCallImpl;
-import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
-import com.intellij.debugger.streams.wrapper.impl.TerminatorStreamCallImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.debugger.streams.wrapper.impl.*;
+import com.intellij.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -74,7 +68,7 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     GenericType typeBefore = producerAfterType;
     for (final PsiMethodCallExpression callExpression : expressions) {
       final String name = resolveMethodName(callExpression);
-      final String args = resolveArguments(callExpression);
+      final List<CallArgument> args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
       result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
       typeBefore = type;
@@ -86,7 +80,7 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
   @NotNull
   private TerminatorStreamCall createTerminationCall(@NotNull GenericType typeBefore, @NotNull PsiMethodCallExpression expression) {
     final String name = resolveMethodName(expression);
-    final String args = resolveArguments(expression);
+    final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
     return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
   }
@@ -97,8 +91,13 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
   }
 
   @NotNull
-  private static String resolveArguments(@NotNull PsiMethodCallExpression methodCall) {
-    return methodCall.getArgumentList().getText();
+  private static List<CallArgument> resolveArguments(@NotNull PsiMethodCallExpression methodCall) {
+    final PsiExpressionList list = methodCall.getArgumentList();
+    return StreamEx.of(list.getExpressions())
+      .zipWith(StreamEx.of(list.getExpressionTypes()),
+               (expression, type) -> new CallArgumentImpl(GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText(),
+                                                          expression.getText()))
+      .collect(Collectors.toList());
   }
 
   @NotNull

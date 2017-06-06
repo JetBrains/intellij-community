@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.resolve;
-
-import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+package com.intellij.debugger.streams.trace;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface ResolvedTrace {
-  @NotNull
-  StreamCall getCall();
-
-  @NotNull
-  List<TraceElement> getPreviousValues(@NotNull TraceElement value);
-
-  @NotNull
-  List<TraceElement> getNextValues(@NotNull TraceElement value);
-
-  @NotNull
-  List<TraceElement> getValues();
+public interface BidirectionalAwareState extends PrevAwareState, NextAwareState {
 }

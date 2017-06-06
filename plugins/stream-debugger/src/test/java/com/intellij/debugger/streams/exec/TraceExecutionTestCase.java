@@ -22,10 +22,12 @@ import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
+import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
+import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.execution.ExecutionException;
@@ -42,10 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -131,6 +130,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
           @Override
           public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+            System.out.println(traceExpression);
             complete(chain, null, message, FailureReason.COMPILATION);
           }
         });
@@ -187,7 +187,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull FailureReason reason) {
-    fail();
+    fail(error);
   }
 
   protected void handleSuccess(@Nullable StreamChain chain,
@@ -198,8 +198,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
     println(chain.getText(), ProcessOutputTypes.SYSTEM);
 
-    final Value resultValue = result.getResult();
-    handleResultValue(resultValue, resultMustBeNull);
+    final TraceElement resultValue = result.getResult();
+    handleResultValue(resultValue.getValue(), resultMustBeNull);
 
     final List<TraceInfo> trace = result.getTrace();
     handleTrace(trace);
@@ -225,55 +225,128 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
       print("    before: ", ProcessOutputTypes.SYSTEM);
       final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
-      println(valuesOrderToString(before), ProcessOutputTypes.SYSTEM);
+      println(traceToString(before.values()), ProcessOutputTypes.SYSTEM);
 
       print("    after: ", ProcessOutputTypes.SYSTEM);
       final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
-      println(valuesOrderToString(after), ProcessOutputTypes.SYSTEM);
+      println(traceToString(after.values()), ProcessOutputTypes.SYSTEM);
     }
   }
 
   @SuppressWarnings("WeakerAccess")
   protected void handleResolvedTrace(@NotNull ResolvedTracingResult result) {
-    final List<ResolvedTrace> traces = result.getResolvedTraces();
+    final ResolvedStreamChain resolvedChain = result.getResolvedChain();
 
-    checkTracesIsCorrectInBothDirections(traces);
+    checkChain(resolvedChain);
+    checkTracesIsCorrectInBothDirections(resolvedChain);
 
-    for (final ResolvedTrace trace : traces) {
-      final String name = trace.getCall().getName();
-      final List<TraceElement> values = trace.getValues();
+    final ResolvedStreamCall.Producer producer = resolvedChain.getProducer();
+    final ResolvedStreamCall.Terminator terminator = resolvedChain.getTerminator();
+    printBeforeAndAfterValues(producer.getStateBefore(), producer.getStateAfter());
+    resolvedChain.getIntermediateCalls().forEach(x -> printBeforeAndAfterValues(x.getStateBefore(), x.getStateAfter()));
+    printBeforeAndAfterValues(terminator.getStateBefore(), terminator.getStateAfter());
+  }
 
-      println("mappings for " + name, ProcessOutputTypes.SYSTEM);
+  private void printBeforeAndAfterValues(@Nullable NextAwareState before, @Nullable PrevAwareState after) {
+    assertFalse(before == null && after == null);
+    final StreamCall call = before == null ? after.getPrevCall() : before.getNextCall();
+    println("mappings for " + call.getName(), ProcessOutputTypes.SYSTEM);
+    println("  direct:", ProcessOutputTypes.SYSTEM);
+    if (before != null) {
+      printMapping(before.getTrace(), before::getNextValues, Direction.FORWARD);
+    }
+    else {
+      println("    no", ProcessOutputTypes.SYSTEM);
+    }
 
-      for (final TraceElement element : StreamEx.of(values).sortedBy(TraceElement::getTime)) {
-        final String beforeTimes = StreamEx.of(trace.getPreviousValues(element)).map(TraceElement::getTime).sorted().joining(", ");
-        final String afterTimes = StreamEx.of(trace.getNextValues(element)).map(TraceElement::getTime).sorted().joining(",");
-        println(evalTimesRepresentation(beforeTimes, element.getTime(), afterTimes), ProcessOutputTypes.SYSTEM);
-      }
+    println("  reverse:", ProcessOutputTypes.SYSTEM);
+    if (after != null) {
+      printMapping(after.getTrace(), after::getPrevValues, Direction.BACKWARD);
+    }
+    else {
+      println("    not found", ProcessOutputTypes.SYSTEM);
     }
   }
 
-  @NotNull
-  private static String evalTimesRepresentation(@NotNull String before, int elementTime, @NotNull String after) {
-    before = replaceIfEmpty(before);
-    after = replaceIfEmpty(after);
-    return String.format("    %s -> %d -> %s", before, elementTime, after);
-  }
-
-  private static void checkTracesIsCorrectInBothDirections(@NotNull List<ResolvedTrace> resolvedTraces) {
-    for (int i = 1, size = resolvedTraces.size(); i < size; i++) {
-      final ResolvedTrace previous = resolvedTraces.get(i - 1);
-      final ResolvedTrace current = resolvedTraces.get(i);
-      checkNeighborTraces(previous, current);
+  private void printMapping(@NotNull List<TraceElement> values,
+                            @NotNull Function<TraceElement, List<TraceElement>> mapper,
+                            @NotNull Direction direction) {
+    if (values.isEmpty()) {
+      println("    empty", ProcessOutputTypes.SYSTEM);
+    }
+    for (final TraceElement element : values) {
+      final List<TraceElement> mappedValues = mapper.apply(element);
+      final String mapped = traceToString(mappedValues);
+      final String line = Direction.FORWARD.equals(direction) ? element.getTime() + " -> " + mapped : mapped + " <- " + element.getTime();
+      println("    " + line, ProcessOutputTypes.SYSTEM);
     }
   }
 
-  private static void checkNeighborTraces(@NotNull ResolvedTrace left, @NotNull ResolvedTrace right) {
-    final Set<TraceElement> leftValues = new HashSet<>(left.getValues());
-    final Set<TraceElement> rightValues = new HashSet<>(right.getValues());
+  private enum Direction {
+    FORWARD, BACKWARD
+  }
 
-    checkThatMappingsIsCorrect(leftValues, rightValues, left::getNextValues, right::getPreviousValues);
-    checkThatMappingsIsCorrect(rightValues, leftValues, right::getPreviousValues, left::getNextValues);
+  private static void checkChain(@NotNull ResolvedStreamChain chain) {
+    final ResolvedStreamCall.Producer producer = chain.getProducer();
+    final NextAwareState before = producer.getStateBefore();
+    if (before != null) {
+      assertEquals(before.getNextCall().getName(), producer.getCall().getName());
+    }
+
+    assertEquals(producer.getCall(), producer.getStateAfter().getPrevCall());
+    final List<ResolvedStreamCall.Intermediate> intermediates = chain.getIntermediateCalls();
+    final ResolvedStreamCall.Terminator terminator = chain.getTerminator();
+    if (intermediates.isEmpty()) {
+      assertEquals(producer.getCall().getName(), terminator.getStateBefore().getPrevCall().getName());
+    }
+
+    checkIntermediates(chain.getIntermediateCalls());
+
+    assertEquals(terminator.getCall().getName(), terminator.getStateBefore().getNextCall().getName());
+    final PrevAwareState after = terminator.getStateAfter();
+    if (after != null) {
+      assertEquals(terminator.getCall().getName(), after.getPrevCall().getName());
+    }
+
+    if (!intermediates.isEmpty()) {
+      assertEquals(terminator.getCall().getName(), intermediates.get(intermediates.size() - 1).getStateAfter().getNextCall().getName());
+    }
+  }
+
+  private static void checkIntermediates(@NotNull List<ResolvedStreamCall.Intermediate> intermediates) {
+    for (int i = 0; i < intermediates.size() - 1; i++) {
+      final ResolvedStreamCall.Intermediate prev = intermediates.get(i);
+      final ResolvedStreamCall.Intermediate next = intermediates.get(i + 1);
+      assertSame(prev.getStateAfter(), next.getStateBefore());
+      assertEquals(prev.getCall().getName(), prev.getStateAfter().getPrevCall().getName());
+      assertEquals(next.getCall().getName(), next.getStateBefore().getNextCall().getName());
+    }
+  }
+
+  private static void checkTracesIsCorrectInBothDirections(@NotNull ResolvedStreamChain resolvedChain) {
+    final ResolvedStreamCall.Producer producer = resolvedChain.getProducer();
+    final NextAwareState before = producer.getStateBefore();
+    if (before != null) {
+      checkNeighborTraces(before, producer.getStateAfter());
+    }
+
+    for (final ResolvedStreamCall.Intermediate intermediate : resolvedChain.getIntermediateCalls()) {
+      checkNeighborTraces(intermediate.getStateBefore(), intermediate.getStateAfter());
+    }
+
+    final ResolvedStreamCall.Terminator terminator = resolvedChain.getTerminator();
+    final PrevAwareState after = terminator.getStateAfter();
+    if (after != null) {
+      checkNeighborTraces(terminator.getStateBefore(), after);
+    }
+  }
+
+  private static void checkNeighborTraces(@NotNull NextAwareState left, @NotNull PrevAwareState right) {
+    final Set<TraceElement> leftValues = new HashSet<>(left.getTrace());
+    final Set<TraceElement> rightValues = new HashSet<>(right.getTrace());
+
+    checkThatMappingsIsCorrect(leftValues, rightValues, left::getNextValues, right::getPrevValues);
+    checkThatMappingsIsCorrect(rightValues, leftValues, right::getPrevValues, left::getNextValues);
   }
 
   private static void checkThatMappingsIsCorrect(@NotNull Set<TraceElement> prev,
@@ -290,8 +363,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   @NotNull
-  private static String valuesOrderToString(@NotNull Map<Integer, TraceElement> values) {
-    return replaceIfEmpty(StreamEx.of(values.keySet()).sorted().joining(","));
+  private static String traceToString(@NotNull Collection<TraceElement> trace) {
+    return replaceIfEmpty(StreamEx.of(trace).map(TraceElement::getTime).sorted().joining(","));
   }
 
   @NotNull

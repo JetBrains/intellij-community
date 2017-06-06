@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,11 +36,12 @@ import java.util.List;
 public class CollectionView extends JPanel implements Disposable, TraceContainer {
   private final CollectionTree myInstancesTree;
 
-  CollectionView(@NotNull String header, @NotNull EvaluationContextImpl evaluationContext, @NotNull List<TraceElement> values) {
+  CollectionView(@NotNull String header,
+                 @NotNull CollectionTree collectionTree) {
     super(new BorderLayout());
     add(new JBLabel(header), BorderLayout.NORTH);
 
-    myInstancesTree = new CollectionTree(values, evaluationContext);
+    myInstancesTree = collectionTree;
 
     final JBScrollPane scroll = new JBScrollPane(myInstancesTree);
 

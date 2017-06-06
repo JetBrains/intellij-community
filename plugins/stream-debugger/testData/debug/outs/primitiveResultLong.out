@@ -12,9 +12,18 @@ IntStream.of
 count
     before: 1,2
     after: nothing
+mappings for IntStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
 mappings for count
-    nothing -> 1 -> nothing
-    nothing -> 2 -> nothing
+  direct:
+    1 -> nothing
+    2 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

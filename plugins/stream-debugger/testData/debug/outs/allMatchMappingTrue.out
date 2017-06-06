@@ -1,0 +1,29 @@
+LineBreakpoint created at AllMatchMappingTrue.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! AllMatchMappingTrue
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+AllMatchMappingTrue.java:6
+Stream.of(1, 2, 3)
+.allMatch(x -> x > 0)
+Stream.of
+    before: nothing
+    after: 1,2,3
+allMatch
+    before: 1,2,3
+    after: 2147483647
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+mappings for allMatch
+  direct:
+    1 -> 2147483647
+    2 -> 2147483647
+    3 -> 2147483647
+  reverse:
+    1,2,3 <- 2147483647
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

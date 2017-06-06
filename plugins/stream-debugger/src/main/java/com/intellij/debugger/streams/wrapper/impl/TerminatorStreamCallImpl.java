@@ -16,10 +16,13 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
@@ -29,7 +32,7 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
   private final GenericType myReturnType;
 
   public TerminatorStreamCallImpl(@NotNull String name,
-                                  @NotNull String args,
+                                  @NotNull List<CallArgument> args,
                                   @NotNull GenericType typeBefore,
                                   @NotNull GenericType resultType,
                                   @NotNull TextRange range) {

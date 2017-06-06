@@ -14,14 +14,29 @@ map
 count
     before: 2,4,6
     after: nothing
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 5
 mappings for map
-    nothing -> 1 -> 2
-    nothing -> 3 -> 4
-    nothing -> 5 -> 6
+  direct:
+    1 -> 2
+    3 -> 4
+    5 -> 6
+  reverse:
+    1 <- 2
+    3 <- 4
+    5 <- 6
 mappings for count
-    1 -> 2 -> nothing
-    3 -> 4 -> nothing
-    5 -> 6 -> nothing
+  direct:
+    2 -> nothing
+    4 -> nothing
+    6 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

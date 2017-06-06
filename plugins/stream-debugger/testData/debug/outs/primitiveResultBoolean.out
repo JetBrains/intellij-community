@@ -11,9 +11,17 @@ Stream.of
     after: 1
 anyMatch
     before: 1
-    after: nothing
+    after: 2147483647
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for anyMatch
-    nothing -> 1 -> nothing
+  direct:
+    1 -> 2147483647
+  reverse:
+    1 <- 2147483647
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -28,8 +28,8 @@ public interface TracingResult {
   /**
    * Returns null if and only if stream call has 'void' as return type (foreach termination call)
    */
-  @Nullable
-  Value getResult();
+  @NotNull
+  TraceElement getResult();
 
   boolean exceptionThrown();
 

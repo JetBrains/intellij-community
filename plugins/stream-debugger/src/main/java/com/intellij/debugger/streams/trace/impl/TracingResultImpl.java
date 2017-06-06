@@ -15,41 +15,44 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
-import com.intellij.debugger.streams.resolve.ResolvedTraceImpl;
-import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
-import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
-import com.intellij.debugger.streams.trace.ResolvedTracingResult;
-import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.trace.TraceInfo;
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.sun.jdi.Value;
+import com.intellij.debugger.streams.resolve.*;
+import com.intellij.debugger.streams.resolve.impl.ResolvedIntermediateCallImpl;
+import com.intellij.debugger.streams.resolve.impl.ResolvedProducerCallImpl;
+import com.intellij.debugger.streams.resolve.impl.ResolvedStreamChainImpl;
+import com.intellij.debugger.streams.resolve.impl.ResolvedTerminatorCallImpl;
+import com.intellij.debugger.streams.trace.*;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.TraceUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class TracingResultImpl implements TracingResult {
-  private final Value myStreamResult;
+  private final TraceElement myStreamResult;
   private final List<TraceInfo> myTrace;
   private final boolean myIsResultException;
+  private final StreamChain mySourceChain;
 
-  TracingResultImpl(@Nullable Value streamResult, @NotNull List<TraceInfo> trace, boolean isResultException) {
+  TracingResultImpl(@NotNull StreamChain chain,
+                    @NotNull TraceElement streamResult,
+                    @NotNull List<TraceInfo> trace,
+                    boolean isResultException) {
     myStreamResult = streamResult;
     myTrace = trace;
+    mySourceChain = chain;
     myIsResultException = isResultException;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Value getResult() {
+  public TraceElement getResult() {
     return myStreamResult;
   }
 
@@ -67,44 +70,84 @@ public class TracingResultImpl implements TracingResult {
   @NotNull
   @Override
   public ResolvedTracingResult resolve() {
-    if (myTrace.size() == 0) {
-      return new MyResolvedResult(Collections.emptyList());
-    }
+    assert myTrace.size() == mySourceChain.length();
 
-    final List<ResolvedTrace> result = new ArrayList<>();
+    final ResolverFactory resolverFactory = ResolverFactoryImpl.getInstance();
+    List<ValuesOrderResolver.Result> resolvedTraces = myTrace.stream()
+      .map(x -> resolverFactory.getResolver(x.getCall().getName()).resolve(x))
+      .collect(Collectors.toList());
+
     final TraceInfo producerTrace = myTrace.get(0);
-    ValuesOrderResolver.Result prevResolved =
-      ResolverFactoryImpl.getInstance().getResolver(producerTrace.getCall().getName()).resolve(producerTrace);
+    final List<IntermediateStreamCall> intermediateCalls = mySourceChain.getIntermediateCalls();
 
-    for (int i = 1; i < myTrace.size(); i++) {
-      final TraceInfo traceInfo = myTrace.get(i);
-      final StreamCall currentCall = traceInfo.getCall();
+    final ResolvedStreamChainImpl.Builder chainBuilder = new ResolvedStreamChainImpl.Builder();
+    final List<TraceElement> valuesAfterProducer = TraceUtil.sortedByTime(producerTrace.getValuesOrderAfter().values());
+    final ProducerStateImpl producerState =
+      new ProducerStateImpl(valuesAfterProducer, mySourceChain.getProducerCall(), myTrace.get(1).getCall(),
+                            resolvedTraces.get(1).getDirectOrder());
 
-      final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(currentCall.getName());
-      final ValuesOrderResolver.Result currentResolve = resolver.resolve(traceInfo);
+    final ResolvedProducerCallImpl resolvedProducer = new ResolvedProducerCallImpl(mySourceChain.getProducerCall(), producerState);
+    chainBuilder.setProducer(resolvedProducer);
+    if (intermediateCalls.isEmpty()) {
+      chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.get(1), producerState, resolvedTraces.get(1).getReverseOrder()));
+    }
+    else {
+      final ArrayList<IntermediateStateImpl> states = new ArrayList<>();
 
-      final Collection<TraceElement> values = traceInfo.getValuesOrderBefore().values();
-      final ResolvedTrace resolvedTrace =
-        new ResolvedTraceImpl(currentCall, values, prevResolved.getReverseOrder(), currentResolve.getDirectOrder());
-      result.add(resolvedTrace);
+      for (int i = 0; i < intermediateCalls.size() - 1; i++) {
+        states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(i + 1).getValuesOrderAfter().values()),
+                                             intermediateCalls.get(i),
+                                             intermediateCalls.get(i + 1),
+                                             resolvedTraces.get(i + 1).getReverseOrder(),
+                                             resolvedTraces.get(i + 2).getDirectOrder()));
+      }
 
-      prevResolved = currentResolve;
+      states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(myTrace.size() - 1).getValuesOrderBefore().values()),
+                                           intermediateCalls.get(intermediateCalls.size() - 1),
+                                           mySourceChain.getTerminationCall(),
+                                           resolvedTraces.get(resolvedTraces.size() - 2).getReverseOrder(),
+                                           resolvedTraces.get(resolvedTraces.size() - 1).getDirectOrder()));
+
+      chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.get(0), producerState, states.get(0)));
+      for (int i = 1; i < states.size(); i++) {
+        chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.get(i), states.get(i - 1), states.get(i)));
+      }
+
+      chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.get(myTrace.size() - 1), states.get(states.size() - 1),
+                                                              resolvedTraces.get(resolvedTraces.size() - 1).getReverseOrder()));
     }
 
-    return new MyResolvedResult(result);
+    return new MyResolvedResult(chainBuilder.build());
+  }
+
+  private ResolvedStreamCall.Terminator buildResolvedTerminationCall(@NotNull TraceInfo terminatorTrace,
+                                                                     @NotNull BidirectionalAwareState previousState,
+                                                                     @NotNull Map<TraceElement, List<TraceElement>>
+                                                                       terminationToPrevMapping) {
+    final List<TraceElement> after = TraceUtil.sortedByTime(terminatorTrace.getValuesOrderAfter().values());
+    final TerminationStateImpl terminatorState =
+      new TerminationStateImpl(myStreamResult, previousState.getNextCall(), after, terminationToPrevMapping);
+    return new ResolvedTerminatorCallImpl(mySourceChain.getTerminationCall(), previousState, terminatorState);
   }
 
   private class MyResolvedResult implements ResolvedTracingResult {
-    private final List<ResolvedTrace> myTrace;
 
-    MyResolvedResult(@NotNull List<ResolvedTrace> trace) {
-      myTrace = trace;
+    @NotNull private final ResolvedStreamChain myChain;
+
+    MyResolvedResult(@NotNull ResolvedStreamChain resolvedStreamChain) {
+      myChain = resolvedStreamChain;
     }
 
     @NotNull
     @Override
-    public List<ResolvedTrace> getResolvedTraces() {
-      return Collections.unmodifiableList(myTrace);
+    public ResolvedStreamChain getResolvedChain() {
+      return myChain;
+    }
+
+    @NotNull
+    @Override
+    public StreamChain getSourceChain() {
+      return mySourceChain;
     }
 
     @Override
@@ -112,9 +155,9 @@ public class TracingResultImpl implements TracingResult {
       return myIsResultException;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public Value getResult() {
+    public TraceElement getResult() {
       return myStreamResult;
     }
   }

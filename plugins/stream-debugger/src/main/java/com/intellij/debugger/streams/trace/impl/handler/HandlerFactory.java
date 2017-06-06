@@ -16,7 +16,9 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class HandlerFactory {
 
   @NotNull
-  public static TraceExpressionBuilderImpl.StreamCallTraceHandler createIntermediate(int number,
-                                                                                     @NotNull IntermediateStreamCall call) {
+  public static TraceExpressionBuilderImpl.IntermediateCallTraceHandler createIntermediate(int number,
+                                                                                           @NotNull IntermediateStreamCall call) {
     final String callName = call.getName();
     switch (callName) {
       case "distinct":
@@ -36,11 +38,26 @@ public class HandlerFactory {
     }
   }
 
-  public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull ProducerStreamCall call) {
+  @NotNull
+  public static TraceExpressionBuilderImpl.ProducerCallTraceHandler create(@NotNull ProducerStreamCall call) {
     return new ProducerHandler(call.getTypeAfter());
   }
 
-  public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull TerminatorStreamCall call) {
+  @NotNull
+  public static TraceExpressionBuilderImpl.TerminatorCallTraceHandler create(@NotNull TerminatorStreamCall call,
+                                                                             @NotNull String resultExpression) {
+    switch (call.getName()) {
+      case "allMatch":
+      case "anyMatch":
+      case "noneMatch":
+        return new MatchHandler(call);
+      case "max":
+      case "min":
+      case "findAny":
+      case "findFirst":
+        return new OptionalTerminatorHandler(call, resultExpression);
+    }
+
     return new TerminatorHandler(call.getTypeBefore());
   }
 }

@@ -15,10 +15,11 @@
  */
 package com.intellij.debugger.streams.ui;
 
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -27,13 +28,22 @@ import java.util.List;
  */
 public interface TraceController {
   @NotNull
-  List<TraceElement> getValues();
+  List<Value> getValues();
 
   @NotNull
-  StreamCall getCall();
+  List<TraceElement> getTrace();
+
+  @Nullable
+  StreamCall getNextCall();
+
+  @Nullable
+  StreamCall getPrevCall();
 
   @NotNull
-  ResolvedTrace getResolvedTrace();
+  List<TraceElement> getNextValues(@NotNull TraceElement element);
+
+  @NotNull
+  List<TraceElement> getPrevValues(@NotNull TraceElement element);
 
   void register(@NotNull TraceContainer listener);
 }

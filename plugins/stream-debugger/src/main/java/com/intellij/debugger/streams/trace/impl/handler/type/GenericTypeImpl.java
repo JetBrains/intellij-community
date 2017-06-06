@@ -17,16 +17,39 @@ package com.intellij.debugger.streams.trace.impl.handler.type;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author Vitaliy.Bibaev
  */
 public class GenericTypeImpl implements GenericType {
   private final String myPrimitiveName;
   private final String myGenericName;
+  private final String myDefaultValue;
 
-  GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName) {
+  @Override
+  public int hashCode() {
+    return Objects.hash(myPrimitiveName, myGenericName);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj instanceof GenericType) {
+      final GenericType type = (GenericType)obj;
+      return myPrimitiveName.equals(type.getVariableTypeName()) && myGenericName.equals(type.getGenericTypeName());
+    }
+
+    return false;
+  }
+
+  GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName, @NotNull String defaultValue) {
     myPrimitiveName = primitiveName;
     myGenericName = genericName;
+    myDefaultValue = defaultValue;
   }
 
   @NotNull
@@ -39,5 +62,11 @@ public class GenericTypeImpl implements GenericType {
   @Override
   public String getGenericTypeName() {
     return myGenericName;
+  }
+
+  @NotNull
+  @Override
+  public String getDefaultValue() {
+    return myDefaultValue;
   }
 }

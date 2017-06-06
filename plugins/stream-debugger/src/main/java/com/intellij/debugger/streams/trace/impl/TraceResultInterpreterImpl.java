@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.trace.TraceResultInterpreter;
-import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.CallTraceResolver;
 import com.intellij.debugger.streams.trace.TraceInfo;
+import com.intellij.debugger.streams.trace.TraceResultInterpreter;
+import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.impl.resolve.ResolverFactory;
 import com.intellij.debugger.streams.trace.impl.resolve.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -46,7 +46,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     final Value time = resultArray.getValue(2);
     logTime(time);
     final List<TraceInfo> trace = getTrace(chain, info);
-    return new TracingResultImpl(streamResult, trace, isException(result));
+    return new TracingResultImpl(chain, TraceElementImpl.ofResultValue(streamResult), trace, isException(result));
   }
 
   @NotNull

@@ -1,0 +1,29 @@
+LineBreakpoint created at MaxMappingPresent.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MaxMappingPresent
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+MaxMappingPresent.java:8
+Stream.of(1, 2, 3)
+.max(Comparator.comparingInt(x -> -x))
+Stream.of
+    before: nothing
+    after: 1,2,3
+max
+    before: 1,2,3
+    after: 2147483646
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+mappings for max
+  direct:
+    1 -> 2147483646
+    2 -> nothing
+    3 -> nothing
+  reverse:
+    1 <- 2147483646
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

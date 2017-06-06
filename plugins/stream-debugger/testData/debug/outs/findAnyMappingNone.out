@@ -1,0 +1,25 @@
+LineBreakpoint created at FindAnyMappingNone.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! FindAnyMappingNone
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+FindAnyMappingNone.java:7
+Stream.empty()
+.findAny()
+Stream.empty
+    before: nothing
+    after: nothing
+findAny
+    before: nothing
+    after: nothing
+mappings for Stream.empty
+  direct:
+    no
+  reverse:
+    empty
+mappings for findAny
+  direct:
+    empty
+  reverse:
+    empty
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

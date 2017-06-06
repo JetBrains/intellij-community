@@ -18,11 +18,26 @@ filter
 findAny
     before: nothing
     after: nothing
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for map
-    nothing -> 1 -> 2
+  direct:
+    1 -> 2
+  reverse:
+    1 <- 2
 mappings for filter
-    1 -> 2 -> nothing
+  direct:
+    2 -> nothing
+  reverse:
+    empty
 mappings for findAny
+  direct:
+    empty
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

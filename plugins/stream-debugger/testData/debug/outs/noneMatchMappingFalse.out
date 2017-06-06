@@ -1,0 +1,25 @@
+LineBreakpoint created at NoneMatchMappingFalse.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! NoneMatchMappingFalse
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+NoneMatchMappingFalse.java:6
+Stream.of(1, 2, 3)
+.noneMatch(Integer.class::isInstance)
+Stream.of
+    before: nothing
+    after: 1
+noneMatch
+    before: 1
+    after: 2147483647
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+mappings for noneMatch
+  direct:
+    1 -> 2147483647
+  reverse:
+    1 <- 2147483647
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

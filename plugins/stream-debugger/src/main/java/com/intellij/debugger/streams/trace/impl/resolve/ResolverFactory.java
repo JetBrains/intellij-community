@@ -37,6 +37,20 @@ public class ResolverFactory {
     switch (callName) {
       case "distinct":
         return new DistinctCallTraceResolver();
+      case "toArray":
+      case "collect":
+        return new CollectIdentityResolver();
+      case "anyMatch":
+        return new AnyMatchResolver();
+      case "allMatch":
+        return new AllMatchResolver();
+      case "noneMatch":
+        return new NoneMatchResolver();
+      case "max":
+      case "min":
+      case "findAny":
+      case "findFirst":
+        return new OptionalResolver();
       default:
         return new SimplePeekCallTraceResolver();
     }

@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler;
+package com.intellij.debugger.streams.wrapper;
 
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.trace.impl.handler.HandlerBase;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public abstract class CallTraceHandlerBase extends HandlerBase implements TraceExpressionBuilderImpl.StreamCallTraceHandler {
+public interface CallArgument {
+  @NotNull
+  String getType();
+
+  @NotNull
+  String getText();
 }

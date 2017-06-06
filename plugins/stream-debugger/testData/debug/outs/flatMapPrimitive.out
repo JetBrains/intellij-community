@@ -13,21 +13,50 @@ flatMapToDouble
     after: 2,3,4,6,7,8,10,11,12
 toArray
     before: 2,3,4,6,7,8,10,11,12
-    after: nothing
+    after: 13,14,15,16,17,18,19,20,21
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 5
+    nothing <- 9
 mappings for flatMapToDouble
-    nothing -> 1 -> 2,3,4
-    nothing -> 5 -> 6,7,8
-    nothing -> 9 -> 10,11,12
+  direct:
+    1 -> 2,3,4
+    5 -> 6,7,8
+    9 -> 10,11,12
+  reverse:
+    1 <- 2
+    1 <- 3
+    1 <- 4
+    5 <- 6
+    5 <- 7
+    5 <- 8
+    9 <- 10
+    9 <- 11
+    9 <- 12
 mappings for toArray
-    1 -> 2 -> nothing
-    1 -> 3 -> nothing
-    1 -> 4 -> nothing
-    5 -> 6 -> nothing
-    5 -> 7 -> nothing
-    5 -> 8 -> nothing
-    9 -> 10 -> nothing
-    9 -> 11 -> nothing
-    9 -> 12 -> nothing
+  direct:
+    2 -> 13
+    3 -> 14
+    4 -> 15
+    6 -> 16
+    7 -> 17
+    8 -> 18
+    10 -> 19
+    11 -> 20
+    12 -> 21
+  reverse:
+    2 <- 13
+    3 <- 14
+    4 <- 15
+    6 <- 16
+    7 <- 17
+    8 <- 18
+    10 <- 19
+    11 <- 20
+    12 <- 21
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

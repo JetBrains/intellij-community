@@ -22,6 +22,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ClassTypeImpl extends GenericTypeImpl {
   public ClassTypeImpl(@NotNull String name) {
-    super(name, name);
+    super(name, name, "null");
   }
 }

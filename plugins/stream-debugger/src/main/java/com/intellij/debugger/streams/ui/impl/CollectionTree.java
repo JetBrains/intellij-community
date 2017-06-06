@@ -15,8 +15,10 @@
  */
 package com.intellij.debugger.streams.ui.impl;
 
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.PaintingListener;
@@ -26,6 +28,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -33,7 +36,9 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.sun.jdi.Value;
 import icons.StreamDebuggerIcons;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +69,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private boolean myIgnoreInternalSelectionEvents = false;
   private boolean myIgnoreExternalSelectionEvents = false;
 
-  CollectionTree(@NotNull List<TraceElement> values, @NotNull EvaluationContextImpl evaluationContext) {
+  CollectionTree(@NotNull List<Value> values,
+                 @NotNull List<TraceElement> traceElements,
+                 @NotNull EvaluationContextImpl evaluationContext) {
     super(evaluationContext.getProject(), new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myProject = evaluationContext.getProject();
@@ -93,20 +100,40 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       }
     });
 
+    final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(traceElements).groupingBy(TraceElement::getValue);
+
     getTreeModel().addTreeModelListener(new TreeModelAdapter() {
       @Override
       public void treeNodesInserted(TreeModelEvent event) {
         final Object[] children = event.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          Object child = children[i];
+        for (Object child : children) {
           if (child instanceof XValueNodeImpl) {
             final XValueNodeImpl node = (XValueNodeImpl)child;
-            myValue2Path.put(values.get(i), node.getPath());
-            myPath2Value.put(node.getPath(), values.get(i));
+            final XValue container = node.getValueContainer();
+            if (container instanceof JavaValue) {
+              // TODO; optimize?
+              evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+                @Override
+                protected void action() throws Exception {
+                  final Value value = ((JavaValue)container).getDescriptor().getValue();
+                  ApplicationManager.getApplication().invokeLater(() -> {
+                    final List<TraceElement> traceElements = map2TraceElement.get(value);
+                    if (traceElements != null && !traceElements.isEmpty()) {
+                      final TraceElement head = traceElements.get(0);
+                      myValue2Path.put(head, node.getPath());
+                      myPath2Value.put(node.getPath(), head);
+                      map2TraceElement.put(value, tail(traceElements));
+                    }
+                  });
+                }
+              });
+            }
           }
         }
 
-        getTreeModel().removeTreeModelListener(this);
+        if (myPath2Value.size() == traceElements.size()) {
+          getTreeModel().removeTreeModelListener(this);
+        }
       }
     });
 
@@ -120,7 +147,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<TraceElement> selectedItems =
         Arrays.stream(paths)
-          .map(CollectionTree::getTopPath)
+          .map(this::getTopPath)
           .map(myPath2Value::get)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
@@ -130,6 +157,11 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     setSelectionRow(0);
     expandNodesOnLoad(node -> node == root);
+  }
+
+  CollectionTree(@NotNull List<TraceElement> traceElements,
+                 @NotNull EvaluationContextImpl evaluationContext) {
+    this(traceElements.stream().map(TraceElement::getValue).collect(Collectors.toList()), traceElements, evaluationContext);
   }
 
   @Override
@@ -224,7 +256,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   @NotNull
-  private Rectangle optimizeRowsCountInVisibleRect(int[] rows) {
+  private Rectangle optimizeRowsCountInVisibleRect(@NotNull int[] rows) {
     // a simple scan-line algorithm to find an optimal subset of visible rows (maximum)
     final Rectangle visibleRect = getVisibleRect();
     final int height = visibleRect.height;
@@ -281,11 +313,20 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     return path != null && (myHighlighted.contains(path) || isPathSelected(path));
   }
 
+  @NotNull
+  private static <T> List<T> tail(@NotNull List<T> list) {
+    if (list.size() <= 1) {
+      return Collections.emptyList();
+    }
+
+    return list.subList(1, list.size());
+  }
+
   private class MyRootValue extends XValue {
-    private final List<TraceElement> myValues;
+    private final List<Value> myValues;
     private final EvaluationContextImpl myEvaluationContext;
 
-    MyRootValue(@NotNull List<TraceElement> values, @NotNull EvaluationContextImpl evaluationContext) {
+    MyRootValue(@NotNull List<Value> values, @NotNull EvaluationContextImpl evaluationContext) {
       myValues = values;
       myEvaluationContext = evaluationContext;
     }
@@ -293,9 +334,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
       final XValueChildrenList children = new XValueChildrenList();
-      for (TraceElement traceElement : myValues) {
-        children
-          .add(new InstanceJavaValue(new PrimitiveValueDescriptor(myProject, traceElement.getValue()), myEvaluationContext, myNodeManager));
+      for (final Value value : myValues) {
+        final PrimitiveValueDescriptor valueDescriptor = new PrimitiveValueDescriptor(myProject, value);
+        children.add(new InstanceJavaValue(valueDescriptor, myEvaluationContext, myNodeManager));
       }
 
       node.addChildren(children, true);
@@ -328,11 +369,13 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
   }
 
-  private static TreePath getTopPath(@NotNull TreePath path) {
-    while (path.getPathCount() > 2) {
-      path = path.getParentPath();
+  @NotNull
+  private TreePath getTopPath(@NotNull TreePath path) {
+    TreePath current = path;
+    while (current != null && !myPath2Value.containsKey(current)) {
+      current = current.getParentPath();
     }
 
-    return path;
+    return current != null ? current : path;
   }
 }

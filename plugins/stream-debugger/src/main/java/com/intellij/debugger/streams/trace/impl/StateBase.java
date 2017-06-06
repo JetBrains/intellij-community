@@ -13,40 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.handler;
+package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.trace.IntermediateState;
+import com.intellij.debugger.streams.trace.TraceElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamChainTraceHandlerImpl extends HandlerBase implements TraceExpressionBuilderImpl.StreamChainTraceHandler {
-  @NotNull
-  @Override
-  public String getTraceExpression(@NotNull StreamChain chain) {
-    return "";
+abstract class StateBase implements IntermediateState {
+  private final List<TraceElement> myElements;
+
+  StateBase(@NotNull List<TraceElement> elements) {
+    myElements = Collections.unmodifiableList(new ArrayList<>(elements));
   }
 
   @NotNull
   @Override
-  public String prepareResult() {
-    return "";
-  }
-
-  @NotNull
-  @Override
-  public String getResultExpression() {
-    return "";
-  }
-
-  @NotNull
-  @Override
-  protected List<Variable> getVariables() {
-    return Collections.emptyList();
+  public List<TraceElement> getTrace() {
+    return myElements;
   }
 }

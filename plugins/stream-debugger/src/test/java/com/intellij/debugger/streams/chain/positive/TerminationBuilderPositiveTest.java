@@ -113,7 +113,6 @@ public class TerminationBuilderPositiveTest extends StreamChainBuilderPositiveTe
     final String expectedCallName = getTestName(true);
     assertEquals(expectedCallName, terminationCall.getName());
     assertEquals(StreamCallType.TERMINATOR, terminationCall.getType());
-    assertFalse(terminationCall.getArguments().isEmpty());
   }
 
   @NotNull
