@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,12 +62,16 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
             val panel = EditorNotificationPanel(LightColors.RED)
             panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
             panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
-              OpenFileDescriptor(project, clsFile, -1).navigate(true)
+              if (!project.isDisposed && clsFile.isValid) {
+                OpenFileDescriptor(project, clsFile, -1).navigate(true)
+              }
             })
             panel.createActionLabel(ProjectBundle.message("library.source.show.diff"), {
-              val cf = DiffContentFactory.getInstance()
-              val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
-              DiffManager.getInstance().showDiff(project, request)
+              if (!project.isDisposed && clsFile.isValid) {
+                val cf = DiffContentFactory.getInstance()
+                val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
+                DiffManager.getInstance().showDiff(project, request)
+              }
             })
             return panel
           }
