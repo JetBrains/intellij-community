@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -391,15 +392,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public long getLength(@NotNull VirtualFile file) {
-    long len;
-    if (mustReloadContent(file)) {
-      len = reloadLengthFromDelegate(file, getDelegate(file));
-    }
-    else {
-      len = getLastRecordedLength(file);
-    }
-
-    return len;
+    return mustReloadContent(file) ?
+           reloadLengthFromDelegate(file, getDelegate(file)) :
+           getLastRecordedLength(file);
   }
 
   @Override
@@ -688,7 +683,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @NotNull
   private static List<VFileEvent> validateEvents(@NotNull List<VFileEvent> events) {
-    final List<EventWrapper> deletionEvents = ContainerUtil.newArrayList();
+    final List<EventWrapper> deletionEvents = new ArrayList<>();
     for (int i = 0, size = events.size(); i < size; i++) {
       final VFileEvent event = events.get(i);
       if (event instanceof VFileDeleteEvent && event.isValid()) {
@@ -776,14 +771,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private void applyChildrenChangeEvents(@NotNull VirtualFile parent, @NotNull List<VFileEvent> events) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
-    TIntArrayList childrenIdsUpdated = new TIntArrayList();
 
     final int parentId = getFileId(parent);
     assert parentId != 0;
-    TIntHashSet parentChildrenIds = new TIntHashSet(FSRecords.list(parentId));
+    int[] oldIds = FSRecords.list(parentId);
+    TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(events.size(), oldIds.length));
+    parentChildrenIds.addAll(oldIds);
     boolean hasRemovedChildren = false;
 
-    List<VirtualFile> childrenToBeUpdated = new SmartList<>();
+    List<Pair<VirtualFile,CharSequence>> childrenAdded = new SmartList<>();
+    List<VirtualFile> childrenDeleted = new SmartList<>();
+    List<CharSequence> childrenNamesDeleted = new SmartList<>();
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent) {
         String name = ((VFileCreateEvent)event).getChildName();
@@ -795,8 +793,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
           assert parent instanceof VirtualDirectoryImpl : parent;
           final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
           VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem());
-          childrenToBeUpdated.add(child);
-          childrenIdsUpdated.add(childId);
+          childrenAdded.add(Pair.create(child, name));
           parentChildrenIds.add(childId);
         }
       }
@@ -810,8 +807,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         hasRemovedChildren = true;
         int id = getFileId(file);
 
-        childrenToBeUpdated.add(file);
-        childrenIdsUpdated.add(-id);
+        childrenDeleted.add(file);
+        childrenNamesDeleted.add(file.getNameSequence());
         parentChildrenIds.remove(id);
       }
     }
@@ -821,18 +818,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (hasRemovedChildren) clearIdCache();
     VirtualDirectoryImpl parentImpl = (VirtualDirectoryImpl)parent;
 
-    for (int i = 0, len = childrenIdsUpdated.size(); i < len; ++i) {
-      final int childId = childrenIdsUpdated.get(i);
-      final VirtualFile childFile = childrenToBeUpdated.get(i);
-
-      if (childId > 0) {
-        parentImpl.addChild((VirtualFileSystemEntry)childFile);
-      }
-      else {
-        FSRecords.deleteRecordRecursively(-childId);
-        parentImpl.removeChild(childFile);
+    if (!childrenDeleted.isEmpty()) {
+      for (final VirtualFile childFile : childrenDeleted) {
+        FSRecords.deleteRecordRecursively(getFileId(childFile));
         invalidateSubtree(childFile);
       }
+      parentImpl.removeChildren(childrenNamesDeleted);
+    }
+    if (!childrenAdded.isEmpty()) {
+      parentImpl.addChildren(childrenAdded);
     }
   }
 

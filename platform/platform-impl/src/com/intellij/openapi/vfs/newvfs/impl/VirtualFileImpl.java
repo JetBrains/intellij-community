@@ -53,7 +53,7 @@ import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
 
-  VirtualFileImpl(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
+  public VirtualFileImpl(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
   }
 
