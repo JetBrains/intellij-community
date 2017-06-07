@@ -19,12 +19,13 @@ import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Malenkov
  */
 final class PsiCrumb extends Crumb.Impl {
-  final PsiAnchor anchor;
+  private final PsiAnchor anchor;
   CrumbPresentation presentation;
 
   PsiCrumb(PsiElement element, BreadcrumbsProvider provider) {
@@ -32,10 +33,12 @@ final class PsiCrumb extends Crumb.Impl {
     anchor = PsiAnchor.create(element);
   }
 
+  @Nullable
   static PsiElement getElement(Crumb crumb) {
     return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).anchor.retrieve() : null;
   }
 
+  @Nullable
   static CrumbPresentation getPresentation(Crumb crumb) {
     return crumb instanceof PsiCrumb ? ((PsiCrumb)crumb).presentation : null;
   }
