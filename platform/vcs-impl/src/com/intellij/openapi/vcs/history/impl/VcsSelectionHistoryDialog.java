@@ -70,7 +70,6 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -248,7 +247,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     myBlockLoader.start(this);
 
     updateRevisionsList();
-    myList.getSelectionModel().setSelectionInterval(0, 0);
+    if (myList.getRowCount() != 0) myList.getSelectionModel().setSelectionInterval(0, 0);
   }
 
   @NotNull
@@ -277,7 +276,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
       myList.setSelection(oldSelection);
       if (myList.getSelectedRowCount() == 0) {
         int index = getNearestVisibleRevision(ContainerUtil.getFirstItem(oldSelection));
-        myList.getSelectionModel().setSelectionInterval(index, index);
+        if (myList.getRowCount() != 0) myList.getSelectionModel().setSelectionInterval(index, index);
       }
     }
     finally {
@@ -333,26 +332,22 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     ArrayList<VcsFileRevision> result = new ArrayList<>();
     BlockData data = myBlockLoader.getLoadedData();
 
-    int firstRevision;
-    boolean foundInitialRevision = false;
-    for (firstRevision = myRevisions.size() - 1; firstRevision > 0; firstRevision--) {
-      Block block = data.getBlock(firstRevision);
-      if (block == EMPTY_BLOCK) foundInitialRevision = true;
-      if (block != null && block != EMPTY_BLOCK) break;
-    }
-    if (!foundInitialRevision && data.isLoading()) firstRevision = myRevisions.size() - 1;
-
-    result.add(myRevisions.get(firstRevision));
-
-    for (int i = firstRevision - 1; i >= 0; i--) {
-      Block block1 = data.getBlock(i + 1);
+    for (int i = 1; i < myRevisions.size(); i++) {
+      Block block1 = data.getBlock(i - 1);
       Block block2 = data.getBlock(i);
-      if (block1 == null || block2 == null) continue;
-      if (block1.getLines().equals(block2.getLines())) continue;
-      result.add(myRevisions.get(i));
+      if (block1 == null || block2 == null) break;
+      if (!block1.getLines().equals(block2.getLines())) {
+        result.add(myRevisions.get(i - 1));
+      }
+      if (block2 == EMPTY_BLOCK) break;
     }
 
-    Collections.reverse(result);
+    int initialCommit = myRevisions.size() - 1;
+    Block initialCommitBlock = data.getBlock(initialCommit);
+    if (initialCommitBlock != null && initialCommitBlock != EMPTY_BLOCK) {
+      result.add(myRevisions.get(initialCommit));
+    }
+
     return result;
   }
 
