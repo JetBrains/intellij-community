@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -103,6 +104,12 @@ public class SearchUtil {
     if (label != null) {
       processUILabel(label, configurableOptions, path);
     }
+    else if (component instanceof JComboBox) {
+      List<String> labels = getItemsFromComboBox((JComboBox)component);
+      for (String each : labels) {
+        processUILabel(each, configurableOptions, path);
+      }
+    }
     else if (component instanceof JTabbedPane) {
       final JTabbedPane tabbedPane = (JTabbedPane)component;
       final int tabCount = tabbedPane.getTabCount();
@@ -156,6 +163,27 @@ public class SearchUtil {
       label = ((JButton)component).getText();
     }
     return StringUtil.nullize(label, true);
+  }
+
+  @NotNull
+  private static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
+    ListCellRenderer renderer = comboBox.getRenderer();
+    if (renderer == null) renderer = new DefaultListCellRenderer();
+
+    JList jList = new BasicComboPopup(comboBox).getList();
+
+    List<String> result = new ArrayList<>();
+
+    int count = comboBox.getItemCount();
+    for (int i = 0; i < count; i++) {
+      Object value = comboBox.getItemAt(i);
+      //noinspection unchecked
+      Component labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false);
+      String label = getLabelFromComponent(labelComponent);
+      if (label != null) result.add(label);
+    }
+
+    return result;
   }
 
   private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path) {
@@ -216,6 +244,13 @@ public class SearchUtil {
     String label = getLabelFromComponent(rootComponent);
     if (label != null) {
       if (isComponentHighlighted(label, option, force, configurable)) {
+        highlight = true;
+        glassPanel.addSpotlight(rootComponent);
+      }
+    }
+    else if (rootComponent instanceof JComboBox) {
+      List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
+      if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
         highlight = true;
         glassPanel.addSpotlight(rootComponent);
       }
