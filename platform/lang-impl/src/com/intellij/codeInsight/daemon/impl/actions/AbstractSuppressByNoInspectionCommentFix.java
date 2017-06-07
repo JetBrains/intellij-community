@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import java.util.List;
 /**
  * @author Roman.Chernyatchik
  * @date Aug 13, 2009
+ * @deprecated use {@link AbstractBatchSuppressByNoInspectionCommentFix} and {@link com.intellij.codeInspection.SuppressIntentionActionFromFix}
  */
 public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressIntentionAction {
   @NotNull protected final String myID;
