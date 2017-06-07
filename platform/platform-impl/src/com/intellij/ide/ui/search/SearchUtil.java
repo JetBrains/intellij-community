@@ -99,31 +99,11 @@ public class SearchUtil {
         processUILabel(title, configurableOptions, path);
       }
     }
-    if (component instanceof JLabel) {
-      final String label = ((JLabel)component).getText();
-      if (label != null) {
-        processUILabel(label, configurableOptions, path);
-      }
+    String label = getLabelFromComponent(component);
+    if (label != null) {
+      processUILabel(label, configurableOptions, path);
     }
-    else if (component instanceof JCheckBox) {
-      final String checkBoxTitle = ((JCheckBox)component).getText();
-      if (checkBoxTitle != null) {
-        processUILabel(checkBoxTitle, configurableOptions, path);
-      }
-    }
-    else if (component instanceof JRadioButton) {
-      final String radioButtonTitle = ((JRadioButton)component).getText();
-      if (radioButtonTitle != null) {
-        processUILabel(radioButtonTitle, configurableOptions, path);
-      }
-    }
-    else if (component instanceof JButton) {
-      final String buttonTitle = ((JButton)component).getText();
-      if (buttonTitle != null) {
-        processUILabel(buttonTitle, configurableOptions, path);
-      }
-    }
-    if (component instanceof JTabbedPane) {
+    else if (component instanceof JTabbedPane) {
       final JTabbedPane tabbedPane = (JTabbedPane)component;
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
@@ -158,6 +138,24 @@ public class SearchUtil {
         }
       }
     }
+  }
+
+  @Nullable
+  private static String getLabelFromComponent(@Nullable Component component) {
+    String label = null;
+    if (component instanceof JLabel) {
+      label = ((JLabel)component).getText();
+    }
+    else if (component instanceof JCheckBox) {
+      label = ((JCheckBox)component).getText();
+    }
+    else if (component instanceof JRadioButton) {
+      label = ((JRadioButton)component).getText();
+    }
+    else if (component instanceof JButton) {
+      label = ((JButton)component).getText();
+    }
+    return StringUtil.nullize(label, true);
   }
 
   private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path) {
@@ -214,32 +212,12 @@ public class SearchUtil {
 
     if (option == null || option.trim().length() == 0) return false;
     boolean highlight = false;
-    if (rootComponent instanceof JCheckBox) {
-      final JCheckBox checkBox = ((JCheckBox)rootComponent);
-      if (isComponentHighlighted(checkBox.getText(), option, force, configurable)) {
+
+    String label = getLabelFromComponent(rootComponent);
+    if (label != null) {
+      if (isComponentHighlighted(label, option, force, configurable)) {
         highlight = true;
-        glassPanel.addSpotlight(checkBox);
-      }
-    }
-    else if (rootComponent instanceof JRadioButton) {
-      final JRadioButton radioButton = ((JRadioButton)rootComponent);
-      if (isComponentHighlighted(radioButton.getText(), option, force, configurable)) {
-        highlight = true;
-        glassPanel.addSpotlight(radioButton);
-      }
-    }
-    else if (rootComponent instanceof JLabel) {
-      final JLabel label = ((JLabel)rootComponent);
-      if (isComponentHighlighted(label.getText(), option, force, configurable)) {
-        highlight = true;
-        glassPanel.addSpotlight(label);
-      }
-    }
-    else if (rootComponent instanceof JButton) {
-      final JButton button = ((JButton)rootComponent);
-      if (isComponentHighlighted(button.getText(), option, force, configurable)) {
-        highlight = true;
-        glassPanel.addSpotlight(button);
+        glassPanel.addSpotlight(rootComponent);
       }
     }
     else if (rootComponent instanceof JTabbedPane) {
