@@ -358,12 +358,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return result.toArray(new File[result.size()]);
   }
 
-  int getFilesCount(boolean filtered) {
+  int getFilteredFilesCount() {
     Pair<PackageSetBase, NamedScopesHolder> scopeFilter = getScopeFilter();
     int[] result = new int[1];
     TreeUtil.traverse(myRoot, node -> {
       if (node instanceof FileTreeNode) {
-        if (!filtered || ((FileTreeNode)node).acceptFilter(scopeFilter, true)) {
+        if (((FileTreeNode)node).acceptFilter(scopeFilter, true)) {
           result[0]++;
         }
       }
