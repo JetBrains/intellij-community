@@ -346,7 +346,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectPercentFormat(@NotNull final PyStringLiteralExpression formatExpression) {
-        final String value = formatExpression.getStringValue();
+        final String value = formatExpression.getText();
         final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
 
         myExpectedArguments = chunks.size();
@@ -482,7 +482,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       public void inspect() {
-        final String value = myFormatExpression.getStringValue();
+        final String value = myFormatExpression.getText();
         final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(value));
 
         for (int i = 0; i < chunks.size(); i++) {
