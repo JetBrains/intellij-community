@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.Collections;
@@ -31,7 +32,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class SingleElementTree extends CollectionTree {
-  SingleElementTree(@NotNull Value value,
+  SingleElementTree(@Nullable Value value,
                     @NotNull List<TraceElement> traceElements,
                     @NotNull EvaluationContextImpl evaluationContext) {
     super(Collections.singletonList(value), traceElements, evaluationContext);
