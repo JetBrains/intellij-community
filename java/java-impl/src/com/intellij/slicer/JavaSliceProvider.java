@@ -93,7 +93,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
 
   @Override
   public void startAnalyzeNullness(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable) {
-    SliceNullnessAnalyzer.startAnalyzeNullness(structure, finalRunnable);
+    new JavaSliceNullnessAnalyzer().startAnalyzeNullness(structure, finalRunnable);
   }
 
   @Override

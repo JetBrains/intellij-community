@@ -212,10 +212,11 @@ public class SliceTreeTest extends SliceTestCase {
   public void testNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, SliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzer.createMap();
-    SliceNullnessAnalyzer.NullAnalysisResult leaves = SliceNullnessAnalyzer.calcNullableLeaves(root, treeStructure, map);
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
+    JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
+    JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
 
-    SliceRootNode newRoot = SliceNullnessAnalyzer.createNewTree(leaves, root, map);
+    SliceRootNode newRoot = analyzer.createNewTree(leaves, root, map);
 
     checkStructure(newRoot, "Null Values\n" +
                             "  Value: o\n" +
@@ -332,10 +333,12 @@ public class SliceTreeTest extends SliceTestCase {
   public void testDoubleNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DoubleNulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, SliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzer.createMap();
-    SliceNullnessAnalyzer.NullAnalysisResult leaves = SliceNullnessAnalyzer.calcNullableLeaves(root, treeStructure, map);
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
+    JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
 
-    SliceRootNode newRoot = SliceNullnessAnalyzer.createNewTree(leaves, root, map);
+    JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
+
+    SliceRootNode newRoot = analyzer.createNewTree(leaves, root, map);
     checkStructure(newRoot,
         "Null Values\n" +
         "  Value: null\n" +

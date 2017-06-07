@@ -15,9 +15,7 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -26,8 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -36,8 +33,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class SliceNullnessAnalyzer {
-  private static void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+public abstract class SliceNullnessAnalyzerBase {
+  @NotNull
+  private final SliceLeafEquality myLeafEquality;
+
+  @NotNull
+  private final SliceLanguageSupportProvider myProvider;
+
+  public SliceNullnessAnalyzerBase(@NotNull SliceLeafEquality leafEquality,
+                                   @NotNull SliceLanguageSupportProvider provider) {
+    myLeafEquality = leafEquality;
+    myProvider = provider;
+  }
+
+  private void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = createNewTree(result, oldRoot, map);
 
     SliceUsage rootUsage = oldRoot.myCachedChildren.get(0).getValue();
@@ -45,7 +54,7 @@ public class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  public static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  public SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.myCachedChildren.size() == 1;
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
@@ -60,13 +69,13 @@ public class SliceNullnessAnalyzer {
     return root;
   }
 
-  private static void createValueRootNode(NullAnalysisResult result,
-                                          SliceRootNode oldRoot,
-                                          final Map<SliceNode, NullAnalysisResult> map,
-                                          SliceRootNode root,
-                                          SliceNode oldRootStart,
-                                          String nodeName,
-                                          final int group) {
+  private void createValueRootNode(NullAnalysisResult result,
+                                   SliceRootNode oldRoot,
+                                   final Map<SliceNode, NullAnalysisResult> map,
+                                   SliceRootNode root,
+                                   SliceNode oldRootStart,
+                                   String nodeName,
+                                   final int group) {
     Collection<PsiElement> groupedByValue = result.groupedByValue[group];
     if (groupedByValue.isEmpty()) {
       return;
@@ -74,7 +83,7 @@ public class SliceNullnessAnalyzer {
     SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
     root.myCachedChildren.add(valueRoot);
 
-    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, JavaSlicerAnalysisUtil.LEAF_ELEMENT_EQUALITY);
+    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, myLeafEquality);
     for (final PsiElement expression : uniqueValues) {
       SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, oldNode -> {
         if (oldNode.getDuplicate() != null) {
@@ -96,13 +105,13 @@ public class SliceNullnessAnalyzer {
       valueRoot.myCachedChildren.add(
         new SliceLeafValueRootNode(root.getProject(),
                                    valueRoot,
-                                   JavaSliceUsage.createRootUsage(expression, oldRoot.getValue().params),
+                                   myProvider.createRootUsage(expression, oldRoot.getValue().params),
                                    Collections.singletonList(newRoot))
       );
     }
   }
 
-  static void startAnalyzeNullness(@NotNull AbstractTreeStructure treeStructure, @NotNull Runnable finish) {
+  public void startAnalyzeNullness(@NotNull AbstractTreeStructure treeStructure, @NotNull Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     final Ref<NullAnalysisResult> leafExpressions = Ref.create(null);
     final Map<SliceNode, NullAnalysisResult> map = createMap();
@@ -146,9 +155,9 @@ public class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
-                                                      @NotNull AbstractTreeStructure treeStructure,
-                                                      @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+  public NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
+                                               @NotNull AbstractTreeStructure treeStructure,
+                                               @NotNull final Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
@@ -192,57 +201,7 @@ public class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  private static Nullness checkNullness(final PsiElement element) {
-    // null
-    PsiElement value = element;
-    if (value instanceof PsiExpression) {
-      value = PsiUtil.deparenthesizeExpression((PsiExpression)value);
-    }
-    if (value instanceof PsiLiteralExpression) {
-      return ((PsiLiteralExpression)value).getValue() == null ? Nullness.NULLABLE : Nullness.NOT_NULL;
-    }
-
-    // not null
-    if (value instanceof PsiNewExpression) return Nullness.NOT_NULL;
-    if (value instanceof PsiThisExpression) return Nullness.NOT_NULL;
-    if (value instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)value).resolveMethod();
-      if (method != null && NullableNotNullManager.isNotNull(method)) return Nullness.NOT_NULL;
-      if (method != null && NullableNotNullManager.isNullable(method)) return Nullness.NULLABLE;
-    }
-    if (value instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)value).getOperationTokenType() == JavaTokenType.PLUS) {
-      return Nullness.NOT_NULL; // "xxx" + var
-    }
-
-    // unfortunately have to resolve here, since there can be no subnodes
-    PsiElement context = value;
-    if (value instanceof PsiReference) {
-      PsiElement resolved = ((PsiReference)value).resolve();
-      if (resolved instanceof PsiCompiledElement) {
-        resolved = resolved.getNavigationElement();
-      }
-      value = resolved;
-    }
-    if (value instanceof PsiParameter && ((PsiParameter)value).getDeclarationScope() instanceof PsiCatchSection) {
-      // exception thrown is always not null
-      return Nullness.NOT_NULL;
-    }
-
-    if (value instanceof PsiLocalVariable || value instanceof PsiParameter) {
-      Nullness result = DfaUtil.checkNullness((PsiVariable)value, context);
-      if (result != Nullness.UNKNOWN) {
-        return result;
-      }
-    }
-
-    if (value instanceof PsiModifierListOwner) {
-      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)value)) return Nullness.NOT_NULL;
-      if (NullableNotNullManager.isNullable((PsiModifierListOwner)value)) return Nullness.NULLABLE;
-    }
-
-    if (value instanceof PsiEnumConstant) return Nullness.NOT_NULL;
-    return Nullness.UNKNOWN;
-  }
+  protected abstract Nullness checkNullness(final PsiElement element);
 
   public static class NullAnalysisResult {
     static final int NULLS = 0;
