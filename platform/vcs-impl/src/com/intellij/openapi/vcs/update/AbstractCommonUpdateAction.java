@@ -50,10 +50,12 @@ import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -417,8 +419,29 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     @NotNull
-    private String prepareNotificationWithUpdateInfo(@NotNull UpdateInfoTree tree) {
-      String scopeText = "";
+    private Notification prepareNotification(@NotNull UpdateInfoTree tree, boolean someSessionWasCancelled) {
+      int allFiles = tree.getFilesCount(false);
+
+      String title;
+      String content;
+      NotificationType type;
+      if (someSessionWasCancelled) {
+        title = "Project Partially Updated";
+        content = allFiles + " " + pluralize("file", allFiles) + " updated";
+        type = NotificationType.WARNING;
+      }
+      else {
+        title = allFiles + " Project " + pluralize("File", allFiles) + " Updated";
+        content = notNullize(prepareScopeUpdatedText(tree));
+        type = NotificationType.INFORMATION;
+      }
+
+      return STANDARD_NOTIFICATION.createNotification(title, content, type, null);
+    }
+
+    @Nullable
+    private String prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
+      String scopeText = null;
       NamedScope scopeFilter = tree.getFilterScope();
       if (scopeFilter != null) {
         int filteredFiles = tree.getFilesCount(true);
@@ -427,13 +450,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           scopeText = filterName + " wasn't modified";
         }
         else {
-          scopeText = "In " + filterName + ": " + filteredFiles + " " + pluralize("file", filteredFiles) + " modified";
+          scopeText = filteredFiles + " in " + filterName;
         }
-        scopeText += "<br/>In all scopes: ";
       }
-
-      int allFiles = tree.getFilesCount(false);
-      return scopeText + allFiles + " " + pluralize("file", allFiles) + " modified";
+      return scopeText;
     }
 
     @Override
@@ -522,18 +542,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
           cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
-          NotificationType type;
-          String title;
-          if (someSessionWasCancelled) {
-            title = "Project Partially Updated";
-            type = NotificationType.WARNING;
-          }
-          else {
-            title = "Project Updated";
-            type = NotificationType.INFORMATION;
-          }
-
-          Notification notification = STANDARD_NOTIFICATION.createNotification(title, prepareNotificationWithUpdateInfo(tree), type, null);
+          Notification notification = prepareNotification(tree, someSessionWasCancelled);
           notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View"));
           VcsNotifier.getInstance(myProject).notify(notification);
         }
@@ -552,6 +561,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }, null, myProject);
     }
+
 
     private void showContextInterruptedError() {
       gatherContextInterruptedMessages();
