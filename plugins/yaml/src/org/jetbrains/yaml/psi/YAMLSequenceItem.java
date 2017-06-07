@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  * @author oleg
  */
-public interface YAMLSequenceItem extends YAMLPsiElement {
+public interface YAMLSequenceItem extends YAMLPsiElement, YAMLAnchorElement {
   @Nullable
   YAMLValue getValue();
   @NotNull

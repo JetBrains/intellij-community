@@ -159,6 +159,8 @@ C_TAG_HANDLE = "!" {NS_WORD_CHAR}+ "!" | "!" "!" | "!"
 C_NS_SHORTHAND_TAG = {C_TAG_HANDLE} {NS_TAG_CHAR}+
 C_NON_SPECIFIC_TAG = "!"
 C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TAG}
+ANCHOR_PROPERTY = (&[^\[\]\{\}\n\t\ ]*)
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,6 +218,9 @@ C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TA
   return TAG;
 }
 
+{ANCHOR_PROPERTY} / ({WHITE_SPACE} | {EOL}) {
+  return ANCHOR;
+}
 }
 
 <YYINITIAL, BRACES, VALUE_OR_KEY> {

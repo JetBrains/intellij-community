@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author oleg
  */
-public interface YAMLKeyValue extends YAMLPsiElement, PsiNamedElement, PomTarget {
+public interface YAMLKeyValue extends YAMLPsiElement, PsiNamedElement, PomTarget, YAMLAnchorElement {
   @Contract(pure = true)
   @Nullable
   PsiElement getKey();

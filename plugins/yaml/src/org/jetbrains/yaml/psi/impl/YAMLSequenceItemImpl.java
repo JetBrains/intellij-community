@@ -1,13 +1,12 @@
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLMapping;
-import org.jetbrains.yaml.psi.YAMLSequenceItem;
-import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.YAMLTokenTypes;
+import org.jetbrains.yaml.psi.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,5 +39,21 @@ public class YAMLSequenceItemImpl extends YAMLPsiElementImpl implements YAMLSequ
   @Override
   public String toString() {
     return "YAML sequence item";
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getAnchor() {
+    YAMLValue value = getValue();
+
+    if (value != null) {
+      for (PsiElement child = value.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child.getNode().getElementType() == YAMLTokenTypes.ANCHOR) {
+          return child;
+        }
+      }
+    }
+
+    return null;
   }
 }

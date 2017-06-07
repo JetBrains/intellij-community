@@ -153,6 +153,10 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       advanceLexer();
     }
 
+    if (getTokenType() == YAMLTokenTypes.ANCHOR) {
+      advanceLexer();
+    }
+
     final IElementType tokenType = getTokenType();
     final IElementType nodeType;
     if (tokenType == LBRACE) {

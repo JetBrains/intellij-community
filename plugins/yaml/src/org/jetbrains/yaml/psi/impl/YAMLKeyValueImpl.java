@@ -97,7 +97,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @Override
   public void setValue(@NotNull YAMLValue value) {
     adjustWhitespaceToContentType(value instanceof YAMLScalar);
-    
+
     if (getValue() != null) {
       getValue().replace(value);
       return;
@@ -115,15 +115,15 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       add(value);
     }
   }
-  
+
   private void adjustWhitespaceToContentType(boolean isScalar) {
     assert getKey() != null;
     PsiElement key = getKey();
-    
+
     if (key.getNextSibling() != null && key.getNextSibling().getNode().getElementType() == YAMLTokenTypes.COLON) {
       key = key.getNextSibling();
     }
-    
+
     while (key.getNextSibling() != null && !(key.getNextSibling() instanceof YAMLValue)) {
       key.getNextSibling().delete();
     }
@@ -182,5 +182,30 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   private boolean isExplicit() {
     final ASTNode child = getNode().getFirstChildNode();
     return child != null && child.getElementType() == YAMLTokenTypes.QUESTION;
+  }
+
+  @Nullable
+  public PsiElement getAnchor() {
+    PsiElement value = getValue();
+
+    if (value != null) {
+      for (PsiElement child = value.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child.getNode().getElementType() == YAMLTokenTypes.ANCHOR) {
+          return child;
+        }
+      }
+    }
+
+    PsiElement key = getKey();
+
+    if (key != null) {
+      for (PsiElement sibling = key; sibling != null; sibling = sibling.getPrevSibling()) {
+        if (sibling.getNode().getElementType() == YAMLTokenTypes.ANCHOR) {
+          return sibling;
+        }
+      }
+    }
+
+    return null;
   }
 }

@@ -31,4 +31,6 @@ public interface YAMLTokenTypes {
 
   YAMLElementType SCALAR_LIST = new YAMLElementType("scalar list");
   YAMLElementType SCALAR_TEXT = new YAMLElementType("scalar text");
+
+  YAMLElementType ANCHOR = new YAMLElementType("anchor");
 }
