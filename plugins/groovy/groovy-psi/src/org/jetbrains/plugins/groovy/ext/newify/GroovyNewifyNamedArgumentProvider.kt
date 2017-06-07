@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve.newify
+package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.groovy.lang.GroovyConstructorNamedArgumentProvider

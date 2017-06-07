@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve.newify
+package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.getClassArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.getParents
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor
@@ -35,58 +36,52 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
                                       place: PsiElement,
                                       state: ResolveState) {
 
-    val qualifier = getQualifier(place)
-    for (annotation in listNewifyAnnotations(place)) {
-      val newifiedClasses = GrAnnotationUtil.getClassArrayValue(annotation, "value", true)
+    if (place !is GrReferenceExpression) return
+    val newifyAnnotations = place.listNewifyAnnotations()
+    if (newifyAnnotations.isEmpty()) return
 
-      qualifier ?: newifiedClasses.flatMap { buildConstructors(it, it.name, true) }.forEach {
+    val qualifier = place.qualifierExpression
+    val type = (qualifier as? GrReferenceExpression)?.resolve() as? PsiClass
+
+    for (annotation in newifyAnnotations) {
+      val newifiedClasses = getClassArrayValue(annotation, "value", true)
+
+      qualifier ?: newifiedClasses.flatMap { buildConstructors(it, it.name) }.forEach {
         ResolveUtil.processElement(processor, it, state)
       }
+
       val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, "auto")
-      val type = (qualifier as? GrReferenceExpression)?.resolve() as? PsiClass
       if (type != null && createNewMethods) {
-        val constructors = buildConstructors(type, "new", false)
-        constructors.forEach {
-          ResolveUtil.processElement(processor, it, state)
+          buildConstructors(type, "new").forEach {
+            ResolveUtil.processElement(processor, it, state)
         }
       }
     }
   }
 
+  private fun PsiElement.listNewifyAnnotations() = getParents().flatMap {
+    val owner = it.second as? PsiModifierListOwner
+    val seq = owner?.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
+    return@flatMap seq ?: emptySequence()
+  }.toList()
 
-  fun listNewifyAnnotations(place: PsiElement): List<PsiAnnotation> {
-    return place.getParents().map { it.second }.flatMap {
-
-      val owner = it as? PsiModifierListOwner ?: return@flatMap emptySequence<PsiAnnotation>()
-      val seq = owner.modifierList?.annotations?.asSequence()?.filter { it.qualifiedName == newifyAnnotationFqn }
-
-      return@flatMap seq ?: emptySequence<PsiAnnotation>()
-    }.toList()
-
-  }
-
-  fun getQualifier(elem: PsiElement): PsiElement? {
-    return (elem as? GrReferenceExpression)?.qualifierExpression
-  }
-
-  fun buildConstructors(clazz: PsiClass, newName: String?, asConstructor: Boolean): List<NewifiedConstructor> {
+  fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
     newName ?: return emptyList()
     val constructors = clazz.constructors
     if (constructors.isNotEmpty()) {
-      return constructors.mapNotNull { buildNewifiedConstructor(it, newName, asConstructor) }
+      return constructors.mapNotNull { buildNewifiedConstructor(it, newName) }
     }
     else {
-      return listOf(buildNewifiedConstructor(clazz, newName, asConstructor))
+      return listOf(buildNewifiedConstructor(clazz, newName))
     }
   }
 
-  fun buildNewifiedConstructor(myPrototype: PsiMethod, newName: String, asConstructor: Boolean): NewifiedConstructor? {
+  private fun buildNewifiedConstructor(myPrototype: PsiMethod, newName: String): NewifiedConstructor? {
     val builder = NewifiedConstructor(myPrototype.manager, newName)
     val psiClass = myPrototype.containingClass ?: return null
     builder.containingClass = psiClass
     builder.setMethodReturnType(TypesUtil.createType(psiClass))
     builder.navigationElement = myPrototype
-    builder.isConstructor = asConstructor
     myPrototype.parameterList.parameters.forEach {
       builder.addParameter(it)
     }
@@ -99,12 +94,11 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return builder
   }
 
-  fun buildNewifiedConstructor(myPrototype: PsiClass, newName: String, asConstructor: Boolean): NewifiedConstructor {
+  private fun buildNewifiedConstructor(myPrototype: PsiClass, newName: String): NewifiedConstructor {
     val builder = NewifiedConstructor(myPrototype.manager, newName)
     builder.containingClass = myPrototype
     builder.setMethodReturnType(TypesUtil.createType(myPrototype))
     builder.navigationElement = myPrototype
-    builder.isConstructor = asConstructor
     return builder
   }
 

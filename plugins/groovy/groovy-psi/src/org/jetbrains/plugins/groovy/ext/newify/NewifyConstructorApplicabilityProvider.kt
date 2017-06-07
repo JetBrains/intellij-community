@@ -15,7 +15,7 @@
  */
 
 
-package org.jetbrains.plugins.groovy.lang.resolve.newify
+package org.jetbrains.plugins.groovy.ext.newify
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider
