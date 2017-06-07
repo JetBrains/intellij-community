@@ -29,7 +29,9 @@ import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
@@ -41,6 +43,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper.ArgumentMappingResul
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,15 +164,19 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     }
     assert oldParamIndexToArgs.keySet().stream().allMatch(index -> index >= 0);
 
-    for (PyParameterInfo info : changeInfo.getNewParameters()) {
+    PyParameterInfo[] newParamInfos = changeInfo.getNewParameters();
+    
+    final int posVarargIndex = JBIterable.of(newParamInfos).indexOf(info -> isPositionalVarargName(info.getName()));
+    final boolean posVarargEmpty = posVarargIndex != -1 && oldParamIndexToArgs.get(newParamInfos[posVarargIndex].getOldIndex()).isEmpty();
+    for (int paramIndex = 0; paramIndex < newParamInfos.length; paramIndex++) {
+      PyParameterInfo info = newParamInfos[paramIndex];
       final String paramName = info.getName();
-      final boolean isKeywordVararg = paramName.startsWith("**");
-      final boolean isSingleStar = paramName.equals("*");
-      final boolean isPositionalVararg = !isKeywordVararg && !isSingleStar && paramName.startsWith("*");
+      final boolean isKeywordVararg = isKeywordVarargName(paramName);
+      final boolean isPositionalVararg = isPositionalVarargName(paramName);
       if (paramName.equals(PyNames.CANONICAL_SELF)) {
         continue;
       }
-      if (isSingleStar) {
+      if (paramName.equals("*")) {
         keywordArgsRequired = true;
         continue;
       }
@@ -199,11 +206,11 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
               argValue = arg;
               argName = "";
             }
-            // XXX Seems doubtful. 
-            // What if such parameter was moved before a parameter which argument was passed without keyword or positional vararg, etc. ?
-            if (!argName.isEmpty()) {
+            // Keep format of existing keyword arguments unless it's illegal in their new position
+            if (!argName.isEmpty() && !(paramIndex < posVarargIndex && !posVarargEmpty)) {
               keywordArgsRequired = true;
             }
+            assert !(isPositionalVararg && keywordArgsRequired);
             final String argValueText = argValue != null ? argValue.getText() : "";
             final String newArgumentName = isKeywordVararg ? argName : paramName;
             newArguments.add(formatArgument(newArgumentName, argValueText, keywordArgsRequired));
@@ -220,6 +227,14 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
     }
     return newArguments;
+  }
+
+  private static boolean isPositionalVarargName(@NotNull String paramName) {
+    return !isKeywordVarargName(paramName) && !paramName.equals("*") && paramName.startsWith("*");
+  }
+
+  private static boolean isKeywordVarargName(@NotNull String paramName) {
+    return paramName.startsWith("**");
   }
 
   @NotNull
