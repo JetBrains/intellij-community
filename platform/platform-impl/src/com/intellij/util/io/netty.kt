@@ -120,7 +120,9 @@ private fun doConnect(bootstrap: Bootstrap,
 
   while (true) {
     try {
-      val channel = OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
+      val address = remoteAddress.address
+      if (address == null) return null
+      val channel = OioSocketChannel(Socket(address, remoteAddress.port))
       BootstrapUtil.initAndRegister(channel, bootstrap).sync()
       return channel
     }
