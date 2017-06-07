@@ -85,6 +85,7 @@ public abstract class UsefulTestCase extends TestCase {
   static {
     Logger.setFactory(TestLoggerFactory.class);
   }
+  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
   @NotNull
   private final Disposable myTestRootDisposable = new TestDisposable();
