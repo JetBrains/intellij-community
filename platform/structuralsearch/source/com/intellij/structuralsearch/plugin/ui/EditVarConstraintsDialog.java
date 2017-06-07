@@ -169,7 +169,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     containedInConstraints.setVisible(false);
 
-    withinTextField.setEditable(false);
     withinTextField.getButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
