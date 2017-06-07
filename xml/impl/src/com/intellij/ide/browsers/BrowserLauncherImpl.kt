@@ -102,7 +102,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
         }
       }
       // 10 seconds is enough to start
-      JobScheduler.getScheduler().schedule({ future.cancel(true) } as Runnable, 10, TimeUnit.SECONDS)
+      JobScheduler.getScheduler().schedule({ future.cancel(true) }, 10, TimeUnit.SECONDS)
     }
   }
 }
