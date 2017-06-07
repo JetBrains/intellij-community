@@ -693,4 +693,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createExtractSideEffectsFix(@NotNull PsiExpressionStatement statement, @NotNull List<PsiExpression> sideEffects) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }
