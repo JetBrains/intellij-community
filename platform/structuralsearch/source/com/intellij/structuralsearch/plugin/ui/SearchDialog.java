@@ -686,7 +686,7 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
-    SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
+    SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
     return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
   }
 
