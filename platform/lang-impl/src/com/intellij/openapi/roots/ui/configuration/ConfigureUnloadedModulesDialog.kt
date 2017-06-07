@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
@@ -24,6 +25,7 @@ import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
@@ -32,6 +34,7 @@ import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.graph.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -55,6 +58,8 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
   private val unloadedModulesTree = ModuleDescriptionsTree(project)
   private val moduleDescriptions = ModuleManager.getInstance(project).allModuleDescriptions.associateBy { it.name }
   private val statusLabel = JBLabel()
+  /** graph contains an edge a -> b if b depends on a */
+  private val dependentsGraph by lazy { buildGraph() }
 
   init {
     title = ProjectBundle.message("module.load.unload.dialog.title")
@@ -64,6 +69,18 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     init()
   }
 
+  private fun buildGraph(): Graph<ModuleDescription> {
+    return GraphGenerator.generate(CachingSemiGraph.cache(object: InboundSemiGraph<ModuleDescription> {
+      override fun getNodes(): Collection<ModuleDescription> {
+        return moduleDescriptions.values
+      }
+
+      override fun getIn(node: ModuleDescription): Iterator<ModuleDescription> {
+        return node.dependencyModuleNames.asIterable().mapNotNull { moduleDescriptions[it] }.iterator()
+      }
+    }))
+  }
+
   override fun createCenterPanel(): JComponent? {
     val buttonsPanel = JPanel(VerticalFlowLayout())
     val moveToUnloadedButton = JButton(ProjectBundle.message("module.unload.button.text"))
@@ -71,10 +88,22 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     val moveAllToUnloadedButton = JButton(ProjectBundle.message("module.unload.all.button.text"))
     val moveAllToLoadedButton = JButton(ProjectBundle.message("module.load.all.button.text"))
     moveToUnloadedButton.addActionListener {
-      moveSelectedNodes(loadedModulesTree, unloadedModulesTree)
+      val modulesToMove = includeMissingModules(loadedModulesTree.selectedModules, unloadedModulesTree.getAllModules(),
+                                                dependentsGraph,
+                                                ProjectBundle.message("module.unload.dependents.dialog.title"),
+                                                { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.unload.dependents.dialog.text", selectedSize, additionalSize, additionalFirst)},
+                                                ProjectBundle.message("module.unload.with.dependents.button.text"),
+                                                ProjectBundle.message("module.unload.without.dependents.button.text"))
+      moveModules(modulesToMove, loadedModulesTree, unloadedModulesTree)
     }
     moveToLoadedButton.addActionListener {
-      moveSelectedNodes(unloadedModulesTree, loadedModulesTree)
+      val modulesToMove = includeMissingModules(unloadedModulesTree.selectedModules, loadedModulesTree.getAllModules(),
+                                                GraphAlgorithms.getInstance().invertEdgeDirections(dependentsGraph),
+                                                ProjectBundle.message("module.load.dependencies.dialog.title"),
+                                                { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.load.dependencies.dialog.text", selectedSize, additionalSize, additionalFirst)},
+                                                ProjectBundle.message("module.load.with.dependencies.button.text"),
+                                                ProjectBundle.message("module.load.without.dependencies.button.text"))
+      moveModules(modulesToMove, unloadedModulesTree, loadedModulesTree)
     }
     moveAllToUnloadedButton.addActionListener {
       moveAllNodes(loadedModulesTree, unloadedModulesTree)
@@ -104,6 +133,35 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     return mainPanel
   }
 
+  private fun includeMissingModules(selected: List<ModuleDescription>, availableTargetModules: List<ModuleDescription>,
+                                    dependenciesGraph: Graph<ModuleDescription>,
+                                    dialogTitle: String, dialogMessage: (Int, Int, String) -> String, yesButtonText: String,
+                                    noButtonText: String): Collection<ModuleDescription> {
+    val additional = computeDependenciesToMove(selected, availableTargetModules, dependenciesGraph)
+    if (additional.isNotEmpty()) {
+      val answer = Messages.showYesNoCancelDialog(project, dialogMessage(selected.size, additional.size, additional.first().name),
+                                                  dialogTitle, yesButtonText, noButtonText, CommonBundle.getCancelButtonText(), null)
+      if (answer == Messages.YES) {
+        return selected + additional
+      }
+      if (answer == Messages.CANCEL) {
+        return emptyList()
+      }
+    }
+    return selected
+  }
+
+  private fun computeDependenciesToMove(modulesToMove: Collection<ModuleDescription>, availableModules: Collection<ModuleDescription>,
+                                        graph: Graph<ModuleDescription>): Set<ModuleDescription> {
+    val result = LinkedHashSet<ModuleDescription>()
+    for (module in modulesToMove) {
+      GraphAlgorithms.getInstance().collectOutsRecursively(graph, module, result)
+    }
+    result.removeAll(modulesToMove)
+    result.removeAll(availableModules)
+    return result
+  }
+
   private fun moveAllNodes(from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
     from.removeAllNodes()
     to.fillTree(moduleDescriptions.values)
@@ -112,11 +170,11 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     }
   }
 
-  private fun moveSelectedNodes(from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
-    val selected = from.selectedModules
+  private fun moveModules(modulesToMove: Collection<ModuleDescription>, from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
+    if (modulesToMove.isEmpty()) return
     val oldSelectedRow = from.tree.selectionModel.leadSelectionRow
-    from.removeModules(selected)
-    val modules = to.addModules(selected)
+    from.removeModules(modulesToMove)
+    val modules = to.addModules(modulesToMove)
     modules.firstOrNull()?.let { TreeUtil.selectNode(to.tree, it)}
     IdeFocusManager.getInstance(project).requestFocus(from.tree, true).doWhenDone {
       from.tree.selectionModel.selectionPath = from.tree.getPathForRow(oldSelectedRow.coerceAtMost(from.tree.rowCount-1))
@@ -165,11 +223,11 @@ private class ModuleDescriptionsTree(project: Project) {
     tree.expandPath(TreePath(root))
   }
 
-  fun addModules(modules: List<ModuleDescription>): List<ModuleDescriptionTreeNode> {
+  fun addModules(modules: Collection<ModuleDescription>): List<ModuleDescriptionTreeNode> {
     return modules.map { helper.createModuleNode(it, root, model) }
   }
 
-  fun removeModules(modules: List<ModuleDescription>) {
+  fun removeModules(modules: Collection<ModuleDescription>) {
     val names = modules.mapTo(HashSet<String>()) { it.name }
     val toRemove = findNodes { it.moduleDescription.name in names }
     for (node in toRemove) {
