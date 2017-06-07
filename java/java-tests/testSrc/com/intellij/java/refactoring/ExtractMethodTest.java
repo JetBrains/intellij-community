@@ -95,6 +95,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testExitPoints10() throws Exception {
+    doExitPointsTest(false);
+  }
+
+  public void testExitPoints11() throws Exception {
+    doTest();
+  }
+
   public void testNotNullCheckNameConflicts() throws Exception {
     doTest();
   }
