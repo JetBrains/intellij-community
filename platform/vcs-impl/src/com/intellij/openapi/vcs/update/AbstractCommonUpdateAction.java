@@ -420,7 +420,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     @NotNull
     private Notification prepareNotification(@NotNull UpdateInfoTree tree, boolean someSessionWasCancelled) {
-      int allFiles = tree.getFilesCount(false);
+      int allFiles = getUpdatedFilesCount();
 
       String title;
       String content;
@@ -439,12 +439,20 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       return STANDARD_NOTIFICATION.createNotification(title, content, type, null);
     }
 
+    private int getUpdatedFilesCount() {
+      return myUpdatedFiles.getTopLevelGroups().stream().mapToInt(this::getFilesCount).sum();
+    }
+
+    private int getFilesCount(@NotNull FileGroup group) {
+      return group.getFiles().size() + group.getChildren().stream().mapToInt(g -> getFilesCount(g)).sum();
+    }
+
     @Nullable
     private String prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
       String scopeText = null;
       NamedScope scopeFilter = tree.getFilterScope();
       if (scopeFilter != null) {
-        int filteredFiles = tree.getFilesCount(true);
+        int filteredFiles = tree.getFilteredFilesCount();
         String filterName = scopeFilter.getName();
         if (filteredFiles == 0) {
           scopeText = filterName + " wasn't modified";
