@@ -292,7 +292,6 @@ public class GitLogProvider implements VcsLogProvider {
     StopWatch sw = StopWatch.start("loading commits on tagged branch in " + root.getName());
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
-    sw.report();
 
     Set<VcsRef> refs = ContainerUtil.newHashSet();
     Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
@@ -303,6 +302,7 @@ public class GitLogProvider implements VcsLogProvider {
       commits.addAll(logData.getCommits());
     });
 
+    sw.report();
     return new LogDataImpl(refs, ContainerUtil.newArrayList(commits));
   }
 
