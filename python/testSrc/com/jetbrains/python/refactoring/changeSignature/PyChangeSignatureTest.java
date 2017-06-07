@@ -72,9 +72,15 @@ public class PyChangeSignatureTest extends PyTestCase {
                                               new PyParameterInfo(-1, "c", "3", false)));
   }
 
-  public void testAddDefaultParam() {
+  public void testAddDefaultParamAtEnd() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(1, "b", null, false),
                                               new PyParameterInfo(-1, "c", "3", true)));
+  }
+
+  // PY-24607
+  public void testAddDefaultParamBeforeAnotherDefault() {
+    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(-1, "d", "1", true),
+                                              new PyParameterInfo(1, "b", "None", true)));
   }
 
   public void testRemoveDefaultFromParam() {
@@ -86,11 +92,6 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyParameterInfo first = new PyParameterInfo(0, "arg", null, false);
     final PyParameterInfo second = new PyParameterInfo(-1, "vvv", "xxx", false);
     doValidationTest(null, Arrays.asList(first, second), PyBundle.message("refactoring.change.signature.dialog.validation.default.missing"));
-  }
-
-  public void testAddDefaultParam1() {
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false), new PyParameterInfo(-1, "d", "1", true),
-                                              new PyParameterInfo(1, "b", "None", true)));
   }
 
   public void testUpdateDocstring() {
@@ -311,7 +312,6 @@ public class PyChangeSignatureTest extends PyTestCase {
                                               new PyParameterInfo(1, "**kwargs", null, false)));
   }
 
-  
   // PY-24480
   public void testAddParameterBeforeVararg() {
     doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(-1, "x", "42", false),
@@ -332,6 +332,49 @@ public class PyChangeSignatureTest extends PyTestCase {
                                                 new PyParameterInfo(-1, "foo", "None", false)));
     });
   }
+
+  // PY-24602
+  public void testScatteredKwargsArgsRemoveParam() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                             new PyParameterInfo(2, "**kwargs", null, false)));
+  }
+
+  // PY-24602
+  public void testScatteredKwargsArgsRenameParam() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                             new PyParameterInfo(1, "bar", null, false),
+                                             new PyParameterInfo(2, "**kwargs", null, false)));
+  }
+
+  // PY-24602
+  public void testScatteredKwargsArgsRemoveParamBefore() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(1, "foo", null, false),
+                                             new PyParameterInfo(2, "**kwargs", null, false)));
+  }
+  
+  // PY-24602
+  public void testScatteredKwargsArgsAddParamAfter() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                             new PyParameterInfo(1, "foo", null, false),
+                                             new PyParameterInfo(-1, "y", "None", false),
+                                             new PyParameterInfo(2, "**kwargs", null, false)));
+  }
+  
+  // PY-24602
+  public void testScatteredKwargsArgsAddParamAfterWithDefault() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "x", null, false),
+                                             new PyParameterInfo(1, "foo", null, false),
+                                             new PyParameterInfo(-1, "y", "None", true),
+                                             new PyParameterInfo(2, "**kwargs", null, false)));
+  }
+  
+  // PY-24602
+  public void testScatteredKwargsArgsSwapParams() {
+    doChangeSignatureTest("f", Arrays.asList(new PyParameterInfo(0, "foo", null, false),
+                                             new PyParameterInfo(1, "x", null, false),
+                                             new PyParameterInfo(2, "**kwargs", null, false)));
+  }
+    
 
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
