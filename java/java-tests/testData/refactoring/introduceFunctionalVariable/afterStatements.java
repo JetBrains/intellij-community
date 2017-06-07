@@ -3,13 +3,11 @@ import java.util.function.Consumer;
 class Test {
     void foo(String s) {
     if (true) {
-        Consumer<String> consumer = new Consumer<String>() {
-            public void accept(String s) {
-                System.out.println("Hello, world " + s);
-                System.out.println();
-            }
+        Consumer<String> stringConsumer = s1 -> {
+            System.out.println("Hello, world " + s1);
+            System.out.println();
         };
-        consumer.accept(s);
+        stringConsumer.accept(s);
       
         System.out.println();
     }
