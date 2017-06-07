@@ -20,7 +20,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.ModuleDescription
+import com.intellij.openapi.module.ModuleGrouper
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -53,19 +56,26 @@ import kotlin.comparisons.compareBy
 /**
  * @author nik
  */
-class ConfigureUnloadedModulesDialog(private val project: Project, selectedModules: Array<Module>?) : DialogWrapper(project) {
+class ConfigureUnloadedModulesDialog(private val project: Project, selectedModuleName: String?) : DialogWrapper(project) {
   private val loadedModulesTree = ModuleDescriptionsTree(project)
   private val unloadedModulesTree = ModuleDescriptionsTree(project)
   private val moduleDescriptions = ModuleManager.getInstance(project).allModuleDescriptions.associateBy { it.name }
   private val statusLabel = JBLabel()
   /** graph contains an edge a -> b if b depends on a */
   private val dependentsGraph by lazy { buildGraph() }
+  private val initiallyFocusedTree: ModuleDescriptionsTree
 
   init {
     title = ProjectBundle.message("module.load.unload.dialog.title")
     loadedModulesTree.fillTree(moduleDescriptions.values.filter { it is LoadedModuleDescriptionImpl })
-    loadedModulesTree.selectNodes(selectedModules?.mapTo(HashSet<String>()) { it.name } ?: emptySet<String>())
     unloadedModulesTree.fillTree(moduleDescriptions.values.filter { it is UnloadedModuleDescription })
+    if (selectedModuleName != null) {
+      initiallyFocusedTree = if (moduleDescriptions[selectedModuleName] is UnloadedModuleDescription) unloadedModulesTree else loadedModulesTree
+      initiallyFocusedTree.selectNodes(setOf(selectedModuleName))
+    }
+    else {
+      initiallyFocusedTree = loadedModulesTree
+    }
     init()
   }
 
@@ -182,7 +192,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    return loadedModulesTree.tree
+    return initiallyFocusedTree.tree
   }
 
   override fun doOKAction() {
