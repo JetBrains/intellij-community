@@ -1576,7 +1576,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
-    System.out.println("N = " + N);
+    LOG.debug("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();
@@ -1688,7 +1688,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     int N = Math.max(5, Timings.adjustAccordingToMySpeed(80, false));
-    System.out.println("N = " + N);
+    LOG.debug("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
       codeAnalyzer.restart();

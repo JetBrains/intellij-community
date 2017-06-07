@@ -58,7 +58,7 @@ public class EditorStressTest extends AbstractEditorTest {
   private long mySeed;
 
   public void testRandomActions() {
-    System.out.println("Seed is " + mySeed);
+    LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
@@ -72,7 +72,7 @@ public class EditorStressTest extends AbstractEditorTest {
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
-      System.out.println(message);
+      System.err.println(message);
       throw new RuntimeException(message, t);
     }
   }

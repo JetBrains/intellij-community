@@ -15,9 +15,9 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class BTreeEnumeratorTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(BTreeEnumeratorTest.class);
   private static final String COLLISION_1 = "";
   private static final String COLLISION_2 = "\u0000";
   private static final String UTF_1 = "\ue534";
@@ -173,7 +174,7 @@ public class BTreeEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator performance failed", 2500, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 2500, () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();
@@ -183,7 +184,7 @@ public class BTreeEnumeratorTest extends TestCase {
       stringCache.removeAll();
     }).useLegacyScaling().assertTiming();
     myEnumerator.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }
 
   private static final StringBuilder builder = new StringBuilder(100);

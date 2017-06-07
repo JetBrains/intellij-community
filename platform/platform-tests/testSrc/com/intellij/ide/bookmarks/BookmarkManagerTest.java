@@ -81,9 +81,9 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   
   public void testBookmarkLineRemove() throws IOException {
     List<ComponentAdapter> adapters = getProject().getPicoContainer().getComponentAdaptersOfType(ChangeListManagerImpl.class);
-    System.out.println(adapters.size() + " adapters:");
+    LOG.debug(adapters.size() + " adapters:");
     for (ComponentAdapter adapter : adapters) {
-      System.out.println(adapter);
+      LOG.debug(String.valueOf(adapter));
     }
 
     @NonNls String text =
