@@ -124,6 +124,7 @@ object JavaInlayHintsProvider {
   }
   
   private fun isParamNameContainedInMethodName(parameter: PsiParameter, method: PsiMethod): Boolean {
+    // TODO: take into account code style (e.g. param name prefix)
     val parameterName = parameter.name ?: return false
     if (parameterName.length > 1) {
       return method.name.contains(parameterName, ignoreCase = true)
@@ -157,7 +158,16 @@ private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean =
 
 
 private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
+  // TODO: take into account code style (e.g. param name prefix)
   val paramName = methodParam.name ?: return null
+  if (callArgument is PsiReferenceExpression && callArgument.referenceName.equals(paramName)) {
+    return null
+  }
+  // recognize 'getter' calls (e.g. "doSomething(findPos())" for "doSomething(int pos)")
+  if (callArgument is PsiCallExpression && paramName.length > 2) {
+    val methodName = callArgument.resolveMethod()?.name ?: ""
+    if (methodName.endsWith(paramName, ignoreCase = true)) return null
+  }
   val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
   val offset = inlayOffset(callArgument)
   return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
