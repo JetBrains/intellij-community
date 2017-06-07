@@ -292,9 +292,18 @@ public class GitLogProvider implements VcsLogProvider {
     StopWatch sw = StopWatch.start("loading commits on tagged branch in " + root.getName());
     List<String> params = new ArrayList<>();
     params.add("--max-count=" + commitCount);
-    params.addAll(unmatchedTags);
     sw.report();
-    return GitHistoryUtils.loadMetadata(myProject, root, ArrayUtil.toStringArray(params));
+
+    Set<VcsRef> refs = ContainerUtil.newHashSet();
+    Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
+    VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
+      DetailedLogData logData =
+        GitHistoryUtils.loadMetadata(myProject, root, ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk)));
+      refs.addAll(logData.getRefs());
+      commits.addAll(logData.getCommits());
+    });
+
+    return new LogDataImpl(refs, ContainerUtil.newArrayList(commits));
   }
 
   @Override
