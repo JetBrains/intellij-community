@@ -54,6 +54,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(false, false);
   }
 
+  public void testConvertToLambdaJava8() throws Exception {
+    doTest(false, false);
+  }
+
   public void testClassInitializer() throws Exception {
     doTest(false, false);
   }
@@ -499,6 +503,9 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
 
   @Override
   protected LanguageLevel getLanguageLevel() {
+    if (getTestName(false).endsWith("Java8")) {
+      return LanguageLevel.JDK_1_8;
+    }
     return LanguageLevel.JDK_1_7;
   }
 }
