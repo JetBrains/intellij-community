@@ -4,12 +4,8 @@ class Test {
     String myName;
   void foo() {
     if (true) {
-        Consumer<String> consumer = new Consumer<String>() {
-            public void accept(String myName) {
-                System.out.println("Hello, world " + myName);
-            }
-        };
-        consumer.accept(myName);
+        Consumer<String> stringConsumer = myName -> System.out.println("Hello, world " + myName);
+        stringConsumer.accept(myName);
     }
   }
 }
