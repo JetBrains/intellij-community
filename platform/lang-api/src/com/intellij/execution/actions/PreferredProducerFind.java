@@ -79,15 +79,11 @@ class PreferredProducerFind {
       try {
         producer = prototype.createProducer(location, context);
       }
-      catch (AbstractMethodError e) {
-        LOG.error(new ExtensionException(prototype.getClass()));
-        continue;
-      }
       catch (ProcessCanceledException e) {
         throw e;
       }
-      catch (Exception e) {
-        LOG.error(e);
+      catch (Throwable e) {
+        LOG.error(new ExtensionException(prototype.getClass(), e));
         continue;
       }
 
