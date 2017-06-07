@@ -46,7 +46,7 @@ public interface ProcessDebugger {
 
   Collection<PyThreadInfo> getThreads();
 
-  void execute(@NotNull AbstractCommand command);
+  void execute(@NotNull AbstractCommand command, boolean waitForResult);
 
   void suspendAllThreads();
 
