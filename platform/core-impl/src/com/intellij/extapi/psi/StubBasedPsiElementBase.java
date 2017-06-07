@@ -131,7 +131,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     if (mySubstrateRef instanceof SubstrateRef.StubRef) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
-      if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
+      if (!file.isValid()) throw new PsiInvalidElementAccessException(file);
 
       FileElement treeElement = file.getTreeElement();
       if (treeElement != null && mySubstrateRef instanceof SubstrateRef.StubRef) {
