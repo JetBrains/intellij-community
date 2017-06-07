@@ -437,19 +437,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         Disposer.dispose(disposable);
         throw t;
       }
-
-      // cleanup of old index storage files
-      // to remove after 2017.1 release
-      cleanupOldStorageFile(MESSAGES, logId);
-      cleanupOldStorageFile(INDEX + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
-      cleanupOldStorageFile(INDEX + "-no-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
-      cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
-      cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS, logId);
-      cleanupOldStorageFile(INDEX + "-no-" + VcsLogPathsIndex.PATHS, logId);
-      cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS + "-ids", logId);
-      cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogPathsIndex.PATHS, logId);
-      cleanupOldStorageFile(INDEX + "-" + VcsLogUserIndex.USERS, logId);
-      cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogUserIndex.USERS, logId);
     }
 
     void markCorrupted() {

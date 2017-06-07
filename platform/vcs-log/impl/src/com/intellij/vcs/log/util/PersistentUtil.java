@@ -58,17 +58,6 @@ public class PersistentUtil {
     return mapFile;
   }
 
-  public static void cleanupOldStorageFile(@NotNull String storageKind, @NotNull String logId) {
-    File subdir = new File(LOG_CACHE, storageKind);
-    String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
-    IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId));
-
-    File[] files = subdir.listFiles();
-    if (files != null && files.length == 0) {
-      subdir.delete();
-    }
-  }
-
   @NotNull
   public static <T> PersistentEnumeratorBase<T> createPersistentEnumerator(@NotNull KeyDescriptor<T> keyDescriptor,
                                                                            @NotNull String storageKind,
