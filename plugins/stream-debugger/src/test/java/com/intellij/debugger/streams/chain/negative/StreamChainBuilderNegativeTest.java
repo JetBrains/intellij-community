@@ -82,6 +82,10 @@ public class StreamChainBuilderNegativeTest extends StreamChainBuilderTestCase {
     doTest();
   }
 
+  public void testIdea173415() {
+    doTest();
+  }
+
   private void doTest() {
     final List<StreamChain> chains = buildChains();
     assertTrue(chains.isEmpty());
