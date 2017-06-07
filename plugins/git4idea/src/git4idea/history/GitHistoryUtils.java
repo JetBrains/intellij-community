@@ -51,8 +51,6 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.SHAHash;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
