@@ -69,6 +69,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
@@ -1417,7 +1418,24 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       
       String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+      HighlightInfo error =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+      if (statement instanceof PsiExpressionStatement) {
+        PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
+        PsiExpression expression = expressionStatement.getExpression();
+        List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
+        if (sideEffects.isEmpty()) {
+          QuickFixAction.registerQuickFixAction(error, QuickFixFactory.getInstance().createDeleteFix(statement));
+        }
+        else {
+          // "Remove unnecessary parentheses" action is already present which will do the same
+          if(sideEffects.size() != 1 || sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression)) {
+            QuickFixAction
+              .registerQuickFixAction(error, QuickFixFactory.getInstance().createExtractSideEffectsFix(expressionStatement, sideEffects));
+          }
+        }
+      }
+      return error;
     }
     return null;
   }

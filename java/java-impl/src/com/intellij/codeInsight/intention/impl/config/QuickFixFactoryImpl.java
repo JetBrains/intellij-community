@@ -876,4 +876,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return new WrapStringWithFileFix(type, expression);
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createExtractSideEffectsFix(@NotNull PsiExpressionStatement statement, @NotNull List<PsiExpression> sideEffects) {
+    return new ExtractSideEffectsFix(statement, sideEffects);
+  }
 }
