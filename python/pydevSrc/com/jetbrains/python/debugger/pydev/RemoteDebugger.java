@@ -27,6 +27,8 @@ import java.net.ServerSocket;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
 
@@ -320,7 +322,8 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void execute(@NotNull final AbstractCommand command) {
+  public void execute(@NotNull final AbstractCommand command, boolean waitForResult) {
+    CountDownLatch myLatch = new CountDownLatch(1);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (command instanceof ResumeOrStepCommand) {
         final String threadId = ((ResumeOrStepCommand)command).getThreadId();
@@ -329,11 +332,20 @@ public class RemoteDebugger implements ProcessDebugger {
 
       try {
         command.execute();
+        myLatch.countDown();
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
       }
     });
+    if (waitForResult) {
+      try {
+        myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
+    }
   }
 
   boolean sendFrame(final ProtocolFrame frame) {
@@ -351,7 +363,7 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void suspendThread(String threadId) {
     final SuspendCommand command = new SuspendCommand(this, threadId);
-    execute(command);
+    execute(command, false);
   }
 
   @Override
@@ -375,20 +387,20 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void smartStepInto(String threadId, String functionName) {
     final SmartStepIntoCommand command = new SmartStepIntoCommand(this, threadId, functionName);
-    execute(command);
+    execute(command, false);
   }
 
   @Override
   public void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode) {
     final ResumeOrStepCommand command = new ResumeOrStepCommand(this, threadId, mode);
-    execute(command);
+    execute(command, false);
   }
 
   @Override
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
-    execute(command);  // set temp. breakpoint
+    execute(command, false);  // set temp. breakpoint
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
@@ -397,7 +409,7 @@ public class RemoteDebugger implements ProcessDebugger {
     String type = myTempBreakpoints.get(Pair.create(file, line));
     if (type != null) {
       final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
-      execute(command);  // remove temp. breakpoint
+      execute(command, false);  // remove temp. breakpoint
     }
     else {
       LOG.error("Temp breakpoint not found for " + file + ":" + line);
@@ -418,7 +430,7 @@ public class RemoteDebugger implements ProcessDebugger {
                                logExpression,
                                funcName,
                                policy);
-    execute(command);
+    execute(command, false);
   }
 
 
@@ -426,13 +438,13 @@ public class RemoteDebugger implements ProcessDebugger {
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
-    execute(command);
+    execute(command, false);
   }
 
   @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
     final ShowReturnValuesCommand command = new ShowReturnValuesCommand(this, isShowReturnValues);
-    execute(command);
+    execute(command, false);
   }
 
   // for DebuggerReader only
@@ -615,25 +627,25 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
     final GetCompletionsCommand command = new GetCompletionsCommand(this, threadId, frameId, prefix);
-    execute(command);
+    execute(command, true);
     return command.getCompletions();
   }
 
   @Override
   public String getDescription(String threadId, String frameId, String cmd) {
     final GetDescriptionCommand command = new GetDescriptionCommand(this, threadId, frameId, cmd);
-    execute(command);
+    execute(command, true);
     return command.getResult();
   }
 
   @Override
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
-    execute(factory.createAddCommand(this));
+    execute(factory.createAddCommand(this), false);
   }
 
   @Override
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
-    execute(factory.createRemoveCommand(this));
+    execute(factory.createRemoveCommand(this), false);
   }
 
   @Override
