@@ -132,7 +132,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public synchronized void scheduleIndex(boolean full) {
-    if (myCommitsToIndex.isEmpty()) return;
+    if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
     Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
 
     for (VirtualFile root : commitsToIndex.keySet()) {
@@ -140,7 +140,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
     myCommitsToIndex = ContainerUtil.newHashMap();
 
-    mySingleTaskController.request(new IndexingRequest(commitsToIndex, full));
+    boolean isFull = full && myIndexStorage.isFresh();
+    if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
+    mySingleTaskController.request(new IndexingRequest(commitsToIndex, isFull));
+    if (isFull) myIndexStorage.unmarkFresh();
   }
 
   private void storeDetail(@NotNull VcsFullCommitDetails detail) {
@@ -403,6 +406,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull public final VcsLogUserIndex users;
     @NotNull public final VcsLogPathsIndex paths;
 
+    private volatile boolean myIsFresh;
+
     public IndexStorage(@NotNull String logId,
                         @NotNull VcsUserRegistryImpl userRegistry,
                         @NotNull Set<VirtualFile> roots,
@@ -416,6 +421,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         int version = getVersion();
 
         File commitsStorage = getStorageFile(INDEX, COMMITS, logId, version);
+        myIsFresh = !commitsStorage.exists();
         commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
         Disposer.register(disposable, () -> catchAndWarn(commits::close));
 
@@ -470,6 +476,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         LOG.error("Could not clean up storage files in " + new File(LOG_CACHE, INDEX) + " starting with " + logId);
       }
     }
+
+    public void unmarkFresh() {
+      myIsFresh = false;
+    }
+
+    public boolean isFresh() {
+      return myIsFresh;
+    }
   }
 
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
@@ -509,7 +523,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private class IndexingRequest {
-    private static final int MAGIC_NUMBER = 150000;
     private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
     private final Map<VirtualFile, TIntHashSet> myCommits;
@@ -622,31 +635,26 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       });
       counter.displayProgress();
 
-      if (notIndexed.size() <= MAGIC_NUMBER) {
-        indexOneByOne(root, counter, TroveUtil.stream(notIndexed));
+      try {
+        myProviders.get(root).readAllFullDetails(root, details -> {
+          int index = myStorage.getCommitIndex(details.getId(), details.getRoot());
+          if (notIndexed.contains(index)) {
+            storeDetail(details);
+            counter.newIndexedCommits++;
+
+            if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
+          }
+
+          counter.indicator.checkCanceled();
+          counter.displayProgress();
+        });
       }
-      else {
-        try {
-          myProviders.get(root).readAllFullDetails(root, details -> {
-            int index = myStorage.getCommitIndex(details.getId(), details.getRoot());
-            if (notIndexed.contains(index)) {
-              storeDetail(details);
-              counter.newIndexedCommits++;
-
-              if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
-            }
-
-            counter.indicator.checkCanceled();
-            counter.displayProgress();
-          });
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-          notIndexed.forEach(value -> {
-            markForIndexing(value, root);
-            return true;
-          });
-        }
+      catch (VcsException e) {
+        LOG.error(e);
+        notIndexed.forEach(value -> {
+          markForIndexing(value, root);
+          return true;
+        });
       }
 
       flush();
