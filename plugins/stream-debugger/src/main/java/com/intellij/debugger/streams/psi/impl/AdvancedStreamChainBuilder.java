@@ -85,6 +85,7 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
 
   @Nullable
   private static PsiElement toUpperLevel(@NotNull PsiElement element) {
+    element = element.getParent();
     while (element != null && !(element instanceof PsiLambdaExpression) && !(element instanceof PsiAnonymousClass)) {
       element = element.getParent();
     }
