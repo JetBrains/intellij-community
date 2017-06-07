@@ -391,7 +391,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   static class IndexStorage {
-    private static final String INPUTS = "inputs";
     private static final String COMMITS = "commits";
     private static final String MESSAGES = "messages";
     private static final String PARENTS = "parents";
