@@ -75,12 +75,14 @@ public class JavaCompletionSorting {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
     if (smart) {
-      sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters));
+      sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters, false));
     }
 
     List<LookupElementWeigher> afterStats = ContainerUtil.newArrayList();
     afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
-    if (!smart) {
+    if (smart) {
+      afterStats.add(new PreferDefaultTypeWeigher(expectedTypes, parameters, true));
+    } else {
       if (preferMostUsedWeigher == null) {
         ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
       }
@@ -298,10 +300,11 @@ public class JavaCompletionSorting {
     private final PsiTypeParameter myTypeParameter;
     private final ExpectedTypeInfo[] myExpectedTypes;
     private final CompletionParameters myParameters;
+    private final boolean myPreferExact;
     private final CompletionLocation myLocation;
 
-    public PreferDefaultTypeWeigher(@NotNull ExpectedTypeInfo[] expectedTypes, CompletionParameters parameters) {
-      super("defaultType");
+    PreferDefaultTypeWeigher(@NotNull ExpectedTypeInfo[] expectedTypes, CompletionParameters parameters, boolean preferExact) {
+      super("defaultType" + (preferExact ? "Exact" : ""));
       myExpectedTypes = ContainerUtil.map2Array(expectedTypes, ExpectedTypeInfo.class, info -> {
         PsiType type = removeClassWildcard(info.getType());
         PsiType defaultType = removeClassWildcard(info.getDefaultType());
@@ -311,6 +314,7 @@ public class JavaCompletionSorting {
         return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType(), null, ExpectedTypeInfoImpl.NULL);
       });
       myParameters = parameters;
+      myPreferExact = preferExact;
 
       final Pair<PsiTypeParameterListOwner,Integer> pair = TypeArgumentCompletionProvider.getTypeParameterInfo(parameters.getPosition());
       myTypeParameter = pair == null ? null : pair.first.getTypeParameters()[pair.second.intValue()];
@@ -333,7 +337,7 @@ public class JavaCompletionSorting {
       if (returnsUnboundType(item)) return MyResult.normal;
 
       PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
-      if (isExactlyExpected(item, itemType)) {
+      if ((myPreferExact || object instanceof PsiClass) && isExactlyExpected(item, itemType)) {
         return AbstractExpectedTypeSkipper.skips(item, myLocation) ? MyResult.expectedNoSelect : MyResult.exactlyExpected;
       }
 
@@ -344,7 +348,7 @@ public class JavaCompletionSorting {
         final PsiType expectedType = expectedInfo.getType();
 
         if (defaultType != expectedType) {
-          if (defaultType.equals(itemType)) {
+          if (myPreferExact && defaultType.equals(itemType)) {
             return MyResult.exactlyDefault;
           }
 

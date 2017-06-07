@@ -324,7 +324,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreferLocalOverThis() {
-    checkPreferredItems 0, 'value', 'hashCode', 'this'
+    checkPreferredItems 0, 'value', 'this', 'hashCode'
   }
 
   void testGetLogger() {
@@ -340,7 +340,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   void testPreferLocalWildcardClassOverObject() {
-    checkPreferredItems 0, 'type', 'forName', 'forName', 'Object.class'
+    checkPreferredItems 0, 'type', 'Object.class', 'forName', 'forName'
   }
 
   void testPreferStringsInStringConcatenation() {
@@ -367,6 +367,10 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     def items = myFixture.complete(CompletionType.SMART, 2)
     assert LookupElementPresentation.renderElement(items[0]).itemText == 'Map.builder'
     assert LookupElementPresentation.renderElement(items[1]).itemText == 'BiMap.builder'
+  }
+
+  void testPreferExpectedLocalOverExactlyDefaultMember() {
+    checkPreferredItems 0, 'method', 'PsiUtil.NULL_PSI_ELEMENT'
   }
 
   @Override
