@@ -140,6 +140,11 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
           processOnSizeChanged();
         }
       }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        popupWindow.removeComponentListener(this);
+      }
     });
     if (dimensionKey != null) {
       addPopupListener(new JBPopupAdapter() {
