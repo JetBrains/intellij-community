@@ -22,6 +22,7 @@ import com.intellij.debugger.streams.trace.IntermediateState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -115,6 +116,10 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
 
     for (int i = 1; i < myTabContents.size(); i++) {
+      if (i == myTabContents.size() - 1 && resolvedTrace.exceptionThrown()) {
+        break;
+      }
+
       final MyPlaceholder tab = myTabContents.get(i);
       final TraceController previous = controllers.get(i - 1);
       final TraceController current = controllers.get(i);
@@ -126,16 +131,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final TraceElement result = resolvedTrace.getResult();
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
 
-    if (result.getValue() == null) {
-      final String text =
-        resolvedTrace.exceptionThrown() ? "There is no result: exception was thrown" : "There is no result of such stream chain";
-      resultTab.setContent(new JBLabel(text, SwingConstants.CENTER), BorderLayout.CENTER);
-    }
-
-    if (result.getValue() != null && resolvedTrace.exceptionThrown()) {
+    if (resolvedTrace.exceptionThrown()) {
+      resultTab.setContent(new JBLabel("There is no result: exception was thrown", SwingConstants.CENTER), BorderLayout.CENTER);
       setTitle(DIALOG_TITLE + " - Exception was thrown. Trace can be incomplete");
       myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, result), "", 0);
       myTabsPane.setSelectedIndex(0);
+    }
+    else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(GenericType.VOID)) {
+      resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
     final FlatView flatView = new FlatView(controllers, context);
