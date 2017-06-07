@@ -75,9 +75,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
 
   public void init(@NotNull final Project project, final boolean isToolwindow) {
-    String taskText = StudyUtils.getTaskText(project);
-    if (taskText == null) return;
-
     final DefaultActionGroup group = getActionGroup(project);
     setActionToolbar(group);
 
@@ -109,11 +106,17 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
         TaskFile file = StudyUtils.getSelectedTaskFile(project);
         if (file != null) {
           VirtualFile taskDir = file.getTask().getTaskDir(project);
-          setTaskText(taskText, taskDir, project);
+          String taskText = StudyUtils.getTaskText(project);
+          if (taskText != null) {
+            setTaskText(taskText, taskDir, project);
+          }
         }
       }
       else {
-        setTaskText(taskText, null, project);
+        String taskText = StudyUtils.getTaskText(project);
+        if (taskText != null) {
+          setTaskText(taskText, null, project);
+        }
       }
     }
   }
@@ -185,7 +188,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     return group;
   }
 
-  public void setTaskText(String text, VirtualFile taskDirectory, Project project) {
+  public void setTaskText(@NotNull String text, @Nullable VirtualFile taskDirectory, @NotNull Project project) {
     if (!EMPTY_TASK_TEXT.equals(text) && StudyTaskManager.getInstance(project).isTurnEditingMode()) {
       if (taskDirectory == null) {
         LOG.info("Failed to enter editing mode for StudyToolWindow");
