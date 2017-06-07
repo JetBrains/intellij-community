@@ -105,7 +105,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected String myMethodName; // name for extracted method
   protected PsiType myReturnType; // return type for extracted method
   protected PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
-  private VariableData[] myVariableDatum; // parameter data for extracted method
+  protected VariableData[] myVariableDatum; // parameter data for extracted method
   protected PsiClassType[] myThrownExceptions; // exception to declare as thrown by extracted method
   protected boolean myStatic; // whether to declare extracted method static
 

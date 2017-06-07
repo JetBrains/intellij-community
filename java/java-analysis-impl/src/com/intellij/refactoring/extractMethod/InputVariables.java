@@ -88,6 +88,10 @@ public class InputVariables {
     myInputVariables.addAll(wrapInputVariables(myInitialParameters));
   }
 
+  public boolean isPassFields() {
+    return myPassFields;
+  }
+
   public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
     UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     final ArrayList<VariableData> inputData = new ArrayList<>(inputVariables.size());

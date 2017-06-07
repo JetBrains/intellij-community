@@ -20,13 +20,13 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -36,19 +36,16 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.IntroduceFunctionalVariableAction;
 import com.intellij.refactoring.extractMethod.*;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
 
@@ -87,7 +84,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           return;
         }
         if (types.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-          functionalInterfaceSelected(ContainerUtil.getFirstItem(types), project, editor, processor, elements, anchorStatement);
+          functionalInterfaceSelected(ContainerUtil.getFirstItem(types), project, editor, processor, elements);
         }
         else {
           final Map<PsiClass, PsiType> classes = new LinkedHashMap<>();
@@ -104,8 +101,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
                                             new PsiElementProcessor<PsiClass>() {
                                               @Override
                                               public boolean execute(@NotNull PsiClass psiClass) {
-                                                functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements,
-                                                                            anchorStatement);
+                                                functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
                                                 return true;
                                               }
                                             }).showInBestPositionFor(editor);
@@ -114,90 +110,33 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     });
   }
 
-  private static void functionalInterfaceSelected(PsiType type,
-                                                  Project project,
-                                                  Editor editor,
-                                                  MyExtractMethodProcessor processor,
-                                                  PsiElement[] elements,
-                                                  PsiElement anchorStatement) {
+  private  void functionalInterfaceSelected(PsiType type,
+                                            Project project,
+                                            Editor editor,
+                                            MyExtractMethodProcessor processor,
+                                            PsiElement[] elements) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elements[0])) return;
-    PsiMethodCallExpression functionalExpression = createReplacement(project, type, processor, elements);
-    
-    PsiExpression qualifier = functionalExpression.getMethodExpression().getQualifierExpression();
-
-    assert qualifier != null;
-    
-    SuggestedNameInfo uniqueNames = getSuggestedName(type, qualifier, anchorStatement);
-
-    WriteCommandAction.runWriteCommandAction(project, () -> {
-      PsiDeclarationStatement declaration =
-        replaceSelectionWithFunctionalCall(type, elements, anchorStatement, functionalExpression, qualifier, uniqueNames.names[0]);
-
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-
-      PsiLocalVariable localVariable = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      PsiIdentifier nameIdentifier = localVariable.getNameIdentifier();
-      final int textOffset = ObjectUtils.notNull(nameIdentifier, localVariable).getTextOffset();
-      editor.getCaretModel().moveToOffset(textOffset);
-      new VariableInplaceRenamer(localVariable, editor) {
-        @Override
-        protected boolean shouldSelectAll() {
-          return true;
-        }
-
-        @Override
-        protected void moveOffsetAfter(boolean success) {
-          super.moveOffsetAfter(success);
-          if (success) {
-            final PsiNamedElement renamedVariable = getVariable();
-            if (renamedVariable != null) {
-              editor.getCaretModel().moveToOffset(renamedVariable.getTextRange().getEndOffset());
-            }
-          }
-        }
-      }.performInplaceRename();
-    });
-  }
-
-  private static PsiDeclarationStatement replaceSelectionWithFunctionalCall(PsiType type,
-                                                                            PsiElement[] elements,
-                                                                            PsiElement anchorStatement,
-                                                                            PsiMethodCallExpression functionalExpression,
-                                                                            PsiExpression qualifier,
-                                                                            String variableName) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(functionalExpression.getProject());
-    PsiElement tempContainer = anchorStatement.getParent();
-
-    boolean singleExpression = elements.length == 1 && elements[0] instanceof PsiExpression;
-    PsiDeclarationStatement declaration = elementFactory
-      .createVariableDeclarationStatement(variableName, type, qualifier, anchorStatement);
-    String callExpressionText = variableName + "." +
-                                functionalExpression.getMethodExpression().getReferenceName() +
-                                functionalExpression.getArgumentList().getText();
-    if (singleExpression) {
-      elements[0].replace(elementFactory.createExpressionFromText(callExpressionText, declaration));
+    MyExtractMethodProcessor physicalProcessor =
+      new MyExtractMethodProcessor(project, editor, elements, 
+                                   null, IntroduceFunctionalVariableAction.REFACTORING_NAME, null, HelpID.INTRODUCE_VARIABLE);
+    try {
+      physicalProcessor.prepare();
     }
-    if (RefactoringUtil.isLoopOrIf(tempContainer)) {
-      declaration = (PsiDeclarationStatement)RefactoringUtil.putStatementInLoopBody(declaration, tempContainer, anchorStatement, !singleExpression);
-      tempContainer = declaration.getParent();
-    }
-    else {
-      declaration = (PsiDeclarationStatement)tempContainer.addBefore(declaration, anchorStatement);
-      if (!singleExpression) {
-        tempContainer.deleteChildRange(elements[0], elements[elements.length - 1]);
-      }
+    catch (PrepareFailedException e) {
+      showErrorMessage(project, editor);
     }
 
-    if (!singleExpression) {
-      tempContainer.addAfter(elementFactory.createStatementFromText(callExpressionText + ";", declaration), declaration);
-    }
-    return (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(declaration.getProject()).shortenClassReferences(declaration);
+    physicalProcessor.copyParameters(processor);
+    physicalProcessor.setMethodVisibility(PsiModifier.PUBLIC);
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      PsiMethodCallExpression expression = WriteAction.compute(() -> createReplacement(project, type, physicalProcessor));
+      invokeImpl(project, expression.getMethodExpression().getQualifierExpression(), editor);
+    }, IntroduceFunctionalVariableAction.REFACTORING_NAME, null);
   }
 
   private static PsiMethodCallExpression createReplacement(Project project,
                                                            PsiType selectedType,
-                                                           ExtractMethodProcessor processor,
-                                                           PsiElement[] elements) {
+                                                           ExtractMethodProcessor processor) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(selectedType);
     final PsiClass wrapperClass = resolveResult.getElement();
 
@@ -222,8 +161,9 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     final PsiMethodCallExpression methodCall = processor.getMethodCall();
     PsiExpression psiExpression = factory
       .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + extractedMethod.getText() + "}." + methodCall.getText(),
-                                elements[0]);
-    return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiExpression);
+                                methodCall);
+    processor.getExtractedMethod().delete();
+    return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodCall.replace(psiExpression));
   }
 
 
@@ -320,6 +260,28 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     @Override
     protected boolean defineVariablesForUnselectedParameters() {
       return false;
+    }
+
+    public void copyParameters(MyExtractMethodProcessor processor) {
+      InputVariables inputVariables = processor.myInputVariables;
+      myInputVariables.setPassFields(inputVariables.isPassFields());
+      List<VariableData> variables = inputVariables.getInputVariables();
+      myVariableDatum = new VariableData[variables.size()];
+      for (int i = 0; i < variables.size(); i++) {
+        VariableData data = variables.get(i);
+        String variableName = data.variable.getName();
+        assert variableName != null;
+        VariableData dataByVName =
+          myInputVariables.getInputVariables()
+            .stream()
+            .filter(vData -> variableName.equals(vData.variable.getName())).findFirst()
+            .orElse(null);
+        if (dataByVName != null) {
+          dataByVName.passAsParameter = data.passAsParameter;
+          dataByVName.name = data.name;
+          myVariableDatum[i] = dataByVName;
+        }
+      }
     }
   }
 }

@@ -1,14 +1,14 @@
 import java.util.function.Supplier;
 
 class Test {
-  void foo() {
+    void foo() {
     if (true) {
-        Supplier<String> stringSupplier = new Supplier<String>() {
+        Supplier<String> supplier = new Supplier<String>() {
             public String get() {
                 return "Hello, world";
             }
         };
-        System.out.println(stringSupplier.get());
+        System.out.println(supplier.get());
     }
   }
 }
