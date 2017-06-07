@@ -23,6 +23,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaPsiFacade;
@@ -86,6 +87,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
 
   private static boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
     if (!PsiClassUtil.isRunnableClass(aClass, true)) return false;
+    if (DumbService.isDumb(manager.getProject())) return true;
 
     final Module module = JavaExecutionUtil.findModule(aClass);
     final GlobalSearchScope scope = module != null
