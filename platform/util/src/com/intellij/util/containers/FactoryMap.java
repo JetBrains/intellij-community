@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -57,7 +59,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
       value = create((K)key);
       if (stamp.mayCacheNow()) {
         V v = notNull(value);
-        map.put(k, v);
+        if (map instanceof ConcurrentMap) {
+          value = ConcurrencyUtil.cacheOrGet((ConcurrentMap<K, V>)map, k, v);
+        }
+        else {
+          map.put(k, v);
+        }
       }
     }
     return value == FAKE_NULL() ? null : value;
