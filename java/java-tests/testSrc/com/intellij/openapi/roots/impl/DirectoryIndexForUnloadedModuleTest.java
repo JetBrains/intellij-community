@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +42,21 @@ public class DirectoryIndexForUnloadedModuleTest extends DirectoryIndexTestCase 
 
     assertFromUnloadedModule(file, "unloaded");
     assertFromUnloadedModule(contentRoot, "unloaded");
+  }
+
+  public void testDependentUnloadedModules() {
+    Module unloadedModule = createModule("unloaded");
+    Module main = createModule("main");
+    Module util = createModule("util");
+    Module common = createModule("common");
+    ModuleRootModificationUtil.addDependency(unloadedModule, main);
+    ModuleRootModificationUtil.addDependency(main, util);
+    ModuleRootModificationUtil.addDependency(main, common, DependencyScope.COMPILE, true);
+    ModuleManager.getInstance(myProject).setUnloadedModules(Arrays.asList("unloaded"));
+
+    assertSameElements(myIndex.getDependentUnloadedModules(main), "unloaded");
+    assertEmpty(myIndex.getDependentUnloadedModules(util));
+    assertSameElements(myIndex.getDependentUnloadedModules(common), "unloaded");
   }
 
   private void assertFromUnloadedModule(VirtualFile file, String moduleName) {

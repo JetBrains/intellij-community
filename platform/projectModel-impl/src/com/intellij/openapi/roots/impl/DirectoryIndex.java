@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class is internal low-level API. Consider using {@link com.intellij.openapi.roots.ProjectFileIndex} instead of using this class directly.
@@ -67,4 +69,10 @@ public abstract class DirectoryIndex {
 
   @NotNull
   public abstract List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info);
+
+  /**
+   * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
+   */
+  @NotNull
+  public abstract Set<String> getDependentUnloadedModules(@NotNull Module module);
 }

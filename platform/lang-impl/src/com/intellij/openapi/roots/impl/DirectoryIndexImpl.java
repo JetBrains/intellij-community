@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
+import java.util.Set;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
@@ -168,6 +170,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     checkAvailability();
     return getRootIndex().getOrderEntries(info);
+  }
+
+  @Override
+  @NotNull
+  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    checkAvailability();
+    return getRootIndex().getDependentUnloadedModules(module);
   }
 
   @TestOnly
