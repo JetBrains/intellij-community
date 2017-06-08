@@ -80,7 +80,7 @@ object GuiTestUtilKt {
 
   private fun String.withoutIndent() = this.substring(this.getIndent())
 
-  private fun String.multiply(n: Int): String {
+  private operator fun String.times(n: Int): String {
     val sb = StringBuilder(n)
     for (i in 1..n) {
       sb.append(this)
@@ -99,7 +99,7 @@ object GuiTestUtilKt {
     }
 
     fun printRecursive(root: ImmutableTreeNode<Value>, indent: Int) {
-      println(" ".multiply(indent) + root.value)
+      println(" " * indent + root.value)
       if (!root.isLeaf()) root.children.forEach { printRecursive(it, indent + 2) }
     }
 

@@ -868,7 +868,6 @@ GuiTestUtil {
   }
 
   public static void invokeAction(@NotNull Robot robot, @NotNull String actionId) {
-
     KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
 
     assert keyboardShortcut != null;

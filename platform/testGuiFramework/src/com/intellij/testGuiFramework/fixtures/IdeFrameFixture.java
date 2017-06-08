@@ -65,7 +65,6 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
@@ -79,7 +78,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl>{
+public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
   private EditorFixture myEditor;
@@ -91,7 +90,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
         Project project = frame.getProject();
         if (projectPath == null && project != null) return true;
-        if (project != null && PathManager.getAbsolutePath(projectPath.getPath()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
+        if (project != null &&
+            PathManager.getAbsolutePath(projectPath.getPath()).equals(PathManager.getAbsolutePath(project.getBasePath()))) {
           return projectName == null || projectName.equals(project.getName());
         }
         return false;
@@ -307,8 +307,11 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     ActionManager actionManager = ActionManager.getInstance();
     AnAction mainMenuAction = actionManager.getAction(mainMenuActionId);
     JMenuBar jMenuBar = this.target().getRootPane().getJMenuBar();
-    MouseEvent fakeMainMenuMouseEvent = new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x, MouseInfo.getPointerInfo().getLocation().y, 1,  false);
-    ApplicationManager.getApplication().invokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+    MouseEvent fakeMainMenuMouseEvent =
+      new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
+                     MouseInfo.getPointerInfo().getLocation().y, 1, false);
+    ApplicationManager.getApplication()
+      .invokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
@@ -651,10 +654,10 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   public void closeProject() {
+    invokeMainMenu("CloseProject");
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
-        closeAndDispose(getProject());
         RecentProjectsManager.getInstance().updateLastProjectPath();
         WelcomeFrame.showIfNoProjectOpened();
       }
