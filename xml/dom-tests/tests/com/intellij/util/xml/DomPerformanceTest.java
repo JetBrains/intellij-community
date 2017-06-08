@@ -118,7 +118,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    PlatformTestUtil.startPerformanceTest("", 100, () -> assertNull(getDomManager().getFileElement(file))).useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest("DOM parsing", 100, () -> assertNull(getDomManager().getFileElement(file))).useLegacyScaling().assertTiming();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

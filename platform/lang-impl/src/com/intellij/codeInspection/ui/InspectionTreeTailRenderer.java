@@ -65,8 +65,7 @@ public abstract class InspectionTreeTailRenderer {
       myItemCounter.clear();
       node.visitProblemSeverities(myItemCounter);
       if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-        appendText(InspectionsBundle.message("inspection.problem.descriptor.count", sum(myItemCounter.getValues()) + " ",
-                   SimpleTextAttributes.GRAYED_ATTRIBUTES));
+        appendText(InspectionsBundle.message("inspection.problem.descriptor.count", sum(myItemCounter.getValues()), SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
       else {
         Object[] levels = myItemCounter.keys();

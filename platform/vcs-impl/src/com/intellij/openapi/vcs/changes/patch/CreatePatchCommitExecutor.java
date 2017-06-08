@@ -140,7 +140,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     @Override
-    public void execute(@NotNull Collection<Change> changes, String commitMessage) {
+    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
       PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
       try {
         if (myPanel.isToClipboard()) {

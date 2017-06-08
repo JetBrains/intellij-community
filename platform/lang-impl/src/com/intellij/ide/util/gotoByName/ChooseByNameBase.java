@@ -28,8 +28,6 @@ import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -126,7 +124,7 @@ public abstract class ChooseByNameBase {
   private JComponent myToolArea;
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
-  private final MyListModel<Object> myListModel = new MyListModel<>();
+  private final SmartPointerListModel<Object> myListModel = new SmartPointerListModel<>();
   protected final JList<Object> myList = new JBList<>(myListModel);
   private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
   private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
@@ -1045,25 +1043,6 @@ public abstract class ChooseByNameBase {
     return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
-  private static class MyListModel<T> extends CollectionListModel<T> implements ModelDiff.Model<T> {
-    @Override
-    public void addToModel(int idx, T element) {
-      add(Math.min(idx, getSize()), element);
-    }
-
-    @Override
-    public void addAllToModel(int index, List<T> elements) {
-      addAll(Math.min(index, getSize()), elements);
-    }
-
-    @Override
-    public void removeRangeFromModel(int start, int end) {
-      if (start < getSize() && !isEmpty()) {
-        removeRange(start, Math.min(end, getSize() - 1));
-      }
-    }
-  }
-
   private class ListUpdater {
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
     private static final int DELAY = 10;
@@ -1154,19 +1133,14 @@ public abstract class ChooseByNameBase {
 
     private MyTextField() {
       super(40);
-      if (!UIUtil.isUnderGTKLookAndFeel()) {
-        if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-          if (!(getUI() instanceof MacIntelliJTextFieldUI)) {
-            setUI(MacIntelliJTextFieldUI.createUI(this));
-          }
-          setBorder(new MacIntelliJTextBorder());
-        } else {
-          if (!(getUI() instanceof DarculaTextFieldUI)) {
-            setUI(DarculaTextFieldUI.createUI(this));
-          }
-          setBorder(new DarculaTextBorder());
+      // Set UI and border for Darcula and all except Win10, Mac and GTK
+      if (!UIUtil.isUnderGTKLookAndFeel() && !UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
+        if (!(getUI() instanceof DarculaTextFieldUI)) {
+          setUI(DarculaTextFieldUI.createUI(this));
         }
+        setBorder(new DarculaTextBorder());
       }
+
       enableEvents(AWTEvent.KEY_EVENT_MASK);
       myCompletionKeyStroke = getShortcut(IdeActions.ACTION_CODE_COMPLETION);
       forwardStroke = getShortcut(IdeActions.ACTION_GOTO_FORWARD);

@@ -31,6 +31,10 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("Annotator")
 public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
 
+  public void testDuplicateNamedGroup() {
+    doTest("(?<name>abc)(?<<error descr=\"Group with name 'name' already defined\">name</error>>xyz)");
+  }
+
   public void testAnonymousCapturingGroupInspection() {
     myFixture.enableInspections(new AnonymousGroupInspection());
     doTest("<warning descr=\"Anonymous capturing group\">(</warning>moo)<warning descr=\"Numeric back reference\">\\1</warning>");

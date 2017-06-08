@@ -559,7 +559,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       assertFalse(jarPointer.isValid());
       UIUtil.dispatchAllInvocationEvents();
     }
-    System.out.println("final i = " + i);
+    LOG.debug("final i = " + i);
   }
 
   private static void refreshVFS() {
@@ -966,7 +966,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       if (exception !=null) throw exception;
       Disposer.dispose(disposable);
     }
-    System.out.println("final i = " + i);
+    LOG.debug("final i = " + i);
   }
 
   public void testGetChildrenMustIncreaseModificationCountIfFoundNewFile() throws Exception {
@@ -999,6 +999,6 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         UIUtil.dispatchAllInvocationEvents();
       }
     }
-    System.out.println("final i = " + i);
+    LOG.debug("final i = " + i);
   }
 }

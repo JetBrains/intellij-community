@@ -46,6 +46,7 @@
     <extensionPoint name="scriptTypeDetector" interface="org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector"/>
 
     <extensionPoint name="namedArgumentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider"/>
+    <extensionPoint name="applicabilityProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider"/>
     <extensionPoint name="mapContentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyMapContentProvider"/>
 
     <extensionPoint name="unresolvedHighlightFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter"/>
@@ -99,7 +100,7 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.NewifyMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
@@ -179,10 +180,12 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
-    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewifyNamedArgumentProvider"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewExprNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
 
+    <applicabilityProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider"/>
+    <applicabilityProvider implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyConstructorApplicabilityProvider"/>
 
     <!-- GroovyDSL extensions -->
     <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers"/>

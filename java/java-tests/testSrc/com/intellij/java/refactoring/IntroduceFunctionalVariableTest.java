@@ -20,6 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.introduceVariable.IntroduceFunctionalVariableHandler;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,27 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
 
   public void testSkipUsedLocals() throws Exception {
     doTest(0);
+  }
+
+  public void testIgnoreMethodObjectSuggestion() throws Exception {
+    try {
+      doTest();
+      fail("Unable to perform is expected");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Extract Functional Variable is not supported in current context", e.getMessage());
+    }
+  }
+
+  public void testNoSuggestionForInaccessibleInterface() throws Exception {
+    try {
+      doTest();
+      fail("Should be shown a error hint");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("No applicable functional interfaces found", e.getMessage());
+    }
   }
 
   private void doTest(int... disableParams) {

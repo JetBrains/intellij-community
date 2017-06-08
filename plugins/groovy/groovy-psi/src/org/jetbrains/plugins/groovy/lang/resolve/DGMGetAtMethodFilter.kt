@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_GROOVY_METHODS
 
 /**

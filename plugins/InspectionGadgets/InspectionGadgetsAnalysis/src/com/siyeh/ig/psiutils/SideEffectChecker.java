@@ -65,9 +65,9 @@ public class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean mayHaveSideEffects(@NotNull PsiStatement statement, Predicate<PsiMethodCallExpression> shouldIgnoreCall) {
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<PsiMethodCallExpression> shouldIgnoreCall) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(null, shouldIgnoreCall);
-    statement.accept(visitor);
+    element.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 

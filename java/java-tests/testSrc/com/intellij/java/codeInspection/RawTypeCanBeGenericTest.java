@@ -20,8 +20,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.miscGenerics.RawTypeCanBeGenericInspection;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -63,6 +66,17 @@ public class RawTypeCanBeGenericTest extends LightCodeInsightFixtureTestCase {
     doTest(getMessage("list", "List<String>"));
   }
 
+  public void testConflict() {
+    try {
+      doTest(getMessage("list", "List<T>"));
+      fail("No conflict detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("Cannot convert type of expression <b>&quot;&quot;</b> from <b>java.lang.String</b> to <b>T</b><br>", 
+                   e.getMessage());
+    }
+  }
+
   public void testAtInitializer() {
     assertIntentionNotAvailable(getMessagePrefix());
   }
@@ -91,5 +105,11 @@ public class RawTypeCanBeGenericTest extends LightCodeInsightFixtureTestCase {
   private static String getMessagePrefix() {
     String message = InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", "@", "@");
     return message.substring(0, message.indexOf("@"));
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_6;
   }
 }

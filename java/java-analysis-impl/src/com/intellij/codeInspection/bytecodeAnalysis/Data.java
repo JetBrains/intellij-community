@@ -15,12 +15,11 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -129,6 +128,15 @@ class Equations {
   public int hashCode() {
     return 31 * results.hashCode() + (stable ? 1 : 0);
   }
+
+  @NotNull
+  Equations update(Direction direction, Effects newResult) {
+    List<DirectionResultPair> newPairs = StreamEx.of(this.results)
+      .map(drp -> drp.updateForDirection(direction, newResult))
+      .nonNull()
+      .toList();
+    return new Equations(newPairs, this.stable);
+  }
 }
 
 class DirectionResultPair {
@@ -158,6 +166,16 @@ class DirectionResultPair {
   @Override
   public String toString() {
     return Direction.fromInt(directionKey) + "->" + result;
+  }
+
+  @Nullable
+  DirectionResultPair updateForDirection(Direction direction, Result newResult) {
+    if (this.directionKey == direction.asInt()) {
+      return newResult == null ? null : new DirectionResultPair(direction.asInt(), newResult);
+    }
+    else {
+      return this;
+    }
   }
 }
 
@@ -227,6 +245,8 @@ final class Pending implements Result {
 }
 
 final class Effects implements Result {
+  static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
+
   @NotNull final DataValue returnValue;
   @NotNull final Set<EffectQuantum> effects;
 
@@ -237,6 +257,10 @@ final class Effects implements Result {
 
   Stream<EKey> dependencies() {
     return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
+  }
+
+  public boolean isTop() {
+    return returnValue == DataValue.UnknownDataValue1 && effects.equals(TOP_EFFECTS);
   }
 
   @Override
@@ -254,6 +278,7 @@ final class Effects implements Result {
 
   @Override
   public String toString() {
-    return "Effects[" + effects.size() + "|" + returnValue + "]";
+    Object effectsPresentation = effects.isEmpty() ? "Pure" : effects.size() == 1 ? effects.iterator().next() : effects.size();
+    return "Effects[" + effectsPresentation + "|" + returnValue + "]";
   }
 }

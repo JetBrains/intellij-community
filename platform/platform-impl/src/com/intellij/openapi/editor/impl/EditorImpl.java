@@ -832,7 +832,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       caret.moveToOffset(caret.getOffset());
     }
 
-    if (myVirtualFile != null) EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
+    if (myVirtualFile != null && myProject != null) EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
   }
 
   /**

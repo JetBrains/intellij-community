@@ -15,28 +15,26 @@
  */
 package com.intellij.ide.util.gotoByName
 
-import com.intellij.ui.CollectionListModel
-
 /**
  * @author peter
  */
 internal interface SelectionPolicy {
-  fun performSelection(popup: ChooseByNameBase, model: CollectionListModel<Any>): List<Int>
+  fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int>
 }
 
 internal fun fromIndex(index: Int) = if (index <= 0) SelectMostRelevant else SelectIndex(index)
 
 internal object SelectMostRelevant : SelectionPolicy {
-  override fun performSelection(popup: ChooseByNameBase, model: CollectionListModel<Any>) = 
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) =
     listOf(popup.calcSelectedIndex(model.items.toTypedArray(), popup.trimmedText))
 }
 
 internal data class SelectIndex(private val selectedIndex: Int) : SelectionPolicy {
-  override fun performSelection(popup: ChooseByNameBase, model: CollectionListModel<Any>) = listOf(selectedIndex)
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>) = listOf(selectedIndex)
 }
 
 internal data class SelectionSnapshot(val pattern: String, private val chosenElements: Set<Any>) : SelectionPolicy {
-  override fun performSelection(popup: ChooseByNameBase, model: CollectionListModel<Any>): List<Int> {
+  override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> {
     val items = model.items
     return items.indices.filter { items[it] in chosenElements }
   }

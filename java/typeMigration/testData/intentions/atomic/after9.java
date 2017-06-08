@@ -2,14 +2,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 // "Convert to atomic" "true"
 class Test {
-  final AtomicInteger o;
+    final AtomicInteger o = new AtomicInteger(0);
   int j = o.get();
 
   Test(int o) {
-    this.o = new AtomicInteger(o);
+    this.o.set(o);
   }
 
   void foo() {
-    while ((o = j) != 0) {}
+    while ((o.set(j)) != 0) {}
   }
 }

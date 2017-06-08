@@ -359,6 +359,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
                                                           rules,
                                                           elements.toArray(new PsiElement[elements.size()]),
                                                           createMigrationTypeFunction(elements, types),
+                                                          true,
                                                           true);
     }
 

@@ -38,8 +38,8 @@
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
     <openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryActionProvider"/>
-    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider"/>
-    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
   </extensions>
 
   <actions>

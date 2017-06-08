@@ -669,7 +669,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, () -> {
+    PlatformTestUtil.startPerformanceTest("Matching", 4500, () -> {
       for (int i = 0; i < 100000; i++) {
         for (MinusculeMatcher matcher : matching) {
           Assert.assertTrue(matcher.toString(), matcher.matches(longName));
@@ -683,7 +683,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testOnlyUnderscoresPerformance() {
-    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
       String small = StringUtil.repeat("_", 50);
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
@@ -692,7 +692,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testRepeatedLetterPerformance() {
-    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
       String big = StringUtil.repeat("Aaaaaa", 50);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);

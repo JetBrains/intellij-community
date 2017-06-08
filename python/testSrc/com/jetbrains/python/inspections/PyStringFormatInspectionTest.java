@@ -193,6 +193,10 @@ public class PyStringFormatInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testEscapedString() {
+    doTest();
+  }
+
   //PY-21166
   public void testUnsupportedFormatSpecifierNewStyleFormatting() {
     doTest();

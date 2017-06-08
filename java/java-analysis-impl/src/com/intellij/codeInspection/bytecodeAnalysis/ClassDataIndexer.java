@@ -71,6 +71,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       Map<EKey, Equations> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
+      allEquations = solvePartially(allEquations);
       allEquations.forEach((methodKey, equations) -> map.put(methodKey.method.hashed(md), hash(equations, md)));
     }
     catch (ProcessCanceledException e) {
@@ -83,6 +84,20 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     }
     ourIndexSizeStatistics.consume(map);
     return map;
+  }
+
+  private static Map<EKey, Equations> solvePartially(Map<EKey, Equations> map) {
+    PuritySolver solver = new PuritySolver();
+    EntryStream.of(map).mapToKey((key, eqs) -> new EKey(key.method, Pure, eqs.stable, false))
+      .flatMapValues(eqs -> eqs.results.stream().map(drp -> drp.result))
+      .selectValues(Effects.class)
+      .forKeyValue(solver::addEquation);
+    Map<EKey, Effects> solved = solver.solve();
+    Map<EKey, Effects> partiallySolvedPurity =
+      StreamEx.of(solved, solver.pending).flatMapToEntry(Function.identity()).removeValues(Effects::isTop).toMap();
+    return EntryStream.of(map)
+      .mapToValue((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(new EKey(key.method, Pure, eqs.stable, false))))
+      .toMap();
   }
 
   private static Equations hash(Equations equations, MessageDigest md) {

@@ -30,6 +30,7 @@ import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -122,6 +123,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiElement psiElement) {
     return new ImplementMethodsFix(psiElement);
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
+    return new ReplaceAssignmentWithComparisonFix(expr);
   }
 
   @NotNull
@@ -868,5 +875,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return new WrapStringWithFileFix(type, expression);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
+    return new DeleteSideEffectsAwareFix(statement);
   }
 }

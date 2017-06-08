@@ -15,10 +15,12 @@
  */
 package com.intellij.structuralsearch.plugin.replace.ui;
 
-import org.jdom.Element;
-import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.util.ObjectUtils;
+import org.jdom.Element;
 
 /**
  * @author Maxim.Mossienko
@@ -36,6 +38,11 @@ public class ReplaceConfiguration extends Configuration {
   @Override
   public MatchOptions getMatchOptions() {
     return options.getMatchOptions();
+  }
+
+  @Override
+  public NamedScriptableDefinition findVariable(String name) {
+    return ObjectUtils.chooseNotNull(options.getVariableDefinition(name), getMatchOptions().getVariableConstraint(name));
   }
 
   @Override

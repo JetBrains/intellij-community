@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @State(name = "StructuralSearchPlugin", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ConfigurationManager implements PersistentStateComponent<Element> {
@@ -131,6 +133,14 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return config;
   }
 
+  /**
+   * @return the names of all configurations, both user defined and built in.
+   */
+  public List<String> getAllConfigurationNames() {
+    final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), configurations.stream());
+    return stream.map(c -> c.getName()).collect(Collectors.toList());
+  }
+
   @NotNull
   public Collection<Configuration> getConfigurations() {
     return Collections.unmodifiableList(configurations);
@@ -158,13 +168,14 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return Collections.unmodifiableList(historyConfigurations);
   }
 
-  public static @Nullable String findAppropriateName(@NotNull final Collection<Configuration> configurations, @NotNull String _name,
-                                                     @NotNull final Project project) {
+  @Nullable
+  public static String findAppropriateName(@NotNull final Collection<Configuration> configurations, @NotNull String _name,
+                                           @NotNull final Project project) {
     Configuration config;
     String name = _name;
 
     while ((config = findConfigurationByName(configurations, name)) != null) {
-      int i = Messages.showYesNoDialog(
+      final int i = Messages.showYesNoDialog(
         project,
         SSRBundle.message("overwrite.message"),
         SSRBundle.message("overwrite.title"),
@@ -181,7 +192,8 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return name;
   }
 
-  public static @Nullable String showSaveTemplateAsDialog(@NotNull String initial, @NotNull Project project) {
+  @Nullable
+  public static String showSaveTemplateAsDialog(@NotNull String initial, @NotNull Project project) {
     return Messages.showInputDialog(
       project,
       SSRBundle.message("template.name.button"),

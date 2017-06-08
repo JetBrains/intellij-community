@@ -63,6 +63,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   @Nullable
   private final Editor myEditor;
   private final PsiFile myFile;
+  @NotNull
   private final Project myProject;
   private static final TObjectHashingStrategy<IntentionActionWithTextCaching> ACTION_TEXT_AND_CLASS_EQUALS = new TObjectHashingStrategy<IntentionActionWithTextCaching>() {
     @Override
@@ -284,7 +285,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   private void markInvoked(@NotNull IntentionAction action) {
-    if (myEditor != null) {
+    if (myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
       ShowIntentionsPass.markActionInvoked(myFile.getProject(), myEditor, action);
     }
   }

@@ -386,6 +386,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiExpression rOperand = operands[i];
       if (rOperand == null) return;
       final TypeView right = new TypeView(rOperand);
+      if (tryFindConversionIfOperandIsNull(left, right, rOperand)) continue;
+      if (tryFindConversionIfOperandIsNull(right, left, lOperand)) continue;
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationTokenType, left.getType(), right.getType(), false)) {
         if (left.isChanged()) {
           findConversionOrFail(lOperand, lOperand, left.getTypePair());
@@ -397,6 +399,19 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       lOperand = rOperand;
       left = right;
     }
+  }
+
+  protected boolean tryFindConversionIfOperandIsNull(TypeView nullCandidate, TypeView comparingType, PsiExpression comparingExpr) {
+    if (nullCandidate.getType() == PsiType.NULL && comparingType.isChanged()) {
+      Pair<PsiType, PsiType> typePair = comparingType.getTypePair();
+      final TypeConversionDescriptorBase
+        conversion = myLabeler.getRules().findConversion(typePair.getFirst(), typePair.getSecond(), null, comparingExpr, false, myLabeler);
+      if (conversion != null) {
+        myLabeler.setConversionMapping(comparingExpr, conversion);
+      }
+      return true;
+    }
+    return false;
   }
 
   private void processArrayInitializer(final PsiArrayInitializerExpression expression, final PsiExpression parentExpression) {
@@ -592,6 +607,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       myLabeler.markFailedConversion(Pair.pair(null, migrationType), valueExpression);
     }
   }
+
 
   private static boolean canBeVariableType(@NotNull PsiType type) {
     return !type.getDeepComponentType().equals(PsiType.VOID);

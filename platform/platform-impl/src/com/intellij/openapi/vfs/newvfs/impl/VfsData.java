@@ -26,17 +26,16 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -111,7 +110,7 @@ public class VfsData {
   }
 
   @Nullable
-  public static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
+  static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
     Segment segment = getSegment(id, false);
     if (segment == null) return null;
 
@@ -270,8 +269,8 @@ public class VfsData {
   public static class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
-    @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY;
-    private Set<String> myAdoptedNames;
+    @NotNull int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
+    private Set<CharSequence> myAdoptedNames; // guarded by this
 
     @NotNull
     VirtualFileSystemEntry[] getFileChildren(int fileId, VirtualDirectoryImpl parent) {
@@ -287,11 +286,11 @@ public class VfsData {
       return updater.compareAndSet(this, oldMap, newMap);
     }
 
-    boolean isAdoptedName(String name) {
+    boolean isAdoptedName(CharSequence name) {
       return myAdoptedNames != null && myAdoptedNames.contains(name);
     }
 
-    void removeAdoptedName(String name) {
+    void removeAdoptedName(CharSequence name) {
       if (myAdoptedNames != null) {
         myAdoptedNames.remove(name);
         if (myAdoptedNames.isEmpty()) {
@@ -299,16 +298,16 @@ public class VfsData {
         }
       }
     }
-    void addAdoptedName(String name, boolean caseSensitive) {
+    void addAdoptedName(CharSequence name, boolean caseSensitive) {
       if (myAdoptedNames == null) {
-        //noinspection unchecked
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE);
+        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
       }
       myAdoptedNames.add(name);
     }
 
-    List<String> getAdoptedNames() {
-      return myAdoptedNames == null ? Collections.emptyList() : ContainerUtil.newArrayList(myAdoptedNames);
+    @NotNull
+    Collection<CharSequence> getAdoptedNames() {
+      return myAdoptedNames == null ? Collections.emptyList() : myAdoptedNames;
     }
 
     void clearAdoptedNames() {

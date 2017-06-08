@@ -599,11 +599,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> boolean processSortedListsInOrder(@NotNull List<T> list1,
-                                                      @NotNull List<T> list2,
-                                                      @NotNull Comparator<? super T> comparator,
-                                                      boolean mergeEqualItems,
-                                                      @NotNull Processor<T> processor) {
+  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
+                                                   @NotNull List<T> list2,
+                                                   @NotNull Comparator<? super T> comparator,
+                                                   boolean mergeEqualItems,
+                                                   @NotNull Consumer<T> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
@@ -627,15 +627,13 @@ public class ContainerUtil extends ContainerUtilRt {
           index2++;
         }
         if (c == 0 && !mergeEqualItems) {
-          if (!processor.process(e)) return false;
+          processor.consume(e);
           index2++;
           e = element2;
         }
       }
-      if (!processor.process(e)) return false;
+      processor.consume(e);
     }
-
-    return true;
   }
 
   @NotNull
@@ -645,65 +643,12 @@ public class ContainerUtil extends ContainerUtilRt {
                                              @NotNull Comparator<? super T> comparator,
                                              boolean mergeEqualItems) {
     final List<T> result = new ArrayList<T>(list1.size() + list2.size());
-    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Processor<T>() {
+    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Consumer<T>() {
       @Override
-      public boolean process(T t) {
+      public void consume(T t) {
         result.add(t);
-        return true;
       }
     });
-    return result;
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> mergeSortedArrays(@NotNull T[] list1, @NotNull T[] list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems, @Nullable Processor<? super T> filter) {
-    int index1 = 0;
-    int index2 = 0;
-    List<T> result = new ArrayList<T>(list1.length + list2.length);
-
-    while (index1 < list1.length || index2 < list2.length) {
-      if (index1 >= list1.length) {
-        T t = list2[index2++];
-        if (filter != null && !filter.process(t)) continue;
-        result.add(t);
-      }
-      else if (index2 >= list2.length) {
-        T t = list1[index1++];
-        if (filter != null && !filter.process(t)) continue;
-        result.add(t);
-      }
-      else {
-        T element1 = list1[index1];
-        if (filter != null && !filter.process(element1)) {
-          index1++;
-          continue;
-        }
-        T element2 = list2[index2];
-        if (filter != null && !filter.process(element2)) {
-          index2++;
-          continue;
-        }
-        int c = comparator.compare(element1, element2);
-        if (c < 0) {
-          result.add(element1);
-          index1++;
-        }
-        else if (c > 0) {
-          result.add(element2);
-          index2++;
-        }
-        else {
-          result.add(element1);
-          if (!mergeEqualItems) {
-            result.add(element2);
-          }
-          index1++;
-          index2++;
-        }
-      }
-    }
-
     return result;
   }
 
@@ -2187,57 +2132,6 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
-  /**
-   * Merge sorted points, which are sorted by x and with equal x by y.
-   * Result is put to x1 y1.
-   */
-  public static void mergeSortedArrays(@NotNull TIntArrayList x1,
-                                       @NotNull TIntArrayList y1,
-                                       @NotNull TIntArrayList x2,
-                                       @NotNull TIntArrayList y2) {
-    TIntArrayList newX = new TIntArrayList();
-    TIntArrayList newY = new TIntArrayList();
-
-    int i = 0;
-    int j = 0;
-
-    while (i < x1.size() && j < x2.size()) {
-      if (x1.get(i) < x2.get(j) || x1.get(i) == x2.get(j) && y1.get(i) < y2.get(j)) {
-        newX.add(x1.get(i));
-        newY.add(y1.get(i));
-        i++;
-      }
-      else if (x1.get(i) > x2.get(j) || x1.get(i) == x2.get(j) && y1.get(i) > y2.get(j)) {
-        newX.add(x2.get(j));
-        newY.add(y2.get(j));
-        j++;
-      }
-      else { //equals
-        newX.add(x1.get(i));
-        newY.add(y1.get(i));
-        i++;
-        j++;
-      }
-    }
-
-    while (i < x1.size()) {
-      newX.add(x1.get(i));
-      newY.add(y1.get(i));
-      i++;
-    }
-
-    while (j < x2.size()) {
-      newX.add(x2.get(j));
-      newY.add(y2.get(j));
-      j++;
-    }
-
-    x1.clear();
-    y1.clear();
-    x1.add(newX.toNativeArray());
-    y1.add(newY.toNativeArray());
-  }
-
 
   /**
    * @return read-only set consisting of the only element o
@@ -2427,17 +2321,6 @@ public class ContainerUtil extends ContainerUtilRt {
       result.put(entry.getValue(), entry.getKey());
     }
     return result;
-  }
-
-  @Contract(pure=true)
-  public static <T> boolean processRecursively(final T root, @NotNull PairProcessor<T, List<T>> processor) {
-    final LinkedList<T> list = new LinkedList<T>();
-    list.add(root);
-    while (!list.isEmpty()) {
-      final T o = list.removeFirst();
-      if (!processor.process(o, list)) return false;
-    }
-    return true;
   }
 
   @Contract("null -> null; !null -> !null")
@@ -2655,7 +2538,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
-    ContainerUtilRt.addIfNotNull(element, result);
+    addIfNotNull(result,element);
   }
 
   public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {

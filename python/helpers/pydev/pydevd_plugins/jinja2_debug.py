@@ -34,7 +34,7 @@ def add_exception_breakpoint(plugin, pydb, type, exception):
         if not hasattr(pydb, 'jinja2_exception_break'):
             _init_plugin_breaks(pydb)
         pydb.jinja2_exception_break[exception] = True
-        pydb.set_tracing_for_untraced_contexts()
+        pydb.set_tracing_for_untraced_contexts_if_not_frame_eval()
         return True
     return False
 
@@ -350,13 +350,6 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
 
 def suspend(plugin, pydb, thread, frame, bp_type):
     if bp_type == 'jinja2':
-        if pydb.frame_eval_func is not None:
-            thread_id = get_thread_id(thread)
-            if thread_id not in pydb.disable_tracing_after_exit_frames:
-                pydb.disable_tracing_after_exit_frames[thread_id] = set()
-                # tracing function inside frame shouldn't be removed until the program exits this frame
-            pydb.disable_tracing_after_exit_frames[thread_id].add(frame)
-
         return _suspend_jinja2(pydb, thread, frame)
     return None
 

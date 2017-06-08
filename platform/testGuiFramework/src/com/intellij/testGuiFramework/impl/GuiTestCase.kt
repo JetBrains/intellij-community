@@ -101,31 +101,31 @@ open class GuiTestCase : GuiTestBase() {
 
   //*********CONTEXT FUNCTIONS ON LAMBDA RECEIVERS
   open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func.invoke(findWelcomeFrame())
+    func(findWelcomeFrame())
   }
 
   fun ideFrame(func: IdeFrameFixture.() -> Unit) {
-    func.invoke(findIdeFrame())
+    func(findIdeFrame())
   }
 
   fun dialog(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
-    func.invoke(dialog(title, timeout))
+    func(dialog(title, timeout))
   }
 
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
-    func.invoke(importSimpleProject())
+    func(importSimpleProject())
   }
 
   fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {
-    func.invoke(findNewProjectWizard())
+    func(findNewProjectWizard())
   }
 
   fun IdeFrameFixture.projectView(func: ProjectViewFixture.() -> Unit) {
-    func.invoke(this.projectView)
+    func(this.projectView)
   }
 
   fun IdeFrameFixture.toolwindow(id: String, func: CustomToolWindowFixture.() -> Unit) {
-    func.invoke(CustomToolWindowFixture(id, this))
+    func(CustomToolWindowFixture(id, this))
   }
 
   //*********FIXTURES METHODS WITHOUT ROBOT and TARGET; KOTLIN ONLY
@@ -213,7 +213,7 @@ open class GuiTestCase : GuiTestBase() {
 
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET; KOTLIN ONLY
   fun IdeFrameFixture.editor(/*timeout in seconds*/ timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
-    func.invoke(this.editor)
+    func(this.editor)
   }
 
   fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
@@ -222,6 +222,7 @@ open class GuiTestCase : GuiTestBase() {
   fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
 
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
+
   fun screenshot(component: Component, screenshotName: String): Unit {
 
     val extension = "${getScaleSuffix()}.png"

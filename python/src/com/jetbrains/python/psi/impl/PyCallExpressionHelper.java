@@ -239,10 +239,6 @@ public class PyCallExpressionHelper {
    */
   public static int getImplicitArgumentCount(@NotNull final PyReferenceExpression callReference, @NotNull PyFunction function,
                                              @NotNull PyResolveContext resolveContext) {
-    final PyDecorator decorator = PsiTreeUtil.getParentOfType(callReference, PyDecorator.class);
-    if (decorator != null && PsiTreeUtil.isAncestor(decorator.getCallee(), callReference, false)) {
-      return 1;
-    }
     QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
     final List<PyExpression> qualifiers = followed.getQualifiers();
     final PyExpression firstQualifier = ContainerUtil.getFirstItem(qualifiers);

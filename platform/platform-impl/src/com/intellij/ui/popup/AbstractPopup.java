@@ -389,7 +389,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInCenterOf(@NotNull Component aContainer) {
-    final Point popupPoint = getCenterOf(aContainer, myContent);
+    final Point popupPoint = getCenterOf(aContainer, getPreferredContentSize());
     show(aContainer, popupPoint.x, popupPoint.y, false);
   }
 
@@ -426,6 +426,10 @@ public class AbstractPopup implements JBPopup {
   }
 
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
+    return getCenterOf(aContainer, content.getPreferredSize());
+  }
+
+  private static Point getCenterOf(final Component aContainer, final Dimension contentSize) {
     final JComponent component = getTargetComponent(aContainer);
 
     Rectangle visibleBounds = component != null
@@ -435,7 +439,7 @@ public class AbstractPopup implements JBPopup {
     Point containerScreenPoint = visibleBounds.getLocation();
     SwingUtilities.convertPointToScreen(containerScreenPoint, aContainer);
     visibleBounds.setLocation(containerScreenPoint);
-    return UIUtil.getCenterPoint(visibleBounds, content.getPreferredSize());
+    return UIUtil.getCenterPoint(visibleBounds, contentSize);
   }
 
   @Override
@@ -579,13 +583,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private RelativePoint relativePointWithDominantRectangle(final JLayeredPane layeredPane, final Rectangle bounds) {
-    Dimension preferredSize = getComponent().getPreferredSize();
-    if (myDimensionServiceKey != null) {
-      final Dimension dimension = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
-      if (dimension != null) {
-        preferredSize = dimension;
-      }
-    }
+    Dimension preferredSize = getPreferredContentSize();
     final Point leftTopCorner = new Point(bounds.x + bounds.width, bounds.y);
     final Point leftTopCornerScreen = (Point)leftTopCorner.clone();
     SwingUtilities.convertPointToScreen(leftTopCornerScreen, layeredPane);
@@ -614,6 +612,17 @@ public class AbstractPopup implements JBPopup {
       }
     }
     return relativePoint;
+  }
+
+  private Dimension getPreferredContentSize() {
+    if (myForcedSize != null) {
+      return myForcedSize;
+    }
+    if (myDimensionServiceKey != null) {
+      final Dimension dimension = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+      if (dimension != null) return dimension;
+    }
+    return myComponent.getPreferredSize();
   }
 
   @Override

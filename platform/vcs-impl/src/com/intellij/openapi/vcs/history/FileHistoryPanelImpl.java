@@ -1167,12 +1167,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   public class MyCreatePatch extends DumbAwareAction {
-    private final CreatePatchFromChangesAction myUsualDelegate;
+    private final AnAction myUsualDelegate;
 
     public MyCreatePatch() {
       super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
             VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Vcs.Patch);
-      myUsualDelegate = new CreatePatchFromChangesAction();
+      myUsualDelegate = new CreatePatchFromChangesAction.Dialog();
     }
 
     @Override

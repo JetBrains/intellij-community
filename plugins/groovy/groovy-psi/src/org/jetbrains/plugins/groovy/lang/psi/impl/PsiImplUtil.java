@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -338,7 +339,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static GroovyResolveResult extractUniqueResult(@NotNull GroovyResolveResult[] results) {
-    if (results.length != 1) return GroovyResolveResult.EMPTY_RESULT;
+    if (results.length != 1) return EmptyGroovyResolveResult.INSTANCE;
     return results[0];
   }
 

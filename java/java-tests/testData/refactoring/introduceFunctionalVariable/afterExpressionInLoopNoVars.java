@@ -1,13 +1,9 @@
 import java.util.function.Supplier;
 
 class Test {
-  void foo() {
+    void foo() {
     if (true) {
-        Supplier<String> stringSupplier = new Supplier<String>() {
-            public String get() {
-                return "Hello, world";
-            }
-        };
+        Supplier<String> stringSupplier = () -> "Hello, world";
         System.out.println(stringSupplier.get());
     }
   }

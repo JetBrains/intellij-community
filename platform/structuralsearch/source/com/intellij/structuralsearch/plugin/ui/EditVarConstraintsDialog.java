@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -96,7 +95,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   ComponentWithBrowseButton<EditorTextField> customScriptCode;
   JCheckBox maxoccursUnlimited;
 
-  TextFieldWithBrowseButton withinTextField;
+  TextFieldWithAutoCompletionWithBrowseButton withinTextField;
   private JPanel containedInConstraints;
   private JCheckBox invertWithinIn;
   private JPanel expressionConstraints;
@@ -109,11 +108,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JButton myOneInfinityButton;
   private JButton myZeroOneButton;
 
-  private static Project myProject;
+  private final Project myProject;
 
   EditVarConstraintsDialog(final Project project, Configuration configuration, List<Variable> _variables, final FileType fileType) {
-    super(project, false);
-
+    super(project, true);
+    myProject = project;
     variables = _variables;
     myConfiguration = configuration;
 
@@ -169,8 +168,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     containedInConstraints.setVisible(false);
 
-    withinTextField.setEditable(false);
-    withinTextField.getButton().addActionListener(new ActionListener() {
+    final List<String> names = ConfigurationManager.getInstance(project).getAllConfigurationNames();
+    withinTextField.setAutoCompletionItems(names);
+    withinTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
         final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
@@ -542,23 +542,24 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+    withinTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
   }
 
-  private static EditorTextField createRegexComponent() {
+  private EditorTextField createRegexComponent() {
     @NonNls final String fileName = "1.regexp";
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, "");
     return new EditorTextField(doc, myProject, fileType);
   }
 
-  private static EditorTextField createScriptComponent() {
+  private EditorTextField createScriptComponent() {
     @NonNls final String fileName = "1.groovy";
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, "");
     return new EditorTextField(doc, myProject, fileType);
   }
 
-  private static Document createDocument(final String fileName, final FileType fileType, String text) {
+  private Document createDocument(final String fileName, final FileType fileType, String text) {
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text, -1, true);
 
     return PsiDocumentManager.getInstance(myProject).getDocument(file);
@@ -568,10 +569,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
     return fileType;
-  }
-
-  public static void setProject(final Project project) {
-    myProject = project;
   }
 
   private static class MyChangeListener implements ChangeListener {
@@ -606,7 +603,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
   }
 
-  static Editor createEditor(final Project project, final String text, final String fileName) {
+  Editor createEditor(final Project project, final String text, final String fileName) {
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, text);
     final Editor editor = EditorFactory.getInstance().createEditor(doc, project);
@@ -623,11 +620,11 @@ class EditVarConstraintsDialog extends DialogWrapper {
     return editor;
   }
 
-  private static class EditScriptDialog extends DialogWrapper {
+  private class EditScriptDialog extends DialogWrapper {
     private final Editor editor;
     private final String title;
 
-    public EditScriptDialog(Project project, String text, Collection<String> names) {
+    EditScriptDialog(Project project, String text, Collection<String> names) {
       super(project, true);
       setTitle(SSRBundle.message("edit.groovy.script.constraint.title"));
       editor = createEditor(project, text, "1.groovy");

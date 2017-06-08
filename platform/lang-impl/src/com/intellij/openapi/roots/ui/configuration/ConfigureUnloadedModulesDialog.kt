@@ -15,23 +15,34 @@
  */
 package com.intellij.openapi.roots.ui.configuration
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
-import com.intellij.openapi.module.*
+import com.intellij.openapi.module.ModuleDescription
+import com.intellij.openapi.module.ModuleGrouper
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.graph.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.xml.util.XmlStringUtil
+import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.util.*
@@ -45,31 +56,64 @@ import kotlin.comparisons.compareBy
 /**
  * @author nik
  */
-class ConfigureUnloadedModulesDialog(private val project: Project, selectedModules: Array<Module>?) : DialogWrapper(project) {
+class ConfigureUnloadedModulesDialog(private val project: Project, selectedModuleName: String?) : DialogWrapper(project) {
   private val loadedModulesTree = ModuleDescriptionsTree(project)
   private val unloadedModulesTree = ModuleDescriptionsTree(project)
   private val moduleDescriptions = ModuleManager.getInstance(project).allModuleDescriptions.associateBy { it.name }
   private val statusLabel = JBLabel()
+  /** graph contains an edge a -> b if b depends on a */
+  private val dependentsGraph by lazy { buildGraph() }
+  private val initiallyFocusedTree: ModuleDescriptionsTree
 
   init {
-    title = "Load/Unload Modules"
+    title = ProjectBundle.message("module.load.unload.dialog.title")
     loadedModulesTree.fillTree(moduleDescriptions.values.filter { it is LoadedModuleDescriptionImpl })
-    loadedModulesTree.selectNodes(selectedModules?.mapTo(HashSet<String>()) { it.name } ?: emptySet<String>())
     unloadedModulesTree.fillTree(moduleDescriptions.values.filter { it is UnloadedModuleDescription })
+    if (selectedModuleName != null) {
+      initiallyFocusedTree = if (moduleDescriptions[selectedModuleName] is UnloadedModuleDescription) unloadedModulesTree else loadedModulesTree
+      initiallyFocusedTree.selectNodes(setOf(selectedModuleName))
+    }
+    else {
+      initiallyFocusedTree = loadedModulesTree
+    }
     init()
+  }
+
+  private fun buildGraph(): Graph<ModuleDescription> {
+    return GraphGenerator.generate(CachingSemiGraph.cache(object: InboundSemiGraph<ModuleDescription> {
+      override fun getNodes(): Collection<ModuleDescription> {
+        return moduleDescriptions.values
+      }
+
+      override fun getIn(node: ModuleDescription): Iterator<ModuleDescription> {
+        return node.dependencyModuleNames.asIterable().mapNotNull { moduleDescriptions[it] }.iterator()
+      }
+    }))
   }
 
   override fun createCenterPanel(): JComponent? {
     val buttonsPanel = JPanel(VerticalFlowLayout())
-    val moveToUnloadedButton = JButton("Unload >")
-    val moveToLoadedButton = JButton("< Load")
-    val moveAllToUnloadedButton = JButton("Unload All >")
-    val moveAllToLoadedButton = JButton("< Load All")
+    val moveToUnloadedButton = JButton(ProjectBundle.message("module.unload.button.text"))
+    val moveToLoadedButton = JButton(ProjectBundle.message("module.load.button.text"))
+    val moveAllToUnloadedButton = JButton(ProjectBundle.message("module.unload.all.button.text"))
+    val moveAllToLoadedButton = JButton(ProjectBundle.message("module.load.all.button.text"))
     moveToUnloadedButton.addActionListener {
-      moveSelectedNodes(loadedModulesTree, unloadedModulesTree)
+      val modulesToMove = includeMissingModules(loadedModulesTree.selectedModules, unloadedModulesTree.getAllModules(),
+                                                dependentsGraph,
+                                                ProjectBundle.message("module.unload.dependents.dialog.title"),
+                                                { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.unload.dependents.dialog.text", selectedSize, additionalSize, additionalFirst)},
+                                                ProjectBundle.message("module.unload.with.dependents.button.text"),
+                                                ProjectBundle.message("module.unload.without.dependents.button.text"))
+      moveModules(modulesToMove, loadedModulesTree, unloadedModulesTree)
     }
     moveToLoadedButton.addActionListener {
-      moveSelectedNodes(unloadedModulesTree, loadedModulesTree)
+      val modulesToMove = includeMissingModules(unloadedModulesTree.selectedModules, loadedModulesTree.getAllModules(),
+                                                GraphAlgorithms.getInstance().invertEdgeDirections(dependentsGraph),
+                                                ProjectBundle.message("module.load.dependencies.dialog.title"),
+                                                { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.load.dependencies.dialog.text", selectedSize, additionalSize, additionalFirst)},
+                                                ProjectBundle.message("module.load.with.dependencies.button.text"),
+                                                ProjectBundle.message("module.load.without.dependencies.button.text"))
+      moveModules(modulesToMove, unloadedModulesTree, loadedModulesTree)
     }
     moveAllToUnloadedButton.addActionListener {
       moveAllNodes(loadedModulesTree, unloadedModulesTree)
@@ -82,29 +126,73 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     buttonsPanel.add(moveAllToUnloadedButton)
     buttonsPanel.add(moveAllToLoadedButton)
 
-    val gridBag = GridBag().setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 1.0)
-    val mainPanel = JPanel(GridBagLayout())
-    mainPanel.add(JBLabel("Loaded modules"), gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
-    mainPanel.add(JBLabel("Unloaded modules"), gridBag.next().next().anchor(GridBagConstraints.WEST))
+    val mainPanel = JPanel(BorderLayout())
+    val gridBag = GridBag().setDefaultWeightX(0, 0.5).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 0.5)
+    val treesPanel = JPanel(GridBagLayout())
+    treesPanel.add(JBLabel(ProjectBundle.message("module.loaded.label.text")), gridBag.nextLine().next().anchor(GridBagConstraints.WEST))
+    treesPanel.add(JBLabel(ProjectBundle.message("module.unloaded.label.text")), gridBag.next().next().anchor(GridBagConstraints.WEST))
 
-    mainPanel.add(JBScrollPane(loadedModulesTree.tree), gridBag.nextLine().next().weighty(1.0).fillCell())
-    mainPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.CENTER))
-    mainPanel.add(JBScrollPane(unloadedModulesTree.tree), gridBag.next().weighty(1.0).fillCell())
-    mainPanel.add(statusLabel, gridBag.nextLine().next().coverLine().anchor(GridBagConstraints.WEST))
-
+    treesPanel.add(JBScrollPane(loadedModulesTree.tree), gridBag.nextLine().next().weighty(1.0).fillCell())
+    treesPanel.add(buttonsPanel, gridBag.next().anchor(GridBagConstraints.CENTER))
+    treesPanel.add(JBScrollPane(unloadedModulesTree.tree), gridBag.next().weighty(1.0).fillCell())
+    mainPanel.add(treesPanel, BorderLayout.CENTER)
+    statusLabel.text = XmlStringUtil.wrapInHtml(ProjectBundle.message("module.unloaded.explanation"))
+    mainPanel.add(statusLabel, BorderLayout.SOUTH)
+    //current label text looks better when it's split on 2.5 lines, so set size of the whole component accordingly
+    mainPanel.preferredSize = Dimension(Math.max(treesPanel.preferredSize.width, statusLabel.preferredSize.width*2/5), treesPanel.preferredSize.height)
     return mainPanel
+  }
+
+  private fun includeMissingModules(selected: List<ModuleDescription>, availableTargetModules: List<ModuleDescription>,
+                                    dependenciesGraph: Graph<ModuleDescription>,
+                                    dialogTitle: String, dialogMessage: (Int, Int, String) -> String, yesButtonText: String,
+                                    noButtonText: String): Collection<ModuleDescription> {
+    val additional = computeDependenciesToMove(selected, availableTargetModules, dependenciesGraph)
+    if (additional.isNotEmpty()) {
+      val answer = Messages.showYesNoCancelDialog(project, dialogMessage(selected.size, additional.size, additional.first().name),
+                                                  dialogTitle, yesButtonText, noButtonText, CommonBundle.getCancelButtonText(), null)
+      if (answer == Messages.YES) {
+        return selected + additional
+      }
+      if (answer == Messages.CANCEL) {
+        return emptyList()
+      }
+    }
+    return selected
+  }
+
+  private fun computeDependenciesToMove(modulesToMove: Collection<ModuleDescription>, availableModules: Collection<ModuleDescription>,
+                                        graph: Graph<ModuleDescription>): Set<ModuleDescription> {
+    val result = LinkedHashSet<ModuleDescription>()
+    for (module in modulesToMove) {
+      GraphAlgorithms.getInstance().collectOutsRecursively(graph, module, result)
+    }
+    result.removeAll(modulesToMove)
+    result.removeAll(availableModules)
+    return result
   }
 
   private fun moveAllNodes(from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
     from.removeAllNodes()
     to.fillTree(moduleDescriptions.values)
+    IdeFocusManager.getInstance(project).requestFocus(to.tree, true).doWhenDone {
+      to.tree.selectionPath = to.tree.getPathForRow(0)
+    }
   }
 
-  private fun moveSelectedNodes(from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
-    val selected = from.selectedModules
-    from.removeModules(selected)
-    val modules = to.addModules(selected)
+  private fun moveModules(modulesToMove: Collection<ModuleDescription>, from: ModuleDescriptionsTree, to: ModuleDescriptionsTree) {
+    if (modulesToMove.isEmpty()) return
+    val oldSelectedRow = from.tree.selectionModel.leadSelectionRow
+    from.removeModules(modulesToMove)
+    val modules = to.addModules(modulesToMove)
     modules.firstOrNull()?.let { TreeUtil.selectNode(to.tree, it)}
+    IdeFocusManager.getInstance(project).requestFocus(from.tree, true).doWhenDone {
+      from.tree.selectionModel.selectionPath = from.tree.getPathForRow(oldSelectedRow.coerceAtMost(from.tree.rowCount-1))
+    }
+  }
+
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return initiallyFocusedTree.tree
   }
 
   override fun doOKAction() {
@@ -145,11 +233,11 @@ private class ModuleDescriptionsTree(project: Project) {
     tree.expandPath(TreePath(root))
   }
 
-  fun addModules(modules: List<ModuleDescription>): List<ModuleDescriptionTreeNode> {
+  fun addModules(modules: Collection<ModuleDescription>): List<ModuleDescriptionTreeNode> {
     return modules.map { helper.createModuleNode(it, root, model) }
   }
 
-  fun removeModules(modules: List<ModuleDescription>) {
+  fun removeModules(modules: Collection<ModuleDescription>) {
     val names = modules.mapTo(HashSet<String>()) { it.name }
     val toRemove = findNodes { it.moduleDescription.name in names }
     for (node in toRemove) {
@@ -178,7 +266,7 @@ private class ModuleDescriptionsTree(project: Project) {
     paths.forEach { tree.expandPath(it) }
     tree.selectionModel.selectionPaths = paths.toTypedArray()
     if (paths.isNotEmpty()) {
-      tree.makeVisible(paths.first())
+      TreeUtil.showRowCentered(tree, tree.getRowForPath(paths.first()), false, true)
     }
   }
 }

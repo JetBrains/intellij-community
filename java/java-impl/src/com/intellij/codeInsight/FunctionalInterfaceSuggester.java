@@ -76,6 +76,9 @@ public class FunctionalInterfaceSuggester {
     }
 
     return suggestFunctionalInterfaces(method, aClass -> {
+      if (!JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(aClass, method, null)) {
+        return null;
+      }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
       if (interfaceMethod != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -103,18 +106,21 @@ public class FunctionalInterfaceSuggester {
         }
 
         for (int i = 0; i < interfaceMethodParameters.length; i++) {
-          if (!TypeConversionUtil.isAssignable(parameters[i].getType(), substitutor.substitute(interfaceMethodParameters[i].getType()))) {
+          PsiType paramType = parameters[i].getType();
+          PsiType interfaceParamType = substitutor.substitute(interfaceMethodParameters[i].getType());
+          if (!(interfaceParamType instanceof PsiPrimitiveType
+                ? paramType.equals(interfaceParamType) : TypeConversionUtil.isAssignable(paramType, interfaceParamType))) {
             return null;
           }
         }
 
         final PsiType returnType = method.getReturnType();
-        PsiType interfaceMethodReturnType = interfaceMethod.getReturnType();
-        if (returnType != null && !TypeConversionUtil.isAssignable(returnType, substitutor.substitute(interfaceMethodReturnType))) {
+        PsiType interfaceMethodReturnType = substitutor.substitute(interfaceMethod.getReturnType());
+        if (returnType != null && !TypeConversionUtil.isAssignable(returnType, interfaceMethodReturnType)) {
           return null;
         }
-
-        if (PsiType.VOID.equals(returnType) && !PsiType.VOID.equals(interfaceMethodReturnType)) {
+        
+        if (interfaceMethodReturnType instanceof PsiPrimitiveType && !interfaceMethodReturnType.equals(returnType)) {
           return null;
         }
 

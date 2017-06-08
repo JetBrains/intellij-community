@@ -493,8 +493,8 @@ public class PlatformTestUtil {
    * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expectedMs, message);
+  public static TestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
+    return new TestInfo(test, expectedMs, what);
   }
 
   public static boolean canRunTest(@NotNull Class testCaseClass) {
@@ -544,16 +544,16 @@ public class PlatformTestUtil {
     private ThrowableRunnable setup;      // to run before each test
     private int usedReferenceCpuCores = 1;
     private int attempts = 4;             // number of retries if performance failed
-    private final String message;         // to print on fail
+    private final String what;         // to print on fail
     private boolean adjustForIO = false;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
     private boolean useLegacyScaling;
 
-    private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, String message) {
+    private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
       this.test = test;
       this.expectedMs = expectedMs;
       assert expectedMs > 0 : "Expected must be > 0. Was: "+ expectedMs;
-      this.message = message;
+      this.what = what;
     }
 
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
@@ -642,7 +642,7 @@ public class PlatformTestUtil {
           "\n  Timings:  %s" +
           "\n  Threads:  %s" +
           "\n  GC stats: %s",
-          message, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
+          what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
           expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
           duration, StringUtil.formatDuration(duration),
           Timings.getStatistics(),

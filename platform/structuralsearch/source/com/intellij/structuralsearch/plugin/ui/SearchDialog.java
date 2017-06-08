@@ -177,7 +177,7 @@ public class SearchDialog extends DialogWrapper {
     return editor;
   }
 
-  private void initiateValidation() {
+  void initiateValidation() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       try {
@@ -613,22 +613,18 @@ public class SearchDialog extends DialogWrapper {
 
           @Override
           public void actionPerformed(ActionEvent e) {
-            EditVarConstraintsDialog.setProject(searchContext.getProject());
             new EditVarConstraintsDialog(
               searchContext.getProject(),
               model.getConfig(), getVariablesFromListeners(),
               (FileType)fileTypes.getSelectedItem()
             ).show();
             initiateValidation();
-            EditVarConstraintsDialog.setProject(null);
           }
         }
       )
     );
 
-    panel.add(
-      Box.createHorizontalStrut(8)
-    );
+    panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
       createJButtonForAction(
@@ -652,9 +648,7 @@ public class SearchDialog extends DialogWrapper {
       )
     );
 
-    panel.add(
-      Box.createHorizontalStrut(8)
-    );
+    panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
       createJButtonForAction(
@@ -686,7 +680,7 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
-    SubstitutionShortInfoHandler handler = searchCriteriaEdit.getUserData(UIUtil.LISTENER_KEY);
+    SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
     return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
   }
 

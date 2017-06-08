@@ -839,6 +839,7 @@ public class AllIcons {
       public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
 
     }
+    public static final Icon UnloadedModule = IconLoader.getIcon("/modules/unloadedModule.png"); // 16x16
     public static final Icon UnmarkWebroot = IconLoader.getIcon("/modules/unmarkWebroot.png"); // 16x16
     public static final Icon WebRoot = IconLoader.getIcon("/modules/webRoot.png"); // 16x16
 

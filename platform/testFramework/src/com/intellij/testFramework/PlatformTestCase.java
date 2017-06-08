@@ -113,7 +113,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected Module myModule;
   protected static final Collection<File> myFilesToDelete = new THashSet<>();
   protected boolean myAssertionsInTestDetected;
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
   private static final long DEFAULT_TEST_TIME = 300L;

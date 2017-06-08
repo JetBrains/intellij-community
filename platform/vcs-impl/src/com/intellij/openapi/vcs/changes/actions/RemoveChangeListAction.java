@@ -42,6 +42,8 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(visible);
+    presentation
+      .setText(ActionsBundle.message("action.ChangesView.RemoveChangeList.text", changeLists != null && changeLists.length > 1 ? 1 : 0));
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       presentation.setVisible(visible);
     }
@@ -86,13 +88,13 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
   }
 
   private static boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists, Project project) {
-    for (LocalChangeList list : lists) {
-      if (list.isDefault()) {
-        return confirmActiveChangeListRemoval(project, lists, list.getChanges().isEmpty());
-      }
+    boolean activeChangelistSelected = lists.stream().anyMatch(LocalChangeList::isDefault);
+    boolean haveNoChanges = lists.stream().allMatch(l -> l.getChanges().isEmpty());
+
+    if (activeChangelistSelected) {
+      return confirmActiveChangeListRemoval(project, lists, haveNoChanges);
     }
 
-    boolean haveNoChanges = lists.stream().noneMatch(list -> !list.getChanges().isEmpty());
     String message = lists.size() == 1
                      ? VcsBundle.message("changes.removechangelist.warning.text", lists.get(0).getName())
                      : VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.size());
@@ -106,6 +108,13 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
   static boolean confirmActiveChangeListRemoval(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists, boolean empty) {
     List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(lists);
+
+    // don't ask "Which changelist to make active" if there is only one option anyway
+    // unless there are some changes to be moved - give user a chance to cancel deletion
+    if (remainingLists.size() == 1 && empty) {
+      ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists.get(0));
+      return true;
+    }
 
     String[] remainingListsNames = remainingLists.stream().map(ChangeList::getName).toArray(String[]::new);
     int nameIndex = Messages.showChooseDialog(project, empty

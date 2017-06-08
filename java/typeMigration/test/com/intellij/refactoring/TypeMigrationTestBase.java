@@ -229,7 +229,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
     public TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
-      super(project, roots, Functions.constant(migrationType), rules);
+      super(project, roots, Functions.constant(migrationType), rules, true);
     }
   }
 }

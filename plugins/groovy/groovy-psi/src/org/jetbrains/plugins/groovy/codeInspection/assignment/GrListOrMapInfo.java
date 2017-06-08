@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -116,7 +117,7 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
     if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final GroovyResolveResult result = GroovyResolveResultImpl.from(type.resolveGenerics());
-    if (result == GroovyResolveResult.EMPTY_RESULT) return GroovyResolveResult.EMPTY_ARRAY;
+    if (result == EmptyGroovyResolveResult.INSTANCE) return GroovyResolveResult.EMPTY_ARRAY;
     return new GroovyResolveResult[]{result};
   }
 

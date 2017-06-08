@@ -15,6 +15,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.TimeoutUtil;
 import junit.framework.TestCase;
@@ -28,10 +29,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BoundedScheduledExecutorTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(BoundedScheduledExecutorTest.class);
   public void testSchedulesAreReallyBound() throws InterruptedException, ExecutionException {
     ExecutorService backendExecutor = AppExecutorUtil.getAppExecutorService();
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
-      System.out.println("maxTasks = " + maxTasks);
+      LOG.debug("maxTasks = " + maxTasks);
       BoundedScheduledExecutorService executor = createBoundedScheduledExecutor(backendExecutor, maxTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger max = new AtomicInteger();
@@ -69,7 +71,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
   public void testSubmitsAreReallyBound() throws InterruptedException, ExecutionException {
     ExecutorService backendExecutor = AppExecutorUtil.getAppExecutorService();
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
-      System.out.println("maxTasks = " + maxTasks);
+      LOG.debug("maxTasks = " + maxTasks);
       BoundedScheduledExecutorService executor = createBoundedScheduledExecutor(backendExecutor, maxTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger max = new AtomicInteger();
@@ -132,7 +134,7 @@ public class BoundedScheduledExecutorTest extends TestCase {
   public void testStressWhenSomeTasksCallOtherTasksGet() throws ExecutionException, InterruptedException {
     ExecutorService backendExecutor = AppExecutorUtil.getAppExecutorService();
     for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20; maxSimultaneousTasks++) {
-      System.out.println("maxSimultaneousTasks = " + maxSimultaneousTasks);
+      LOG.debug("maxSimultaneousTasks = " + maxSimultaneousTasks);
       BoundedScheduledExecutorService executor = createBoundedScheduledExecutor(backendExecutor, maxSimultaneousTasks);
       AtomicInteger running = new AtomicInteger();
       AtomicInteger maxThreads = new AtomicInteger();

@@ -16,9 +16,13 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.tree.IElementType;
@@ -27,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +49,11 @@ public class TypeEvaluator {
   private final HashMap<TypeMigrationUsageInfo, LinkedList<PsiType>> myTypeMap;
   private final TypeMigrationRules myRules;
   private final TypeMigrationLabeler myLabeler;
+  private final ProjectFileIndex myProjectFileIndex;
 
-  public TypeEvaluator(final LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types, final TypeMigrationLabeler labeler) {
+  public TypeEvaluator(LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> types,
+                       TypeMigrationLabeler labeler,
+                       Project project) {
     myLabeler = labeler;
     myRules = labeler == null ? new TypeMigrationRules() : labeler.getRules();
     myTypeMap = new HashMap<>();
@@ -62,6 +68,7 @@ public class TypeEvaluator {
       }
     }
 
+    myProjectFileIndex =  ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   public boolean setType(final TypeMigrationUsageInfo usageInfo, @NotNull PsiType type) {
@@ -99,6 +106,11 @@ public class TypeEvaluator {
 
   @Nullable
   public PsiType getType(PsiElement element) {
+    VirtualFile file = element.getContainingFile().getVirtualFile();
+    if (file == null || !myProjectFileIndex.isInContent(file)) {
+      return TypeMigrationLabeler.getElementType(element);
+    }
+
     for (Map.Entry<TypeMigrationUsageInfo, LinkedList<PsiType>> entry : myTypeMap.entrySet()) {
       if (Comparing.equal(element, entry.getKey().getElement())) {
         return entry.getValue().getFirst();

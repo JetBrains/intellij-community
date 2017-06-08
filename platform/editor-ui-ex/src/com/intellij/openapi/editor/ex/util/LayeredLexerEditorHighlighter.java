@@ -167,12 +167,14 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   protected boolean updateLayers() { return false; }
+  
+  protected boolean updateLayers(@NotNull DocumentEvent e) { return updateLayers(); }
 
   @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
   @Override
   public void documentChanged(DocumentEvent e) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    boolean changed = updateLayers();
+    boolean changed = updateLayers(e);
 
     //noinspection SynchronizeOnThis
     synchronized (this) {

@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -60,7 +61,8 @@ public class CreateSubclassTest extends MultiFileTestCase {
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
         PsiDirectory root = myPsiManager.findDirectory(rootDir);
         PsiClass superClass = myJavaFacade.findClass("Superclass", ProjectScope.getAllScope(myProject));
-        CreateSubclassAction.createSubclass(superClass, root, "Subclass");
+        ApplicationManager.getApplication().invokeLater(
+          () -> CreateSubclassAction.createSubclass(superClass, root, "Subclass"));
         UIUtil.dispatchAllInvocationEvents();
       }
     });

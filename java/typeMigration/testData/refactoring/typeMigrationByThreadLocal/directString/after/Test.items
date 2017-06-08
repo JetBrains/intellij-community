@@ -4,8 +4,14 @@ PsiReferenceExpression:myS : java.lang.ThreadLocal<java.lang.String>
 PsiReferenceExpression:myS : java.lang.ThreadLocal<java.lang.String>
 
 Conversions:
+"" -> new java.lang.ThreadLocal<java.lang.String>() {
+@Override
+protected java.lang.String initialValue() {
+  return "";
+}
+} $qualifier$ ""
+myS -> $qualifier$.get() $qualifier$ myS
 myS -> $qualifier$.get() $qualifier$ myS
 
 New expression type changes:
 Fails:
-""->java.lang.ThreadLocal<java.lang.String>

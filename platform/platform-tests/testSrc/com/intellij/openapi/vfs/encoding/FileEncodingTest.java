@@ -118,37 +118,37 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     String text = getDocument(xml).getText();
 
     if (!expected.equals(text)) {
-      System.out.print("expected = ");
+      System.err.print("expected = ");
       for (int i=0; i<50;i++) {
         final char c = expected.charAt(i);
-        System.out.print(Integer.toHexString((int)c)+", ");
+        System.err.print(Integer.toHexString((int)c)+", ");
       }
-      System.out.println("");
-      System.out.print("expected bytes = ");
+      System.err.println("");
+      System.err.print("expected bytes = ");
       byte[] expectedBytes = FileUtil.loadFileBytes(new File(xml.getPath()));
       for (int i=0; i<50;i++) {
         final byte c = expectedBytes[i];
-        System.out.print(Integer.toHexString((int)c) + ", ");
+        System.err.print(Integer.toHexString((int)c) + ", ");
       }
-      System.out.println("");
+      System.err.println("");
 
-      System.out.print("text = ");
+      System.err.print("text = ");
       for (int i=0; i<50;i++) {
         final char c = text.charAt(i);
-        System.out.print(Integer.toHexString((int)c)+", ");
+        System.err.print(Integer.toHexString((int)c)+", ");
       }
-      System.out.println("");
-      System.out.print("text bytes = ");
+      System.err.println("");
+      System.err.print("text bytes = ");
       byte[] textBytes = xml.contentsToByteArray();
       for (int i=0; i<50;i++) {
         final byte c = textBytes[i];
-        System.out.print(Integer.toHexString((int)c) + ", ");
+        System.err.print(Integer.toHexString((int)c) + ", ");
       }
-      System.out.println("");
+      System.err.println("");
       String charsetFromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(xml.contentsToByteArray());
-      System.out.println("charsetFromProlog = " + charsetFromProlog);
+      System.err.println("charsetFromProlog = " + charsetFromProlog);
       Charset charset = xml.getCharset();
-      System.out.println("charset = " + charset);
+      System.err.println("charset = " + charset);
     }
     assertEquals(expected, text);
   }

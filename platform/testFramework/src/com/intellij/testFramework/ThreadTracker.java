@@ -38,6 +38,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -151,6 +152,10 @@ public class ThreadTracker {
           continue;
         }
 
+        if (isIdleCommonPoolThread(thread, stackTrace)) {
+          continue;
+        }
+
         @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
         String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
         for (final StackTraceElement stackTraceElement : stackTrace) {
@@ -171,13 +176,23 @@ public class ThreadTracker {
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
-  private static boolean isIdleApplicationPoolThread(Thread thread, StackTraceElement[] stackTrace) {
+  private static boolean isIdleApplicationPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     if (!isWellKnownOffender(thread)) return false;
     boolean insideTPEGetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
                            && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
 
     return insideTPEGetTask;
+  }
+
+  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
+      return false;
+    }
+    boolean insideAwaitWork = Arrays.stream(stackTrace)
+      .anyMatch(element -> element.getMethodName().equals("awaitWork")
+                           && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
+    return insideAwaitWork;
   }
 
   public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Element;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Pattern;
 
 @State(name = "IntentionManagerSettings", storages = @Storage("intentionSettings.xml"))
@@ -149,12 +151,14 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     myMetaData.put(key, metaData);
   }
 
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("loader", 1);
+  
   private static synchronized void processMetaData(@NotNull final IntentionActionMetaData metaData) {
     final Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
     final TextDescriptor description = metaData.getDescription();
-    app.executeOnPooledThread(() -> {
+    ourExecutor.execute(() -> {
       try {
         SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
         if (registrar == null) return;

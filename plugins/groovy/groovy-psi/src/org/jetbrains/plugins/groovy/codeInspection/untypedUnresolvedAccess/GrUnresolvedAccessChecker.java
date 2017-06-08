@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -389,7 +390,7 @@ public class GrUnresolvedAccessChecker {
   @NotNull
   private static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
     GroovyResolveResult[] results = ref.multiResolve(false);
-    if (results.length == 0) return GroovyResolveResult.EMPTY_RESULT;
+    if (results.length == 0) return EmptyGroovyResolveResult.INSTANCE;
     if (results.length == 1) return results[0];
 
     for (GroovyResolveResult result : results) {

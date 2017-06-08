@@ -480,7 +480,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
       fail("Copying a file into a '.' path should have failed");
     }
     catch (IOException e) {
-      System.out.println(e.getMessage());
+      e.printStackTrace();
     }
 
     topDir.refresh(false, true);

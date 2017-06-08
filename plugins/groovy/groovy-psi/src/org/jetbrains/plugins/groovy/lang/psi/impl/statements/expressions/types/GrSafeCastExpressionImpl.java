@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import java.util.HashMap;
 /**
  * @author ven
  */
-public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafeCastExpression, PsiPolyVariantReference {
+public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafeCastExpression {
 
   private static final Function<GrSafeCastExpressionImpl, PsiType> TYPE_CALCULATOR =
     (NullableFunction<GrSafeCastExpressionImpl, PsiType>)cast -> {

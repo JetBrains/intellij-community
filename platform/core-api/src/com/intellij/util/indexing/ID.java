@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class ID<K, V> extends IndexId<K,V> {
     myUniqueId = stringToId(name);
 
     final ID old = ourRegistry.put(myUniqueId, this);
-    assert old == null;
+    assert old == null : "ID with name '" + name + "' is already registered";
   }
 
   private static short stringToId(String name) {

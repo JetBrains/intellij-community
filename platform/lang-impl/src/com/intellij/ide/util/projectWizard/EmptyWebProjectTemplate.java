@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ProjectGeneratorPeer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,14 +40,14 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
   }
 
   @Override
-  public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Object settings, @NotNull Module module) {
+  public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @Nullable Object settings, @NotNull Module module) {
     //ignore
   }
 
   @NotNull
   @Override
-  public GeneratorPeer<Object> createPeer() {
-    return new GeneratorPeer<Object>() {
+  public ProjectGeneratorPeer<Object> createPeer() {
+    return new ProjectGeneratorPeer<Object>() {
       @NotNull
       @Override
       public JComponent getComponent() {

@@ -37,7 +37,7 @@ public class JavaOverrideMethodsSearchTest extends LightCodeInsightFixtureTestCa
     final PsiMethod method = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethod.class);
     assertNotNull(method);
     final PsiMethod superMethod = method.findDeepestSuperMethods()[0];
-    PlatformTestUtil.startPerformanceTest("Only local scope should be processed", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("search in local scope", 100, () -> {
       final Collection<PsiMethod> all = OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll();
       assertTrue(all.size() == 1);
     }).useLegacyScaling().attempts(1).assertTiming();

@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
@@ -182,7 +182,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
         else {
           substitutorComputer = () -> myPropertySubstitutorComputer.getValue().obtainSubstitutor(substitutor, method, resolveContext);
         }
-        candidate = new GroovyMethodResult(
+        candidate = new GroovyMethodResultImpl(
           method, resolveContext, spreadState,
           substitutor, substitutorComputer,
           kind == GroovyResolveKind.PROPERTY,

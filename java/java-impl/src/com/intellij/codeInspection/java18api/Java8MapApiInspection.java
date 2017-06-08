@@ -52,6 +52,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
   public boolean mySuggestMapPutIfAbsent = true;
   public boolean mySuggestMapMerge = true;
   public boolean myTreatGetNullAsContainsKey = false;
+  public boolean mySideEffects = false;
 
   @Nullable
   @Override
@@ -62,6 +63,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
     panel.addCheckbox("Suggest conversion to Map.putIfAbsent", "mySuggestMapPutIfAbsent");
     panel.addCheckbox("Suggest conversion to Map.merge", "mySuggestMapMerge");
     panel.addCheckbox("Treat 'get(k) != null' the same as 'containsKey(k)' (may change semantics)", "myTreatGetNullAsContainsKey");
+    panel.addCheckbox("Suggest replacement even if lambda may have side effects", "mySideEffects");
     return panel;
   }
 
@@ -121,7 +123,9 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
           if (PsiTreeUtil.collectElements(presentValue, e -> PsiEquivalenceUtil.areElementsEquivalent(e, absentValue)).length == 0) {
             return;
           }
-          condition.register(holder, new ReplaceWithSingleMapOperation("merge", PsiTreeUtil
+          boolean informationLevel =
+            !mySideEffects && SideEffectChecker.mayHaveSideEffects(presentValue, ex -> condition.extractGetCall(ex) != null);
+          condition.register(holder, informationLevel, new ReplaceWithSingleMapOperation("merge", PsiTreeUtil
             .getParentOfType(absentValue, PsiMethodCallExpression.class), presentValue, noneBranch));
         }
       }
@@ -139,11 +143,11 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
             condition.isMap(putCall.getMethodExpression().getQualifierExpression())) {
           PsiExpression[] putArgs = putCall.getArgumentList().getExpressions();
           if (putArgs.length != 2 || !condition.isKey(putArgs[0]) || !ExpressionUtils.isSimpleExpression(putArgs[1])) return;
-          condition.register(holder, new ReplaceWithSingleMapOperation("putIfAbsent", getCall, putArgs[1], result));
+          condition.register(holder, false, new ReplaceWithSingleMapOperation("putIfAbsent", getCall, putArgs[1], result));
         }
         if (mySuggestMapGetOrDefault && condition.isContainsKey() && ExpressionUtils.isSimpleExpression(noneExpression) &&
           condition.isMapValueType(noneExpression.getType())) {
-          condition.register(holder, new ReplaceWithSingleMapOperation("getOrDefault", getCall, noneExpression, result));
+          condition.register(holder, false, new ReplaceWithSingleMapOperation("getOrDefault", getCall, noneExpression, result));
         }
       }
 
@@ -159,7 +163,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
           PsiExpression rValue = assignment.getRExpression();
           if (ExpressionUtils.isSimpleExpression(rValue) && condition.isValueReference(assignment.getLExpression()) &&
               !condition.isValueReference(rValue) && condition.isMapValueType(rValue.getType())) {
-            condition.register(holder, ReplaceWithSingleMapOperation.fromIf("getOrDefault", condition, rValue));
+            condition.register(holder, false, ReplaceWithSingleMapOperation.fromIf("getOrDefault", condition, rValue));
           }
         } else if (condition.isGetNull()) {
           /*
@@ -171,25 +175,30 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
            */
           PsiExpression lambdaCandidate = extractLambdaCandidate(condition, noneBranch);
           if (lambdaCandidate != null && mySuggestMapComputeIfAbsent) {
-            condition.register(holder, ReplaceWithSingleMapOperation.fromIf("computeIfAbsent", condition, lambdaCandidate));
+            boolean informationLevel = !mySideEffects && SideEffectChecker.mayHaveSideEffects(lambdaCandidate);
+            condition
+              .register(holder, informationLevel, ReplaceWithSingleMapOperation.fromIf("computeIfAbsent", condition, lambdaCandidate));
           }
           if (lambdaCandidate == null) {
             PsiExpression expression = extractPutValue(condition, noneBranch);
             if(expression != null) {
               String replacement = null;
+              boolean informationLevel = false;
               if (mySuggestMapPutIfAbsent && ExpressionUtils.isSimpleExpression(expression) && !condition.isValueReference(expression)) {
                 replacement = "putIfAbsent";
               }
               else if (mySuggestMapComputeIfAbsent && !condition.hasVariable()) {
+                informationLevel = !mySideEffects && SideEffectChecker.mayHaveSideEffects(expression);
                 replacement = "computeIfAbsent";
               }
               if(replacement != null) {
                 if(condition.hasVariable()) {
-                  condition.register(holder, ReplaceWithSingleMapOperation.fromIf(replacement, condition, expression));
+                  condition.register(holder, informationLevel, ReplaceWithSingleMapOperation.fromIf(replacement, condition, expression));
                 } else {
                   PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
                   LOG.assertTrue(call != null);
-                  condition.register(holder, new ReplaceWithSingleMapOperation(replacement, call, expression, noneBranch));
+                  condition
+                    .register(holder, informationLevel, new ReplaceWithSingleMapOperation(replacement, call, expression, noneBranch));
                 }
               }
             }
@@ -554,9 +563,10 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
       return myFullCondition;
     }
 
-    public void register(ProblemsHolder holder, ReplaceWithSingleMapOperation fix) {
+    public void register(ProblemsHolder holder, boolean informationLevel, ReplaceWithSingleMapOperation fix) {
       //noinspection DialogTitleCapitalization
-      holder.registerProblem(getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
+      holder.registerProblem(getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName),
+                             informationLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
     }
 
     public boolean isMapValueType(@Nullable PsiType type) {

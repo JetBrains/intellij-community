@@ -114,7 +114,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myProject = project;
     myUpdatedFiles = updatedFiles;
     myRootName = rootName;
-    
+
     myShowOnlyFilteredItems = VcsConfiguration.getInstance(myProject).UPDATE_FILTER_BY_SCOPE;
 
     myFileStatusManager = FileStatusManager.getInstance(myProject);
@@ -358,6 +358,20 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return result.toArray(new File[result.size()]);
   }
 
+  int getFilteredFilesCount() {
+    Pair<PackageSetBase, NamedScopesHolder> scopeFilter = getScopeFilter();
+    int[] result = new int[1];
+    TreeUtil.traverse(myRoot, node -> {
+      if (node instanceof FileTreeNode) {
+        if (((FileTreeNode)node).acceptFilter(scopeFilter, true)) {
+          result[0]++;
+        }
+      }
+      return true;
+    });
+    return result[0];
+  }
+
   public void expandRootChildren() {
     TreeNode root = (TreeNode)myTreeModel.getRoot();
 
@@ -449,7 +463,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Nullable
   private Pair<PackageSetBase, NamedScopesHolder> getScopeFilter() {
-    String scopeName = VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME;
+    String scopeName = getFilterScopeName();
     if (scopeName != null) {
       for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
         NamedScope scope = holder.getScope(scopeName);
@@ -462,6 +476,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private String getFilterScopeName() {
+    return VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME;
+  }
+
+  @Nullable
+  NamedScope getFilterScope() {
+    Pair<PackageSetBase, NamedScopesHolder> filter = getScopeFilter();
+    return filter == null ? null : filter.second.getScope(getFilterScopeName());
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
@@ -483,7 +508,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     public void update(AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!myGroupByChangeList && VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME != null);
+      e.getPresentation().setEnabled(!myGroupByChangeList && getFilterScopeName() != null);
     }
   }
 

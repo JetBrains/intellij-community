@@ -1729,7 +1729,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     options.setToShortenFQN(true);
 
     try {
-      PlatformTestUtil.startPerformanceTest("SSR should work fast", 3500, new ThrowableRunnable() {
+      PlatformTestUtil.startPerformanceTest("SSR", 3500, new ThrowableRunnable() {
                                               public void run() {
                                                 doTest(testName, ext, message);
                                               }

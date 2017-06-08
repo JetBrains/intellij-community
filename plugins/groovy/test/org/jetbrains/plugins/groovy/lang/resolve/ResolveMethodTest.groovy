@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -827,110 +827,7 @@ def test() {
     assertNotNull(ref.resolve())
   }
 
-  void testAutoNewify() {
-   fixture.addClass('''
-class A {
-  String name;
-  public A(){}
-}
-''')
 
-    def resolved = configureByText("""
-@Newify
-class B {
-  def a = A.ne<caret>w()
-}
-""").resolve()
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-@Newify
-class B {
-  def a = A.ne<caret>w(name :"bar")
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-class B {
-  @Newify
-  def a = A.ne<caret>w(name :"bar")
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-class B {
-  @Newify
-  def a (){ return A.ne<caret>w(name :"bar")}
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiMethod)
-
-    def ref = configureByText("""
-class B {
-  @Newify(auto = false)
-  def a (){ return A.ne<caret>w()}
-}
-""")
-    assert ref.resolve() == null
-  }
-
-  void testNewifyByClass() {
-    fixture.addClass('''
-class Aa {
-  String name;
-  public Aa(){}
-}
-''')
-
-    def resolved = configureByText("""
-@Newify(Aa)
-class B {
-  def a = A<caret>a()
-}
-""").resolve()
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-@Newify(Aa)
-class B {
-  def a = A<caret>a(name :"bar")
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-class B {
-  @Newify(Aa)
-  def a = A<caret>a(name :"bar")
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-class B {
-  @Newify(Aa)
-  def a (){ return A<caret>a(name :"bar")}
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiMethod)
-
-    resolved = configureByText("""
-class B {
-  @Newify
-  def a (){ return A<caret>a(name :"bar")}
-}
-""").resolve()
-
-    assertInstanceOf(resolved, PsiClass)
-  }
 
   void testStringInjectionDontOverrideItParameter() {
     def ref = configureByText("""
@@ -2344,7 +2241,7 @@ SourceConcrete.someOtherStatic<caret>Method()
     def results = ref.multiResolve(false)
     assert results.length > 0
     results.each {
-      assert it instanceof GroovyMethodResult
+      assert it instanceof GroovyMethodResultImpl
       def computer = it.substitutorComputer
       assert computer instanceof NotNullCachedComputableWrapper
       assert !computer.computed

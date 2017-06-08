@@ -132,7 +132,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
       protected void run(@NotNull final Result result) {
         List<ArtifactPointer> pointers = task.getArtifactPointers();
         for (ArtifactPointer pointer : pointers) {
-          ContainerUtil.addIfNotNull(pointer.getArtifact(), artifacts);
+          ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
         }
       }
     }.execute();

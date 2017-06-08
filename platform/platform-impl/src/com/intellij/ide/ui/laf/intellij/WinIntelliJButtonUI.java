@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import sun.swing.SwingUtilities2;
@@ -75,7 +76,17 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
       Graphics2D g2 = (Graphics2D)g.create();
       try {
-        g2.translate(0, 0);
+        Rectangle r = new Rectangle(c.getSize());
+        Container parent = c.getParent();
+        if (c.isOpaque() && parent != null) {
+          g2.setColor(parent.getBackground());
+          g2.fill(r);
+        }
+
+        if (isSquare(c)) { // Count insets for square buttons
+          JBInsets.removeFrom(r, c.getInsets());
+        }
+
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
@@ -83,8 +94,8 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
                       c.hasFocus() || bm.isRollover() ? UIManager.getColor("Button.intellij.native.focusedBackgroundColor") :
                       c.getBackground();
 
-        g.setColor(color);
-        g.fillRect(0, 0, c.getWidth(), c.getHeight());
+        g2.setColor(color);
+        g2.fill(r);
 
         paintContents(g2, b);
       } finally {

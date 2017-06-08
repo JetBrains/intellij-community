@@ -1,5 +1,5 @@
 from _pydevd_bundle.pydevd_constants import get_frame
-from _pydev_imps._pydev_saved_modules import thread
+from _pydev_imps._pydev_saved_modules import thread, threading
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -67,11 +67,11 @@ def _internal_set_trace(tracing_func):
         TracingFunctionHolder._original_tracing(tracing_func)
 
 
-def SetTrace(tracing_func, frame_eval_func=None):
+def SetTrace(tracing_func, frame_eval_func=None, dummy_tracing_func=None):
     if tracing_func is not None and frame_eval_func is not None:
         # There is no need to set tracing function if frame evaluation is available
         frame_eval_func()
-        return
+        tracing_func = dummy_tracing_func
 
     if TracingFunctionHolder._original_tracing is None:
         #This may happen before replace_sys_set_trace_func is called.
@@ -97,4 +97,32 @@ def restore_sys_set_trace_func():
         sys.settrace = TracingFunctionHolder._original_tracing
         TracingFunctionHolder._original_tracing = None
 
-    
+def settrace_while_running_if_frame_eval(py_db, trace_func):
+    if not py_db.ready_to_run:
+        # do it if only debug session is started
+        return
+
+    if py_db.frame_eval_func is None:
+        return
+
+    threads = threading.enumerate()
+    try:
+        for t in threads:
+            if getattr(t, 'is_pydev_daemon_thread', False):
+                continue
+            additional_info = None
+            try:
+                additional_info = t.additional_info
+            except AttributeError:
+                pass  # that's ok, no info currently set
+            if additional_info is None:
+                continue
+
+            for frame in additional_info.iter_frames(t):
+                py_db.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=trace_func)
+            py_db.enable_cache_frames_without_breaks(False)
+            # sometimes (when script enters new frames too fast), we can't enable tracing only in the appropriate
+            # frame. So, if breakpoint was added during run, we should disable frame evaluation forever.
+            py_db.do_not_use_frame_eval = True
+    except:
+        traceback.print_exc()

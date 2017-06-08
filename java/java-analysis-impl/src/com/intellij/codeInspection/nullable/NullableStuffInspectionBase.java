@@ -180,13 +180,13 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         if (element instanceof PsiClass) {
           PsiTypeParameter[] typeParameters = ((PsiClass)element).getTypeParameters();
           PsiTypeElement[] typeArguments = getReferenceTypeArguments(reference);
-          if (typeParameters.length > 0 && typeParameters.length == typeArguments.length) {
+          if (typeParameters.length > 0 && typeParameters.length == typeArguments.length && !(typeArguments[0].getType() instanceof PsiDiamondType)) {
             for (int i = 0; i < typeParameters.length; i++) {
-              if (isNullityConflict(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i]), typeArguments[i].getType())) {
+              if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i])) ==
+                  Nullness.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArguments[i].getType()) != Nullness.NOT_NULL) {
                 holder.registerProblem(typeArguments[i],
-                                       "Nullable type argument where non-null one is expected",
+                                       "Non-null type argument is expected",
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-                
               }
             }
           }
@@ -302,7 +302,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     if (isNullableOverridingNotNull(check(targetMethod, holder, expression.getType()), superMethod)) {
       holder.registerProblem(refName,
                              InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull",
-                                                       getPresentableAnnoName((PsiMethod)targetMethod), getPresentableAnnoName(superMethod)),
+                                                       getPresentableAnnoName(targetMethod), getPresentableAnnoName(superMethod)),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
     else if (isNonAnnotatedOverridingNotNull(targetMethod, superMethod)) {

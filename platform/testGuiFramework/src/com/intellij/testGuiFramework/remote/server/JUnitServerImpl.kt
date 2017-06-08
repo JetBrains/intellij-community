@@ -158,6 +158,10 @@ class JUnitServerImpl: JUnitServer {
       catch(e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
+      catch (e: Exception) {
+        if (e is InvalidClassException) LOG.error("Probably client is down:", e)
+        failHandler?.invoke(e)
+      }
       finally {
         objectOutputStream.close()
       }

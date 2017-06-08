@@ -325,10 +325,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
                                       @NotNull Disposable parentDisposable) {
     final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : layoutDataRef.get();
     if (layoutData.groupId == null) {
-      if (NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldLog()) {
-        layoutData.groupId = notification.getGroupId();
-        layoutData.id = notification.id;
-      }
+      layoutData.groupId = notification.getGroupId();
+      layoutData.id = notification.id;
     }
     else {
       layoutData.groupId = null;

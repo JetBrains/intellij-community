@@ -85,7 +85,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   @Override
   public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     int len = dataStream.readVarInt();
-    String[] names = new String[len];
+    String[] names = ArrayUtil.newStringArray(len);
     for (int i = 0; i < names.length; i++) {
       names[i] = StringRef.toString(dataStream.readName());
     }

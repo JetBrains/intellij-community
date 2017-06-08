@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.IdentityCharTable;
+import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
@@ -228,6 +228,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
   private static class FileNode<N> extends TraverserBasedASTNode<N> implements FileASTNode {
     private final PsiFile myPsiFile;
+    private final CharTableImpl myCharTable = new CharTableImpl();
 
     FileNode(@NotNull SyntaxTraverser<N> traverser, @NotNull N node, @NotNull PsiFile psiFile) {
       super(node, -1, null, traverser);
@@ -243,7 +244,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
     @NotNull
     @Override
     public CharTable getCharTable() {
-      return IdentityCharTable.INSTANCE;
+      return myCharTable;
     }
 
     @Override

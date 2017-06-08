@@ -12,10 +12,9 @@
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
-    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"/>
-    <action id="AnnotateDiffViewer" class="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction" use-shortcut-of="Annotate">
+    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction">
       <add-to-group group-id="Diff.EditorPopupMenu"/>
-      <add-to-group group-id="Diff.EditorGutterPopupMenu"/>
+      <add-to-group group-id="Diff.EditorGutterPopupMenu" anchor="first"/>
     </action>
     <action id="Show.Current.Revision" class="com.intellij.openapi.vcs.actions.ShowBaseRevisionAction" text="Show Current Revision"/>
     <action id="Compare.SameVersion" class="com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction" icon="AllIcons.Actions.Diff"/>
@@ -127,7 +126,7 @@
       <reference ref="ChangesView.SetDefault"/>
       <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
       <reference ref="ChangesView.CreatePatch"/>
-      <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.patch.CreatePatchToClipboardAction"/>
+      <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard"/>
       <reference ref="ChangesView.Shelve"/>
       <separator/>
       <reference ref="ChangesView.Refresh"/>
@@ -150,7 +149,7 @@
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
-      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
+      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Dialog"
               icon="AllIcons.Vcs.Patch"/>
       <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
       <separator/>

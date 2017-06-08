@@ -48,7 +48,7 @@ public class ChainSearcher {
       if (methods == null) {
         methods = currentMethods;
       } else {
-        methods.addAll(currentMethods);
+        methods = unionSortedSet(currentMethods, methods);
       }
     }
     return new SearchInitializer(methods, context);
@@ -168,5 +168,14 @@ public class ChainSearcher {
     if (doAdd) {
       result.add(newChain);
     }
+  }
+
+  private static <T> SortedSet<T> unionSortedSet(SortedSet<T> s1, SortedSet<T> s2) {
+    if (s1.isEmpty()) return s2;
+    if (s2.isEmpty()) return s1;
+    TreeSet<T> result = new TreeSet<>();
+    result.addAll(s1);
+    result.addAll(s2);
+    return result;
   }
 }

@@ -118,6 +118,56 @@ java.lang.Thread.run() Thread.java:745
     assert threads.collect { it.daemon } == [false, true, false]
     assert threads.collect { it.stackTrace.readLines().size() } == [2, 2, 5] // thread name is included into stack trace
   }
+  
+  void "test YourKit 2017 format"() {
+    def text = '''
+Stacks at 2017-06-08 12:56:31 PM. Uptime is 23m 47s 200ms.
+
+thread 23 State: RUNNABLE CPU usage on sample: 968ms
+com.intellij.openapi.util.io.win32.IdeaWin32.listChildren0(String) IdeaWin32.java (native)
+com.intellij.openapi.util.io.win32.IdeaWin32.listChildren(String) IdeaWin32.java:136
+com.intellij.openapi.vfs.impl.win32.Win32FsCache.list(VirtualFile) Win32FsCache.java:58
+com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem.list(VirtualFile) Win32LocalFileSystem.java:57
+com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker.partialDirRefresh(NewVirtualFileSystem, TObjectHashingStrategy, VirtualDirectoryImpl) RefreshWorker.java:272
+com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker.processQueue(NewVirtualFileSystem, PersistentFS) RefreshWorker.java:124
+com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker.scan() RefreshWorker.java:85
+com.intellij.openapi.vfs.newvfs.RefreshSessionImpl.scan() RefreshSessionImpl.java:147
+com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.doScan(RefreshSessionImpl) RefreshQueueImpl.java:91
+com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.lambda$queueSession$1(RefreshSessionImpl, TransactionId, ModalityState) RefreshQueueImpl.java:74
+com.intellij.openapi.vfs.newvfs.RefreshQueueImpl$$Lambda$242.run()
+java.util.concurrent.Executors$RunnableAdapter.call() Executors.java:511
+java.util.concurrent.FutureTask.run() FutureTask.java:266
+com.intellij.util.concurrency.BoundedTaskExecutor$2.run() BoundedTaskExecutor.java:212
+java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1142
+java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+java.lang.Thread.run() Thread.java:745
+
+thread 24 State: WAITING CPU usage on sample: 0ms
+sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+java.util.concurrent.ThreadPoolExecutor.getTask() ThreadPoolExecutor.java:1066
+java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1127
+java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+java.lang.Thread.run() Thread.java:745
+
+thread 25 State: WAITING CPU usage on sample: 0ms
+sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+
+Swing-Shell [DAEMON] State: WAITING CPU usage on sample: 0ms
+sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+java.util.concurrent.locks.LockSupport.park(Object) LockSupport.java:175
+''' 
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['thread 23', 'thread 24', 'thread 25', 'Swing-Shell']
+    assert threads.collect { it.daemon } == [false, false, false, true]
+  }
 
   void "test log is not a thread dump"() {
     def threads = ThreadDumpParser.parse("""\

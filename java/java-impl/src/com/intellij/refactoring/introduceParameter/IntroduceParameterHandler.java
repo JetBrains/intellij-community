@@ -639,6 +639,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
                                                   final PsiType selectedType,
                                                   final ExtractMethodProcessor processor, 
                                                   final PsiElement[] elements) {
+    if (!elements[0].isValid()) {
+      return;
+    }
     final PsiElement commonParent = findCommonParent(elements);
     if (commonParent == null) {
       LOG.error("Should have common parent:" + Arrays.toString(elements));

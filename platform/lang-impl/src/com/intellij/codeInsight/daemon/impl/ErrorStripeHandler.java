@@ -22,10 +22,10 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class ErrorStripeHandler extends ErrorStripeAdapter {
+class ErrorStripeHandler extends ErrorStripeAdapter {
   private final Project myProject;
 
-  public ErrorStripeHandler(Project project) {
+  ErrorStripeHandler(Project project) {
     myProject = project;
   }
 

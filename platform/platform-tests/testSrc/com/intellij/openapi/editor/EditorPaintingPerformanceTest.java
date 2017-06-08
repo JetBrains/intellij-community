@@ -51,6 +51,6 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
         result[0] += g.getResult();
       }
     }).assertTiming();
-    System.out.println(result[0]);
+    LOG.debug(String.valueOf(result[0]));
   }
 }

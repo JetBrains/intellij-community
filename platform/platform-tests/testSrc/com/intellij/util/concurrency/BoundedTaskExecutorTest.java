@@ -41,6 +41,9 @@ public class BoundedTaskExecutorTest extends TestCase {
   static {
     Logger.setFactory(TestLoggerFactory.class);
   }
+
+  private static final Logger LOG = Logger.getInstance(BoundedTaskExecutorTest.class);
+  
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -77,7 +80,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testReallyBound() throws InterruptedException, ExecutionException {
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
-      System.out.println("maxTasks = " + maxTasks);
+      LOG.debug("maxTasks = " + maxTasks);
       ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("maxTasks = " + maxTasks));
       BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(), backendExecutor, maxTasks);
       AtomicInteger running = new AtomicInteger();
@@ -396,7 +399,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testNoExtraThreadsAreEverCreated() throws ExecutionException, InterruptedException {
     for (int nMaxThreads=1; nMaxThreads<10; nMaxThreads++) {
-      System.out.println("nMaxThreads = " + nMaxThreads);
+      LOG.debug("nMaxThreads = " + nMaxThreads);
       ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),nMaxThreads);
       int N = 1000000;
       Set<Thread> workers = ContainerUtil.newConcurrentSet();
@@ -460,7 +463,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testAwaitTerminationDoesWait() throws InterruptedException {
     for (int maxTasks=1; maxTasks<10; maxTasks++) {
-      System.out.println("maxTasks = " + maxTasks);
+      LOG.debug("maxTasks = " + maxTasks);
       ExecutorService executor = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, maxTasks);
       int N = 1000;
       StringBuffer log = new StringBuffer(N*4);

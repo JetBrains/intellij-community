@@ -1256,6 +1256,9 @@ public class HighlightUtil extends HighlightUtilBase {
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.BOOLEAN, true));
           }
         }
+        else if (expr instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)expr).getOperationTokenType() == JavaTokenType.EQ) {
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAssignmentToComparisonFix((PsiAssignmentExpression)expr));
+        }
         return info;
       }
     }
@@ -1414,7 +1417,13 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       
       String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+      HighlightInfo error =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+      if (statement instanceof PsiExpressionStatement) {
+        QuickFixAction
+          .registerQuickFixAction(error, QuickFixFactory.getInstance().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
+      }
+      return error;
     }
     return null;
   }

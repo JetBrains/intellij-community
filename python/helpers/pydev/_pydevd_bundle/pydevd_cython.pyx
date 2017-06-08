@@ -9,7 +9,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 3
+version = 5
 
 if not hasattr(sys, '_current_frames'):
 
@@ -162,6 +162,51 @@ DEBUG_START = ('pydevd.py', 'run')
 DEBUG_START_PY3K = ('_pydev_execfile.py', 'execfile')
 TRACE_PROPERTY = 'pydevd_traceproperty.py'
 get_file_type = DONT_TRACE.get
+
+
+def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
+    condition = breakpoint.condition
+    try:
+        return eval(condition, new_frame.f_globals, new_frame.f_locals)
+
+    except:
+        if type(condition) != type(''):
+            if hasattr(condition, 'encode'):
+                condition = condition.encode('utf-8')
+
+        msg = 'Error while evaluating expression: %s\n' % (condition,)
+        sys.stderr.write(msg)
+        traceback.print_exc()
+        if not py_db.suspend_on_breakpoint_exception:
+            return False
+        else:
+            stop = True
+            try:
+                # add exception_type and stacktrace into thread additional info
+                etype, value, tb = sys.exc_info()
+                try:
+                    error = ''.join(traceback.format_exception_only(etype, value))
+                    stack = traceback.extract_stack(f=tb.tb_frame.f_back)
+
+                    # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
+                    # sent to the client.
+                    info.conditional_breakpoint_exception = \
+                        ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
+                finally:
+                    etype, value, tb = None, None, None
+            except:
+                traceback.print_exc()
+
+
+def handle_breakpoint_expression(breakpoint, info, new_frame):
+    try:
+        try:
+            val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
+        except:
+            val = sys.exc_info()[1]
+    finally:
+        if val is not None:
+            info.pydev_message = str(val)
 
 
 #=======================================================================================================================
@@ -557,16 +602,6 @@ cdef class PyDBFrame:
                             # trace function for showing return values after step over
                             can_skip = False
 
-                if main_debugger.frame_eval_func and event == 'return' and info.pydev_step_cmd == -1:
-                    frames_set = main_debugger.disable_tracing_after_exit_frames.get(get_thread_id(thread), None)
-                    if frames_set is not None:
-                        if frame in frames_set:
-                            frames_set.remove(frame)
-                        if len(frames_set) == 0:
-                            # there were some frames, but we exited all of them, stop tracing
-                            main_debugger.disable_tracing_after_exit_frames.pop(get_thread_id(thread))
-                            main_debugger.SetTrace(None)
-
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
                 # also, after we hit a breakpoint and go to some other debugging state, we have to force the set trace anyway,
@@ -654,48 +689,12 @@ cdef class PyDBFrame:
                     if stop or exist_result:
                         condition = breakpoint.condition
                         if condition is not None:
-                            try:
-                                val = eval(condition, new_frame.f_globals, new_frame.f_locals)
-                                if not val:
-                                    return self.trace_dispatch
-
-                            except:
-                                if type(condition) != type(''):
-                                    if hasattr(condition, 'encode'):
-                                        condition = condition.encode('utf-8')
-
-                                msg = 'Error while evaluating expression: %s\n' % (condition,)
-                                sys.stderr.write(msg)
-                                traceback.print_exc()
-                                if not main_debugger.suspend_on_breakpoint_exception:
-                                    return self.trace_dispatch
-                                else:
-                                    stop = True
-                                    try:
-                                        # add exception_type and stacktrace into thread additional info
-                                        etype, value, tb = sys.exc_info()
-                                        try:
-                                            error = ''.join(traceback.format_exception_only(etype, value))
-                                            stack = traceback.extract_stack(f=tb.tb_frame.f_back)
-
-                                            # On self.set_suspend(thread, CMD_SET_BREAK) this info will be
-                                            # sent to the client.
-                                            info.conditional_breakpoint_exception = \
-                                                ('Condition:\n' + condition + '\n\nError:\n' + error, stack)
-                                        finally:
-                                            etype, value, tb = None, None, None
-                                    except:
-                                        traceback.print_exc()
+                            eval_result = handle_breakpoint_condition(main_debugger, info, breakpoint, new_frame)
+                            if not eval_result:
+                                return self.trace_dispatch
 
                         if breakpoint.expression is not None:
-                            try:
-                                try:
-                                    val = eval(breakpoint.expression, new_frame.f_globals, new_frame.f_locals)
-                                except:
-                                    val = sys.exc_info()[1]
-                            finally:
-                                if val is not None:
-                                    info.pydev_message = str(val)
+                            handle_breakpoint_expression(breakpoint, info, new_frame)
 
                         if not main_debugger.first_breakpoint_reached:
                             if is_call:
@@ -833,7 +832,7 @@ cdef class PyDBFrame:
                 else:
                     stop = False
 
-                if step_cmd != -1 and is_return and IS_PY3K and hasattr(frame, "f_back"):
+                if stop and step_cmd != -1 and is_return and IS_PY3K and hasattr(frame, "f_back"):
                     f_code = getattr(frame.f_back, 'f_code', None)
                     if f_code is not None:
                         back_filename = os.path.basename(f_code.co_filename)

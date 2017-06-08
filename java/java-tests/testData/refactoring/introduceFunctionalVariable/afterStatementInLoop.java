@@ -1,14 +1,10 @@
 import java.util.function.Consumer;
 
 class Test {
-  void foo(String s) {
+    void foo(String s) {
     if (true) {
-        Consumer<String> stringConsumer = new Consumer<String>() {
-            public void accept(String s) {
-                System.out.println("Hello, world " + s);
-            }
-        };
+        Consumer<String> stringConsumer = s1 -> System.out.println("Hello, world " + s1);
         stringConsumer.accept(s);
     }
-  }
+    }
 }

@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
@@ -49,12 +50,13 @@ import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static com.intellij.openapi.util.text.StringUtil.toLowerCase;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -416,25 +418,50 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       });
     }
 
-    private String prepareNotificationWithUpdateInfo() {
-      StringBuffer text = new StringBuffer();
-      final List<FileGroup> groups = myUpdatedFiles.getTopLevelGroups();
-      for (FileGroup group : groups) {
-        appendGroup(text, group);
+    @NotNull
+    private Notification prepareNotification(@NotNull UpdateInfoTree tree, boolean someSessionWasCancelled) {
+      int allFiles = getUpdatedFilesCount();
+
+      String title;
+      String content;
+      NotificationType type;
+      if (someSessionWasCancelled) {
+        title = "Project Partially Updated";
+        content = allFiles + " " + pluralize("file", allFiles) + " updated";
+        type = NotificationType.WARNING;
       }
-      return text.toString();
+      else {
+        title = allFiles + " Project " + pluralize("File", allFiles) + " Updated";
+        content = notNullize(prepareScopeUpdatedText(tree));
+        type = NotificationType.INFORMATION;
+      }
+
+      return STANDARD_NOTIFICATION.createNotification(title, content, type, null);
     }
 
-    private void appendGroup(final StringBuffer text, final FileGroup group) {
-      final int s = group.getFiles().size();
-      if (s > 0) {
-        text.append(s).append(" ").append(pluralize("File", s)).append(" ").append(toLowerCase(group.getUpdateName())).append("<br/>");
-      }
+    private int getUpdatedFilesCount() {
+      return myUpdatedFiles.getTopLevelGroups().stream().mapToInt(this::getFilesCount).sum();
+    }
 
-      final List<FileGroup> list = group.getChildren();
-      for (FileGroup g : list) {
-        appendGroup(text, g);
+    private int getFilesCount(@NotNull FileGroup group) {
+      return group.getFiles().size() + group.getChildren().stream().mapToInt(g -> getFilesCount(g)).sum();
+    }
+
+    @Nullable
+    private String prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
+      String scopeText = null;
+      NamedScope scopeFilter = tree.getFilterScope();
+      if (scopeFilter != null) {
+        int filteredFiles = tree.getFilteredFilesCount();
+        String filterName = scopeFilter.getName();
+        if (filteredFiles == 0) {
+          scopeText = filterName + " wasn't modified";
+        }
+        else {
+          scopeText = filteredFiles + " in " + filterName;
+        }
       }
+      return scopeText;
     }
 
     @Override
@@ -523,18 +550,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
           cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
-          NotificationType type;
-          String title;
-          if (someSessionWasCancelled) {
-            title = "Project Partially Updated";
-            type = NotificationType.WARNING;
-          }
-          else {
-            title = "Project Updated";
-            type = NotificationType.INFORMATION;
-          }
-          
-          Notification notification = STANDARD_NOTIFICATION.createNotification(title, prepareNotificationWithUpdateInfo(), type, null);
+          Notification notification = prepareNotification(tree, someSessionWasCancelled);
           notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View"));
           VcsNotifier.getInstance(myProject).notify(notification);
         }
@@ -553,6 +569,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }, null, myProject);
     }
+
 
     private void showContextInterruptedError() {
       gatherContextInterruptedMessages();

@@ -19,6 +19,7 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.java.stubs.impl.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
@@ -86,7 +87,8 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
       @Override
       public void visitProvide(String service, String... providers) {
         PsiProvidesStatementStubImpl statementStub = new PsiProvidesStatementStubImpl(myResult, NAME_MAPPER.fun(service));
-        new PsiClassReferenceListStubImpl(PROVIDES_WITH_LIST, statementStub, map2Array(providers, String.class, NAME_MAPPER));
+        String[] names = map2Array(providers, String.class, NAME_MAPPER);
+        new PsiClassReferenceListStubImpl(PROVIDES_WITH_LIST, statementStub, names.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : names);
       }
     };
   }

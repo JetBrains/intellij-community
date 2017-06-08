@@ -143,7 +143,9 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
       }
     );
 
-    return new TableView<>(model);
+    final TableView<NestingRule> table = new TableView<>(model);
+    table.setRowHeight(new JTextField().getPreferredSize().height + table.getRowMargin());
+    return table;
   }
 
 

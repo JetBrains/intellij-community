@@ -37,10 +37,6 @@ public class SimpleModificationTracker implements ModificationTracker {
   }
 
   public void incModificationCount() {
-    incAndGetModificationCount();
-  }
-
-  public long incAndGetModificationCount() {
-    return UPDATER.incrementAndGet(this);
+    UPDATER.incrementAndGet(this);
   }
 }

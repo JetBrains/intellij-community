@@ -45,6 +45,12 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
   
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
+    if (address.isUnresolved) {
+      val error = "Host ${address.hostString} is unresolved"
+      setState(ConnectionStatus.CONNECTION_FAILED, error)
+      return rejectedPromise(error)
+    }
+
     this.address = address
     @Suppress("DEPRECATION")
     port = address.port
