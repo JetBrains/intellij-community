@@ -49,7 +49,9 @@ public final class TypeEvalContextBasedCache<T> {
   }
 
   /**
-   * Returns value (executes provider to obtain new if no any and stores it in cache)
+   * Returns value (executes provider to obtain new if no any and stores it in cache).
+   * It is better to run this method under read action to make sure PSI not modified in the middle of its execution
+   *
    * @param context to be used as key
    * @return value
    */
@@ -57,11 +59,17 @@ public final class TypeEvalContextBasedCache<T> {
   public T getValue(@NotNull final TypeEvalContext context) {
 
     // map is thread safe but not atomic nor getValue() is, so in worst case several threads may produce same result
-    // but explicit synchronization is also slow and may lead to deadlocks like in PY-24300
+    // myProvider.fun should never be launched under lock to prevent deadlocks like PY-24300 and PY-24625
+    // both explicit locking and computeIfAbsent leads to deadlock
     final ConcurrentMap<TypeEvalConstraints, T> map = myCachedMapStorage.getValue();
     final TypeEvalConstraints key = context.getConstraints();
-    map.computeIfAbsent(key, o -> myProvider.fun(context));
-    return map.get(key);
+    final T value = map.get(key);
+    if (value != null) {
+      return value;
+    }
+    final T newValue = myProvider.fun(context);
+    map.put(key, newValue); // ConcurrentMap guarantees happens-before so from this moment get() should work in other threads
+    return newValue;
   }
 
   /**
