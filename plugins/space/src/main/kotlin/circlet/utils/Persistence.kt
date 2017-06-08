@@ -3,6 +3,7 @@ package circlet.utils
 import circlet.*
 import com.intellij.ide.passwordSafe.*
 import com.intellij.openapi.project.*
+import runtime.*
 
 object IdeaPersistence : Persistence {
     suspend override fun put(key: String, value: String): String {
