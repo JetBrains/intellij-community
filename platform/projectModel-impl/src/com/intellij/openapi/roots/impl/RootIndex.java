@@ -20,9 +20,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileNameMatcherEx;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
-import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -264,6 +264,7 @@ public class RootIndex {
     private static class Node {
       Module myKey;
       List<Edge> myEdges = new ArrayList<>();
+      Set<String> myUnloadedDependentModules;
 
       @Override
       public String toString() {
@@ -281,6 +282,7 @@ public class RootIndex {
     Graph myGraph;
     MultiMap<VirtualFile, Node> myRoots; // Map of roots to their root nodes, eg. library jar -> library node
     final SynchronizedSLRUCache<VirtualFile, List<OrderEntry>> myCache;
+    final SynchronizedSLRUCache<Module, Set<String>> myDependentUnloadedModulesCache;
     private MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
     private MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
@@ -296,6 +298,14 @@ public class RootIndex {
           return collectOrderEntries(key);
         }
       };
+      int dependentUnloadedModulesCacheSize = ModuleManager.getInstance(project).getModules().length / 2;
+      myDependentUnloadedModulesCache = new SynchronizedSLRUCache<Module, Set<String>>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
+        @NotNull
+        @Override
+        public Set<String> createValue(Module key) {
+          return collectDependentUnloadedModules(key);
+        }
+      };
       initGraph();
       initLibraryRoots();
     }
@@ -305,7 +315,8 @@ public class RootIndex {
 
       MultiMap<VirtualFile, Node> roots = MultiMap.createSmart();
 
-      for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
+      ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+      for (final Module module : moduleManager.getModules()) {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         List<OrderEnumerationHandler> handlers = OrderEnumeratorBase.getCustomHandlers(module);
         for (OrderEntry orderEntry : moduleRootManager.getOrderEntries()) {
@@ -333,6 +344,23 @@ public class RootIndex {
               boolean shouldRecurse = en.recursively().shouldRecurse(moduleOrderEntry, handlers);
               node.myEdges.add(new Edge(module, moduleOrderEntry, shouldRecurse));
             }
+          }
+        }
+      }
+      for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
+        for (String depName : description.getDependencyModuleNames()) {
+          Module depModule = moduleManager.findModuleByName(depName);
+          if (depModule != null) {
+            Node node = graph.myNodes.get(depModule);
+            if (node == null) {
+              node = new Node();
+              node.myKey = depModule;
+              graph.myNodes.put(depModule, node);
+            }
+            if (node.myUnloadedDependentModules == null) {
+              node.myUnloadedDependentModules = new LinkedHashSet<>();
+            }
+            node.myUnloadedDependentModules.add(description.getName());
           }
         }
       }
@@ -419,7 +447,47 @@ public class RootIndex {
       Collections.sort(result, BY_OWNER_MODULE);
       return result;
     }
+
+    public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+      return myDependentUnloadedModulesCache.get(module);
+    }
+
+    /**
+     * @return names of unloaded modules which directly or transitively via exported dependencies depend on the specified module
+     */
+    private Set<String> collectDependentUnloadedModules(@NotNull Module module) {
+      ArrayDeque<OrderEntryGraph.Node> stack = new ArrayDeque<>();
+      Node start = myGraph.myNodes.get(module);
+      if (start == null) return Collections.emptySet();
+      stack.push(start);
+      Set<Node> seen = new HashSet<>();
+      Set<String> result = null;
+      while (!stack.isEmpty()) {
+        Node node = stack.pop();
+        if (!seen.add(node)) {
+          continue;
+        }
+        if (node.myUnloadedDependentModules != null) {
+          if (result == null) {
+            result = new LinkedHashSet<>(node.myUnloadedDependentModules);
+          }
+          else {
+            result.addAll(node.myUnloadedDependentModules);
+          }
+        }
+        for (Edge edge : node.myEdges) {
+          if (edge.myRecursive) {
+            Node targetNode = myGraph.myNodes.get(edge.myKey);
+            if (targetNode != null) {
+              stack.push(targetNode);
+            }
+          }
+        }
+      }
+      return result != null ? result : Collections.emptySet();
+    }
   }
+
 
   private int getRootTypeId(@NotNull JpsModuleSourceRootType<?> rootType) {
     if (myRootTypeId.containsKey(rootType)) {
@@ -860,6 +928,11 @@ public class RootIndex {
   public List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info) {
     if (!(info instanceof DirectoryInfoImpl)) return Collections.emptyList();
     return getOrderEntryGraph().getOrderEntries(((DirectoryInfoImpl)info).getRoot());
+  }
+
+  @NotNull
+  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    return getOrderEntryGraph().getDependentUnloadedModules(module);
   }
 
   public interface InfoCache {
