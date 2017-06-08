@@ -5,6 +5,7 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -34,8 +35,11 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
-    return myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(), mySuitesBundle,
-                                                       myCoverageDataManager) + " in '" + node.toString() + "'";
+    String statInfo = myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(),
+                                                                  mySuitesBundle,
+                                                                  myCoverageDataManager);
+    statInfo = StringUtil.notNullize(statInfo, "No coverage");
+    return statInfo + " in '" + node.toString() + "'";
   }
 
   @Override
