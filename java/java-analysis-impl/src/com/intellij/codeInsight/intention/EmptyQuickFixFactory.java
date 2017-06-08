@@ -696,7 +696,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createExtractSideEffectsFix(@NotNull PsiExpressionStatement statement, @NotNull List<PsiExpression> sideEffects) {
+  public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
     return QuickFixes.EMPTY_FIX;
   }
 }

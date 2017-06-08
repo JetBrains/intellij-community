@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -29,22 +31,34 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExtractSideEffectsFix implements IntentionAction, LowPriorityAction {
+public class DeleteSideEffectsAwareFix implements IntentionAction, LowPriorityAction {
   private final SmartPsiElementPointer<PsiExpressionStatement> myPointer;
   private final String myMessage;
 
-  public ExtractSideEffectsFix(PsiExpressionStatement statement, List<PsiExpression> effects) {
+  public DeleteSideEffectsAwareFix(PsiExpressionStatement statement) {
     myPointer = SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
     PsiExpression expression = statement.getExpression();
-    PsiStatement[] statements = StatementExtractor.generateStatements(effects, expression);
-    if (statements.length == 1) {
-      if(statements[0] instanceof PsiIfStatement) {
-        myMessage = "Convert to 'if' statement";
-      } else {
-        myMessage = "Extract side effect";
+    List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
+    if (sideEffects.isEmpty()) {
+      myMessage = QuickFixBundle.message("delete.element.fix.text");
+    }
+    else if (sideEffects.size() == 1 && sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression)) {
+      // "Remove unnecessary parentheses" action is already present which will do the same
+      myMessage = "";
+    }
+    else {
+      PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
+      if (statements.length == 1) {
+        if (statements[0] instanceof PsiIfStatement) {
+          myMessage = QuickFixBundle.message("extract.side.effects.convert.to.if");
+        }
+        else {
+          myMessage = QuickFixBundle.message("extract.side.effects.single");
+        }
       }
-    } else {
-      myMessage = "Extract side effects";
+      else {
+        myMessage = QuickFixBundle.message("extract.side.effects.multiple");
+      }
     }
   }
 
@@ -59,12 +73,12 @@ public class ExtractSideEffectsFix implements IntentionAction, LowPriorityAction
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Extract side effects";
+    return QuickFixBundle.message("extract.side.effects.family.name");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return !myMessage.isEmpty();
   }
 
   @Override
