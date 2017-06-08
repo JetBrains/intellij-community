@@ -115,6 +115,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
                                             Editor editor,
                                             MyExtractMethodProcessor processor,
                                             PsiElement[] elements) {
+    if (!elements[0].isValid()) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elements[0])) return;
     MyExtractMethodProcessor physicalProcessor =
       new MyExtractMethodProcessor(project, editor, elements, 
