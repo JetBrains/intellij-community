@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -48,7 +49,10 @@ public class CharsetEP implements PatchEP {
   public CharSequence provideContent(@NotNull String path, CommitContext commitContext) {
     final File file = new File(myBaseDir, path);
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    return vf == null ? null : vf.getCharset().name();
+    if (vf == null) return null;
+    CharSequence charsetName = vf.getCharset().name();
+    UsageTrigger.trigger("Patch.CharsetEP." + charsetName);
+    return charsetName;
   }
 
   @Override
