@@ -300,7 +300,7 @@ public class VfsData {
     }
     void addAdoptedName(CharSequence name, boolean caseSensitive) {
       if (myAdoptedNames == null) {
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? ContainerUtil.canonicalStrategy() : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
       }
       myAdoptedNames.add(name);
     }

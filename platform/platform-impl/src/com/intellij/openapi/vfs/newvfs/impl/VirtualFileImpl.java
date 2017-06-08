@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -52,7 +53,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
-
+  @VisibleForTesting
   public VirtualFileImpl(int id, VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
   }

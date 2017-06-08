@@ -23,7 +23,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -779,9 +778,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     parentChildrenIds.addAll(oldIds);
     boolean hasRemovedChildren = false;
 
-    List<Pair<VirtualFile,CharSequence>> childrenAdded = new SmartList<>();
+    List<VirtualDirectoryImpl.IdNamePair> childrenAdded = new SmartList<>();
     List<VirtualFile> childrenDeleted = new SmartList<>();
     List<CharSequence> childrenNamesDeleted = new SmartList<>();
+    TIntHashSet childrenIdsDeleted = new TIntHashSet(Math.max(events.size(), oldIds.length));
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent) {
         String name = ((VFileCreateEvent)event).getChildName();
@@ -791,9 +791,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         if (attributes != null) {
           final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
           assert parent instanceof VirtualDirectoryImpl : parent;
-          final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-          VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem());
-          childrenAdded.add(Pair.create(child, name));
+
+          childrenAdded.add(new VirtualDirectoryImpl.IdNamePair(childId, name));
           parentChildrenIds.add(childId);
         }
       }
@@ -809,6 +808,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         childrenDeleted.add(file);
         childrenNamesDeleted.add(file.getNameSequence());
+        childrenIdsDeleted.add(id);
         parentChildrenIds.remove(id);
       }
     }
@@ -823,10 +823,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         FSRecords.deleteRecordRecursively(getFileId(childFile));
         invalidateSubtree(childFile);
       }
-      parentImpl.removeChildren(childrenNamesDeleted);
+      parentImpl.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
     }
     if (!childrenAdded.isEmpty()) {
-      parentImpl.addChildren(childrenAdded);
+      parentImpl.createAndAddChildren(childrenAdded);
     }
   }
 

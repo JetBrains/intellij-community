@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -27,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -39,6 +37,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -105,21 +104,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     return result;
-  }
-
-  private void removeFromRealAndAddToAdopted(final boolean caseSensitive, @NotNull final String name) {
-    if (myData.isAdoptedName(name)) return; //already added
-    if (!allChildrenLoaded()) {
-      myData.addAdoptedName(name, caseSensitive);
-    }
-
-    int indexInReal = findIndex(myData.myChildrenIds, name, caseSensitive);
-    if (indexInReal >= 0) {
-      // there suddenly can be that we ask to add name to adopted whereas it already contained in the real part
-      // in this case we should remove it from there
-      removeFromArray(indexInReal);
-    }
-    assertConsistency(caseSensitive, name);
   }
 
   @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE
@@ -216,7 +200,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
+  public VirtualFileSystemEntry createChild(@NotNull String name, int id, @NotNull NewVirtualFileSystem delegate) {
     synchronized (myData) {
       return createChild(FileNameCache.storeName(name), id, delegate);
     }
@@ -249,7 +233,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child.markDirty();
     }
 
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
     return child;
   }
 
@@ -376,6 +359,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
               " is wrongly placed before " +
               verboseToString(VfsData.getFileById(id, this)), getArraySafely(), details);
       }
+      if (myData.isAdoptedName(name)) {
+        try {
+          error("In "+verboseToString(this)+" file '"+name+"' is both child and adopted",
+                getArraySafely(), "Adopted: "+myData.getAdoptedNames()+";\n "+details);
+        }
+        finally {
+          myData.removeAdoptedName(name);
+        }
+      }
     }
   }
 
@@ -394,10 +386,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   private static void error(String message, VirtualFileSystemEntry[] array, Object... details) {
-    String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, ",");
-    throw new AssertionError(
-      message + "; children: " + children + "\nDetails: " + ContainerUtil.map(
-        details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o));
+    String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
+    String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
+    throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);
   }
 
   @Override
@@ -422,39 +413,55 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new IOException("Cannot get content of directory: " + this);
   }
 
+  public static class IdNamePair {
+    private final int id;
+    private final CharSequence name;
+
+    public IdNamePair(int id, @NotNull CharSequence name) {
+      this.id = id;
+      this.name = name;
+    }
+
+    @Override
+    public String toString() {
+      return '(' + id + ", '" + name + "')";
+    }
+  }
   // optimisation: works faster than added.forEach(this::addChild)
-  public void addChildren(@NotNull List<Pair<VirtualFile,CharSequence>> added) {
-    if (added.size()<=3) {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < added.size(); i++) {
-        VirtualFile file = added.get(i).getFirst();
-        addChild((VirtualFileSystemEntry)file);
+  public void createAndAddChildren(@NotNull List<IdNamePair> added) {
+    if (added.size()<=1) {
+      for (IdNamePair pair : added) {
+        VirtualFileSystemEntry file = createChild(pair.name.toString(), pair.id, getFileSystem());
+        addChild(file);
       }
       return;
     }
 
     // merge sorted added and existing lists just like in merge sort
     final boolean caseSensitive = getFileSystem().isCaseSensitive();
-    Comparator<Pair<VirtualFile, CharSequence>> pairComparator = (p1, p2) -> compareNames(p1.getSecond(), p2.getSecond(), caseSensitive);
+    Comparator<IdNamePair> pairComparator = (p1, p2) -> compareNames(p1.name, p2.name, caseSensitive);
     added.sort(pairComparator);
     TIntArrayList mergedIds = new TIntArrayList(myData.myChildrenIds.length + added.size());
     synchronized (myData) {
-      ContainerUtil.processSortedListsInOrder(added, new AbstractList<Pair<VirtualFile,CharSequence>>() {
+      for (IdNamePair pair : added) {
+        createChild(pair.name.toString(), pair.id, getFileSystem());
+        myData.removeAdoptedName(pair.name);
+      }
+      ContainerUtil.processSortedListsInOrder(added, new AbstractList<IdNamePair>() {
         @Override
-        public Pair<VirtualFile,CharSequence> get(int index) {
-          VirtualFileSystemEntry file = VfsData.getFileById(myData.myChildrenIds[index], VirtualDirectoryImpl.this);
-          return Pair.create(file, file.getNameSequence());
+        public IdNamePair get(int index) {
+          int id = myData.myChildrenIds[index];
+          CharSequence name = ObjectUtils.assertNotNull(VfsData.getNameByFileId(id));
+          return new IdNamePair(id, name);
         }
 
         @Override
         public int size() {
           return myData.myChildrenIds.length;
         }
-      }, pairComparator, true, pair -> {
-        mergedIds.add(((VirtualFileWithId)pair.getFirst()).getId());
-        return true;
-      });
+      }, pairComparator, true, pair -> mergedIds.add(pair.id));
       myData.myChildrenIds = mergedIds.toNativeArray();
+
       ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
       assertConsistency(caseSensitive, added);
     }
@@ -491,75 +498,49 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     boolean caseSensitive = getFileSystem().isCaseSensitive();
     String name = file.getName();
     synchronized (myData) {
-      removeFromRealAndAddToAdopted(caseSensitive, name);
+      int indexInReal = findIndex(myData.myChildrenIds, name, caseSensitive);
+      if (indexInReal >= 0) {
+        // there suddenly can be that we ask to add name to adopted whereas it already contained in the real part
+        // in this case we should remove it from there
+        removeFromArray(indexInReal);
+      }
+      if (!allChildrenLoaded()) {
+        myData.addAdoptedName(name, caseSensitive);
+      }
+
       assertConsistency(caseSensitive, file);
     }
   }
 
   // faster than names.forEach(this::removeChild)
-  public void removeChildren(@NotNull List<CharSequence> names) {
+  public void removeChildren(@NotNull TIntHashSet idsToRemove, @NotNull List<CharSequence> namesToRemove) {
     boolean caseSensitive = getFileSystem().isCaseSensitive();
     synchronized (myData) {
-      Comparator<CharSequence> comparator = (n1, n2) -> compareNames(n1, n2, caseSensitive);
-      names.sort(comparator);
-
       boolean allChildrenLoaded = allChildrenLoaded();
       if (!allChildrenLoaded) {
-        for (CharSequence name : names) {
+        for (CharSequence name : namesToRemove) {
           myData.addAdoptedName(name, caseSensitive);
         }
       }
 
       // remove from array by merging two sorted lists
       int[] newIds = new int[myData.myChildrenIds.length];
-      int length = processSortedListsAndRemoveFirstFromTheSecond(names, myData.myChildrenIds, comparator, newIds);
-      if (length != newIds.length) {
-        newIds = length == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, length);
+      int[] oldIds = myData.myChildrenIds;
+      int o = 0;
+      for (int oldId : oldIds) {
+        if (!idsToRemove.contains(oldId)) {
+          newIds[o++] = oldId;
+        }
+      }
+      if (o != newIds.length) {
+        newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
       myData.myChildrenIds = newIds;
       ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
 
-      assertConsistency(caseSensitive, names);
+      assertConsistency(caseSensitive, namesToRemove);
     }
   }
-
-  // returns output length
-  private static int processSortedListsAndRemoveFirstFromTheSecond(@NotNull List<CharSequence> namesToRemove,
-                                                                   @NotNull int[] ids,
-                                                                   @NotNull Comparator<CharSequence> comparator,
-                                                                   @NotNull int[] output) {
-    int index1 = 0;
-    int index2 = 0;
-    int o = 0;
-    while (index2 < ids.length) {
-      int e;
-      if (index1 >= namesToRemove.size()) {
-        e = ids[index2++];
-      }
-      else {
-        CharSequence nameToRemove = namesToRemove.get(index1);
-        int id = ids[index2];
-        CharSequence element2 = VfsData.getNameByFileId(id);
-        int c = comparator.compare(nameToRemove, element2);
-        if (c == 0) {
-          // remove
-          index2++;
-          continue;
-        }
-        if (c < 0) {
-          // next name to remove
-          index1++;
-          continue;
-        }
-        e = id;
-        index2++;
-      }
-      output[o++] = e;
-    }
-
-    return o;
-  }
-
 
   private void removeFromArray(int index) {
     myData.myChildrenIds = ArrayUtil.remove(myData.myChildrenIds, index);

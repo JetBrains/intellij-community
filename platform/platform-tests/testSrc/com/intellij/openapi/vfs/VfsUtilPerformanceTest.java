@@ -296,7 +296,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
     List<VirtualFile> toDelete = new ArrayList<>();
     try {
-      UIUtil.invokeLaterIfNeeded(()-> PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
+      UIUtil.invokeAndWaitIfNeeded((Runnable)()-> PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
         VirtualFile validVTemp = new MyFakeDirectory("vtemp");
         toDelete.add(validVTemp);
         List<VFileEvent> events = IntStream.range(0, N)
@@ -326,7 +326,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
     List<VirtualFile> toDelete = new ArrayList<>();
     try {
-      UIUtil.invokeLaterIfNeeded(()->{
+      UIUtil.invokeAndWaitIfNeeded((Runnable)()->{
         final VirtualDirectoryImpl[] validVTemp = new VirtualDirectoryImpl[1];
         List<VFileEvent> deleteEvents = new ArrayList<>();
         PlatformTestUtil.startPerformanceTest("deleting many children", 30000, () -> {
