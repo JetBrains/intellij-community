@@ -106,7 +106,10 @@ public class FunctionalInterfaceSuggester {
         }
 
         for (int i = 0; i < interfaceMethodParameters.length; i++) {
-          if (!TypeConversionUtil.isAssignable(parameters[i].getType(), substitutor.substitute(interfaceMethodParameters[i].getType()))) {
+          PsiType paramType = parameters[i].getType();
+          PsiType interfaceParamType = substitutor.substitute(interfaceMethodParameters[i].getType());
+          if (!(interfaceParamType instanceof PsiPrimitiveType
+                ? paramType.equals(interfaceParamType) : TypeConversionUtil.isAssignable(paramType, interfaceParamType))) {
             return null;
           }
         }
@@ -117,7 +120,7 @@ public class FunctionalInterfaceSuggester {
           return null;
         }
         
-        if (returnType instanceof PsiPrimitiveType && !returnType.equals(interfaceMethodReturnType)) {
+        if (interfaceMethodReturnType instanceof PsiPrimitiveType && !interfaceMethodReturnType.equals(returnType)) {
           return null;
         }
 
