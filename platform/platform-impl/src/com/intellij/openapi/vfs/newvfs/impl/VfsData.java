@@ -110,7 +110,7 @@ public class VfsData {
   }
 
   @Nullable
-  public static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
+  static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
     Segment segment = getSegment(id, false);
     if (segment == null) return null;
 

@@ -31,7 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends PlatformTestCase {
-  public void testManyEvents() {
+  public void testManyEventsStress() {
     int N = 100000;
     PlatformTestUtil.startPerformanceTest("Event queue dispatch", 10000, () -> {
       UIUtil.dispatchAllInvocationEvents();
