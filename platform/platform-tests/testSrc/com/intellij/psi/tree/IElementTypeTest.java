@@ -44,9 +44,9 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   @SuppressWarnings("UnusedDeclaration")
   public void testCount() throws Exception {
     int count = IElementType.getAllocatedTypesCount();
-    System.out.println("Preloaded: " + count +" element types");
+    LOG.debug("Preloaded: " + count +" element types");
     LanguageExtensionPoint[] extensions = Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
-    System.out.println("ParserDefinitions: " + extensions.length);
+    LOG.debug("ParserDefinitions: " + extensions.length);
 
     THashMap<Language, String> languageMap = new THashMap<>();
     languageMap.put(Language.ANY, "platform");
@@ -86,7 +86,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
       map.put(key, map.get(key) + 1);
       //if (key.equals("unknown")) System.out.println(type +"   " + language);
     }
-    System.out.println("Total: " + IElementType.getAllocatedTypesCount() +" element types");
+    LOG.debug("Total: " + IElementType.getAllocatedTypesCount() +" element types");
 
     // Show per-plugin statistics
     Object[] keys = map.keys();
@@ -96,7 +96,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
       int value = map.get((String)key);
       if (value == 0) continue;
       sum += value;
-      System.out.println("  " + key + ": " + value);
+      LOG.debug("  " + key + ": " + value);
     }
 
     // leave some index-space for plugin developers
@@ -136,15 +136,17 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
           PsiElement element = treeElement instanceof PsiElement? (PsiElement)treeElement : definition.createElement(treeElement);
           if (element instanceof PsiLanguageInjectionHost && classes.add(element.getClass().getName())) {
             boolean ok = ElementManipulators.getManipulator(element) != null;
-            System.out.println((ok ? "OK  " : "FAIL") + " " + element.getClass().getSimpleName() + " [" + definition.getClass().getSimpleName() + "]");
-            if (!ok) failures.add(element.getClass().getName());
+            if (!ok) {
+              System.err.println("FAIL" + " " + element.getClass().getSimpleName() + " [" + definition.getClass().getSimpleName() + "]");
+              failures.add(element.getClass().getName());
+            }
           }
         }
         catch (Throwable ignored) {
         }
       }
     }
-    System.out.println("count: " + classes.size() + ", total: " + total);
+    LOG.debug("count: " + classes.size() + ", total: " + total);
     assertEmpty("PsiLanguageInjectionHost requires " + ElementManipulators.EP_NAME, failures);
   }
 

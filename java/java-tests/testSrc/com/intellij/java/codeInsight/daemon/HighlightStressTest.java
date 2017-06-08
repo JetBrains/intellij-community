@@ -107,7 +107,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       UIUtil.dispatchAllInvocationEvents();
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
-    System.out.println(System.currentTimeMillis() - time+"ms");
+    LOG.debug(System.currentTimeMillis() - time+"ms");
   }
 
   public void _testHugeFile() throws Exception {
@@ -124,11 +124,11 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       doHighlighting();
       long end = System.currentTimeMillis();
       time[i] = end - start;
-      System.out.println("i = " + i + "; time= "+(end-start));
+      LOG.debug("i = " + i + "; time= "+(end-start));
 
       UIUtil.dispatchAllInvocationEvents();
     }
-    System.out.println("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
+    LOG.debug("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
 
     //System.out.println("JobLauncher.COUNT   = " + JobLauncher.COUNT);
     //System.out.println("JobLauncher.TINY    = " + JobLauncher.TINY_COUNT);
@@ -166,7 +166,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       long start = System.currentTimeMillis();
 
-      System.out.println("i = " + i);
+      LOG.debug("i = " + i);
       String s = myFile.getText();
       int offset;
       while (true) {

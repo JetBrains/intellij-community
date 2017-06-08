@@ -54,7 +54,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     DialogWrapperPeer peer = getPeer();
     JRootPane pane = peer.getRootPane();
     if (pane != null) {
-      JBDimension size = JBUI.size(FlatWelcomeFrame.MAX_DEFAUL_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT);
+      JBDimension size = JBUI.size(FlatWelcomeFrame.MAX_DEFAULT_WIDTH, FlatWelcomeFrame.DEFAULT_HEIGHT);
       pane.setMinimumSize(size);
       pane.setPreferredSize(size);
     }

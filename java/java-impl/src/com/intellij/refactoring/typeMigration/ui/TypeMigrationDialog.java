@@ -98,7 +98,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       myRules = new TypeMigrationRules();
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
     }
-    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules));
+    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules, true));
   }
 
   @NotNull

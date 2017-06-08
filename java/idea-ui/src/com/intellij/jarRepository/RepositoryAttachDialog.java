@@ -47,14 +47,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -118,6 +128,12 @@ public class RepositoryAttachDialog extends DialogWrapper {
       protected void textChanged(DocumentEvent e) {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myProgressIcon.isDisposed()) return;
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (myProgressIcon.isDisposed()) return;
+            handleMavenDependencyInsertion(e, textField);
+            updateComboboxSelection(false);
+          });
+
           updateComboboxSelection(false);
         });
       }
@@ -161,6 +177,30 @@ public class RepositoryAttachDialog extends DialogWrapper {
     updateInfoLabel();
     setOKActionEnabled(false);
     init();
+  }
+
+  private static void handleMavenDependencyInsertion(DocumentEvent e, JTextField textField) {
+    if (e.getType() == DocumentEvent.EventType.INSERT) {
+      String text = textField.getText();
+      if (isMvnDependency(text)) {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setValidating(false);
+        try {
+          DocumentBuilder builder = factory.newDocumentBuilder();
+          try {
+            Document document = builder.parse(new InputSource(new StringReader(text)));
+            String mavenCoordinates = extractMavenCoordinates(document);
+            if (mavenCoordinates != null) {
+              textField.setText(mavenCoordinates);
+            }
+          }
+          catch (SAXException | IOException ignored) {
+          }
+        }
+        catch (ParserConfigurationException ignored) {
+        }
+      }
+    }
   }
 
   public boolean getAttachJavaDoc() {
@@ -347,5 +387,47 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myProgressIcon = new AsyncProcessIcon("Progress");
+  }
+
+  private static boolean isMvnDependency(String text) {
+    String trimmed = text.trim();
+    if (trimmed.startsWith("<dependency>") && trimmed.endsWith("</dependency>")) {
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  private static String extractMavenCoordinates(Document document) {
+    String groupId = getGroupId(document);
+    String artifactId = getArtifactId(document);
+    if (groupId.isEmpty() && artifactId.isEmpty()) {
+      return null;
+    }
+    String version = getVersion(document);
+    String classifier = getClassifier(document);
+    String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
+    return groupId + ":" + artifactId + ":" + version + gradleClassifier;
+  }
+
+  private static String getVersion(@NotNull Document document) {
+    return firstOrEmpty(document.getElementsByTagName("version"));
+  }
+
+  private static String getArtifactId(@NotNull Document document) {
+    return firstOrEmpty(document.getElementsByTagName("artifactId"));
+  }
+
+  private static String getGroupId(@NotNull Document document) {
+    return firstOrEmpty(document.getElementsByTagName("groupId"));
+  }
+
+  private static String getClassifier(@NotNull Document document) {
+    return firstOrEmpty(document.getElementsByTagName("classifier"));
+  }
+
+  private static String firstOrEmpty(@NotNull NodeList list) {
+    Node first = list.item(0);
+    return first != null ? first.getTextContent() : "";
   }
 }

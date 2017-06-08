@@ -104,6 +104,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     doTest(true, 0);
   }
 
+  public void testConflictingLocalVariableAndTargetClassField() throws Exception {
+    doTest(true, 0);
+  }
+
   public void testMethodReference() throws Exception {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 0));
   }

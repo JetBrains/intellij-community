@@ -223,7 +223,9 @@
     <group id="Diff.EditorPopupMenu"/>
     <group id="Diff.ViewerPopupMenu"/>
     <group id="Diff.ViewerToolbar"/>
-    <group id="Diff.EditorGutterPopupMenu"/>
+    <group id="Diff.EditorGutterPopupMenu">
+      <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
+    </group>
 
     <action id="ScrollTreeToCenter" text="Scroll to Center" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 

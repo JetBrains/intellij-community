@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
@@ -88,7 +87,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private val myLogger = lazy { IdeaLogger() }
   private val myOptions = lazy { getOptions() }
-  private val myProgress = ContainerUtil.newConcurrentMap<VirtualFile, ProgressIndicator>()
   private val myFutures = ContainerUtil.newConcurrentMap<VirtualFile, Future<CharSequence>>()
   @Volatile private var myLegalNoticeAccepted = false
 
@@ -150,7 +148,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
     val indicator = ProgressManager.getInstance().progressIndicator
     if (indicator != null) {
-      myProgress.put(file, indicator)
       indicator.text = IdeaDecompilerBundle.message("decompiling.progress", file.name)
     }
 
@@ -190,9 +187,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       else {
         throw ClassFileDecompilers.Light.CannotDecompileException(e)
       }
-    }
-    finally {
-      myProgress.remove(file)
     }
   }
 

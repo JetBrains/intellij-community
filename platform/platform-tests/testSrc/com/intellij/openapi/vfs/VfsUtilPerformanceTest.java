@@ -287,7 +287,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void addingManyChildrenToTheSameDirectoryMustNotBeQuadratic() throws IOException {
+  public void addingManyChildrenToTheSameDirectoryMustNotBeQuadratic() throws Exception {
     int N = 1_000_000;
     // measures create N children inside one directory.
     // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
@@ -296,21 +296,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
     List<VirtualFile> toDelete = new ArrayList<>();
     try {
-      UIUtil.invokeLaterIfNeeded(()->{
-        PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
-          VirtualFile validVTemp = new MyFakeDirectory("vtemp");
-          toDelete.add(validVTemp);
-          List<VFileEvent> events = IntStream.range(0, N)
-            .mapToObj(i -> new VFileCreateEvent(this, validVTemp, i + ".txt", false, false))
-            .collect(Collectors.toList());
+      UIUtil.invokeAndWaitIfNeeded((Runnable)()-> PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
+        VirtualFile validVTemp = new MyFakeDirectory("vtemp");
+        toDelete.add(validVTemp);
+        List<VFileEvent> events = IntStream.range(0, N)
+          .mapToObj(i -> new VFileCreateEvent(this, validVTemp, i + ".txt", false, false))
+          .collect(Collectors.toList());
 
-          WriteCommandAction.runWriteCommandAction(null, () -> {
-            PersistentFS.getInstance().processEvents(events);
-          });
+        WriteCommandAction.runWriteCommandAction(null, () -> {
+          PersistentFS.getInstance().processEvents(events);
+        });
 
-          assertEquals(N, validVTemp.getChildren().length);
-        }).assertTiming();
-      });
+        assertEquals(N, validVTemp.getChildren().length);
+      }).assertTiming());
     }
     finally {
       toDelete.forEach(VfsTestUtil::deleteFile);
@@ -328,7 +326,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
     List<VirtualFile> toDelete = new ArrayList<>();
     try {
-      UIUtil.invokeLaterIfNeeded(()->{
+      UIUtil.invokeAndWaitIfNeeded((Runnable)()->{
         final VirtualDirectoryImpl[] validVTemp = new VirtualDirectoryImpl[1];
         List<VFileEvent> deleteEvents = new ArrayList<>();
         PlatformTestUtil.startPerformanceTest("deleting many children", 30000, () -> {

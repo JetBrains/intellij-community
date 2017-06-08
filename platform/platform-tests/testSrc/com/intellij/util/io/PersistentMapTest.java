@@ -250,7 +250,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("Performance", 9000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
@@ -272,9 +272,9 @@ public class PersistentMapTest extends PersistentMapTestBase {
     }).ioBound().useLegacyScaling().assertTiming();
 
     myMap.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
-    System.out
-      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
+    LOG.debug(String.format("Data file size = %d bytes\n",
+                            new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length()));
   }
 
   public void testPerformance1() throws IOException {
@@ -283,7 +283,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       strings.add(createRandomString());
     }
 
-    PlatformTestUtil.startPerformanceTest("perf1", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 5000, () -> {
       for (int i = 0; i < 100000; ++i) {
         final String string = strings.get(i);
         myMap.put(string, string);
@@ -304,9 +304,9 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     }).useLegacyScaling().assertTiming();
     myMap.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
-    System.out
-      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
+    LOG.debug(String.format("Data file size = %d bytes\n",
+                            new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length()));
   }
 
   public void testReadonlyMap() throws IOException {

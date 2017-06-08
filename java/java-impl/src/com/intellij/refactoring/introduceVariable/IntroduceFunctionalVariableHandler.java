@@ -42,11 +42,11 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
 
@@ -68,8 +68,12 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
         MyExtractMethodProcessor processor =
           new MyExtractMethodProcessor(project, editor, elementsInCopy, null, IntroduceFunctionalVariableAction.REFACTORING_NAME, null,
                                        HelpID.INTRODUCE_VARIABLE);
+        processor.setShowErrorDialogs(false);
         try {
-          processor.prepare();
+          if (!processor.prepare()) {
+            showErrorMessage(project, editor);
+            return;
+          }
         }
         catch (PrepareFailedException e) {
           showErrorMessage(project, editor);
@@ -116,6 +120,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
                                             Editor editor,
                                             MyExtractMethodProcessor processor,
                                             PsiElement[] elements) {
+    if (!elements[0].isValid()) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elements[0])) return;
     MyExtractMethodProcessor physicalProcessor =
       new MyExtractMethodProcessor(project, editor, elements, 
@@ -260,6 +265,17 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
 
     @Override
+    public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+      final boolean prepare = super.prepare(pass);
+      if (prepare) {
+        if (myNotNullConditionalCheck || myNullConditionalCheck) {
+          return false;
+        }
+      }
+      return prepare;
+    }
+    
+    @Override
     public boolean showDialog() {
       if (!myInputVariables.hasInstanceFields() && myInputVariables.getInputVariables().isEmpty() ||
            ApplicationManager.getApplication().isUnitTestMode()) {
@@ -275,12 +291,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
 
     public void copyParameters(MyExtractMethodProcessor processor) {
-      InputVariables inputVariables = processor.myInputVariables;
-      myInputVariables.setPassFields(inputVariables.isPassFields());
-      List<VariableData> variables = inputVariables.getInputVariables();
-      myVariableDatum = new VariableData[variables.size()];
-      for (int i = 0; i < variables.size(); i++) {
-        VariableData data = variables.get(i);
+      myInputVariables.setPassFields(processor.myInputVariables.isPassFields());
+      VariableData[] variables = processor.myVariableDatum;
+      myVariableDatum = new VariableData[variables.length];
+      for (int i = 0; i < variables.length; i++) {
+        VariableData data = variables[i];
         String variableName = data.variable.getName();
         assert variableName != null;
         VariableData dataByVName =

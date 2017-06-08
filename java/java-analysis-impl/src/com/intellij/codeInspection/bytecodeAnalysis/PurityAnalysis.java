@@ -66,7 +66,7 @@ public class PurityAnalysis {
     for (EffectQuantum effectQuantum : quanta) {
       if (effectQuantum != null) {
         if (effectQuantum == EffectQuantum.TopEffectQuantum) {
-          return returnValue == DataValue.UnknownDataValue1 ? null : new Equation(key, new Effects(returnValue, PuritySolver.TOP_EFFECTS));
+          return returnValue == DataValue.UnknownDataValue1 ? null : new Equation(key, new Effects(returnValue, Effects.TOP_EFFECTS));
         }
         effects.add(effectQuantum);
       }
@@ -559,11 +559,10 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class PuritySolver {
-  static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
   private HashMap<EKey, Effects> solved = new HashMap<>();
   private HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final Stack<EKey> moving = new Stack<>();
-  private HashMap<EKey, Effects> pending = new HashMap<>();
+  HashMap<EKey, Effects> pending = new HashMap<>();
 
   void addEquation(EKey key, Effects effects) {
     Set<EKey> depKeys = effects.dependencies().collect(Collectors.toSet());
@@ -593,7 +592,7 @@ final class PuritySolver {
       }
       else {
         propagateKeys = new EKey[]{key.mkStable(), key};
-        propagateEffects = new Effects[]{effects, new Effects(DataValue.UnknownDataValue1, TOP_EFFECTS)};
+        propagateEffects = new Effects[]{effects, new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS)};
       }
       for (int i = 0; i < propagateKeys.length; i++) {
         EKey pKey = propagateKeys[i];
@@ -615,7 +614,7 @@ final class PuritySolver {
                 EffectQuantum.CallQuantum call = substitute((EffectQuantum.CallQuantum)dEffect, pKey, pEffects);
                 if (call.key.equals(pKey)) {
                   delta = substitute(pEffects, call.data, call.isStatic);
-                  if(delta.equals(TOP_EFFECTS)) {
+                  if(delta.equals(Effects.TOP_EFFECTS)) {
                     newEffects = delta;
                     break;
                   }
@@ -630,7 +629,7 @@ final class PuritySolver {
                 EffectQuantum.ReturnChangeQuantum retChange = (EffectQuantum.ReturnChangeQuantum)dEffect;
                 if (retChange.key.equals(pKey)) {
                   if(pEffects.returnValue != DataValue.LocalDataValue) {
-                    newEffects = delta = TOP_EFFECTS;
+                    newEffects = delta = Effects.TOP_EFFECTS;
                     break;
                   }
                   continue;
@@ -639,8 +638,8 @@ final class PuritySolver {
               newEffects.add(dEffect);
             }
 
-            if (TOP_EFFECTS.equals(delta) && returnValue.equals(DataValue.UnknownDataValue1)) {
-              solved.put(dKey, new Effects(returnValue, TOP_EFFECTS));
+            if (Effects.TOP_EFFECTS.equals(delta) && returnValue.equals(DataValue.UnknownDataValue1)) {
+              solved.put(dKey, new Effects(returnValue, Effects.TOP_EFFECTS));
               moving.push(dKey);
             }
             else {
@@ -682,7 +681,7 @@ final class PuritySolver {
   }
 
   private static Set<EffectQuantum> substitute(Effects effects, DataValue[] data, boolean isStatic) {
-    if (effects.effects.isEmpty() || TOP_EFFECTS.equals(effects.effects)) {
+    if (effects.effects.isEmpty() || Effects.TOP_EFFECTS.equals(effects.effects)) {
       return effects.effects;
     }
     Set<EffectQuantum> newEffects = new HashSet<>(effects.effects.size());
@@ -710,7 +709,7 @@ final class PuritySolver {
         newEffects.add(new EffectQuantum.ReturnChangeQuantum(((DataValue.ReturnDataValue)arg).key));
         continue;
       }
-      return TOP_EFFECTS;
+      return Effects.TOP_EFFECTS;
     }
     return newEffects;
   }

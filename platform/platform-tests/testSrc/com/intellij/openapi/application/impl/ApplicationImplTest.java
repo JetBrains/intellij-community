@@ -95,7 +95,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertFalse(application.isReadAccessAllowed());
           int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
           String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "% (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
-          System.out.println(msg + "\nAcquire:\n" + dataAcq.getSummary(" ") + "\nRun:\n" + dataRun.getSummary(" "));
+          LOG.debug(msg + "\nAcquire:\n" + dataAcq.getSummary(" ") + "\nRun:\n" + dataRun.getSummary(" "));
           if (Math.abs(ratioPercent) > 40) {
             return "Suspiciously different times for " + msg;
           }
@@ -137,7 +137,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     application.disableEventsUntil(disposable);
 
     try {
-      PlatformTestUtil.startPerformanceTest("lock performance", expectedMs, () -> {
+      PlatformTestUtil.startPerformanceTest("lock/unlock", expectedMs, () -> {
         final int numOfThreads = JobSchedulerImpl.CORES_COUNT;
         List<Thread> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -184,7 +184,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     // try to take read lock2 - must wait (because of write preference - write lock is pending)
     // release read lock1 - write lock must be taken first
     // release write - read lock2 must be taken
-    System.out.println("-----");
+    LOG.debug("-----");
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     AtomicBoolean holdRead1 = new AtomicBoolean(true);
     AtomicBoolean holdWrite = new AtomicBoolean(true);
@@ -199,14 +199,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
         AccessToken stamp = application.acquireReadActionLock();
         try {
-          System.out.println("read lock1 acquired");
+          LOG.debug("read lock1 acquired");
           read1Acquired.set(true);
           while (holdRead1.get() && ok());
         }
         finally {
           read1Released.set(true);
           stamp.finish();
-          System.out.println("read lock1 released");
+          LOG.debug("read lock1 released");
         }
       }
       catch (Throwable e) {
@@ -226,13 +226,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         TimeoutUtil.sleep(1000); // make sure it called writelock
         AccessToken stamp = application.acquireReadActionLock();
         try {
-          System.out.println("read lock2 acquired");
+          LOG.debug("read lock2 acquired");
           read2Acquired.set(true);
         }
         finally {
           read2Released.set(true);
           stamp.finish();
-          System.out.println("read lock2 released");
+          LOG.debug("read lock2 released");
         }
       }
       catch (Throwable e) {
@@ -313,7 +313,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     aboutToAcquireWrite.set(true);
     AccessToken stamp = application.acquireWriteActionLock(getClass());
     try {
-      System.out.println("write lock acquired");
+      LOG.debug("write lock acquired");
       writeAcquired.set(true);
 
       while (holdWrite.get() && ok()) {
@@ -325,7 +325,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     finally {
       writeReleased.set(true);
       stamp.finish();
-      System.out.println("write lock released");
+      LOG.debug("write lock released");
     }
 
     readAction1.join();
@@ -511,7 +511,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     }
     //System.out.println("warming finished");
     final int readIterations = 100000000;
-    PlatformTestUtil.startPerformanceTest("RWLock is slow", 12000, ()-> {
+    PlatformTestUtil.startPerformanceTest("RWLock/unlock", 12000, ()-> {
       ReadMostlyRWLock lock = new ReadMostlyRWLock(Thread.currentThread());
 
       final int numOfThreads = JobSchedulerImpl.CORES_COUNT;

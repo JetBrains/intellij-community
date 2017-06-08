@@ -59,14 +59,12 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
@@ -94,7 +92,10 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class DaemonListeners implements Disposable {
+public class DaemonListeners
+  extends SimpleModificationTracker // modCount will change whenever daemon-worthy event happens
+  implements Disposable {
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
 
   private final Project myProject;
@@ -280,7 +281,7 @@ public class DaemonListeners implements Disposable {
     });
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
-    connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
 
     commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
@@ -291,6 +292,7 @@ public class DaemonListeners implements Disposable {
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+        incModificationCount();
         String propertyName = event.getPropertyName();
         if (VirtualFile.PROP_NAME.equals(propertyName)) {
           stopDaemonAndRestartAllFiles("Virtual file name changed");
@@ -317,6 +319,31 @@ public class DaemonListeners implements Disposable {
         if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
           stopDaemon(true, "Virtual file property change");
         }
+      }
+
+      @Override
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        incModificationCount();
+      }
+
+      @Override
+      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
+        incModificationCount();
+      }
+
+      @Override
+      public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+        incModificationCount();
+      }
+
+      @Override
+      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+        incModificationCount();
+      }
+
+      @Override
+      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
+        incModificationCount();
       }
     }, this);
 
@@ -614,12 +641,14 @@ public class DaemonListeners implements Disposable {
   }
 
   private void stopDaemon(boolean toRestartAlarm, @NonNls @NotNull String reason) {
+    incModificationCount();
     if (myDaemonCodeAnalyzer.stopProcess(toRestartAlarm, reason)) {
       myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     }
   }
 
   private void stopDaemonAndRestartAllFiles(@NotNull String reason) {
+    incModificationCount();
     if (myDaemonCodeAnalyzer.doRestart()) {
       myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     }

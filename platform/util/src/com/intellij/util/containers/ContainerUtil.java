@@ -599,11 +599,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> boolean processSortedListsInOrder(@NotNull List<T> list1,
-                                                      @NotNull List<T> list2,
-                                                      @NotNull Comparator<? super T> comparator,
-                                                      boolean mergeEqualItems,
-                                                      @NotNull Processor<T> processor) {
+  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
+                                                   @NotNull List<T> list2,
+                                                   @NotNull Comparator<? super T> comparator,
+                                                   boolean mergeEqualItems,
+                                                   @NotNull Consumer<T> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
@@ -627,15 +627,13 @@ public class ContainerUtil extends ContainerUtilRt {
           index2++;
         }
         if (c == 0 && !mergeEqualItems) {
-          if (!processor.process(e)) return false;
+          processor.consume(e);
           index2++;
           e = element2;
         }
       }
-      if (!processor.process(e)) return false;
+      processor.consume(e);
     }
-
-    return true;
   }
 
   @NotNull
@@ -645,11 +643,10 @@ public class ContainerUtil extends ContainerUtilRt {
                                              @NotNull Comparator<? super T> comparator,
                                              boolean mergeEqualItems) {
     final List<T> result = new ArrayList<T>(list1.size() + list2.size());
-    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Processor<T>() {
+    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Consumer<T>() {
       @Override
-      public boolean process(T t) {
+      public void consume(T t) {
         result.add(t);
-        return true;
       }
     });
     return result;

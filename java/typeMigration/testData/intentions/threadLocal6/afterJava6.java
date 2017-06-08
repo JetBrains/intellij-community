@@ -1,13 +1,13 @@
 // "Convert to ThreadLocal" "true"
 class Main {
-  private final ThreadLocal<Boolean> property;
-
-  Main3(final boolean property) {
-    this.property = new ThreadLocal<Boolean>() {
+    private final ThreadLocal<Boolean> property = new ThreadLocal<Boolean>() {
         @Override
         protected Boolean initialValue() {
-            return property;
+            return false;
         }
     };
+
+  Main3(boolean property) {
+    this.property.set(property);
   }
 }

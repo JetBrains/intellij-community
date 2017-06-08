@@ -90,14 +90,14 @@ public final class FontComboBox extends ComboBox {
   }
 
   private static final class Model extends AbstractListModel implements ComboBoxModel {
-    private final NoFontItem NO_FONT_ITEM;
+    private final NoFontItem myNoFontItem;
     private volatile List<FontInfo> myAllFonts = Collections.emptyList();
     private volatile List<FontInfo> myMonoFonts = Collections.emptyList();
     private boolean myMonospacedOnly;
     private Object mySelectedItem;
 
     private Model(boolean withAllStyles, boolean filterNonLatin, boolean noFontItem) {
-      NO_FONT_ITEM = noFontItem ? new NoFontItem() : null;
+      myNoFontItem = noFontItem ? new NoFontItem() : null;
       Application application = ApplicationManager.getApplication();
       if (application == null || application.isUnitTestMode()) {
         setFonts(FontInfo.getAll(withAllStyles), filterNonLatin);
@@ -141,8 +141,8 @@ public final class FontComboBox extends ComboBox {
 
     @Override
     public void setSelectedItem(@Nullable Object item) {
-      if (item == null && NO_FONT_ITEM != null) {
-        item = NO_FONT_ITEM;
+      if (item == null && myNoFontItem != null) {
+        item = myNoFontItem;
       }
       else {
         if (item instanceof FontInfo) {
@@ -164,7 +164,7 @@ public final class FontComboBox extends ComboBox {
     }
 
     public boolean isNoFontSelected() {
-      return getSelectedItem() == NO_FONT_ITEM;
+      return getSelectedItem() == myNoFontItem;
     }
 
     @Override
@@ -172,15 +172,15 @@ public final class FontComboBox extends ComboBox {
       List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;
       int size = list.size();
       if (mySelectedItem instanceof String)  size ++;
-      if (NO_FONT_ITEM != null) size++;
+      if (myNoFontItem != null) size++;
       return size;
     }
 
     @Override
     public Object getElementAt(int index) {
       int i = index;
-      if (NO_FONT_ITEM != null) {
-        if (index == 0) return NO_FONT_ITEM;
+      if (myNoFontItem != null) {
+        if (index == 0) return myNoFontItem;
         i --;
       }
       List<FontInfo> list = myMonospacedOnly ? myMonoFonts : myAllFonts;

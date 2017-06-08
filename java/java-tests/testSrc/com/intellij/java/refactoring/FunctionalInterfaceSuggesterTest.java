@@ -39,8 +39,8 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
       .stream()
       .map(type -> type.getCanonicalText())
       .collect(Collectors.toList());
-    Assert.assertTrue(suggestedTypes.containsAll(Arrays.asList("java.util.function.IntToDoubleFunction", 
+    Assert.assertEquals(4, suggestedTypes.size());
+    Assert.assertTrue(suggestedTypes.containsAll(Arrays.asList("java.util.function.ToDoubleFunction<java.lang.Double>",
                                                                "java.util.function.DoubleUnaryOperator")));
-    Assert.assertFalse(suggestedTypes.contains("java.util.function.LongToIntFunction"));
   }
 }

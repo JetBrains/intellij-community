@@ -86,8 +86,8 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
 
 
   private static boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
+    if (DumbService.isDumb(manager.getProject())) return false;
     if (!PsiClassUtil.isRunnableClass(aClass, true)) return false;
-    if (DumbService.isDumb(manager.getProject())) return true;
 
     final Module module = JavaExecutionUtil.findModule(aClass);
     final GlobalSearchScope scope = module != null

@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -143,6 +142,12 @@ public class ResolveCache {
     if (result instanceof ResolveResult) {
       ensureValidPsi((ResolveResult)result);
     }
+    else if (result instanceof ResolveResult[]) {
+      ensureValidResults((ResolveResult[])result);
+    }
+    else if (result instanceof PsiElement) {
+      PsiUtilCore.ensureValid((PsiElement)result);
+    }
 
     if (stamp.mayCacheNow()) {
       cache(ref, map, result);
@@ -187,15 +192,19 @@ public class ResolveCache {
     result = needToPreventRecursion ? myGuard.doPreventingRecursion(Pair.create(ref, incompleteCode), true,
                                                                     () -> resolver.resolve(ref, containingFile, incompleteCode)) : resolver.resolve(ref, containingFile, incompleteCode);
     if (result != null) {
-      for (ResolveResult resolveResult : result) {
-        ensureValidPsi(resolveResult);
-      }
+      ensureValidResults(result);
     }
 
     if (stamp.mayCacheNow()) {
       cache(ref, map, result);
     }
     return result == null ? ResolveResult.EMPTY_ARRAY : result;
+  }
+
+  private static void ensureValidResults(ResolveResult[] result) {
+    for (ResolveResult resolveResult : result) {
+      ensureValidPsi(resolveResult);
+    }
   }
 
   private static void ensureValidPsi(ResolveResult resolveResult) {

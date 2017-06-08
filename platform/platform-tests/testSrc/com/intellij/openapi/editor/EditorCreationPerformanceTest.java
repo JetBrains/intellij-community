@@ -26,7 +26,7 @@ public class EditorCreationPerformanceTest extends AbstractEditorTest {
     PlatformTestUtil.startPerformanceTest("Editor creation", 750, () -> {
       Editor editor = EditorFactory.getInstance().createEditor(document);
       try {
-        System.out.println(editor.getContentComponent().getPreferredSize());
+        LOG.debug(String.valueOf(editor.getContentComponent().getPreferredSize()));
       }
       finally {
         EditorFactory.getInstance().releaseEditor(editor);

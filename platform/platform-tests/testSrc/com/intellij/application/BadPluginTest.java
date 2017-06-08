@@ -51,8 +51,8 @@ public class BadPluginTest extends PlatformTestCase {
     FileUtil.copyDir(new File(path), directory);
 
     System.setProperty(PathManager.PROPERTY_CONFIG_PATH, directory.getPath());
-    System.out.println("Old path: " + myOldConfigPath);
-    System.out.println("New path: " + System.getProperty(PathManager.PROPERTY_CONFIG_PATH));
+    LOG.debug("Old path: " + myOldConfigPath);
+    LOG.debug("New path: " + System.getProperty(PathManager.PROPERTY_CONFIG_PATH));
     super.setUp();
   }
 

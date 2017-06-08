@@ -16,11 +16,13 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -178,12 +180,19 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      // if anything changed after action executed, mark it invoked.
+      // alternatively, the action could have shown the dialog where user pressed cancel, so do nothing in this case
+      long startModificationCount = DaemonListeners.getInstance(project).getModificationCount();
       try {
         myAction.invoke(project, editor, file);
       }
       finally {
         if (myMarkInvoked != null) {
-          myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (startModificationCount != DaemonListeners.getInstance(project).getModificationCount()) {
+              myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
+            }
+          }, project.getDisposed());
         }
       }
     }

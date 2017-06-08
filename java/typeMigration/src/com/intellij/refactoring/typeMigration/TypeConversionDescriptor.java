@@ -1,6 +1,5 @@
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -15,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
-  private static final Logger LOG = Logger.getInstance(TypeConversionDescriptor.class);
-
   private String myStringToReplace = null;
   private String myReplaceByString = "$";
   private PsiExpression myExpression;
@@ -75,7 +72,13 @@ public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
   @Override
   public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
     if (getExpression() != null) expression = getExpression();
+    expression = adjustExpressionBeforeReplacement(expression);
     return replaceExpression(expression, getStringToReplace(), getReplaceByString());
+  }
+
+  @NotNull
+  protected PsiExpression adjustExpressionBeforeReplacement(@NotNull PsiExpression expression) {
+    return expression;
   }
 
   @NotNull

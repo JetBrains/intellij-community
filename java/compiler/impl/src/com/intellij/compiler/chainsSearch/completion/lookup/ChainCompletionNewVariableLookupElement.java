@@ -57,7 +57,6 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
   @Override
   public void handleInsert(final InsertionContext context) {
     final PsiFile file = context.getFile();
-    ((PsiJavaFile)file).importClass(myQualifierClass);
     final PsiElement caretElement = ObjectUtils.notNull(file.findElementAt(context.getEditor().getCaretModel().getOffset()));
 
     final PsiStatement statement = PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiStatement.class, false);
@@ -67,8 +66,8 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
     final PsiStatement newVarDeclarationTemplate = elementFactory.createVariableDeclarationStatement(myNewVarName,
                                                                                                      elementFactory.createType(myQualifierClass),
                                                                                                      elementFactory.createExpressionFromText(PsiKeyword.NULL, null));
-
-    statement.getParent().addBefore(newVarDeclarationTemplate, statement);
+    PsiElement varDeclaration = statement.getParent().addBefore(newVarDeclarationTemplate, statement);
+    JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(varDeclaration);
   }
 
   @NotNull

@@ -28,7 +28,17 @@ public class PySearchableOptionContributor extends SearchableOptionContributor {
   }
 
   private static void processProjectSettings(SearchableOptionProcessor processor) {
-    processor.addOptions("Python interpreter", "Project interpreter", "Python interpreter", "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable", "Project interpreter", true);
+    String id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
+    processor.addOptions("Python interpreter", "Project interpreter", "Python interpreter",
+                         id, "Project interpreter", true);
+
+    processor.addOptions("pip package", "Project interpreter", "Project Interpreter Packages",
+                         id, "Project interpreter", true);
+
+
+    processor.addOptions("virtualenv venv", "Project interpreter", "Create VirtualEnv",
+                         id, "Project interpreter", true);
+
   }
 
   private static void processIntegratedTools(SearchableOptionProcessor processor) {

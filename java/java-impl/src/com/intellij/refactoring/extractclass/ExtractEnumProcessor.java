@@ -147,7 +147,8 @@ public class ExtractEnumProcessor {
       myTypeMigrationProcessor = new TypeMigrationProcessor(myProject,
                                                             PsiUtilCore.toPsiElementArray(myEnumConstants),
                                                             Functions.constant(JavaPsiFacade.getElementFactory(myProject).createType(myClass)),
-                                                            rules);
+                                                            rules,
+                                                            true);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
         final PsiElement migrateElement = usageInfo.getElement();
         if (migrateElement instanceof PsiField) {

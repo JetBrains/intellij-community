@@ -31,6 +31,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class CreatePatchFromHistoryActionProvider implements AnActionExtensionProvider {
+  private final boolean mySilentClipboard;
+
+  private CreatePatchFromHistoryActionProvider(boolean silentClipboard) {
+    mySilentClipboard = silentClipboard;
+  }
+
+  public static class Dialog extends CreatePatchFromHistoryActionProvider {
+    public Dialog() {
+      super(false);
+    }
+  }
+
+  public static class Clipboard extends CreatePatchFromHistoryActionProvider {
+    public Clipboard() {
+      super(true);
+    }
+  }
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
@@ -61,7 +78,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
 
     ui.getVcsLog().requestSelectedDetails(detailsList -> {
       List<Change> changes = ui.collectChanges(detailsList, false);
-      CreatePatchFromChangesAction.createPatch(project, commitMessage, changes);
+      CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard);
     });
   }
 }

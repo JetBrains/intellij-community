@@ -57,7 +57,7 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
     for (String id : ids) {
       AnAction action = mgr.getAction(id);
       if (action == null) {
-        System.out.println("Can't find action: " + id);
+        fail("Can't find action: " + id);
         continue;
       }
       Method updateMethod = action.getClass().getMethod("update", AnActionEvent.class);
@@ -66,7 +66,7 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
       }
     }
     for (AnAction action : failed) {
-      System.out.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
+      System.err.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
     }
 
     assertEmpty("The following actions have shortcuts, but don't have update() method redefined", failed);

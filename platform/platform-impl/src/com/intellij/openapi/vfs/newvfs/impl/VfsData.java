@@ -26,7 +26,7 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.text.CaseInsensitiveCharSequenceHashingStrategy;
+import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Contract;
@@ -110,7 +110,7 @@ public class VfsData {
   }
 
   @Nullable
-  public static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
+  static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
     Segment segment = getSegment(id, false);
     if (segment == null) return null;
 
@@ -300,7 +300,7 @@ public class VfsData {
     }
     void addAdoptedName(CharSequence name, boolean caseSensitive) {
       if (myAdoptedNames == null) {
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? ContainerUtil.canonicalStrategy() : CaseInsensitiveCharSequenceHashingStrategy.INSTANCE);
+        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
       }
       myAdoptedNames.add(name);
     }

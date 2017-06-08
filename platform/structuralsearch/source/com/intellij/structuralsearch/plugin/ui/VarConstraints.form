@@ -302,7 +302,7 @@
         </clientProperties>
         <border type="none" title-resource-bundle="messages/SSRBundle" title-key="var.constraints.within.pattern.border"/>
         <children>
-          <component id="ecda0" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="withinTextField">
+          <component id="bfd62" class="com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton" binding="withinTextField" custom-create="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

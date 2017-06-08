@@ -574,7 +574,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @NotNull
-  private File generateUniqueSchemePatchDir(@NotNull final String defaultName, boolean createResourceDirectory) {
+  private File generateUniqueSchemePatchDir(@Nullable final String defaultName, boolean createResourceDirectory) {
     ignoreShelfDirectoryIfFirstShelf();
     String uniqueName = UniqueNameGenerator
       .generateUniqueName(shortenAndSanitize(defaultName), mySchemeManager.getAllSchemeNames());
@@ -596,7 +596,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   // for create patch only
-  public static File suggestPatchName(Project project, @NotNull final String commitMessage, final File file, String extension) {
+  public static File suggestPatchName(Project project, @Nullable final String commitMessage, final File file, String extension) {
     @NonNls String defaultPath = shortenAndSanitize(commitMessage);
     while (true) {
       final File nonexistentFile = FileUtil.findSequentNonexistentFile(file, defaultPath,
@@ -612,8 +612,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @NotNull
-  private static String shortenAndSanitize(@NotNull String commitMessage) {
-    @NonNls String defaultPath = FileUtil.sanitizeFileName(commitMessage);
+  private static String shortenAndSanitize(@Nullable String commitMessage) {
+    @NonNls String defaultPath = FileUtil.sanitizeFileName(StringUtil.notNullize(commitMessage));
     if (defaultPath.isEmpty()) {
       defaultPath = "unnamed";
     }

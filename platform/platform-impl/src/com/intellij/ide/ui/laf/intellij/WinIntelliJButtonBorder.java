@@ -17,7 +17,10 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,6 +29,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isSquare;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL;
 
 /**
@@ -43,9 +47,13 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     Graphics2D g2 = (Graphics2D)g.create();
     AbstractButton b = (AbstractButton)c;
     ButtonModel bm = b.getModel();
-
+    Rectangle r = new Rectangle(x, y, width, height);
     try {
-      g2.translate(x, y);
+      if (isSquare(c)) {
+        JBInsets.removeFrom(r, b.getInsets());
+      }
+
+      g2.translate(r.x, r.y);
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
@@ -66,8 +74,8 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      border.append(new Rectangle2D.Double(0, 0, width, height), false);
-      border.append(new Rectangle2D.Double(bw, bw, width - 2*bw, height - 2*bw), false);
+      border.append(new Rectangle2D.Double(0, 0, r.width, r.height), false);
+      border.append(new Rectangle2D.Double(bw, bw, r.width - 2*bw, r.height - 2*bw), false);
 
       g2.setColor(color);
       g2.fill(border);
@@ -81,7 +89,8 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     if (c.getParent() instanceof ActionToolbar) {
       return JBUI.insets(4, 16).asUIResource();
     } else if (DarculaButtonUI.isSquare(c)) {
-      return JBUI.insets(0, 0).asUIResource();
+      int i = (UIUtil.getParentOfType(Wrapper.class, c) != null) ? 1 : 0;
+      return JBUI.insets(i).asUIResource();
     } else if (DarculaButtonUI.isHelpButton((JComponent)c)) {
       return JBUI.insets(0, 0, 0, 10).asUIResource();
     } else {
