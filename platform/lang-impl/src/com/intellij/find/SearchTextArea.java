@@ -23,6 +23,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.InplaceActionButtonLook;
@@ -59,6 +60,8 @@ import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -385,7 +388,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   @NotNull
   private LafHelper createHelper() {
-    return SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacLafHelper() : new DefaultLafHelper();
+    return UIUtil.isUnderWin10LookAndFeel() ? new Win10LafHelper() :
+           SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacLafHelper() : new DefaultLafHelper();
   }
 
   private static abstract class LafHelper {
@@ -528,6 +532,84 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         RectanglePainter
           .paint(g, r.x, r.y, r.width, r.height, arcSize, myTextArea.getBackground(), myTextArea.isEnabled() ? Gray._100 : Gray._83);
       }
+    }
+  }
+
+  private class Win10LafHelper extends DefaultLafHelper implements Border {
+    private Win10LafHelper() {
+      MouseListener ml = new MouseAdapter() {
+        @Override public void mouseEntered(MouseEvent e) {
+          setHover(true);
+        }
+
+        @Override public void mouseExited(MouseEvent e) {
+          setHover(false);
+        }
+
+        private void setHover(Boolean hover) {
+          putClientProperty(WinIntelliJTextFieldUI.HOVER_PROPERTY, hover);
+          repaint();
+        }
+      };
+
+      myTextArea.addMouseListener(ml);
+      addMouseListener(ml);
+    }
+
+    @Override
+    Border getBorder() {
+      return this;
+    }
+
+    @Override
+    void paint(Graphics2D g) {
+      Rectangle r = new Rectangle(getSize());
+      JBInsets.removeFrom(r, getInsets());
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.setColor(myTextArea.getBackground());
+        g2.fill(r);
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    @Override public Insets getBorderInsets(Component c) {
+      return JBUI.insets(1, 0).asUIResource();
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        Insets i = getInsets();
+        g2.translate(x + i.left, y + i.top);
+        width -= i.left + i.right;
+        height -= i.top + i.bottom;
+
+        if (myTextArea.hasFocus()) {
+          g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
+        } else if (isEnabled() && getClientProperty(WinIntelliJTextFieldUI.HOVER_PROPERTY) == Boolean.TRUE) {
+          g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+        } else {
+          g2.setColor(UIManager.getColor("TextField.borderColor"));
+        }
+
+        int bw = JBUI.scale(1);
+        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        border.append(new Rectangle2D.Double(0, 0, width, height), false);
+        border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
+
+        g2.fill(border);
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public boolean isBorderOpaque() {
+      return false;
     }
   }
 }

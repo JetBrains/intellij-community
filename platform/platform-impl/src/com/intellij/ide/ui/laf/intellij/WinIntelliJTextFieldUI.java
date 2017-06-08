@@ -17,6 +17,9 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -59,8 +62,7 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
   @Override
   protected void paintBackground(Graphics g) {
     JTextComponent c = getComponent();
-    if (UIUtil.getParentOfType(JComboBox.class, c) != null ||
-        UIUtil.getParentOfType(JSpinner.class, c) != null) return;
+    if (UIUtil.getParentOfType(JComboBox.class, c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -70,11 +72,9 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
         g2.fillRect(0, 0, c.getWidth(), c.getHeight());
       }
 
+      paintTextFieldBackground(c, g2);
       if (isSearchField(c)) {
-        Rectangle r = getDrawingRect();
-        paintSearchField(g2, c, r);
-      } else if (c.getBorder() instanceof WinIntelliJTextBorder){
-        paintTextFieldBackground(c, g2);
+        paintSearchField(g2, c, getDrawingRect());
       }
     } finally {
       g2.dispose();
@@ -82,19 +82,50 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   static void paintTextFieldBackground(JComponent c, Graphics2D g2) {
-    g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
+    g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("TextField.inactiveBackground"));
 
     if (!c.isEnabled()) {
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
     }
 
-    int bw = JBUI.scale(1);
-    g2.fillRect(bw, bw, c.getWidth() - bw*2, c.getHeight() - bw*2);
+    Rectangle r = new Rectangle(c.getSize());
+    adjustVerticalInsets(r, c);
+    g2.fill(r);
+  }
+
+  static void adjustVerticalInsets(Rectangle r, JComponent c) {
+    if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+      Insets i = c.getInsets();
+      i.left = i.right = 0;
+      JBInsets.removeFrom(r, i);
+    }
   }
 
   @Override public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    size.height = isSearchField(c) ? size.height : JBUI.scale(22);
+    size.height = JBUI.scale(22);
     return size;
+  }
+
+  @Override protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
+    Icon searchIcon = isSearchFieldWithHistoryPopup(c) ?
+                      UIManager.getIcon("TextField.darcula.searchWithHistory.icon") :
+                      UIManager.getIcon("TextField.darcula.search.icon");
+    if (searchIcon == null) {
+      searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
+    }
+
+    int yOffset = isSearchFieldWithHistoryPopup(c) ? JBUI.scale(1) : 0;
+
+    searchIcon.paintIcon(c, g, JBUI.scale(4), (c.getHeight() - searchIcon.getIconHeight()) / 2 + yOffset);
+
+    if (hasText()) {
+      Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
+      if (clearIcon == null) {
+        clearIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+      }
+      clearIcon.paintIcon(c, g, c.getWidth() - clearIcon.getIconWidth() - JBUI.scale(4),
+                                (c.getHeight() - searchIcon.getIconHeight()) / 2);
+    }
   }
 }
