@@ -79,7 +79,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     super(new BorderLayout());
     myModel = model;
     myFactory = factory;
-    mySchemesPanel = new CodeStyleSchemesPanel(model);
+    mySchemesPanel = new CodeStyleSchemesPanel(model, createLinkComponent());
     myProperties = PropertiesComponent.getInstance();
 
     model.addListener(new CodeStyleSettingsListener(){
@@ -126,20 +126,11 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
     addWaitCard();
 
-    JLabel link = new SwingActionLink(mySetFromAction);
-    link.setVerticalAlignment(SwingConstants.BOTTOM);
-
     JPanel top = new JPanel();
     top.setLayout(new BoxLayout(top, BoxLayout.X_AXIS));
 
     if (schemesPanelEnabled) {
-      JPanel linkPanel = new JPanel();
-      linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
-      linkPanel.add(Box.createVerticalGlue());
-      linkPanel.add(link);
       top.add(mySchemesPanel);
-      top.add(Box.createRigidArea(new Dimension(10,0)));
-      top.add(linkPanel);
     }
 
     top.setBorder(JBUI.Borders.empty(5, 10, 0, 10));
@@ -150,6 +141,17 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     mySchemesPanel.onSelectedSchemeChanged();
     onCurrentSchemeChanged();
 
+  }
+
+  @NotNull
+  private JComponent createLinkComponent() {
+    JPanel linkPanel = new JPanel();
+    JLabel link = new SwingActionLink(mySetFromAction);
+    link.setVerticalAlignment(SwingConstants.BOTTOM);
+    linkPanel.setLayout(new BoxLayout(linkPanel, BoxLayout.Y_AXIS));
+    linkPanel.add(Box.createVerticalGlue());
+    linkPanel.add(link);
+    return linkPanel;
   }
 
   private void addWaitCard() {

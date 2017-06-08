@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,8 +40,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     super(vGap);
     myModel = model;
   }
-  public CodeStyleSchemesPanel(CodeStyleSchemesModel model) {
-    super();
+  public CodeStyleSchemesPanel(CodeStyleSchemesModel model, @NotNull JComponent linkComponent) {
+    super(DEFAULT_VGAP, linkComponent);
     myModel = model;
   }
 
