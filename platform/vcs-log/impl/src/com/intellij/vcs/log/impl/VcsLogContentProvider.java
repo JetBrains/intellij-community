@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,7 +62,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     connection.subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
       public void logCreated(@NotNull VcsLogManager logManager) {
-        addLogUi();
+        addLogUi(logManager);
       }
 
       @Override
@@ -71,14 +72,17 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       }
     });
 
-    if (myProjectLog.getLogManager() != null) {
-      addLogUi();
+    VcsLogManager manager = myProjectLog.getLogManager();
+    if (manager != null) {
+      addLogUi(manager);
     }
   }
 
   @CalledInAwt
-  private void addLogUi() {
-    myContainer.add(myProjectLog.initMainLog(TAB_NAME), BorderLayout.CENTER);
+  private void addLogUi(@NotNull VcsLogManager logManager) {
+    VcsLogUiImpl ui = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
+    myProjectLog.setMainUi(ui);
+    myContainer.add(new VcsLogPanel(logManager, ui), BorderLayout.CENTER);
   }
 
   @Override
@@ -90,7 +94,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Override
   public void disposeContent() {
     myContainer.removeAll();
-    
+
     VcsLogManager logManager = myProjectLog.getLogManager();
     if (logManager != null) {
       closeLogTabs(logManager);
