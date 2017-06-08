@@ -27,7 +27,9 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustVerticalInsets;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,32 +37,28 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROP
 public class WinIntelliJTextBorder extends DarculaTextBorder {
   @Override
   public Insets getBorderInsets(Component c) {
-
-    int vOffset = TextFieldWithPopupHandlerUI.isSearchField(c) ? 6 : 4;
-    if (TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup(c)) {
-      return JBUI.insets(vOffset, 7 + 16 + 3, vOffset, 7 + 16).asUIResource();
-    }
-    else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
-      return JBUI.insets(vOffset, 4 + 16 + 3, vOffset, 7 + 16).asUIResource();
-    }
-    else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+    if (isSearchFieldWithHistoryPopup(c)) {
+      return JBUI.insets(3, 26, 3, 23).asUIResource();
+    } else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
+      return JBUI.insets(3, 20, 3, 23).asUIResource();
+    } else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
-    }
-    else {
+    } else {
       return JBUI.insets(3, 5).asUIResource();
     }
   }
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (TextFieldWithPopupHandlerUI.isSearchField(c)) return;
-
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      g2.translate(x, y);
+      Rectangle r = new Rectangle(x, y, width, height);
+      adjustVerticalInsets(r, (JComponent)c);
+
+      g2.translate(r.x, r.y);
       Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, c.hasFocus());
+        DarculaUIUtil.paintErrorBorder(g2, r.width, r.height, 0, true, c.hasFocus());
       } else {
         //boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
         JComponent jc = (JComponent)c;
@@ -81,8 +79,8 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
         int bw = JBUI.scale(1);
         Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(new Rectangle2D.Double(0, 0, width, height), false);
-        border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
+        border.append(new Rectangle2D.Double(0, 0, r.width, r.height), false);
+        border.append(new Rectangle2D.Double(bw, bw, r.width - bw*2, r.height - bw*2), false);
 
         g2.fill(border);
       }
