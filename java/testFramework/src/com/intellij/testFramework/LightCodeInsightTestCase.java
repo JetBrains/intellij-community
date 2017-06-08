@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
-  private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+).java$");
+  private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(\\.java)?$");
 
   public static JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(ourProject);

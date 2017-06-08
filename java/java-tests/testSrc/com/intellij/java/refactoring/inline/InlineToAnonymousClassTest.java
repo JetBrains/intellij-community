@@ -502,10 +502,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    if (getTestName(false).endsWith("Java8")) {
-      return LanguageLevel.JDK_1_8;
-    }
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_7;
   }
 }
