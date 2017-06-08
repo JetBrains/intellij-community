@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
@@ -37,7 +36,10 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.JITSensitive;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -292,27 +294,18 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     // measures create N children inside one directory.
     // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
     // then call PersistentFS.getInstance().processEvents(events); directly instead of agonizingly slow refresh.
-    ApplicationInfoImpl.setInStressTest(true); //wtf wrong with you fixtures?
-    Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
-    List<VirtualFile> toDelete = new ArrayList<>();
-    try {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)()-> PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
-        VirtualFile validVTemp = new MyFakeDirectory("vtemp");
-        toDelete.add(validVTemp);
-        List<VFileEvent> events = IntStream.range(0, N)
-          .mapToObj(i -> new VFileCreateEvent(this, validVTemp, i + ".txt", false, false))
-          .collect(Collectors.toList());
+    UIUtil.invokeAndWaitIfNeeded((Runnable)()-> PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
+      VirtualFile validVTemp = new MyFakeDirectory("vtemp");
+      List<VFileEvent> events = IntStream.range(0, N)
+        .mapToObj(i -> new VFileCreateEvent(this, validVTemp, i + ".txt", false, false))
+        .collect(Collectors.toList());
 
-        WriteCommandAction.runWriteCommandAction(null, () -> {
-          PersistentFS.getInstance().processEvents(events);
-        });
+      WriteCommandAction.runWriteCommandAction(null, () -> {
+        PersistentFS.getInstance().processEvents(events);
+      });
 
-        assertEquals(N, validVTemp.getChildren().length);
-      }).assertTiming());
-    }
-    finally {
-      toDelete.forEach(VfsTestUtil::deleteFile);
-    }
+      assertEquals(N, validVTemp.getChildren().length);
+    }).assertTiming());
   }
 
   @Test
@@ -321,57 +314,49 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     // measures delete N children inside one directory.
     // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
     // then call PersistentFS.getInstance().processEvents(events); directly instead of agonizingly slow refresh.
-    ApplicationInfoImpl.setInStressTest(true); //wtf wrong with you fixtures?
-    //TranslatingCompilerFilesMonitor.getInstance().disable(getTestRootDisposable());
-    Disposer.register(getTestRootDisposable(), ()-> ApplicationInfoImpl.setInStressTest(false));
-    List<VirtualFile> toDelete = new ArrayList<>();
-    try {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)()->{
-        final VirtualDirectoryImpl[] validVTemp = new VirtualDirectoryImpl[1];
-        List<VFileEvent> deleteEvents = new ArrayList<>();
-        PlatformTestUtil.startPerformanceTest("deleting many children", 30000, () -> {
-          WriteCommandAction.runWriteCommandAction(null, () -> {
-            PersistentFS.getInstance().processEvents(deleteEvents);
-          });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)()->{
+      final VirtualDirectoryImpl[] validVTemp = new VirtualDirectoryImpl[1];
+      List<VFileEvent> deleteEvents = new ArrayList<>();
+      PlatformTestUtil.startPerformanceTest("deleting many children", 30000, () -> {
+        assertEquals(N, deleteEvents.size());
+        WriteCommandAction.runWriteCommandAction(null, () -> {
+          PersistentFS.getInstance().processEvents(deleteEvents);
+        });
 
-          assertEquals(0, validVTemp[0].getChildren().length);
-        }).setup(()-> {
-          // prepare fake dir with N fake children
-          ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
-          GCUtil.tryForceGC();
-          
-          validVTemp[0] = new MyFakeDirectory("vtemp");
-          validVTemp[0].getChildren();
-          toDelete.add(validVTemp[0]);
+        assertEquals(0, validVTemp[0].getChildren().length);
+      }).setup(()-> {
+        // prepare fake dir with N fake children
+        ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
+        GCUtil.tryForceGC();
 
-          List<VFileEvent> createEvents = IntStream.range(0, N)
-            .mapToObj(i -> new VFileCreateEvent(this, validVTemp[0], i + ".txt", false, false))
-            .collect(Collectors.toList());
+        validVTemp[0] = new MyFakeDirectory("vtemp");
+        validVTemp[0].getChildren();
 
-          WriteCommandAction.runWriteCommandAction(null, () -> {
-            PersistentFS.getInstance().processEvents(createEvents);
-          });
-          assertEquals(N, validVTemp[0].getChildren().length);
+        List<VFileEvent> createEvents = IntStream.range(0, N)
+          .mapToObj(i -> new VFileCreateEvent(this, validVTemp[0], i + ".txt", false, false))
+          .collect(Collectors.toList());
 
-          deleteEvents.clear();
-          deleteEvents.addAll(Arrays.stream(validVTemp[0].getChildren())
-            .map(v -> new VFileDeleteEvent(this, new MyFakeFile(v.getName(), validVTemp[0]), false))
-            .collect(Collectors.toList()));
+        WriteCommandAction.runWriteCommandAction(null, () -> {
+          PersistentFS.getInstance().processEvents(createEvents);
+        });
+        assertEquals(N, validVTemp[0].getChildren().length);
 
-        }).assertTiming();
-      });
-    }
-    finally {
-      toDelete.forEach(VfsTestUtil::deleteFile);
-    }
+        deleteEvents.clear();
+        deleteEvents.addAll(Arrays.stream(validVTemp[0].getChildren())
+          .map(v -> new VFileDeleteEvent(this, new MyFakeFile(v.getName(), ((VirtualFileWithId)v).getId(), validVTemp[0]), false))
+          .collect(Collectors.toList()));
+
+      }).assertTiming();
+    });
   }
 
   private static class MyFakeFile extends VirtualFileImpl {
     private static final VfsData.Segment SEGMENT = new VfsData.Segment();
     private final String name;
 
-    MyFakeFile(String name, VirtualDirectoryImpl parent) {
-      super(FSRecords.createRecord(), SEGMENT, parent);
+    MyFakeFile(String name, int id, VirtualDirectoryImpl parent) {
+      super(id, SEGMENT, parent);
+
       this.name = name;
     }
 
@@ -395,13 +380,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
     UserDataHolder data;
     @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    public synchronized <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
       if (data == null) data = new UserDataHolderBase();
       data.putUserData(key, value);
     }
 
     @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
+    public synchronized <T> T getUserData(@NotNull Key<T> key) {
       try {
         return data.getUserData(key);
       }
@@ -409,6 +394,11 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         data.putUserData(key, null);
         if (((UserDataHolderBase)data).isUserDataEmpty()) data = null;
       }
+    }
+
+    @Override
+    public boolean isValid() {
+      return true;
     }
   }
 
