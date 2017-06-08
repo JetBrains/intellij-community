@@ -24,7 +24,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -57,8 +56,11 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
 
   public static void record(@NotNull AnAction action, String place) {
     String id = ActionManager.getInstance().getId(action);
+    if (id == null) {
+      id = action.getClass().getName();
+    }
     ToolbarClicksCollector collector = getInstance();
-    if (collector != null && id != null) {
+    if (collector != null) {
       String key = ConvertUsagesUtil.escapeDescriptorName(id + "@" + place);
       ClicksState state = collector.getState();
       if (state != null) {
