@@ -199,6 +199,10 @@ public class HardcodedContracts {
     return className.startsWith("junit.framework.") || className.startsWith("org.junit.");
   }
 
+  private static boolean isJunit5(String className) {
+    return className.startsWith("org.junit.jupiter.");
+  }
+
   private static boolean isTestng(String className) {
     return className.startsWith("org.testng.");
   }
@@ -245,7 +249,7 @@ public class HardcodedContracts {
 
     if (paramCount == 0) return Collections.emptyList();
 
-    int checkedParam = testng ? 0 : paramCount - 1;
+    int checkedParam = testng || isJunit5(className) ? 0 : paramCount - 1;
     MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
     if ("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) {
       constraints[checkedParam] = FALSE_VALUE;
