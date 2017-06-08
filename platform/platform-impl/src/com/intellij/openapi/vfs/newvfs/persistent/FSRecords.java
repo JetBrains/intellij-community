@@ -1048,7 +1048,7 @@ public class FSRecords {
     return false;
   }
 
-  public static void updateList(int id, @NotNull int[] childIds) {
+  static void updateList(int id, @NotNull int[] childIds) {
     Arrays.sort(childIds);
     w.lock();
     try {
@@ -1095,7 +1095,7 @@ public class FSRecords {
     return ourLocalModificationCount; // This is volatile, only modified under Application.runWriteAction() lock.
   }
 
-  public static int getModCount() {
+  static int getModCount() {
     r.lock();
     try {
       return getRecords().getInt(HEADER_GLOBAL_MOD_COUNT_OFFSET);
@@ -1129,7 +1129,7 @@ public class FSRecords {
 
   // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
   @NotNull
-  public static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
+  static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
     TIntArrayList result = new TIntArrayList(10);
     r.lock();
     try {
@@ -1156,7 +1156,7 @@ public class FSRecords {
     return result;
   }
 
-  public static void setParent(int id, int parentId) {
+  static void setParent(int id, int parentId) {
     if (id == parentId) {
       LOG.error("Cyclic parent/child relations");
       return;
@@ -1175,7 +1175,7 @@ public class FSRecords {
     }
   }
 
-  public static int getNameId(int id) {
+  static int getNameId(int id) {
     try {
       r.lock();
       try {
@@ -1212,7 +1212,7 @@ public class FSRecords {
   }
 
   @NotNull
-  public static CharSequence getNameSequence(int id) {
+  static CharSequence getNameSequence(int id) {
     try {
       r.lock();
       try {
@@ -1260,7 +1260,7 @@ public class FSRecords {
     }
   }
 
-  public static int getFlags(int id) {
+  static int getFlags(int id) {
     r.lock();
     try {
       return getRecordInt(id, FLAGS_OFFSET);
@@ -1270,7 +1270,7 @@ public class FSRecords {
     }
   }
 
-  public static void setFlags(int id, int flags, final boolean markAsChange) {
+  static void setFlags(int id, int flags, final boolean markAsChange) {
     w.lock();
     try {
       if (markAsChange) {
@@ -1800,9 +1800,7 @@ public class FSRecords {
       return page;
     } else {
       int newRecord = getContentStorage().acquireNewRecord();
-      if (page != newRecord) {
-        assert false:"Unexpected content storage modification";
-      }
+      assert page == newRecord :"Unexpected content storage modification";
       
       return -page;
     }

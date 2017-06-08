@@ -778,7 +778,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     parentChildrenIds.addAll(oldIds);
     boolean hasRemovedChildren = false;
 
-    List<VirtualDirectoryImpl.IdNamePair> childrenAdded = new SmartList<>();
+    List<FSRecords.NameId> childrenAdded = new SmartList<>();
     List<VirtualFile> childrenDeleted = new SmartList<>();
     List<CharSequence> childrenNamesDeleted = new SmartList<>();
     TIntHashSet childrenIdsDeleted = new TIntHashSet(Math.max(events.size(), oldIds.length));
@@ -792,7 +792,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
           final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
           assert parent instanceof VirtualDirectoryImpl : parent;
 
-          childrenAdded.add(new VirtualDirectoryImpl.IdNamePair(childId, name));
+          childrenAdded.add(new FSRecords.NameId(childId, -1, name));
           parentChildrenIds.add(childId);
         }
       }

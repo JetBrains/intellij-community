@@ -413,24 +413,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new IOException("Cannot get content of directory: " + this);
   }
 
-  public static class IdNamePair {
-    private final int id;
-    private final CharSequence name;
-
-    public IdNamePair(int id, @NotNull CharSequence name) {
-      this.id = id;
-      this.name = name;
-    }
-
-    @Override
-    public String toString() {
-      return '(' + id + ", '" + name + "')";
-    }
-  }
   // optimisation: works faster than added.forEach(this::addChild)
-  public void createAndAddChildren(@NotNull List<IdNamePair> added) {
+  public void createAndAddChildren(@NotNull List<FSRecords.NameId> added) {
     if (added.size()<=1) {
-      for (IdNamePair pair : added) {
+      for (FSRecords.NameId pair : added) {
         VirtualFileSystemEntry file = createChild(pair.name.toString(), pair.id, getFileSystem());
         addChild(file);
       }
@@ -439,20 +425,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     // merge sorted added and existing lists just like in merge sort
     final boolean caseSensitive = getFileSystem().isCaseSensitive();
-    Comparator<IdNamePair> pairComparator = (p1, p2) -> compareNames(p1.name, p2.name, caseSensitive);
+    Comparator<FSRecords.NameId> pairComparator = (p1, p2) -> compareNames(p1.name, p2.name, caseSensitive);
     added.sort(pairComparator);
     TIntArrayList mergedIds = new TIntArrayList(myData.myChildrenIds.length + added.size());
     synchronized (myData) {
-      for (IdNamePair pair : added) {
+      for (FSRecords.NameId pair : added) {
         createChild(pair.name.toString(), pair.id, getFileSystem());
         myData.removeAdoptedName(pair.name);
       }
-      ContainerUtil.processSortedListsInOrder(added, new AbstractList<IdNamePair>() {
+      ContainerUtil.processSortedListsInOrder(added, new AbstractList<FSRecords.NameId>() {
         @Override
-        public IdNamePair get(int index) {
+        public FSRecords.NameId get(int index) {
           int id = myData.myChildrenIds[index];
           CharSequence name = ObjectUtils.assertNotNull(VfsData.getNameByFileId(id));
-          return new IdNamePair(id, name);
+          return new FSRecords.NameId(id, -1, name);
         }
 
         @Override
