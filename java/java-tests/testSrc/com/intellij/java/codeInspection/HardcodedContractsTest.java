@@ -17,11 +17,18 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public class HardcodedContractsTest extends DataFlowInspectionTestCase {
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -110,8 +117,13 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testJunit5Assert() {
-    myFixture.addClass("package org.junit.jupiter.api; public class Assertions {\n" +
+    myFixture.addClass("package org.junit.jupiter.api;" +
+                       "import java.util.function.BooleanSupplier;" +
+                       "public class Assertions {\n" +
                        "    public static void assertNotNull(Object actual){}" +
+                       "    public static void assertNotNull(Object actual, String message){}" +
+                       "    public static void assertTrue(boolean b, String message){}" +
+                       "    public static void assertTrue(BooleanSupplier b, String message){}" +
                        "}");
     checkHighlighting();
   }
