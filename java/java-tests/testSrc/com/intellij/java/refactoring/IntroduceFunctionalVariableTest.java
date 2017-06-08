@@ -63,6 +63,17 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     doTest(0);
   }
 
+  public void testIgnoreMethodObjectSuggestion() throws Exception {
+    try {
+      doTest();
+      fail("Unable to perform is expected");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Extract Functional Variable is not supported in current context", e.getMessage());
+    }
+  }
+
   public void testNoSuggestionForInaccessibleInterface() throws Exception {
     try {
       doTest();
