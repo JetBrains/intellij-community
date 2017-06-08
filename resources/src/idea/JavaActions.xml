@@ -128,7 +128,7 @@
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
+    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
 
