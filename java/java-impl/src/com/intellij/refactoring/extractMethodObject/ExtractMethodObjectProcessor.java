@@ -37,6 +37,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -766,6 +767,21 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     @Override
     protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
       return createExtractMethodObjectDialog(this);
+    }
+
+    @Override
+    protected PsiExpression expressionToReplace(PsiExpression expression) {
+      if (expression instanceof PsiPostfixExpression || expression instanceof PsiPrefixExpression) {
+        final IElementType elementType = expression instanceof PsiPostfixExpression
+                                         ? ((PsiPostfixExpression)expression).getOperationTokenType()
+                                         : ((PsiPrefixExpression)expression).getOperationTokenType();
+        if (elementType == JavaTokenType.PLUSPLUS || elementType == JavaTokenType.MINUSMINUS) {
+          PsiExpression operand = expression instanceof PsiPostfixExpression ? ((PsiPostfixExpression)expression).getOperand() 
+                                                                             : ((PsiPrefixExpression)expression).getOperand();
+          return ((PsiBinaryExpression)expression.replace(myElementFactory.createExpressionFromText(operand.getText() + " + x", operand))).getROperand();
+        }
+      }
+      return super.expressionToReplace(expression);
     }
 
     @Override
