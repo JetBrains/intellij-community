@@ -395,6 +395,9 @@ public class UpdateHighlightersUtil {
     if (severity == HighlightSeverity.WARNING) {
       layer = HighlighterLayer.WARNING;
     }
+    else if (severity == HighlightSeverity.WEAK_WARNING) {
+      layer = HighlighterLayer.WEAK_WARNING;
+    }
     else if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {
       layer = HighlighterLayer.ERROR;
     }

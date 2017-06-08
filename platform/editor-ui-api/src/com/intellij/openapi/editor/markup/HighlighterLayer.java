@@ -20,6 +20,7 @@ public interface HighlighterLayer {
   int CARET_ROW = 2000;
   int ADDITIONAL_SYNTAX = 3000;
   int GUARDED_BLOCKS = 3500;
+  int WEAK_WARNING = 3750;
   int WARNING = 4000;
   int ERROR = 5000;
   int ELEMENT_UNDER_CARET = 5500;
