@@ -83,7 +83,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   private boolean myIsStatic;
 
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
-  private static final String METHOD_ENTRY_KEY = "METHOD_ENTRY_KEY";
 
   protected MethodBreakpoint(@NotNull Project project, XBreakpoint breakpoint) {
     super(project, breakpoint);
@@ -329,26 +328,26 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   public String getEventMessage(@NotNull LocatableEvent event) {
     Location location = event.location();
     if (event instanceof MethodEntryEvent) {
-      return getEventMessage(true, ((MethodEntryEvent)event).method(), location);
+      return getEventMessage(true, ((MethodEntryEvent)event).method(), location, getFileName());
     }
     if (event instanceof MethodExitEvent) {
-      return getEventMessage(false, ((MethodExitEvent)event).method(), location);
+      return getEventMessage(false, ((MethodExitEvent)event).method(), location, getFileName());
     }
     Object entryProperty = event.request().getProperty(METHOD_ENTRY_KEY);
     if (entryProperty instanceof Boolean) {
-      return getEventMessage((Boolean)entryProperty, location.method(), location);
+      return getEventMessage((Boolean)entryProperty, location.method(), location, getFileName());
     }
     return "";
   }
 
-  private String getEventMessage(boolean entry, Method method, Location location) {
+  static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName;
     try {
       locationFileName = location.sourceName();
     }
     catch (AbsentInformationException e) {
-      locationFileName = getFileName();
+      locationFileName = defaultFileName;
     }
     int locationLine = location.lineNumber();
     return DebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",

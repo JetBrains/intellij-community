@@ -24,7 +24,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +38,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
@@ -177,40 +175,17 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
-  public String getEventMessage(LocatableEvent event) {
-    final Location location = event.location();
-    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName;
-    try {
-      locationFileName = location.sourceName();
-    }
-    catch (AbsentInformationException e) {
-      locationFileName = "";
-    }
-    final int locationLine = location.lineNumber();
-    
+  public String getEventMessage(@NotNull LocatableEvent event) {
+    Location location = event.location();
     if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent entryEvent = (MethodEntryEvent)event;
-      final Method method = entryEvent.method();
-      return DebuggerBundle.message(
-        "status.method.entry.breakpoint.reached", 
-        method.declaringType().name() + "." + method.name() + "()",
-        locationQName,
-        locationFileName,
-        locationLine
-      );
+      return MethodBreakpoint.getEventMessage(true, ((MethodEntryEvent)event).method(), location, "");
     }
-    
     if (event instanceof MethodExitEvent) {
-      MethodExitEvent exitEvent = (MethodExitEvent)event;
-      final Method method = exitEvent.method();
-      return DebuggerBundle.message(
-        "status.method.exit.breakpoint.reached", 
-        method.declaringType().name() + "." + method.name() + "()",
-        locationQName,
-        locationFileName,
-        locationLine
-      );
+      return MethodBreakpoint.getEventMessage(false, ((MethodExitEvent)event).method(), location, "");
+    }
+    Object entryProperty = event.request().getProperty(METHOD_ENTRY_KEY);
+    if (entryProperty instanceof Boolean) {
+      return MethodBreakpoint.getEventMessage((Boolean)entryProperty, location.method(), location, "");
     }
     return "";
   }
