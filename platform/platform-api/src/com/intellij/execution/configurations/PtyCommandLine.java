@@ -38,7 +38,7 @@ import java.util.Map;
  * Warning: PtyCommandLine works with ProcessHandler only in blocking read mode.
  * Please make sure that you use appropriate ProcessHandler implementation.
  *
- * Note: this works only on Unix, on Windows regular processes are used instead.
+ * Works for Linux, macOS, and Windows. On Windows PTY is emulated by creating an invisible console window (see pty4j and winpty implementation)
  */
 public class PtyCommandLine extends GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.PtyCommandLine");
