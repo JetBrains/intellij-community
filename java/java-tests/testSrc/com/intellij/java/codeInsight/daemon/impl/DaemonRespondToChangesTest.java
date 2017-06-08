@@ -27,7 +27,6 @@ import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
@@ -37,7 +36,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.configurationStore.StorageUtilKt;
@@ -2653,32 +2651,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(fixes);
   }
 
-  public void testStupidQuickFixIsStillVisibleAfterAppliedButDidNothing() {
-    MyInspection tool = new MyInspection();
-    enableInspectionTool(tool);
-    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
-
-    @Language("JAVA")
-    String text = "class X { void f() { if (this == null) {} else return; } }";
-    configureByText(JavaFileType.INSTANCE, text);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().setText(text));
-    getEditor().getCaretModel().moveToOffset(getFile().getText().indexOf("if (") + 1);
-    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
-    List<IntentionAction> fixes = findStupidFixes();
-    IntentionAction fix = assertOneElement(fixes);
-    ((MyInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability)((QuickFixWrapper)((IntentionActionDelegate)fix).getDelegate()).getFix()).doFix = false;
-    fix.invoke(getProject(), getEditor(), getFile()); // did nothing
-
-    fixes = findStupidFixes();
-    assertOneElement(fixes);
-
-    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
-    fixes = findStupidFixes();
-    assertOneElement(fixes);
-  }
-
   private List<IntentionAction> findStupidFixes() {
-    UIUtil.dispatchAllInvocationEvents();
     return CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
       .stream().filter(f->f.getFamilyName().equals(new MyInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()))
       .collect(Collectors.toList());
@@ -2719,7 +2692,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       };
     }
     private static class StupidQuickFixWhichDoesntCheckItsOwnApplicability implements LocalQuickFix {
-      private boolean doFix = true;
       @Nls
       @NotNull
       @Override
@@ -2736,9 +2708,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        if (doFix) {
-          WriteCommandAction.runWriteCommandAction(project, () -> ((PsiIfStatement)descriptor.getPsiElement().getParent()).getElseBranch().delete());
-        }
+        WriteCommandAction.runWriteCommandAction(project, () -> ((PsiIfStatement)descriptor.getPsiElement().getParent()).getElseBranch().delete());
       }
     }
   }
