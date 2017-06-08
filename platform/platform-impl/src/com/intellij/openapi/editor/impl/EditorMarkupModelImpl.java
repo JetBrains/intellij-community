@@ -1028,7 +1028,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         final Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
-        final String text = tooltipObject.toString();
+        final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
         if (tooltips == null) {
           tooltips = new THashSet<>();
         }
