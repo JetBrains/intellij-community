@@ -24,17 +24,17 @@ import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
@@ -150,8 +150,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public <U> Stream<U> getObjectsUnderStream(@NotNull Class<U> clazz) {
     return toStream(preorderEnumeration())
       .map(ChangesBrowserNode::getUserObject)
-      .filter(userObject -> clazz.isAssignableFrom(userObject.getClass()))
-      .map(clazz::cast);
+      .select(clazz);
   }
 
   @NotNull
@@ -161,10 +160,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   public Stream<VirtualFile> getFilesUnderStream() {
-    return toStream(breadthFirstEnumeration())
+    return toStream(preorderEnumeration())
       .map(ChangesBrowserNode::getUserObject)
-      .filter(userObject -> userObject instanceof VirtualFile)
-      .map(VirtualFile.class::cast)
+      .select(VirtualFile.class)
       .filter(VirtualFile::isValid);
   }
 
@@ -175,20 +173,16 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   public Stream<FilePath> getFilePathsUnderStream() {
-    return toStream(breadthFirstEnumeration())
+    return toStream(preorderEnumeration())
       .filter(ChangesBrowserNode::isLeaf)
       .map(ChangesBrowserNode::getUserObject)
-      .filter(userObject -> userObject instanceof FilePath)
-      .map(FilePath.class::cast);
+      .select(FilePath.class);
   }
 
   @NotNull
-  private static Stream<ChangesBrowserNode> toStream(@NotNull Enumeration enumeration) {
+  private static StreamEx<ChangesBrowserNode> toStream(@NotNull Enumeration enumeration) {
     //noinspection unchecked
-    Iterator<ChangesBrowserNode> iterator = ContainerUtil.iterate((Enumeration<ChangesBrowserNode>)enumeration);
-    Spliterator<ChangesBrowserNode> spliterator = Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED | Spliterator.NONNULL);
-
-    return StreamSupport.stream(spliterator, false);
+    return StreamEx.<ChangesBrowserNode>of(enumeration);
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
