@@ -12,8 +12,7 @@
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
     <action id="CheckStatusForFiles" class="com.intellij.openapi.vcs.update.CommonStatusFileOrDirectoryAction"/>
     <action id="IntegrateFiles" class="com.intellij.openapi.vcs.update.CommonIntegrateFileOrDirectoryAction"/>
-    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction"/>
-    <action id="AnnotateDiffViewer" class="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction" use-shortcut-of="Annotate">
+    <action id="Annotate" class="com.intellij.openapi.vcs.actions.AnnotateToggleAction">
       <add-to-group group-id="Diff.EditorPopupMenu"/>
       <add-to-group group-id="Diff.EditorGutterPopupMenu"/>
     </action>
