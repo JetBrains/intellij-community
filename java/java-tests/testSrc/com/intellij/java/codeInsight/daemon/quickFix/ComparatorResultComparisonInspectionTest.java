@@ -15,25 +15,46 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.ComparatorResultComparisonInspection;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 
-public class ComparatorResultComparisonInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new ComparatorResultComparisonInspection()
-    };
+public class ComparatorResultComparisonInspectionTest extends LightInspectionTestCase {
+  public static final String TEST_DATA_DIR = "/codeInsight/daemonCodeAnalyzer/quickFix/comparatorResultComparison/";
+
+  public void testComparatorResultComparison() {
+    doTest();
   }
 
-  public void test() throws Exception { doAllTests(); }
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ComparatorResultComparisonInspection();
+  }
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/comparatorResultComparison";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + TEST_DATA_DIR;
+  }
+
+  public static class ComparatorResultComparisonInspectionFixTest extends LightQuickFixParameterizedTestCase {
+    @NotNull
+    @Override
+    protected LocalInspectionTool[] configureLocalInspectionTools() {
+      return new LocalInspectionTool[]{new ComparatorResultComparisonInspection()};
+    }
+
+    public void test() throws Exception {
+      doAllTests();
+    }
+
+    @Override
+    protected String getBasePath() {
+      return TEST_DATA_DIR;
+    }
   }
 }
