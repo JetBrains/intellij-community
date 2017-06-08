@@ -120,7 +120,7 @@ public class RawTypeCanBeGenericInspection extends BaseJavaBatchLocalInspectionT
         if (type != null) {
           final TypeMigrationRules rules = new TypeMigrationRules();
           rules.setBoundScope(PsiSearchHelper.SERVICE.getInstance(project).getUseScope(variable));
-          TypeMigrationProcessor.runHighlightingTypeMigration(project, null, rules, variable, type, false);
+          TypeMigrationProcessor.runHighlightingTypeMigration(project, null, rules, variable, type, false, true);
         }
       }
     }

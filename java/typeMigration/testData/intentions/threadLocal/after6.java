@@ -1,7 +1,7 @@
 // "Convert to ThreadLocal" "true"
 class Test {
-  static final ThreadLocal<Integer> field;
+    static final ThreadLocal<Integer> field = new ThreadLocal<Integer>();
   static {
-    field = ThreadLocal.withInitial(() -> new Integer(0));
+    field.set(new Integer(0));
   }
 }

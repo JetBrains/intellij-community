@@ -50,18 +50,25 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class TypeMigrationProcessor extends BaseRefactoringProcessor {
+  public volatile static boolean ourSkipFailedConversionInTestMode;
   private final static int MAX_ROOT_IN_PREVIEW_PRESENTATION = 3;
 
   private PsiElement[] myRoots;
   private final Function<PsiElement, PsiType> myRootTypes;
+  private final boolean myAllowDependentRoots;
   private final TypeMigrationRules myRules;
   private TypeMigrationLabeler myLabeler;
 
-  public TypeMigrationProcessor(final Project project, final PsiElement[] roots, final Function<PsiElement, PsiType> rootTypes, final TypeMigrationRules rules) {
+  public TypeMigrationProcessor(final Project project,
+                                final PsiElement[] roots,
+                                final Function<PsiElement, PsiType> rootTypes,
+                                final TypeMigrationRules rules,
+                                final boolean allowDependentRoots) {
     super(project);
     myRoots = roots;
     myRules = rules;
     myRootTypes = rootTypes;
+    myAllowDependentRoots = allowDependentRoots;
   }
 
   public static void runHighlightingTypeMigration(final Project project,
@@ -69,7 +76,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final TypeMigrationRules rules,
                                                   final PsiElement root,
                                                   final PsiType migrationType) {
-    runHighlightingTypeMigration(project, editor, rules, root, migrationType, false);
+    runHighlightingTypeMigration(project, editor, rules, root, migrationType, false, true);
   }
 
   public static void runHighlightingTypeMigration(final Project project,
@@ -77,8 +84,9 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final TypeMigrationRules rules,
                                                   final PsiElement root,
                                                   final PsiType migrationType,
-                                                  final boolean optimizeImports) {
-    runHighlightingTypeMigration(project, editor, rules, new PsiElement[] {root}, Functions.constant(migrationType), optimizeImports);
+                                                  final boolean optimizeImports,
+                                                  boolean allowDependentRoots) {
+    runHighlightingTypeMigration(project, editor, rules, new PsiElement[] {root}, Functions.constant(migrationType), optimizeImports, allowDependentRoots);
   }
 
 
@@ -87,9 +95,10 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final TypeMigrationRules rules,
                                                   final PsiElement[] roots,
                                                   final Function<PsiElement, PsiType> migrationTypeFunction,
-                                                  final boolean optimizeImports) {
-    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, element -> element.getContainingFile());
-    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, roots, migrationTypeFunction, rules) {
+                                                  final boolean optimizeImports,
+                                                  boolean allowDependentRoots) {
+    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, PsiElement::getContainingFile);
+    final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, roots, migrationTypeFunction, rules, allowDependentRoots) {
       @Override
       public void performRefactoring(@NotNull final UsageInfo[] usages) {
         super.performRefactoring(usages);
@@ -142,6 +151,10 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (hasFailedConversions()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (ourSkipFailedConversionInTestMode) {
+          prepareSuccessful();
+          return true;
+        }
         throw new BaseRefactoringProcessor.ConflictsInTestsException(Arrays.asList(myLabeler.getFailedConversionsReport()));
       }
       FailedConversionsDialog dialog = new FailedConversionsDialog(myLabeler.getFailedConversionsReport(), myProject);
@@ -213,7 +226,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes);
+    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots);
 
     try {
       return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);
@@ -287,6 +300,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     return myLabeler;
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return "TypeMigration";

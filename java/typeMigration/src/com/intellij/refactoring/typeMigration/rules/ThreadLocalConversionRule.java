@@ -91,6 +91,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
       return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", toPrimitive("$qualifier$.get()", from, context) + " " + sign + " $val$");
     }
 
+    if (parent instanceof PsiVariable && ((PsiVariable)parent).getInitializer() == context) {
+      return wrapWithNewExpression(to, from, (PsiExpression)context);
+    }
+
     if (parent instanceof PsiExpressionStatement) {
       if (context instanceof PsiPostfixExpression) {
         final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)context;
@@ -169,12 +173,12 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                   PsiExpression initializer,
                                                                   String boxedTypeName) {
     if (PsiUtil.isLanguageLevel8OrHigher(initializer)) {
-      return "java.lang.ThreadLocal.withInitial(() -> " + initializer.getText() + ")";
+      return "java.lang.ThreadLocal.withInitial(() -> $qualifier$)";
     }
     return "new " +
            to.getCanonicalText() +
            "() {\n" +
-           "@Override \n" +
+           "@Override\n" +
            "protected " +
            boxedTypeName +
            " initialValue() {\n" +
@@ -183,9 +187,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                           ? initializer.getText()
                           : (from instanceof PsiPrimitiveType ? "new " +
                                                                 ((PsiPrimitiveType)from).getBoxedTypeName() +
-                                                                "(" +
-                                                                initializer.getText() +
-                                                                ")" : initializer.getText())) +
+                                                                "($qualifier$)" : "$qualifier$")) +
            ";\n" +
            "}\n" +
            "}";
@@ -242,7 +244,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return toBoxed(arg, from, context);
   }
 
-  private static class WrappingWithInnerClassOrLambdaDescriptor extends TypeConversionDescriptor {
+  private static class WrappingWithInnerClassOrLambdaDescriptor extends AtomicConversionRule.ArrayInitializerAwareConversionDescriptor {
     private final List<PsiVariable> myVariablesToMakeFinal;
 
     private WrappingWithInnerClassOrLambdaDescriptor(@NonNls final String stringToReplace,

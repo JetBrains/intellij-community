@@ -74,6 +74,7 @@ public class TypeMigrationLabeler {
 
   private final TypeMigrationRules myRules;
   private final Function<PsiElement, PsiType> myMigrationRootTypeFunction;
+  @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
   private final Map<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
@@ -89,13 +90,16 @@ public class TypeMigrationLabeler {
   private final Map<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>> myRootUsagesTree = new HashMap<>();
   private final Set<TypeMigrationUsageInfo> myProcessedRoots = new HashSet<>();
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules, PsiType rootType) {
-    this(rules, Functions.constant(rootType));
+  public TypeMigrationLabeler(TypeMigrationRules rules, PsiType rootType) {
+    this(rules, Functions.constant(rootType), null);
   }
 
-  public TypeMigrationLabeler(final TypeMigrationRules rules, Function<PsiElement, PsiType> migrationRootTypeFunction) {
+  public TypeMigrationLabeler(TypeMigrationRules rules,
+                              Function<PsiElement, PsiType> migrationRootTypeFunction,
+                              @Nullable("any root accepted if null") PsiElement[] allowedRoots) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
+    myAllowedRoots = allowedRoots == null ? null : ContainerUtil.set(allowedRoots);
 
     myConversions = new LinkedHashMap<>();
     myFailedConversions = new LinkedHashMap<>();
@@ -574,6 +578,9 @@ public class TypeMigrationLabeler {
                            boolean alreadyProcessed,
                            final boolean isContraVariantPosition,
                            final boolean userDefinedType) {
+    if (myAllowedRoots != null && !myAllowedRoots.contains(element)) {
+      return false;
+    }
     if (type.equals(PsiType.NULL)) {
       return false;
     }

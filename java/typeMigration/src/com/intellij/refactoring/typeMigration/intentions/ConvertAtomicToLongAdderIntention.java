@@ -41,7 +41,7 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
     if (variable != null) {
       final PsiType longAdder =
         JavaPsiFacade.getElementFactory(project).createTypeFromText(LongAdderConversionRule.JAVA_UTIL_CONCURRENT_ATOMIC_LONG_ADDER, element);
-      TypeMigrationVariableTypeFixProvider.runTypeMigrationOnVariable(variable, longAdder, null, false);
+      TypeMigrationVariableTypeFixProvider.runTypeMigrationOnVariable(variable, longAdder, null, false, false);
     }
   }
 
