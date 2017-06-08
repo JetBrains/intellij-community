@@ -32,14 +32,12 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -77,10 +75,8 @@ public class VcsProjectLog implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  @NotNull
-  public JComponent initMainLog(@NotNull String contentTabName) {
-    myUi = myLogManager.getValue().createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
-    return new VcsLogPanel(myLogManager.getValue(), myUi);
+  void setMainUi(@NotNull VcsLogUiImpl ui) {
+    myUi = ui;
   }
 
   /**
