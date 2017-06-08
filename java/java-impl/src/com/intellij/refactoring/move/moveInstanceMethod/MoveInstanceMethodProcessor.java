@@ -147,7 +147,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     try {
       ConflictsUtil.checkMethodConflicts(myTargetClass, myMethod, getPatternMethod(), conflicts);
     }
-    catch (IncorrectOperationException e) {}
+    catch (IncorrectOperationException ignored) {}
 
     return showConflicts(conflicts, usages);
   }
@@ -455,16 +455,16 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+      return null;
     }
-
-    return null;
   }
 
   private PsiMethod createMethodToAdd () {
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     try {
       final PsiManager manager = myMethod.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+      final PsiElementFactory factory = facade.getElementFactory();
 
       //correct internal references
       final PsiCodeBlock body = myMethod.getBody();
@@ -492,8 +492,11 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
               final PsiElement resolved = expression.resolve();
               if (ExpressionUtils.isReferenceTo(qualifier, myTargetVariable)) {
                 if (resolved instanceof PsiField) {
+                  String fieldName = ((PsiField)resolved).getName();
+                  LOG.assertTrue(fieldName != null);
                   for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
-                    if (Comparing.strEqual(parameter.getName(), ((PsiField)resolved).getName())) {
+                    if (Comparing.strEqual(parameter.getName(), fieldName) ||
+                        facade.getResolveHelper().resolveReferencedVariable(fieldName, expression) != null) {
                       qualifier.replace(factory.createExpressionFromText("this", null));
                       return;
                     }
