@@ -755,7 +755,7 @@ createRegistration:
   call OMWriteRegStr
   StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open\command"
   StrCpy $2 ""
-  StrCpy $3 '$productLauncher "%1"'
+  StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
 FunctionEnd
 
@@ -775,7 +775,7 @@ skip_backup:
 command_exists:
  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" " $productLauncher,0"
  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
-                  '$productLauncher "%1"'
+                  '"$productLauncher" "%1"'
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -858,7 +858,7 @@ done:
 "${Index}-Skip:"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
-    '$productLauncher "%1"'
+    '"$productLauncher" "%1"'
 !undef Index
 
 skip_ipr:
