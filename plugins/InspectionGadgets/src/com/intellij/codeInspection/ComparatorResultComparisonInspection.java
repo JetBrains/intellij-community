@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -35,6 +36,8 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_COMPARABLE, "compareTo").parameterCount(1)
   );
+  public static final LongRangeSet NEGATIVE_INTEGERS = LongRangeSet.range(Integer.MIN_VALUE, -1);
+  public static final LongRangeSet POSITIVE_INTEGERS = LongRangeSet.range(1, Integer.MAX_VALUE);
 
   @NotNull
   @Override
@@ -62,7 +65,8 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
         if (binOp == null) return;
         PsiJavaToken sign = binOp.getOperationSign();
         IElementType tokenType = sign.getTokenType();
-        if (!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) return;
+        RelationType relation = RelationType.fromElementType(tokenType);
+        if (relation == null) return;
         PsiExpression constOperand =
           PsiTreeUtil.isAncestor(binOp.getLOperand(), compareExpression, false) ? binOp.getROperand() : binOp.getLOperand();
         if (constOperand == null) return;
@@ -70,27 +74,38 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
         if (!(constantExpression instanceof Integer)) return;
         int value = ((Integer)constantExpression).intValue();
         if (value == 0) return;
-        RelationType relationType = value < 0 ? RelationType.LT : RelationType.GT;
-        if (tokenType.equals(JavaTokenType.NE)) {
-          relationType = relationType.getNegated();
-        }
         boolean jodaCondition = constOperand == binOp.getLOperand();
         if (jodaCondition) {
-          relationType = relationType.getFlipped();
+          relation = relation.getFlipped();
         }
-        holder.registerProblem(sign, InspectionsBundle.message("inspection.comparator.result.comparison.problem.display.name"),
-                               new ComparatorComparisonFix(jodaCondition, relationType));
+        LongRangeSet rangeSet = LongRangeSet.point(value).fromRelation(relation);
+        if (coversPartially(rangeSet, NEGATIVE_INTEGERS)) {
+          register(sign, jodaCondition, rangeSet.intersects(POSITIVE_INTEGERS) ? null : RelationType.LT);
+        } else if (coversPartially(rangeSet, POSITIVE_INTEGERS)) {
+          register(sign, jodaCondition, rangeSet.intersects(NEGATIVE_INTEGERS) ? null : RelationType.GT);
+        }
+      }
+
+      private boolean coversPartially(LongRangeSet testedRange, LongRangeSet coveredRange) {
+        LongRangeSet intersection = testedRange.intersect(coveredRange);
+        return !intersection.isEmpty() && !coveredRange.subtract(intersection).isEmpty();
+      }
+
+      private void register(PsiJavaToken sign, boolean jodaCondition, RelationType relationType) {
+        LocalQuickFix[] fixes =
+          relationType == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{new ComparatorComparisonFix(jodaCondition, relationType)};
+        holder.registerProblem(sign, InspectionsBundle.message("inspection.comparator.result.comparison.problem.display.name"), fixes);
       }
     };
   }
 
   private static class ComparatorComparisonFix implements LocalQuickFix {
     private final boolean myJodaCondition;
-    private final RelationType myType;
+    private final RelationType myRelation;
 
-    public ComparatorComparisonFix(boolean jodaCondition, RelationType type) {
+    public ComparatorComparisonFix(boolean jodaCondition, RelationType relation) {
       myJodaCondition = jodaCondition;
-      myType = type;
+      myRelation = relation;
     }
 
     @Nls
@@ -102,7 +117,7 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
 
     @NotNull
     private String getReplacement() {
-      return myJodaCondition ? "0 "+myType : myType + " 0";
+      return myJodaCondition ? "0 " + myRelation.getFlipped() : myRelation + " 0";
     }
 
     @Nls
