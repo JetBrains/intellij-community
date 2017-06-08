@@ -42,6 +42,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,8 +68,12 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
         MyExtractMethodProcessor processor =
           new MyExtractMethodProcessor(project, editor, elementsInCopy, null, IntroduceFunctionalVariableAction.REFACTORING_NAME, null,
                                        HelpID.INTRODUCE_VARIABLE);
+        processor.setShowErrorDialogs(false);
         try {
-          processor.prepare();
+          if (!processor.prepare()) {
+            showErrorMessage(project, editor);
+            return;
+          }
         }
         catch (PrepareFailedException e) {
           showErrorMessage(project, editor);
@@ -259,6 +264,17 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
       };
     }
 
+    @Override
+    public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+      final boolean prepare = super.prepare(pass);
+      if (prepare) {
+        if (myNotNullConditionalCheck || myNullConditionalCheck) {
+          return false;
+        }
+      }
+      return prepare;
+    }
+    
     @Override
     public boolean showDialog() {
       if (!myInputVariables.hasInstanceFields() && myInputVariables.getInputVariables().isEmpty() ||
