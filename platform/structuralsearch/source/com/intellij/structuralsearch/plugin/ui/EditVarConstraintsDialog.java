@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -96,7 +95,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   ComponentWithBrowseButton<EditorTextField> customScriptCode;
   JCheckBox maxoccursUnlimited;
 
-  TextFieldWithBrowseButton withinTextField;
+  TextFieldWithAutoCompletionWithBrowseButton withinTextField;
   private JPanel containedInConstraints;
   private JCheckBox invertWithinIn;
   private JPanel expressionConstraints;
@@ -169,6 +168,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     containedInConstraints.setVisible(false);
 
+    final List<String> names = ConfigurationManager.getInstance(project).getAllConfigurationNames();
+    withinTextField.setAutoCompletionItems(names);
     withinTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
@@ -541,6 +542,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+    withinTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
   }
 
   private EditorTextField createRegexComponent() {
