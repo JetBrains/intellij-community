@@ -47,6 +47,9 @@ def show_in_pager(self, strng, *args, **kwargs):
     # On PyDev we just output the string, there are scroll bars in the console
     # to handle "paging". This is the same behaviour as when TERM==dump (see
     # page.py)
+    # for compatibility with mime-bundle form:
+    if isinstance(strng, dict):
+        strng = strng['text/plain']
     print(strng)
 
 def create_editor_hook(pydev_host, pydev_client_port):
