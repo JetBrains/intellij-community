@@ -74,15 +74,15 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
         if (!(constantExpression instanceof Integer)) return;
         int value = ((Integer)constantExpression).intValue();
         if (value == 0) return;
-        boolean jodaCondition = constOperand == binOp.getLOperand();
-        if (jodaCondition) {
+        boolean yodaCondition = constOperand == binOp.getLOperand();
+        if (yodaCondition) {
           relation = relation.getFlipped();
         }
         LongRangeSet rangeSet = LongRangeSet.point(value).fromRelation(relation);
         if (coversPartially(rangeSet, NEGATIVE_INTEGERS)) {
-          register(sign, jodaCondition, rangeSet.intersects(POSITIVE_INTEGERS) ? null : RelationType.LT);
+          register(sign, yodaCondition, rangeSet.intersects(POSITIVE_INTEGERS) ? null : RelationType.LT);
         } else if (coversPartially(rangeSet, POSITIVE_INTEGERS)) {
-          register(sign, jodaCondition, rangeSet.intersects(NEGATIVE_INTEGERS) ? null : RelationType.GT);
+          register(sign, yodaCondition, rangeSet.intersects(NEGATIVE_INTEGERS) ? null : RelationType.GT);
         }
       }
 
@@ -91,20 +91,20 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
         return !intersection.isEmpty() && !coveredRange.subtract(intersection).isEmpty();
       }
 
-      private void register(PsiJavaToken sign, boolean jodaCondition, RelationType relationType) {
+      private void register(PsiJavaToken sign, boolean yodaCondition, RelationType relationType) {
         LocalQuickFix[] fixes =
-          relationType == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{new ComparatorComparisonFix(jodaCondition, relationType)};
+          relationType == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{new ComparatorComparisonFix(yodaCondition, relationType)};
         holder.registerProblem(sign, InspectionsBundle.message("inspection.comparator.result.comparison.problem.display.name"), fixes);
       }
     };
   }
 
   private static class ComparatorComparisonFix implements LocalQuickFix {
-    private final boolean myJodaCondition;
+    private final boolean myYodaCondition;
     private final RelationType myRelation;
 
-    public ComparatorComparisonFix(boolean jodaCondition, RelationType relation) {
-      myJodaCondition = jodaCondition;
+    public ComparatorComparisonFix(boolean yodaCondition, RelationType relation) {
+      myYodaCondition = yodaCondition;
       myRelation = relation;
     }
 
@@ -117,7 +117,7 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
 
     @NotNull
     private String getReplacement() {
-      return myJodaCondition ? "0 " + myRelation.getFlipped() : myRelation + " 0";
+      return myYodaCondition ? "0 " + myRelation.getFlipped() : myRelation + " 0";
     }
 
     @Nls
@@ -133,7 +133,7 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
       if (binOp == null) return;
       CommentTracker ct = new CommentTracker();
       String replacement;
-      if(myJodaCondition) {
+      if(myYodaCondition) {
         PsiExpression operand = binOp.getROperand();
         if (operand == null) return;
         replacement = getReplacement() + ct.text(operand);
