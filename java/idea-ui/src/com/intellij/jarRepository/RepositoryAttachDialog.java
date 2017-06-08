@@ -401,6 +401,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private static String extractMavenCoordinates(Document document) {
     String groupId = getGroupId(document);
     String artifactId = getArtifactId(document);
+    if (groupId.isEmpty() && artifactId.isEmpty()) {
+      return null;
+    }
     String version = getVersion(document);
     String classifier = getClassifier(document);
     String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
