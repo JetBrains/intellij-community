@@ -65,15 +65,45 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   // endregion
 
   public AbstractSchemesPanel() {
-    this(DEFAULT_VGAP);
+    this(DEFAULT_VGAP, null);
   }
 
   public AbstractSchemesPanel(int vGap) {
+    this(vGap, null);
+  }
+
+  public AbstractSchemesPanel(int vGap, @Nullable JComponent rightCustomComponent) {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    createUIComponents(vGap);
+    createUIComponents(vGap, rightCustomComponent);
   }
   
-  private void createUIComponents(int vGap) {
+  private void createUIComponents(int vGap, @Nullable JComponent rightCustomComponent) {
+    final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
+    JPanel controlsPanel = createControlsPanel();
+    verticalContainer.add(controlsPanel);
+    verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
+    if (rightCustomComponent != null) {
+      JPanel horizontalContainer = new JPanel();
+      horizontalContainer.setLayout(new BoxLayout(horizontalContainer, BoxLayout.X_AXIS));
+      horizontalContainer.add(verticalContainer);
+      horizontalContainer.add(Box.createHorizontalGlue());
+      horizontalContainer.add(rightCustomComponent);
+      add(horizontalContainer);
+    }
+    add(new JSeparator());
+    if (vGap > 0) {
+      add(Box.createVerticalGlue());
+      add(Box.createRigidArea(new JBDimension(0, vGap)));
+    }
+  }
+
+  private static JPanel createVerticalContainer() {
+    JPanel container = new JPanel();
+    container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+    return container;
+  }
+
+  private JPanel createControlsPanel() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
     String label = getComboBoxLabel();
@@ -92,13 +122,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
-    add(controlsPanel);
-    add(Box.createRigidArea(new JBDimension(0, 12)));
-    add(new JSeparator());
-    if (vGap > 0) {
-      add(Box.createVerticalGlue());
-      add(Box.createRigidArea(new JBDimension(0, vGap)));
-    }
+    return controlsPanel;
   }
   
   private JComponent createToolbar() {
