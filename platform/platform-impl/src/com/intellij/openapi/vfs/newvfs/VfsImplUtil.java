@@ -166,7 +166,6 @@ public class VfsImplUtil {
     }
   }
 
-  @Nullable
   public static String normalize(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     return vfs.normalize(path);
   }

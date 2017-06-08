@@ -359,7 +359,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     throw new IncorrectOperationException();
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected String normalize(@NotNull String path) {
     return path;

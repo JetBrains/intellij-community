@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     return PROTOCOL;
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected String normalize(@NotNull String path) {
     int p = path.indexOf(SEPARATOR);
