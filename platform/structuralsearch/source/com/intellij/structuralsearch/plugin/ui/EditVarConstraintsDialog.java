@@ -112,7 +112,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private static Project myProject;
 
   EditVarConstraintsDialog(final Project project, Configuration configuration, List<Variable> _variables, final FileType fileType) {
-    super(project, false);
+    super(project, true);
 
     variables = _variables;
     myConfiguration = configuration;
@@ -169,7 +169,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
     containedInConstraints.setVisible(false);
 
-    withinTextField.getButton().addActionListener(new ActionListener() {
+    withinTextField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
         final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
