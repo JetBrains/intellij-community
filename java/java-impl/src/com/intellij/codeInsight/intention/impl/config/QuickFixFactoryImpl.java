@@ -879,7 +879,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createExtractSideEffectsFix(@NotNull PsiExpressionStatement statement, @NotNull List<PsiExpression> sideEffects) {
-    return new ExtractSideEffectsFix(statement, sideEffects);
+  public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
+    return new DeleteSideEffectsAwareFix(statement);
   }
 }

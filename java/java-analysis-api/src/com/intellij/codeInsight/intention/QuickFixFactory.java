@@ -262,6 +262,9 @@ public abstract class QuickFixFactory {
   @NotNull public abstract LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @NotNull @Nls String text);
 
   @NotNull
+  public abstract IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement);
+
+  @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
   @Nullable
@@ -300,8 +303,4 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression);
-
-  @NotNull
-  public abstract IntentionAction createExtractSideEffectsFix(@NotNull PsiExpressionStatement statement,
-                                                              @NotNull List<PsiExpression> sideEffects);
 }

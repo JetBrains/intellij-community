@@ -17,11 +17,11 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
-public class ExtractSideEffectsTest extends LightQuickFixParameterizedTestCase {
+public class DeleteSideEffectsAwareTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/extractSideEffects";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/deleteSideEffectsAware";
   }
 }
