@@ -84,6 +84,10 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     }
   }
 
+  public void testPostfixExpressionUnusedAfterAssignment() throws Exception {
+    doTest();
+  }
+
   private void doTest(int... disableParams) {
     boolean enabled = true;
     try {
