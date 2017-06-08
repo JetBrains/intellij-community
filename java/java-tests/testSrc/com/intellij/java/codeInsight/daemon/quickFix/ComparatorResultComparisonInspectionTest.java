@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class ComparatorResultComparisonInspectionTest extends LightInspectionTestCase {
-  public static final String TEST_DATA_DIR = "/codeInsight/daemonCodeAnalyzer/quickFix/comparatorResultComparison/";
+  static final String TEST_DATA_DIR = "/codeInsight/daemonCodeAnalyzer/quickFix/comparatorResultComparison/";
 
   public void testComparatorResultComparison() {
     doTest();

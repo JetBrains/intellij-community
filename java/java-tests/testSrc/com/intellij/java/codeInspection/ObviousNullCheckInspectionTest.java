@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Tagir Valeev
  */
 public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
-  public static final String TEST_DATA_DIR = "/inspection/obviousNotNull/";
+  static final String TEST_DATA_DIR = "/inspection/obviousNotNull/";
 
   private static final LightProjectDescriptor JAVA_8_WITH_ANNOTATIONS = new DefaultLightProjectDescriptor() {
     @Override
