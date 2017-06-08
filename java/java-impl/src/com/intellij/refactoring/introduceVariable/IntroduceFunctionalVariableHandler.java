@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler {
 
@@ -275,12 +274,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
 
     public void copyParameters(MyExtractMethodProcessor processor) {
-      InputVariables inputVariables = processor.myInputVariables;
-      myInputVariables.setPassFields(inputVariables.isPassFields());
-      List<VariableData> variables = inputVariables.getInputVariables();
-      myVariableDatum = new VariableData[variables.size()];
-      for (int i = 0; i < variables.size(); i++) {
-        VariableData data = variables.get(i);
+      myInputVariables.setPassFields(processor.myInputVariables.isPassFields());
+      VariableData[] variables = processor.myVariableDatum;
+      myVariableDatum = new VariableData[variables.length];
+      for (int i = 0; i < variables.length; i++) {
+        VariableData data = variables[i];
         String variableName = data.variable.getName();
         assert variableName != null;
         VariableData dataByVName =
