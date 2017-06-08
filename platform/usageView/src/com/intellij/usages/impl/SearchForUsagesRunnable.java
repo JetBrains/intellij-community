@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -50,7 +49,6 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ui.RangeBlinker;
@@ -63,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -384,44 +381,24 @@ class SearchForUsagesRunnable implements Runnable {
               return;
             }
 
-            final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
             final String message = UsageViewBundle.message("dialog.no.usages.found.in",
                                                            StringUtil.decapitalize(myPresentation.getUsagesString()),
                                                            myPresentation.getScopeText(),
                                                            myPresentation.getContextText()
                                                            );
 
-            if (notFoundActions.isEmpty()) {
-              List<String> lines = new ArrayList<>();
-              lines.add(StringUtil.escapeXml(message));
-              if (myOutOfScopeUsages.get() != 0) {
-                lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
-              }
-              if (myProcessPresentation.isShowFindOptionsPrompt()) {
-                lines.add(createOptionsHtml(mySearchFor));
-              }
-              MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-              notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
-                                  type, myProcessPresentation, myProject, lines);
-              findStartedBalloonShown.set(false);
+            List<String> lines = new ArrayList<>();
+            lines.add(StringUtil.escapeXml(message));
+            if (myOutOfScopeUsages.get() != 0) {
+              lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
             }
-            else {
-              List<String> titles = new ArrayList<>(notFoundActions.size() + 1);
-              titles.add(UsageViewBundle.message("dialog.button.ok"));
-              for (Action action : notFoundActions) {
-                Object value = action.getValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY);
-                if (value == null) value = action.getValue(Action.NAME);
-
-                titles.add((String)value);
-              }
-
-              int option = Messages.showDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
-                                               ArrayUtil.toStringArray(titles), 0, Messages.getInformationIcon());
-
-              if (option > 0) {
-                notFoundActions.get(option - 1).actionPerformed(new ActionEvent(this, 0, titles.get(option)));
-              }
+            if (myProcessPresentation.isShowFindOptionsPrompt()) {
+              lines.add(createOptionsHtml(mySearchFor));
             }
+            MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+            notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
+                                type, myProcessPresentation, myProject, lines);
+            findStartedBalloonShown.set(false);
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
