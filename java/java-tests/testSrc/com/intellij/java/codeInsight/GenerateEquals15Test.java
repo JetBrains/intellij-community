@@ -68,6 +68,14 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
     doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
   }
 
+  public void testArrayAndNotOnlyArrayWithObjectsTemplate() throws Exception {
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
+  }
+
+  public void testArrayAndSuperWithObjectsTemplate() throws Exception {
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE);
+  }
+
   private void doTestWithTemplate(String templateName) throws Exception {
     try {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(templateName);
