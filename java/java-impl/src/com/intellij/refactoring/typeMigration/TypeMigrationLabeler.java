@@ -67,6 +67,7 @@ public class TypeMigrationLabeler {
   private boolean myShowWarning = true;
   private volatile MigrateException myException;
   private final Semaphore myDialogSemaphore = new Semaphore();
+  private final Project myProject;
 
   public TypeMigrationRules getRules() {
     return myRules;
@@ -90,13 +91,14 @@ public class TypeMigrationLabeler {
   private final Map<Pair<TypeMigrationUsageInfo, TypeMigrationUsageInfo>, Set<PsiElement>> myRootUsagesTree = new HashMap<>();
   private final Set<TypeMigrationUsageInfo> myProcessedRoots = new HashSet<>();
 
-  public TypeMigrationLabeler(TypeMigrationRules rules, PsiType rootType) {
-    this(rules, Functions.constant(rootType), null);
+  public TypeMigrationLabeler(TypeMigrationRules rules, PsiType rootType, Project project) {
+    this(rules, Functions.constant(rootType), null, project);
   }
 
   public TypeMigrationLabeler(TypeMigrationRules rules,
                               Function<PsiElement, PsiType> migrationRootTypeFunction,
-                              @Nullable("any root accepted if null") PsiElement[] allowedRoots) {
+                              @Nullable("any root accepted if null") PsiElement[] allowedRoots,
+                              Project project) {
     myRules = rules;
     myMigrationRootTypeFunction = migrationRootTypeFunction;
     myAllowedRoots = allowedRoots == null ? null : ContainerUtil.set(allowedRoots);
@@ -105,6 +107,7 @@ public class TypeMigrationLabeler {
     myFailedConversions = new LinkedHashMap<>();
     myNewExpressionTypeChange = new LinkedHashMap<>();
     myClassTypeArgumentsChange = new LinkedHashMap<>();
+    myProject = project;
   }
 
   public boolean hasFailedConversions() {
@@ -1068,7 +1071,7 @@ public class TypeMigrationLabeler {
   private void migrate(boolean autoMigrate, final PsiElement... victims) {
 
     myMigrationRoots = new LinkedList<>();
-    myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this);
+    myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
 
 
     for (PsiElement victim : victims) {

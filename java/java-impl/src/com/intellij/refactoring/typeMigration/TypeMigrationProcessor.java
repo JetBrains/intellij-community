@@ -226,7 +226,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   public UsageInfo[] findUsages() {
-    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots);
+    myLabeler = new TypeMigrationLabeler(myRules, myRootTypes, myAllowDependentRoots ? null : myRoots, myProject);
 
     try {
       return myLabeler.getMigratedUsages(!isPreviewUsages(), myRoots);
