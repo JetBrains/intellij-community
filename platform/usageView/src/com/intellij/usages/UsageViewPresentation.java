@@ -19,10 +19,6 @@ import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author max
  */
@@ -45,7 +41,6 @@ public class UsageViewPresentation {
   private String myTabName;
   private String myToolwindowTitle;
 
-  private List<Action> myNotFoundActions;
   private boolean myDetachedMode; // no UI will be shown
   private String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
@@ -142,15 +137,6 @@ public class UsageViewPresentation {
 
   public void setCodeUsages(final boolean codeUsages) {
     myCodeUsages = codeUsages;
-  }
-
-  public void addNotFoundAction(Action _action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
-    myNotFoundActions.add(_action);
-  }
-
-  public List<Action> getNotFoundActions() {
-    return myNotFoundActions;
   }
 
   @NotNull
@@ -251,7 +237,6 @@ public class UsageViewPresentation {
     if (myNonCodeUsagesString != null ? !myNonCodeUsagesString.equals(that.myNonCodeUsagesString) : that.myNonCodeUsagesString != null) {
       return false;
     }
-    if (myNotFoundActions != null ? !myNotFoundActions.equals(that.myNotFoundActions) : that.myNotFoundActions != null) return false;
     if (myScopeText != null ? !myScopeText.equals(that.myScopeText) : that.myScopeText != null) return false;
     if (myTabName != null ? !myTabName.equals(that.myTabName) : that.myTabName != null) return false;
     if (myTabText != null ? !myTabText.equals(that.myTabText) : that.myTabText != null) return false;
@@ -286,7 +271,6 @@ public class UsageViewPresentation {
     result = 31 * result + (myUsagesWord != null ? myUsagesWord.hashCode() : 0);
     result = 31 * result + (myTabName != null ? myTabName.hashCode() : 0);
     result = 31 * result + (myToolwindowTitle != null ? myToolwindowTitle.hashCode() : 0);
-    result = 31 * result + (myNotFoundActions != null ? myNotFoundActions.hashCode() : 0);
     result = 31 * result + (myDetachedMode ? 1 : 0);
     result = 31 * result + (myDynamicCodeUsagesString != null ? myDynamicCodeUsagesString.hashCode() : 0);
     result = 31 * result + (myMergeDupLinesAvailable ? 1 : 0);
