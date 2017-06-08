@@ -1482,10 +1482,15 @@ public class StringUtil extends StringUtilRt {
                               @NotNull Function<? super T, String> f,
                               @NotNull @NonNls String separator,
                               @NotNull StringBuilder result) {
+    boolean isFirst = true;
     for (T item : items) {
       String string = f.fun(item);
       if (string != null && !string.isEmpty()) {
-        if (result.length() != 0) result.append(separator);
+        if (isFirst) {
+          isFirst = false;
+        } else {
+          result.append(separator);
+        }
         result.append(string);
       }
     }
