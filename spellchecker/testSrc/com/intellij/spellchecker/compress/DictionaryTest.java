@@ -40,14 +40,14 @@ public class DictionaryTest {
   private final Transformation myTransformation = new Transformation();
 
   @Test
-  public void testJBDictionary() {
+  public void testJBDictionaryPerformance() {
     Dictionary dictionary = loadDictionaryPerformanceTest(JETBRAINS_DIC, 1000);
     containsWordPerformanceTest(dictionary, 2000);
     containsWordTest(dictionary);
   }
 
   @Test
-  public void testEnglishDictionary() {
+  public void testEnglishDictionaryPerformance() {
     Dictionary dictionary = loadDictionaryPerformanceTest(ENGLISH_DIC, 50000);
     containsWordPerformanceTest(dictionary, 2000);
     containsWordTest(dictionary);
@@ -72,23 +72,15 @@ public class DictionaryTest {
   private Dictionary loadDictionaryPerformanceTest(final String name, int time) {
     final Ref<Dictionary> ref = Ref.create();
 
-    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) {
-      return CompressedDictionary.create(getLoader(name), myTransformation);
-    }
-    else {
-      PlatformTestUtil.startPerformanceTest(
-        "load dictionary", time,
-        () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))
-      ).useLegacyScaling().assertTiming();
-    }
+    PlatformTestUtil.startPerformanceTest(
+      "load dictionary", time, () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))
+    ).useLegacyScaling().assertTiming();
 
     assertFalse(ref.isNull());
     return ref.get();
   }
 
   private void containsWordPerformanceTest(final Dictionary dictionary, int time) {
-    if (PlatformTestUtil.COVERAGE_ENABLED_BUILD) return;
-
     final Set<String> wordsToCheck = createWordSets(dictionary, 50000, 1).first;
     PlatformTestUtil.startPerformanceTest("contains word", time, () -> {
       for (String s : wordsToCheck) {
