@@ -330,23 +330,26 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
   }
 
-
   public String getEventMessage(@NotNull LocatableEvent event) {
+    return getEventMessage(event, getFileName());
+  }
+
+  static String getEventMessage(@NotNull LocatableEvent event, String defaultFileName) {
     Location location = event.location();
     if (event instanceof MethodEntryEvent) {
-      return getEventMessage(true, ((MethodEntryEvent)event).method(), location, getFileName());
+      return getEventMessage(true, ((MethodEntryEvent)event).method(), location, defaultFileName);
     }
     if (event instanceof MethodExitEvent) {
-      return getEventMessage(false, ((MethodExitEvent)event).method(), location, getFileName());
+      return getEventMessage(false, ((MethodExitEvent)event).method(), location, defaultFileName);
     }
     Object entryProperty = event.request().getProperty(METHOD_ENTRY_KEY);
     if (entryProperty instanceof Boolean) {
-      return getEventMessage((Boolean)entryProperty, location.method(), location, getFileName());
+      return getEventMessage((Boolean)entryProperty, location.method(), location, defaultFileName);
     }
     return "";
   }
 
-  static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
+  private static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName;
     try {
