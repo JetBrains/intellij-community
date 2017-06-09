@@ -46,7 +46,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
   @NotNull
   @Override
   public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(headerValuePart);
+    Module module = ModuleUtilCore.findModuleForPsiElement(headerValuePart);
     JavaClassReferenceProvider provider;
     if (module != null) {
       provider = new JavaClassReferenceProvider() {
@@ -91,17 +91,17 @@ public class ClassReferenceParser extends StandardHeaderParser {
   protected boolean checkClass(@NotNull HeaderValuePart valuePart, @NotNull PsiClass aClass, @NotNull AnnotationHolder holder) {
     String header = ((Header)valuePart.getParent()).getName();
 
-    if (header.equals(MAIN_CLASS) && !PsiMethodUtil.hasMainMethod(aClass)) {
+    if (MAIN_CLASS.equals(header) && !PsiMethodUtil.hasMainMethod(aClass)) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.main.class.invalid"));
       return true;
     }
 
-    if (header.equals(PREMAIN_CLASS) && !hasInstrumenterMethod(aClass, "premain")) {
+    if (PREMAIN_CLASS.equals(header) && !hasInstrumenterMethod(aClass, "premain")) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.pre-main.class.invalid"));
       return true;
     }
 
-    if ((header.equals(AGENT_CLASS) || header.equals(LAUNCHER_AGENT_CLASS)) && !hasInstrumenterMethod(aClass, "agentmain")) {
+    if ((AGENT_CLASS.equals(header) || LAUNCHER_AGENT_CLASS.equals(header)) && !hasInstrumenterMethod(aClass, "agentmain")) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.agent.class.invalid"));
       return true;
     }
