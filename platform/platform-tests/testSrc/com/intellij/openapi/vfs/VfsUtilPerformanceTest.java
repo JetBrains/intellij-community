@@ -317,7 +317,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     UIUtil.invokeAndWaitIfNeeded((Runnable)()->{
       final VirtualDirectoryImpl[] validVTemp = new VirtualDirectoryImpl[1];
       List<VFileEvent> deleteEvents = new ArrayList<>();
-      PlatformTestUtil.startPerformanceTest("deleting many children", 30000, () -> {
+      PlatformTestUtil.startPerformanceTest("deleting many children", 45000, () -> {
         assertEquals(N, deleteEvents.size());
         WriteCommandAction.runWriteCommandAction(null, () -> {
           PersistentFS.getInstance().processEvents(deleteEvents);
