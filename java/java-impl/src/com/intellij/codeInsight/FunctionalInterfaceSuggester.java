@@ -171,7 +171,7 @@ public class FunctionalInterfaceSuggester {
     }
 
     for (String functionalInterface : FUNCTIONAL_INTERFACES) {
-      final PsiClass aClass = psiFacade.findClass(functionalInterface, allScope);
+      final PsiClass aClass = psiFacade.findClass(functionalInterface, element.getResolveScope());
       if (aClass != null) {
         consumer.process(aClass);
       }
