@@ -46,7 +46,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -366,9 +365,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     final RuntimeException[] exception = new RuntimeException[1];
     Runnable executeUndoOrRedoAction = () -> {
       try {
-        if (myProject != null) {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        }
         CopyPasteManager.getInstance().stopKillRings();
         myMerger.undoOrRedo(editor, isUndo);
       }

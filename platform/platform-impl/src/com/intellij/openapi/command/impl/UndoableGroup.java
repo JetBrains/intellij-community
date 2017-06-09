@@ -26,11 +26,9 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -156,7 +154,6 @@ class UndoableGroup {
       }
     });
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
-    commitAllDocuments();
   }
 
   private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {
@@ -242,12 +239,6 @@ class UndoableGroup {
       }
     }
     return false;
-  }
-
-  private static void commitAllDocuments() {
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      PsiDocumentManager.getInstance(p).commitAllDocuments();
-    }
   }
 
   private void reportUndoProblem(UnexpectedUndoException e, boolean isUndo) {
