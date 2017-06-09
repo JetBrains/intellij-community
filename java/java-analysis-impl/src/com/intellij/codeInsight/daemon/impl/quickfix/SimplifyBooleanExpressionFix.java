@@ -42,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -60,7 +59,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getText() {
-    return getIntentionText(Objects.requireNonNull(getSubExpression()), mySubExpressionValue);
+    PsiExpression subExpression = getSubExpression();
+    return subExpression == null ? getFamilyName() : getIntentionText(subExpression, mySubExpressionValue);
   }
 
   @NotNull
