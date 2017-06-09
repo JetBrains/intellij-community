@@ -60,6 +60,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         myParent.getIpnbFilePanel().processKeyPressed(event);
       }
     });
+    setBorder(BorderFactory.createLineBorder(IpnbEditorUtil.getBackground()));
   }
 
   @NotNull
@@ -261,10 +262,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @Override
   public void switchToEditing() {
     setEditing(true);
-    final Container parent = getParent();
-    if (parent != null) {
-      parent.repaint();
-    }
     IdeFocusManager.findInstance().requestFocus(myCodeSourcePanel.getEditor().getContentComponent(), true);
   }
 
@@ -306,7 +303,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       myPromptLabel.setText(promptText);
       final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
       setEditing(false);
-      filePanel.revalidateAndRepaint();
       IdeFocusManager.findInstance().requestFocus(filePanel, true);
       if (mySelectNext) {
         filePanel.selectNext(this, true);
@@ -342,8 +338,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
           addOutputPanel(component, outputContent, outputContent instanceof IpnbOutOutputCell);
         }
       }
-      final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
-      filePanel.revalidateAndRepaint();
     }, ModalityState.stateForComponent(this));
   }
 
@@ -352,10 +346,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     myViewPanel.removeAll();
     final JComponent panel = createViewPanel();
     myViewPanel.add(panel);
-
-    final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
-    filePanel.revalidate();
-    filePanel.repaint();
   }
 
   @Override

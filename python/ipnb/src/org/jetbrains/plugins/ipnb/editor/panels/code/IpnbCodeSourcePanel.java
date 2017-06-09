@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
@@ -103,8 +104,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final Container parent = codePanel.getParent();
         if (keyCode == KeyEvent.VK_ESCAPE && parent instanceof IpnbFilePanel) {
           getIpnbCodePanel().setEditing(false);
-          parent.repaint();
-          UIUtil.requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel());
+          IdeFocusManager.getGlobalInstance().requestFocus(getIpnbCodePanel().getFileEditor().getIpnbFilePanel(), true);
         }
       }
 
@@ -134,15 +134,9 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final int height = myEditor.getLineHeight() * Math.max(myEditor.getDocument().getLineCount(), 1) + 10;
         contentComponent.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
         panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
-        codePanel.revalidate();
-        codePanel.repaint();
-        panel.revalidate();
-        panel.repaint();
 
         if (parent instanceof IpnbFilePanel) {
           IpnbFilePanel ipnbFilePanel = (IpnbFilePanel)parent;
-          ipnbFilePanel.revalidate();
-          ipnbFilePanel.repaint();
           if (keyCode == KeyEvent.VK_ENTER && InputEvent.CTRL_MASK == e.getModifiers()) {
             IpnbRunCellBaseAction.runCell(ipnbFilePanel, false);
           }
@@ -193,7 +187,6 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
           panel.setPreferredSize(new Dimension(parent.getWidth() - 300, height));
           panel.revalidate();
           panel.repaint();
-          parent.repaint();
         }
       }
     });

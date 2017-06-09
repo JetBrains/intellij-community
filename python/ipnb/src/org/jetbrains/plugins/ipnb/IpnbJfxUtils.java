@@ -5,6 +5,7 @@ import com.github.rjeschke.txtmark.Processor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +67,7 @@ public class IpnbJfxUtils {
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
+  public static JComponent createHtmlPanel(@NotNull final String source, int width, boolean repaint) {
 
     final JFXPanel javafxPanel = new JFXPanel() {
       @Override
@@ -89,14 +90,14 @@ public class IpnbJfxUtils {
         engine.setOnStatusChanged(event -> {
           final String data = event.getData();
           if (data != null && data.isEmpty()) {
-            adjustHeight(webView, javafxPanel, source);
+            adjustHeight(webView, javafxPanel, source, repaint);
           }
         });
       }
       else {
         engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
           if (newValue == Worker.State.SUCCEEDED) {
-            adjustHeight(webView, javafxPanel, source);
+            adjustHeight(webView, javafxPanel, source, repaint);
           }
         });
       }
@@ -232,7 +233,7 @@ public class IpnbJfxUtils {
     }
   }
 
-  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source) {
+  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source, boolean repaintCallback) {
     final WebEngine engine = webView.getEngine();
     final Document document = engine.getDocument();
     if (document != null) {
@@ -273,8 +274,11 @@ public class IpnbJfxUtils {
 
         final Dimension size = new Dimension(
           width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
-        javafxPanel.setPreferredSize(size);
-        javafxPanel.setMinimumSize(size);
+
+        ApplicationManager.getApplication().invokeLater(()-> javafxPanel.setPreferredSize(size));
+        if (repaintCallback) {
+          ApplicationManager.getApplication().invokeLater(()->javafxPanel.repaint());
+        }
       }
     }
   }
