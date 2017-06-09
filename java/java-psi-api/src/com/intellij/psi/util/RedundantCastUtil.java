@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -44,11 +45,12 @@ public class RedundantCastUtil {
   private RedundantCastUtil() { }
 
   @NotNull
-  public static List<PsiTypeCastExpression> getRedundantCastsInside(PsiElement where) {
+  public static List<PsiTypeCastExpression> getRedundantCastsInside(@NotNull PsiElement where) {
     MyCollectingVisitor visitor = new MyCollectingVisitor();
     if (where instanceof PsiEnumConstant) {
       where.accept(visitor);
-    } else {
+    }
+    else {
       where.acceptChildren(visitor);
     }
     return new ArrayList<>(visitor.myFoundCasts);
@@ -242,7 +244,8 @@ public class RedundantCastUtil {
       }
     }
 
-    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       processCall(expression);
 
       checkForVirtual(expression);
@@ -269,8 +272,8 @@ public class RedundantCastUtil {
       if (targetMethod.hasModifierProperty(PsiModifier.STATIC)) return;
 
       try {
-        PsiManager manager = methodExpr.getManager();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        Project project = methodExpr.getProject();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
         final PsiExpression expressionFromText = factory.createExpressionFromText(methodCall.getText(), methodCall);
         if (!(expressionFromText instanceof PsiMethodCallExpression)) return;
@@ -282,23 +285,38 @@ public class RedundantCastUtil {
         final JavaResolveResult newResult = newCall.getMethodExpression().advancedResolve(false);
         if (!newResult.isValidResult()) return;
         final PsiMethod newTargetMethod = (PsiMethod)newResult.getElement();
-        PsiType newReturnType = newCall.getType(), oldReturnType = methodCall.getType();
+        PsiType newReturnType = newCall.getType();
+        PsiType oldReturnType = methodCall.getType();
         if (newReturnType instanceof PsiCapturedWildcardType && oldReturnType instanceof PsiCapturedWildcardType) {
           newReturnType = ((PsiCapturedWildcardType)newReturnType).getUpperBound();
           oldReturnType = ((PsiCapturedWildcardType)oldReturnType).getUpperBound();
         }
-        if (Comparing.equal(newReturnType, oldReturnType)) {
-          if (Comparing.equal(newTargetMethod, targetMethod) ||
-              (newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
-               !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&  // see SCR11555, SCR14559
-               areThrownExceptionsCompatible(targetMethod, newTargetMethod))) {
-            addToResults(typeCast);
-          }
+        if (Comparing.equal(newReturnType, oldReturnType) &&
+            (Comparing.equal(newTargetMethod, targetMethod) ||
+             newTargetMethod.getSignature(newResult.getSubstitutor()).equals(targetMethod.getSignature(resolveResult.getSubstitutor())) &&
+             !(newTargetMethod.isDeprecated() && !targetMethod.isDeprecated()) &&
+             // see SCR11555, SCR14559
+             areThrownExceptionsCompatible(targetMethod, newTargetMethod) &&
+             areNullnessCompatible(project, targetMethod, newTargetMethod))) {
+          addToResults(typeCast);
         }
       }
       catch (IncorrectOperationException ignore) { }
     }
 
+    private static boolean areNullnessCompatible(Project project,
+                                                 final PsiMethod oldTargetMethod,
+                                                 final PsiMethod newTargetMethod) {
+      // the cast may be for the @NotNull which newTargetMethod has whereas the oldTargetMethod doesn't
+      NullableNotNullManager nnm = NullableNotNullManager.getInstance(project);
+      boolean oldNotNull = nnm.isNotNull(oldTargetMethod, true);
+      boolean newNotNull = nnm.isNotNull(newTargetMethod, true);
+      if (oldNotNull != newNotNull) return false;
+      boolean oldNullable = nnm.isNullable(oldTargetMethod, true);
+      boolean newNullable = nnm.isNullable(newTargetMethod, true);
+      return oldNullable == newNullable;
+    }
+    
     private static boolean areThrownExceptionsCompatible(final PsiMethod targetMethod, final PsiMethod newTargetMethod) {
       final PsiClassType[] oldThrowsTypes = targetMethod.getThrowsList().getReferencedTypes();
       final PsiClassType[] newThrowsTypes = newTargetMethod.getThrowsList().getReferencedTypes();
@@ -820,10 +838,11 @@ public class RedundantCastUtil {
         otherOperand = firstOperand;
         firstOperand = temp;
       }
-      if (firstOperand != null && otherOperand != null && wrapperCastChangeSemantics(firstOperand, otherOperand, operand)) {
+      if (otherOperand != null && wrapperCastChangeSemantics(firstOperand, otherOperand, operand)) {
         return true;
       }
-    } else if (parent instanceof PsiConditionalExpression) {
+    }
+    else if (parent instanceof PsiConditionalExpression) {
       if (opType instanceof PsiPrimitiveType && !(((PsiConditionalExpression)parent).getType() instanceof PsiPrimitiveType)) {
         if (PsiPrimitiveType.getUnboxedType(PsiTypesUtil.getExpectedTypeByParent(parent)) != null) {
           return true;

@@ -92,4 +92,5 @@ public class RedundantCast15Test extends InspectionTestCase {
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(castInspection);
     doTest("redundantCast/generics/" + getTestName(false), tool, "java 1.5");
   }
+  public void testDifferentNullness() throws Exception { doTest();}
 }
