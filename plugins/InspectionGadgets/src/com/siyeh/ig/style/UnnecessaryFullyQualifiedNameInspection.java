@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -107,7 +108,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)descriptor.getPsiElement().getParent();
+      PsiElement element = descriptor.getPsiElement();
+      final PsiJavaCodeReferenceElement referenceElement;
+      if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+        referenceElement = (PsiJavaCodeReferenceElement)element;
+      }
+      else {
+        referenceElement = (PsiJavaCodeReferenceElement)element.getParent();
+      }
       final PsiFile file = referenceElement.getContainingFile();
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass)) {
@@ -265,11 +273,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
+          PsiElement elementToHighlight = qualifier1;
           final ProblemHighlightType highlightType;
           if (reportAsInformationInsideJavadoc ||
-              ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
+              ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null ||
+              InspectionProjectProfileManager.isInformationLevel(getShortName(), aReference) && isOnTheFly()) {
             if (!isOnTheFly()) return;
             highlightType = ProblemHighlightType.INFORMATION;
+            elementToHighlight = aReference;
           }
           else {
             highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
@@ -277,7 +288,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
                                      ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
-          registerError(qualifier1, highlightType, inSameFile);
+          registerError(elementToHighlight, highlightType, inSameFile);
         }
         break;
       }
