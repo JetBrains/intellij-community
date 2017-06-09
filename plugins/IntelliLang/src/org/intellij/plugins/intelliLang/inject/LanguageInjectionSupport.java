@@ -30,9 +30,13 @@ import com.intellij.util.Consumer;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -49,6 +53,13 @@ public abstract class LanguageInjectionSupport {
   @NonNls
   @NotNull
   public abstract String getId();
+
+  @NonNls
+  @NotNull
+  @ApiStatus.Experimental
+  public Set<String> getSupportedIds() {
+    return Collections.singleton(getId());
+  }
 
   @NotNull
   public abstract Class[] getPatternClasses();

@@ -30,14 +30,14 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <tipAndTrick file="InjectSQLLanguage.html" feature-id="db.console.run.intention"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.java.UastLanguageInjector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">
     <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport"/>
+    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.java.UastLanguageInjectionSupport"/>
     <injectionConfig config="resources/javaInjections.xml"/>
     <injectionConfig config="resources/xmlInjections-java.xml"/>
-
-
   </extensions>
 
 </idea-plugin>

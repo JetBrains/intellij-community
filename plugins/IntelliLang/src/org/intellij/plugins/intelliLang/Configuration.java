@@ -236,7 +236,14 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         InjectionPlace[] places = dropKnownInvalidPlaces(injection.getInjectionPlaces());
         if (places != null) { // not all places were removed
           injection.setInjectionPlaces(places);
-          myInjections.get(key).add(injection);
+          if (support != null) {
+            for (String id : support.getSupportedIds()) {
+              myInjections.get(id).add(injection);
+            }
+          }
+          else {
+            myInjections.get(key).add(injection);
+          }
         }
       }
     }

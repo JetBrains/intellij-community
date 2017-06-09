@@ -176,7 +176,8 @@ fun UExpression.endsWithQualified(fqName: String): Boolean {
     return true
 }
 
-fun UElement.asRecursiveLogString(): String {
+@JvmOverloads
+fun UElement.asRecursiveLogString(render: (UElement) -> String = { it.asLogString() }): String {
     val stringBuilder = StringBuilder()
     val indent = "    "
 
@@ -185,7 +186,7 @@ fun UElement.asRecursiveLogString(): String {
 
         override fun visitElement(node: UElement): Boolean {
             stringBuilder.append(indent.repeat(level))
-            stringBuilder.appendln(node.asLogString())
+          stringBuilder.appendln(render(node))
             level++
             return false
         }
