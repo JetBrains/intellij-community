@@ -391,7 +391,7 @@ open class GuiTestCase : GuiTestBase() {
     return "@${uiScaleVal}x"
   }
 
-  private fun <ComponentType : Component> waitUntilFound(container: Container?,
+  protected fun <ComponentType : Component> waitUntilFound(container: Container?,
                                                          componentClass: Class<ComponentType>,
                                                          timeout: Long,
                                                          matcher: (ComponentType) -> Boolean): ComponentType {
