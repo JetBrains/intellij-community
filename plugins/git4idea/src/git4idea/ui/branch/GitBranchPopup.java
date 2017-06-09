@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -45,6 +44,7 @@ import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static git4idea.branch.GitBranchUtil.getDisplayableBranchText;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -152,7 +152,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addSeparator("Repositories");
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(),
-                                    isBranchesDiverged() ? GitBranchUtil.getDisplayableBranchText(repo) : null)).collect(toList());
+                                    !userWantsSyncControl() || myMultiRootBranchConfig.diverged() ? getDisplayableBranchText(repo) : null))
+      .collect(toList());
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
     return popupGroup;
