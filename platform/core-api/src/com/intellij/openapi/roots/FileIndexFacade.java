@@ -17,12 +17,15 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -65,4 +68,7 @@ public abstract class FileIndexFacade {
   }
 
   @NotNull public abstract ModificationTracker getRootModificationTracker();
+
+  @NotNull
+  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
 }

@@ -992,8 +992,14 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   }
 
   @Override
-  public Collection<? extends UnloadedModuleDescription> getUnloadedModuleDescriptions() {
-    return myUnloadedModules.values();
+  public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+    return Collections.unmodifiableCollection(myUnloadedModules.values());
+  }
+
+  @Nullable
+  @Override
+  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName) {
+    return myUnloadedModules.get(moduleName);
   }
 
   @Override

@@ -16,11 +16,13 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author peter
@@ -67,6 +69,11 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   @Override
   public boolean isSearchOutsideRootModel() {
     return myBaseScope.isSearchOutsideRootModel();
+  }
+
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    return myBaseScope.getUnloadedModulesBelongingToScope();
   }
 
   @NotNull

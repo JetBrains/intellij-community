@@ -180,7 +180,11 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   public abstract Collection<ModuleDescription> getAllModuleDescriptions();
 
   @ApiStatus.Experimental
-  public abstract Collection<? extends UnloadedModuleDescription> getUnloadedModuleDescriptions();
+  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+
+  @ApiStatus.Experimental
+  @Nullable
+  public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
 
   /**
    * Specify list of modules which will be unloaded from the project. These modules won't be shown in UI, all of their contents will be excluded

@@ -55,4 +55,6 @@ class EmptyModuleManager(project: Project, messageBus: MessageBus) : ModuleManag
   override fun getAllModuleDescriptions() = emptyList<ModuleDescription>()
 
   override fun getUnloadedModuleDescriptions() = emptyList<UnloadedModuleDescription>()
+
+  override fun getUnloadedModuleDescription(moduleName: String) = null
 }

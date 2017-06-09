@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
@@ -80,6 +81,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public boolean isSearchOutsideRootModel() {
     return false;
+  }
+
+  /**
+   * Returns descriptions of unloaded modules content of whose might be included into this scope if they had been loaded. Actually search in
+   * unloaded modules isn't performed, so this method is used to determine whether a warning about possible missing results should be shown.
+   */
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    return Collections.emptySet();
   }
 
   @NotNull
@@ -150,6 +159,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @Override
       public boolean isSearchInLibraries() {
         return GlobalSearchScope.this.isSearchInLibraries();
+      }
+
+      @Override
+      public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+        return GlobalSearchScope.this.getUnloadedModulesBelongingToScope();
       }
 
       @NonNls
@@ -430,6 +444,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      return ContainerUtil.intersection(myScope1.getUnloadedModulesBelongingToScope(), myScope2.getUnloadedModulesBelongingToScope());
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof IntersectionScope)) return false;
@@ -491,6 +510,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean isSearchOutsideRootModel() {
       return ContainerUtil.find(myScopes, scope -> scope.isSearchOutsideRootModel()) != null;
+    }
+
+    @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
+      for (GlobalSearchScope scope : myScopes) {
+        result.addAll(scope.getUnloadedModulesBelongingToScope());
+      }
+      return result;
     }
 
     @Override
