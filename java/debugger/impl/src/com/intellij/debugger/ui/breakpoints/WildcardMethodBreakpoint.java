@@ -129,7 +129,13 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
       return;
     }
     if (isEmulated()) {
-      createOrWaitPrepare(debugProcess, getClassPattern());
+      debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
+
+      Pattern pattern = Pattern.compile(getClassPattern().replaceAll("\\*", ".*"));
+      debugProcess.getVirtualMachineProxy().allClasses().stream()
+        .filter(c -> pattern.matcher(c.name()).matches())
+        .filter(ReferenceType::isPrepared)
+        .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
     else {
       try {
