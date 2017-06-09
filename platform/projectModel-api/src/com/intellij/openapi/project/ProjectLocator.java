@@ -30,7 +30,7 @@ import java.util.Collection;
 
 public abstract class ProjectLocator {
 
-  static final Key<Project> PREFERRED_PROJECT_KEY = Key.create("PREFERRED_PROJECT_KEY");
+  private static final Key<ThreadLocal<Project>> PREFERRED_PROJECT_KEY = Key.create("PREFERRED_PROJECT_KEY");
 
   public static ProjectLocator getInstance() {
     return ServiceManager.getService(ProjectLocator.class);
@@ -58,12 +58,22 @@ public abstract class ProjectLocator {
   public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
                                                                        @NotNull Project preferredProject,
                                                                        @NotNull ThrowableComputable<T, E> action) throws E {
-    file.putUserData(PREFERRED_PROJECT_KEY, preferredProject);
+    ThreadLocal<Project> local = file.getUserData(PREFERRED_PROJECT_KEY);
+    if (local == null) {
+      local = file.putUserDataIfAbsent(PREFERRED_PROJECT_KEY, new ThreadLocal<>());
+    }
+    local.set(preferredProject);
     try {
       return action.compute();
     }
     finally {
-      file.putUserData(PREFERRED_PROJECT_KEY, null);
+      local.set(null);
     }
+  }
+
+  @Nullable
+  static Project getPreferredProject(@NotNull VirtualFile file) {
+    ThreadLocal<Project> local = file.getUserData(PREFERRED_PROJECT_KEY);
+    return local != null ? local.get() : null;
   }
 }
