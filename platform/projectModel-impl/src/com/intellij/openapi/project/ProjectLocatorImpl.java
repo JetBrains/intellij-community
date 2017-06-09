@@ -41,7 +41,7 @@ public class ProjectLocatorImpl extends ProjectLocator {
     if (projects.length == 1 && !projects[0].isDisposed()) return projects[0];
 
     if (file != null) {
-      Project preferredProject = file.getUserData(PREFERRED_PROJECT_KEY);
+      Project preferredProject = getPreferredProject(file);
       if (preferredProject != null) {
         return preferredProject;
       }
