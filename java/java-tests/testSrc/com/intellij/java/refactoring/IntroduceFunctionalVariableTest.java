@@ -67,6 +67,10 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     doTest();
   }
 
+  public void testChangeContextBeforePuttingIntoAnonymous() throws Exception {
+    doTest();
+  }
+
   public void testIgnoreMethodObjectSuggestion() throws Exception {
     try {
       doTest();

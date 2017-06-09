@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
+import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
@@ -38,6 +39,7 @@ import com.intellij.refactoring.actions.IntroduceFunctionalVariableAction;
 import com.intellij.refactoring.extractMethod.*;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
@@ -170,11 +172,18 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     }
     final PsiMethodCallExpression methodCall = processor.getMethodCall();
     PsiMethodCallExpression psiExpression = (PsiMethodCallExpression)factory
-      .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + extractedMethod.getText() + "}." + methodCall.getText(),
+      .createExpressionFromText("new " + selectedType.getCanonicalText() + "() {" + "}." + methodCall.getText(),
                                 methodCall);
+    
     PsiExpression qualifierExpression = psiExpression.getMethodExpression().getQualifierExpression();
     assert qualifierExpression != null;
-    if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(((PsiNewExpression)qualifierExpression).getAnonymousClass(), false, Collections.emptySet())) {
+    PsiAnonymousClass anonymousClass = ((PsiNewExpression)qualifierExpression).getAnonymousClass();
+    assert anonymousClass != null;
+    ChangeContextUtil.encodeContextInfo(extractedMethod, true);
+    PsiClass aClass = extractedMethod.getContainingClass();
+    ChangeContextUtil.decodeContextInfo(anonymousClass.add(extractedMethod), aClass, 
+                                        RefactoringChangeUtil.createThisExpression(anonymousClass.getManager(), aClass));
+    if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, false, Collections.emptySet())) {
       PsiExpression castExpression = JavaPsiFacade.getElementFactory(project)
         .createExpressionFromText("((" +
                                   selectedType.getCanonicalText() + ")" +
@@ -183,7 +192,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
       qualifierExpression.replace(castExpression);
     }
       
-    processor.getExtractedMethod().delete();
+    extractedMethod.delete();
     return (PsiMethodCallExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodCall.replace(psiExpression));
   }
 
