@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +35,6 @@ import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
-import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -54,10 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -163,7 +160,9 @@ public class GradleExecutionHelper {
     }
 
     if (!commandLineArgs.isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + StringUtil.join(commandLineArgs, " "));
+      // Added June 9, 2017 to fix b/38341842, writing a PR to push this to upstream
+      String loggableArgs = StringUtil.join(obfuscatePasswordParameters(commandLineArgs), " ");
+      LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
 
@@ -406,6 +405,26 @@ public class GradleExecutionHelper {
     field.setAccessible(true);
     field.set(obj, fieldValue);
     field.setAccessible(isAccessible);
+  }
+
+  @VisibleForTesting
+  @NotNull
+  static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
+    List<String> replaced = new ArrayList<>(commandLineArguments.size());
+    final String PASSWORD_PARAMETER_IDENTIFIER = ".password=";
+    for (String option : commandLineArguments) {
+      // Find parameters ending in "password", like:
+      //   -Pandroid.injected.signing.store.password=
+      //   -Pandroid.injected.signing.key.password=
+      int index = option.indexOf(PASSWORD_PARAMETER_IDENTIFIER);
+      if (index == -1) {
+        replaced.add(option);
+      }
+      else {
+        replaced.add(option.substring(0, index + PASSWORD_PARAMETER_IDENTIFIER.length()) + "*********");
+      }
+    }
+    return replaced;
   }
 
   @Nullable
