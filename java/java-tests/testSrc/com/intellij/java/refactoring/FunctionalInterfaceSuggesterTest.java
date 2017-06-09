@@ -17,12 +17,14 @@ package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,8 +41,18 @@ public class FunctionalInterfaceSuggesterTest extends LightCodeInsightFixtureTes
       .stream()
       .map(type -> type.getCanonicalText())
       .collect(Collectors.toList());
-    Assert.assertEquals(4, suggestedTypes.size());
-    Assert.assertTrue(suggestedTypes.containsAll(Arrays.asList("java.util.function.ToDoubleFunction<java.lang.Double>",
-                                                               "java.util.function.DoubleUnaryOperator")));
+    assertEquals(4, suggestedTypes.size());
+    assertTrue(suggestedTypes.containsAll(Arrays.asList("java.util.function.ToDoubleFunction<java.lang.Double>",
+                                                        "java.util.function.DoubleUnaryOperator")));
+  }
+
+  public void testSAMWithThrowable() throws Exception {
+    myFixture.addClass("@FunctionalInterface\n" +
+                       "public interface MyThrowingConsumer<T> {\n" +
+                       "    void accept(T t) throws Throwable;\n" +
+                       "}\n");
+    PsiMethod method = myFixture.addClass("class Foo { void foo(int i) {}}").getMethods()[0];
+    Collection<? extends PsiType> suggestedTypes = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(method, true);
+    assertTrue(suggestedTypes.stream().anyMatch(type -> type.equalsToText("MyThrowingConsumer<Integer>")));
   }
 }

@@ -83,7 +83,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
 
         final PsiMethod emptyMethod = JavaPsiFacade.getElementFactory(project)
           .createMethodFromText(processor.generateEmptyMethod("name").getText(), elements[0]);
-        final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod);
+        Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod);
+        if (types.isEmpty()) {
+          types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod, true);
+        }
+
         if (types.isEmpty()) {
           showErrorMessage(project, editor, "No applicable functional interfaces found");
           return;
