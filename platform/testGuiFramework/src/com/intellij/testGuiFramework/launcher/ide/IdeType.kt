@@ -10,5 +10,6 @@ enum class IdeType(val id: String, val buildTypeExtId: String, val platformPrefi
   PYCHARM(id = "null", buildTypeExtId = "null", platformPrefix = "Python", ideJarName = "pycharm.jar", mainModule = "main_pycharm"),
   PYCHARM_COMMUNITY(id = "null", buildTypeExtId = "null", platformPrefix = "PyCharmCore", ideJarName = "pycharm.jar", mainModule = "main_pycharm_ce"),
   PYCHARM_EDU(id = "null", buildTypeExtId = "null", platformPrefix = "PyCharmEdu", ideJarName = "pycharm.jar", mainModule = "main_pycharm_edu"),
-  ANDROID_STUDIO(id = "null", buildTypeExtId = "null", platformPrefix = "AndroidStudio", ideJarName = "idea.jar", mainModule = "main_AndroidStudio")
+  ANDROID_STUDIO(id = "null", buildTypeExtId = "null", platformPrefix = "AndroidStudio", ideJarName = "idea.jar", mainModule = "main_AndroidStudio"),
+  PHPSTORM(id = "PhpStorm-EAP", buildTypeExtId = "bt1028s", platformPrefix = "PhpStorm", ideJarName = "phpstorm.jar", mainModule = "main_phpstorm"),
 }
