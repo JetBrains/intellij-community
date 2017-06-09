@@ -193,7 +193,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, debugProcess.getVirtualMachineProxy());
       if (lambdaMethod != null &&
           !breakpoint
-            .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::methods), debugProcess)
+            .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
             .findFirst().isPresent()) {
         return;
       }
