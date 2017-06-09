@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -76,9 +75,6 @@ public class FunctionalInterfaceSuggester {
     }
 
     return suggestFunctionalInterfaces(method, aClass -> {
-      if (!JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(aClass, method, null)) {
-        return null;
-      }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
       if (interfaceMethod != null) {
         final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -151,7 +147,7 @@ public class FunctionalInterfaceSuggester {
     final Set<PsiType> types = new HashSet<>();
     final Processor<PsiMember> consumer = member -> {
       if (member instanceof PsiClass && Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
-        if (!JavaResolveUtil.isAccessible(member, null, member.getModifierList(), element, null, null)) {
+        if (!JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, element, null)) {
           return true;
         }
         ContainerUtil.addIfNotNull(types, acceptanceChecker.fun((PsiClass)member));
