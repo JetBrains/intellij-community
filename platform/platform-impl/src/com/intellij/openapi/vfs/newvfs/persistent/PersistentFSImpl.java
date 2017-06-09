@@ -824,9 +824,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         invalidateSubtree(childFile);
       }
       parentImpl.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
+      incStructuralModificationCount();
     }
     if (!childrenAdded.isEmpty()) {
       parentImpl.createAndAddChildren(childrenAdded);
+      incStructuralModificationCount();
     }
   }
 
@@ -1055,7 +1057,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return "PersistentFS";
   }
 
-  private static void executeCreateChild(@NotNull VirtualFile parent, @NotNull String name) {
+  private void executeCreateChild(@NotNull VirtualFile parent, @NotNull String name) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     final VirtualFile fake = new FakeVirtualFile(parent, name);
     final FileAttributes attributes = delegate.getAttributes(fake);
@@ -1067,6 +1069,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
       VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem());
       dir.addChild(child);
+      incStructuralModificationCount();
     }
   }
 

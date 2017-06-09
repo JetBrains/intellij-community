@@ -180,6 +180,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       child = createChild(FileNameCache.storeName(name), id, delegate);
 
       insertChildAt(child, indexInReal);
+      ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
       assertConsistency(caseSensitive, name);
     }
 
@@ -430,8 +431,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     TIntArrayList mergedIds = new TIntArrayList(myData.myChildrenIds.length + added.size());
     synchronized (myData) {
       for (FSRecords.NameId pair : added) {
-        createChild(pair.name.toString(), pair.id, getFileSystem());
         myData.removeAdoptedName(pair.name);
+        createChild(pair.name.toString(), pair.id, getFileSystem());
       }
       ContainerUtil.processSortedListsInOrder(added, new AbstractList<FSRecords.NameId>() {
         @Override
@@ -448,7 +449,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }, pairComparator, true, pair -> mergedIds.add(pair.id));
       myData.myChildrenIds = mergedIds.toNativeArray();
 
-      ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
       assertConsistency(caseSensitive, added);
     }
   }
@@ -457,9 +457,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final String childName = child.getName();
     final boolean caseSensitive = getFileSystem().isCaseSensitive();
     synchronized (myData) {
-      int indexInReal = findIndex(myData.myChildrenIds, childName, caseSensitive);
-
       myData.removeAdoptedName(childName);
+      int indexInReal = findIndex(myData.myChildrenIds, childName, caseSensitive);
       if (indexInReal < 0) {
         insertChildAt(child, indexInReal);
       }
@@ -477,7 +476,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     assert appended[i] > 0 : file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myData.myChildrenIds = appended;
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void removeChild(@NotNull VirtualFile file) {
@@ -488,7 +486,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (indexInReal >= 0) {
         // there suddenly can be that we ask to add name to adopted whereas it already contained in the real part
         // in this case we should remove it from there
-        removeFromArray(indexInReal);
+        myData.myChildrenIds = ArrayUtil.remove(myData.myChildrenIds, indexInReal);
       }
       if (!allChildrenLoaded()) {
         myData.addAdoptedName(name, caseSensitive);
@@ -498,17 +496,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  // faster than names.forEach(this::removeChild)
+  // faster than forEach(this::removeChild)
   public void removeChildren(@NotNull TIntHashSet idsToRemove, @NotNull List<CharSequence> namesToRemove) {
     boolean caseSensitive = getFileSystem().isCaseSensitive();
     synchronized (myData) {
-      boolean allChildrenLoaded = allChildrenLoaded();
-      if (!allChildrenLoaded) {
-        for (CharSequence name : namesToRemove) {
-          myData.addAdoptedName(name, caseSensitive);
-        }
-      }
-
       // remove from array by merging two sorted lists
       int[] newIds = new int[myData.myChildrenIds.length];
       int[] oldIds = myData.myChildrenIds;
@@ -522,15 +513,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         newIds = o == 0 ? ArrayUtil.EMPTY_INT_ARRAY : Arrays.copyOf(newIds, o);
       }
       myData.myChildrenIds = newIds;
-      ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
+
+      if (!allChildrenLoaded()) {
+        for (CharSequence name : namesToRemove) {
+          myData.addAdoptedName(name, caseSensitive);
+        }
+      }
 
       assertConsistency(caseSensitive, namesToRemove);
     }
-  }
-
-  private void removeFromArray(int index) {
-    myData.myChildrenIds = ArrayUtil.remove(myData.myChildrenIds, index);
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public boolean allChildrenLoaded() {
