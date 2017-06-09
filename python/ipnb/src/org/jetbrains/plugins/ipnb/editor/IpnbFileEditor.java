@@ -277,10 +277,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     final Rectangle cellBounds = ipnbPanel.getBounds();
     final int shift = 2;
-    if (cellBounds.getY() <= rect.getY()) {
+    if (cellBounds.getY() <= rect.getY() || cellBounds.getY() >= rect.getY() + rect.height) {
       myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - shift);
     }
-    if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
+    if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight() && cellBounds.height < rect.height) {
       myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - rect.height + cellBounds.height + shift);
     }
   }
