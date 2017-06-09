@@ -24,6 +24,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -257,7 +258,14 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName));
       if (sdkHome != null) {
         selectedSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-        if (selectedSdk != null) {
+        if (selectedSdk != null && PythonSdkType.isVirtualEnv(selectedSdk)) {
+          if (PythonSdkType.isVirtualEnv(selectedSdk)) {
+            final SdkModificator sdkModificator = selectedSdk.getSdkModificator();
+            final PythonSdkAdditionalData additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(selectedSdk));
+            additionalData.associateWithProject(myProject);
+            sdkModificator.setSdkAdditionalData(additionalData);
+            ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
+          }
           myProjectSdksModel.addSdk(selectedSdk);
         }
       }
