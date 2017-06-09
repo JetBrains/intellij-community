@@ -76,8 +76,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
         document.deleteString(document.getLineStartOffset(1), document.getTextLength());
       }
     }.execute();
-    assertTrue(highlighter.isValid());
-    assertEquals(6, highlighter.getStartOffset());
+    assertFalse(highlighter.isValid());
   }
 
   public static class TestAnnotator implements Annotator {

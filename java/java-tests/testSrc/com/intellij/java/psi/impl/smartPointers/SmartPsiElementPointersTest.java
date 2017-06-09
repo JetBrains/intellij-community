@@ -996,4 +996,26 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertNull(file.getTreeElement());
   }
 
+  public void testSurviveAfterWholeTextReplace() throws Exception {
+    String text = "class A {" +
+                  "void foo() {\n" +
+                  "  //comment\n" +
+                  "\n}" +
+                  "\n" +
+                  "void bar() {}\n" +
+                  "void bar2() {}\n" +
+                  "void bar3() {}\n" +
+                  "void bar4() {}\n" +
+                  "}";
+    PsiJavaFileImpl file = (PsiJavaFileImpl)createFile("a.java", text);
+    SmartPointerEx<PsiMethod> pointer = createPointer(file.getClasses()[0].getMethods()[1]);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      file.getViewProvider().getDocument().setText(text.replace("//comment", "//a\n//multiline\n// comment"));
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
+
+    assertEquals(file.getClasses()[0].getMethods()[1], pointer.getElement());
+  }
+
 }
