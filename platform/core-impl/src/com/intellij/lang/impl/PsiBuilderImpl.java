@@ -1462,12 +1462,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       throw new UnsupportedOperationException("Unknown node type: " + node);
     }
 
-    @Override
-    @NotNull
-    public LighterASTNode prepareForGetChildren(@NotNull final LighterASTNode node) {
-      return node;
-    }
-
     private int count;
     private LighterASTNode[] nodes;
 
@@ -1479,7 +1473,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         if (root instanceof ProductionMarker) {
           ((ProductionMarker)root).myParent = ((Token)item).myParentNode;
         }
-        return tree.getChildren(tree.prepareForGetChildren(root), into);  // todo: set offset shift for kids?
+        return tree.getChildren(root, into);  // todo: set offset shift for kids?
       }
 
       if (item instanceof Token || item instanceof ErrorItem) return 0;
