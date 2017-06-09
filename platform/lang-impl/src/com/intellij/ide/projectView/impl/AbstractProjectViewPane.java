@@ -222,11 +222,16 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private void doSelectModuleOrGroup(final Object toSelect, final boolean requestFocus) {
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
     final Runnable runnable = () -> {
-      ProjectView projectView = ProjectView.getInstance(myProject);
       if (requestFocus) {
-        projectView.changeView(getId(), getSubId());
+        ProjectView projectView = ProjectView.getInstance(myProject);
+        if (projectView != null) {
+          projectView.changeView(getId(), getSubId());
+        }
       }
-      ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
+      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
+      if (builder != null) {
+        builder.selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
+      }
     };
     if (requestFocus) {
       windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
