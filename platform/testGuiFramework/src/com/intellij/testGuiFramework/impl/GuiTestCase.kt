@@ -112,10 +112,6 @@ open class GuiTestCase : GuiTestBase() {
     func(dialog(title, timeout))
   }
 
-  fun message(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
-    func(dialog(title, timeout))
-  }
-
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
     func(importSimpleProject())
   }
@@ -227,7 +223,7 @@ open class GuiTestCase : GuiTestBase() {
 
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
 
-//  fun invokeAction(actionName: String) = GuiTestUtil.invokeAction(myRobot, actionName)
+  fun invokeAction(actionName: String) = GuiTestUtil.invokeAction(myRobot, actionName)
 
   fun screenshot(component: Component, screenshotName: String): Unit {
 
