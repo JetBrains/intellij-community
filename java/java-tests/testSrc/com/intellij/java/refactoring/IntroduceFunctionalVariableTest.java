@@ -63,6 +63,10 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     doTest(0);
   }
 
+  public void testRunnableFromComment() throws Exception {
+    doTest();
+  }
+
   public void testIgnoreMethodObjectSuggestion() throws Exception {
     try {
       doTest();

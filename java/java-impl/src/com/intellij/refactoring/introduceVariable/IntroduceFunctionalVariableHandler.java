@@ -60,7 +60,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           showErrorMessage(project , editor, message);
           return;
         }
-        PsiElement anchorStatement = RefactoringUtil.getParentStatement(elements[0], false);
+        PsiElement anchorStatement = elements[0] instanceof PsiComment ? elements[0] : RefactoringUtil.getParentStatement(elements[0], false);
         PsiElement tempContainer = checkAnchorStatement(project, editor, anchorStatement);
         if (tempContainer == null) return;
 
