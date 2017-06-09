@@ -1744,8 +1744,12 @@ public class AbstractTreeUi {
         ApplicationManager.getApplication().isDispatchThread()) {
       return producer.produce();
     }
-    Ref<T> result = new Ref<>();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null && indicator.isRunning()) {
+      return producer.produce();
+    }
+
+    Ref<T> result = new Ref<>();
     boolean succeeded = ProgressManager.getInstance().runInReadActionWithWriteActionPriority(
       () -> result.set(producer.produce()),
       indicator
