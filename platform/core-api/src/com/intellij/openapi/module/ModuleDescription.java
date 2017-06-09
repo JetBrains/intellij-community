@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module
+package com.intellij.openapi.module;
 
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Represents a description of a module which may be either loaded into the project or unloaded. Use this class only if you need to process
- * all modules including unloaded, in other cases [Module] should be used instead.
- * @see [ModuleManager.getUnloadedModuleDescriptions]
+ * all modules including unloaded, in other cases {@link Module} should be used instead.
+ *
+ * @see UnloadedModuleDescription
+ * @see LoadedModuleDescription
  * @author nik
  */
 @ApiStatus.Experimental
-interface ModuleDescription {
-  val name: String
+public interface ModuleDescription {
+  @NotNull
+  String getName();
 
   /**
    * Names of the modules on which the current module depend.
    */
-  val dependencyModuleNames: List<String>
-}
-
-@ApiStatus.Experimental
-interface UnloadedModuleDescription : ModuleDescription {
-  val contentRoots: List<VirtualFilePointer>
-  val groupPath: List<String>
-}
-
-@ApiStatus.Experimental
-interface LoadedModuleDescription : ModuleDescription {
-  val module: Module
+  @NotNull
+  List<String> getDependencyModuleNames();
 }
