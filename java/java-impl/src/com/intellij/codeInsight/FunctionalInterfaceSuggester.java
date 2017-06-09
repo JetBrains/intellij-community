@@ -70,6 +70,11 @@ public class FunctionalInterfaceSuggester {
   }
 
   public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiMethod method) {
+    return suggestFunctionalInterfaces(method, false);
+  }
+
+  public static Collection<? extends PsiType> suggestFunctionalInterfaces(final @NotNull PsiMethod method,
+                                                                          boolean suggestUnhandledThrowables) {
     if (method.isConstructor()) {
       return Collections.emptyList();
     }
@@ -128,10 +133,14 @@ public class FunctionalInterfaceSuggester {
           }
         }
 
-        for (PsiClassType thrownType : interfaceThrownTypes) {
-          final PsiCodeBlock codeBlock = PsiTreeUtil.getContextOfType(method, PsiCodeBlock.class);
-          if (codeBlock == null || !ExceptionUtil.isHandled(thrownType, codeBlock)) {
-            return null;
+        if (!suggestUnhandledThrowables) {
+          for (PsiClassType thrownType : interfaceThrownTypes) {
+            final PsiCodeBlock codeBlock = PsiTreeUtil.getContextOfType(method, PsiCodeBlock.class);
+            PsiType substitutedThrowable = substitutor.substitute(thrownType);
+            if (codeBlock == null || !(substitutedThrowable instanceof PsiClassType) ||
+                !ExceptionUtil.isHandled((PsiClassType)substitutedThrowable, codeBlock)) {
+              return null;
+            }
           }
         }
 
