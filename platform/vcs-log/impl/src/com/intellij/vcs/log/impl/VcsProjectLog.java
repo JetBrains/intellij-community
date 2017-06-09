@@ -33,10 +33,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,6 +72,7 @@ public class VcsProjectLog implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
+  @CalledInAwt
   void setMainUi(@NotNull VcsLogUiImpl ui) {
     myUi = ui;
   }
@@ -97,9 +95,11 @@ public class VcsProjectLog implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> {
       disposeLog();
 
-      if (hasDvcsRoots()) {
-        createLog();
-      }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (hasDvcsRoots()) {
+          createLog();
+        }
+      });
     });
   }
 
@@ -130,19 +130,21 @@ public class VcsProjectLog implements Disposable {
     myLogManager.drop();
   }
 
-  @CalledInAwt
+  @CalledInBackground
   public void createLog() {
     VcsLogManager logManager = myLogManager.getValue();
 
-    if (logManager.isLogVisible()) {
-      logManager.scheduleInitialization();
-    }
-    else if (PostponableLogRefresher.keepUpToDate()) {
-      VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
-      if (invalidator.isValid()) {
-        HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (logManager.isLogVisible()) {
+        logManager.scheduleInitialization();
       }
-    }
+      else if (PostponableLogRefresher.keepUpToDate()) {
+        VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+        if (invalidator.isValid()) {
+          HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
+        }
+      }
+    });
   }
 
   private boolean hasDvcsRoots() {
@@ -162,17 +164,18 @@ public class VcsProjectLog implements Disposable {
     @Nullable private VcsLogManager myValue;
 
     @NotNull
-    @CalledInAwt
+    @CalledInBackground
     public synchronized VcsLogManager getValue() {
       if (myValue == null) {
-        myValue = compute();
-        myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(myValue);
+        VcsLogManager value = compute();
+        myValue = value;
+        ApplicationManager.getApplication().invokeLater(() -> myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value));
       }
       return myValue;
     }
 
     @NotNull
-    @CalledInAwt
+    @CalledInBackground
     protected synchronized VcsLogManager compute() {
       return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateOnError);
     }
@@ -202,7 +205,7 @@ public class VcsProjectLog implements Disposable {
       MessageBusConnection connection = project.getMessageBus().connect(project);
       connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
       if (projectLog.hasDvcsRoots()) {
-        ApplicationManager.getApplication().invokeLater(projectLog::createLog);
+        projectLog.createLog();
       }
     }
   }

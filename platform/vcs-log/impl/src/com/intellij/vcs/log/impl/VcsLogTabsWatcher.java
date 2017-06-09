@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -51,8 +52,10 @@ public class VcsLogTabsWatcher implements Disposable {
     myToolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
 
     myPostponedEventsListener = new MyRefreshPostponedEventsListener();
-    myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
-    installContentListener();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      myToolWindowManager.addToolWindowManagerListener(myPostponedEventsListener);
+      installContentListener();
+    });
 
     Disposer.register(parentDisposable, this);
   }
