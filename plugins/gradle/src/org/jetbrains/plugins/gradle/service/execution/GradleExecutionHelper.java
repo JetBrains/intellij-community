@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -143,7 +144,9 @@ public class GradleExecutionHelper {
     }
 
     if (!settings.getArguments().isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + StringUtil.join(settings.getArguments(), " "));
+      String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
+      LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
+
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s);
 
@@ -573,6 +576,26 @@ public class GradleExecutionHelper {
     BuildLauncher result = connection.newBuild();
     prepare(result, id, settings, listener, vmOptions, commandLineArgs, connection);
     return result;
+  }
+
+  @VisibleForTesting
+  @NotNull
+  static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
+    List<String> replaced = new ArrayList<>(commandLineArguments.size());
+    final String PASSWORD_PARAMETER_IDENTIFIER = ".password=";
+    for (String option : commandLineArguments) {
+      // Find parameters ending in "password", like:
+      //   -Pandroid.injected.signing.store.password=
+      //   -Pandroid.injected.signing.key.password=
+      int index = option.indexOf(PASSWORD_PARAMETER_IDENTIFIER);
+      if (index == -1) {
+        replaced.add(option);
+      }
+      else {
+        replaced.add(option.substring(0, index + PASSWORD_PARAMETER_IDENTIFIER.length()) + "*********");
+      }
+    }
+    return replaced;
   }
 
   /**
