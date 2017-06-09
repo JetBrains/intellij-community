@@ -93,7 +93,9 @@ public class JavaGenerateMemberCompletionContributor {
       List<PsiMethod> prototypes = ContainerUtil.newSmartList();
       try {
         Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
-        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false));
+        if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+          Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false));
+        }
       }
       catch (GenerateCodeException ignore) { }
       for (final PsiMethod prototype : prototypes) {

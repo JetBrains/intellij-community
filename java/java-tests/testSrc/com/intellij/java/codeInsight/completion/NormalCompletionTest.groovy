@@ -1550,6 +1550,12 @@ class XInternalError {}
     checkResult()
   }
 
+  void testNoSetterForFinalField() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'public', 'public int getFinalField'
+    assert !myFixture.lookupElements.find { it.lookupString == 'public void setFinalField' }
+  }
+
   void testBraceOnNextLine() {
     codeStyleSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     doTest()
