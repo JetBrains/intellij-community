@@ -625,6 +625,7 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
     }
 
     val location = context?.location
+    configuration.module = context?.module
     if (location is com.jetbrains.python.testing.PyTargetBasedPsiLocation) {
       location.target.copyTo(configuration.target)
     }
@@ -637,7 +638,6 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
         configuration.workingDirectory = targetForConfig.second
       }
     }
-    configuration.module = context?.module
     configuration.setGeneratedName()
     return true
   }
