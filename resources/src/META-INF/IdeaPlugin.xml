@@ -1168,6 +1168,10 @@
       <category>Java/Imports</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.AddExplicitTypeArgumentsIntention</className>
+      <category>Java/Declaration</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExpandStaticImportAction</className>
       <category>Java/Imports</category>
     </intentionAction>
