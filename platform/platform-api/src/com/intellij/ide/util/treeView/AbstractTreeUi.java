@@ -4409,8 +4409,6 @@ public class AbstractTreeUi {
     });
   }
 
-  private static final ThreadLocal<Integer> ourLocal = new ThreadLocal<>();
-
   private void processExpand(final DefaultMutableTreeNode toExpand,
                              @NotNull final List<Object> kidsToExpand,
                              final int expandIndex,
@@ -4419,17 +4417,7 @@ public class AbstractTreeUi {
 
     final Object element = getElementFor(toExpand);
     if (element == null) {
-      Integer integer = ourLocal.get();
-      if (integer != null && integer > 20) {
-        int a = 1;
-      }
-      if (integer != null) ourLocal.set(integer + 1);
-      else ourLocal.set(1);
-      try {
-        runDone(onDone);
-      } finally {
-        ourLocal.set(integer);
-      }
+      runDone(onDone);
       return;
     }
 
