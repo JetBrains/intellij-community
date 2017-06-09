@@ -33,7 +33,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean warnOnAllPossiblyLiterals = false;
 
-  final Set<String> LITERAL_TYPES = new HashSet<>(Arrays.asList(
+  private static final Set<String> LITERAL_TYPES = new HashSet<>(Arrays.asList(
     CommonClassNames.JAVA_LANG_STRING,
     CommonClassNames.JAVA_LANG_BOOLEAN,
     CommonClassNames.JAVA_LANG_CHARACTER,
