@@ -276,11 +276,12 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     final Rectangle rect = myIpnbFilePanel.getVisibleRect();
 
     final Rectangle cellBounds = ipnbPanel.getBounds();
+    final int shift = 2;
     if (cellBounds.getY() <= rect.getY()) {
-      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - rect.height + cellBounds.height);
+      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - shift);
     }
     if (cellBounds.getY() + cellBounds.getHeight() > rect.getY() + rect.getHeight()) {
-      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y);
+      myScrollPane.getVerticalScrollBar().setValue(cellBounds.y - rect.height + cellBounds.height + shift);
     }
   }
 
