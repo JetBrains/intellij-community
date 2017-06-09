@@ -271,7 +271,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
         }
         return 13;
     }
-
+    
     PyObjectHolder traceFunc = PyObjectHolder(isDebug, pyGetAttr(globalDbg.ToPython(), "trace_dispatch"));
     CHECK_NULL(traceFunc.ToPython(), "pydevd.GetGlobalDebugger().trace_dispatch returned null!\n", 14);
     
