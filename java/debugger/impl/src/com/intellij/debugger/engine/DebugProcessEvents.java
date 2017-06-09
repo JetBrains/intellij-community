@@ -526,9 +526,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   private void notifySkippedBreakpoints(LocatableEvent event) {
-    XDebugSessionImpl.NOTIFICATION_GROUP
-      .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
-      .notify(getProject());
+    if (event != null) {
+      XDebugSessionImpl.NOTIFICATION_GROUP
+        .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
+        .notify(getProject());
+    }
   }
 
   @Nullable
