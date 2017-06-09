@@ -926,6 +926,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                 @NotNull final GlobalSearchScope scope,
                                                 @Nullable final PsiFile fileToIgnoreOccurrencesIn,
                                                 @Nullable final ProgressIndicator progress) {
+    if (!ReadAction.compute(() -> scope.getUnloadedModulesBelongingToScope().isEmpty())) {
+      return SearchCostResult.TOO_MANY_OCCURRENCES;
+    }
+
     final AtomicInteger count = new AtomicInteger();
     final ProgressIndicator indicator = progress == null ? new EmptyProgressIndicator() : progress;
     final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
