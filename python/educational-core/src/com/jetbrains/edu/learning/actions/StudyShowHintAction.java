@@ -3,9 +3,7 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -26,7 +24,6 @@ import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class StudyShowHintAction extends StudyActionWithShortcut {
@@ -34,8 +31,7 @@ public class StudyShowHintAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl pressed 7";
 
   public StudyShowHintAction() {
-    super("Show hint (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Show hint",
-          EducationalCoreIcons.ShowHint);
+    super("Show hint", "Show hint", EducationalCoreIcons.ShowHint);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
