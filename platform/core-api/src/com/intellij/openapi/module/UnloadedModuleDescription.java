@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.module.impl
+package com.intellij.openapi.module;
 
-import com.intellij.openapi.module.LoadedModuleDescription
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
  */
-class LoadedModuleDescriptionImpl(private val module: Module): LoadedModuleDescription {
-  override fun getModule() = module
+@ApiStatus.Experimental
+public interface UnloadedModuleDescription extends ModuleDescription {
+  @NotNull
+  List<VirtualFilePointer> getContentRoots();
 
-  override fun getName() = module.name
-
-  override fun getDependencyModuleNames() = ModuleRootManager.getInstance(module).dependencyModuleNames.asList()
+  @NotNull
+  List<String> getGroupPath();
 }

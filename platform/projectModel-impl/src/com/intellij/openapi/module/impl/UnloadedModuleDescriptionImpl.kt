@@ -30,13 +30,15 @@ import java.nio.file.Paths
  * @author nik
  */
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
-                                    override val dependencyModuleNames: List<String>,
-                                    override val contentRoots: List<VirtualFilePointer>) : UnloadedModuleDescription {
-  override val groupPath: List<String>
-    get() = modulePath.group?.split(ModuleManagerImpl.MODULE_GROUP_SEPARATOR) ?: emptyList()
+                                    private val dependencyModuleNames: List<String>,
+                                    private val contentRoots: List<VirtualFilePointer>) : UnloadedModuleDescription {
+  override fun getGroupPath() = modulePath.group?.split(ModuleManagerImpl.MODULE_GROUP_SEPARATOR) ?: emptyList()
 
-  override val name: String
-    get() = modulePath.moduleName
+  override fun getName() = modulePath.moduleName
+
+  override fun getContentRoots() = contentRoots
+
+  override fun getDependencyModuleNames() = dependencyModuleNames
 
   companion object {
     @JvmStatic
