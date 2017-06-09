@@ -2,13 +2,11 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,8 +30,6 @@ import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class StudyCheckAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl alt pressed ENTER";
   public static final String ACTION_ID = "Edu.Check";
@@ -43,13 +39,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
   protected final Ref<Boolean> myCheckInProgress = new Ref<>(false);
 
   public StudyCheckAction() {
-    super(getTextWithShortcuts(TEXT),
-          "Check current task", EducationalCoreIcons.CheckTask);
-  }
-
-  @NotNull
-  private static String getTextWithShortcuts(String text) {
-    return text + "(" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")";
+    super(TEXT,"Check current task", EducationalCoreIcons.CheckTask);
   }
 
   @Override
@@ -101,10 +91,10 @@ public class StudyCheckAction extends StudyActionWithShortcut {
       if (studyEditor != null) {
         final Task task = studyEditor.getTaskFile().getTask();
         if (task instanceof TheoryTask) {
-          presentation.setText(getTextWithShortcuts("Get Next Recommendation"));
+          presentation.setText("Get Next Recommendation");
         }
         else {
-          presentation.setText(getTextWithShortcuts(TEXT));
+          presentation.setText(TEXT);
         }
       }
     }

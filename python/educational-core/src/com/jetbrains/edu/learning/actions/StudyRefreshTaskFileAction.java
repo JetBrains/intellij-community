@@ -2,14 +2,12 @@ package com.jetbrains.edu.learning.actions;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -40,7 +38,6 @@ import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 
 public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
@@ -49,9 +46,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
 
   public StudyRefreshTaskFileAction() {
-    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")",
-          "Refresh current task",
-          EducationalCoreIcons.ResetTaskFile);
+    super("Reset Task File", "Refresh current task", EducationalCoreIcons.ResetTaskFile);
   }
 
   public static void refresh(@NotNull final Project project) {
