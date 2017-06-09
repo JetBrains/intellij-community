@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -39,6 +39,9 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreIntegerCharCasts = false;
 
+  @SuppressWarnings({"PublicField"})
+  public boolean ignoreOverflowingByteCasts = false;
+
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
@@ -58,15 +61,18 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     final PsiType operandType = (PsiType)infos[0];
     boolean negativeOnly = (boolean)infos[1];
-    return InspectionGadgetsBundle
-      .message(negativeOnly ? "cast.that.loses.precision.negative.problem.descriptor" : "cast.that.loses.precision.problem.descriptor",
-               operandType.getPresentableText());
+    return InspectionGadgetsBundle.message(negativeOnly ?
+                                           "cast.that.loses.precision.negative.problem.descriptor" :
+                                           "cast.that.loses.precision.problem.descriptor",
+                                           operandType.getPresentableText());
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("cast.that.loses.precision.option"),
-                                          this, "ignoreIntegerCharCasts");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("cast.that.loses.precision.option"), "ignoreIntegerCharCasts");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.overflowing.byte.casts.option"), "ignoreOverflowingByteCasts");
+    return panel;
   }
 
   @Override
@@ -90,10 +96,8 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       if (!ClassUtils.isPrimitiveNumericType(operandType) || !TypeUtils.isNarrowingConversion(operandType, castType)) {
         return;
       }
-      if (ignoreIntegerCharCasts) {
-        if (PsiType.INT.equals(operandType) && PsiType.CHAR.equals(castType)) {
-          return;
-        }
+      if (ignoreIntegerCharCasts && PsiType.INT.equals(operandType) && PsiType.CHAR.equals(castType)) {
+        return;
       }
       if (PsiType.LONG.equals(operandType) && PsiType.INT.equals(castType)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -107,6 +111,12 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       }
       if (result instanceof Number) {
         final Number number = (Number)result;
+        if (ignoreOverflowingByteCasts && PsiType.INT.equals(operandType) && PsiType.BYTE.equals(castType)) {
+          final int i = number.intValue();
+          if (i > Byte.MIN_VALUE && i <= 255) {
+            return;
+          }
+        }
         if (valueIsContainableInType(number, castType)) {
           return;
         }

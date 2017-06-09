@@ -12,29 +12,26 @@ public class CastThatLosesPrecision
         int i;
         char ch;
 
-
-
-
-        i = (<warning descr="Cast to 'int' from 'float' may result in loss of precision">int</warning>) f;
+        i = (<warning descr="Cast from 'float' to 'int' may result in loss of precision">int</warning>) f;
         System.out.println("i = " + i);
-        ch = (<warning descr="Cast to 'char' from 'double' may result in loss of precision">char</warning>) d;
+        ch = (<warning descr="Cast from 'double' to 'char' may result in loss of precision">char</warning>) d;
         System.out.println("ch = " + ch);
-        i = (<warning descr="Cast to 'int' from 'double' may result in loss of precision">int</warning>) d;
+        i = (<warning descr="Cast from 'double' to 'int' may result in loss of precision">int</warning>) d;
         System.out.println("i = " + i);
-        i = (<warning descr="Cast to 'int' from 'long' may result in loss of precision">int</warning>) l;
+        i = (<warning descr="Cast from 'long' to 'int' may result in loss of precision">int</warning>) l;
         System.out.println("i = " + i);
-        b = (<warning descr="Cast to 'byte' from 'long' may result in loss of precision">byte</warning>) l;
+        b = (<warning descr="Cast from 'long' to 'byte' may result in loss of precision">byte</warning>) l;
         System.out.println("b = " + b);
 
-        l = (<warning descr="Cast to 'long' from 'double' may result in loss of precision">long</warning>) d;
+        l = (<warning descr="Cast from 'double' to 'long' may result in loss of precision">long</warning>) d;
         System.out.println("l = " + l);
-        l = (<warning descr="Cast to 'long' from 'float' may result in loss of precision">long</warning>) f;
+        l = (<warning descr="Cast from 'float' to 'long' may result in loss of precision">long</warning>) f;
         System.out.println("l = " + l);
 
         d = (double) f;
         System.out.println("d = " + d);
 
-        f = (<warning descr="Cast to 'float' from 'double' may result in loss of precision">float</warning>) d;
+        f = (<warning descr="Cast from 'double' to 'float' may result in loss of precision">float</warning>) d;
         System.out.println("f = " + f);
     }
 
@@ -52,7 +49,7 @@ public class CastThatLosesPrecision
         System.out.println("i = " + i);
         i = (int) 0L;
         System.out.println("i = " + i);
-        b = (<warning descr="Cast to 'byte' from 'long' may result in loss of precision">byte</warning>) l;
+        b = (<warning descr="Cast from 'long' to 'byte' may result in loss of precision">byte</warning>) l;
         System.out.println("b = " + b);
 
         l = (long) 0.0;
@@ -74,7 +71,7 @@ public class CastThatLosesPrecision
   @Override
   public int hashCode() {
     int result = (int) (aLong ^ (aLong >>> 32));
-    long temp = d != +0.0d ? (<warning descr="Cast to 'int' from 'double' may result in loss of precision">int</warning>) d : 0L;
+    long temp = d != +0.0d ? (<warning descr="Cast from 'double' to 'int' may result in loss of precision">int</warning>) d : 0L;
     result = 31 * result + (int) (temp ^ temp >>> 32);
     return result;
   }
@@ -83,7 +80,7 @@ public class CastThatLosesPrecision
     if (longNumberOfAgents > Integer.MAX_VALUE) {
       throw new IllegalArgumentException("Too many agents: " + longNumberOfAgents);
     }
-    int intNumberOfAgents = (<warning descr="Cast to 'int' from 'long' may result in loss of precision for negative argument">int</warning>)longNumberOfAgents;
+    int intNumberOfAgents = (<warning descr="Cast from 'long' to 'int' may result in loss of precision for negative argument">int</warning>)longNumberOfAgents;
     System.out.println(intNumberOfAgents);
   }
 
@@ -96,5 +93,9 @@ public class CastThatLosesPrecision
     }
     int intNumberOfAgents = (int)longNumberOfAgents;
     System.out.println(intNumberOfAgents);
+  }
+
+  void bytes() {
+    byte[] bytes = { (byte) 0xb2, (byte) 0x80 };
   }
 }
