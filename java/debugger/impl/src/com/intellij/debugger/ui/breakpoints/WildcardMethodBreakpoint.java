@@ -38,12 +38,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.event.MethodEntryEvent;
-import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import one.util.streamex.StreamEx;
@@ -176,18 +173,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   }
 
   public String getEventMessage(@NotNull LocatableEvent event) {
-    Location location = event.location();
-    if (event instanceof MethodEntryEvent) {
-      return MethodBreakpoint.getEventMessage(true, ((MethodEntryEvent)event).method(), location, "");
-    }
-    if (event instanceof MethodExitEvent) {
-      return MethodBreakpoint.getEventMessage(false, ((MethodExitEvent)event).method(), location, "");
-    }
-    Object entryProperty = event.request().getProperty(METHOD_ENTRY_KEY);
-    if (entryProperty instanceof Boolean) {
-      return MethodBreakpoint.getEventMessage((Boolean)entryProperty, location.method(), location, "");
-    }
-    return "";
+    return MethodBreakpoint.getEventMessage(event, "");
   }
 
   public boolean isValid() {
