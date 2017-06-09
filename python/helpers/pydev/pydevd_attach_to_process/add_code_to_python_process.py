@@ -280,8 +280,8 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
 
     if is_64 != is_python_64bit():
         raise RuntimeError("The architecture of the Python used to connect doesn't match the architecture of the target.\n"
-                           "Target 64 bits: %s\n"
-                           "Current Python 64 bits: %s" % (is_64, is_python_64bit()))
+        "Target 64 bits: %s\n"
+        "Current Python 64 bits: %s" % (is_64, is_python_64bit()))
 
     print('Connecting to %s bits target' % (bits,))
     assert resolve_label(process, compat.b('PyGILState_Ensure'))
@@ -366,16 +366,16 @@ def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, sh
 
 
     # Uncomment to see the disassembled version of what we just did...
-    #     with open('f.asm', 'wb') as stream:
-    #         stream.write(code)
-    #
-    #     exe = r'x:\nasm\nasm-2.07-win32\nasm-2.07\ndisasm.exe'
-    #     if is_64:
-    #         arch = '64'
-    #     else:
-    #         arch = '32'
-    #
-    #     subprocess.call((exe + ' -b %s f.asm' % arch).split())
+#     with open('f.asm', 'wb') as stream:
+#         stream.write(code)
+#
+#     exe = r'x:\nasm\nasm-2.07-win32\nasm-2.07\ndisasm.exe'
+#     if is_64:
+#         arch = '64'
+#     else:
+#         arch = '32'
+#
+#     subprocess.call((exe + ' -b %s f.asm' % arch).split())
 
     print('Injecting code to target process')
     thread, _thread_address = process.inject_code(code, 0)
@@ -428,11 +428,11 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
         '--nw',  # no gui interface
         '--nh',  # no ~/.gdbinit
         '--nx',  # no .gdbinit
-        #         '--quiet',  # no version number on startup
+#         '--quiet',  # no version number on startup
         '--pid',
         str(pid),
         '--batch',
-        #         '--batch-silent',
+#         '--batch-silent',
     ]
 
     cmd.extend(["--eval-command='set scheduler-locking off'"])  # If on we'll deadlock.
@@ -449,7 +449,7 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
     if connect_debugger_tracing:
         cmd.extend([
             "--command='%s'" % (gdb_threads_settrace_file,),
-            ])
+        ])
 
     #print ' '.join(cmd)
 
@@ -527,8 +527,8 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         "-o 'process attach --pid %d'"%pid,
         "-o 'command script import \"%s\"'" % (lldb_prepare_file,),
         "-o 'load_lib_and_attach \"%s\" %s \"%s\" %s'" % (target_dll,
-                                                          is_debug, python_code, show_debug_info),
-        ])
+            is_debug, python_code, show_debug_info),
+    ])
 
 
     if connect_debugger_tracing:
@@ -556,7 +556,7 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
+        )
     print('Running lldb in target process.')
     out, err = p.communicate()
     print('stdout: %s' % (out,))
