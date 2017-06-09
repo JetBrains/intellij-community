@@ -1327,6 +1327,8 @@ public class RefactoringUtil {
 
     }
 
+    collectTypeParametersInDependencies(filter, used);
+    
     if (fromList != null) {
       used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }
@@ -1349,6 +1351,18 @@ public class RefactoringUtil {
       LOG.error(e);
       assert false;
       return null;
+    }
+  }
+
+  private static void collectTypeParametersInDependencies(Condition<PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
+    HashSet<PsiTypeParameter> typeParametersInDependencies = new HashSet<>();
+    for (PsiTypeParameter parameter : used) {
+      collectTypeParameters(typeParametersInDependencies, parameter, filter);
+    }
+    typeParametersInDependencies.removeAll(used);
+    if (!typeParametersInDependencies.isEmpty()) {
+      collectTypeParametersInDependencies(filter, typeParametersInDependencies);
+      used.addAll(typeParametersInDependencies);
     }
   }
 
