@@ -811,6 +811,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   private static class IconRenderer extends JLabel implements Renderer<Icon> {
     public JComponent setValue(@NotNull final Icon value) {
       setIcon(value);
+      String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
+      setText(toString.replace('\n', ' '));
       return this;
     }
   }
@@ -906,6 +908,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       Class<?> clazz0 = component.getClass();
       Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
       myProperties.add(new PropertyBean(prefix + "class", clazz.getName()));
+      StringBuilder classHierarchy = new StringBuilder();
+      for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
+        if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
+        classHierarchy.append(cl.getName());
+        if (JComponent.class.getName().equals(cl.getName())) break;
+      }
+      myProperties.add(new PropertyBean(prefix + "hierarchy", classHierarchy.toString()));
       for (String name: methodNames) {
         String propertyName = ObjectUtils.notNull(StringUtil.getPropertyName(name), name);
         Object propertyValue;

@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.featureStatistics.FeaturesUsageCollector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.ToolbarClicksCollector;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -245,7 +243,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    *         disabled icon if action is disabled. If the action's icon is <code>null</code> then it returns
    *         an empty icon.
    */
-  protected Icon getIcon() {
+  public Icon getIcon() {
     Icon icon = isButtonEnabled() ? myIcon : myDisabledIcon;
     return icon == null ? EmptyIcon.ICON_18 : icon;
   }

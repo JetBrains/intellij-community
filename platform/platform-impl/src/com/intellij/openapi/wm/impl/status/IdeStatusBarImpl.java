@@ -737,7 +737,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
   }
 
-  private static final class IconPresentationWrapper extends JComponent implements StatusBarWrapper {
+  private static final class IconPresentationWrapper extends JLabel implements StatusBarWrapper {
     private final StatusBarWidget.IconPresentation myPresentation;
     private final Consumer<MouseEvent> myClickConsumer;
     private Icon myIcon;
@@ -746,6 +746,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
       myIcon = myPresentation.getIcon();
+      setIcon(myIcon);
 
       putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
       setToolTipText(presentation.getTooltipText());

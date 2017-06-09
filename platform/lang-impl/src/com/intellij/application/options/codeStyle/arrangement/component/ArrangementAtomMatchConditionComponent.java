@@ -20,7 +20,6 @@ import com.intellij.application.options.codeStyle.arrangement.action.Arrangement
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -159,7 +158,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
         JBUI.emptySize())
       {
         @Override
-        protected Icon getIcon() {
+        public Icon getIcon() {
           return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
         }
       };
