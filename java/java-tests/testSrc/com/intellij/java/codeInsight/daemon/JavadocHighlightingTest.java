@@ -86,6 +86,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testValueNotOnStaticField() { doTest(); }
   public void testValueOnNotInitializedField() { doTest(); }
   public void testJava18Tags() { doTest(); }
+  public void testJava19Tags() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
   public void testUnknownInlineTag() { doTest(); }
   public void testUnknownTags() { doTest(); }
   public void testBadCharacters() { doTest(); }
