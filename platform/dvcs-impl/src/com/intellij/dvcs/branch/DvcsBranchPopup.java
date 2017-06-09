@@ -123,7 +123,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     return popupGroup;
   }
 
-  private boolean userWantsSyncControl() {
+  protected boolean userWantsSyncControl() {
     return (myVcsSettings.getSyncSetting() != DvcsSyncSettings.Value.DONT_SYNC);
   }
 
@@ -142,7 +142,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     }
   }
 
-  protected boolean isBranchesDiverged() {
+  private boolean isBranchesDiverged() {
     return myRepositoryManager.moreThanOneRoot() && myMultiRootBranchConfig.diverged() && userWantsSyncControl();
   }
 
