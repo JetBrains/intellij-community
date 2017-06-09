@@ -12,7 +12,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class IpnbAddCellBelowAction extends AnAction {
@@ -22,7 +22,7 @@ public class IpnbAddCellBelowAction extends AnAction {
   public IpnbAddCellBelowAction(IpnbFileEditor fileEditor) {
     super("Insert Cell Below", "Insert Cell Below", AllIcons.General.Add);
     myFileEditor = fileEditor;
-    KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask());
+    KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, InputEvent.CTRL_DOWN_MASK);
     registerCustomShortcutSet(new CustomShortcutSet(keyStroke), myFileEditor.getIpnbFilePanel());
   }
 
