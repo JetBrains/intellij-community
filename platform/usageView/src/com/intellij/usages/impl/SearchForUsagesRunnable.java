@@ -166,15 +166,18 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   private Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
-    if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
-    Collection<UnloadedModuleDescription> unloadedInSearchScope = ((GlobalSearchScope)mySearchScopeToWarnOfFallingOutOf).getUnloadedModulesBelongingToScope();
-    Set<UnloadedModuleDescription> unloadedInResolveScope = getCombinedUseScope();
-    if (unloadedInResolveScope != null) {
-      //when searching for usages of PsiElements return only those unloaded modules which may contain references to the elements, this way
-      // we won't show a warning if e.g. 'find usages' for a private method is invoked
-      return ContainerUtil.intersection(unloadedInSearchScope, unloadedInResolveScope);
-    }
-    return unloadedInSearchScope;
+    return ReadAction.compute(() -> {
+      if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
+      Collection<UnloadedModuleDescription> unloadedInSearchScope =
+        ((GlobalSearchScope)mySearchScopeToWarnOfFallingOutOf).getUnloadedModulesBelongingToScope();
+      Set<UnloadedModuleDescription> unloadedInResolveScope = getCombinedUseScope();
+      if (unloadedInResolveScope != null) {
+        //when searching for usages of PsiElements return only those unloaded modules which may contain references to the elements, this way
+        // we won't show a warning if e.g. 'find usages' for a private method is invoked
+        return ContainerUtil.intersection(unloadedInSearchScope, unloadedInResolveScope);
+      }
+      return unloadedInSearchScope;
+    });
   }
 
   private Set<UnloadedModuleDescription> getCombinedUseScope() {
