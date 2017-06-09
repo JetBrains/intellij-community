@@ -62,11 +62,8 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
   private static void runCells(List<IpnbEditablePanel> cells, IpnbFilePanel ipnbFilePanel) {
     for (IpnbEditablePanel cell : cells) {
       cell.runCell(true);
-      ipnbFilePanel.revalidate();
-      ipnbFilePanel.repaint();
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(ipnbFilePanel, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+                                                             IdeFocusManager.getGlobalInstance().requestFocus(ipnbFilePanel, true));
     }
   }
 

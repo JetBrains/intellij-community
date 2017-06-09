@@ -31,8 +31,6 @@ import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
@@ -59,8 +57,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.ui.update.Update.HIGH_PRIORITY;
-
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
   private final DocumentListener myDocumentListener;
@@ -80,13 +76,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private int myInitialSelection = 0;
   private boolean mySynchronize;
   private static final String ourHelpID = "IPython_Notebook_Support";
-  private MergingUpdateQueue myQueue;
 
   public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 100, 5, true, false));
-    myQueue = new MergingUpdateQueue("Jupyter", 100, true, this, this,
-                                     null, true);
     myProject = project;
     myParent = parent;
     myVirtualFile = vFile;
@@ -122,11 +115,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       });
       setFocusable(true);
     }, 10, ModalityState.stateForComponent(this));
-    alarm.addRequest(() -> {
-      revalidate();
-      repaint();
-      myParent.loaded();
-    }, 100);
+    myParent.loaded();
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       IdeFocusManager.getGlobalInstance().requestFocus(this, true);
     });
@@ -610,7 +599,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (mySelectedCellPanel != null && e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         mySelectedCellPanel.switchToEditing();
-        repaint();
       }
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         selectPrev(mySelectedCellPanel);
@@ -692,17 +680,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     else {
       mySelectedCellPanel = null;
       mySelectedIndex = -1;
-      repaint();
-    }
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    if (mySelectedCellPanel != null) {
-      g.setColor(mySelectedCellPanel.isEditing() ? JBColor.GREEN : JBColor.GRAY);
-      g.drawRoundRect(mySelectedCellPanel.getX() - 50, mySelectedCellPanel.getTop() - 1,
-                      mySelectedCellPanel.getWidth() + 145 - IpnbEditorUtil.PROMPT_SIZE.width, mySelectedCellPanel.getHeight() + 2, 5, 5);
     }
   }
 
@@ -714,7 +691,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
           IdeFocusManager.getGlobalInstance().requestFocus(this, true);
         });
-        repaint();
         setSelectedCell(ipnbPanel, true);
       }
     }
@@ -732,29 +708,15 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (ipnbPanel.equals(mySelectedCellPanel)) return;
     if (mySelectedCellPanel != null) {
       mySelectedCellPanel.setEditing(false);
+      mySelectedCellPanel.setBorder(BorderFactory.createLineBorder(IpnbEditorUtil.getBackground()));
     }
+    ipnbPanel.setBorder(BorderFactory.createLineBorder(ipnbPanel.isEditing() ? JBColor.GREEN : JBColor.GRAY));
+
     mySelectedCellPanel = ipnbPanel;
     mySelectedIndex = myIpnbPanels.indexOf(ipnbPanel);
-    myQueue.queue(new Update("Jupyter.Repaint", HIGH_PRIORITY) {
-      @Override
-      public void run() {
-        revalidate();
-        repaint();
-        if (ipnbPanel.getBounds().getHeight() != 0) {
-          myListener.selectionChanged(ipnbPanel, mouse);
-        }
-      }
-    });
-  }
-
-  public void revalidateAndRepaint() {
-    myQueue.queue(new Update("Jupyter.Repaint", HIGH_PRIORITY) {
-      @Override
-      public void run() {
-        revalidate();
-        repaint();
-      }
-    });
+    if (ipnbPanel.getBounds().getHeight() != 0) {
+      myListener.selectionChanged(ipnbPanel, mouse);
+    }
   }
 
   @Nullable
