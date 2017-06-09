@@ -423,10 +423,7 @@ public class AnalysisScope {
     return VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, fileOrDir -> {
       if (isFiltered(fileOrDir)) return true;
       if (!processGeneratedFiles && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, project)) return true;
-      if (!fileOrDir.isDirectory()) {
-        return processor.process(fileOrDir);
-      }
-      return true;
+      return fileOrDir.isDirectory() || processor.process(fileOrDir);
     });
   }
 
@@ -534,7 +531,7 @@ public class AnalysisScope {
     return myVFiles == null ? Collections.emptySet() : Collections.unmodifiableSet(myVFiles);
   }
 
-  @Nullable
+  @NotNull
   private String getRelativePath() {
     final String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
     if (relativePath.length() > 100) {
@@ -740,5 +737,10 @@ public class AnalysisScope {
 
   public void setFilter(GlobalSearchScope filter) {
     myFilter = filter;
+  }
+
+  @Override
+  public String toString() {
+    return ReadAction.compute(() -> toSearchScope().toString());
   }
 }
