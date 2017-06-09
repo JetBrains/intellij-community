@@ -17,12 +17,16 @@
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
@@ -85,6 +89,12 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
 
   public boolean isSearchInLibraries() {
     return true;
+  }
+
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    Project project = getProject();
+    return project != null ? ModuleManager.getInstance(project).getUnloadedModuleDescriptions() : Collections.emptySet();
   }
 
   @NotNull
