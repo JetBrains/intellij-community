@@ -88,7 +88,7 @@ public class JavaGenerateMemberCompletionContributor {
   private static void addGetterSetterElements(CompletionResultSet result, PsiClass parent, Set<MethodSignature> addedSignatures) {
     int count = 0;
     for (PsiField field : parent.getFields()) {
-      if (field instanceof PsiEnumConstant) continue;
+      if (isConstant(field)) continue;
 
       List<PsiMethod> prototypes = ContainerUtil.newSmartList();
       try {
@@ -114,6 +114,10 @@ public class JavaGenerateMemberCompletionContributor {
         }
       }
     }
+  }
+
+  private static boolean isConstant(PsiField field) {
+    return field.hasModifierProperty(PsiModifier.FINAL) && field.hasModifierProperty(PsiModifier.PUBLIC) && field.hasModifierProperty(PsiModifier.STATIC);
   }
 
   private static void removeLookupString(InsertionContext context) {

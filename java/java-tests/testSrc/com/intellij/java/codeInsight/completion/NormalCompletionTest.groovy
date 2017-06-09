@@ -1554,6 +1554,7 @@ class XInternalError {}
     configure()
     myFixture.assertPreferredCompletionItems 0, 'public', 'public int getFinalField'
     assert !myFixture.lookupElements.find { it.lookupString == 'public void setFinalField' }
+    assert !myFixture.lookupElements.find { it.lookupString == 'public int getCONSTANT' }
   }
 
   void testBraceOnNextLine() {
