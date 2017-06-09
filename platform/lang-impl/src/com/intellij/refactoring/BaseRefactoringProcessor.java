@@ -132,38 +132,27 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * Is called inside atomic action.
    */
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
-    return myIsPreviewUsages || !computeUnloadedModulesFromUseScope().isEmpty();
+    return myIsPreviewUsages;
   }
 
   protected boolean isPreviewUsages() {
-    return myIsPreviewUsages || !computeUnloadedModulesFromUseScope().isEmpty();
+    return myIsPreviewUsages;
   }
 
-  private Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope() {
-    return ReadAction.compute(() -> {
-      if (ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
-        //optimization
-        return Collections.emptySet();
-      }
-      RefactoringEventData beforeData = getBeforeData();
-      if (beforeData == null) return Collections.emptySet();
+  private Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope(UsageViewDescriptor descriptor) {
+    if (ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
+      //optimization
+      return Collections.emptySet();
+    }
 
-      PsiElement[] psiElements = beforeData.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY);
-      if (psiElements == null) {
-        PsiElement psiElement = beforeData.getUserData(RefactoringEventData.PSI_ELEMENT_KEY);
-        if (psiElement == null) return Collections.emptySet();
-        psiElements = new PsiElement[]{psiElement};
+    Set<UnloadedModuleDescription> unloadedModulesInUseScope = new LinkedHashSet<>();
+    for (PsiElement element : descriptor.getElements()) {
+      SearchScope useScope = element.getUseScope();
+      if (useScope instanceof GlobalSearchScope) {
+        unloadedModulesInUseScope.addAll(((GlobalSearchScope)useScope).getUnloadedModulesBelongingToScope());
       }
-
-      Set<UnloadedModuleDescription> unloadedModulesInUseScope = new LinkedHashSet<>();
-      for (PsiElement element : psiElements) {
-        SearchScope useScope = element.getUseScope();
-        if (useScope instanceof GlobalSearchScope) {
-          unloadedModulesInUseScope.addAll(((GlobalSearchScope)useScope).getUnloadedModulesBelongingToScope());
-        }
-      }
-      return unloadedModulesInUseScope;
-    });
+    }
+    return unloadedModulesInUseScope;
   }
 
 
@@ -237,8 +226,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageInfo[] usages = refUsages.get();
     assert usages != null;
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
-
-    boolean isPreview = isPreviewUsages(usages);
+    boolean isPreview = isPreviewUsages(usages) || !computeUnloadedModulesFromUseScope(descriptor).isEmpty();
     if (!isPreview) {
       isPreview = !ensureElementsWritable(usages, descriptor) || UsageViewUtil.hasReadOnlyUsages(usages);
       if (isPreview) {
@@ -414,7 +402,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 
     final UsageView usageView = viewManager.showUsages(targets, usages, presentation, factory);
-    Set<UnloadedModuleDescription> unloadedModules = computeUnloadedModulesFromUseScope();
+    Set<UnloadedModuleDescription> unloadedModules = computeUnloadedModulesFromUseScope(viewDescriptor);
     if (!unloadedModules.isEmpty()) {
       usageView.appendUsage(new UnknownUsagesInUnloadedModules(unloadedModules));
     }
