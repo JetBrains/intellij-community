@@ -262,7 +262,7 @@ public class DebugUtil {
 
       if (!isLeaf) {
         final Ref<LighterASTNode[]> kids = new Ref<>();
-        final int numKids = tree.getChildren(tree.prepareForGetChildren(node), kids);
+        final int numKids = tree.getChildren(node, kids);
         if (numKids == 0) {
           StringUtil.repeatSymbol(buffer, ' ', indent + 2);
           buffer.append("<empty list>\n");
