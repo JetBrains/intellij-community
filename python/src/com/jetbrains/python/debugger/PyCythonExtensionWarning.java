@@ -23,13 +23,15 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.*;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
@@ -43,7 +45,6 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -52,9 +53,7 @@ public class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance("com.jetbrains.python.debugger.PyCythonExtensionWarning");
   public static final String ERROR_TITLE = "Compile Cython Extensions Error";
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
-  private static final String WARNING_MESSAGE = "Cython extension speed ups Python debugging <br/>" +
-                                                "<a href=\"install\">Install</a> " +
-                                                "<a href=\"docs\">How does it work</a>";
+  private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";
   public static final String SETUP_CYTHON_PATH = "pydev/setup_cython.py";
   public static final String[] CYTHON_ARGS = {"build_ext", "--inplace"};
 
@@ -65,23 +64,29 @@ public class PyCythonExtensionWarning {
     }
     Notification notification =
       new Notification(CYTHON_WARNING_GROUP_ID, "Python Debugger Extension Available", WARNING_MESSAGE,
-                       NotificationType.INFORMATION, createListener(project));
+                       NotificationType.INFORMATION);
+    notification.addAction(createInstallAction(notification, project));
+    notification.addAction(createDocsAction());
     notification.notify(project);
   }
 
-  private static NotificationListener.Adapter createListener(@NotNull Project project) {
-    return new NotificationListener.Adapter() {
+  private static AnAction createInstallAction(@NotNull Notification notification, @NotNull Project project) {
+    return new DumbAwareAction("Install") {
+
       @Override
-      protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        switch (event.getDescription()) {
-          case "install":
-            compileCythonExtension(project);
-            notification.expire();
-            return;
-          case "docs":
-            // TODO: help id for cython speedups help page
-            HelpManager.getInstance().invokeHelp("");
-        }
+      public void actionPerformed(AnActionEvent e) {
+        compileCythonExtension(project);
+        notification.expire();
+      }
+    };
+  }
+
+  private static AnAction createDocsAction() {
+    return new DumbAwareAction("How does it work") {
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        HelpManager.getInstance().invokeHelp("");
       }
     };
   }
