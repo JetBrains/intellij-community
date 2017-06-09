@@ -35,6 +35,8 @@ import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -49,6 +51,8 @@ import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -63,6 +67,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
@@ -127,11 +132,38 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * Is called inside atomic action.
    */
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
-    return myIsPreviewUsages;
+    return myIsPreviewUsages || !computeUnloadedModulesFromUseScope().isEmpty();
   }
 
   protected boolean isPreviewUsages() {
-    return myIsPreviewUsages;
+    return myIsPreviewUsages || !computeUnloadedModulesFromUseScope().isEmpty();
+  }
+
+  private Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope() {
+    return ReadAction.compute(() -> {
+      if (ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
+        //optimization
+        return Collections.emptySet();
+      }
+      RefactoringEventData beforeData = getBeforeData();
+      if (beforeData == null) return Collections.emptySet();
+
+      PsiElement[] psiElements = beforeData.getUserData(RefactoringEventData.PSI_ELEMENT_ARRAY_KEY);
+      if (psiElements == null) {
+        PsiElement psiElement = beforeData.getUserData(RefactoringEventData.PSI_ELEMENT_KEY);
+        if (psiElement == null) return Collections.emptySet();
+        psiElements = new PsiElement[]{psiElement};
+      }
+
+      Set<UnloadedModuleDescription> unloadedModulesInUseScope = new LinkedHashSet<>();
+      for (PsiElement element : psiElements) {
+        SearchScope useScope = element.getUseScope();
+        if (useScope instanceof GlobalSearchScope) {
+          unloadedModulesInUseScope.addAll(((GlobalSearchScope)useScope).getUnloadedModulesBelongingToScope());
+        }
+      }
+      return unloadedModulesInUseScope;
+    });
   }
 
 
@@ -382,6 +414,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 
     final UsageView usageView = viewManager.showUsages(targets, usages, presentation, factory);
+    Set<UnloadedModuleDescription> unloadedModules = computeUnloadedModulesFromUseScope();
+    if (!unloadedModules.isEmpty()) {
+      usageView.appendUsage(new UnknownUsagesInUnloadedModules(unloadedModules));
+    }
     customizeUsagesView(viewDescriptor, usageView);
   }
 
