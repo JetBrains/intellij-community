@@ -34,6 +34,9 @@ public class FramelessAnalyzer extends SubroutineFinder {
   protected boolean[] queued;
   protected int[] queue;
   protected int top;
+  protected final EdgeCreator myEdgeCreator;
+
+  public FramelessAnalyzer(EdgeCreator creator) {myEdgeCreator = creator;}
 
   public void analyze(final MethodNode m) throws AnalyzerException {
     n = m.instructions.size();
@@ -101,7 +104,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
 
         if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE || insnType == AbstractInsnNode.FRAME) {
           merge(insn + 1, subroutine);
-          newControlFlowEdge(insn, insn + 1);
+          myEdgeCreator.newControlFlowEdge(insn, insn + 1);
         } else {
           subroutine = subroutine == null ? null : subroutine.copy();
 
@@ -109,7 +112,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
             JumpInsnNode j = (JumpInsnNode) insnNode;
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, subroutine);
-              newControlFlowEdge(insn, insn + 1);
+              myEdgeCreator.newControlFlowEdge(insn, insn + 1);
             }
             int jump = insns.indexOf(j.label);
             if (insnOpcode == JSR) {
@@ -117,28 +120,28 @@ public class FramelessAnalyzer extends SubroutineFinder {
             } else {
               merge(jump, subroutine);
             }
-            newControlFlowEdge(insn, jump);
+            myEdgeCreator.newControlFlowEdge(insn, jump);
           } else if (insnNode instanceof LookupSwitchInsnNode) {
             LookupSwitchInsnNode lsi = (LookupSwitchInsnNode) insnNode;
             int jump = insns.indexOf(lsi.dflt);
             merge(jump, subroutine);
-            newControlFlowEdge(insn, jump);
+            myEdgeCreator.newControlFlowEdge(insn, jump);
             for (int j = 0; j < lsi.labels.size(); ++j) {
               LabelNode label = lsi.labels.get(j);
               jump = insns.indexOf(label);
               merge(jump, subroutine);
-              newControlFlowEdge(insn, jump);
+              myEdgeCreator.newControlFlowEdge(insn, jump);
             }
           } else if (insnNode instanceof TableSwitchInsnNode) {
             TableSwitchInsnNode tsi = (TableSwitchInsnNode) insnNode;
             int jump = insns.indexOf(tsi.dflt);
             merge(jump, subroutine);
-            newControlFlowEdge(insn, jump);
+            myEdgeCreator.newControlFlowEdge(insn, jump);
             for (int j = 0; j < tsi.labels.size(); ++j) {
               LabelNode label = tsi.labels.get(j);
               jump = insns.indexOf(label);
               merge(jump, subroutine);
-              newControlFlowEdge(insn, jump);
+              myEdgeCreator.newControlFlowEdge(insn, jump);
             }
           } else if (insnOpcode == RET) {
             if (subroutine == null) {
@@ -149,7 +152,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
               int call = insns.indexOf(caller);
               if (wasQueued[call]) {
                 merge(call + 1, subroutines[call], subroutine.access);
-                newControlFlowEdge(insn, call + 1);
+                myEdgeCreator.newControlFlowEdge(insn, call + 1);
               }
             }
           } else if (insnOpcode != ATHROW && (insnOpcode < IRETURN || insnOpcode > RETURN)) {
@@ -168,7 +171,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
               }
             }
             merge(insn + 1, subroutine);
-            newControlFlowEdge(insn, insn + 1);
+            myEdgeCreator.newControlFlowEdge(insn, insn + 1);
           }
         }
 
@@ -189,14 +192,8 @@ public class FramelessAnalyzer extends SubroutineFinder {
     }
   }
 
-  protected void newControlFlowEdge(final int insn, final int successor) {}
-
-  protected boolean newControlFlowExceptionEdge(final int insn, final int successor) {
-    return true;
-  }
-
   protected boolean newControlFlowExceptionEdge(final int insn, final TryCatchBlockNode tcb) {
-    return newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler));
+    return myEdgeCreator.newControlFlowExceptionEdge(insn, insns.indexOf(tcb.handler));
   }
 
   // -------------------------------------------------------------------------
@@ -242,5 +239,11 @@ public class FramelessAnalyzer extends SubroutineFinder {
       queued[insn] = true;
       queue[top++] = insn;
     }
+  }
+
+  interface EdgeCreator {
+    void newControlFlowEdge(final int insn, final int successor);
+
+    boolean newControlFlowExceptionEdge(final int insn, final int successor);
   }
 }
