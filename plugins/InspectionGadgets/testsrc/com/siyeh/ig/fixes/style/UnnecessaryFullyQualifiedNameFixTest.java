@@ -134,6 +134,17 @@ public class UnnecessaryFullyQualifiedNameFixTest extends IGQuickFixesTestCase {
            "}");
   }
 
+  public void testCaretOnClassName() {
+    doTest(InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.remove.quickfix"),
+           "class X {" +
+           "  java.lang.St/**/ring s;" +
+           "}",
+
+           "class X {" +
+           "  String s;" +
+           "}");
+  }
+
   private void doTest(@Language("JAVA") @NotNull @NonNls String before, @Language("JAVA") @NotNull @NonNls String after,
                       @MagicConstant(intValues = {
                         JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS,
