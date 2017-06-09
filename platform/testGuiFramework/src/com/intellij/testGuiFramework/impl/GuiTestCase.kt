@@ -223,6 +223,8 @@ open class GuiTestCase : GuiTestBase() {
 
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
 
+  fun invokeAction(actionName: String) = GuiTestUtil.invokeAction(myRobot, actionName)
+
   fun screenshot(component: Component, screenshotName: String): Unit {
 
     val extension = "${getScaleSuffix()}.png"
