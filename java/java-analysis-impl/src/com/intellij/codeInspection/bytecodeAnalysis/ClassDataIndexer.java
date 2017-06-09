@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
@@ -88,7 +89,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
 
   private static Map<EKey, Equations> solvePartially(Map<EKey, Equations> map) {
     PuritySolver solver = new PuritySolver();
-    EntryStream.of(map).mapToKey((key, eqs) -> new EKey(key.method, Pure, eqs.stable, false))
+    BiFunction<EKey, Equations, EKey> keyCreator = (key, eqs) -> new EKey(key.method, Pure, eqs.stable, false);
+    EntryStream.of(map).mapToKey(keyCreator)
       .flatMapValues(eqs -> eqs.results.stream().map(drp -> drp.result))
       .selectValues(Effects.class)
       .forKeyValue(solver::addEquation);
@@ -96,7 +98,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     Map<EKey, Effects> partiallySolvedPurity =
       StreamEx.of(solved, solver.pending).flatMapToEntry(Function.identity()).removeValues(Effects::isTop).toMap();
     return EntryStream.of(map)
-      .mapToValue((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(new EKey(key.method, Pure, eqs.stable, false))))
+      .mapToValue((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(keyCreator.apply(key, eqs))))
       .toMap();
   }
 
