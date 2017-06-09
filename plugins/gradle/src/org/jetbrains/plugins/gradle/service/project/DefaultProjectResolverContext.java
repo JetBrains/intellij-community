@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
+import java.io.File;
 import java.util.Collection;
 
 /**
@@ -38,11 +40,12 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final String myProjectPath;
   @Nullable private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
+  private final boolean myIsPreviewMode;
   private ProjectConnection myConnection;
   @Nullable private CancellationTokenSource myCancellationTokenSource;
-  private final boolean myIsPreviewMode;
   @NotNull
   private ProjectImportAction.AllModels myModels;
+  private File myGradleUserHome;
 
   public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
                                        @NotNull final String projectPath,
@@ -125,6 +128,14 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Override
   public boolean isResolveModulePerSourceSet() {
     return mySettings == null || mySettings.isResolveModulePerSourceSet();
+  }
+
+  public File getGradleUserHome() {
+    if (myGradleUserHome == null) {
+      String serviceDirectory = mySettings == null ? null : mySettings.getServiceDirectory();
+      myGradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
+    }
+    return myGradleUserHome;
   }
 
   @NotNull

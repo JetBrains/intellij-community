@@ -71,8 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
  * @author Denis Zhdanov, Vladislav Soroka
@@ -400,7 +399,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     if(resolverCtx.isResolveModulePerSourceSet()) {
-      mergeLibraryAndModuleDependencyData(projectDataNode, gradleHomeDir, gradleVersion);
+      mergeLibraryAndModuleDependencyData(projectDataNode, resolverCtx.getGradleUserHome(), gradleHomeDir, gradleVersion);
     }
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);
     projectDataNode.putUserData(MODULES_OUTPUTS, null);
@@ -468,6 +467,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void mergeLibraryAndModuleDependencyData(DataNode<ProjectData> projectDataNode,
+                                                          @NotNull File gradleUserHomeDir,
                                                           @Nullable File gradleHomeDir,
                                                           @Nullable GradleVersion gradleVersion) {
     final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
@@ -492,7 +492,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final LibraryData libraryData = libraryDependencyData.getTarget();
       final Set<String> libraryPaths = libraryData.getPaths(LibraryPathType.BINARY);
       if (libraryPaths.isEmpty()) continue;
-      if(StringUtil.isNotEmpty(libraryData.getExternalName())) continue;
+      if (StringUtil.isNotEmpty(libraryData.getExternalName())) {
+        attachSourcesAndJavadocFromGradleCacheIfNeeded(gradleUserHomeDir, libraryData);
+        continue;
+      }
 
       boolean projectDependencyCandidate = libraryPaths.size() == 1 && !libraryDependencyDataNode.getChildren().isEmpty();
 

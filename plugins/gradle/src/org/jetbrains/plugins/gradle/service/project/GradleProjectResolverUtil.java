@@ -338,6 +338,45 @@ public class GradleProjectResolverUtil {
     }
   }
 
+  public static void attachSourcesAndJavadocFromGradleCacheIfNeeded(File gradleUserHomeDir, LibraryData libraryData) {
+    if (!libraryData.getPaths(LibraryPathType.SOURCE).isEmpty() && !libraryData.getPaths(LibraryPathType.DOC).isEmpty()) {
+      return;
+    }
+
+    for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
+      final File file = new File(path);
+      if (!file.isFile()) continue;
+      if (!FileUtil.isAncestor(gradleUserHomeDir, file, true)) continue;
+      File binaryFileParent = file.getParentFile();
+      if (binaryFileParent == null) continue;
+      File grandParentFile = binaryFileParent.getParentFile();
+      if (grandParentFile == null) continue;
+      File[] sourceParentCandidates = grandParentFile.listFiles();
+      if (sourceParentCandidates == null || sourceParentCandidates.length < 2) continue;
+
+      boolean sourceFound = false;
+      boolean docFound = false;
+      for (File sourceParentCandidate : sourceParentCandidates) {
+        if (!sourceParentCandidate.isDirectory() || FileUtil.filesEqual(binaryFileParent, sourceParentCandidate)) continue;
+        File[] sourceCandidates = sourceParentCandidate.listFiles();
+        if (sourceCandidates != null && sourceCandidates.length == 1) {
+          File sourceCandidate = sourceCandidates[0];
+          if (sourceCandidate.isFile()) {
+            if (StringUtil.endsWith(sourceCandidate.getName(), "-sources.jar")) {
+              libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.getAbsolutePath());
+              sourceFound = true;
+            }
+            else if (StringUtil.endsWith(sourceCandidate.getName(), "-javadoc.jar")) {
+              libraryData.addPath(LibraryPathType.DOC, sourceCandidate.getAbsolutePath());
+              docFound = true;
+            }
+            if (sourceFound && docFound) break;
+          }
+        }
+      }
+    }
+  }
+
   @SuppressWarnings("unchecked")
   public static Collection<DependencyData> getIdeDependencies(@NotNull ProjectResolverContext resolverCtx,
                                                               @NotNull DataNode<? extends ModuleData> moduleDataNode,

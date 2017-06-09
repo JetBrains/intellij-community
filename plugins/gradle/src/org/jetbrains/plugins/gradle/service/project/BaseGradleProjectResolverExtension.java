@@ -961,6 +961,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (!unresolved && sourcePath == null) {
       attachGradleSdkSources(gradleModule, binaryPath, library, resolverCtx);
+      if (resolverCtx instanceof DefaultProjectResolverContext) {
+        attachSourcesAndJavadocFromGradleCacheIfNeeded(((DefaultProjectResolverContext)resolverCtx).getGradleUserHome(), library);
+      }
     }
 
     File javadocPath = dependency.getJavadoc();
