@@ -204,13 +204,23 @@ public class ThreadDumpParser {
       line = StringUtil.replace(line, " [DAEMON]", "");
     }
 
-    m = ourYourkitThreadStartPattern.matcher(line);
-    if (!m.matches()) m = ourYourkitThreadStartPattern2.matcher(line);
-    if (m.matches()) {
+    m = matchYourKit(line);
+    if (m != null) {
       ThreadState state = new ThreadState(m.group(1), m.group(2));
       state.setDaemon(daemon);
       return state;
     }
+    return null;
+  }
+
+  @Nullable
+  private static Matcher matchYourKit(String line) {
+    Matcher m = ourYourkitThreadStartPattern.matcher(line);
+    if (m.matches()) return m;
+
+    m = ourYourkitThreadStartPattern2.matcher(line);
+    if (m.matches()) return m;
+
     return null;
   }
 
