@@ -84,7 +84,8 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   public final int getToggleClickCount() {
-    Object object = TreeUtil.getUserObject(getSelectionPath().getLastPathComponent());
+    TreePath path = getSelectionPath();
+    Object object = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
     if (object instanceof NodeDescriptor) {
       NodeDescriptor descriptor = (NodeDescriptor)object;
       if (!descriptor.expandOnDoubleClick()) {
