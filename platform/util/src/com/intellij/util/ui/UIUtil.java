@@ -393,7 +393,7 @@ public class UIUtil {
     if (SystemInfo.isLinux) {
       return false; // pending support
     }
-    if (SystemInfo.isJetbrainsJvm) {
+    if (SystemInfo.isJetBrainsJvm) {
       try {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         if (ge instanceof SunGraphicsEnvironment) {
