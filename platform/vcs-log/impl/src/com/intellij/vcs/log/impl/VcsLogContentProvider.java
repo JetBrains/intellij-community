@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -80,14 +81,16 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @CalledInAwt
   private void addLogUi(@NotNull VcsLogManager logManager) {
-    VcsLogUiImpl ui = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
-    myProjectLog.setMainUi(ui);
-    myContainer.add(new VcsLogPanel(logManager, ui), BorderLayout.CENTER);
+    if (myProjectLog.getMainLogUi() == null) {
+      VcsLogUiImpl ui = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
+      myProjectLog.setMainUi(ui);
+      myContainer.add(new VcsLogPanel(logManager, ui), BorderLayout.CENTER);
+    }
   }
 
   @Override
   public JComponent initContent() {
-    myProjectLog.createLog();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myProjectLog.createLog());
     return myContainer;
   }
 
