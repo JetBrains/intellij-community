@@ -497,6 +497,9 @@ public class AllIcons {
     public static final Icon Jdk = IconLoader.getIcon("/general/jdk.png"); // 16x16
     public static final Icon KeyboardShortcut = IconLoader.getIcon("/general/keyboardShortcut.png"); // 13x13
     public static final Icon Keymap = IconLoader.getIcon("/general/keymap.png"); // 32x32
+    public static final Icon LayoutEditorOnly = IconLoader.getIcon("/general/layoutEditorOnly.png"); // 16x16
+    public static final Icon LayoutEditorPreview = IconLoader.getIcon("/general/layoutEditorPreview.png"); // 16x16
+    public static final Icon LayoutPreviewOnly = IconLoader.getIcon("/general/layoutPreviewOnly.png"); // 16x16
     public static final Icon Locate = IconLoader.getIcon("/general/locate.png"); // 14x16
     public static final Icon LocateHover = IconLoader.getIcon("/general/locateHover.png"); // 14x16
     public static final Icon MacCorner = IconLoader.getIcon("/general/macCorner.png"); // 16x16
