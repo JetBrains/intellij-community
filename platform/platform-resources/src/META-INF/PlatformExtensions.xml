@@ -331,9 +331,11 @@
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
     <applicationConfigurable
-        parentId="preferences.editor"
-        displayName="Default Font"
-        instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"/>
+        groupId="editor"
+        groupWeight="189"
+        displayName="Font"
+        instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
+    />
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
 

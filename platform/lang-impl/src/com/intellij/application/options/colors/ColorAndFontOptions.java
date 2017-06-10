@@ -78,7 +78,7 @@ import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONE
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
-  public static final String FONT_CONFIGURABLE_NAME = "Font";
+  public static final String FONT_CONFIGURABLE_NAME = "Color Scheme Font";
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
@@ -455,9 +455,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   protected List<ColorAndFontPanelFactory> createPanelFactories() {
     List<ColorAndFontPanelFactory> result = new ArrayList<>();
-    result.add(new FontConfigurableFactory());
 
     List<ColorAndFontPanelFactory> extensions = new ArrayList<>();
+    extensions.add(new FontConfigurableFactory());
     extensions.add(new ConsoleFontConfigurableFactory());
     ColorSettingsPage[] pages = ColorSettingsPages.getInstance().getRegisteredPages();
     for (final ColorSettingsPage page : pages) {
@@ -508,7 +508,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return result;
   }
 
-  private static class FontConfigurableFactory implements ColorAndFontPanelFactory {
+  private static class FontConfigurableFactory implements ColorAndFontPanelFactoryEx {
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
@@ -524,7 +524,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public String getPanelDisplayName() {
-      return "Font";
+      return FONT_CONFIGURABLE_NAME;
+    }
+
+    @Override
+    public DisplayPriority getPriority() {
+      return DisplayPriority.FONT_SETTINGS;
     }
   }
 
@@ -555,7 +560,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
      @NotNull
      @Override
      public DisplayPriority getPriority() {
-       return DisplayPriority.COMMON_SETTINGS;
+       return DisplayPriority.FONT_SETTINGS;
      }
    }
 
