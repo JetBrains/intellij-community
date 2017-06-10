@@ -91,7 +91,7 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Default Font";
+    return "Font";
   }
 
   @Override
