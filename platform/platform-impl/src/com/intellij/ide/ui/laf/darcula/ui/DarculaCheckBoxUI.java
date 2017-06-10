@@ -138,8 +138,9 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
         view.paint(g, textRect);
       } else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
+        final int mnemonicIndex = UIManager.getBoolean("Button.showMnemonics") ? b.getDisplayedMnemonicIndex() : -1;
         SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
-                                                  b.getDisplayedMnemonicIndex(),
+                                                  mnemonicIndex,
                                                   textRect.x,
                                                   textRect.y + fm.getAscent());
       }
