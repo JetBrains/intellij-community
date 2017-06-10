@@ -93,7 +93,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(field, !isZeroSizeArrayExpression(field.getInitializer()));
       containingClass.accept(visitor);
       final boolean written = visitor.isWritten();
-      if (!visitor.isReferenced() || written == visitor.isRead() || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
+      if (!visitor.isReferenced() || written == visitor.isRead() || UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));

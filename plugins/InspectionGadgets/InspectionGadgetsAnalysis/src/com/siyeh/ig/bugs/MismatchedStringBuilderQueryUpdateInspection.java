@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.Set;
 public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> returnSelfNames =
+  static final Set<String> returnSelfNames =
     ContainerUtil.set("append", "appendCodePoint", "delete", "deleteCharAt", "insert", "replace", "reverse");
 
   @Pattern(VALID_ID_PATTERN)
@@ -93,9 +93,9 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (!checkVariable(field, containingClass)) {
         return;
       }
-      final boolean queried = stringBuilderContentsAreQueried(field, containingClass);
-      final boolean updated = stringBuilderContentsAreUpdated(field, containingClass);
-      if (queried == updated || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
+      final boolean queried = isStringBuilderQueried(field, containingClass);
+      final boolean updated = isStringBuilderUpdated(field, containingClass);
+      if (queried == updated || UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(updated), field.getType());
@@ -108,8 +108,8 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       if (!checkVariable(variable, codeBlock)) {
         return;
       }
-      final boolean queried = stringBuilderContentsAreQueried(variable, codeBlock);
-      final boolean updated = stringBuilderContentsAreUpdated(variable, codeBlock);
+      final boolean queried = isStringBuilderQueried(variable, codeBlock);
+      final boolean updated = isStringBuilderUpdated(variable, codeBlock);
       if (queried == updated) {
         return;
       }
@@ -141,24 +141,21 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       return !VariableAccessUtils.variableIsUsedInArrayInitializer(variable, context);
     }
 
-    private static boolean stringBuilderContentsAreUpdated(
-      PsiVariable variable, PsiElement context) {
+    private static boolean isStringBuilderUpdated(PsiVariable variable, PsiElement context) {
       final PsiExpression initializer = variable.getInitializer();
       if (initializer != null && !ConstructionUtils.isEmptyStringBuilderInitializer(initializer)) {
         return true;
       }
-      return isStringBuilderUpdated(variable, context);
+      final StringBuilderUpdateCalledVisitor visitor = new StringBuilderUpdateCalledVisitor(variable);
+      context.accept(visitor);
+      return visitor.isUpdated();
     }
 
-    private static boolean stringBuilderContentsAreQueried(PsiVariable variable, PsiElement context) {
-      return isStringBuilderQueried(variable, context);
+    private static boolean isStringBuilderQueried(PsiVariable variable, PsiElement context) {
+      final StringBuilderQueryCalledVisitor visitor = new StringBuilderQueryCalledVisitor(variable);
+      context.accept(visitor);
+      return visitor.isQueried();
     }
-  }
-
-  public static boolean isStringBuilderUpdated(PsiVariable variable, PsiElement context) {
-    final StringBuilderUpdateCalledVisitor visitor = new StringBuilderUpdateCalledVisitor(variable);
-    context.accept(visitor);
-    return visitor.isUpdated();
   }
 
   private static class StringBuilderUpdateCalledVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -201,12 +198,6 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     }
   }
 
-  private static boolean isStringBuilderQueried(PsiVariable variable, PsiElement context) {
-    final StringBuilderQueryCalledVisitor visitor = new StringBuilderQueryCalledVisitor(variable);
-    context.accept(visitor);
-    return visitor.isQueried();
-  }
-
   private static class StringBuilderQueryCalledVisitor extends JavaRecursiveElementWalkingVisitor {
     @NonNls
     private static final Set<String> queryNames = ContainerUtil
@@ -216,7 +207,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     private final PsiVariable variable;
     private boolean queried;
 
-    private StringBuilderQueryCalledVisitor(PsiVariable variable) {
+    StringBuilderQueryCalledVisitor(PsiVariable variable) {
       this.variable = variable;
     }
 
@@ -286,44 +277,44 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
       return !"getChars".equals(methodExpression.getReferenceName()) &&
              ExpressionUtils.isReferenceTo(methodExpression.getQualifierExpression(), variable);
     }
-  }
 
-  private static boolean isVariableValueUsed(PsiExpression expression) {
-    final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)parent;
-      return isVariableValueUsed(parenthesizedExpression);
-    }
-    if (parent instanceof PsiTypeCastExpression) {
-      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-      return isVariableValueUsed(typeCastExpression);
-    }
-    if (parent instanceof PsiReturnStatement) {
-      return true;
-    }
-    if (parent instanceof PsiExpressionList) {
-      final PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiMethodCallExpression) {
+    private static boolean isVariableValueUsed(PsiExpression expression) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiParenthesizedExpression) {
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)parent;
+        return isVariableValueUsed(parenthesizedExpression);
+      }
+      if (parent instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
+        return isVariableValueUsed(typeCastExpression);
+      }
+      if (parent instanceof PsiReturnStatement) {
         return true;
       }
+      if (parent instanceof PsiExpressionList) {
+        final PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof PsiMethodCallExpression) {
+          return true;
+        }
+      }
+      else if (parent instanceof PsiArrayInitializerExpression) {
+        return true;
+      }
+      else if (parent instanceof PsiAssignmentExpression) {
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+        final PsiExpression rhs = assignmentExpression.getRExpression();
+        return expression.equals(rhs);
+      }
+      else if (parent instanceof PsiVariable) {
+        final PsiVariable variable = (PsiVariable)parent;
+        final PsiExpression initializer = variable.getInitializer();
+        return expression.equals(initializer);
+      }
+      return false;
     }
-    else if (parent instanceof PsiArrayInitializerExpression) {
-      return true;
-    }
-    else if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-      final PsiExpression rhs = assignmentExpression.getRExpression();
-      return expression.equals(rhs);
-    }
-    else if (parent instanceof PsiVariable) {
-      final PsiVariable variable = (PsiVariable)parent;
-      final PsiExpression initializer = variable.getInitializer();
-      return expression.equals(initializer);
-    }
-    return false;
   }
 
-  private static boolean hasReferenceToVariable(PsiVariable variable, PsiElement element) {
+  static boolean hasReferenceToVariable(PsiVariable variable, PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
       return referenceExpression.isReferenceTo(variable);

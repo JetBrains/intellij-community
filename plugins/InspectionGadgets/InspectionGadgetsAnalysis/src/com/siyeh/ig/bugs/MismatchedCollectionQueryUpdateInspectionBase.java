@@ -39,8 +39,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspection {
-  private static final Set<String> QUERY_EXCLUDES = Collections.singleton("java.util.Collections");
-  private static final Set<String> UPDATE_EXCLUDES = new HashSet<>(CollectionUtils.getAllCollectionNames());
+  static final Set<String> QUERY_EXCLUDES = Collections.singleton("java.util.Collections");
+  static final Set<String> UPDATE_EXCLUDES = new HashSet<>(CollectionUtils.getAllCollectionNames());
   static {
     UPDATE_EXCLUDES.add("java.util.Collections");
   }
@@ -57,7 +57,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignoredClasses = new ExternalizableStringSet();
 
-  private static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
+  static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {
       return ConstructionUtils.isEmptyCollectionInitializer(initializer);
     }
@@ -80,12 +80,6 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       }
     }
     return true;
-  }
-
-  private static boolean collectionQueriedByAssignment(@NotNull PsiVariable variable, @NotNull PsiElement context) {
-    final CollectionQueriedByAssignmentVisitor visitor = new CollectionQueriedByAssignmentVisitor(variable);
-    context.accept(visitor);
-    return visitor.mayBeQueried();
   }
 
   @Pattern(VALID_ID_PATTERN)
@@ -132,7 +126,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     private boolean mayBeQueried;
     @NotNull private final PsiVariable variable;
 
-    private CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable) {
+    CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable) {
       this.variable = variable;
     }
 
@@ -187,7 +181,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       mayBeQueried = true;
     }
 
-    private boolean mayBeQueried() {
+    boolean mayBeQueried() {
       return mayBeQueried;
     }
   }
@@ -206,7 +200,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       }
       final boolean written = collectionContentsAreUpdated(field, containingClass);
       final boolean read = collectionContentsAreQueried(field, containingClass);
-      if (read == written || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
+      if (read == written || UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));
@@ -294,6 +288,12 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       final CollectionQueryUpdateCalledVisitor visitor = new CollectionQueryUpdateCalledVisitor(variable, updateNames, false);
       context.accept(visitor);
       return visitor.isQueriedUpdated();
+    }
+
+    private boolean collectionQueriedByAssignment(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+      final CollectionQueriedByAssignmentVisitor visitor = new CollectionQueriedByAssignmentVisitor(variable);
+      context.accept(visitor);
+      return visitor.mayBeQueried();
     }
   }
 
