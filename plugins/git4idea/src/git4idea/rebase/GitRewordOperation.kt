@@ -23,22 +23,27 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.branch.GitRebaseParams
+import git4idea.commands.Git
 import git4idea.rebase.GitRebaseEntry.Action.pick
 import git4idea.rebase.GitRebaseEntry.Action.reword
-import git4idea.rebase.GitRebaseStatus.Type.SUCCESS
 import git4idea.repo.GitRepository
+import git4idea.reset.GitResetMode
 
 class GitRewordOperation(private val repository: GitRepository,
                          private val commit: VcsCommitMetadata,
                          private val newMessage: String) {
+  init {
+    repository.update()
+  }
+  private val project = repository.project
+  private val initialHeadPosition = repository.currentRevision!!
+
   fun execute() {
-    val project = repository.project
     val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
@@ -46,7 +51,14 @@ class GitRewordOperation(private val repository: GitRepository,
     val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true)
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
-    RewordProcess(project, spec).rebase()
+    RewordProcess(spec).rebase()
+  }
+
+  internal fun undo() {
+    val res = Git.getInstance().reset(repository, GitResetMode.KEEP, initialHeadPosition)
+    if (!res.success()) {
+      VcsNotifier.getInstance(project).notifyError("Undo Reword Failed", res.errorOutputAsHtmlString)
+    }
   }
 
   private fun injectRewordAction(list: List<GitRebaseEntry>): List<GitRebaseEntry> {
@@ -66,15 +78,14 @@ class GitRewordOperation(private val repository: GitRepository,
     }
   }
 
-  private inner class RewordProcess(val project: Project, val spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
+  private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
     override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
                                skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
       val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
       notification.addAction(object : NotificationAction("Undo") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           notification.expire()
-          val specForUndo = spec.cloneWithNewStatuses(mapOf(repository to GitRebaseStatus(SUCCESS, emptyList())))
-          undo(project, specForUndo)
+          undoInBackground()
         }
       })
       VcsNotifier.getInstance(project).notify(notification)
@@ -82,11 +93,10 @@ class GitRewordOperation(private val repository: GitRepository,
 
     override fun shouldRefreshOnSuccess(successType: GitSuccessfulRebase.SuccessType) = false
 
-    private fun undo(project: Project, spec: GitRebaseSpec) {
+    private fun undoInBackground() {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword") {
         override fun run(indicator: ProgressIndicator) {
-          GitAbortRebaseProcess(project, null, spec.headPositionsToRollback, spec.initialBranchNames, indicator, spec.saver, false)
-            .abortAndRollback()
+          undo()
         }
       })
     }
