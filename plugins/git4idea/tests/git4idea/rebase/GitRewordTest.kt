@@ -27,7 +27,7 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(myRepo, commit, newMessage).execute()
 
-    assertEquals("Message reworded incorrectly", git("log HEAD --no-walk --pretty=%B"), newMessage)
+    assertEquals("Message reworded incorrectly", newMessage, git("log HEAD --no-walk --pretty=%B"))
   }
 
   fun `test reword previous commit`() {
@@ -38,6 +38,16 @@ class GitRewordTest : GitSingleRepoTest() {
     val newMessage = "Correct message"
     GitRewordOperation(myRepo, commit, newMessage).execute()
 
-    assertEquals("Message reworded incorrectly", git("log HEAD^ --no-walk --pretty=%B"), newMessage)
+    assertEquals("Message reworded incorrectly", newMessage, git("log HEAD^ --no-walk --pretty=%B"))
+  }
+
+  fun `test undo reword`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    val operation = GitRewordOperation(myRepo, commit, "Correct message")
+    operation.execute()
+    operation.undo()
+
+    assertEquals("Message reworded incorrectly", "Wrong message", git("log HEAD --no-walk --pretty=%B"))
   }
 }
