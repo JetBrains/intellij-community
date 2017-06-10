@@ -51,6 +51,9 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     imageFileType.setName(IMAGE_FILE_TYPE_NAME);
     imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
     svgFileType = new SvgFileType();
+    svgFileType.setIcon(ImagesIcons.ImagesFileType);
+    svgFileType.setName("Scalable Vector Graphics");
+    svgFileType.setDescription("SVG images");
   }
 
   public boolean isImage(VirtualFile file) {
