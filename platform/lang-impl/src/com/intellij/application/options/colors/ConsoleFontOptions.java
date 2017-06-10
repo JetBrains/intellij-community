@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ConsoleFontOptions extends FontOptions {
   public ConsoleFontOptions(ColorAndFontOptions options) {
