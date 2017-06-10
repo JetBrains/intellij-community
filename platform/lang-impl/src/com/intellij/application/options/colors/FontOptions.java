@@ -18,6 +18,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.editor.fonts.AppEditorFontConfigurable;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -53,11 +54,11 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @Nullable
   protected String getInheritedFontTitle() {
-    return "Default font";
+    return "default";
   }
 
   protected String getOverwriteFontTitle() {
-    return "Set font for color scheme";
+    return ApplicationBundle.message("settings.editor.font.overwrite");
   }
 
   @Override
@@ -101,11 +102,9 @@ public class FontOptions extends AbstractFontOptionsPanel {
         }
       });
       overwritePanel.add(myOverwriteCheckBox);
-      overwritePanel.add(new JLabel(getOverwriteFontTitle()));
-      overwritePanel.add(Box.createRigidArea(JBDimension.create(new Dimension(10,0))));
-      overwritePanel.add(grayed(new JLabel("(")));
-      overwritePanel.add(grayed(createHyperlinkLabel()));
-      overwritePanel.add(grayed(new JLabel(": ")));
+      overwritePanel.add(new JLabel(getOverwriteFontTitle() + " "));
+      overwritePanel.add(createHyperlinkLabel());
+      overwritePanel.add(grayed(new JLabel(" (")));
       myBaseFontInfoLabel = grayed(new JLabel("?"));
       overwritePanel.add(myBaseFontInfoLabel);
       overwritePanel.add(grayed(new JLabel(")")));

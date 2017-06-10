@@ -16,6 +16,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.options.Configurable;
@@ -28,16 +29,9 @@ public class ConsoleFontOptions extends FontOptions {
     super(options);
   }
 
-
-  @Nullable
-  @Override
-  protected String getInheritedFontTitle() {
-    return "Scheme font";
-  }
-
   @Override
   protected String getOverwriteFontTitle() {
-    return "Set console font for color scheme";
+    return ApplicationBundle.message("settings.editor.console.font.overwrite");
   }
 
   @Override
