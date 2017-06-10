@@ -336,10 +336,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (getId() > 0) {
         myData.myChildrenIds = result;
+        setChildrenLoaded();
         if (CHECK) {
           assertConsistency(caseSensitive, Arrays.asList(childrenIds));
         }
-        setChildrenLoaded();
       }
 
       return getArraySafely();
