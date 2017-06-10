@@ -42,7 +42,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @NotNull private final ColorAndFontOptions myOptions;
 
-  private @Nullable JCheckBox myInheritFontCheckbox;
+  private @Nullable JCheckBox myOverwriteCheckBox;
   private @Nullable JLabel myBaseFontInfoLabel;
 
   private final static int FONT_PANEL_LEFT_OFFSET = 15;
@@ -62,7 +62,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @Override
   protected JComponent createControls() {
-    Component inheritBox = createInheritCheckBox();
+    Component inheritBox = createOverwriteCheckBox();
     if (inheritBox != null) {
       JPanel topPanel = new JPanel(new GridBagLayout());
       GridBagConstraints c = new GridBagConstraints();
@@ -88,28 +88,28 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @Nullable
-  private Component createInheritCheckBox() {
+  private Component createOverwriteCheckBox() {
     if (getInheritedFontTitle() != null) {
-      JPanel inheritPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
-      inheritPanel.setBorder(BorderFactory.createEmptyBorder());
-      myInheritFontCheckbox = new JCheckBox();
-      myInheritFontCheckbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-      myInheritFontCheckbox.addActionListener(new ActionListener() {
+      JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
+      overwritePanel.setBorder(BorderFactory.createEmptyBorder());
+      myOverwriteCheckBox = new JCheckBox();
+      myOverwriteCheckBox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+      myOverwriteCheckBox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          setDelegatingPreferences(myInheritFontCheckbox.isSelected());
+          setDelegatingPreferences(!myOverwriteCheckBox.isSelected());
         }
       });
-      inheritPanel.add(myInheritFontCheckbox);
-      inheritPanel.add(new JLabel(getOverwriteFontTitle()));
-      inheritPanel.add(Box.createRigidArea(JBDimension.create(new Dimension(10,0))));
-      inheritPanel.add(grayed(new JLabel("(")));
-      inheritPanel.add(grayed(createHyperlinkLabel()));
-      inheritPanel.add(grayed(new JLabel(": ")));
+      overwritePanel.add(myOverwriteCheckBox);
+      overwritePanel.add(new JLabel(getOverwriteFontTitle()));
+      overwritePanel.add(Box.createRigidArea(JBDimension.create(new Dimension(10,0))));
+      overwritePanel.add(grayed(new JLabel("(")));
+      overwritePanel.add(grayed(createHyperlinkLabel()));
+      overwritePanel.add(grayed(new JLabel(": ")));
       myBaseFontInfoLabel = grayed(new JLabel("?"));
-      inheritPanel.add(myBaseFontInfoLabel);
-      inheritPanel.add(grayed(new JLabel(")")));
-      return inheritPanel;
+      overwritePanel.add(myBaseFontInfoLabel);
+      overwritePanel.add(grayed(new JLabel(")")));
+      return overwritePanel;
     }
     return null;
   }
@@ -206,9 +206,9 @@ public class FontOptions extends AbstractFontOptionsPanel {
 
   @Override
   protected void updateCustomOptions() {
-    if (myInheritFontCheckbox != null) {
-      myInheritFontCheckbox.setEnabled(!isReadOnly());
-      myInheritFontCheckbox.setSelected(isDelegating());
+    if (myOverwriteCheckBox != null) {
+      myOverwriteCheckBox.setEnabled(!isReadOnly());
+      myOverwriteCheckBox.setSelected(!isDelegating());
     }
     if (myBaseFontInfoLabel != null) {
       myBaseFontInfoLabel.setText(getBaseFontInfo());
