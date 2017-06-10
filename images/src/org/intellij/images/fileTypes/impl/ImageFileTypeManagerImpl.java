@@ -19,7 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.fileTypes.UserFileType;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
@@ -43,16 +43,18 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
   private static final UserFileType imageFileType;
+  private static final UserFileType svgFileType;
 
   static {
     imageFileType = new ImageFileType();
     imageFileType.setIcon(ImagesIcons.ImagesFileType);
     imageFileType.setName(IMAGE_FILE_TYPE_NAME);
     imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
+    svgFileType = new SvgFileType();
   }
 
   public boolean isImage(VirtualFile file) {
-    return file.getFileType() instanceof ImageFileType;
+    return file.getFileType() instanceof ImageFileType || file.getFileType() instanceof SvgFileType;
   }
 
   public FileType getImageFileType() {
@@ -62,6 +64,18 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
   public static final class ImageFileType extends UserBinaryFileType {
   }
+  public static final class SvgFileType extends UserFileType {
+    @Override
+    public SettingsEditor getEditor() {
+      return null;
+    }
+
+    @Override
+    public boolean isBinary() {
+      return false;
+    }
+  }
+
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
@@ -73,8 +87,8 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     }
 
     processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
-    if (Registry.is("ide.svg.viewer")) processed.add(IfsUtil.SVG_FORMAT.toLowerCase());
 
     consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+    consumer.consume(svgFileType, "svg");
   }
 }
