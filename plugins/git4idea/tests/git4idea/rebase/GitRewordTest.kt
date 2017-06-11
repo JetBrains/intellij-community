@@ -16,6 +16,7 @@
 package git4idea.rebase
 
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.assertLatestHistory
 import git4idea.test.file
 import git4idea.test.git
 
@@ -49,5 +50,44 @@ class GitRewordTest : GitSingleRepoTest() {
     operation.undo()
 
     assertEquals("Message reworded incorrectly", "Wrong message", git("log HEAD --no-walk --pretty=%B"))
+  }
+
+  fun `test undo is not possible if HEAD moved`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    val operation = GitRewordOperation(myRepo, commit, "Correct message")
+    operation.execute()
+
+    file("b").create().addCommit("New commit")
+
+    operation.undo()
+
+    myRepo.assertLatestHistory(
+      "New commit",
+      "Correct message"
+    )
+    assertErrorNotification("Can't Undo Reword", "Repository has already been changed")
+  }
+
+  fun `test undo is not possible if commit was pushed`() {
+    git("remote add origin http://example.git")
+    val file = file("a").create("initial")
+    file.append("First commit\n").addCommit("First commit")
+    val commit = file.append("To reword\n").addCommit("Wrong message").details()
+    file.append("Third commit").addCommit("Third commit")
+
+    val operation = GitRewordOperation(myRepo, commit, "Correct message")
+    operation.execute()
+
+    git("update-ref refs/remotes/origin/master HEAD")
+
+    operation.undo()
+
+    myRepo.assertLatestHistory(
+      "Third commit",
+      "Correct message",
+      "First commit"
+    )
+    assertErrorNotification("Can't Undo Reword", "Commit has already been pushed to origin/master")
   }
 }

@@ -19,19 +19,26 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.util.containers.MultiMap
+import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.Git
+import git4idea.history.GitHistoryUtils
 import git4idea.rebase.GitRebaseEntry.Action.pick
 import git4idea.rebase.GitRebaseEntry.Action.reword
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
 
 class GitRewordOperation(private val repository: GitRepository,
@@ -40,8 +47,14 @@ class GitRewordOperation(private val repository: GitRepository,
   init {
     repository.update()
   }
+
+  private val LOG = logger<GitRewordOperation>()
   private val project = repository.project
+  private val notifier = VcsNotifier.getInstance(project)
+
   private val initialHeadPosition = repository.currentRevision!!
+  private var headAfterReword: String? = null
+  private var rewordedCommit: Hash? = null
 
   fun execute() {
     val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
@@ -52,12 +65,26 @@ class GitRewordOperation(private val repository: GitRepository,
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
     RewordProcess(spec).rebase()
+    headAfterReword = repository.currentRevision
+    rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
   }
 
   internal fun undo() {
+    val possibility = checkUndoPossibility(project)
+    val errorTitle = "Can't Undo Reword"
+    when (possibility) {
+      is UndoPossibility.HeadMoved -> notifier.notifyError(errorTitle, "Repository has already been changed")
+      is UndoPossibility.PushedToProtectedBranch ->
+        notifier.notifyError(errorTitle, "Commit has already been pushed to ${possibility.branch}")
+      is Error -> notifier.notifyError(errorTitle, "")
+      else -> doUndo()
+    }
+  }
+
+  private fun doUndo() {
     val res = Git.getInstance().reset(repository, GitResetMode.KEEP, initialHeadPosition)
     if (!res.success()) {
-      VcsNotifier.getInstance(project).notifyError("Undo Reword Failed", res.errorOutputAsHtmlString)
+      notifier.notifyError("Undo Reword Failed", res.errorOutputAsHtmlString)
     }
   }
 
@@ -78,6 +105,44 @@ class GitRewordOperation(private val repository: GitRepository,
     }
   }
 
+  private fun findNewHashOfRewordedCommit(newHead: String): Hash? {
+    val newCommitsRange = "${commit.parents.first().asString()}..$newHead"
+    val newCommits = GitHistoryUtils.loadMetadata(project, repository.root, newCommitsRange).commits
+    if (newCommits.isEmpty()) {
+      LOG.error("Couldn't find commits after reword in range $newCommitsRange")
+      return null
+    }
+    val newCommit = newCommits.last()
+    if (newCommit.fullMessage != newMessage) {
+      LOG.error("Couldn't find the reworded commit. Expected message: \n[$newMessage]\nActual message: \n[${newCommit.fullMessage}]")
+      return null
+    }
+    return newCommit.id
+  }
+
+  private fun checkUndoPossibility(project: Project): UndoPossibility {
+    repository.update()
+    if (repository.currentRevision != headAfterReword) {
+      return UndoPossibility.HeadMoved
+    }
+
+    if (rewordedCommit == null) {
+      LOG.error("Couldn't find the reworded commit")
+      return UndoPossibility.Error
+    }
+    val containingBranches = GitBranchUtil.getBranches(project, repository.root, false, true, rewordedCommit!!.asString())
+    val protectedBranch = findProtectedRemoteBranch(repository, containingBranches)
+    if (protectedBranch != null) return UndoPossibility.PushedToProtectedBranch(protectedBranch)
+    return UndoPossibility.Possible
+  }
+
+  private sealed class UndoPossibility {
+    object Possible : UndoPossibility()
+    object HeadMoved : UndoPossibility()
+    class PushedToProtectedBranch(val branch: String) : UndoPossibility()
+    object Error : UndoPossibility()
+  }
+
   private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
     override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
                                skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
@@ -88,7 +153,16 @@ class GitRewordOperation(private val repository: GitRepository,
           undoInBackground()
         }
       })
-      VcsNotifier.getInstance(project).notify(notification)
+
+      val connection = project.messageBus.connect()
+      notification.whenExpired { connection.disconnect() }
+      connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+        ApplicationManager.getApplication().executeOnPooledThread {
+          if (checkUndoPossibility(project) !is UndoPossibility.Possible) notification.expire()
+        }
+      })
+
+      notifier.notify(notification)
     }
 
     override fun shouldRefreshOnSuccess(successType: GitSuccessfulRebase.SuccessType) = false
