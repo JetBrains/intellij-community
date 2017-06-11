@@ -44,10 +44,13 @@
       <module fileurl="file://$PROJECT_DIR$/../base/asset-studio/assetstudio.iml" filepath="$PROJECT_DIR$/../base/asset-studio/assetstudio.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/aswb/aswb.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/aswb/aswb.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../base/apkparser/binary-resources/binary-resources.iml" filepath="$PROJECT_DIR$/../base/apkparser/binary-resources/binary-resources.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/google3/aswb/blaze-aswb-google3.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/google3/aswb/blaze-aswb-google3.iml" group="plugins/Google/Blaze/Google3" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/base/blaze-base.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/base/blaze-base.iml" group="plugins/Google/Blaze" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/google3/base/blaze-base-google3.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/google3/base/blaze-base-google3.iml" group="plugins/Google/Blaze/Google3" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/common/blaze-common.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/common/blaze-common.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/cpp/blaze-cpp.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/cpp/blaze-cpp.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/java/blaze-java.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/java/blaze-java.iml" group="plugins/Google/Blaze" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/google3/java/blaze-java-google3.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/google3/java/blaze-java-google3.iml" group="plugins/Google/Blaze/Google3" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/sdkcompat/blaze-sdkcompat.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/sdkcompat/blaze-sdkcompat.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/testing/blaze-testing.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/testing/blaze-testing.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/platform/boot/boot.iml" filepath="$PROJECT_DIR$/platform/boot/boot.iml" group="platform" />
