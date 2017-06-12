@@ -19,8 +19,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.fileTypes.UserFileType;
-import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
@@ -44,17 +42,12 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
   private static final UserFileType imageFileType;
-  private static final UserFileType svgFileType;
 
   static {
     imageFileType = new ImageFileType();
     imageFileType.setIcon(ImagesIcons.ImagesFileType);
     imageFileType.setName(IMAGE_FILE_TYPE_NAME);
     imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
-    svgFileType = new SvgFileType();
-    svgFileType.setIcon(ImagesIcons.ImagesFileType);
-    svgFileType.setName("Scalable Vector Graphics");
-    svgFileType.setDescription("SVG images");
   }
 
   public boolean isImage(VirtualFile file) {
@@ -67,17 +60,6 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
 
   public static final class ImageFileType extends UserBinaryFileType {
-  }
-  public static final class SvgFileType extends UserFileType {
-    @Override
-    public SettingsEditor getEditor() {
-      return null;
-    }
-
-    @Override
-    public boolean isBinary() {
-      return false;
-    }
   }
 
 
@@ -93,8 +75,6 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
 
     consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
-    if (Registry.is("ide.svg.editor")) {
-      consumer.consume(svgFileType, "svg");
-    }
+    consumer.consume(SvgFileType.INSTANCE, "svg");
   }
 }
