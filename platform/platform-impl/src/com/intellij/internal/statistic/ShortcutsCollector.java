@@ -20,7 +20,6 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -70,12 +69,28 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
     InputEvent e = event.getInputEvent();
     if (e instanceof KeyEvent) {
       KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)e), null);
-      String key = KeymapUtil.getShortcutText(shortcut);
+      //String key = KeymapUtil.getShortcutText(shortcut);
+      //Stat server doesn't support UFT-8
+      String key = getShortcutText(shortcut);
       if (isDoubleShortcut) {
         key = SystemInfo.isMac ? key + key : key + "+" + key;
       }
       incValue(key);
     }
+  }
+
+  private static String getShortcutText(KeyboardShortcut shortcut) {
+    String results = "";
+    int modifiers = shortcut.getFirstKeyStroke().getModifiers();
+    if (modifiers > 0) {
+      final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
+      if (!keyModifiersText.isEmpty()) {
+        results = keyModifiersText + "+";
+      }
+    }
+
+    results += KeyEvent.getKeyText(shortcut.getFirstKeyStroke().getKeyCode());
+    return results;
   }
 
   private static void incValue(String key) {
