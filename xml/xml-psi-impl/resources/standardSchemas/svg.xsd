@@ -1,0 +1,3110 @@
+<schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xml="http://www.w3.org/XML/1998/namespace" targetNamespace="http://www.w3.org/2000/svg" elementFormDefault="unqualified" attributeFormDefault="unqualified" xml:lang="en">
+  <!--
+ don't declare the XML namespace; it is predeclared and redeclaring it upsets some software
+-->
+  <import namespace="http://www.w3.org/1999/xlink" schemaLocation="xlink.xsd"/>
+  <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="xml.xsd"/>
+  <!--  simpleTypes  -->
+  <simpleType name="BaselineShiftValueType">
+    <annotation>
+      <documentation>
+        The actual definition is baseline | sub | super | percentage | length | inherit not sure that union can do this
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <!--
+ SVG BooleanType not needed, already defined by XML Schema
+-->
+  <simpleType name="ClassListType">
+    <annotation>
+      <documentation>Space-separated list of classes</documentation>
+    </annotation>
+    <list itemType="string"/>
+  </simpleType>
+  <simpleType name="ClipValueType">
+    <annotation>
+      <documentation>shape | auto | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="ClipPathValueType">
+    <annotation>
+      <documentation>uri | none | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="ClipFillRuleType">
+    <annotation>
+      <documentation>'clip-rule' or fill-rule property/attribute value</documentation>
+    </annotation>
+    <restriction base="string">
+      <enumeration value="evenodd"/>
+      <enumeration value="nonzero"/>
+      <enumeration value="inherit"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="ContentTypeType">
+    <annotation>
+      <documentation source="http://www.ietf.org/rfc/rfc2045.txt">media type, as per [RFC2045]</documentation>
+      <documentation>media type, as per [RFC2045]</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="CoordinateType">
+    <annotation>
+      <documentation source="http://www.w3.org/TR/SVG/types.html#DataTypeCoordinate">a co-ordinate</documentation>
+      <documentation>
+        a coordinate, which is a number optionally followed immediately by a unit identifier. Perhaps it is possible to represent this as a union by declaring unit idenifiers as a type?
+      </documentation>
+    </annotation>
+    <restriction base="string">
+      <pattern value="((((\+|\-)?((\d+)))|((\+|\-)?(((((\d+)?\.(\d+))|((\d+)\.))([eE](\+|\-)?(\d+))?)|((\d+)([eE](\+|\-)?(\d+))))))(em|ex|px|pt|pc|cm|mm|in|%)?)"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="CoordinatesType">
+    <annotation>
+      <documentation>
+        a space separated list of CoordinateType. Punt to 'string' for now
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="ColorType">
+    <annotation>
+      <documentation source="http://www.w3.org/TR/SVG/types.html#DataTypeColor">a CSS2 Color</documentation>
+      <documentation>
+        Color as defined in CSS2 and XSL 1.0 plus additional recognised color keyword names (the 'X11 colors')
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="CursorValueType">
+    <annotation>
+      <documentation>
+        Value is an optional comma-separated list orf uri references followed by one token from an enumerated list.
+      </documentation>
+      <documentation>
+        [ [uri ,]* [ auto | crosshair | default | pointer | move | e-resize | ne-resize | nw-resize | n-resize | se-resize | sw-resize | s-resize | w-resize| text | wait | help ] ] | inherit
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="EnableBackgroundValueType">
+    <annotation>
+      <documentation>
+        accumulate | new [ x y width height ] | inherit
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="ExtensionListType">
+    <annotation>
+      <documentation>extension list specification</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="FeatureListType">
+    <annotation>
+      <documentation>feature list specification</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="FilterValueType">
+    <annotation>
+      <documentation>uri | none | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="FontFamilyValueType">
+    <annotation>
+      <documentation>
+        [[ family-name | generic-family ],]* [family-name | generic-family] | inherit
+      </documentation>
+      <documentation>
+        'font-family' property/attribute value (i.e., list of fonts)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="FontSizeValueType">
+    <annotation>
+      <documentation>'font-size' property/attribute value</documentation>
+      <documentation>
+        absolute-size | relative-size | length | percentage | inherit
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="FontSizeAdjustValueType">
+    <annotation>
+      <documentation>'font-size-adjust' property/attribute value</documentation>
+      <documentation>number | none | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="GlyphOrientationHorizontalValueType">
+    <annotation>
+      <documentation>
+        'glyph-orientation-horizontal' property/attribute value (e.g., angle)
+      </documentation>
+      <documentation>angle | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="GlyphOrientationVerticalValueType">
+    <annotation>
+      <documentation>
+        'glyph-orientation-vertical' property/attribute value (e.g., 'auto', angle)
+      </documentation>
+      <documentation>auto | angle | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <!--
+ no need to declare IntegerType as XML Schema defines integers
+-->
+  <simpleType name="KerningValue">
+    <annotation>
+      <documentation>
+        'kerning' property/attribute value (e.g., auto | length)
+      </documentation>
+      <documentation>auto | length | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="LanguageCodeType">
+    <annotation>
+      <documentation>a language code, as per [RFC3066]</documentation>
+      <documentation source="http://www.ietf.org/rfc/rfc3066.txt"/>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="LanguageCodesType">
+    <annotation>
+      <documentation>
+        a comma-separated list of language codes, as per [RFC3066]
+      </documentation>
+      <documentation source="http://www.ietf.org/rfc/rfc3066.txt"/>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="LengthType">
+    <annotation>
+      <documentation>a length</documentation>
+    </annotation>
+    <restriction base="string">
+      <pattern value="((((\+|\-)?((\d+)))|((\+|\-)?(((((\d+)?\.(\d+))|((\d+)\.))([eE](\+|\-)?(\d+))?)|((\d+)([eE](\+|\-)?(\d+))))))(em|ex|px|pt|pc|cm|mm|in|%)?)"/>
+    </restriction>
+  </simpleType>
+  <simpleType name="LengthsType">
+    <annotation>
+      <documentation>a list of lengths</documentation>
+    </annotation>
+    <restriction base="string"/>
+    <!--  make a regexp for this one  -->
+  </simpleType>
+  <simpleType name="LinkTargetType">
+    <annotation>
+      <documentation>link to this target</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="MarkerValueType">
+    <annotation>
+      <documentation>
+        'marker' property/attribute value (e.g., 'none', %URI;)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+    <!--  need to check this one, its a shorthand value  -->
+  </simpleType>
+  <simpleType name="MaskValueType">
+    <annotation>
+      <documentation>
+        'mask' property/attribute value (e.g., 'none', %URI;)
+      </documentation>
+      <documentation>uri | none | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="MediaDescType">
+    <annotation>
+      <documentation>comma-separated list of media descriptors.</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <!--
+ no need to define NumberType as XML Schema has double
+-->
+  <simpleType name="NumberOptionalNumberType">
+    <annotation>
+      <documentation>
+        list of numbers, but at least one and at most two
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="NumberOrPercentageType">
+    <annotation>
+      <documentation>a number or a percentage</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="NumbersType">
+    <annotation>
+      <documentation>list of numbers</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="OpacityValueType">
+    <annotation>
+      <documentation>opacity value (e.g., number)</documentation>
+      <documentation>alphavalue | inherit</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="PaintType">
+    <annotation>
+      <documentation>a 'fill' or 'stroke' property/attribute value</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="PathDataType">
+    <annotation>
+      <documentation>a path data specification</documentation>
+      <documentation source="http://www.w3.org/TR/SVG/paths.html"/>
+      <documentation>Yes, of course this was generated by a program!</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="PointsType">
+    <annotation>
+      <documentation>a list of points</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="PreserveAspectRatioSpecType">
+    <annotation>
+      <documentation>'preserveAspectRatio' attribute specification</documentation>
+    </annotation>
+    <restriction base="string">
+      <pattern value='(\s*("none"|x("Min"|"Mid"|"Max")y("Min"|"Mid"|"Max"))\s+("meet"|"slice")?\s*)'/>
+    </restriction>
+  </simpleType>
+  <simpleType name="ScriptType">
+    <annotation>
+      <documentation>script expression</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="SpacingValueType">
+    <annotation>
+      <documentation>
+        'letter-spacing' or 'word-spacing' property/attribute value (e.g., normal | length)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="StrokeDashArrayValueType">
+    <annotation>
+      <documentation>
+        'stroke-dasharray' property/attribute value (e.g., 'none', list of numbers)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="StrokeDashOffsetValueType">
+    <annotation>
+      <documentation>
+        'stroke-dashoffset' property/attribute value (e.g., 'none', >length>)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="StrokeMiterLimitValueType">
+    <annotation>
+      <documentation>
+        'stroke-miterlimit' property/attribute value (e.g., number)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="StrokeWidthValueType">
+    <annotation>
+      <documentation>
+        'stroke-width' property/attribute value (e.g., length)
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <!--
+ <simpleType name="StructuredTextType" base="string"/> expanded
+-->
+  <simpleType name="StyleSheetType">
+    <annotation>
+      <documentation>style sheet data</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="SVGColorType">
+    <annotation>
+      <documentation>An SVG color value (sRGB plus optional ICC)</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <!--
+ <simpleType name="TextType" base="string"/> not necessary (string)
+-->
+  <simpleType name="TextDecorationValueType">
+    <annotation>
+      <documentation>
+        'text-decoration' property/attribute value (e.g., 'none', 'underline')
+      </documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <simpleType name="TransformListType">
+    <annotation>
+      <documentation>Yes, of course this was generated by a program!</documentation>
+      <documentation>list of transforms</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <!--
+ <simpleType name="URIType" base="string"/> not necessary (use AnyURI)
+-->
+  <simpleType name="ViewBoxSpecType">
+    <annotation>
+      <documentation>'viewBox' attribute specification</documentation>
+    </annotation>
+    <restriction base="string"/>
+  </simpleType>
+  <attributeGroup name="stdAttrs">
+    <annotation>
+      <documentation>All elements have an ID</documentation>
+    </annotation>
+    <attribute name="id" type="ID" use="optional"/>
+    <attribute ref="xml:base" type="anyURI" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="langSpaceAttrs">
+    <annotation>
+      <documentation>
+        Common attributes for elements that might contain character data content
+      </documentation>
+    </annotation>
+    <attribute ref="xml:lang" use="optional"/>
+    <attribute ref="xml:space" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="testAttrs">
+    <annotation>
+      <documentation>Common attributes to check for system capabilities</documentation>
+    </annotation>
+    <attribute name="requiredFeatures" type="svg:FeatureListType" use="optional"/>
+    <attribute name="requiredExtensions" type="svg:ExtensionListType" use="optional"/>
+    <attribute name="systemLanguage" type="svg:LanguageCodesType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="xlinkRefAttrs">
+    <annotation>
+      <documentation>
+        For most uses of URI referencing: standard XLink attributes other than xlink:href
+      </documentation>
+    </annotation>
+    <attribute ref="xlink:type" fixed="simple"/>
+    <attribute ref="xlink:role"/>
+    <attribute ref="xlink:arcrole"/>
+    <attribute ref="xlink:title"/>
+    <attribute ref="xlink:show" default="other"/>
+    <attribute ref="xlink:actuate"/>
+  </attributeGroup>
+  <attributeGroup name="xlinkRefAttrsEmbed">
+    <annotation>
+      <documentation>
+        Standard XLink attributes for uses of URI referencing where xlink:show is 'embed'
+      </documentation>
+    </annotation>
+    <attribute ref="xlink:type" fixed="simple"/>
+    <attribute ref="xlink:role"/>
+    <attribute ref="xlink:arcrole"/>
+    <attribute ref="xlink:title"/>
+    <attribute ref="xlink:show"/>
+    <attribute ref="xlink:actuate"/>
+  </attributeGroup>
+  <attributeGroup name="graphicsElementEvents">
+    <attribute name="onfocusin" type="svg:ScriptType" use="optional"/>
+    <attribute name="onfocusout" type="svg:ScriptType" use="optional"/>
+    <attribute name="onactivate" type="svg:ScriptType" use="optional"/>
+    <attribute name="onclick" type="svg:ScriptType" use="optional"/>
+    <attribute name="onmousedown" type="svg:ScriptType" use="optional"/>
+    <attribute name="onmouseup" type="svg:ScriptType" use="optional"/>
+    <attribute name="onmouseover" type="svg:ScriptType" use="optional"/>
+    <attribute name="onmousemove" type="svg:ScriptType" use="optional"/>
+    <attribute name="onmouseout" type="svg:ScriptType" use="optional"/>
+    <attribute name="onload" type="svg:ScriptType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="documentEvents">
+    <attribute name="onunload" type="svg:ScriptType" use="optional"/>
+    <attribute name="onabort" type="svg:ScriptType" use="optional"/>
+    <attribute name="onerror" type="svg:ScriptType" use="optional"/>
+    <attribute name="onresize" type="svg:ScriptType" use="optional"/>
+    <attribute name="onscroll" type="svg:ScriptType" use="optional"/>
+    <attribute name="onzoom" type="svg:ScriptType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="animationEvents">
+    <attribute name="onbegin" type="svg:ScriptType" use="optional"/>
+    <attribute name="onend" type="svg:ScriptType" use="optional"/>
+    <attribute name="onrepeat" type="svg:ScriptType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Color">
+    <annotation>
+      <documentation>
+        The following presentation attributes have to do with specifying color.
+      </documentation>
+    </annotation>
+    <attribute name="color" type="svg:ColorType" use="optional"/>
+    <attribute name="color-interpolation" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="sRGB"/>
+          <enumeration value="linearRGB"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="color-rendering" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="optimizeSpeed"/>
+          <enumeration value="optimizeQuality"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Containers">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to container elements
+      </documentation>
+    </annotation>
+    <attribute name="enable-background" type="svg:EnableBackgroundValueType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-feFlood">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to 'feFlood' elements
+      </documentation>
+    </annotation>
+    <attribute name="flood-color" type="svg:SVGColorType" use="optional"/>
+    <attribute name="flood-opacity" type="svg:OpacityValueType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-FilterPrimitives">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to filter primitives
+      </documentation>
+    </annotation>
+    <attribute name="color-interpolation-filters" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="sRGB"/>
+          <enumeration value="linearRGB"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-FillStroke">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to filling and stroking operations
+      </documentation>
+    </annotation>
+    <attribute name="fill" type="svg:PaintType" use="optional"/>
+    <attribute name="fill-opacity" type="svg:OpacityValueType" use="optional"/>
+    <attribute name="fill-rule" type="svg:ClipFillRuleType" use="optional"/>
+    <attribute name="stroke" type="svg:PaintType" use="optional"/>
+    <attribute name="stroke-dasharray" type="svg:StrokeDashArrayValueType" use="optional"/>
+    <attribute name="stroke-dashoffset" type="svg:StrokeDashOffsetValueType" use="optional"/>
+    <attribute name="stroke-linecap" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="butt"/>
+          <enumeration value="round"/>
+          <enumeration value="square"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="stroke-linejoin" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="miter"/>
+          <enumeration value="round"/>
+          <enumeration value="bevel"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="stroke-miterlimit" type="svg:StrokeMiterLimitValueType" use="optional"/>
+    <attribute name="stroke-opacity" type="svg:OpacityValueType" use="optional"/>
+    <attribute name="stroke-width" type="svg:StrokeWidthValueType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-FontSpecification">
+    <annotation>
+      <documentation>
+        The following presentation attributes have to do with selecting a font to use
+      </documentation>
+    </annotation>
+    <attribute name="font-family" type="svg:FontFamilyValueType" use="optional"/>
+    <attribute name="font-size" type="svg:FontSizeValueType" use="optional"/>
+    <attribute name="font-size-adjust" type="svg:FontSizeAdjustValueType" use="optional"/>
+    <attribute name="font-stretch" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="normal"/>
+          <enumeration value="wider"/>
+          <enumeration value="narrower"/>
+          <enumeration value="ultra-condensed"/>
+          <enumeration value="extra-condensed"/>
+          <enumeration value="condensed"/>
+          <enumeration value="semi-condensed"/>
+          <enumeration value="semi-expanded"/>
+          <enumeration value="expanded"/>
+          <enumeration value="extra-expanded"/>
+          <enumeration value="ultra-expanded"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="font-style" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="normal"/>
+          <enumeration value="italic"/>
+          <enumeration value="oblique"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="font-variant" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="normal"/>
+          <enumeration value="small-caps"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="font-weight" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="normal"/>
+          <enumeration value="bold"/>
+          <enumeration value="bolder"/>
+          <enumeration value="lighter"/>
+          <enumeration value="100"/>
+          <enumeration value="200"/>
+          <enumeration value="300"/>
+          <enumeration value="400"/>
+          <enumeration value="500"/>
+          <enumeration value="600"/>
+          <enumeration value="700"/>
+          <enumeration value="800"/>
+          <enumeration value="900"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Gradients">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to gradient 'stop' elements
+      </documentation>
+    </annotation>
+    <attribute name="stop-color" type="svg:SVGColorType" use="optional"/>
+    <attribute name="stop-opacity" type="svg:OpacityValueType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Graphics">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to graphics elements
+      </documentation>
+    </annotation>
+    <attribute name="clip-path" type="svg:ClipPathValueType" use="optional"/>
+    <attribute name="clip-rule" type="svg:ClipFillRuleType" use="optional"/>
+    <attribute name="cursor" type="svg:CursorValueType" use="optional"/>
+    <attribute name="display" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="inline"/>
+          <enumeration value="block"/>
+          <enumeration value="list-item"/>
+          <enumeration value="run-in"/>
+          <enumeration value="compact"/>
+          <enumeration value="marker"/>
+          <enumeration value="table"/>
+          <enumeration value="inline-table"/>
+          <enumeration value="table-row-group"/>
+          <enumeration value="table-header-group"/>
+          <enumeration value="table-footer-group"/>
+          <enumeration value="table-row"/>
+          <enumeration value="table-column-group"/>
+          <enumeration value="table-column"/>
+          <enumeration value="table-cell"/>
+          <enumeration value="table-caption"/>
+          <enumeration value="none"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="filter" type="svg:FilterValueType" use="optional"/>
+    <attribute name="image-rendering" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="optimizeSpeed"/>
+          <enumeration value="optimizeQuality"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="mask" type="svg:MaskValueType" use="optional"/>
+    <attribute name="opacity" type="svg:OpacityValueType" use="optional"/>
+    <attribute name="pointer-events" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="visiblePainted"/>
+          <enumeration value="visibleFill"/>
+          <enumeration value="visibleStroke"/>
+          <enumeration value="visibleFillStroke"/>
+          <enumeration value="visible"/>
+          <enumeration value="painted"/>
+          <enumeration value="fill"/>
+          <enumeration value="stroke"/>
+          <enumeration value="fillstroke"/>
+          <enumeration value="all"/>
+          <enumeration value="none"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="shape-rendering" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="optimizeSpeed"/>
+          <enumeration value="crispEdges"/>
+          <enumeration value="geometricPrecision"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="text-rendering" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="optimizeSpeed"/>
+          <enumeration value="optimizeLegibility"/>
+          <enumeration value="geometricPrecision"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="visibility" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="visible"/>
+          <enumeration value="hidden"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Images">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to 'image' elements
+      </documentation>
+    </annotation>
+    <attribute name="color-profile" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-LightingEffects">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to 'feDiffuseLighting' and 'feSpecularLighting' elements
+      </documentation>
+    </annotation>
+    <attribute name="lighting-color" type="svg:SVGColorType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Markers">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to marker operations
+      </documentation>
+    </annotation>
+    <attribute name="marker-start" type="svg:MarkerValueType" use="optional"/>
+    <attribute name="marker-mid" type="svg:MarkerValueType" use="optional"/>
+    <attribute name="marker-end" type="svg:MarkerValueType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-TextContentElements">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to text content elements
+      </documentation>
+    </annotation>
+    <attribute name="alignment-baseline" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="baseline"/>
+          <enumeration value="top"/>
+          <enumeration value="before-edge"/>
+          <enumeration value="text-top"/>
+          <enumeration value="text-before-edge"/>
+          <enumeration value="middle"/>
+          <enumeration value="bottom"/>
+          <enumeration value="after-edge"/>
+          <enumeration value="text-bottom"/>
+          <enumeration value="text-after-edge"/>
+          <enumeration value="ideographic"/>
+          <enumeration value="lower"/>
+          <enumeration value="hanging"/>
+          <enumeration value="mathematical"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="baseline-shift" type="svg:BaselineShiftValueType" use="optional"/>
+    <attribute name="direction" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="ltr"/>
+          <enumeration value="rtl"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="dominant-baseline" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="autosense-script"/>
+          <enumeration value="no-change"/>
+          <enumeration value="reset"/>
+          <enumeration value="ideographic"/>
+          <enumeration value="lower"/>
+          <enumeration value="hanging"/>
+          <enumeration value="mathematical"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="glyph-orientation-horizontal" type="svg:GlyphOrientationHorizontalValueType" use="optional"/>
+    <attribute name="glyph-orientation-vertical" type="svg:GlyphOrientationVerticalValueType" use="optional"/>
+    <attribute name="letter-spacing" type="svg:SpacingValueType" use="optional"/>
+    <attribute name="text-anchor" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="start"/>
+          <enumeration value="middle"/>
+          <enumeration value="end"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="text-decoration" type="svg:TextDecorationValueType" use="optional"/>
+    <attribute name="unicode-bidi" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="normal"/>
+          <enumeration value="embed"/>
+          <enumeration value="bidi-override"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="word-spacing" type="svg:SpacingValueType" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-TextElements">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to 'text' elements
+      </documentation>
+    </annotation>
+    <attribute name="writing-mode" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="lr-tb"/>
+          <enumeration value="rl-tb"/>
+          <enumeration value="tb-rl"/>
+          <enumeration value="lr"/>
+          <enumeration value="rl"/>
+          <enumeration value="tb"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-Viewports">
+    <annotation>
+      <documentation>
+        The following presentation attributes apply to elements that establish viewports
+      </documentation>
+    </annotation>
+    <attribute name="clip" type="svg:ClipValueType" use="optional"/>
+    <attribute name="overflow" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="visible"/>
+          <enumeration value="hidden"/>
+          <enumeration value="scroll"/>
+          <enumeration value="auto"/>
+          <enumeration value="inherit"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="PresentationAttributes-All">
+    <annotation>
+      <documentation>
+        The following represents the complete list of presentation attributes
+      </documentation>
+    </annotation>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-Containers"/>
+    <attributeGroup ref="svg:PresentationAttributes-feFlood"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FilterPrimitives"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Gradients"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-Images"/>
+    <attributeGroup ref="svg:PresentationAttributes-LightingEffects"/>
+    <attributeGroup ref="svg:PresentationAttributes-Markers"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextElements"/>
+    <attributeGroup ref="svg:PresentationAttributes-Viewports"/>
+  </attributeGroup>
+  <attributeGroup name="filter_primitive_attributes">
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="optional"/>
+    <attribute name="height" type="svg:LengthType" use="optional"/>
+    <attribute name="result" type="string" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="filter_primitive_attributes_with_in">
+    <attributeGroup ref="svg:filter_primitive_attributes"/>
+    <attribute name="in" type="string" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="component_transfer_function_attributes">
+    <attribute name="type" use="required">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="identity"/>
+          <enumeration value="table"/>
+          <enumeration value="discrete"/>
+          <enumeration value="linear"/>
+          <enumeration value="gamma"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="tableValues" type="string" use="optional"/>
+    <attribute name="slope" type="double" use="optional"/>
+    <attribute name="intercept" type="double" use="optional"/>
+    <attribute name="amplitude" type="double" use="optional"/>
+    <attribute name="exponent" type="double" use="optional"/>
+    <attribute name="offset" type="double" use="optional"/>
+    <!--  here  -->
+  </attributeGroup>
+  <attributeGroup name="animElementAttrs">
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" type="anyURI" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="animAttributeAttrs">
+    <attribute name="attributeName" type="string" use="required"/>
+    <attribute name="attributeType" type="string" use="optional"/>
+  </attributeGroup>
+  <attributeGroup name="animTargetAttrs">
+    <attributeGroup ref="svg:animElementAttrs"/>
+    <attributeGroup ref="svg:animAttributeAttrs"/>
+  </attributeGroup>
+  <attributeGroup name="animTimingAttrs">
+    <attribute name="begin" type="string" use="optional"/>
+    <attribute name="dur" type="string" use="optional"/>
+    <attribute name="end" type="string" use="optional"/>
+    <attribute name="min" type="string" use="optional"/>
+    <attribute name="max" type="string" use="optional"/>
+    <attribute name="restart" default="always">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="always"/>
+          <enumeration value="never"/>
+          <enumeration value="whenNotActive"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="repeatCount" type="string" use="optional"/>
+    <attribute name="repeatDur" type="string" use="optional"/>
+    <attribute name="fill" default="remove">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="remove"/>
+          <enumeration value="freeze"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <attributeGroup name="animValueAttrs">
+    <attribute name="calcMode" default="linear">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="discrete"/>
+          <enumeration value="linear"/>
+          <enumeration value="paced"/>
+          <enumeration value="spline"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="values" type="string" use="optional"/>
+    <attribute name="keyTimes" type="string" use="optional"/>
+    <attribute name="keySplines" type="string" use="optional"/>
+    <attribute name="from" type="string" use="optional"/>
+    <attribute name="to" type="string" use="optional"/>
+    <attribute name="by" type="string" use="optional"/>
+    <!--  could add a pattern facet here  -->
+  </attributeGroup>
+  <attributeGroup name="animAdditionAttrs">
+    <attribute name="additive" default="replace">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="replace"/>
+          <enumeration value="sum"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="accumulate" default="none">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="none"/>
+          <enumeration value="sum"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </attributeGroup>
+  <group name="descTitleMetadata">
+    <annotation>
+      <documentation>
+        A bit simpler than the DTD, but see commented-out alternative
+      </documentation>
+    </annotation>
+    <all>
+      <element name="desc" type="svg:descType" minOccurs="0"/>
+      <element name="title" type="svg:titleType" minOccurs="0"/>
+      <element name="metadata" type="svg:metadataType" minOccurs="0"/>
+    </all>
+  </group>
+  <!--
+
+	<group name="descTitleMetadata">
+	<annotation>
+			<documentation>Captures the ordering restrictions of the DTD, but suffers from over complexity. No easy way to express this without a wrapper element.</documentation>
+		</annotation>
+		<choice minOccurs="0" maxOccurs="1">
+			<sequence>
+				<element name="desc" type="svg:descType"/>
+				<choice minOccurs="0" maxOccurs="1">
+					<sequence>
+						<element name="title" type="svg:titleType"/>
+						<element name="metadata" type="svg:metadataType" minOccurs="0" maxOccurs="1"/>
+					</sequence>
+					<sequence>
+						<element name="metadata" type="svg:metadataType"/>
+						<element name="title" type="svg:titleType" minOccurs="0" maxOccurs="1"/>
+					</sequence>
+				</choice>
+			</sequence>
+			<sequence>
+				<element name="title" type="svg:titleType"/>
+				<choice minOccurs="0" maxOccurs="1">
+					<sequence>
+						<element name="desc" type="svg:descType"/>
+						<element name="metadata" type="svg:metadataType" minOccurs="0" maxOccurs="1"/>
+					</sequence>
+					<sequence>
+						<element name="metadata" type="svg:metadataType"/>
+						<element name="desc" type="svg:descType" minOccurs="0" maxOccurs="1"/>
+					</sequence>
+				</choice>
+			</sequence>
+			<sequence>
+				<element name="metadata" type="svg:metadataType"/>
+				<choice minOccurs="0" maxOccurs="1">
+					<sequence>
+						<element name="desc" type="svg:descType"/>
+						<element name="title" type="svg:titleType" minOccurs="0" maxOccurs="1"/>
+					</sequence>
+					<sequence>
+						<element name="title" type="svg:titleType"/>
+						<element name="desc" type="svg:descType" minOccurs="0" maxOccurs="1"/>
+					</sequence>
+				</choice>
+			</sequence>
+		</choice>
+	</group>
+-->
+  <element name="svg" type="svg:svgType"/>
+  <element name="g" type="svg:gType"/>
+  <element name="defs" type="svg:defsType"/>
+  <element name="desc" type="svg:descType"/>
+  <element name="title" type="svg:titleType"/>
+  <element name="symbol" type="svg:symbolType"/>
+  <element name="use" type="svg:useType"/>
+  <element name="image" type="svg:imageType"/>
+  <element name="switch" type="svg:switchType"/>
+  <element name="style" type="svg:styleType"/>
+  <element name="path" type="svg:pathType"/>
+  <element name="rect" type="svg:rectType"/>
+  <element name="circle" type="svg:circleType"/>
+  <element name="ellipse" type="svg:ellipseType"/>
+  <element name="line" type="svg:lineType"/>
+  <element name="polyline" type="svg:polylineType"/>
+  <element name="polygon" type="svg:polygonType"/>
+  <element name="text" type="svg:textType"/>
+  <element name="tspan" type="svg:tspanType"/>
+  <element name="tref" type="svg:trefType"/>
+  <element name="textPath" type="svg:textPathType"/>
+  <element name="altGlyph" type="svg:altGlyphType"/>
+  <element name="altGlyphDef" type="svg:altGlyphDefType"/>
+  <element name="altGlyphItem" type="svg:altGlyphItemType"/>
+  <element name="glyphRef" type="svg:glyphRefType"/>
+  <element name="marker" type="svg:markerType"/>
+  <element name="color-profile" type="svg:color-profileType"/>
+  <element name="linearGradient" type="svg:linearGradientType"/>
+  <element name="radialGradient" type="svg:radialGradientType"/>
+  <element name="stop" type="svg:stopType"/>
+  <element name="pattern" type="svg:patternType"/>
+  <element name="clipPath" type="svg:clipPathType"/>
+  <element name="mask" type="svg:maskType"/>
+  <element name="filter" type="svg:filterType"/>
+  <element name="feDistantLight" type="svg:feDistantLightType"/>
+  <element name="fePointLight" type="svg:fePointLightType"/>
+  <element name="feSpotLight" type="svg:feSpotLightType"/>
+  <element name="feBlend" type="svg:feBlendType"/>
+  <element name="feColorMatrix" type="svg:feColorMatrixType"/>
+  <element name="feComponentTransfer" type="svg:feComponentTransferType"/>
+  <element name="feFuncR" type="svg:feFuncRType"/>
+  <element name="feFuncG" type="svg:feFuncGType"/>
+  <element name="feFuncB" type="svg:feFuncBType"/>
+  <element name="feFuncA" type="svg:feFuncAType"/>
+  <element name="feComposite" type="svg:feCompositeType"/>
+  <element name="feConvolveMatrix" type="svg:feConvolveMatrixType"/>
+  <element name="feDiffuseLighting" type="svg:feDiffuseLightingType"/>
+  <element name="feDisplacementMap" type="svg:feDisplacementMapType"/>
+  <element name="feFlood" type="svg:feFloodType"/>
+  <element name="feGaussianBlur" type="svg:feGaussianBlurType"/>
+  <element name="feImage" type="svg:feImageType"/>
+  <element name="feMerge" type="svg:feMergeType"/>
+  <element name="feMergeNode" type="svg:feMergeNodeType"/>
+  <element name="feMorphology" type="svg:feMorphologyType"/>
+  <element name="feOffset" type="svg:feOffsetType"/>
+  <element name="feSpecularLighting" type="svg:feSpecularLightingType"/>
+  <element name="feTile" type="svg:feTileType"/>
+  <element name="feTurbulence" type="svg:feTurbulenceType"/>
+  <element name="cursor" type="svg:cursorType"/>
+  <element name="a" type="svg:aType"/>
+  <element name="view" type="svg:viewType"/>
+  <element name="script" type="svg:scriptType"/>
+  <element name="animate" type="svg:animateType"/>
+  <element name="set" type="svg:setType"/>
+  <element name="animateMotion" type="svg:animateMotionType"/>
+  <element name="mpath" type="svg:mpathType"/>
+  <element name="animateColor" type="svg:animateColorType"/>
+  <element name="animateTransform" type="svg:animateTransformType"/>
+  <element name="font" type="svg:fontType"/>
+  <element name="glyph" type="svg:glyphType"/>
+  <element name="missing-glyph" type="svg:missing-glyphType"/>
+  <element name="hkern" type="svg:hkernType"/>
+  <element name="vkern" type="svg:vkernType"/>
+  <element name="font-face" type="svg:font-faceType"/>
+  <element name="font-face-src" type="svg:font-face-srcType"/>
+  <element name="font-face-uri" type="svg:font-face-uriType"/>
+  <element name="font-face-format" type="svg:font-face-formatType"/>
+  <element name="font-face-name" type="svg:font-face-nameType"/>
+  <element name="definition-src" type="svg:definition-srcType"/>
+  <element name="metadata" type="svg:metadataType"/>
+  <element name="foreignObject" type="svg:foreignObjectType"/>
+  <complexType name="svgType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+      <!--
+ should this be done with named child element collections? Especially for modularisation.
+-->
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="viewBox" type="svg:ViewBoxSpecType" use="optional"/>
+    <attribute name="preserveAspectRatio" type="svg:PreserveAspectRatioSpecType" default="xMidYMid meet"/>
+    <attribute name="zoomAndPan" default="magnify">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="disable"/>
+          <enumeration value="magnify"/>
+          <enumeration value="zoom"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attributeGroup ref="svg:documentEvents"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="required"/>
+    <attribute name="height" type="svg:LengthType" use="required"/>
+    <attribute name="contentScriptType" type="svg:ContentTypeType" default="text/ecmascript"/>
+    <attribute name="contentStyleType" type="svg:ContentTypeType" default="text/css"/>
+  </complexType>
+  <complexType name="gType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+  </complexType>
+  <complexType name="defsType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+  </complexType>
+  <complexType name="descType" mixed="true">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attribute name="content" type="string" fixed="structured text"/>
+  </complexType>
+  <complexType name="titleType" mixed="true">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attribute name="content" type="string" fixed="structured text"/>
+  </complexType>
+  <complexType name="symbolType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="viewBox" type="svg:ViewBoxSpecType" use="optional"/>
+    <attribute name="preserveAspectRatio" type="svg:PreserveAspectRatioSpecType" default="xMidYMid meet"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+  </complexType>
+  <complexType name="useType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrsEmbed"/>
+    <attribute ref="xlink:href" use="required"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="optional"/>
+    <attribute name="height" type="svg:LengthType" use="optional"/>
+  </complexType>
+  <complexType name="imageType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+        <!--  this should probably be a named element group  -->
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-Viewports"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="required"/>
+    <attribute name="height" type="svg:LengthType" use="required"/>
+  </complexType>
+  <complexType name="switchType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:path"/>
+        <element ref="svg:text"/>
+        <element ref="svg:rect"/>
+        <element ref="svg:circle"/>
+        <element ref="svg:ellipse"/>
+        <element ref="svg:line"/>
+        <element ref="svg:polyline"/>
+        <element ref="svg:polygon"/>
+        <element ref="svg:use"/>
+        <element ref="svg:image"/>
+        <element ref="svg:svg"/>
+        <element ref="svg:g"/>
+        <element ref="svg:switch"/>
+        <element ref="svg:a"/>
+        <element ref="svg:foreignObject"/>
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+  </complexType>
+  <complexType name="styleType" mixed="true">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute ref="xml:space" fixed="preserve"/>
+    <attribute name="type" type="svg:ContentTypeType" use="required"/>
+    <attribute name="media" type="svg:MediaDescType" use="optional"/>
+    <attribute name="title" type="string" use="optional"/>
+  </complexType>
+  <complexType name="pathType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-Markers"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="d" type="svg:PathDataType" use="required"/>
+    <attribute name="pathLength" type="double" use="optional"/>
+  </complexType>
+  <complexType name="rectType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="required"/>
+    <attribute name="height" type="svg:LengthType" use="required"/>
+    <attribute name="rx" type="svg:LengthType" use="optional"/>
+    <attribute name="ry" type="svg:LengthType" use="optional"/>
+  </complexType>
+  <complexType name="circleType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="cx" type="svg:CoordinateType" use="optional"/>
+    <attribute name="cy" type="svg:CoordinateType" use="optional"/>
+    <attribute name="r" type="svg:LengthType" use="required"/>
+  </complexType>
+  <complexType name="ellipseType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="cx" type="svg:CoordinateType" use="optional"/>
+    <attribute name="cy" type="svg:CoordinateType" use="optional"/>
+    <attribute name="rx" type="svg:LengthType" use="required"/>
+    <attribute name="ry" type="svg:LengthType" use="required"/>
+  </complexType>
+  <complexType name="lineType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-Markers"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x1" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y1" type="svg:CoordinateType" use="optional"/>
+    <attribute name="x2" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y2" type="svg:CoordinateType" use="optional"/>
+  </complexType>
+  <complexType name="polylineType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-Markers"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="points" type="svg:PointsType" use="required"/>
+  </complexType>
+  <complexType name="polygonType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-Markers"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="points" type="svg:PointsType" use="required"/>
+  </complexType>
+  <complexType name="textType" mixed="true">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:tspan"/>
+      <element ref="svg:tref"/>
+      <element ref="svg:textPath"/>
+      <element ref="svg:altGlyph"/>
+      <element ref="svg:a"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextElements"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="textLength" type="svg:LengthType" use="optional"/>
+    <attribute name="lengthAdjust" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="spacing"/>
+          <enumeration value="spacingAndGlyphs"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="tspanType" mixed="true">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:tspan"/>
+      <element ref="svg:tref"/>
+      <element ref="svg:altGlyph"/>
+      <element ref="svg:a"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateColor"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="y" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="dx" type="svg:LengthsType" use="optional"/>
+    <attribute name="dy" type="svg:LengthsType" use="optional"/>
+    <attribute name="rotate" type="string" use="optional"/>
+    <attribute name="textLength" type="svg:LengthType" use="optional"/>
+    <attribute name="lengthAdjust" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="spacing"/>
+          <enumeration value="spacingAndGlyphs"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="trefType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateColor"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="y" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="dx" type="svg:LengthsType" use="optional"/>
+    <attribute name="dy" type="svg:LengthsType" use="optional"/>
+    <attribute name="rotate" type="string" use="optional"/>
+    <attribute name="textLength" type="svg:LengthType" use="optional"/>
+    <attribute name="lengthAdjust" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="spacing"/>
+          <enumeration value="spacingAndGlyphs"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="textPathType" mixed="true">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:tspan"/>
+      <element ref="svg:tref"/>
+      <element ref="svg:altGlyph"/>
+      <element ref="svg:a"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateColor"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="startOffset" type="string" use="optional"/>
+    <attribute name="textLength" type="svg:LengthType" use="optional"/>
+    <attribute name="lengthAdjust" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="spacing"/>
+          <enumeration value="spacingAndGlyphs"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="method" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="align"/>
+          <enumeration value="stretch"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="spacing" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="exact"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="altGlyphType" mixed="true">
+    <sequence minOccurs="0" maxOccurs="unbounded"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attribute name="glyphRef" type="string" use="optional"/>
+    <attribute name="format" type="string" use="optional"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Color"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="y" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="dx" type="svg:LengthsType" use="optional"/>
+    <attribute name="dy" type="svg:LengthsType" use="optional"/>
+    <attribute name="rotate" type="string" use="optional"/>
+  </complexType>
+  <complexType name="altGlyphDefType">
+    <choice maxOccurs="unbounded">
+      <element ref="svg:altGlyphItem"/>
+      <element ref="svg:glyphRef"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+  </complexType>
+  <complexType name="altGlyphItemType">
+    <sequence maxOccurs="unbounded">
+      <element ref="svg:glyphRef"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+  </complexType>
+  <complexType name="glyphRefType">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attribute name="glyphRef" type="string" use="required"/>
+    <attribute name="format" type="string" use="required"/>
+    <attribute name="x" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="y" type="svg:CoordinatesType" use="optional"/>
+    <attribute name="dx" type="svg:LengthsType" use="optional"/>
+    <attribute name="dy" type="svg:LengthsType" use="optional"/>
+  </complexType>
+  <complexType name="markerType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="viewBox" type="svg:ViewBoxSpecType" use="optional"/>
+    <attribute name="preserveAspectRatio" type="svg:PreserveAspectRatioSpecType" default="xMidYMid meet"/>
+    <attribute name="refX" type="svg:CoordinateType" use="optional"/>
+    <attribute name="refY" type="svg:CoordinateType" use="optional"/>
+    <attribute name="markerUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="strokeWidth"/>
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="markerWidth" type="svg:LengthType" use="optional"/>
+    <attribute name="markerHeight" type="svg:LengthType" use="optional"/>
+    <attribute name="orient" type="string" use="optional"/>
+  </complexType>
+  <complexType name="color-profileType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" type="anyURI" use="optional"/>
+    <attribute name="local" type="string" use="optional"/>
+    <attribute name="name" type="string" use="required"/>
+    <attribute name="rendering-intent" default="auto">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="auto"/>
+          <enumeration value="perceptual"/>
+          <enumeration value="relative-colorimetric"/>
+          <enumeration value="saturation"/>
+          <enumeration value="absolute-colorimetric"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="linearGradientType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:stop"/>
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attribute name="gradientUnits" use="optional">
+      <!--  @@ need to add more attributes here @@  -->
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="gradientTransform" type="svg:TransformListType" use="optional"/>
+    <attribute name="x1" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y1" type="svg:CoordinateType" use="optional"/>
+    <attribute name="x2" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y2" type="svg:CoordinateType" use="optional"/>
+    <attribute name="spreadMethod" default="pad">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="pad"/>
+          <enumeration value="reflect"/>
+          <enumeration value="repeat"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="radialGradientType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:stop"/>
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="gradientUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="gradientTransform" type="svg:TransformListType" use="optional"/>
+    <attribute name="cx" type="svg:CoordinateType" use="optional"/>
+    <attribute name="cy" type="svg:CoordinateType" use="optional"/>
+    <attribute name="r" type="svg:LengthType" use="optional"/>
+    <attribute name="fx" type="svg:CoordinateType" use="optional"/>
+    <attribute name="fy" type="svg:CoordinateType" use="optional"/>
+    <attribute name="spreadMethod" default="pad">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="pad"/>
+          <enumeration value="reflect"/>
+          <enumeration value="repeat"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="stopType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateColor"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-Gradients"/>
+    <attribute name="offset" type="svg:LengthType" use="required"/>
+  </complexType>
+  <complexType name="patternType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="viewBox" type="svg:ViewBoxSpecType" use="optional"/>
+    <attribute name="preserveAspectRatio" type="svg:PreserveAspectRatioSpecType" default="xMidYMid meet"/>
+    <attribute name="patternUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="patternTransform" type="svg:TransformListType" use="optional"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="required"/>
+    <attribute name="height" type="svg:LengthType" use="required"/>
+  </complexType>
+  <complexType name="clipPathType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:path"/>
+        <element ref="svg:text"/>
+        <element ref="svg:rect"/>
+        <element ref="svg:circle"/>
+        <element ref="svg:ellipse"/>
+        <element ref="svg:line"/>
+        <element ref="svg:polyline"/>
+        <element ref="svg:polygon"/>
+        <element ref="svg:use"/>
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-FillStroke"/>
+    <attributeGroup ref="svg:PresentationAttributes-FontSpecification"/>
+    <attributeGroup ref="svg:PresentationAttributes-Graphics"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextContentElements"/>
+    <attributeGroup ref="svg:PresentationAttributes-TextElements"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attribute name="clipPathUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="maskType">
+    <sequence>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:desc"/>
+        <element ref="svg:title"/>
+        <element ref="svg:metadata"/>
+        <element ref="svg:defs"/>
+        <element ref="svg:path"/>
+        <element ref="svg:text"/>
+        <element ref="svg:rect"/>
+        <element ref="svg:circle"/>
+        <element ref="svg:ellipse"/>
+        <element ref="svg:line"/>
+        <element ref="svg:polyline"/>
+        <element ref="svg:polygon"/>
+        <element ref="svg:use"/>
+        <element ref="svg:image"/>
+        <element ref="svg:svg"/>
+        <element ref="svg:g"/>
+        <element ref="svg:view"/>
+        <element ref="svg:switch"/>
+        <element ref="svg:a"/>
+        <element ref="svg:altGlyphDef"/>
+        <element ref="svg:script"/>
+        <element ref="svg:style"/>
+        <element ref="svg:symbol"/>
+        <element ref="svg:marker"/>
+        <element ref="svg:clipPath"/>
+        <element ref="svg:mask"/>
+        <element ref="svg:linearGradient"/>
+        <element ref="svg:radialGradient"/>
+        <element ref="svg:pattern"/>
+        <element ref="svg:filter"/>
+        <element ref="svg:cursor"/>
+        <element ref="svg:font"/>
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateMotion"/>
+        <element ref="svg:animateColor"/>
+        <element ref="svg:animateTransform"/>
+        <element ref="svg:color-profile"/>
+        <element ref="svg:font-face"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attribute name="maskUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="optional"/>
+    <attribute name="height" type="svg:LengthType" use="optional"/>
+  </complexType>
+  <complexType name="filterType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:feBlend"/>
+        <element ref="svg:feFlood"/>
+        <element ref="svg:feColorMatrix"/>
+        <element ref="svg:feComponentTransfer"/>
+        <element ref="svg:feComposite"/>
+        <element ref="svg:feConvolveMatrix"/>
+        <element ref="svg:feDiffuseLighting"/>
+        <element ref="svg:feDisplacementMap"/>
+        <element ref="svg:feGaussianBlur"/>
+        <element ref="svg:feImage"/>
+        <element ref="svg:feMerge"/>
+        <element ref="svg:feMorphology"/>
+        <element ref="svg:feOffset"/>
+        <element ref="svg:feSpecularLighting"/>
+        <element ref="svg:feTile"/>
+        <element ref="svg:feTurbulence"/>
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="filterUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="primitiveUnits" use="optional">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="userSpaceOnUse"/>
+          <enumeration value="userSpace"/>
+          <enumeration value="objectBoundingBox"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="optional"/>
+    <attribute name="height" type="svg:LengthType" use="optional"/>
+    <attribute name="filterRes" type="string" use="optional"/>
+  </complexType>
+  <complexType name="feDistantLightType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="azimuth" type="double" use="optional"/>
+    <attribute name="elevation" type="double" use="optional"/>
+  </complexType>
+  <complexType name="fePointLightType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="x" type="double" use="optional"/>
+    <attribute name="y" type="double" use="optional"/>
+    <attribute name="z" type="double" use="optional"/>
+  </complexType>
+  <complexType name="feSpotLightType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="x" type="double" use="optional"/>
+    <attribute name="y" type="double" use="optional"/>
+    <attribute name="z" type="double" use="optional"/>
+    <attribute name="pointsAtX" type="double" use="optional"/>
+    <attribute name="pointsAtY" type="double" use="optional"/>
+    <attribute name="pointsAtZ" type="double" use="optional"/>
+    <attribute name="specularExponent" type="double" use="optional"/>
+    <attribute name="limitingConeAngle" type="double" use="optional"/>
+  </complexType>
+  <complexType name="feBlendType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="in2" type="string" use="required"/>
+    <attribute name="mode" default="normal">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="normal"/>
+          <enumeration value="multiply"/>
+          <enumeration value="screen"/>
+          <enumeration value="darken"/>
+          <enumeration value="lighten"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="feColorMatrixType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="type" default="matrix">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="matrix"/>
+          <enumeration value="saturate"/>
+          <enumeration value="hueRotate"/>
+          <enumeration value="luminanceToAlpha"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="values" type="string" use="optional"/>
+  </complexType>
+  <complexType name="feComponentTransferType">
+    <sequence>
+      <element ref="svg:feFuncR" minOccurs="0"/>
+      <element ref="svg:feFuncG" minOccurs="0"/>
+      <element ref="svg:feFuncB" minOccurs="0"/>
+      <element ref="svg:feFuncA" minOccurs="0"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+  </complexType>
+  <complexType name="feFuncRType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="type" use="required">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="identity"/>
+          <enumeration value="table"/>
+          <enumeration value="discrete"/>
+          <enumeration value="linear"/>
+          <enumeration value="gamma"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attributeGroup ref="svg:component_transfer_function_attributes"/>
+  </complexType>
+  <complexType name="feFuncGType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="type" use="required">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="identity"/>
+          <enumeration value="table"/>
+          <enumeration value="discrete"/>
+          <enumeration value="linear"/>
+          <enumeration value="gamma"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attributeGroup ref="svg:component_transfer_function_attributes"/>
+  </complexType>
+  <complexType name="feFuncBType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="type" use="required">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="identity"/>
+          <enumeration value="table"/>
+          <enumeration value="discrete"/>
+          <enumeration value="linear"/>
+          <enumeration value="gamma"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attributeGroup ref="svg:component_transfer_function_attributes"/>
+  </complexType>
+  <complexType name="feFuncAType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="type" use="required">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="identity"/>
+          <enumeration value="table"/>
+          <enumeration value="discrete"/>
+          <enumeration value="linear"/>
+          <enumeration value="gamma"/>
+        </restriction>
+      </simpleType>
+      <!--  these all need to be stripped out and checked  -->
+    </attribute>
+    <attributeGroup ref="svg:component_transfer_function_attributes"/>
+  </complexType>
+  <complexType name="feCompositeType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="in2" type="string" use="required"/>
+    <attribute name="operator" default="over">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="over"/>
+          <enumeration value="in"/>
+          <enumeration value="out"/>
+          <enumeration value="atop"/>
+          <enumeration value="xor"/>
+          <enumeration value="arithmetic"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="k1" type="double" use="optional"/>
+    <attribute name="k2" type="double" use="optional"/>
+    <attribute name="k3" type="double" use="optional"/>
+    <attribute name="k4" type="double" use="optional"/>
+  </complexType>
+  <complexType name="feConvolveMatrixType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="order" type="string" use="required"/>
+    <attribute name="kernelMatrix" type="string" use="required"/>
+    <attribute name="divisor" type="double" use="optional"/>
+    <attribute name="bias" type="double" use="optional"/>
+    <attribute name="targetX" type="integer" use="optional"/>
+    <attribute name="targetY" type="integer" use="optional"/>
+    <attribute name="edgeMode" default="duplicate">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="duplicate"/>
+          <enumeration value="wrap"/>
+          <enumeration value="none"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="kernelUnitLength" type="string" use="optional"/>
+    <attribute name="preserveAlpha" type="boolean" use="optional"/>
+  </complexType>
+  <complexType name="feDiffuseLightingType">
+    <sequence>
+      <choice>
+        <element ref="svg:feDistantLight"/>
+        <element ref="svg:fePointLight"/>
+        <element ref="svg:feSpotLight"/>
+      </choice>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateColor"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-LightingEffects"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="surfaceScale" type="double" use="optional"/>
+    <attribute name="diffuseConstant" type="double" use="optional"/>
+  </complexType>
+  <complexType name="feDisplacementMapType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="in2" type="string" use="required"/>
+    <attribute name="scale" type="double" use="optional"/>
+    <attribute name="xChannelSelector" default="A">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="R"/>
+          <enumeration value="G"/>
+          <enumeration value="B"/>
+          <enumeration value="A"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="yChannelSelector" default="A">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="R"/>
+          <enumeration value="G"/>
+          <enumeration value="B"/>
+          <enumeration value="A"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="feFloodType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateColor"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-feFlood"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+  </complexType>
+  <complexType name="feGaussianBlurType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="stdDeviation" type="string" use="optional"/>
+  </complexType>
+  <complexType name="feImageType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateTransform"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:filter_primitive_attributes"/>
+  </complexType>
+  <complexType name="feMergeType">
+    <sequence minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:feMergeNode"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes"/>
+  </complexType>
+  <complexType name="feMergeNodeType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="in" type="string" use="optional"/>
+  </complexType>
+  <complexType name="feMorphologyType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="operator" default="erode">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="erode"/>
+          <enumeration value="dilate"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="radius" type="svg:LengthType" use="optional"/>
+  </complexType>
+  <complexType name="feOffsetType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="dx" type="svg:LengthType" use="optional"/>
+    <attribute name="dy" type="svg:LengthType" use="optional"/>
+  </complexType>
+  <complexType name="feSpecularLightingType">
+    <sequence>
+      <choice>
+        <element ref="svg:feDistantLight"/>
+        <element ref="svg:fePointLight"/>
+        <element ref="svg:feSpotLight"/>
+      </choice>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:animate"/>
+        <element ref="svg:set"/>
+        <element ref="svg:animateColor"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-LightingEffects"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+    <attribute name="surfaceScale" type="double" use="optional"/>
+    <attribute name="specularConstant" type="double" use="optional"/>
+    <attribute name="specularExponent" type="double" use="optional"/>
+  </complexType>
+  <complexType name="feTileType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes_with_in"/>
+  </complexType>
+  <complexType name="feTurbulenceType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:filter_primitive_attributes"/>
+    <attribute name="baseFrequency" type="string" use="optional"/>
+    <attribute name="numOctaves" type="integer" use="optional"/>
+    <attribute name="seed" type="double" use="optional"/>
+    <attribute name="stitchTiles" default="noStitch">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="stitch"/>
+          <enumeration value="noStitch"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="type" default="turbulence">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="fractalNoise"/>
+          <enumeration value="turbulence"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="cursorType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+  </complexType>
+  <complexType name="aType" mixed="true">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute ref="xlink:type" fixed="simple"/>
+    <attribute ref="xlink:role"/>
+    <attribute ref="xlink:arcrole"/>
+    <attribute ref="xlink:title"/>
+    <attribute ref="xlink:show"/>
+    <attribute ref="xlink:actuate" fixed="onRequest"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="target" type="NMTOKEN" use="optional"/>
+    <!--
+ don't use attribute declarations to declare namespaces
+		attribute ref="xmlns:xlink" type="string" fixed="http://www.w3.org/1999/xlink"/>
+
+-->
+    <!--  change from string to URI  -->
+  </complexType>
+  <complexType name="viewType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="viewBox" type="svg:ViewBoxSpecType" use="optional"/>
+    <attribute name="preserveAspectRatio" type="svg:PreserveAspectRatioSpecType" default="xMidYMid meet"/>
+    <attribute name="zoomAndPan" default="magnify">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="disable"/>
+          <enumeration value="magnify"/>
+          <enumeration value="zoom"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="viewTarget" type="string" use="optional"/>
+  </complexType>
+  <complexType name="scriptType" mixed="true">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="type" type="svg:ContentTypeType" use="required"/>
+  </complexType>
+  <complexType name="animateType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attributeGroup ref="svg:animationEvents"/>
+    <attributeGroup ref="svg:animTargetAttrs"/>
+    <attributeGroup ref="svg:animTimingAttrs"/>
+    <attributeGroup ref="svg:animValueAttrs"/>
+    <attributeGroup ref="svg:animAdditionAttrs"/>
+  </complexType>
+  <complexType name="setType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attributeGroup ref="svg:animationEvents"/>
+    <attributeGroup ref="svg:animTargetAttrs"/>
+    <attributeGroup ref="svg:animTimingAttrs"/>
+    <attribute name="to" type="string" use="optional"/>
+  </complexType>
+  <complexType name="animateMotionType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <element ref="svg:mpath" minOccurs="0"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attributeGroup ref="svg:animationEvents"/>
+    <attributeGroup ref="svg:animElementAttrs"/>
+    <attributeGroup ref="svg:animTimingAttrs"/>
+    <attributeGroup ref="svg:animValueAttrs"/>
+    <attributeGroup ref="svg:animAdditionAttrs"/>
+    <attribute name="path" type="string" use="optional"/>
+    <attribute name="keyPoints" type="string" use="optional"/>
+    <attribute name="rotate" type="string" use="optional"/>
+    <attribute name="origin" type="string" use="optional"/>
+  </complexType>
+  <complexType name="mpathType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+  </complexType>
+  <complexType name="animateColorType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attributeGroup ref="svg:animationEvents"/>
+    <attributeGroup ref="svg:animTargetAttrs"/>
+    <attributeGroup ref="svg:animTimingAttrs"/>
+    <attributeGroup ref="svg:animValueAttrs"/>
+    <attributeGroup ref="svg:animAdditionAttrs"/>
+  </complexType>
+  <complexType name="animateTransformType">
+    <group ref="svg:descTitleMetadata" minOccurs="0"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attributeGroup ref="svg:animationEvents"/>
+    <attributeGroup ref="svg:animTargetAttrs"/>
+    <attributeGroup ref="svg:animTimingAttrs"/>
+    <attributeGroup ref="svg:animValueAttrs"/>
+    <attributeGroup ref="svg:animAdditionAttrs"/>
+    <attribute name="type" default="translate">
+      <simpleType>
+        <restriction base="string">
+          <enumeration value="translate"/>
+          <enumeration value="scale"/>
+          <enumeration value="rotate"/>
+          <enumeration value="skewX"/>
+          <enumeration value="skewY"/>
+        </restriction>
+      </simpleType>
+    </attribute>
+  </complexType>
+  <complexType name="fontType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <element ref="svg:font-face"/>
+      <element ref="svg:missing-glyph"/>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element ref="svg:glyph"/>
+        <element ref="svg:hkern"/>
+        <element ref="svg:vkern"/>
+      </choice>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="horiz-origin-x" type="double" use="optional"/>
+    <attribute name="horiz-origin-y" type="double" use="optional"/>
+    <attribute name="horiz-adv-x" type="double" use="required"/>
+    <attribute name="vert-origin-x" type="double" use="optional"/>
+    <attribute name="vert-origin-y" type="double" use="optional"/>
+    <attribute name="vert-adv-y" type="double" use="optional"/>
+  </complexType>
+  <complexType name="glyphType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="unicode" type="string" use="optional"/>
+    <attribute name="glyph-name" type="string" use="optional"/>
+    <attribute name="d" type="svg:PathDataType" use="optional"/>
+    <attribute name="vert-text-orient" type="string" use="optional"/>
+    <attribute name="arabic" type="string" use="optional"/>
+    <attribute name="han" type="string" use="optional"/>
+    <attribute name="horiz-adv-x" type="double" use="optional"/>
+    <attribute name="vert-adv-y" type="double" use="optional"/>
+  </complexType>
+  <complexType name="missing-glyphType">
+    <choice minOccurs="0" maxOccurs="unbounded">
+      <element ref="svg:desc"/>
+      <element ref="svg:title"/>
+      <element ref="svg:metadata"/>
+      <element ref="svg:defs"/>
+      <element ref="svg:path"/>
+      <element ref="svg:text"/>
+      <element ref="svg:rect"/>
+      <element ref="svg:circle"/>
+      <element ref="svg:ellipse"/>
+      <element ref="svg:line"/>
+      <element ref="svg:polyline"/>
+      <element ref="svg:polygon"/>
+      <element ref="svg:use"/>
+      <element ref="svg:image"/>
+      <element ref="svg:svg"/>
+      <element ref="svg:g"/>
+      <element ref="svg:view"/>
+      <element ref="svg:switch"/>
+      <element ref="svg:a"/>
+      <element ref="svg:altGlyphDef"/>
+      <element ref="svg:script"/>
+      <element ref="svg:style"/>
+      <element ref="svg:symbol"/>
+      <element ref="svg:marker"/>
+      <element ref="svg:clipPath"/>
+      <element ref="svg:mask"/>
+      <element ref="svg:linearGradient"/>
+      <element ref="svg:radialGradient"/>
+      <element ref="svg:pattern"/>
+      <element ref="svg:filter"/>
+      <element ref="svg:cursor"/>
+      <element ref="svg:font"/>
+      <element ref="svg:animate"/>
+      <element ref="svg:set"/>
+      <element ref="svg:animateMotion"/>
+      <element ref="svg:animateColor"/>
+      <element ref="svg:animateTransform"/>
+      <element ref="svg:color-profile"/>
+      <element ref="svg:font-face"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="d" type="svg:PathDataType" use="optional"/>
+    <attribute name="horiz-adv-x" type="double" use="optional"/>
+    <attribute name="vert-adv-y" type="double" use="optional"/>
+  </complexType>
+  <complexType name="hkernType">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="u1" type="string" use="optional"/>
+    <attribute name="g1" type="string" use="optional"/>
+    <attribute name="u2" type="string" use="optional"/>
+    <attribute name="g2" type="string" use="optional"/>
+    <attribute name="k" type="double" use="required"/>
+  </complexType>
+  <complexType name="vkernType">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="u1" type="string" use="optional"/>
+    <attribute name="g1" type="string" use="optional"/>
+    <attribute name="u2" type="string" use="optional"/>
+    <attribute name="g2" type="string" use="optional"/>
+    <attribute name="k" type="double" use="required"/>
+  </complexType>
+  <complexType name="font-faceType">
+    <sequence>
+      <group ref="svg:descTitleMetadata" minOccurs="0"/>
+      <element ref="svg:font-face-src"/>
+      <element ref="svg:definition-src"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="font-family" type="svg:FontFamilyValueType" use="optional"/>
+    <attribute name="font-style" type="string" use="optional"/>
+    <attribute name="font-variant" type="string" use="optional"/>
+    <attribute name="font-weight" type="string" use="optional"/>
+    <attribute name="font-stretch" type="string" use="optional"/>
+    <attribute name="font-size" type="svg:FontSizeValueType" use="optional"/>
+    <attribute name="unicode-range" type="string" use="optional"/>
+    <attribute name="units-per-em" type="double" use="optional"/>
+    <attribute name="panose-1" type="string" use="optional"/>
+    <attribute name="stemv" type="double" use="optional"/>
+    <attribute name="stemh" type="double" use="optional"/>
+    <attribute name="slope" type="double" use="optional"/>
+    <attribute name="cap-height" type="double" use="optional"/>
+    <attribute name="x-height" type="double" use="optional"/>
+    <attribute name="accent-height" type="double" use="optional"/>
+    <attribute name="ascent" type="double" use="optional"/>
+    <attribute name="descent" type="double" use="optional"/>
+    <attribute name="widths" type="string" use="optional"/>
+    <attribute name="bbox" type="string" use="optional"/>
+    <attribute name="ideographic" type="double" use="optional"/>
+    <attribute name="baseline" type="double" use="optional"/>
+    <attribute name="centerline" type="double" use="optional"/>
+    <attribute name="mathline" type="double" use="optional"/>
+    <attribute name="hanging" type="double" use="optional"/>
+    <attribute name="topline" type="double" use="optional"/>
+    <attribute name="underline-position" type="double" use="optional"/>
+    <attribute name="underline-thickness" type="double" use="optional"/>
+    <attribute name="strikethrough-position" type="double" use="optional"/>
+    <attribute name="strikethrough-thickness" type="double" use="optional"/>
+    <attribute name="overline-position" type="double" use="optional"/>
+    <attribute name="overline-thickness" type="double" use="optional"/>
+  </complexType>
+  <complexType name="font-face-srcType">
+    <choice maxOccurs="unbounded">
+      <element ref="svg:font-face-uri"/>
+      <element ref="svg:font-face-name"/>
+    </choice>
+    <attributeGroup ref="svg:stdAttrs"/>
+  </complexType>
+  <complexType name="font-face-uriType">
+    <sequence>
+      <element ref="svg:font-face-format"/>
+    </sequence>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+  </complexType>
+  <complexType name="font-face-formatType">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="string" type="string" use="optional"/>
+  </complexType>
+  <complexType name="font-face-nameType">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attribute name="name" type="string" use="optional"/>
+  </complexType>
+  <complexType name="definition-srcType">
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:xlinkRefAttrs"/>
+    <attribute ref="xlink:href" use="optional"/>
+  </complexType>
+  <complexType name="metadataType" mixed="true">
+    <sequence minOccurs="0" maxOccurs="unbounded"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+  </complexType>
+  <complexType name="foreignObjectType" mixed="true">
+    <sequence minOccurs="0" maxOccurs="unbounded"/>
+    <attributeGroup ref="svg:stdAttrs"/>
+    <attributeGroup ref="svg:testAttrs"/>
+    <attributeGroup ref="svg:langSpaceAttrs"/>
+    <attribute name="externalResourcesRequired" type="boolean" use="optional"/>
+    <attribute name="class" type="svg:ClassListType" use="optional"/>
+    <attribute name="style" type="svg:StyleSheetType" use="optional"/>
+    <attributeGroup ref="svg:PresentationAttributes-All"/>
+    <attribute name="transform" type="svg:TransformListType" use="optional"/>
+    <attributeGroup ref="svg:graphicsElementEvents"/>
+    <attribute name="x" type="svg:CoordinateType" use="optional"/>
+    <attribute name="y" type="svg:CoordinateType" use="optional"/>
+    <attribute name="width" type="svg:LengthType" use="required"/>
+    <attribute name="height" type="svg:LengthType" use="required"/>
+    <attribute name="content" type="string" fixed="structured text"/>
+  </complexType>
+</schema>

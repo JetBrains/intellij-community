@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ public class InternalResourceProvider implements StandardResourceProvider{
 
     // svg and mathML
     impl.addIgnoredResource(HtmlUtil.MATH_ML_NAMESPACE);
-    impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);
+    //impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);
     impl.addInternalResource("http://www.w3.org/1999/xlink", "xlink.dtd");
+    impl.addInternalResource(HtmlUtil.SVG_NAMESPACE, "svg.xsd");
   }
 }
