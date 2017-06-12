@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
@@ -139,6 +140,12 @@ open class GuiTestCase : GuiTestBase() {
     target() as Container, name, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JButton component named by \"${name}\" with ${target().toString()} as a Container")
+
+  fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(comboboxClass: Class<out ComponentWithBrowseButton<out JComponent>>,
+                                                                          timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture
+    = if (target() is Container) componentWithBrowseButton(target() as Container, comboboxClass, timeout)
+  else throw UnsupportedOperationException(
+    "Sorry, unable to find ComponentWithBrowseButton component with ${target().toString()} as a Container")
 
   fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String, /*timeout in seconds*/
                                                          timeout: Long = defaultTimeout): JComboBoxFixture = if (target() is Container) combobox(
@@ -276,6 +283,15 @@ open class GuiTestCase : GuiTestBase() {
   private fun button(container: Container, name: String, timeout: Long): JButtonFixture {
     val jButton = waitUntilFound(container, JButton::class.java, timeout) { jButton -> jButton.isShowing && jButton.text == name }
     return JButtonFixture(myRobot, jButton)
+  }
+
+  private fun componentWithBrowseButton(container: Container,
+                                        foo: Class<out ComponentWithBrowseButton<out JComponent>>,
+                                        timeout: Long): ComponentWithBrowseButtonFixture {
+    val component = waitUntilFound(container, ComponentWithBrowseButton::class.java, timeout) {
+      component -> component.isShowing && foo.isInstance(component)
+    }
+    return ComponentWithBrowseButtonFixture(component, myRobot)
   }
 
   private fun combobox(container: Container, labelText: String, timeout: Long): JComboBoxFixture {
