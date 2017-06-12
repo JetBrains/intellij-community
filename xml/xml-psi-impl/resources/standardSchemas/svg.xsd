@@ -1204,8 +1204,8 @@
     <attributeGroup ref="svg:documentEvents"/>
     <attribute name="x" type="svg:CoordinateType" use="optional"/>
     <attribute name="y" type="svg:CoordinateType" use="optional"/>
-    <attribute name="width" type="svg:LengthType" use="required"/>
-    <attribute name="height" type="svg:LengthType" use="required"/>
+    <attribute name="width" type="svg:LengthType" use="optional"/>
+    <attribute name="height" type="svg:LengthType" use="optional"/>
     <attribute name="contentScriptType" type="svg:ContentTypeType" default="text/ecmascript"/>
     <attribute name="contentStyleType" type="svg:ContentTypeType" default="text/css"/>
   </complexType>
