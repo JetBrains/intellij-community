@@ -69,6 +69,10 @@ public abstract class FileIndexFacade {
 
   @NotNull public abstract ModificationTracker getRootModificationTracker();
 
+  /**
+   * @return descriptions of all modules which are unloaded from the project
+   * @see UnloadedModuleDescription
+   */
   @NotNull
   public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
 }
