@@ -110,7 +110,9 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   fun dialog(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
-    func(dialog(title, timeout))
+    val dialog = dialog(title, timeout)
+    func(dialog)
+    dialog.waitTillGone()
   }
 
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {

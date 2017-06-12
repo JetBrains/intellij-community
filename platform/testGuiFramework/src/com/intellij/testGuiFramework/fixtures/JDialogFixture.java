@@ -29,9 +29,23 @@ import java.util.Collection;
 
 public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> implements ContainerFixture<JDialog> {
 
+  private final Robot myRobot;
+  private final JDialog myDialog;
 
   public JDialogFixture(@NotNull Robot robot, JDialog jDialog) {
     super(JDialogFixture.class, robot, jDialog);
+    myRobot = robot;
+    myDialog = jDialog;
+  }
+
+  public void waitTillGone() {
+    GenericTypeMatcher<JDialog> matcher = getMatcher(myDialog.getTitle());
+    Pause.pause(new Condition("Wait till dialog gone") {
+      @Override
+      public boolean test() {
+        return myRobot.finder().findAll(matcher).isEmpty();
+      }
+    });
   }
 
   @NotNull
@@ -41,12 +55,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title, Timeout timeout) {
-    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
-      @Override
-      protected boolean isMatching(@NotNull JDialog dialog) {
-        return title.equals(dialog.getTitle()) && dialog.isShowing();
-      }
-    };
+    GenericTypeMatcher<JDialog> matcher = getMatcher(title);
 
     Pause.pause(new Condition("Finding for JDialogFixture with title \"" + title + "\"") {
       @Override
@@ -79,6 +88,15 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
     JDialog dialog = robot.finder().find(matcher);
     return new JDialogFixture(robot, dialog);
+  }
+
+  private static GenericTypeMatcher<JDialog> getMatcher(String title) {
+    return new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        return title.equals(dialog.getTitle()) && dialog.isShowing();
+      }
+    };
   }
 
 }
