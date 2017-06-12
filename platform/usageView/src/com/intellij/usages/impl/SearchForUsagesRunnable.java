@@ -170,17 +170,17 @@ class SearchForUsagesRunnable implements Runnable {
       if (!(mySearchScopeToWarnOfFallingOutOf instanceof GlobalSearchScope)) return Collections.emptySet();
       Collection<UnloadedModuleDescription> unloadedInSearchScope =
         ((GlobalSearchScope)mySearchScopeToWarnOfFallingOutOf).getUnloadedModulesBelongingToScope();
-      Set<UnloadedModuleDescription> unloadedInResolveScope = getCombinedUseScope();
-      if (unloadedInResolveScope != null) {
+      Set<UnloadedModuleDescription> unloadedInUseScope = getUnloadedModulesBelongingToUseScopes();
+      if (unloadedInUseScope != null) {
         //when searching for usages of PsiElements return only those unloaded modules which may contain references to the elements, this way
         // we won't show a warning if e.g. 'find usages' for a private method is invoked
-        return ContainerUtil.intersection(unloadedInSearchScope, unloadedInResolveScope);
+        return ContainerUtil.intersection(unloadedInSearchScope, unloadedInUseScope);
       }
       return unloadedInSearchScope;
     });
   }
 
-  private Set<UnloadedModuleDescription> getCombinedUseScope() {
+  private Set<UnloadedModuleDescription> getUnloadedModulesBelongingToUseScopes() {
     Set<UnloadedModuleDescription> resolveScope = new LinkedHashSet<>();
     for (UsageTarget target : mySearchFor) {
       if (!(target instanceof PsiElementUsageTarget)) return null;
