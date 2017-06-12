@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -36,8 +37,8 @@ public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
   private final ProjectStructureElement mySourceElement;
   private final String myPresentableName;
 
-  public UsagesInUnloadedModules(StructureConfigurableContext context, GeneralProjectSettingsElement element,
-                                 ProjectStructureElement sourceElement, Collection<UnloadedModuleDescription> unloadedModules) {
+  public UsagesInUnloadedModules(@NotNull StructureConfigurableContext context, @NotNull GeneralProjectSettingsElement element,
+                                 @NotNull ProjectStructureElement sourceElement, @NotNull Collection<UnloadedModuleDescription> unloadedModules) {
     myContext = context;
     myContainingElement = element;
     mySourceElement = sourceElement;
@@ -83,11 +84,11 @@ public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
 
   @Override
   public int hashCode() {
-    return 0;
+    return mySourceElement.hashCode();
   }
 
   @Override
   public boolean equals(Object obj) {
-    return obj instanceof UsagesInUnloadedModules;
+    return obj instanceof UsagesInUnloadedModules && mySourceElement.equals(((UsagesInUnloadedModules)obj).mySourceElement);
   }
 }
