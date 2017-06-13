@@ -16,14 +16,13 @@
 package com.jetbrains.reflection
 
 import com.intellij.util.containers.HashMap
+import com.intellij.util.containers.SoftHashMap
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
+import java.lang.ref.SoftReference
 import java.util.*
-import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KProperty
+import kotlin.reflect.*
 import kotlin.reflect.jvm.javaType
-import kotlin.reflect.memberProperties
 
 /**
  * Tools to fetch properties both from Java and Kotlin code and to copy them from one object to another.
@@ -98,6 +97,18 @@ private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
   return this.annotations.find { annotation.java.isAssignableFrom(it.javaClass) } != null
 }
 
+private val membersCache: MutableMap<KClass<*>, SoftReference<Collection<KProperty<*>>>> = SoftHashMap()
+
+private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> {
+  val cache = membersCache[this]?.get()
+  if (cache != null) {
+    return cache
+  }
+  val memberProperties = this.memberProperties
+  membersCache.put(this, SoftReference(memberProperties))
+  return memberProperties
+}
+
 /**
  * @param instance object with properties (see module doc)
  * @param annotationToFilterByClass optional annotation class to fetch only kotlin properties annotated with it. Only supported in Kotlin
@@ -116,7 +127,7 @@ fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, us
   else {
     // Kotlin props
     val klass = instance.javaClass.kotlin
-    val allKotlinProperties = LinkedHashSet(klass.memberProperties.filterIsInstance(KProperty::class.java))
+    val allKotlinProperties = LinkedHashSet(klass.memberPropertiesCached().filterIsInstance(KProperty::class.java))
 
     val delegatedProperties = ArrayList<Property>() // See DelegationProperty doc
     allKotlinProperties.filter { it.isAnnotated(DelegationProperty::class) }.forEach {
