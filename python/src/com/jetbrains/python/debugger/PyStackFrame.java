@@ -255,6 +255,10 @@ public class PyStackFrame extends XStackFrame {
     return myFrameInfo.getThreadId() + ":" + myFrameInfo.getId();
   }
 
+  public String getFrameName() {
+    return myFrameInfo.getName();
+  }
+
   protected XSourcePosition getPosition() {
     return myPosition;
   }
