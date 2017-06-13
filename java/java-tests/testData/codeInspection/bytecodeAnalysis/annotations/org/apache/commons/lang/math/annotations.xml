@@ -605,7 +605,7 @@
     </item>
     <item name='org.apache.commons.lang.math.NumberUtils java.lang.Integer createInteger(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -614,7 +614,7 @@
     </item>
     <item name='org.apache.commons.lang.math.NumberUtils java.lang.Long createLong(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val val="&quot;null-&gt;null&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
