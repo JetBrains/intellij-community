@@ -19,6 +19,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,7 +158,7 @@ public final class FontComboBox extends ComboBox {
           if (info != null) item = info;
         }
       }
-      if (!(mySelectedItem == null ? item == null : mySelectedItem.equals(item))) {
+      if (!Comparing.equal(mySelectedItem, item) || item == myNoFontItem) {
         mySelectedItem = item;
         fireContentsChanged(this, -1, -1);
       }
