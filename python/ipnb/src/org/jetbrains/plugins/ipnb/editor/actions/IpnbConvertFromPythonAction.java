@@ -49,7 +49,7 @@ public class IpnbConvertFromPythonAction extends AnAction {
     }
   }
 
-  public static void convertFromPythonScript(VirtualFile virtualFile, Project project) {
+  private static void convertFromPythonScript(VirtualFile virtualFile, Project project) {
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
     if (module == null) return;
 

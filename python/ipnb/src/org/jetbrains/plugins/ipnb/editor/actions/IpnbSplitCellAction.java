@@ -22,7 +22,7 @@ public class IpnbSplitCellAction extends AnAction {
     }
   }
 
-  public static void splitCell(IpnbFilePanel filePanel) {
+  private static void splitCell(IpnbFilePanel filePanel) {
     filePanel.executeUndoableCommand(() -> {
       filePanel.splitCell();
       filePanel.saveToFile(false);

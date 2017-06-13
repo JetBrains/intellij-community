@@ -31,7 +31,7 @@ public class IpnbHeadingCellActionBase extends AnAction {
     }
   }
 
-  public void changeTypeToHeading(@NotNull final IpnbFileEditor editor) {
+  private void changeTypeToHeading(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
     if (selectedCellPanel == null) return;

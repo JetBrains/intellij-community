@@ -76,7 +76,7 @@ public class IpnbConvertToPythonAction extends AnAction {
     }
   }
 
-  public static void convertToPythonScript(@NotNull final Project project,
+  private static void convertToPythonScript(@NotNull final Project project,
                                            @NotNull final VirtualFile virtualFile) {
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
     if (module == null) return;

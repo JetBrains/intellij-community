@@ -25,7 +25,7 @@ public class IpnbMarkdownCellAction extends AnAction {
     changeTypeToMarkdown(myEditor);
   }
 
-  public void changeTypeToMarkdown(@NotNull final IpnbFileEditor editor) {
+  private static void changeTypeToMarkdown(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
     if (selectedCellPanel == null) return;
