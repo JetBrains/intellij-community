@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -54,6 +55,8 @@ class UnloadedModulesConfigurationTest : ModuleTestCase() {
   fun `test set unloaded modules`() {
     val a = createModule("a")
     val b = createModule("b")
+    val contentRootPath = FileUtil.toSystemIndependentName(createTempDirectory().absolutePath)
+    ModuleRootModificationUtil.addContentRoot(a, contentRootPath)
     ModuleRootModificationUtil.addDependency(a, b)
     val moduleManager = ModuleManager.getInstance(project)
     moduleManager.setUnloadedModules(listOf("a"))
@@ -63,8 +66,10 @@ class UnloadedModulesConfigurationTest : ModuleTestCase() {
 
     moduleManager.setUnloadedModules(listOf("b"))
     assertEquals("b", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
-    assertNotNull(moduleManager.findModuleByName("a"))
+    val newA = moduleManager.findModuleByName("a")
+    assertNotNull(newA)
     assertNull(moduleManager.findModuleByName("b"))
+    assertEquals(VfsUtilCore.pathToUrl(contentRootPath), assertOneElement(ModuleRootManager.getInstance(newA!!).contentRootUrls))
   }
 
   private fun getProjectManager() = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
