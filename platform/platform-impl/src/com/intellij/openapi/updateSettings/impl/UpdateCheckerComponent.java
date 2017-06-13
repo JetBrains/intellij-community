@@ -53,7 +53,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenDone(() -> queueNextCheck(CHECK_INTERVAL));
+  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
   private final UpdateSettings mySettings;
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
