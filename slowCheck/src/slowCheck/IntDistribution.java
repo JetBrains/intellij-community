@@ -11,14 +11,14 @@ public interface IntDistribution {
   boolean isValidValue(int i);
   
   /**
-   * This distribution returns an integer uniformly distributed between {@code min} and {@code max}.
+   * This distribution returns an integer uniformly distributed between {@code min} and {@code max} (both ends inclusive).
    */
   static IntDistribution uniform(int min, int max) {
     return new BoundedIntDistribution(min, max, r -> {
       if (min == max) return min;
       
       int i = r.nextInt();
-      return i >= min && i <= max ? i : Math.abs(i) % (max - min) + min;
+      return i >= min && i <= max ? i : Math.abs(i) % (max - min + 1) + min;
     });
   }
 

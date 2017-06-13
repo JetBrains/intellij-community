@@ -23,19 +23,19 @@ public class GeneratorTest extends TestCase {
   public void testListSumMod() {
     checkFalsified(listOf(integers()), 
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   110);
+                   130);
   }
 
   public void testListContainsDivisible() {
     checkFalsified(listOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   13);
+                   14);
   }
 
   public void testStringContains() {
     checkFalsified(stringOf(asciiPrintableChar()), 
                    s -> !s.contains("a"),
-                   10);
+                   7);
   }
 
   public void testLetterStringContains() {
@@ -47,7 +47,7 @@ public class GeneratorTest extends TestCase {
   public void testIsSorted() {
     checkFalsified(listOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   197);
+                   217);
   }
 
   public void testSuccess() {
@@ -58,7 +58,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())), 
-                   329);
+                   297);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -82,11 +82,17 @@ public class GeneratorTest extends TestCase {
 
   public void testUnsatisfiableSuchThat() {
     try {
-      Checker.forAll(integers(-1, 1).suchThat(i -> i >2), i -> i == 0);
+      Checker.forAll(integers(-1, 1).suchThat(i -> i > 2), i -> i == 0);
       fail();
     }
     catch (CannotSatisfyCondition ignored) {
     }
+  }
+
+  public void testStringOfStringChecksAllChars() {
+    checkFalsified(stringOf("abc "), 
+                   s -> !s.contains(" "), 
+                   7);
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {

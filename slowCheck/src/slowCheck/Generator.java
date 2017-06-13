@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author peter
@@ -104,7 +106,12 @@ public final class Generator<T> {
       .noShrink();
   }
 
-  public static Generator<String> stringOf(Generator<Character> charGen) {
+  public static Generator<String> stringOf(@NotNull String possibleChars) {
+    List<Character> chars = IntStream.range(0, possibleChars.length()).mapToObj(possibleChars::charAt).collect(Collectors.toList());
+    return stringOf(oneOf(chars));
+  }
+  
+  public static Generator<String> stringOf(@NotNull Generator<Character> charGen) {
     return listOf(charGen).map(chars -> {
       StringBuilder sb = new StringBuilder();
       chars.forEach(sb::append);
