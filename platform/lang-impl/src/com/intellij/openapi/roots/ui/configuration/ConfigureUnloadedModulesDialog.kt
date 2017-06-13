@@ -229,6 +229,7 @@ private class ModuleDescriptionsTree(project: Project) {
   }
 
   fun fillTree(modules: Collection<ModuleDescription>) {
+    removeAllNodes()
     helper.createModuleNodes(modules, root, model)
     tree.expandPath(TreePath(root))
   }
