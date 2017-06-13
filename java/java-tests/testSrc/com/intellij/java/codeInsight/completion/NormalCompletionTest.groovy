@@ -154,7 +154,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert "void" == presentation.typeText
 
     presentation = renderElement(myItems[0])
-    assert "(String o)" == presentation.tailText
+    assert "(String e)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
     assert !presentation.tailGrayed
