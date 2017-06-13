@@ -97,6 +97,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                        "    -PsiPackage: org\n" +
                        "     +PsiPackage: intellij.lang.annotations\n" +
                        "     +PsiPackage: jetbrains.annotations\n" +
+                       "    LICENSE\n" +
                        ""
       , 5);
 
@@ -144,7 +145,8 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                         "   MANIFEST.MF\n" +
                         "  -PsiPackage: org\n" +
                         "   +PsiPackage: intellij.lang.annotations\n" +
-                        "   +PsiPackage: jetbrains.annotations\n"
+                        "   +PsiPackage: jetbrains.annotations\n" +
+                        "  LICENSE\n"
       , 3);
 
     doTest(true, false, "-Project\n" +
