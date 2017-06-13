@@ -108,7 +108,7 @@ public class SyncScrollSupport {
 
     @NotNull
     private ScrollHelper create(@NotNull Side side) {
-      return ScrollHelper.create(myEditors, side.getIndex(), side.other().getIndex(), myScrollable, side);
+      return new ScrollHelper(myEditors, side.getIndex(), side.other().getIndex(), myScrollable, side);
     }
   }
 
@@ -211,7 +211,7 @@ public class SyncScrollSupport {
         side = Side.fromLeft(master == ThreeSide.BASE);
       }
 
-      return ScrollHelper.create(myEditors, master.getIndex(), slave.getIndex(), scrollable, side);
+      return new ScrollHelper(myEditors, master.getIndex(), slave.getIndex(), scrollable, side);
     }
   }
 
@@ -294,34 +294,30 @@ public class SyncScrollSupport {
     }
   }
 
-  private static abstract class ScrollHelper implements VisibleAreaListener {
+  private static class ScrollHelper implements VisibleAreaListener {
     @NotNull private final List<? extends Editor> myEditors;
     private final int myMasterIndex;
     private final int mySlaveIndex;
+    @NotNull private final SyncScrollable myScrollable;
+    @NotNull private final Side mySide;
 
     @Nullable private Anchor myAnchor;
 
-    public ScrollHelper(@NotNull List<? extends Editor> editors, int masterIndex, int slaveIndex) {
+    public ScrollHelper(@NotNull List<? extends Editor> editors,
+                        int masterIndex,
+                        int slaveIndex,
+                        @NotNull SyncScrollable scrollable,
+                        @NotNull Side side) {
       myEditors = editors;
       myMasterIndex = masterIndex;
       mySlaveIndex = slaveIndex;
+      myScrollable = scrollable;
+      mySide = side;
     }
 
-    @NotNull
-    public static ScrollHelper create(@NotNull List<? extends Editor> editors,
-                                      int masterIndex,
-                                      int slaveIndex,
-                                      @NotNull final SyncScrollable scrollable,
-                                      @NotNull final Side side) {
-      return new ScrollHelper(editors, masterIndex, slaveIndex) {
-        @Override
-        protected int convertLine(int value) {
-          return scrollable.transfer(side, value);
-        }
-      };
+    private int convertLine(int value) {
+      return myScrollable.transfer(mySide, value);
     }
-
-    protected abstract int convertLine(int value);
 
     public void setAnchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
       myAnchor = new Anchor(masterStartOffset, masterEndOffset, slaveStartOffset, slaveEndOffset);
