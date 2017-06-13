@@ -40,6 +40,10 @@ class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
 
   override fun getDependencyModuleNames() = dependencyModuleNames
 
+  override fun equals(other: Any?) = other is UnloadedModuleDescriptionImpl && name == other.name
+
+  override fun hashCode() = name.hashCode()
+
   companion object {
     @JvmStatic
     fun createFromPaths(paths: List<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
