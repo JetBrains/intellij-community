@@ -81,14 +81,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo marker = markers.get(i);
       List<MergeableLineMarkerInfo> toMerge = new SmartList<>();
-      GutterIconNavigationHandler handler = marker.getNavigationHandler();
-      String presentation = getPresentation(marker);
       for (int k = markers.size() - 1; k > i; k--) {
         MergeableLineMarkerInfo current = markers.get(k);
         if (marker.canMergeWith(current)) {
-          if (handler == null || !handler.equals(current.getNavigationHandler()) || !presentation.equals(getPresentation(current))) {
-            toMerge.add(0, current);
-          }
+          toMerge.add(0, current);
           markers.remove(k);
         }
       }
@@ -146,7 +142,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                 if (renderer != null) {
                   icon = renderer.getIcon();
                 }
-                String text = getPresentation((LineMarkerInfo)dom);
+                PsiElement element = ((LineMarkerInfo)dom).getElement();
+                assert element != null;
+                final String elementPresentation =
+                  dom instanceof MergeableLineMarkerInfo
+                  ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element)
+                  : element.getText();
+                String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
+
                 final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
                 label.setBorder(IdeBorderFactory.createEmptyBorder(2));
                 return label;
@@ -168,14 +171,5 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
       };
     }
-  }
-
-  @NotNull
-  private static String getPresentation(LineMarkerInfo info) {
-    PsiElement element = info.getElement();
-    assert element != null;
-    final String elementPresentation =
-      info instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)info).getElementPresentation(element) : element.getText();
-    return StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
   }
 }
