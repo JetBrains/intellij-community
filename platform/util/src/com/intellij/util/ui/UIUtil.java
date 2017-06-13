@@ -110,6 +110,10 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
+  public static void decorateFrame(@NotNull JRootPane pane) {
+    pane.putClientProperty("jetbrains.awt.windowDarkAppearance" , /*isUnderDarcula()*/false);
+  }
+
   private static void blockATKWrapper() {
     /*
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
