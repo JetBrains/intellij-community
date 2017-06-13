@@ -51,20 +51,6 @@ public class QueueProcessor<T> {
 
   private final PairConsumer<T, Runnable> myProcessor;
   private final Deque<T> myQueue = new ArrayDeque<>();
-  private final Runnable myContinuationContext = new Runnable() {
-    @Override
-    public void run() {
-      synchronized (myQueue) {
-        isProcessing = false;
-        if (myQueue.isEmpty()) {
-          myQueue.notifyAll();
-        }
-        else {
-          startProcessing();
-        }
-      }
-    }
-  };
 
   private boolean isProcessing;
   private boolean myStarted;
@@ -144,6 +130,18 @@ public class QueueProcessor<T> {
       }
     }
   }
+  
+  private void finishProcessing(boolean continueProcessing) {
+    synchronized (myQueue) {
+      isProcessing = false;
+      if (myQueue.isEmpty()) {
+        myQueue.notifyAll();
+      }
+      else if (continueProcessing){
+        startProcessing();
+      }
+    }
+  }
 
   public void add(@NotNull T t, ModalityState state) {
     synchronized (myQueue) {
@@ -190,6 +188,27 @@ public class QueueProcessor<T> {
       }
     }
   }
+  
+  public boolean waitFor(long timeoutMS) {
+    synchronized (myQueue) {
+      long start = System.currentTimeMillis();
+      
+      while (isProcessing) {
+        long rest = timeoutMS - (System.currentTimeMillis() - start);
+        
+        if (rest <= 0) return !isProcessing;
+        
+        try {
+          myQueue.wait(rest);
+        }
+        catch (InterruptedException e) {
+          //ok
+        }
+      }
+      
+      return true;
+    }
+  }
 
   private boolean startProcessing() {
     LOG.assertTrue(Thread.holdsLock(myQueue));
@@ -200,8 +219,11 @@ public class QueueProcessor<T> {
     isProcessing = true;
     final T item = myQueue.removeFirst();
     final Runnable runnable = () -> {
-      if (myDeathCondition.value(null)) return;
-      runSafely(() -> myProcessor.consume(item, myContinuationContext));
+      if (myDeathCondition.value(null)) {
+        finishProcessing(false);
+        return;
+      }
+      runSafely(() -> myProcessor.consume(item, () -> finishProcessing(true)));
     };
     final Application application = ApplicationManager.getApplication();
     if (myThreadToUse == ThreadToUse.AWT) {
