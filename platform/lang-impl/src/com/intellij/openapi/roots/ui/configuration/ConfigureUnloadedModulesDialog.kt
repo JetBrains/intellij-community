@@ -98,7 +98,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     val moveAllToUnloadedButton = JButton(ProjectBundle.message("module.unload.all.button.text"))
     val moveAllToLoadedButton = JButton(ProjectBundle.message("module.load.all.button.text"))
     moveToUnloadedButton.addActionListener {
-      val modulesToMove = includeMissingModules(loadedModulesTree.selectedModules, unloadedModulesTree.getAllModules(),
+      val modulesToMove = includeMissingModules(loadedModulesTree.getSelectedModules(), unloadedModulesTree.getAllModules(),
                                                 dependentsGraph,
                                                 ProjectBundle.message("module.unload.dependents.dialog.title"),
                                                 { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.unload.dependents.dialog.text", selectedSize, additionalSize, additionalFirst)},
@@ -107,7 +107,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
       moveModules(modulesToMove, loadedModulesTree, unloadedModulesTree)
     }
     moveToLoadedButton.addActionListener {
-      val modulesToMove = includeMissingModules(unloadedModulesTree.selectedModules, loadedModulesTree.getAllModules(),
+      val modulesToMove = includeMissingModules(unloadedModulesTree.getSelectedModules(), loadedModulesTree.getAllModules(),
                                                 GraphAlgorithms.getInstance().invertEdgeDirections(dependentsGraph),
                                                 ProjectBundle.message("module.load.dependencies.dialog.title"),
                                                 { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.load.dependencies.dialog.text", selectedSize, additionalSize, additionalFirst)},
@@ -214,12 +214,18 @@ private class ModuleDescriptionsTree(project: Project) {
     tree.cellRenderer = ModuleDescriptionTreeRenderer()
   }
 
-  val selectedModules: List<ModuleDescription>
-    get() = tree.selectionPaths?.mapNotNull { (it.lastPathComponent as? ModuleDescriptionNode)?.moduleDescription } ?: emptyList()
+  fun getSelectedModules(): List<ModuleDescription> =
+    tree.selectionPaths
+        ?.mapNotNull { it.lastPathComponent }
+        ?.filterIsInstance<ModuleDescriptionTreeNode>()
+        ?.flatMap { getAllModulesUnder(it) }
+        ?: emptyList<ModuleDescription>()
 
-  fun getAllModules(): List<ModuleDescription> {
+  fun getAllModules() = getAllModulesUnder(root)
+
+  private fun getAllModulesUnder(node: ModuleDescriptionTreeNode): List<ModuleDescription> {
     val modules = ArrayList<ModuleDescription>()
-    TreeUtil.traverse(root, { node ->
+    TreeUtil.traverse(node, { node ->
       if (node is ModuleDescriptionNode) {
         modules.add(node.moduleDescription)
       }
