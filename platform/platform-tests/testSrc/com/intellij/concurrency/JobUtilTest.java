@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.Timings;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -76,9 +77,9 @@ public class JobUtilTest extends PlatformTestCase {
     return COUNT.incrementAndGet();
   }
 
-  public void testJobUtilCorrectlySplitsUpHugeWorkAndFinishes_Performance() throws Exception {
+  public void testJobUtilCorrectlySplitsUpHugeWorkAndFinishesStress() throws Exception {
     COUNT.set(0);
-    int N = 100000;
+    int N = Timings.adjustAccordingToMySpeed(100000, true);
     List<String> list = Collections.nCopies(N, null);
     final AtomicReference<Exception> exception = new AtomicReference<>();
     final AtomicBoolean finished = new AtomicBoolean();
@@ -107,8 +108,8 @@ public class JobUtilTest extends PlatformTestCase {
     assertEquals(N, COUNT.get());
   }
 
-  public void testJobUtilProcessesAllItems_Performance() throws Exception {
-    List<String> list = Collections.nCopies(10000, null);
+  public void testJobUtilProcessesAllItemsStress() throws Exception {
+    List<String> list = Collections.nCopies(Timings.adjustAccordingToMySpeed(1000, true), null);
     final AtomicReference<Exception> exception = new AtomicReference<>();
     for (int i=0; i<10; i++) {
       long start = System.currentTimeMillis();
@@ -124,7 +125,7 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testJobUtilRecursive_Performance() throws Exception {
+  public void testJobUtilRecursiveStress() throws Exception {
     final List<String> list = Collections.nCopies(100, null);
     for (int i=0; i<10; i++) {
       COUNT.set(0);
@@ -298,7 +299,7 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testTasksRunEvenWhenReadActionIsHardToGet_Performance() throws ExecutionException, InterruptedException {
+  public void testTasksRunEvenWhenReadActionIsHardToGetStress() throws ExecutionException, InterruptedException {
     AtomicInteger processorCalled = new AtomicInteger();
     final Processor<String> processor = s -> {
       busySleep(1);
@@ -309,12 +310,12 @@ public class JobUtilTest extends PlatformTestCase {
       LOG.debug("i = " + i);
       processorCalled.set(0);
       final ProgressIndicator indicator = new EmptyProgressIndicator();
-      int N = 10000;
+      int N = Timings.adjustAccordingToMySpeed(1000, true);
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""), indicator, true, false, processor);
         assertFalse(indicator.isCanceled());
       });
-      for (int k=0; k<10000; k++) {
+      for (int k=0; k<N; k++) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           busySleep(1);
         });
