@@ -17,11 +17,9 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.FixedSizeButton;
-import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 
 public class ComponentWithBrowseButtonFixture extends JComponentFixture<ComponentWithBrowseButtonFixture, ComponentWithBrowseButton> {
 
@@ -31,10 +29,6 @@ public class ComponentWithBrowseButtonFixture extends JComponentFixture<Componen
 
   public void clickButton() {
     FixedSizeButton button = target().getButton();
-    Point locationOnScreen = button.getLocationOnScreen();
-    Rectangle bounds = button.getBounds();
-    final Point point =
-      new Point(locationOnScreen.x + bounds.x + bounds.width / 2, locationOnScreen.y + bounds.y + bounds.height / 2);
-    robot().click(point, MouseButton.LEFT_BUTTON, 1);
+    robot().click(button);
   }
 }
