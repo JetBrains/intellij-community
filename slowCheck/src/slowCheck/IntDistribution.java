@@ -23,6 +23,25 @@ public interface IntDistribution {
   }
 
   /**
+   * Geometric distribution with a given mean
+   */
+  static IntDistribution geometric(int mean) {
+    double p = 1.0 / mean;
+    return new IntDistribution() {
+      @Override
+      public int generateInt(Random random) {
+        double u = random.nextDouble();
+        return (int) (Math.log(u) / Math.log(1 - p));
+      }
+
+      @Override
+      public boolean isValidValue(int i) {
+        return i >= 0;
+      }
+    };
+  }
+
+  /**
    * This distribution returns 0 or 1, where 1 will be returned with the given probability
    */
   static IntDistribution biasedCoin(double probabilityOfOne) {

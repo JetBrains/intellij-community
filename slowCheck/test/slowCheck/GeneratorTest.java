@@ -24,21 +24,21 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testListSumMod() {
-    checkFalsified(listOf(integers()), 
+    checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   130);
+                   118);
   }
 
   public void testListContainsDivisible() {
-    checkFalsified(listOf(integers()), 
+    checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   14);
+                   13);
   }
 
   public void testStringContains() {
     checkFalsified(stringOf(asciiPrintable()), 
                    s -> !s.contains("a"),
-                   7);
+                   10);
   }
 
   public void testLetterStringContains() {
@@ -48,9 +48,9 @@ public class GeneratorTest extends TestCase {
   }
   
   public void testIsSorted() {
-    checkFalsified(listOf(integers()), 
+    checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   217);
+                   218);
   }
 
   public void testSuccess() {
@@ -61,7 +61,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   297);
+                   399);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -95,7 +95,17 @@ public class GeneratorTest extends TestCase {
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringOf("abc "), 
                    s -> !s.contains(" "),
-                   7);
+                   6);
+  }
+
+  public void testLongListsHappen() {
+    checkFalsified(listOf(integers()).noShrink(),
+                   l -> l.size() < 200,
+                   0);
+  }
+
+  public void testNonEmptyList() {
+    PropertyChecker.forAll(nonEmptyListOf(integers()), l -> !l.isEmpty());
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {

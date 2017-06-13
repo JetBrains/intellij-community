@@ -9,7 +9,11 @@ import java.util.List;
  */
 public class GenCollection {
   public static <T> Generator<List<T>> listOf(Generator<T> itemGenerator) {
-    return listOf(IntDistribution.uniform(0, 42), itemGenerator);
+    return listOf(IntDistribution.geometric(42), itemGenerator);
+  }
+
+  public static <T> Generator<List<T>> nonEmptyListOf(Generator<T> itemGenerator) {
+    return listOf(BoundedIntDistribution.bound(1, Integer.MAX_VALUE, IntDistribution.geometric(42)), itemGenerator);
   }
 
   public static <T> Generator<List<T>> listOf(IntDistribution length, Generator<T> itemGenerator) {
