@@ -48,14 +48,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
-import com.intellij.util.attribute
+import com.intellij.util.*
 import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
-import com.intellij.util.isEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
 import gnu.trove.THashSet
@@ -110,7 +107,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
     LOG.runAndLogException {
-      normalizeDefaultProjectElement(defaultProject, element, if (isDirectoryBased) Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)) else null)
+      if (isDirectoryBased) {
+        normalizeDefaultProjectElement(defaultProject, element, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)))
+      }
     }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
   }
@@ -424,10 +423,10 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
   }
 }
 
-private fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element) {
+private fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element): List<Element> {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
-    return
+    return emptyList()
   }
 
   val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
@@ -446,24 +445,36 @@ private fun removeWorkspaceComponentConfiguration(defaultProject: Project, eleme
     true
   }
 
+  val result = SmartList<Element>()
   val iterator = componentElements.iterator()
   for (componentElement in iterator) {
     val name = componentElement.getAttributeValue("name") ?: continue
     if (workspaceComponentNames.contains(name)) {
       iterator.remove()
+      result.add(componentElement)
     }
   }
-  return
+  return result
 }
 
 // public only to test
-fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path?) {
+fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
   LOG.runAndLogException {
-    removeWorkspaceComponentConfiguration(defaultProject, element)
-  }
-
-  if (projectConfigDir == null) {
-    return
+    val workspaceElements = removeWorkspaceComponentConfiguration(defaultProject, element)
+    if (workspaceElements.isNotEmpty()) {
+      val workspaceFile = projectConfigDir.resolve("workspace.xml")
+      var wrapper = Element("project").attribute("version", "4")
+      if (workspaceFile.exists()) {
+        try {
+          wrapper = loadElement(workspaceFile)
+        }
+        catch (e: Exception) {
+          LOG.warn(e)
+        }
+      }
+      workspaceElements.forEach { wrapper.addContent(it) }
+      wrapper.write(workspaceFile)
+    }
   }
 
   LOG.runAndLogException {
