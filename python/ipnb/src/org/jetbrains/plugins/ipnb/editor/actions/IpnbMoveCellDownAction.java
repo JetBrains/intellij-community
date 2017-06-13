@@ -25,7 +25,7 @@ public class IpnbMoveCellDownAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    IpnbFilePanel ipnbFilePanel = myFileEditor.getIpnbFilePanel();
+    IpnbFilePanel ipnbFilePanel = myEditor.getIpnbFilePanel();
     IpnbEditablePanel selectedCellPanel = ipnbFilePanel.getSelectedCellPanel();
     if (selectedCellPanel != null) {
       boolean editing = selectedCellPanel.isEditing();

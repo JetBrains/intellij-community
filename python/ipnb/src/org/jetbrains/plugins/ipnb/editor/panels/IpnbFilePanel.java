@@ -817,7 +817,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      executeSaveFileCommand();
       executeUndoableCommand(
         () -> {
           deleteSelectedCell();
@@ -832,7 +831,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
-      executeSaveFileCommand();
       executeUndoableCommand(() -> {
         pasteCell();
         saveToFile(false);
@@ -851,7 +849,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      executeSaveFileCommand();
       executeUndoableCommand(() -> {
         cutCell();
         saveToFile(false);
@@ -871,6 +868,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void executeUndoableCommand(@NotNull Runnable action, @NotNull String name) {
+    executeSaveFileCommand();
     CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
       action), name, new Object());
   }

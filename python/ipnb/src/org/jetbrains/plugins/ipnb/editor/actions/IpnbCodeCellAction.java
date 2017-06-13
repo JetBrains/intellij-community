@@ -35,7 +35,6 @@ public class IpnbCodeCellAction extends AnAction {
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
     final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.newArrayList(), cell.getMetadata());
-    filePanel.executeSaveFileCommand();
     filePanel.executeUndoableCommand(() -> {
       if (index >= 0) {
         cells.set(index, codeCell);

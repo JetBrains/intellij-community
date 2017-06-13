@@ -34,7 +34,6 @@ public class IpnbMarkdownCellAction extends AnAction {
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
     final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource(), cell.getMetadata());
-    filePanel.executeSaveFileCommand();
     filePanel.executeUndoableCommand(
       () -> {
         if (index >= 0) {

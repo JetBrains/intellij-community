@@ -25,7 +25,6 @@ public class IpnbMergeCellAboveAction extends AnAction {
   }
 
   public static void mergeCell(@NotNull IpnbFilePanel filePanel) {
-    filePanel.executeSaveFileCommand();
     filePanel.executeUndoableCommand(() -> filePanel.mergeCell(false), "Merge Cell Above");
   }
 
