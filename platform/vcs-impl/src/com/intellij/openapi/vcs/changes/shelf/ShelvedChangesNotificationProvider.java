@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -58,6 +59,9 @@ public class ShelvedChangesNotificationProvider extends EditorNotifications.Prov
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+    if (!VcsConfiguration.getInstance(myProject).SHOW_CURRENT_FILE_CHANGES_ON_SHELF) {
+      return null;
+    }
     final String path = file.getPath();
     final List<ShelvedChangeList> foundChangeLists = ShelveChangesManager.getInstance(myProject).getShelvedChangeLists()
       .stream().filter(l -> findChange(path, l).isPresent()).collect(Collectors.toList());

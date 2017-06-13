@@ -67,7 +67,7 @@ public abstract class ProjectLocator {
       return action.compute();
     }
     finally {
-      local.set(null);
+      local.remove();
     }
   }
 

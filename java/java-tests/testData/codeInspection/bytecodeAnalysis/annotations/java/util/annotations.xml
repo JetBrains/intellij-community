@@ -4,6 +4,12 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.AbstractCollection T[] finishToArray(T[], java.util.Iterator&lt;?&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.AbstractCollection T[] finishToArray(T[], java.util.Iterator&lt;?&gt;) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.AbstractCollection T[] toArray(T[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -159,6 +165,9 @@
     <item name='java.util.AbstractMap boolean containsValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.AbstractMap boolean eq(java.lang.Object, java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.AbstractMap boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -181,16 +190,13 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.AbstractMap.SimpleEntry SimpleEntry(java.util.Map.Entry&lt;K,V&gt;) 0'>
+    <item name='java.util.AbstractMap.SimpleEntry SimpleEntry(java.util.Map.Entry&lt;? extends K,? extends V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.AbstractMap.SimpleEntry V getValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.util.AbstractMap.SimpleEntry boolean eq(java.lang.Object, java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.AbstractMap.SimpleEntry boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -201,6 +207,47 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.AbstractMap.SimpleEntry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry K getKey()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry SimpleImmutableEntry(K, V)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry SimpleImmutableEntry(java.util.Map.Entry&lt;? extends K,? extends V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry V getValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry V setValue(V)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry V setValue(V) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry boolean equals(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry boolean equals(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.AbstractMap.SimpleImmutableEntry java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -251,7 +298,7 @@
     <item name='java.util.ArrayList ArrayList(java.util.Collection&lt;? extends E&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.ArrayList E get(int)'>
+    <item name='java.util.ArrayList E elementData(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -293,9 +340,43 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.util.ArrayList java.lang.String outOfBoundsMsg(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.ArrayList void RangeCheck(int)'>
+    <item name='java.util.ArrayList java.util.Iterator&lt;E&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList void rangeCheck(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList void rangeCheckForAdd(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -303,20 +384,133 @@
     <item name='java.util.ArrayList void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.ArrayList void subListRangeCheck(int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.ArrayList void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList.Itr Itr()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.Itr boolean hasNext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.Itr void checkForComodification()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.ListItr ListItr(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.ListItr boolean hasPrevious()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.ListItr int nextIndex()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.ListItr int previousIndex()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.SubList SubList(java.util.AbstractList&lt;E&gt;, int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.SubList SubList(java.util.AbstractList&lt;E&gt;, int, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList.SubList boolean addAll(int, java.util.Collection&lt;? extends E&gt;) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList.SubList int size()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.SubList java.lang.String outOfBoundsMsg(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList.SubList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList.SubList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.ArrayList.SubList void checkForComodification()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.SubList void rangeCheck(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ArrayList.SubList void rangeCheckForAdd(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Arrays Arrays()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.Arrays T[] cloneSubarray(T[], int, int)'>
+    <item name='java.util.Arrays T[] copyOf(T[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.Arrays T[] cloneSubarray(T[], int, int) 0'>
+    <item name='java.util.Arrays T[] copyOf(T[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays T[] copyOfRange(T[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays T[] copyOfRange(T[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays T[] copyOfRange(U[], int, int, java.lang.Class&lt;? extends T[]&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays T[] copyOfRange(U[], int, int, java.lang.Class&lt;? extends T[]&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays boolean deepEquals(java.lang.Object[], java.lang.Object[]) 0'>
@@ -324,6 +518,9 @@
     </item>
     <item name='java.util.Arrays boolean deepEquals(java.lang.Object[], java.lang.Object[]) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays boolean deepEquals0(java.lang.Object, java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays boolean equals(boolean[], boolean[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -358,11 +555,21 @@
     <item name='java.util.Arrays boolean equals(char[], char[]) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.Arrays boolean equals(double[], double[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Arrays boolean equals(double[], double[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.Arrays boolean equals(double[], double[]) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays boolean equals(float[], float[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Arrays boolean equals(float[], float[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -409,10 +616,106 @@
     <item name='java.util.Arrays boolean equals(short[], short[]) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.Arrays boolean[] copyOf(boolean[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays boolean[] copyOf(boolean[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays boolean[] copyOfRange(boolean[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays boolean[] copyOfRange(boolean[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays byte[] copyOf(byte[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays byte[] copyOf(byte[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays byte[] copyOfRange(byte[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays byte[] copyOfRange(byte[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays char[] copyOf(char[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays char[] copyOf(char[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays char[] copyOfRange(char[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays char[] copyOfRange(char[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays double[] copyOf(double[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays double[] copyOf(double[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays double[] copyOfRange(double[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays double[] copyOfRange(double[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays float[] copyOf(float[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays float[] copyOf(float[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays float[] copyOfRange(float[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays float[] copyOfRange(float[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays int binarySearch(T[], T, java.util.Comparator&lt;? super T&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays int binarySearch(T[], T, java.util.Comparator&lt;? super T&gt;) 2'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(T[], int, int, T, java.util.Comparator&lt;? super T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(T[], int, int, T, java.util.Comparator&lt;? super T&gt;) 4'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.Arrays int binarySearch(byte[], byte)'>
@@ -423,6 +726,14 @@
     <item name='java.util.Arrays int binarySearch(byte[], byte) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays int binarySearch(byte[], int, int, byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(byte[], int, int, byte) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays int binarySearch(char[], char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -431,10 +742,44 @@
     <item name='java.util.Arrays int binarySearch(char[], char) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays int binarySearch(char[], int, int, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(char[], int, int, char) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(double[], double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Arrays int binarySearch(double[], double) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays int binarySearch(double[], int, int, double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(double[], int, int, double) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(float[], float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Arrays int binarySearch(float[], float) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(float[], int, int, float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(float[], int, int, float) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays int binarySearch(int[], int)'>
@@ -445,7 +790,26 @@
     <item name='java.util.Arrays int binarySearch(int[], int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays int binarySearch(int[], int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(int[], int, int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(java.lang.Object[], int, int, java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays int binarySearch(java.lang.Object[], java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch(long[], int, int, long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(long[], int, int, long) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays int binarySearch(long[], long)'>
@@ -456,6 +820,14 @@
     <item name='java.util.Arrays int binarySearch(long[], long) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays int binarySearch(short[], int, int, short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch(short[], int, int, short) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays int binarySearch(short[], short)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -463,6 +835,44 @@
     </item>
     <item name='java.util.Arrays int binarySearch(short[], short) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(T[], int, int, T, java.util.Comparator&lt;? super T&gt;) 4'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(byte[], int, int, byte)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(char[], int, int, char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(double[], int, int, double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(float[], int, int, float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(int[], int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(long[], int, int, long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays int binarySearch0(short[], int, int, short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Arrays int deepHashCode(java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -491,8 +901,18 @@
     <item name='java.util.Arrays int hashCode(char[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.Arrays int hashCode(double[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Arrays int hashCode(double[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays int hashCode(float[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Arrays int hashCode(float[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -524,60 +944,22 @@
     <item name='java.util.Arrays int hashCode(short[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.util.Arrays int med3(byte[], int, int, int)'>
+    <item name='java.util.Arrays int[] copyOf(int[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(byte[], int, int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays int med3(char[], int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(char[], int, int, int) 0'>
+    <item name='java.util.Arrays int[] copyOf(int[], int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays int med3(double[], int, int, int)'>
+    <item name='java.util.Arrays int[] copyOfRange(int[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(double[], int, int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays int med3(float[], int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(float[], int, int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays int med3(int[], int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(int[], int, int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays int med3(long[], int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(long[], int, int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays int med3(short[], int, int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Arrays int med3(short[], int, int, int) 0'>
+    <item name='java.util.Arrays int[] copyOfRange(int[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays java.lang.String deepToString(java.lang.Object[])'>
@@ -676,6 +1058,42 @@
     <item name='java.util.Arrays java.util.List&lt;T&gt; asList(T...) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays long[] copyOf(long[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays long[] copyOf(long[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays long[] copyOfRange(long[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays long[] copyOfRange(long[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays short[] copyOf(short[], int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays short[] copyOf(short[], int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays short[] copyOfRange(short[], int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays short[] copyOfRange(short[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays void deepToString(java.lang.Object[], java.lang.StringBuilder, java.util.Set&lt;java.lang.Object[]&gt;) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -736,93 +1154,51 @@
     <item name='java.util.Arrays void fill(short[], short) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Arrays void legacyMergeSort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays void legacyMergeSort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 3'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays void legacyMergeSort(T[], java.util.Comparator&lt;? super T&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays void legacyMergeSort(T[], java.util.Comparator&lt;? super T&gt;) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Arrays void legacyMergeSort(java.lang.Object[]) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays void legacyMergeSort(java.lang.Object[], int, int) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays void rangeCheck(int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 3'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.Arrays void sort(T[], java.util.Comparator&lt;? super T&gt;) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(T[], java.util.Comparator&lt;? super T&gt;) 1'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.Arrays void sort(byte[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.util.Arrays void sort(byte[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(char[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays void sort(char[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays void sort(double[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.util.Arrays void sort(double[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(float[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays void sort(float[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays void sort(int[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.util.Arrays void sort(int[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(java.lang.Object[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(java.lang.Object[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void sort(long[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays void sort(long[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays void sort(short[]) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.util.Arrays void sort(short[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Arrays void swap(byte[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void swap(char[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void swap(double[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void swap(float[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void swap(int[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='java.util.Arrays void swap(java.lang.Object[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void swap(long[], int, int) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Arrays void swap(short[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays.ArrayList ArrayList(E[])'>
@@ -838,10 +1214,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Arrays.ArrayList T[] toArray(T[]) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Arrays.ArrayList int indexOf(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.Arrays.ArrayList int size()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Arrays.LegacyMergeSort LegacyMergeSort()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -862,10 +1246,35 @@
     <item name='java.util.Calendar boolean before(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.util.Calendar boolean equals(java.lang.Object) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
+    <item name='java.util.Calendar boolean checkDisplayNameParams(int, int, int, int, java.util.Locale, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar boolean checkDisplayNameParams(int, int, int, int, java.util.Locale, int) 4'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Calendar boolean isExternallySet(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar boolean isFieldSet(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar boolean isFullyNormalized()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Calendar boolean isLenient()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar boolean isPartiallyNormalized()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -874,6 +1283,19 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.util.Calendar boolean isWeekDateSupported()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar int aggregateStamp(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar int compareTo(java.util.Calendar) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar int getFirstDayOfWeek()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -885,7 +1307,35 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Calendar int getSetStateFields()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar int getWeekYear()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar int getWeeksInWeekYear()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Calendar int internalGet(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar int selectFields()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Calendar java.lang.String getDisplayName(int, int, java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Calendar java.lang.String getFieldName(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -908,14 +1358,39 @@
     <item name='java.util.Calendar java.util.Date getTime()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Calendar java.util.Map&lt;java.lang.String,java.lang.Integer&gt; getDisplayNames(int, int, java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Calendar java.util.Map&lt;java.lang.String,java.lang.Integer&gt; getDisplayNamesImpl(int, int, java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Calendar long getMillisOf(java.util.Calendar) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Calendar void appendValue(java.lang.StringBuilder, java.lang.String, boolean, long) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Calendar void appendValue(java.lang.StringBuilder, java.lang.String, boolean, long) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.Calendar void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar void setTime(java.util.Date) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Calendar void setWeekDate(int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Calendar void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Calendar.CalendarAccessControlContext CalendarAccessControlContext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collection java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1186,6 +1661,12 @@
     <item name='java.util.Collections java.util.Map&lt;K,V&gt; unmodifiableMap(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Collections java.util.Queue&lt;T&gt; asLifoQueue(java.util.Deque&lt;T&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Collections java.util.Set&lt;E&gt; checkedSet(java.util.Set&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1335,14 +1816,16 @@
     <item name='java.util.Collections void sort(java.util.List&lt;T&gt;, java.util.Comparator&lt;? super T&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Collections void sort(java.util.List&lt;T&gt;, java.util.Comparator&lt;? super T&gt;) 1'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.util.Collections void swap(java.lang.Object[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections void swap(java.util.List&lt;?&gt;, int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Collections.AsLIFOQueue AsLIFOQueue(java.util.Deque&lt;E&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.AsLIFOQueue boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2457,6 +2940,16 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.ConcurrentModificationException ConcurrentModificationException(java.lang.String, java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.ConcurrentModificationException ConcurrentModificationException(java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Date Date(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2485,10 +2978,28 @@
     <item name='java.util.Date java.lang.Object clone()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.Date java.lang.String toGMTString()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Date java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Date java.lang.StringBuilder convertToAbbr(java.lang.StringBuilder, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null,_-&gt;!null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.Date java.lang.StringBuilder convertToAbbr(java.lang.StringBuilder, java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Date java.lang.StringBuilder convertToAbbr(java.lang.StringBuilder, java.lang.String) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Date long getMillisOf(java.util.Date) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Date long parse(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2507,38 +3018,12 @@
     <item name='java.util.GregorianCalendar boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.util.GregorianCalendar boolean isLeapYear(int)'>
+    <item name='java.util.GregorianCalendar boolean isCutoverYear(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.GregorianCalendar int aggregateStamp(int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.GregorianCalendar int floorDivide(int, int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.GregorianCalendar int floorDivide(int, int, int[]) 2'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.GregorianCalendar int floorDivide(long, int, int[]) 2'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.GregorianCalendar int getGreatestMinimum(int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.GregorianCalendar int getLeastMaximum(int)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.GregorianCalendar int getMaximum(int)'>
+    <item name='java.util.GregorianCalendar boolean isWeekDateSupported()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -2548,7 +3033,7 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.GregorianCalendar int julianDayToDayOfWeek(long)'>
+    <item name='java.util.GregorianCalendar int getRolledValue(int, int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -2559,24 +3044,6 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.GregorianCalendar long computeJulianDay(boolean, int, int[]) 2'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.GregorianCalendar long floorDivide(long, long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.GregorianCalendar long julianDayToMillis(long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.GregorianCalendar long millisToJulianDay(long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.GregorianCalendar void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2586,26 +3053,16 @@
     <item name='java.util.HashMap HashMap(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.HashMap T maskNull(T)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;!null&quot;"/>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.HashMap T maskNull(T) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.HashMap T unmaskNull(T)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;null-&gt;null&quot;"/>
-            <val name="pure" val="true"/>
-        </annotation>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.util.HashMap V get(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.HashMap V get(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap V getForNullKey()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.HashMap V put(K, V)'>
@@ -2614,7 +3071,13 @@
     <item name='java.util.HashMap V put(K, V) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.HashMap V putForNullKey(V)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.HashMap V remove(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap V remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.HashMap boolean containsKey(java.lang.Object) 0'>
@@ -2627,11 +3090,6 @@
     </item>
     <item name='java.util.HashMap boolean containsValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.HashMap boolean eq(java.lang.Object, java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;true&quot;"/>
-        </annotation>
     </item>
     <item name='java.util.HashMap boolean isEmpty()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2656,18 +3114,53 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.HashMap int roundUpToPowerOf2(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.HashMap int size()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.HashMap java.util.HashMap.Entry&lt;K,V&gt; getEntry(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap java.util.HashMap.Entry&lt;K,V&gt; getEntry(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap java.util.HashMap.Entry&lt;K,V&gt; removeEntryForKey(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap java.util.HashMap.Entry&lt;K,V&gt; removeEntryForKey(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap java.util.HashMap.Entry&lt;K,V&gt; removeMapping(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;null&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap java.util.HashMap.Entry&lt;K,V&gt; removeMapping(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.HashMap java.util.Iterator&lt;K&gt; newKeyIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap java.util.Iterator&lt;V&gt; newValueIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; newEntryIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap void init()'>
@@ -2681,14 +3174,133 @@
     <item name='java.util.HashMap void putAllForCreate(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.HashMap void putForCreate(K, V) 0'>
-        <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
     <item name='java.util.HashMap void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.HashMap void transfer(java.util.HashMap.Entry[], boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.HashMap.Entry Entry(int, K, V, java.util.HashMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Entry K getKey()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Entry V getValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Entry boolean equals(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Entry boolean equals(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap.Entry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.HashMap.Entry void recordAccess(java.util.HashMap&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Entry void recordAccess(java.util.HashMap&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap.Entry void recordRemoval(java.util.HashMap&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Entry void recordRemoval(java.util.HashMap&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap.EntryIterator EntryIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.EntrySet EntrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.EntrySet boolean contains(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.EntrySet boolean contains(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap.EntrySet boolean remove(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap.EntrySet int size()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.HashIterator HashIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.HashIterator boolean hasNext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Holder Holder()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.KeyIterator KeyIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.KeySet KeySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.KeySet boolean remove(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.HashMap.KeySet int size()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.ValueIterator ValueIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Values Values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.HashMap.Values int size()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Hashtable Hashtable(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2728,6 +3340,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Hashtable int hash(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Hashtable int size()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -2765,13 +3380,13 @@
     <item name='java.util.Hashtable void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Hashtable void reconstitutionPut(java.util.Hashtable.Entry[], K, V) 0'>
+    <item name='java.util.Hashtable void reconstitutionPut(java.util.Hashtable.Entry&lt;K,V&gt;[], K, V) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Hashtable void reconstitutionPut(java.util.Hashtable.Entry[], K, V) 1'>
+    <item name='java.util.Hashtable void reconstitutionPut(java.util.Hashtable.Entry&lt;K,V&gt;[], K, V) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Hashtable void reconstitutionPut(java.util.Hashtable.Entry[], K, V) 2'>
+    <item name='java.util.Hashtable void reconstitutionPut(java.util.Hashtable.Entry&lt;K,V&gt;[], K, V) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Hashtable void writeObject(java.io.ObjectOutputStream) 0'>
@@ -2844,6 +3459,11 @@
         </annotation>
     </item>
     <item name='java.util.Hashtable.Enumerator Enumerator(int, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Hashtable.Holder Holder()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -3147,6 +3767,14 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.LinkedHashMap void transfer(java.util.HashMap.Entry[], boolean) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.LinkedHashMap.Entry Entry(int, K, V, java.util.HashMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.LinkedHashMap.Entry void addBefore(java.util.LinkedHashMap.Entry&lt;K,V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3195,11 +3823,6 @@
     <item name='java.util.Locale Locale(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Locale Locale(java.lang.String, java.lang.String, boolean)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.Locale Locale(java.lang.String, java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3209,16 +3832,8 @@
     <item name='java.util.Locale Locale(java.lang.String, java.lang.String, java.lang.String) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Locale boolean equals(java.lang.Object)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.Locale boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.Locale java.lang.String convertOldISOCodes(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.lang.String formatList(java.lang.String[], java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3234,17 +3849,17 @@
     <item name='java.util.Locale java.lang.String formatList(java.lang.String[], java.lang.String, java.lang.String) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.util.Locale java.lang.String getCountry()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.Locale java.lang.String getDisplayCountry(java.util.Locale)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='java.util.Locale java.lang.String getDisplayLanguage(java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;!null&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.Locale java.lang.String getDisplayScript(java.util.Locale)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;!null&quot;"/>
         </annotation>
@@ -3257,6 +3872,9 @@
     <item name='java.util.Locale java.lang.String getDisplayString(java.lang.String, java.util.Locale, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Locale java.lang.String getExtension(char)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.Locale java.lang.String getISO3Code(java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;!null&quot;"/>
@@ -3266,32 +3884,16 @@
     <item name='java.util.Locale java.lang.String getISO3Code(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Locale java.lang.String getLanguage()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
+    <item name='java.util.Locale java.lang.String getUnicodeLocaleType(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.util.Locale java.lang.String getVariant()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Locale java.lang.String toLowerCase(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Locale java.lang.String toLowerCase(java.lang.String) 0'>
+    <item name='java.util.Locale java.lang.String toLanguageTag()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Locale java.lang.String toUpperCase(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.Locale java.lang.String toUpperCase(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.lang.String[] getISO2Table(java.lang.String) 0'>
@@ -3303,7 +3905,7 @@
     <item name='java.util.Locale java.lang.String[] getISOLanguages()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.Locale java.util.Locale createSingleton(java.lang.String, java.lang.String, java.lang.String)'>
+    <item name='java.util.Locale java.util.Locale getDefault(java.util.Locale.Category) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.util.Locale getInstance(java.lang.String, java.lang.String, java.lang.String) 0'>
@@ -3315,8 +3917,84 @@
     <item name='java.util.Locale java.util.Locale getInstance(java.lang.String, java.lang.String, java.lang.String) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Locale void initDefault(java.util.Locale.Category) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale void readObject(java.io.ObjectInputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.Locale void setDefault(java.util.Locale) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale void setDefault(java.util.Locale.Category, java.util.Locale) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale void setDefault(java.util.Locale.Category, java.util.Locale) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder addUnicodeLocaleAttribute(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder clear()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder clearExtensions()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder removeUnicodeLocaleAttribute(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setExtension(char, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setLanguage(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setLanguageTag(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setLocale(java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setLocale(java.util.Locale) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setRegion(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setScript(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setUnicodeLocaleKeyword(java.lang.String, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Builder java.util.Locale.Builder setVariant(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Cache java.util.Locale createObject(java.util.Locale.LocaleKey)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.Cache java.util.Locale createObject(java.util.Locale.LocaleKey) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Locale.LocaleKey boolean equals(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Locale.LocaleKey int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Locale.LocaleNameGetter LocaleNameGetter()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.NoSuchElementException NoSuchElementException()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3388,6 +4066,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Random long initialScramble(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Random void nextBytes(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -3402,15 +4085,45 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.TreeMap K ceilingKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.TreeMap K firstKey()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.TreeMap K floorKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap K higherKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap K key(java.util.TreeMap.Entry&lt;K,?&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap K key(java.util.TreeMap.Entry&lt;K,?&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap K keyOrNull(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap K keyOrNull(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.TreeMap K lastKey()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='java.util.TreeMap K lowerKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.TreeMap TreeMap()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3434,6 +4147,15 @@
     <item name='java.util.TreeMap V remove(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.TreeMap boolean colorOf(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;true&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap boolean colorOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.TreeMap boolean containsValue(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -3455,13 +4177,148 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.TreeMap java.util.SortedMap&lt;K,V&gt; headMap(K)'>
+    <item name='java.util.TreeMap java.util.Iterator&lt;K&gt; descendingKeyIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.TreeMap java.util.SortedMap&lt;K,V&gt; subMap(K, K)'>
+    <item name='java.util.TreeMap java.util.Iterator&lt;K&gt; keyIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.TreeMap java.util.SortedMap&lt;K,V&gt; tailMap(K)'>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; ceilingEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; exportEntry(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; exportEntry(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; firstEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; floorEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; higherEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; lastEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; lowerEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; pollFirstEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.Map.Entry&lt;K,V&gt; pollLastEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.NavigableMap&lt;K,V&gt; headMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap java.util.NavigableMap&lt;K,V&gt; subMap(K, boolean, K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap java.util.NavigableMap&lt;K,V&gt; tailMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; buildFromSorted(int, int, int, int, java.util.Iterator, java.io.ObjectInputStream, V)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getCeilingEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getEntry(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getEntryUsingComparator(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getFirstEntry()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getFloorEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getHigherEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getLastEntry()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; getLowerEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; leftOf(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; leftOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; parentOf(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; parentOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; predecessor(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; predecessor(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; rightOf(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; rightOf(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; successor(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; successor(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap void deleteEntry(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap void fixAfterDeletion(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap void fixAfterInsertion(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
@@ -3470,7 +4327,361 @@
     <item name='java.util.TreeMap void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.TreeMap void rotateLeft(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap void rotateRight(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap void setColor(java.util.TreeMap.Entry&lt;K,V&gt;, boolean) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
     <item name='java.util.TreeMap void writeObject(java.io.ObjectOutputStream) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap java.util.Iterator&lt;K&gt; descendingKeyIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap java.util.Iterator&lt;K&gt; keyIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap java.util.NavigableMap&lt;K,V&gt; headMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap java.util.NavigableMap&lt;K,V&gt; subMap(K, boolean, K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap java.util.NavigableMap&lt;K,V&gt; tailMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap.AscendingEntrySetView AscendingEntrySetView()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.AscendingSubMap.AscendingEntrySetView java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingKeyIterator DescendingKeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.DescendingKeyIterator DescendingKeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.Comparator&lt;? super K&gt; comparator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.Iterator&lt;K&gt; descendingKeyIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.Iterator&lt;K&gt; keyIterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.NavigableMap&lt;K,V&gt; headMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.NavigableMap&lt;K,V&gt; subMap(K, boolean, K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.NavigableMap&lt;K,V&gt; tailMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap.DescendingEntrySetView DescendingEntrySetView()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.DescendingSubMap.DescendingEntrySetView java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.Entry Entry(K, V, java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.Entry K getKey()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.Entry V getValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.Entry boolean equals(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.Entry boolean equals(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.Entry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.EntryIterator EntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.EntryIterator EntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.EntrySet EntrySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.EntrySet boolean contains(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.EntrySet boolean contains(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.EntrySet boolean remove(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.EntrySet boolean remove(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.EntrySet java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.KeyIterator KeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.KeyIterator KeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.KeySet E pollFirst()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.KeySet E pollLast()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.KeySet KeySet(java.util.NavigableMap&lt;E,java.lang.Object&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.KeySet java.util.SortedSet&lt;E&gt; headSet(E)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.KeySet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.KeySet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap K ceilingKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap K floorKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap K higherKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap K lowerKey(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap V get(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap V remove(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; ceilingEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; firstEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; floorEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; higherEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; lastEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; lowerEntry(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; pollFirstEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.Map.Entry&lt;K,V&gt; pollLastEntry()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absCeiling(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absFloor(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absHighFence()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absHigher(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absHighest()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absLowFence()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absLower(K)'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap java.util.TreeMap.Entry&lt;K,V&gt; absLowest()'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.DescendingSubMapEntryIterator DescendingSubMapEntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.DescendingSubMapEntryIterator DescendingSubMapEntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.DescendingSubMapKeyIterator DescendingSubMapKeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.DescendingSubMapKeyIterator DescendingSubMapKeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.EntrySetView EntrySetView()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.EntrySetView boolean contains(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.EntrySetView boolean contains(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.EntrySetView boolean remove(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;null-&gt;false&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.EntrySetView boolean remove(java.lang.Object) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapEntryIterator SubMapEntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapEntryIterator SubMapEntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapIterator SubMapIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapIterator SubMapIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapIterator boolean hasNext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapKeyIterator SubMapKeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.NavigableSubMap.SubMapKeyIterator SubMapKeyIterator(java.util.TreeMap.Entry&lt;K,V&gt;, java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.PrivateEntryIterator PrivateEntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.PrivateEntryIterator PrivateEntryIterator(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.PrivateEntryIterator boolean hasNext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.SubMap SubMap()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.SubMap java.lang.Object readResolve()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.SubMap java.util.SortedMap&lt;K,V&gt; headMap(K) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.SubMap java.util.SortedMap&lt;K,V&gt; subMap(K, K) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.SubMap java.util.SortedMap&lt;K,V&gt; subMap(K, K) 1'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.SubMap java.util.SortedMap&lt;K,V&gt; tailMap(K) 0'>
+        <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.TreeMap.ValueIterator ValueIterator(java.util.TreeMap.Entry&lt;K,V&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.ValueIterator ValueIterator(java.util.TreeMap.Entry&lt;K,V&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.TreeMap.Values Values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.TreeMap.Values java.util.Iterator&lt;V&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
 </root>

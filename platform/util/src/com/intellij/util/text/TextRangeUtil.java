@@ -18,14 +18,17 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Rustam Vishnyakov
  */
 public class TextRangeUtil {
 
-  private static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
+  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange range1, TextRange range2) {
       int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
@@ -67,5 +70,25 @@ public class TextRangeUtil {
       return enabledRanges;
     }
     return Collections.singletonList(original);
+  }
+
+  /**
+   * Return least text range that contains all of passed text ranges.
+   * For example for {[0, 3],[3, 7],[10, 17]} this method will return [0, 17]
+   * @param textRanges The list of ranges to process
+   * @return least text range that contains all of passed text ranges
+   */
+  @NotNull
+  public static TextRange getEnclosingTextRange(@NotNull List<TextRange> textRanges) {
+    if(textRanges.isEmpty())
+      return TextRange.EMPTY_RANGE;
+    int lowerBound = textRanges.get(0).getStartOffset();
+    int upperBound = textRanges.get(0).getEndOffset();
+    for(int i = 1; i < textRanges.size(); ++i) {
+      TextRange textRange = textRanges.get(i);
+      lowerBound = Math.min(lowerBound, textRange.getStartOffset());
+      upperBound = Math.max(upperBound, textRange.getEndOffset());
+    }
+    return new TextRange(lowerBound, upperBound);
   }
 }
