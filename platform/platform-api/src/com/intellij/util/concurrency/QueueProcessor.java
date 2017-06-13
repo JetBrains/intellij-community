@@ -189,7 +189,7 @@ public class QueueProcessor<T> {
     }
   }
   
-  public boolean waitFor(long timeoutMS) {
+  boolean waitFor(long timeoutMS) {
     synchronized (myQueue) {
       long start = System.currentTimeMillis();
       
