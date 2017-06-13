@@ -9,10 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="core-api" scope="TEST" />
-    <orderEntry type="module" module-name="indexing-impl" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="compiler-openapi" scope="TEST" />
     <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="module" module-name="util" scope="TEST" />
   </component>
 </module>

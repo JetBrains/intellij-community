@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 /**
  * @author peter
  */
-interface DataStructure {
+public interface DataStructure {
 
   default int drawInt() {
     return drawInt(BoundedIntDistribution.ALL_INTS);

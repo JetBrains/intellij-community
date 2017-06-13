@@ -1,6 +1,5 @@
 package slowCheck;
 
-import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
 import java.util.List;
@@ -8,8 +7,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static slowCheck.Generator.*;
-import static slowCheck.Generator.doubles;
-import static slowCheck.Generator.listOf;
 
 /**
  * @author peter
@@ -54,12 +51,14 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuccess() {
-    Checker.forAll(ourTestSettings, listOf(integers(-1, 1)), l -> 
-      l.stream().allMatch(i -> Math.abs(i) <= 1));
+    Checker.forAll(listOf(integers(-1, 1)), 
+                   l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
   }
 
   public void testSortedDoublesNonDescending() {
-    checkFalsified(listOf(doubles()), l -> isSorted(ContainerUtil.sorted(l)), 329);
+    checkFalsified(listOf(doubles()), 
+                   l -> isSorted(l.stream().sorted().collect(Collectors.toList())), 
+                   329);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -78,12 +77,12 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuchThat() {
-    Checker.forAll(ourTestSettings, integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
+    Checker.forAll(integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
   }
 
   public void testUnsatisfiableSuchThat() {
     try {
-      Checker.forAll(ourTestSettings, integers(-1, 1).suchThat(i -> i >2), i -> i == 0);
+      Checker.forAll(integers(-1, 1).suchThat(i -> i >2), i -> i == 0);
       fail();
     }
     catch (CannotSatisfyCondition ignored) {
