@@ -26,7 +26,7 @@ public class IpnbCodeCellAction extends AnAction {
     changeTypeToCode(myEditor);
   }
 
-  public void changeTypeToCode(@NotNull final IpnbFileEditor editor) {
+  private static void changeTypeToCode(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
     if (selectedCellPanel == null) return;

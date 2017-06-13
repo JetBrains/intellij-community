@@ -23,7 +23,7 @@ public class IpnbReloadKernelAction extends AnAction {
     reloadKernel(myFileEditor);
   }
 
-  public static void reloadKernel(@NotNull final IpnbFileEditor editor) {
+  private static void reloadKernel(@NotNull final IpnbFileEditor editor) {
     final Project project = editor.getIpnbFilePanel().getProject();
     @SuppressWarnings("DialogTitleCapitalization")
     final int restart = Messages.showYesNoDialog("Do you want to restart the current kernel? You will lose all variables defined in it.",
