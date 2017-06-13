@@ -425,9 +425,7 @@ public class RedundantCastUtil {
                 final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, i, varargs);
                 final PsiType newArgType = newResult.getSubstitutor().substitute(parameterType);
 
-                //todo replace with castType.equals(FunctionalInterfaceParameterizationUtil.getGroundType(newArgType, lambda))
-                if (Comparing.equal(oldResult.getSubstitutor().substitute(parameterType), newArgType) &&
-                    Comparing.equal(TypeConversionUtil.erasure(castType), TypeConversionUtil.erasure(newArgType))) {
+                if (Comparing.equal(castType, ((PsiFunctionalExpression)newArgs[i]).getGroundTargetType(newArgType))) {
                   addToResults(cast);
                 }
               }
