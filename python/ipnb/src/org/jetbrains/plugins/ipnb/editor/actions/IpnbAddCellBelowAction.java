@@ -31,7 +31,6 @@ public class IpnbAddCellBelowAction extends AnAction {
   }
 
   public static void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    ipnbFilePanel.executeSaveFileCommand();
     ipnbFilePanel.executeUndoableCommand(() -> {
       ipnbFilePanel.createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
       ipnbFilePanel.saveToFile(false);
