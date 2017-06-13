@@ -52,17 +52,18 @@ import java.util.*;
 public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
 
-  private int myBaseListHashCode = 0;
+  private long myBaseListModCount = -1;
   private Set<NestingRule> myNestingRules;
 
   @NotNull
   private Collection<NestingRule> getNestingRules() {
-    final List<NestingRule> baseRules = ProjectViewFileNestingService.getInstance().getRules();
-    final int baseRulesHashCode = baseRules.hashCode();
+    final ProjectViewFileNestingService fileNestingService = ProjectViewFileNestingService.getInstance();
+    final List<NestingRule> baseRules = fileNestingService.getRules();
+    final long modCount = fileNestingService.getModificationCount();
 
-    if (myNestingRules == null || myBaseListHashCode != baseRulesHashCode) {
+    if (myNestingRules == null || myBaseListModCount != modCount) {
       myNestingRules = new THashSet<>();
-      myBaseListHashCode = baseRulesHashCode;
+      myBaseListModCount = modCount;
 
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
       final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
