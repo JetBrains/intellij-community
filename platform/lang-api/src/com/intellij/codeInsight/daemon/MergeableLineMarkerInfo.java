@@ -26,7 +26,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -83,10 +81,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     for (int i = 0; i < markers.size(); i++) {
       MergeableLineMarkerInfo marker = markers.get(i);
       List<MergeableLineMarkerInfo> toMerge = new SmartList<>();
+      GutterIconNavigationHandler handler = marker.getNavigationHandler();
+      String presentation = getPresentation(marker);
       for (int k = markers.size() - 1; k > i; k--) {
         MergeableLineMarkerInfo current = markers.get(k);
         if (marker.canMergeWith(current)) {
-          toMerge.add(0, current);
+          if (handler == null || !handler.equals(current.getNavigationHandler()) || !presentation.equals(getPresentation(current))) {
+            toMerge.add(0, current);
+          }
           markers.remove(k);
         }
       }
@@ -144,12 +146,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                 if (renderer != null) {
                   icon = renderer.getIcon();
                 }
-                PsiElement element = ((LineMarkerInfo)dom).getElement();
-                assert element != null;
-                final String elementPresentation =
-                  dom instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element) : element.getText();
-                String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
-
+                String text = getPresentation((LineMarkerInfo)dom);
                 final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
                 label.setBorder(IdeBorderFactory.createEmptyBorder(2));
                 return label;
@@ -171,5 +168,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
       };
     }
+  }
+
+  @NotNull
+  private static String getPresentation(LineMarkerInfo info) {
+    PsiElement element = info.getElement();
+    assert element != null;
+    final String elementPresentation =
+      info instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)info).getElementPresentation(element) : element.getText();
+    return StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
   }
 }
