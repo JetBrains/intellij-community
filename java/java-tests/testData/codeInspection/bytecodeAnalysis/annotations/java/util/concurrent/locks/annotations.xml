@@ -193,6 +193,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.concurrent.locks.LockSupport java.lang.Object getBlocker(java.lang.Thread) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
     <item name='java.util.concurrent.locks.LockSupport void unpark(java.lang.Thread) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>

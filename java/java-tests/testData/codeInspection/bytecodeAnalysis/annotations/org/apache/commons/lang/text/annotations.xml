@@ -564,6 +564,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher stringMatcher(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.text.StrMatcher org.apache.commons.lang.text.StrMatcher stringMatcher(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -614,6 +619,11 @@
     </item>
     <item name='org.apache.commons.lang.text.StrMatcher.NoMatcher int isMatch(char[], int, int, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.text.StrMatcher.StringMatcher StringMatcher(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrMatcher.StringMatcher StringMatcher(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -811,6 +821,11 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer StrTokenizer(char[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.text.StrTokenizer StrTokenizer(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

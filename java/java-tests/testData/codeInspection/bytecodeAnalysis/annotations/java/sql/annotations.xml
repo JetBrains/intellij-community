@@ -24,6 +24,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.sql.BatchUpdateException int[] getUpdateCounts()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.sql.DataTruncation boolean getParameter()'>
@@ -257,6 +260,11 @@
         </annotation>
     </item>
     <item name='java.sql.Time void setYear(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.sql.Timestamp Timestamp(long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

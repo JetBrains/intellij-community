@@ -155,7 +155,8 @@
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble boolean equals(java.lang.Object) 0'>
@@ -181,8 +182,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble int compareTo(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble int compareTo(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble int intValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -232,7 +243,8 @@
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat boolean equals(java.lang.Object) 0'>
@@ -258,8 +270,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat int compareTo(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat int compareTo(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat int intValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
