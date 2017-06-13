@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -45,6 +46,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   @NotNull private static final String DEFAULT_LOCATION_HINT = "Default location is ";
   @NotNull private final VcsConfiguration myVcsConfiguration;
   @NotNull private final Project myProject;
+  @NotNull private final JBCheckBox myShowCurrentFileChangesNotification;
   @NotNull private final JBCheckBox myBaseRevisionTexts;
   @NotNull private final JLabel myInfoLabel;
 
@@ -52,6 +54,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
+    myShowCurrentFileChangesNotification = new JBCheckBox(VcsBundle.message("vcs.shelf.current.file.changes.on.shelf.notification"));
     myBaseRevisionTexts = new JBCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myInfoLabel = new JLabel();
     myInfoLabel.setBorder(null);
@@ -70,6 +73,8 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, NONE,
                                                          JBUI.insets(3), 0, 0);
+    contentPanel.add(myShowCurrentFileChangesNotification, gb);
+    gb.gridy++;
     contentPanel.add(createStoreBaseRevisionOption(), gb);
 
     JPanel shelfConfigurablePanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
@@ -118,14 +123,20 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   public void restoreFromSettings() {
+    myShowCurrentFileChangesNotification.setSelected(myVcsConfiguration.SHOW_CURRENT_FILE_CHANGES_ON_SHELF);
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
   }
 
   public boolean isModified() {
-    return myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected();
+    return myVcsConfiguration.SHOW_CURRENT_FILE_CHANGES_ON_SHELF != myShowCurrentFileChangesNotification.isSelected() ||
+           myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected();
   }
 
   public void apply() {
+    if (myVcsConfiguration.SHOW_CURRENT_FILE_CHANGES_ON_SHELF != myShowCurrentFileChangesNotification.isSelected()) {
+      EditorNotifications.getInstance(myProject).updateAllNotifications();
+    }
+    myVcsConfiguration.SHOW_CURRENT_FILE_CHANGES_ON_SHELF = myShowCurrentFileChangesNotification.isSelected();
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
   }
 }
