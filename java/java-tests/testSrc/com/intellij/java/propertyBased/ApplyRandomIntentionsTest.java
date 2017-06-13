@@ -28,7 +28,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.Checker;
+import slowCheck.PropertyChecker;
 import slowCheck.CheckerSettings;
 import slowCheck.Generator;
 
@@ -115,7 +115,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
 
   private void doOpenFilesAndRevert(Function<PsiFile, Boolean> mutation) throws Throwable {
     CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS;
-    Checker.forAll(settings.withIterationCount(10), javaFiles(), file -> {
+    PropertyChecker.forAll(settings.withIterationCount(10), javaFiles(), file -> {
       System.out.println("for file: " + file.getPresentableUrl());
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
       if (psiFile == null) return false;
@@ -127,7 +127,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
         data -> new InvokeIntention(document,
                                     Generator.integers(0, textLength).generateValue(data),
                                     Generator.integers(0, 100).generateValue(data))).noShrink();
-      Checker.forAll(settings.withIterationCount(5), Generator.listOf(genInvocation), list -> {
+      PropertyChecker.forAll(settings.withIterationCount(5), Generator.listOf(genInvocation), list -> {
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         changeDocumentAndRevert(document, () -> {
           Boolean checkCompilationStatus = mutation.apply(psiFile);

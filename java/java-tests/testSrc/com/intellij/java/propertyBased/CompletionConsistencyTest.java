@@ -32,7 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import slowCheck.Checker;
+import slowCheck.PropertyChecker;
 import slowCheck.CheckerSettings;
 import slowCheck.Generator;
 import slowCheck.IntDistribution;
@@ -68,7 +68,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
   public void testCompletionConsistency() {
     Registry.get("ide.completion.variant.limit").setValue(100_000, getTestRootDisposable());
     CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS;
-    Checker.forAll(settings.withIterationCount(20), javaFiles(), file -> {
+    PropertyChecker.forAll(settings.withIterationCount(20), javaFiles(), file -> {
       System.out.println("for file: " + file.getPresentableUrl());
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
       if (psiFile == null) return false;
@@ -83,7 +83,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
         char c = Generator.oneOf('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
         return new CompletionInvocation(document, offset, itemIndex, c);
       });
-      Checker.forAll(settings.withIterationCount(10), Generator.listOf(genInvocation), list -> {
+      PropertyChecker.forAll(settings.withIterationCount(10), Generator.listOf(genInvocation), list -> {
         changeDocumentAndRevert(document, () -> {
           for (int i = 0; i < list.size(); i++) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();

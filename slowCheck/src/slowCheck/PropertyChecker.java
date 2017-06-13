@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 /**
  * @author peter
  */
-public class Checker {
+public class PropertyChecker {
 
   public static <T> void forAll(Generator<T> gen, Predicate<T> property) {
     forAll(CheckerSettings.DEFAULT_SETTINGS, gen, property);

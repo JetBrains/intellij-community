@@ -51,7 +51,7 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuccess() {
-    Checker.forAll(listOf(integers(-1, 1)), 
+    PropertyChecker.forAll(listOf(integers(-1, 1)), 
                    l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
   }
 
@@ -77,12 +77,12 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuchThat() {
-    Checker.forAll(integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
+    PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
   }
 
   public void testUnsatisfiableSuchThat() {
     try {
-      Checker.forAll(integers(-1, 1).suchThat(i -> i > 2), i -> i == 0);
+      PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i > 2), i -> i == 0);
       fail();
     }
     catch (CannotSatisfyCondition ignored) {
@@ -97,7 +97,7 @@ public class GeneratorTest extends TestCase {
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
     try {
-      Checker.forAll(ourTestSettings, generator, predicate);
+      PropertyChecker.forAll(ourTestSettings, generator, predicate);
       fail("Can't falsify " + getName());
     }
     catch (PropertyFalsified e) {
