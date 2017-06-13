@@ -130,12 +130,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   }
 
   @Override
-  protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
-    PostprocessReformattingAspect.getInstance(myProject).beforeDocumentChanged(viewProvider);
-    super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
-  }
-
-  @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<Processor<Document>> finishProcessors,
                                               boolean synchronously) {

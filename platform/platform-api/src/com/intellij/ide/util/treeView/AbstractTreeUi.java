@@ -711,7 +711,7 @@ public class AbstractTreeUi {
       @Override
       public void perform() {
         Object fromDescriptor = getElementFromDescriptor(rootDescriptor.get());
-        if (fromDescriptor != null) {
+        if (!isNodeNull(fromDescriptor)) {
           createMapping(fromDescriptor, getRootNode());
         }
 
@@ -2266,7 +2266,7 @@ public class AbstractTreeUi {
         @Override
         public void perform() {
           Object element = getElementFromDescriptor(childDescr);
-          if (element != null) {
+          if (!isNodeNull(element)) {
             DefaultMutableTreeNode node = getNodeForElement(element, false);
             if (node == null || node.getParent() != parent) {
               final DefaultMutableTreeNode childNode = createChildNode(childDescr);
@@ -2594,18 +2594,22 @@ public class AbstractTreeUi {
 
   private UpdateInfo getLoadedInBackground(Object element) {
     synchronized (myLoadedInBackground) {
-      return myLoadedInBackground.get(element);
+      return isNodeNull(element) ? null : myLoadedInBackground.get(element);
     }
   }
 
   private void addToLoadedInBackground(Object element, UpdateInfo info) {
+    if (isNodeNull(element)) return;
     synchronized (myLoadedInBackground) {
+      warnMap("put into myLoadedInBackground: ", myLoadedInBackground);
       myLoadedInBackground.put(element, info);
     }
   }
 
   private void removeFromLoadedInBackground(final Object element) {
+    if (isNodeNull(element)) return;
     synchronized (myLoadedInBackground) {
+      warnMap("remove from myLoadedInBackground: ", myLoadedInBackground);
       myLoadedInBackground.remove(element);
     }
   }
@@ -2620,6 +2624,7 @@ public class AbstractTreeUi {
     assertIsDispatchThread();
 
     final Object oldElementFromDescriptor = getElementFromDescriptor(updateInfo.getDescriptor());
+    if (isNodeNull(oldElementFromDescriptor)) return false;
 
     UpdateInfo loaded = getLoadedInBackground(oldElementFromDescriptor);
     if (loaded != null) {
@@ -2832,6 +2837,8 @@ public class AbstractTreeUi {
     if (childrenReady) {
       processActions(node, element, myNodeChildrenActions, null);
     }
+    warnMap("myNodeActions: processNodeActionsIfReady: ", myNodeActions);
+    warnMap("myNodeChildrenActions: processNodeActionsIfReady: ", myNodeChildrenActions);
 
     if (!isUpdatingParent(node) && !isWorkerBusy()) {
       final UpdaterTreeState state = myUpdaterState;
@@ -2989,10 +2996,11 @@ public class AbstractTreeUi {
       return Promises.<Void>rejectedPromise();
     }
     final Object oldElement = getElementFromDescriptor(childDescriptor);
-    if (oldElement == null) {
+    if (isNodeNull(oldElement)) {
       // if a tree node with removed element was not properly removed from a tree model
       // we must not ignore this situation and should remove a wrong node
       removeNodeFromParent(childNode, true);
+      doUpdateNode(parentNode);
       return Promises.<Void>resolvedPromise();
     }
 
@@ -3069,7 +3077,7 @@ public class AbstractTreeUi {
             if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
               removeMapping(oldElement, childNode, newElement.get());
               Object newE = newElement.get();
-              if (newE != null) {
+              if (!isNodeNull(newE)) {
                 createMapping(newE, childNode);
               }
               NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
@@ -3326,6 +3334,7 @@ public class AbstractTreeUi {
   }
 
   private boolean isValid(Object element) {
+    if (isNodeNull(element)) return false;
     if (element instanceof ValidateableNode) {
       if (!((ValidateableNode)element).isValid()) return false;
     }
@@ -3664,7 +3673,7 @@ public class AbstractTreeUi {
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (descriptor == null) return;
     final Object element = getElementFromDescriptor(descriptor);
-    if (element != null) {
+    if (!isNodeNull(element)) {
       removeMapping(element, node, null);
     }
     myAutoExpandRoots.remove(element);
@@ -4108,7 +4117,7 @@ public class AbstractTreeUi {
     }
 
     Object anchor = TreeAnchorizer.getService().createAnchor(element);
-    Object o = myElementToNodeMap.get(anchor);
+    Object o = isNodeNull(anchor) ? null : myElementToNodeMap.get(anchor);
     TreeAnchorizer.getService().freeAnchor(anchor);
 
     if (o instanceof List) {
@@ -4549,6 +4558,7 @@ public class AbstractTreeUi {
 
   private void createMapping(@NotNull Object element, DefaultMutableTreeNode node) {
     element = TreeAnchorizer.getService().createAnchor(element);
+    warnMap("myElementToNodeMap: createMapping: ", myElementToNodeMap);
     if (!myElementToNodeMap.containsKey(element)) {
       myElementToNodeMap.put(element, node);
     }
@@ -4569,6 +4579,7 @@ public class AbstractTreeUi {
 
   private void removeMapping(@NotNull Object element, DefaultMutableTreeNode node, @Nullable Object elementToPutNodeActionsFor) {
     element = TreeAnchorizer.getService().createAnchor(element);
+    warnMap("myElementToNodeMap: removeMapping: ", myElementToNodeMap);
     final Object value = myElementToNodeMap.get(element);
     if (value != null) {
       if (value instanceof DefaultMutableTreeNode) {
@@ -4594,6 +4605,8 @@ public class AbstractTreeUi {
   private void remapNodeActions(Object element, Object elementToPutNodeActionsFor) {
     _remapNodeActions(element, elementToPutNodeActionsFor, myNodeActions);
     _remapNodeActions(element, elementToPutNodeActionsFor, myNodeChildrenActions);
+    warnMap("myNodeActions: remapNodeActions: ", myNodeActions);
+    warnMap("myNodeChildrenActions: remapNodeActions: ", myNodeChildrenActions);
   }
 
   private static void _remapNodeActions(Object element, @Nullable Object elementToPutNodeActionsFor, @NotNull final Map<Object, List<NodeAction>> nodeActions) {
@@ -4626,6 +4639,7 @@ public class AbstractTreeUi {
   protected Object findNodeByElement(Object element) {
     element = TreeAnchorizer.getService().createAnchor(element);
     try {
+      if (isNodeNull(element)) return null;
       if (myElementToNodeMap.containsKey(element)) {
         return myElementToNodeMap.get(element);
       }
@@ -4642,7 +4656,7 @@ public class AbstractTreeUi {
   @Nullable
   private DefaultMutableTreeNode findNodeForChildElement(@NotNull DefaultMutableTreeNode parentNode, Object element) {
     Object anchor = TreeAnchorizer.getService().createAnchor(element);
-    final Object value = myElementToNodeMap.get(anchor);
+    final Object value = isNodeNull(anchor) ? null : myElementToNodeMap.get(anchor);
     TreeAnchorizer.getService().freeAnchor(anchor);
     if (value == null) {
       return null;
@@ -4668,6 +4682,8 @@ public class AbstractTreeUi {
     if (shouldChildrenBeReady) {
       _addNodeAction(element, action, myNodeChildrenActions);
     }
+    warnMap("myNodeActions: addNodeAction: ", myNodeActions);
+    warnMap("myNodeChildrenActions: addNodeAction: ", myNodeChildrenActions);
   }
 
 
@@ -4868,6 +4884,7 @@ public class AbstractTreeUi {
   }
 
   public boolean isInStructure(@Nullable Object element) {
+    if (isNodeNull(element)) return false;
     final AbstractTreeStructure structure = getTreeStructure();
     if (structure == null) return false;
 
@@ -5078,5 +5095,24 @@ public class AbstractTreeUi {
         assertIsDispatchThread();
       }
     });
+  }
+
+  private static <V> void warnMap(String prefix, Map<Object, V> map) {
+    if (!LOG.isDebugEnabled()) return;
+    if (!SwingUtilities.isEventDispatchThread()) LOG.warn(prefix + "modified on wrong thread");
+    long count = map.keySet().stream().filter(AbstractTreeUi::isNodeNull).count();
+    if (count > 0) LOG.warn(prefix + "null keys: " + count + " / " + map.size());
+  }
+
+  /**
+   * @param element an element in the tree structure
+   * @return {@code true} if element is {@code null} or if it contains a {@code null} value
+   */
+  private static boolean isNodeNull(Object element) {
+    if (element instanceof AbstractTreeNode) {
+      AbstractTreeNode node = (AbstractTreeNode)element;
+      element = node.getValue();
+    }
+    return element == null;
   }
 }

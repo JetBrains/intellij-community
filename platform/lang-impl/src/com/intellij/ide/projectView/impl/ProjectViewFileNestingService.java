@@ -22,6 +22,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -39,7 +40,7 @@ import java.util.List;
   name = "ProjectViewFileNesting",
   storages = @Storage("ui.lnf.xml")
 )
-public class ProjectViewFileNestingService implements PersistentStateComponent<ProjectViewFileNestingService.MyState> {
+public class ProjectViewFileNestingService implements PersistentStateComponent<ProjectViewFileNestingService.MyState>, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ProjectViewFileNestingService.class);
 
   private static final ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
@@ -48,6 +49,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   public static final NestingRule[] DEFAULT_NESTING_RULES = loadDefaultNestingRules();
 
   private MyState myState = new MyState();
+  private long myModCount = 0;
 
   @NotNull
   public static ProjectViewFileNestingService getInstance() {
@@ -82,6 +84,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   @Override
   public void loadState(@NotNull final MyState state) {
     myState = state;
+    myModCount++;
   }
 
   /**
@@ -96,6 +99,12 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   public void setRules(@NotNull final List<NestingRule> rules) {
     myState.myRules.clear();
     myState.myRules.addAll(rules);
+    myModCount++;
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModCount;
   }
 
   public static class MyState {

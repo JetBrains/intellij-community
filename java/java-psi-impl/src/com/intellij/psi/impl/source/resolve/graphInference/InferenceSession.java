@@ -506,7 +506,7 @@ public class InferenceSession {
         else if (arg instanceof PsiLambdaExpression &&
                  isPertinentToApplicability(arg, parentMethod)) {
           collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)arg,
-                                        FunctionalInterfaceParameterizationUtil.getGroundTargetType(parameterType, (PsiLambdaExpression)arg),
+                                        ((PsiLambdaExpression)arg).getGroundTargetType(parameterType),
                                         !isProperType(initialSubstitutor.substitute(parameterType)),
                                         initialSubstitutor);
         }
@@ -893,7 +893,7 @@ public class InferenceSession {
     if (lambdaExpression != null) {
       final PsiType typeTypeByParentCall = getTargetTypeFromParent(lambdaExpression, errorMessage, inferParent);
       if (typeTypeByParentCall != null) {
-        return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(typeTypeByParentCall, lambdaExpression));
+        return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getGroundTargetType(typeTypeByParentCall));
       }
 
       //during checked exception constraint processing
@@ -903,7 +903,7 @@ public class InferenceSession {
       //that's why we can reuse this type here
       final PsiType cachedLambdaType = LambdaUtil.getFunctionalTypeMap().get(lambdaExpression);
       if (cachedLambdaType != null) {
-        return LambdaUtil.getFunctionalInterfaceReturnType(FunctionalInterfaceParameterizationUtil.getGroundTargetType(cachedLambdaType, lambdaExpression));
+        return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getGroundTargetType(cachedLambdaType));
       }
 
       return inferParent || !(PsiUtil.skipParenthesizedExprUp(lambdaExpression.getParent()) instanceof PsiExpressionList) 
@@ -1434,7 +1434,7 @@ public class InferenceSession {
     if (formula instanceof ExpressionCompatibilityConstraint) {
       PsiExpression expression = ((ExpressionCompatibilityConstraint)formula).getExpression();
       if (expression instanceof PsiLambdaExpression) {
-        PsiType parameterType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(((ExpressionCompatibilityConstraint)formula).getT(), (PsiLambdaExpression)expression);
+        PsiType parameterType = ((PsiLambdaExpression)expression).getGroundTargetType(((ExpressionCompatibilityConstraint)formula).getT());
         collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)expression, parameterType, !isProperType(parameterType), substitutor);
       }
     }

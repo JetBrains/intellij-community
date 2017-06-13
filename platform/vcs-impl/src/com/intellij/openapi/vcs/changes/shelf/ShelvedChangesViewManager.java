@@ -320,10 +320,18 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     }
   }
 
+  public void showChangeInView(final ShelvedChange change) {
+    showTargetInView(change);
+  }
+
   public void activateView(final ShelvedChangeList list) {
+    showTargetInView(list);
+  }
+
+  private void showTargetInView(Object target) {
     Runnable runnable = () -> {
-      if (list != null) {
-        TreeUtil.selectNode(myTree, TreeUtil.findNodeWithObject(myRoot, list));
+      if (target != null) {
+        TreeUtil.selectNode(myTree, TreeUtil.findNodeWithObject(myRoot, target));
       }
       myContentManager.setSelectedContent(myContent);
       ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);

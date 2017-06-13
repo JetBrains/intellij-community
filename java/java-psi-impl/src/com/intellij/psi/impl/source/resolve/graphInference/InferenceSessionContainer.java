@@ -165,6 +165,9 @@ public class InferenceSessionContainer {
             gParent = returnContainer.getParent();
           }
         }
+        if (gParent instanceof PsiConditionalExpression) {
+          gParent = PsiUtil.skipParenthesizedExprUp(gParent.getParent());
+        }
         if (gParent instanceof PsiLambdaExpression) {
           final PsiCall call = PsiTreeUtil.getParentOfType(gParent, PsiCall.class);
           if (call != null) {

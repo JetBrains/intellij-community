@@ -203,6 +203,43 @@ internal class DefaultProjectStoreTest {
         <inspection_tool class="EmptyEventHandler" enabled="false" level="WARNING" enabled_by_default="false" />
         <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
       </profile>
-    </component>""".trimIndent())
+    </component>
+
+      ├──workspace.xml
+    <project version="4">
+      <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+      <component name="masterDetails">
+        <states>
+          <state key="Copyright.UI">
+            <settings>
+              <last-edited>Foo</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+          <state key="ProjectJDKs.UI">
+            <settings>
+              <last-edited>1.4</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+        </states>
+      </component>
+      <component name="PropertiesComponent">
+        <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+        <property name="settings.editor.splitter.proportion" value="0.2" />
+      </component>
+    </project>""".trimIndent())
   }
 }

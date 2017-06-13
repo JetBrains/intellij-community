@@ -80,6 +80,7 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testInvalidResolveWithoutCast() { doTest();}
   public void testCastInConditionalBranch() { doTest();}
   public void testCastInsideLambdaReturnExpressionPassedToEnumConstant() { doTest(); }
+  public void testGroundTargetTypeDiffersFromCastType() { doTest(); }
   public void testRejectReturnTypeChange() throws Exception {
     doTest();
   }

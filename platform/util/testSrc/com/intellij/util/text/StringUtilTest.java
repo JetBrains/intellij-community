@@ -19,13 +19,19 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import slowCheck.GenCollection;
+import slowCheck.GenString;
+import slowCheck.PropertyChecker;
 
 import java.nio.CharBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -172,6 +178,20 @@ public class StringUtilTest {
     assertTrue(StringUtil.naturalCompare(s1, s2) < 0);
     assertTrue(StringUtil.naturalCompare(s2, s3) < 0);
     assertTrue("non-transitive", StringUtil.naturalCompare(s1, s3) < 0);
+  }
+
+  @Test
+  public void testNaturalCompareTransitivityProperty() {
+    PropertyChecker.forAll(GenCollection.listOf(GenString.stringOf("ab01()_# ")), l -> {
+      List<String> sorted = ContainerUtil.sorted(l, StringUtil::naturalCompare);
+      for (int i = 0; i < sorted.size(); i++) {
+        for (int j = i + 1; j < sorted.size(); j++) {
+          if (StringUtil.naturalCompare(sorted.get(i), sorted.get(j)) > 0) return false;
+          if (StringUtil.naturalCompare(sorted.get(j), sorted.get(i)) < 0) return false;
+        }
+      }
+      return true;
+    });
   }
 
   @Test

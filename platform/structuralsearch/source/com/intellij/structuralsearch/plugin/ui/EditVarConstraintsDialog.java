@@ -36,7 +36,10 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -48,6 +51,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -301,10 +305,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   boolean validateParameters() {
-    return validateRegExp(regexp) && validateRegExp(regexprForExprType) &&
-           validateIntOccurence(minoccurs) &&
-           validateScript(customScriptCode.getChildComponent()) &&
-           (maxoccursUnlimited.isSelected() || validateIntOccurence(maxoccurs));
+    return validateRegExp(regexp) && validateCounts() && validateRegExp(regexprForExprType) && validateRegExp(formalArgType) && validateScript();
   }
 
   @Override
@@ -481,46 +482,48 @@ class EditVarConstraintsDialog extends DialogWrapper {
     return "#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog";
   }
 
-  private static boolean validateRegExp(EditorTextField field) {
-    final String s = field.getDocument().getText();
+  private boolean validateRegExp(EditorTextField field) {
     try {
-      if (s.length() > 0) {
-        //noinspection ResultOfMethodCallIgnored
-        Pattern.compile(s);
-      }
-    } catch(PatternSyntaxException ex) {
-      Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression", ex.getMessage()),
-                               SSRBundle.message("invalid.regular.expression.title"));
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
-      return false;
+      //noinspection ResultOfMethodCallIgnored
+      Pattern.compile(field.getText());
+    } catch (PatternSyntaxException e) {
+      return showError(field, e.getDescription());
     }
     return true;
   }
 
-  private static boolean validateScript(EditorTextField field) {
-    final String text = field.getText();
+  private boolean validateScript() {
+    final EditorTextField field = customScriptCode.getChildComponent();
+    return showError(field, ScriptSupport.checkValidScript(field.getText()));
+  }
 
-    if (text.length() > 0) {
-      final String message = ScriptSupport.checkValidScript(text);
-
-      if (message != null) {
-        Messages.showErrorDialog(message, SSRBundle.message("invalid.groovy.script"));
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
-        return false;
+  private boolean validateCounts() {
+    final int minValue;
+    try {
+      minValue = Integer.parseInt(minoccurs.getText());
+      if (minValue < 0) throw new NumberFormatException();
+    }
+    catch (NumberFormatException e) {
+      return showError(minoccurs, SSRBundle.message("invalid.occurence.count"));
+    }
+    if (!maxoccursUnlimited.isSelected()) {
+      try {
+        if (Integer.parseInt(maxoccurs.getText()) < minValue) throw new NumberFormatException();
+      }
+      catch (NumberFormatException e) {
+        return showError(maxoccurs, SSRBundle.message("invalid.occurence.count"));
       }
     }
     return true;
   }
 
-  private static boolean validateIntOccurence(JTextField field) {
-    try {
-      if (Integer.parseInt(field.getText()) < 0) throw new NumberFormatException();
-    } catch(NumberFormatException ex) {
-      Messages.showErrorDialog(SSRBundle.message("invalid.occurence.count"), SSRBundle.message("invalid.occurence.count"));
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(field, true));
-      return false;
-    }
-    return true;
+  private boolean showError(JComponent component, String message) {
+    if (message == null) return true;
+    final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null).createBalloon();
+    balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
+    Disposer.register(myDisposable, balloon);
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
+    return false;
   }
 
   @Override

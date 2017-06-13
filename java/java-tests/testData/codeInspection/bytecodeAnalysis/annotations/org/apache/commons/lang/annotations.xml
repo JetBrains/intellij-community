@@ -1634,7 +1634,8 @@
     </item>
     <item name='org.apache.commons.lang.CharSetUtils java.lang.String translate(java.lang.String, java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;!null,_,_-&gt;!null;null,_,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.CharSetUtils org.apache.commons.lang.CharSet evaluateSet(java.lang.String[])'>
@@ -2300,7 +2301,18 @@
     </item>
     <item name='org.apache.commons.lang.NumberUtils boolean isNumber(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.NumberUtils int compare(double, double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.NumberUtils int compare(float, float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.NumberUtils int maximum(int, int, int)'>
@@ -2319,13 +2331,7 @@
     <item name='org.apache.commons.lang.NumberUtils java.lang.Float createFloat(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.lang.NumberUtils java.lang.Integer createInteger(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
     <item name='org.apache.commons.lang.NumberUtils java.lang.Integer createInteger(java.lang.String) 0'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.lang.NumberUtils java.lang.Long createLong(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.NumberUtils java.lang.Long createLong(java.lang.String) 0'>

@@ -34,8 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
@@ -121,39 +122,41 @@ public class TextPatchBuilder {
       return patch;
     }
 
+    List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
+    for (PatchHunk hunk : hunks) {
+      patch.addHunk(hunk);
+    }
+    return patch;
+  }
+
+  @NotNull
+  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
     if (beforeContent.isEmpty()) {
-      patch.addHunk(createWholeFileHunk(afterContent, true, true));
-      return patch;
+      return singletonList(createWholeFileHunk(afterContent, true, true));
     }
     if (afterContent.isEmpty()) {
-      patch.addHunk(createWholeFileHunk(beforeContent, false, true));
-      return patch;
+      return singletonList(createWholeFileHunk(beforeContent, false, true));
     }
 
+    List<PatchHunk> hunks = new ArrayList<>();
 
     List<String> beforeLines = tokenize(beforeContent);
     List<String> afterLines = tokenize(afterContent);
     boolean beforeNoNewlineAtEOF = !beforeContent.endsWith("\n");
     boolean afterNoNewlineAtEOF = !afterContent.endsWith("\n");
 
-    List<Range> fragments;
-    try {
-      fragments = compareLines(beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF);
-    }
-    catch (DiffTooBigException e) {
-      throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
-    }
+    List<Range> fragments = compareLines(beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF);
 
     int hunkStart = 0;
     while (hunkStart < fragments.size()) {
       List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart);
 
-      patch.addHunk(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
+      hunks.add(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
 
       hunkStart += hunkFragments.size();
     }
 
-    return patch;
+    return hunks;
   }
 
   @NotNull
@@ -251,7 +254,7 @@ public class TextPatchBuilder {
 
   @NotNull
   private static List<Range> appendRange(@NotNull List<Range> ranges, @NotNull Range change) {
-    if (ranges.isEmpty()) return Collections.singletonList(change);
+    if (ranges.isEmpty()) return singletonList(change);
 
     Range lastRange = ranges.get(ranges.size() - 1);
     if (lastRange.end1 == change.start1 && lastRange.end2 == change.start2) {
@@ -265,8 +268,13 @@ public class TextPatchBuilder {
 
   @NotNull
   private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
-    FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
-    return ContainerUtil.newArrayList(iterable.iterateChanges());
+    try {
+      FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+      return ContainerUtil.newArrayList(iterable.iterateChanges());
+    }
+    catch (DiffTooBigException e) {
+      return singletonList(new Range(0, beforeLines.size(), 0, afterLines.size()));
+    }
   }
 
   @NotNull
@@ -311,7 +319,7 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private static PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) throws VcsException {
+  private static PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) {
     PatchLine.Type type = isInsertion ? PatchLine.Type.ADD : PatchLine.Type.REMOVE;
 
     List<String> lines = tokenize(content);

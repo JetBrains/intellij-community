@@ -28,6 +28,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,6 +66,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
   public void setModule(final Module module) {
     myModule.setModule(module);
+  }
+
+  public void setModuleName(@Nullable String moduleName) {
+    myModule.setModuleName(moduleName);
   }
 
   protected void readModule(final Element element) {

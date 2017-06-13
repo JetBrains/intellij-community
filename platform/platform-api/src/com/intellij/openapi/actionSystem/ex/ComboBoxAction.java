@@ -51,8 +51,20 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static final Icon ARROW_ICON = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
-  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
+  private static Icon myIcon = null;
+  private static Icon myDisabledIcon = null;
+
+  public static Icon getArrowIcon(boolean enabled) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      return IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+    }
+    Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
+    if (myIcon != icon) {
+      myIcon = icon;
+      myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
+    }
+    return enabled ? myIcon : myDisabledIcon;
+  }
 
   private boolean mySmallVariant = true;
   private String myPopupTitle;
@@ -351,14 +363,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Insets getInsets() {
       final Insets insets = super.getInsets();
-      insets.right += getArrowIcon().getIconWidth();
+      insets.right += getArrowIcon(isEnabled()).getIconWidth();
       return insets;
     }
 
     @Override
     public Insets getInsets(Insets insets) {
       final Insets result = super.getInsets(insets);
-      result.right += getArrowIcon().getIconWidth();
+      result.right += getArrowIcon(isEnabled()).getIconWidth();
       return result;
     }
 
@@ -367,17 +379,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return !isSmallVariant();
     }
 
-    protected Icon getArrowIcon() {
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        return IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
-      }
-      return isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
-    }
-
     @Override
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? JBUI.scale(10) + getArrowIcon().getIconWidth() : super.getPreferredSize().width;
+      int width = isEmpty ? JBUI.scale(10) + getArrowIcon(isEnabled()).getIconWidth() : super.getPreferredSize().width;
       if (isSmallVariant() && !((SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()))) {
         width += JBUI.scale(4);
         if (UIUtil.isUnderWin10LookAndFeel()) {
@@ -480,7 +485,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
       final Insets insets = super.getInsets();
-      final Icon icon = getArrowIcon();
+      final Icon icon = getArrowIcon(isEnabled());
       int x;
       if (isEmpty) {
         x = (size.width - icon.getIconWidth()) / 2;

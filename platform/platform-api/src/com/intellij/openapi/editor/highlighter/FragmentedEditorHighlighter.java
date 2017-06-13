@@ -34,6 +34,10 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   private final int myAdditionalOffset;
   private final boolean myMergeByTextAttributes;
 
+  public FragmentedEditorHighlighter(EditorHighlighter highlighter, TextRange range) {
+    this(highlighter.createIterator(range.getStartOffset()), Collections.singletonList(range));
+  }
+
   public FragmentedEditorHighlighter(HighlighterIterator sourceIterator, List<TextRange> ranges) {
     this(sourceIterator, ranges, 0, false);
   }

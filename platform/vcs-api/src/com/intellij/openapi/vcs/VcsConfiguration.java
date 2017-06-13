@@ -68,6 +68,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean MOVE_SHELVES = false;
   // asked only for non-DVCS
   public boolean INCLUDE_TEXT_INTO_SHELF = true;
+  public boolean SHOW_CURRENT_FILE_CHANGES_ON_SHELF = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
   public boolean SHOW_DIRTY_RECURSIVELY = false;
