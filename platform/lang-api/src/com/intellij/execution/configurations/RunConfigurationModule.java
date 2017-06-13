@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -117,6 +118,13 @@ public class RunConfigurationModule implements JDOMExternalizable {
     myModuleName = module != null ? module.getName() : null;
   }
 
+  public void setModuleName(@Nullable String moduleName) {
+    if (!Comparing.equal(myModuleName, moduleName)) {
+      myModuleName = moduleName;
+      myModule = null;
+    }
+  }
+
   public String getModuleName() {
     return StringUtil.notNullize(myModuleName);
   }
@@ -134,7 +142,9 @@ public class RunConfigurationModule implements JDOMExternalizable {
     }
     else {
       if (myModuleName != null) {
-        //noinspection SpellCheckingInspection
+        if (ModuleManager.getInstance(myProject).getUnloadedModuleDescription(myModuleName) != null) {
+          throw new RuntimeConfigurationError(ExecutionBundle.message("module.is.unloaded.from.project.error.text", myModuleName));
+        }
         throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
       }
       throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));

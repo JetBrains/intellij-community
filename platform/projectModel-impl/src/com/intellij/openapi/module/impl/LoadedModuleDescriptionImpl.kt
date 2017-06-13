@@ -28,4 +28,8 @@ class LoadedModuleDescriptionImpl(private val module: Module): LoadedModuleDescr
   override fun getName() = module.name
 
   override fun getDependencyModuleNames() = ModuleRootManager.getInstance(module).dependencyModuleNames.asList()
+
+  override fun equals(other: Any?) = other is LoadedModuleDescriptionImpl && module == other.module
+
+  override fun hashCode() = module.hashCode()
 }
