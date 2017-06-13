@@ -32,4 +32,11 @@ public class IpnbReloadKernelAction extends AnAction {
       IpnbConnectionManager.getInstance(project).reloadKernel(editor.getVirtualFile().getPath());
     }
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = myFileEditor.getIpnbFilePanel().getProject();
+    boolean hasConnection = IpnbConnectionManager.getInstance(project).hasConnection(myFileEditor.getVirtualFile().getPath());
+    e.getPresentation().setEnabled(hasConnection);
+  }
 }
