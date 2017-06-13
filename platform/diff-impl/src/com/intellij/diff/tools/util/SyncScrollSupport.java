@@ -363,7 +363,10 @@ public class SyncScrollSupport {
 
       Rectangle viewRect = getMaster().getScrollingModel().getVisibleArea();
       int middleY = viewRect.height / 3;
+      int lineHeight = getMaster().getLineHeight();
 
+      boolean onlyMajorForward = false;
+      boolean onlyMajorBackward = false;
       int offset;
       if (myAnchor == null) {
         LogicalPosition masterPos = getMaster().xyToLogicalPosition(new Point(viewRect.x, viewRect.y + middleY));
@@ -371,8 +374,11 @@ public class SyncScrollSupport {
         int convertedCenterLine = convertLine(masterCenterLine);
 
         Point point = getSlave().logicalPositionToXY(new LogicalPosition(convertedCenterLine, masterPos.column));
-        int correction = (viewRect.y + middleY) % getMaster().getLineHeight();
+        int correction = (viewRect.y + middleY) % lineHeight;
         offset = point.y - middleY + correction;
+
+        onlyMajorBackward = convertedCenterLine == convertLine(masterCenterLine - 1) && correction < lineHeight / 2;
+        onlyMajorForward = convertedCenterLine == convertLine(masterCenterLine + 1) && correction > lineHeight / 2;
       }
       else {
         double progress = myAnchor.masterStartOffset == myAnchor.masterEndOffset || viewRect.y == myAnchor.masterEndOffset ? 1 :
@@ -382,7 +388,7 @@ public class SyncScrollSupport {
       }
 
       int deltaHeaderOffset = getHeaderOffset(getSlave()) - getHeaderOffset(getMaster());
-      doScrollVertically(getSlave(), offset + deltaHeaderOffset, animated);
+      doScrollVertically(getSlave(), offset + deltaHeaderOffset, animated, onlyMajorForward, onlyMajorBackward);
     }
 
     private void syncHorizontalScroll(boolean animated) {
@@ -392,7 +398,21 @@ public class SyncScrollSupport {
   }
 
   private static void doScrollVertically(@NotNull Editor editor, int offset, boolean animated) {
+    doScrollVertically(editor, offset, animated, false, false);
+  }
+
+  private static void doScrollVertically(@NotNull Editor editor, int offset, boolean animated,
+                                         boolean onlyMajorForward, boolean onlyMajorBackward) {
     ScrollingModel model = editor.getScrollingModel();
+
+    int currentOffset = model.getVerticalScrollOffset();
+    if (onlyMajorForward && offset > currentOffset ||
+        onlyMajorBackward && offset < currentOffset) {
+      if (Math.abs(offset - currentOffset) < editor.getLineHeight()) {
+        return;
+      }
+    }
+
     if (!animated) model.disableAnimation();
     model.scrollVertically(offset);
     if (!animated) model.enableAnimation();
