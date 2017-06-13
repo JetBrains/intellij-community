@@ -17,6 +17,7 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -35,13 +36,17 @@ import java.util.Collection;
 import java.util.Map;
 
 public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>> implements NavigationItem, Queryable.Contributor {
+  private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
   private AbstractTreeNode myParent;
   private Object myValue;
+  private boolean myNullValueSet;
+  private final boolean myNodeWrapper;
   private NodeDescriptor myParentDescriptor;
 
   protected AbstractTreeNode(Project project, T value) {
     super(project, null);
-    setValue(value);
+    // assume that null value used for AbstractTreeNodeWrapper only
+    myNodeWrapper = setInternalValue(value);
   }
 
   @NotNull
@@ -93,7 +98,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   @Override
   protected boolean shouldUpdateData() {
-    return !myProject.isDisposed() && myValue != null;
+    return !myProject.isDisposed() && getEqualityObject() != null;
   }
 
   public boolean isAlwaysShowPlus() {
@@ -111,14 +116,16 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @Override
   @Nullable
   public final AbstractTreeNode<T> getElement() {
-    return myValue != null ? this : null;
+    return getEqualityObject() != null ? this : null;
   }
 
   public boolean equals(Object object) {
+    // we should not change this behaviour if value is set to null
     return object instanceof AbstractTreeNode && Comparing.equal(myValue, ((AbstractTreeNode)object).myValue);
   }
 
   public int hashCode() {
+    // we should not change hash code if value is set to null
     Object value = myValue;
     return value == null ? 0 : value.hashCode();
   }
@@ -138,18 +145,33 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   public final T getValue() {
-    if (myValue == null) {
-      return null;
-    }
-    return (T)TreeAnchorizer.getService().retrieveElement(myValue);
+    Object value = getEqualityObject();
+    return value == null ? null : (T)TreeAnchorizer.getService().retrieveElement(value);
   }
 
   public final void setValue(T value) {
-    myValue = value == null ? null : TreeAnchorizer.getService().createAnchor(value);
+    boolean debug = !myNodeWrapper && LOG.isDebugEnabled();
+    int hash = !debug ? 0 : hashCode();
+    myNullValueSet = setInternalValue(value);
+    if (debug && hash != hashCode()) {
+      LOG.warn("hash code changed: " + myValue);
+    }
+  }
+
+  /**
+   * Stores the anchor to new value if it is not {@code null}
+   *
+   * @param value a new value to set
+   * @return {@code true} if the specified value is {@code null} and the anchor is not changed
+   */
+  private boolean setInternalValue(T value) {
+    if (value == null) return true;
+    myValue = TreeAnchorizer.getService().createAnchor(value);
+    return false;
   }
 
   public final Object getEqualityObject() {
-    return myValue;
+    return myNullValueSet ? null : myValue;
   }
 
   @Nullable
