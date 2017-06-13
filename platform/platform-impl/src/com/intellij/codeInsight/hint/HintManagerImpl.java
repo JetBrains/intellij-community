@@ -110,7 +110,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myCaretMoveListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        hideHints(HIDE_BY_ANY_KEY, false, false);
+        hideHints(HIDE_BY_ANY_KEY | HIDE_BY_CARET_MOVE, false, false);
       }
     };
 
