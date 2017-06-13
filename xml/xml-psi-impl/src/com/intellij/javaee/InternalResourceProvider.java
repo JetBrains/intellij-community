@@ -26,7 +26,7 @@ public class InternalResourceProvider implements StandardResourceProvider{
   @Override
   public void registerResources(ResourceRegistrar registrar) {
     ResourceRegistrarImpl impl = (ResourceRegistrarImpl)registrar;
-    
+
     impl.addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
     impl.addInternalResource(XmlUtil.XSLT_URI,"2.0", "xslt-2_0.xsd");
     impl.addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");
@@ -65,8 +65,7 @@ public class InternalResourceProvider implements StandardResourceProvider{
 
     // svg and mathML
     impl.addIgnoredResource(HtmlUtil.MATH_ML_NAMESPACE);
-    //impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);
+    impl.addIgnoredResource(HtmlUtil.SVG_NAMESPACE);
     impl.addInternalResource("http://www.w3.org/1999/xlink", "xlink.dtd");
-    impl.addInternalResource(HtmlUtil.SVG_NAMESPACE, "svg.xsd");
   }
 }
