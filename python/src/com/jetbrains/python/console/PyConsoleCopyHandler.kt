@@ -35,13 +35,13 @@ class PyConsoleCopyHandler(val originalHandler: EditorActionHandler) : EditorAct
 
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     if (!RichCopySettings.getInstance().isEnabled) {
-      return originalHandler.execute(editor, null, dataContext);
+      return originalHandler.execute(editor, null, dataContext)
     }
-    if (true != editor.getUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW)) {
-      return originalHandler.execute(editor, null, dataContext);
-
+    if (true != editor.getUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW)
+        || editor.caretModel.allCarets.size != 1) {
+      return originalHandler.execute(editor, null, dataContext)
     }
-    doCopyWithoutPrompt(editor as EditorEx);
+    doCopyWithoutPrompt(editor as EditorEx)
   }
 
   private fun doCopyWithoutPrompt(editor: EditorEx) {
@@ -66,7 +66,9 @@ class PyConsoleCopyHandler(val originalHandler: EditorActionHandler) : EditorAct
       val rangeEnd = Math.min(document.getLineEndOffset(i), end)
       if (rangeStart < rangeEnd) {
         sb.append(document.getText(TextRange(rangeStart, rangeEnd)))
-        sb.append("\n")
+        if (rangeEnd < end) {
+          sb.append("\n")
+        }
       }
     }
     if (!sb.isEmpty()) {
