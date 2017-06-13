@@ -24,21 +24,17 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class ComponentWithBrowseButtonFixture extends JComponentFixture<ComponentWithBrowseButtonFixture, ComponentWithBrowseButton> {
-  private final ComponentWithBrowseButton myComponentWithBrowseButton;
-  @NotNull private final Robot myRobot;
 
   public ComponentWithBrowseButtonFixture(ComponentWithBrowseButton componentWithBrowseButton, @NotNull Robot robot) {
     super(ComponentWithBrowseButtonFixture.class, robot, componentWithBrowseButton);
-    myComponentWithBrowseButton = componentWithBrowseButton;
-    myRobot = robot;
   }
 
   public void clickButton() {
-    FixedSizeButton button = myComponentWithBrowseButton.getButton();
+    FixedSizeButton button = target().getButton();
     Point locationOnScreen = button.getLocationOnScreen();
     Rectangle bounds = button.getBounds();
     final Point point =
       new Point(locationOnScreen.x + bounds.x + bounds.width / 2, locationOnScreen.y + bounds.y + bounds.height / 2);
-    myRobot.click(point, MouseButton.LEFT_BUTTON, 1);
+    robot().click(point, MouseButton.LEFT_BUTTON, 1);
   }
 }
