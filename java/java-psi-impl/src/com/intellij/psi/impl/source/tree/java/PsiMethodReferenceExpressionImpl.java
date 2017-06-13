@@ -69,7 +69,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   @Nullable
   @Override
   public PsiType getFunctionalInterfaceType() {
-    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
+    return getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
   @Override
@@ -130,6 +130,12 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       }
     }
     return false;
+  }
+
+  @Nullable
+  @Override
+  public PsiType getGroundTargetType(PsiType functionalInterfaceType) {
+    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType);
   }
 
   @Override
@@ -384,7 +390,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       }
     }
 
-    left = FunctionalInterfaceParameterizationUtil.getGroundTargetType(left);
+    left = getGroundTargetType(left);
     if (!isPotentiallyCompatible(left)) {
       return false;
     }
