@@ -54,8 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Area;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -234,6 +233,39 @@ public class IdeBackgroundUtil {
     }
 
     @Override
+    public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
+      super.fillArc(x, y, width, height, startAngle, arcAngle);
+      runAllPainters(x, y, width, height, new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.PIE), getColor());
+    }
+
+    @Override
+    public void fillOval(int x, int y, int width, int height) {
+      super.fillOval(x, y, width, height);
+      runAllPainters(x, y, width, height, new Ellipse2D.Double(x, y, width, height), getColor());
+    }
+
+    @Override
+    public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+      super.fillPolygon(xPoints, yPoints, nPoints);
+      Polygon s = new Polygon(xPoints, yPoints, nPoints);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
+    }
+
+    @Override
+    public void fillPolygon(Polygon s) {
+      super.fillPolygon(s);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
+    }
+
+    @Override
+    public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+      super.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
+      runAllPainters(x, y, width, height, new RoundRectangle2D.Double(x, y, width, height, arcHeight, arcHeight), getColor());
+    }
+
+    @Override
     public void fill(Shape s) {
       super.fill(s);
       Rectangle r = s.getBounds();
@@ -302,6 +334,8 @@ public class IdeBackgroundUtil {
 
   private static final JBIterable<Object> ourPreservedKeys = JBIterable.of(
     EditorColors.SELECTION_BACKGROUND_COLOR,
+    EditorColors.ADDED_LINES_COLOR, EditorColors.MODIFIED_LINES_COLOR, EditorColors.DELETED_LINES_COLOR,
+    EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, EditorColors.BORDER_LINES_COLOR,
     DiffColors.DIFF_INSERTED, DiffColors.DIFF_DELETED, DiffColors.DIFF_MODIFIED, DiffColors.DIFF_CONFLICT);
 
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
