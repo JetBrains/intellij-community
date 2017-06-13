@@ -24,8 +24,9 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
+import slowCheck.GenCollection;
+import slowCheck.GenString;
 import slowCheck.PropertyChecker;
-import slowCheck.Generator;
 
 import java.nio.CharBuffer;
 import java.util.Arrays;
@@ -181,7 +182,7 @@ public class StringUtilTest {
 
   @Test
   public void testNaturalCompareTransitivityProperty() {
-    PropertyChecker.forAll(Generator.listOf(Generator.stringOf("ab01()_# ")), l -> {
+    PropertyChecker.forAll(GenCollection.listOf(GenString.stringOf("ab01()_# ")), l -> {
       List<String> sorted = ContainerUtil.sorted(l, StringUtil::naturalCompare);
       for (int i = 0; i < sorted.size(); i++) {
         for (int j = i + 1; j < sorted.size(); j++) {

@@ -6,7 +6,10 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static slowCheck.Generator.*;
+import static slowCheck.GenChar.*;
+import static slowCheck.GenCollection.*;
+import static slowCheck.GenNumber.*;
+import static slowCheck.GenString.*;
 
 /**
  * @author peter
@@ -16,7 +19,7 @@ public class GeneratorTest extends TestCase {
   
   public void testMod() {
     checkFalsified(integers(), 
-                   i -> i % 12 != 0, 
+                   i -> i % 12 != 0,
                    3);
   }
 
@@ -33,13 +36,13 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testStringContains() {
-    checkFalsified(stringOf(asciiPrintableChar()), 
+    checkFalsified(stringOf(asciiPrintable()), 
                    s -> !s.contains("a"),
                    7);
   }
 
   public void testLetterStringContains() {
-    checkFalsified(stringOf(asciiLetterChar()), 
+    checkFalsified(stringOf(asciiLetter()), 
                    s -> !s.contains("a"),
                    8);
   }
@@ -57,7 +60,7 @@ public class GeneratorTest extends TestCase {
 
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
-                   l -> isSorted(l.stream().sorted().collect(Collectors.toList())), 
+                   l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
                    297);
   }
 
@@ -91,7 +94,7 @@ public class GeneratorTest extends TestCase {
 
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringOf("abc "), 
-                   s -> !s.contains(" "), 
+                   s -> !s.contains(" "),
                    7);
   }
 

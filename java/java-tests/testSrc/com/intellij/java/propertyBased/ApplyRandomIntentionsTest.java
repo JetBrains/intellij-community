@@ -28,9 +28,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.PropertyChecker;
-import slowCheck.CheckerSettings;
-import slowCheck.Generator;
+import slowCheck.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -125,9 +123,9 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
       Document document = editor.getDocument();
       Generator<InvokeIntention> genInvocation = Generator.from(
         data -> new InvokeIntention(document,
-                                    Generator.integers(0, textLength).generateValue(data),
-                                    Generator.integers(0, 100).generateValue(data))).noShrink();
-      PropertyChecker.forAll(settings.withIterationCount(5), Generator.listOf(genInvocation), list -> {
+                                    GenNumber.integers(0, textLength).generateValue(data),
+                                    GenNumber.integers(0, 100).generateValue(data))).noShrink();
+      PropertyChecker.forAll(settings.withIterationCount(5), GenCollection.listOf(genInvocation), list -> {
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         changeDocumentAndRevert(document, () -> {
           Boolean checkCompilationStatus = mutation.apply(psiFile);

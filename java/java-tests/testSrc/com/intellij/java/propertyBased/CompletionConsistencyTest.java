@@ -32,10 +32,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import slowCheck.PropertyChecker;
-import slowCheck.CheckerSettings;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
+import slowCheck.*;
 
 import java.util.List;
 
@@ -83,7 +80,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
         char c = Generator.oneOf('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
         return new CompletionInvocation(document, offset, itemIndex, c);
       });
-      PropertyChecker.forAll(settings.withIterationCount(10), Generator.listOf(genInvocation), list -> {
+      PropertyChecker.forAll(settings.withIterationCount(10), GenCollection.listOf(genInvocation), list -> {
         changeDocumentAndRevert(document, () -> {
           for (int i = 0; i < list.size(); i++) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
