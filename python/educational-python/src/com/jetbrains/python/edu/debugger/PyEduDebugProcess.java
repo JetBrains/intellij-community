@@ -42,7 +42,7 @@ class PyEduDebugProcess extends PyDebugProcess {
   @Override
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
     return new PyEduStackFrame(getSession().getProject(), this, frameInfo,
-                               getPositionConverter().convertFromPython(frameInfo.getPosition()));
+                               getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
   }
 
   @Override
