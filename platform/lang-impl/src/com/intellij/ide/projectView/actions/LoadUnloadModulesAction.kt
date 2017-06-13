@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
-import com.intellij.openapi.util.registry.Registry
 
 /**
  * @author nik
@@ -29,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry
 class LoadUnloadModulesAction : DumbAwareAction("Load/Unload Modules...") {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null && ModuleManager.getInstance(e.project!!).modules.size > 1
-                                         && Registry.`is`("project.support.module.unloading")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
