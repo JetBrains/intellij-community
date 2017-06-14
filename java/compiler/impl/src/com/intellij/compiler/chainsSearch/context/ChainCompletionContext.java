@@ -113,6 +113,11 @@ public class ChainCompletionContext {
     return false;
   }
 
+  @NotNull
+  public PsiElement getContextPsi() {
+    return myContext;
+  }
+
   public PsiFile getContextFile() {
     return myContext.getContainingFile();
   }
@@ -246,7 +251,7 @@ public class ChainCompletionContext {
     if (element instanceof PsiMethod) {
       return ((PsiMethod)element).getReturnType();
     }
-    throw new AssertionError(element);
+    return null;
   }
 
   public static boolean isWidelyUsed(@NotNull PsiType type) {

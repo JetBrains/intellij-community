@@ -226,6 +226,10 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals("f.createClass", element.getLookupString());
   }
 
+  public void testMethodCallInFieldInitializer() {
+    doTestRendering();
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int chainSize,
@@ -255,10 +259,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
       if (element instanceof JavaRelevantChainLookupElement) {
         myFixture.getLookup().setCurrentItem(element);
         myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
-        break;
+        myFixture.checkResultByFile(getAfterCompletionFilePath());
+        return;
       }
     }
-    myFixture.checkResultByFile(getAfterCompletionFilePath());
+    fail("relevant method chain isn't foun");
   }
 
   private List<JavaRelevantChainLookupElement> doCompletion() {
