@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -33,10 +32,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
@@ -110,7 +106,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
           final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
           if (arguments.length > 2) {
             final PsiExpression typeExpression = ParenthesesUtils.stripParentheses(arguments[2]);
-            final ReflectiveSignature expectedSignature = JavaLangInvokeHandleSignatureInspection.composeMethodSignature(typeExpression);
+            final ReflectiveSignature expectedSignature = composeMethodSignature(typeExpression);
             if (expectedSignature != null) {
               return ContainerUtil.find(methods, method -> expectedSignature.equals(getMethodSignature(method)));
             }

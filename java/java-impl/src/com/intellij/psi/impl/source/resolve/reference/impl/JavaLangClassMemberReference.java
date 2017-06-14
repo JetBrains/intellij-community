@@ -18,8 +18,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection;
-import com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -170,9 +168,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   private PsiElement findOverloadedMethod(PsiMethod[] methods) {
     final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
     if (definitionCall != null) {
-      final List<ReflectiveType> parameterTypes = JavaReflectionInvocationInspection.getReflectionMethodParameterTypes(definitionCall, 1);
-      if (parameterTypes != null) {
-        return JavaReflectionMemberAccessInspection.matchMethod(methods, parameterTypes);
+      final List<PsiExpression> arguments = getReflectionMethodArguments(definitionCall, 1);
+      if (arguments != null) {
+        final List<ReflectiveType> parameterTypes = ContainerUtil.map(arguments, type -> getReflectiveType(type));
+        return matchMethod(methods, parameterTypes);
       }
     }
     return null;
@@ -186,5 +185,61 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
       final String text = signature.getText(false, false, type -> type + ".class");
       replaceText(context, text.isEmpty() ? "" : ", " + text);
     }
+  }
+
+
+  @Nullable
+  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<ReflectiveType> argumentTypes) {
+    int mismatchCount = Integer.MAX_VALUE;
+    PsiMethod bestGuess = null;
+    for (PsiMethod method : methods) {
+      final int match = matchMethodArguments(method, argumentTypes);
+      if (match == 0) {
+        return method;
+      }
+      if (match < 0) {
+        continue;
+      }
+      if (mismatchCount > match) {
+        mismatchCount = match;
+        bestGuess = method;
+      }
+    }
+    return bestGuess;
+  }
+
+  private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != argumentTypes.size()) {
+      return -1;
+    }
+    int mismatchCount = 0;
+    for (int i = 0; i < parameters.length; i++) {
+      final ReflectiveType argumentType = argumentTypes.get(i);
+      if (argumentType == null) {
+        mismatchCount++;
+        continue;
+      }
+      if (!argumentType.isEqualTo(parameters[i].getType())) {
+        return -1;
+      }
+    }
+    return mismatchCount;
+  }
+
+  @Nullable
+  public static List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
+    final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
+
+    if (arguments.length == argumentOffset + 1) {
+      final PsiExpression[] arrayElements = getVarargAsArray(arguments[argumentOffset]);
+      if (arrayElements != null) {
+        return Arrays.asList(arrayElements);
+      }
+    }
+    if (arguments.length >= argumentOffset) {
+      return Arrays.asList(arguments).subList(argumentOffset, arguments.length);
+    }
+    return null;
   }
 }

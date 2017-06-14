@@ -19,10 +19,9 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,32 +131,10 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
     if (definition instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression definitionCall = (PsiMethodCallExpression)definition;
       if (methodPredicate.test(definitionCall)) {
-        return getRequiredMethodArguments(definitionCall, argumentOffset);
+        return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
       }
     }
     return null;
-  }
-
-  private static List<PsiExpression> getRequiredMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
-    final PsiExpression[] arguments = definitionCall.getArgumentList().getExpressions();
-
-    if (arguments.length == argumentOffset + 1) {
-      final PsiExpression[] arrayElements = getVarargAsArray(arguments[argumentOffset]);
-      if (arrayElements != null) {
-        return Arrays.asList(arrayElements);
-      }
-    }
-    if (arguments.length >= argumentOffset) {
-      return Arrays.asList(arguments).subList(argumentOffset, arguments.length);
-    }
-    return null;
-  }
-
-  @Nullable
-  public static List<ReflectiveType> getReflectionMethodParameterTypes(@NotNull PsiMethodCallExpression definitionCall,
-                                                                       int argumentOffset) {
-    List<PsiExpression> arguments = getRequiredMethodArguments(definitionCall, argumentOffset);
-    return arguments != null ? ContainerUtil.map(arguments, type -> getReflectiveType(type)) : null;
   }
 
   @Nullable
@@ -179,38 +156,6 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
       return new Arguments(expressions, false);
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
-    if (isVarargAsArray(maybeArray)) {
-      final PsiExpression argumentsDefinition = findDefinition(maybeArray);
-      if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
-        return ((PsiArrayInitializerExpression)argumentsDefinition).getInitializers();
-      }
-      if (argumentsDefinition instanceof PsiNewExpression) {
-        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)argumentsDefinition).getArrayInitializer();
-        if (arrayInitializer != null) {
-          return arrayInitializer.getInitializers();
-        }
-        final PsiExpression[] dimensions = ((PsiNewExpression)argumentsDefinition).getArrayDimensions();
-        if (dimensions.length == 1) { // special case: new Object[0]
-          final Integer itemCount = computeConstantExpression(findDefinition(dimensions[0]), Integer.class);
-          if (itemCount != null && itemCount == 0) {
-            return PsiExpression.EMPTY_ARRAY;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  @Contract("null -> false")
-  static boolean isVarargAsArray(@Nullable PsiExpression maybeArray) {
-    final PsiType type = maybeArray != null ? maybeArray.getType() : null;
-    return type instanceof PsiArrayType &&
-           type.getArrayDimensions() == 1 &&
-           type.getDeepComponentType() instanceof PsiClassType;
   }
 
   @Nullable

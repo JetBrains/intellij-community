@@ -271,27 +271,25 @@ class JavaLangReflectHandleInvocationChecker {
       }
       else if (isCallToMethod(typeDefinitionCall, JAVA_LANG_INVOKE_METHOD_TYPE, GENERIC_METHOD_TYPE)) {
         final PsiExpression[] arguments = typeDefinitionCall.getArgumentList().getExpressions();
-        final Pair.NonNull<Integer, Boolean> signature = JavaLangInvokeHandleSignatureInspection.getGenericSignature(arguments);
+        final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(arguments);
         if (signature != null) {
           final int objectArgCount = signature.getFirst();
           final boolean finalArray = signature.getSecond();
           if (objectArgCount == 0 && !finalArray) {
             return Collections.emptyList();
           }
-          final JavaPsiFacade facade = JavaPsiFacade.getInstance(methodTypeExpression.getProject());
-          final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, methodTypeExpression.getResolveScope());
-          if (objectClass != null) {
-            final List<ReflectiveType> argumentTypes = new ArrayList<>();
-            final ReflectiveType objectType = ReflectiveType.create(objectClass);
-            argumentTypes.add(objectType); // return type
-            for (int i = 0; i < objectArgCount; i++) {
-              argumentTypes.add(objectType);
-            }
-            if (finalArray) {
-              argumentTypes.add(ReflectiveType.arrayOf(objectType));
-            }
-            return ContainerUtil.map(argumentTypes, type -> (() -> type));
+          final PsiClassType javaLangObject =
+            PsiType.getJavaLangObject(methodTypeExpression.getManager(), methodTypeExpression.getResolveScope());
+          final ReflectiveType objectType = ReflectiveType.create(javaLangObject);
+          final List<ReflectiveType> argumentTypes = new ArrayList<>();
+          argumentTypes.add(objectType); // return type
+          for (int i = 0; i < objectArgCount; i++) {
+            argumentTypes.add(objectType);
           }
+          if (finalArray) {
+            argumentTypes.add(ReflectiveType.arrayOf(objectType));
+          }
+          return ContainerUtil.map(argumentTypes, type -> (() -> type));
         }
       }
     }
@@ -364,7 +362,7 @@ class JavaLangReflectHandleInvocationChecker {
     if (INVOKE_WITH_ARGUMENTS.equals(invokeCall.getMethodExpression().getReferenceName())) {
       final PsiExpression[] arguments = invokeCall.getArgumentList().getExpressions();
       if (arguments.length == 1) {
-        return JavaReflectionInvocationInspection.isVarargAsArray(arguments[0]) ||
+        return isVarargAsArray(arguments[0]) ||
                InheritanceUtil.isInheritor(arguments[0].getType(), JAVA_UTIL_LIST);
       }
     }
