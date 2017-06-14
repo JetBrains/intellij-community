@@ -112,6 +112,7 @@ public class PyNames {
   public static final String ISINSTANCE = "isinstance";
   public static final String ASSERT_IS_INSTANCE = "assertIsInstance";
   public static final String HAS_ATTR = "hasattr";
+  public static final String ISSUBCLASS = "issubclass";
 
   public static final String DOC = "__doc__";
   public static final String DOCFORMAT = "__docformat__";
