@@ -73,7 +73,10 @@ public class StatementExtractor {
       }
       parent = ObjectUtils.tryCast(parentElement, PsiExpression.class);
       if (parent == null) {
-        throw new RuntimeExceptionWithAttachments("Expected to have expression parent",
+        String message = PsiTreeUtil.isAncestor(root, expression, false) ?
+                         "Expected to have expression parent" :
+                         "Supplied root is not the expression ancestor";
+        throw new RuntimeExceptionWithAttachments(message,
                                                   new Attachment("expression.txt", expression.getText()),
                                                   new Attachment("root.txt", root.getText()));
       }
