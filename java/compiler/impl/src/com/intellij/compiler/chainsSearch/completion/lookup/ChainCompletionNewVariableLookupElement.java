@@ -19,11 +19,13 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PreferByKindWeigher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,13 +37,17 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
   private final PsiClass myQualifierClass;
   @NotNull
   private final String myNewVarName;
+  private final boolean myField;
 
-  public ChainCompletionNewVariableLookupElement(@NotNull final PsiClass qualifierClass) {
+  public ChainCompletionNewVariableLookupElement(@NotNull PsiClass qualifierClass,
+                                                 @NotNull ChainCompletionContext context) {
     Project project = qualifierClass.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    myField = PsiTreeUtil.getParentOfType(context.getContextPsi(), PsiStatement.class, false) == null;
+    VariableKind variableKind = myField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
     myNewVarName = Stream
-      .of(codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, elementFactory.createType(qualifierClass)).names)
+      .of(codeStyleManager.suggestVariableName(variableKind, null, null, elementFactory.createType(qualifierClass)).names)
       .sorted(Comparator.comparing(String::length).reversed())
       .findFirst()
       .orElseThrow(IllegalStateException::new);
@@ -58,17 +64,30 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
   public void handleInsert(final InsertionContext context) {
     final PsiFile file = context.getFile();
     final PsiElement caretElement = ObjectUtils.notNull(file.findElementAt(context.getEditor().getCaretModel().getOffset()));
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
 
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiStatement.class, false);
-    final Project project = context.getProject();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    context.commitDocument();
-    final PsiStatement newVarDeclarationTemplate = elementFactory.createVariableDeclarationStatement(myNewVarName,
-                                                                                                     elementFactory.createType(myQualifierClass),
-                                                                                                     elementFactory.createExpressionFromText(PsiKeyword.NULL, null));
-    PsiElement varDeclaration = statement.getParent().addBefore(newVarDeclarationTemplate, statement);
+    PsiElement newVariablePlacementAnchor;
+    PsiElement newVarDeclarationTemplate;
+    if (myField) {
+      PsiField field = ObjectUtils.notNull(PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiField.class, false));
+      newVariablePlacementAnchor = field;
+      PsiField newField = elementFactory.createField(myNewVarName, elementFactory.createType(myQualifierClass));
+      if (field.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiUtil.setModifierProperty(newField, PsiModifier.STATIC, true);
+      }
+      newVarDeclarationTemplate = newField;
+    } else {
+      newVariablePlacementAnchor = ObjectUtils.notNull(PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiStatement.class, false));
+      newVarDeclarationTemplate = elementFactory.createVariableDeclarationStatement(myNewVarName,
+                                                                                    elementFactory.createType(myQualifierClass),
+                                                                                    elementFactory.createExpressionFromText(PsiKeyword.NULL, null));
+
+    }
+
+    PsiElement varDeclaration = newVariablePlacementAnchor.getParent().addBefore(newVarDeclarationTemplate, newVariablePlacementAnchor);
     JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(varDeclaration);
   }
+
 
   @NotNull
   @Override
