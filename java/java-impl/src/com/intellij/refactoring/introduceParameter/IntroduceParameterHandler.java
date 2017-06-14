@@ -559,8 +559,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
         processor.showDialog();
 
         //provide context for generated method to check exceptions compatibility
-        final PsiMethod emptyMethod = JavaPsiFacade.getElementFactory(project)
-          .createMethodFromText(processor.generateEmptyMethod("name").getText(), elements[0]);
+        final PsiMethod emptyMethod = processor.generateEmptyMethod("name", elements[0]);
         final Collection<? extends PsiType> types = FunctionalInterfaceSuggester.suggestFunctionalInterfaces(emptyMethod);
         if (types.isEmpty()) {
           return false;

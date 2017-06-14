@@ -96,6 +96,10 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     doTest();
   }
 
+  public void testFieldFromSuperClassPreserveContext() throws Exception {
+    doTest();
+  }
+
   private void doTest(int... disableParams) {
     boolean enabled = true;
     try {

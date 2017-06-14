@@ -688,7 +688,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (classCopy == null) {
         return null;
       }
-      final PsiMethod emptyMethod = (PsiMethod)classCopy.addAfter(generateEmptyMethod("name"), classCopy.getLBrace());
+      final PsiMethod emptyMethod = (PsiMethod)classCopy.addAfter(generateEmptyMethod("name", null), classCopy.getLBrace());
       prepareMethodBody(emptyMethod, false);
       if (myNotNullConditionalCheck || myNullConditionalCheck) {
         return Nullness.NULLABLE;
@@ -1367,16 +1367,17 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiMethod generateEmptyMethod() throws IncorrectOperationException {
-    return generateEmptyMethod(myMethodName);
+    return generateEmptyMethod(myMethodName, null);
   }
 
-  public PsiMethod generateEmptyMethod(String methodName) throws IncorrectOperationException {
+  public PsiMethod generateEmptyMethod(String methodName, PsiElement context) throws IncorrectOperationException {
     PsiMethod newMethod;
     if (myIsChainedConstructor) {
       newMethod = myElementFactory.createConstructor();
     }
     else {
-      newMethod = myElementFactory.createMethod(methodName, myReturnType);
+      newMethod = context != null ? myElementFactory.createMethod(methodName, myReturnType, context) 
+                                  : myElementFactory.createMethod(methodName, myReturnType);
       PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic());
     }
     PsiUtil.setModifierProperty(newMethod, myMethodVisibility, true);
