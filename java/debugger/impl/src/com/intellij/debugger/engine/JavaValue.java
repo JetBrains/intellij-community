@@ -128,8 +128,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public void computePresentation(@NotNull final XValueNode node, @NotNull XValuePlace place) {
-    final SuspendContextImpl suspendContext = myEvaluationContext.getSuspendContext();
-    myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
