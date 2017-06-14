@@ -176,7 +176,6 @@ if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
 else
   message "Cannot find VM options file"
-  exit 1
 fi
 
 IS_EAP="@@isEap@@"
