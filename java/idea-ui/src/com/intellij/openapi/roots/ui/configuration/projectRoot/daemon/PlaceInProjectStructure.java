@@ -29,6 +29,10 @@ public abstract class PlaceInProjectStructure {
   @Nullable
   public abstract String getPlacePath();
 
+  public boolean canNavigate() {
+    return true;
+  }
+
   @NotNull
   public abstract ActionCallback navigate();
 }

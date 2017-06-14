@@ -65,7 +65,7 @@ public class UsagesInUnloadedModules extends ProjectStructureElementUsage {
   @Override
   public PlaceInProjectStructure getPlace() {
     Place configurablePlace = ProjectStructureConfigurable.getInstance(myContext.getProject()).createProjectConfigurablePlace();
-    return new PlaceInProjectStructureBase(myContext.getProject(), configurablePlace, myContainingElement);
+    return new PlaceInProjectStructureBase(myContext.getProject(), configurablePlace, myContainingElement, false);
   }
 
   @Override
