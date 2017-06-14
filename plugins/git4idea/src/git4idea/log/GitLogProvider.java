@@ -296,8 +296,8 @@ public class GitLogProvider implements VcsLogProvider {
     Set<VcsRef> refs = ContainerUtil.newHashSet();
     Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
-      DetailedLogData logData =
-        GitHistoryUtils.loadMetadata(myProject, root, ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk)));
+      String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
+      DetailedLogData logData = GitHistoryUtils.loadMetadata(myProject, root, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
     });
@@ -341,10 +341,9 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    VcsFileUtil
-      .foreachChunk(hashes, 1, hashesChunk -> {
-        GitHistoryUtils.loadDetails(myProject, root, commitConsumer, GitHistoryUtils.formHashParameters(myVcs, hashesChunk));
-      });
+    VcsFileUtil.foreachChunk(hashes, 1, hashesChunk -> {
+      GitHistoryUtils.loadDetails(myProject, root, commitConsumer, GitHistoryUtils.formHashParameters(myVcs, hashesChunk));
+    });
   }
 
   @NotNull
@@ -352,14 +351,14 @@ public class GitLogProvider implements VcsLogProvider {
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
     //noinspection Convert2Lambda
-    return VcsFileUtil
-      .foreachChunk(hashes, new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
-        @NotNull
-        @Override
-        public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
-          return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
-        }
-      });
+    return VcsFileUtil.foreachChunk(hashes,
+                                    new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
+                                      @NotNull
+                                      @Override
+                                      public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
+                                        return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
+                                      }
+                                    });
   }
 
   @NotNull
