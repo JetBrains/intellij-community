@@ -28,13 +28,13 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   private final Object myEventId;
   @Nullable
   private final Object myParentId;
-  private final int myEventTime;
+  private final long myEventTime;
   @NotNull
   private final String myMessage;
   @Nullable
   private String myDescription;
 
-  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, int eventTime, @NotNull String message) {
+  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
     myEventId = eventId;
     myParentId = parentId;
     myEventTime = eventTime;

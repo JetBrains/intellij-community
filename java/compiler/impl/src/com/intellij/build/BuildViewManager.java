@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
+package com.intellij.build;
 
-import com.intellij.build.events.StartBuildEvent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.ui.UIUtil;
+
+import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends AbstractBuildEvent implements StartBuildEvent {
+public class BuildViewManager {
 
-  public StartBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
-    super(eventId, parentId, eventTime, message);
+  private final BuildContentManager myBuildContentManager;
+  public BuildViewManager(BuildContentManager buildContentManager) {
+    myBuildContentManager = buildContentManager;
   }
 }

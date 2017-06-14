@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
-
-import com.intellij.build.events.StartBuildEvent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.build.events;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends AbstractBuildEvent implements StartBuildEvent {
+public interface OutputBuildEvent {
 
-  public StartBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
-    super(eventId, parentId, eventTime, message);
-  }
 }

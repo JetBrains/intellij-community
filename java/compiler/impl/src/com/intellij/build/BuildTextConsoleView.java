@@ -13,18 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
+package com.intellij.build;
 
-import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends AbstractBuildEvent implements StartBuildEvent {
+public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsoleView {
+  private final String myId;
 
-  public StartBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
-    super(eventId, parentId, eventTime, message);
+  public BuildTextConsoleView(@NotNull Project project, boolean viewer, String id) {
+    super(project, viewer);
+    myId = id;
+  }
+
+  @Override
+  public String getViewId() {
+    return myId;
+  }
+
+  @Override
+  public void onEvent(BuildEvent event) {
+    print(event.getMessage(), ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 }
+

@@ -15,16 +15,19 @@
  */
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.OutputBuildEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends AbstractBuildEvent implements StartBuildEvent {
+public class OutputBuildEventImpl extends AbstractBuildEvent implements OutputBuildEvent {
+  public OutputBuildEventImpl(@Nullable Object parentId, @NotNull String message, boolean stdOut) {
+    this(new Object(), parentId, message, stdOut);
+  }
 
-  public StartBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
-    super(eventId, parentId, eventTime, message);
+  public OutputBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, @NotNull String message, boolean stdOut) {
+    super(eventId, parentId, -1, message);
   }
 }

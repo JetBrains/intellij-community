@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.build.SyncViewManager;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.impl.FinishBuildEventImpl;
+import com.intellij.build.events.impl.OutputBuildEventImpl;
+import com.intellij.build.events.impl.ProgressBuildEventImpl;
+import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -38,8 +44,8 @@ import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
@@ -80,8 +86,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.util.Consumer;
-import com.intellij.util.DisposeAwareRunnable;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -408,7 +413,65 @@ public class ExternalSystemUtil {
           return;
         }
 
-        myTask.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
+        ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+
+          @Override
+          public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+            long eventTime = System.currentTimeMillis();
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(
+              new StartBuildEventImpl(id, null, eventTime, "\r"), "CONSOLE");
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(
+              new StartBuildEventImpl(id, null, eventTime, projectName + ": syncing..."), "TREE");
+          }
+
+          @Override
+          public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(
+              new OutputBuildEventImpl(id, text, stdOut), "CONSOLE");
+          }
+
+          @Override
+          public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+            String exceptionMessage = ExceptionUtil.getMessage(e);
+            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
+
+            //executionConsole.print(text + '\n', ConsoleViewContentType.ERROR_OUTPUT);
+            //processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+            //processHandler.notifyProcessTerminated(1);
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(
+              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), projectName + ": sync failed"), "TREE");
+          }
+
+          @Override
+          public void onSuccess(@NotNull ExternalSystemTaskId id) {
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(
+              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), projectName + ": synced successfully"), "TREE");
+          }
+
+          @Override
+          public void onEnd(@NotNull ExternalSystemTaskId id) {
+            //final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+            //final String farewell;
+            //farewell =
+            //  ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, "");
+            //executionConsole.print(farewell, ConsoleViewContentType.SYSTEM_OUTPUT);
+            //foldGreetingOrFarewell(consoleView, farewell, false);
+            //processHandler.notifyProcessTerminated(0);
+          }
+
+          @Override
+          public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+            if (event instanceof ExternalSystemTaskExecutionEvent) {
+              BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent, "TREE");
+            }
+            else {
+              //ServiceManager.getService(project, SyncViewManager.class)
+              //  .onEvent(new OutputBuildEventImpl(event.getId(), event.getId(), event.getDescription() + '\n', true), "CONSOLE");
+            }
+          }
+        };
+        myTask.execute(indicator, ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
         if (project.isDisposed()) return;
 
         final Throwable error = myTask.getError();
@@ -487,6 +550,27 @@ public class ExternalSystemUtil {
             refreshProjectStructureTask.execute(indicator);
           }
         }.queue();
+    }
+  }
+
+  private static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
+    ExternalSystemProgressEvent progressEvent = taskExecutionEvent.getProgressEvent();
+    String displayName = progressEvent.getDescriptor().getDisplayName();
+    long eventTime = progressEvent.getDescriptor().getEventTime();
+    Object parentEventId = ObjectUtils.chooseNotNull(progressEvent.getParentEventId(), taskExecutionEvent.getId());
+    if (progressEvent instanceof ExternalSystemStartEvent) {
+      return new StartBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+    }
+    else if (progressEvent instanceof ExternalSystemFinishEvent) {
+      return new FinishBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+    }
+    else if (progressEvent instanceof ExternalSystemStatusEvent) {
+      ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
+      return new ProgressBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName,
+                                        statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
+    }
+    else {
+      return new OutputBuildEventImpl(progressEvent.getEventId(), parentEventId, displayName, true);
     }
   }
 

@@ -24,16 +24,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProgressBuildEventImpl extends AbstractBuildEvent implements ProgressBuildEvent {
 
-  private final int myTotal;
-  private final int myProgress;
+  private final long myTotal;
+  private final long myProgress;
   private final String myUnit;
 
   public ProgressBuildEventImpl(@NotNull Object eventId,
                                 @Nullable Object parentId,
-                                int eventTime,
+                                long eventTime,
                                 @NotNull String message,
-                                int total,
-                                int progress,
+                                long total,
+                                long progress,
                                 @NotNull String unit) {
     super(eventId, parentId, eventTime, message);
     myTotal = total;
