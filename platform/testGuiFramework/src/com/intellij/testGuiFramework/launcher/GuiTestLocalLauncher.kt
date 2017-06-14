@@ -173,7 +173,7 @@ object GuiTestLocalLauncher {
                                   isInternal: Boolean = true,
                                   useMenuScreenBar: Boolean = true,
                                   debugPort: Int = 5009,
-                                  suspendDebug: String = "n"): List<String> =
+                                  suspendDebug: String = "y"): List<String> =
     listOf<String>()
       .plus("-ea")
       .plus("-Xbootclasspath/p:$bootClasspath")
