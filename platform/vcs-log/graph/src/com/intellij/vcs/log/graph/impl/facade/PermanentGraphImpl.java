@@ -87,46 +87,48 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  @Override
-  public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
-                                                   @Nullable Set<CommitId> visibleHeads,
-                                                   @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController baseController;
+  private LinearGraphController createBaseController(@NotNull SortType sortType) {
     if (sortType == SortType.Normal) {
-      baseController = new BaseController(this);
+      return new BaseController(this);
     }
     else if (sortType == SortType.LinearBek) {
-      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap.get()), this);
+      return new LinearBekController(new BekBaseController(this, myBekIntMap.get()), this);
     }
-    else {
-      baseController = new BekBaseController(this, myBekIntMap.get());
-    }
+    return new BekBaseController(this, myBekIntMap.get());
+  }
 
-    // TODO this code is unclear and obviously needs some refactoring
-    // I'll leave it for later to reorganize, and add some duplication for now, in order just to fix stuff
+  @NotNull
+  private LinearGraphController createFilteredController(@NotNull LinearGraphController baseController,
+                                                         @NotNull SortType sortType,
+                                                         @Nullable Set<CommitId> visibleHeads, @Nullable Set<CommitId> matchingCommits) {
     LinearGraphController controller;
     if (matchingCommits != null) {
       controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
       if (visibleHeads != null) {
-        controller = new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+        return new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
       }
-    }
-    else if (sortType == SortType.LinearBek) {
-      if (visibleHeads != null) {
-        controller = new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-      }
-      else {
-        controller = baseController;
-      }
-    }
-    else {
-      Set<Integer> idOfVisibleBranches = null;
-      if (visibleHeads != null) {
-        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true);
-      }
-      controller = new CollapsedController(baseController, this, idOfVisibleBranches);
+      return controller;
     }
 
+    if (sortType == SortType.LinearBek) {
+      if (visibleHeads != null) {
+        return new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+      }
+      return baseController;
+    }
+
+    if (visibleHeads != null) {
+      return new CollapsedController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+    }
+    return new CollapsedController(baseController, this, null);
+  }
+
+  @NotNull
+  @Override
+  public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
+                                                   @Nullable Set<CommitId> visibleHeads,
+                                                   @Nullable Set<CommitId> matchingCommits) {
+    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
     return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
   }
 
