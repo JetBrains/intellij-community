@@ -47,6 +47,10 @@ abstract class DefaultJreSelector {
         = SdkFromModuleDependencies(moduleComboBox, ModulesComboBox::getSelectedModule, {productionOnly})
 
     @JvmStatic
+    fun fromModuleDependencies(moduleComboBox: ModuleDescriptionsComboBox, productionOnly: Boolean): DefaultJreSelector
+        = SdkFromModuleDependencies(moduleComboBox, ModuleDescriptionsComboBox::getSelectedModule, {productionOnly})
+
+    @JvmStatic
     fun fromSourceRootsDependencies(moduleComboBox: ModulesComboBox, classSelector: EditorTextFieldWithBrowseButton): DefaultJreSelector
         = SdkFromSourceRootDependencies(moduleComboBox, ModulesComboBox::getSelectedModule, classSelector)
 

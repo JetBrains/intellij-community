@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class ConfigurationModuleSelector {
+  public static final String NO_MODULE_TEXT = "<no module>";
   private final Project myProject;
   /** this field is {@code null} if and only if {@link #myModulesList} is not null */
   private final ModuleDescriptionsComboBox myModulesDescriptionsComboBox;
@@ -47,17 +48,22 @@ public class ConfigurationModuleSelector {
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
   public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList) {
-    this(project, modulesList, "<no module>");
+    this(project, modulesList, NO_MODULE_TEXT);
   }
 
   public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox) {
-    this(project, modulesComboBox, "<no module>");
+    this(project, modulesComboBox, NO_MODULE_TEXT);
   }
 
   public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox) {
+    this(project, modulesDescriptionsComboBox, NO_MODULE_TEXT);
+  }
+
+  public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox, String emptySelectionText) {
     myProject = project;
     myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
     myModulesList = null;
+    modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
   }
 
   public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, String noModule) {
