@@ -413,6 +413,8 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
-    jetbrainsLibrary("KotlinJavaRuntime")
+    jetbrainsLibrary("KotlinJavaRuntime"),
+    jetbrainsLibrary("kotlin-stdlib-jre7"),
+    jetbrainsLibrary("kotlin-stdlib-jre8")
   ] as List<LibraryLicense>
 }

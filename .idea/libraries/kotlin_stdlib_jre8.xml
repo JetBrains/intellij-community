@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="kotlin-stdlib-jre8">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.2-4/kotlin-stdlib-jre8-1.1.2-4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.2-4/kotlin-stdlib-jre7-1.1.2-4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
