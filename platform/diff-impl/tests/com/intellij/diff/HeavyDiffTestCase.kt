@@ -33,10 +33,13 @@ abstract class HeavyDiffTestCase : DiffTestCase() {
   }
 
   override fun tearDown() {
-    projectFixture?.tearDown()
-    project = null
-
-    super.tearDown()
+    try {
+      project = null
+      projectFixture?.tearDown()
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   override fun runBare() {
