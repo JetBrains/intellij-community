@@ -64,11 +64,11 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
   private final TreeTable myTreeTable;
   private final SimpleTreeBuilder myBuilder;
-  private final ExecutionNode myRoot;
   private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
   private final ExecutionNodeProgressAnimator myProgressAnimator;
 
   private final Project myProject;
+  private final SimpleTreeStructure myTreeStructure;
 
   public BuildTreeConsoleView(Project project) {
     myProject = project;
@@ -88,8 +88,8 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
         }
       }
     };
-    myRoot = new ExecutionNode(myProject);
-    final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(myRoot), COLUMNS);
+    final ExecutionNode rootNode = new ExecutionNode(myProject);
+    final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(rootNode), COLUMNS);
 
     DefaultTableCellRenderer timeColumnCellRenderer = new DefaultTableCellRenderer() {
       @Override
@@ -128,20 +128,17 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
     TreeTableTree tree = myTreeTable.getTree();
     tree.setRootVisible(false);
-    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot) {
-      @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
-        return true;
-      }
-    };
+    tree.setShowsRootHandles(true);
+    myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
-    myBuilder = new SimpleTreeBuilder(tree, model, treeStructure, null);
+    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
     Disposer.register(this, myBuilder);
-    myBuilder.initRoot();
-    myBuilder.expand(myRoot, null);
+    myBuilder.initRootNode();
+    myBuilder.updateFromRoot();
+    myBuilder.expand(rootNode, null);
 
     myProgressAnimator = new ExecutionNodeProgressAnimator(myBuilder);
-    myProgressAnimator.setCurrentNode(myRoot);
+    myProgressAnimator.setCurrentNode(rootNode);
 
     myPanel.setLayout(new BorderLayout());
     myPanel.add(myContentPanel, BorderLayout.CENTER);
@@ -150,14 +147,19 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     myContentPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable), TREE);
   }
 
+  private ExecutionNode getRootElement() {
+    return ((ExecutionNode)myTreeStructure.getRootElement());
+  }
+
   @Override
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
   }
 
   @Override
   public void clear() {
-    myRoot.removeChildren();
+    getRootElement().removeChildren();
     nodesMap.clear();
+    myBuilder.queueUpdate();
   }
 
   @Override
@@ -239,9 +241,9 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
   @Override
   public void onEvent(BuildEvent event) {
-    ExecutionNode parentNode = event.getParentId() == null ? myRoot : nodesMap.get(event.getParentId());
+    ExecutionNode parentNode = event.getParentId() == null ? getRootElement() : nodesMap.get(event.getParentId());
     if (parentNode == null) {
-      parentNode = myRoot;
+      parentNode = getRootElement();
     }
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartBuildEvent) {
@@ -265,7 +267,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     }
 
     String eventMessage = event.getMessage();
-    currentNode.setText(eventMessage);
+    currentNode.setName(eventMessage);
     if (currentNode.getStartTime() == 0) {
       currentNode.setStartTime(event.getEventTime());
     }
