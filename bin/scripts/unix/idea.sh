@@ -50,12 +50,10 @@ if [ -x "$READLINK" ]; then
   done
 fi
 
-IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
-if [ "$IDE_BIN_HOME" = "." ]; then
-  IDE_HOME=".."
-else
-  IDE_HOME=`dirname "$IDE_BIN_HOME"`
-fi
+cd "`dirname "$SCRIPT_LOCATION"`"
+IDE_BIN_HOME=`pwd`
+IDE_HOME=`dirname "$IDE_BIN_HOME"`
+cd "$OLDPWD"
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
@@ -158,6 +156,9 @@ VM_OPTIONS_FILE=""
 if [ -n "$@@product_uc@@_VM_OPTIONS" -a -r "$@@product_uc@@_VM_OPTIONS" ]; then
   # explicit
   VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
+elif [ -r "$IDE_HOME.vmoptions" ]; then
+  # Toolbox
+  VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
 elif [ -r "$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions" ]; then
   # user-overridden
   VM_OPTIONS_FILE="$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions"
@@ -175,6 +176,7 @@ if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
 else
   message "Cannot find VM options file"
+  exit 1
 fi
 
 IS_EAP="@@isEap@@"
