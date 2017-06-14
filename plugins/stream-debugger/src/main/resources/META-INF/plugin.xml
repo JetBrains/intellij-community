@@ -38,6 +38,7 @@
         <ul>
             <li> Add transitions for toArray/collect/find*/*Match terminal methods </li>
             <li> Support stream with nulls </li>
+            <li> Fix bug when IDE hangs </li>
             <li> Minor fixes and improvements </li>
         </ul>
     ]]>
