@@ -835,6 +835,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19705
+  public void testBlankLinesAroundFirstMethod() {
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }

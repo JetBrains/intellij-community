@@ -719,6 +719,8 @@ public class PyBlock implements ASTBlock {
   @Override
   @Nullable
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+    final CommonCodeStyleSettings settings = myContext.getSettings();
+    final PyCodeStyleSettings pySettings = myContext.getPySettings();
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
       ASTNode node2 = ((ASTBlock)child2).getNode();
@@ -726,6 +728,22 @@ public class PyBlock implements ASTBlock {
       final PsiElement psi1 = node1.getPsi();
 
       PsiElement psi2 = node2.getPsi();
+
+      if (psi2 instanceof PyStatementList) {
+        // Quite odd getSpacing() doesn't get called with child1=null for the first statement
+        // in the statement list of a class, yet it does get called for the preceding colon and
+        // the statement list itself. Hence we have to handle blank lines around methods here in
+        // addition to SpacingBuilder.
+        if (myNode.getElementType() == PyElementTypes.CLASS_DECLARATION) {
+          final PyStatement[] statements = ((PyStatementList)psi2).getStatements();
+          if (statements.length > 0 && statements[0] instanceof PyFunction) {
+            return getBlankLinesForOption(settings.BLANK_LINES_AROUND_METHOD);
+          }
+        }
+        if (childType1 == PyTokenTypes.COLON && needLineBreakInStatement()) {
+          return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
 
       // pycodestyle.py enforces at most 2 blank lines only between comments directly
       // at the top-level of a file, not inside if, try/except, etc.
@@ -744,19 +762,11 @@ public class PyBlock implements ASTBlock {
       final IElementType childType2 = psi2.getNode().getElementType();
       //noinspection ConstantConditions
       child2 = getSubBlockByNode(node2);
-      final CommonCodeStyleSettings settings = myContext.getSettings();
-      final PyCodeStyleSettings pySettings = myContext.getPySettings();
 
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
         final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
         if (namedParameter != null && namedParameter.getAnnotation() != null) {
           return Spacing.createSpacing(1, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
-        }
-      }
-
-      if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
-        if (needLineBreakInStatement()) {
-          return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
 
@@ -766,7 +776,7 @@ public class PyBlock implements ASTBlock {
           final Boolean rightImportIsGroupStart = psi2.getCopyableUserData(IMPORT_GROUP_BEGIN);
           // Cleanup user data, it's no longer needed
           psi1.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
-          // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise: 
+          // Don't remove IMPORT_GROUP_BEGIN from the element psi2 yet, because spacing is constructed pairwise:
           // it might be needed on the next iteration.
           //psi2.putCopyableUserData(IMPORT_GROUP_BEGIN, null);
           if (rightImportIsGroupStart != null) {
@@ -962,7 +972,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (lastChild != null && PyElementTypes.LIST_LIKE_EXPRESSIONS.contains(lastChild.getElementType())) {
-      // handle pressing enter at the end of a list literal when there's no closing paren or bracket 
+      // handle pressing enter at the end of a list literal when there's no closing paren or bracket
       final ASTNode lastLastChild = lastChild.getLastChildNode();
       if (lastLastChild != null && lastLastChild.getPsi() instanceof PsiErrorElement) {
         // we're at a place like this: [foo, ... bar, <caret>
