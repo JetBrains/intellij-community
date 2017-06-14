@@ -257,14 +257,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void beforeDocumentChanged(@NotNull FileViewProvider viewProvider) {
-    if (isViewProviderLocked(viewProvider)) {
-      Throwable cause = viewProvider.getUserData(REFORMAT_ORIGINATOR);
-      @NonNls String message = "Document is locked by write PSI operations. " +
-                               "Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document." +
-                               (cause == null ? "" : " See cause stacktrace for the reason to lock.");
-      throw cause == null ? new RuntimeException(message): new RuntimeException(message, cause);
+    if (!isViewProviderLocked(viewProvider)) {
+      postponedFormatting(viewProvider);
     }
-    postponedFormatting(viewProvider);
   }
 
   public static PostprocessReformattingAspect getInstance(Project project) {
