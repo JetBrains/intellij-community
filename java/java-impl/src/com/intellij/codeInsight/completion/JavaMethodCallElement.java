@@ -322,7 +322,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     caretModel.moveToOffset(offset - 1); // avoid caret impact on hints location
-    editor.getDocument().insertString(offset, StringUtil.repeat(", ", parametersCount - 1));
+    int braceOffset = caretModel.getOffset();
+    String commas = StringUtil.repeat(", ", parametersCount - 1);
+    editor.getDocument().insertString(offset, commas);
+
+    Project project = context.getProject();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
+    if (handler.findElementForParameterInfo(infoContext) == null) {
+      editor.getDocument().deleteString(offset, commas.length());
+      caretModel.moveToOffset(offset);
+      return;
+    }
+
     List<Inlay> addedHints = new ArrayList<>(parametersCount);
     if (showHints) {
       for (PsiParameter parameter : parameterList.getParameters()) {
@@ -333,15 +346,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         offset += 2;
       }
     }
-    int braceOffset = caretModel.getOffset();
     caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(braceOffset + 1).leanForward(true));
 
-    Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
-    handler.findElementForParameterInfo(infoContext);
-    
     parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
     ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
                                                                  parameterOwner, handler, false, false);
