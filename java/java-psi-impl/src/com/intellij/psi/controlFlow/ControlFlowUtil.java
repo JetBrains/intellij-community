@@ -361,6 +361,19 @@ public class ControlFlowUtil {
     return outputVariables;
   }
 
+  public static List<PsiVariable> filterUsedVariables(ControlFlow flow, int offset, PsiVariable[] variables) {
+    if (offset >= flow.getSize()) {
+      return Collections.emptyList();
+    }
+    List<PsiVariable> result = new ArrayList<>();
+    for (PsiVariable variable : variables) {
+      if (needVariableValueAt(variable, flow, offset)) {
+        result.add(variable);
+      }
+    }
+    return result;
+  }
+
   public static Collection<PsiStatement> findExitPointsAndStatements(final ControlFlow flow, final int start, final int end, final IntArrayList exitPoints,
                                                                      final Class... classesFilter) {
     if (end == start) {

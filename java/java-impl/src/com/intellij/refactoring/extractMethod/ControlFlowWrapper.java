@@ -147,6 +147,10 @@ public class ControlFlowWrapper {
     return myExitStatements;
   }
 
+  public List<PsiVariable> filterUsedVariables(PsiVariable[] outputVariables) {
+    return ControlFlowUtil.filterUsedVariables(myControlFlow, myFlowEnd, outputVariables);
+  }
+
   public static class ExitStatementsNotSameException extends Exception {}
 
 
