@@ -79,13 +79,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     return new SpacingBuilder(commonSettings)
       .before(END_OF_LINE_COMMENT).spacing(2, 0, 0, commonSettings.KEEP_LINE_BREAKS, commonSettings.KEEP_BLANK_LINES_IN_CODE)
       .after(END_OF_LINE_COMMENT).spacing(0, 0, 1, commonSettings.KEEP_LINE_BREAKS, commonSettings.KEEP_BLANK_LINES_IN_CODE)
-      .between(CLASS_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      .between(STATEMENT_OR_DECLARATION, CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      .between(FUNCTION_DECLARATION, STATEMENT_OR_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
-      .between(STATEMENT_OR_DECLARATION, FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
-      .after(FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
-      .after(CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
-      // Remove excess blank lines between imports (at most one is allowed). 
+      // Top-level definitions are supposed to be handled in PyBlock#getSpacing
+      .around(CLASS_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_CLASS)
+      .around(FUNCTION_DECLARATION).blankLines(commonSettings.BLANK_LINES_AROUND_METHOD)
+      // Remove excess blank lines between imports (at most one is allowed).
       // Note that ImportOptimizer gets rid of them anyway.
       // Empty lines between import groups are handles in PyBlock#getSpacing
       .between(IMPORT_STATEMENTS, IMPORT_STATEMENTS).spacing(0, Integer.MAX_VALUE, 1, false, 1)
