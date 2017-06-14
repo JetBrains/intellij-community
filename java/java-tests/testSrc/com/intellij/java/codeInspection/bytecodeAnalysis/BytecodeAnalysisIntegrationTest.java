@@ -34,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
@@ -141,11 +142,11 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testExternalAnnoGutter() {
-    setUpExternalUpAnnotations();
-    openDecompiledClass("java.lang.Boolean");
+    ModuleRootModificationUtil.setModuleSdk(myModule, PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17()));
+    openDecompiledClass("java.lang.String");
     checkHasGutter("<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "@Contract(&quot;null-&gt;false&quot;)&nbsp;\n" +
-                   "private static&nbsp;boolean&nbsp;<b>toBoolean</b>(@Nullable&nbsp;String&nbsp;var0)</html>");
+                   "<i>@Contract(pure = true)</i>&nbsp;\n" +
+                   "public&nbsp;<b>String</b>(@NotNull&nbsp;String&nbsp;var1)</html>");
   }
 
   private void checkHasGutter(String expectedText) {
