@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
   private static final Map<String, String> ourInjectedIds = new HashMap<>();
+  private boolean myIsToolbarAction;
 
   /**
    * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
@@ -99,8 +100,19 @@ public class AnActionEvent implements PlaceProvider<String> {
                                                    @NotNull String place,
                                                    @NotNull Presentation presentation,
                                                    @NotNull DataContext dataContext) {
-    return new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
-                             event == null ? 0 : event.getModifiers());
+    return createFromInputEvent(event, place, presentation, dataContext, false);
+  }
+
+  @NotNull
+  public static AnActionEvent createFromInputEvent(@Nullable InputEvent event,
+                                                   @NotNull String place,
+                                                   @NotNull Presentation presentation,
+                                                   @NotNull DataContext dataContext,
+                                                   boolean isToolbarAction) {
+    AnActionEvent e = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
+                                             event == null ? 0 : event.getModifiers());
+    e.myIsToolbarAction = isToolbarAction;
+    return e;
   }
 
   /**
@@ -206,6 +218,10 @@ public class AnActionEvent implements PlaceProvider<String> {
   @NotNull
   public String getPlace() {
     return myPlace;
+  }
+
+  public boolean isToolbarAction() {
+    return myIsToolbarAction;
   }
 
   /**
