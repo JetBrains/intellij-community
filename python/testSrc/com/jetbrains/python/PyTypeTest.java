@@ -1915,6 +1915,23 @@ public class PyTypeTest extends PyTestCase {
            "expr = resort");
   }
 
+  public void testIsSubclass() {
+    doTest("Type[A]",
+           "class A: pass\n" +
+           "def foo(cls):\n" +
+           "    if issubclass(cls, A):\n" +
+           "        expr = cls");
+  }
+
+  public void testIsSubclassWithTupleOfTypeObjects() {
+    doTest("Type[Union[A, B]]",
+           "class A: pass\n" +
+           "class B: pass\n" +
+           "def foo(cls):\n" +
+           "    if issubclass(cls, (A, B)):\n" +
+           "        expr = cls");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
