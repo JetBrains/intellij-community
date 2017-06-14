@@ -53,6 +53,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
 
 public class IdeTooltipManager implements ApplicationComponentAdapter, Disposable, AWTEventListener {
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
@@ -607,7 +608,16 @@ public class IdeTooltipManager implements ApplicationComponentAdapter, Disposabl
         if (o instanceof HTML.Tag) {
           HTML.Tag kind = (HTML.Tag)o;
           if (kind == HTML.Tag.HR) {
-            return new CustomHrView(elem, hintHint.getTextForeground());
+            View view = super.create(elem);
+            try {
+              Field field = view.getClass().getDeclaredField("size");
+              field.setAccessible(true);
+              field.set(view, JBUI.scale(1));
+              return view;
+            }
+            catch (Exception ignored) {
+              //ignore
+            }
           }
         }
         return super.create(elem);
