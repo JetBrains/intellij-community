@@ -53,6 +53,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.TextRangeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -246,6 +247,22 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return getContext().myReformatElements.containsKey(fileViewProvider);
   }
 
+  /**
+   * Checks that view provider doesn't contain any PSI modifications which will be used in postponed formatting and may conflict with
+   * changes made to the document.
+   *
+   * @param viewProvider The view provider to validate.
+   * @throws RuntimeException If the assertion fails.
+   */
+  public void assertDocumentChangeIsAllowed(@NotNull FileViewProvider viewProvider) {
+    if (isViewProviderLocked(viewProvider)) {
+      Throwable cause = viewProvider.getUserData(REFORMAT_ORIGINATOR);
+      @NonNls String message = "Document is locked by write PSI operations. " +
+                               "Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document." +
+                               (cause == null ? "" : " See cause stacktrace for the reason to lock.");
+      throw cause == null ? new RuntimeException(message): new RuntimeException(message, cause);
+    }
+  }
 
   public static PostprocessReformattingAspect getInstance(Project project) {
     return project.getComponent(PostprocessReformattingAspect.class);
