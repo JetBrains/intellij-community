@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -31,7 +32,7 @@ import java.util.Objects;
  */
 public class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final String myName;
-  @Nullable private final PyType myType;
+  @Nullable private final Ref<PyType> myType;
   @Nullable private final PyExpression myDefaultValue;
   @Nullable private final PyParameter myElement;
 
@@ -41,7 +42,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
 
   public PyCallableParameterImpl(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
     myName = name;
-    myType = type;
+    myType = Ref.create(type);
     myDefaultValue = defaultValue;
     myElement = null;
   }
@@ -49,6 +50,13 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   public PyCallableParameterImpl(@NotNull PyParameter element) {
     myName = null;
     myType = null;
+    myDefaultValue = null;
+    myElement = element;
+  }
+
+  public PyCallableParameterImpl(@NotNull PyParameter element, @Nullable PyType type) {
+    myName = null;
+    myType = Ref.create(type);
     myDefaultValue = null;
     myElement = element;
   }
@@ -69,7 +77,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Override
   public PyType getType(@NotNull TypeEvalContext context) {
     if (myType != null) {
-      return myType;
+      return myType.get();
     }
     else if (myElement instanceof PyNamedParameter) {
       return context.getType((PyNamedParameter)myElement);
@@ -104,6 +112,12 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   public boolean isKeywordContainer() {
     final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
     return namedParameter != null && namedParameter.isKeywordContainer();
+  }
+
+  @Override
+  public boolean isSelf() {
+    final PyParameter parameter = PyUtil.as(myElement, PyParameter.class);
+    return parameter != null && parameter.isSelf();
   }
 
   @NotNull
@@ -174,13 +188,13 @@ public class PyCallableParameterImpl implements PyCallableParameter {
 
     final PyCallableParameterImpl parameter = (PyCallableParameterImpl)o;
     return Objects.equals(myName, parameter.myName) &&
-           Objects.equals(myType, parameter.myType) &&
+           Objects.equals(Ref.deref(myType), Ref.deref(parameter.myType)) &&
            Objects.equals(myElement, parameter.myElement);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myName, myType, myElement);
+    return Objects.hash(myName, Ref.deref(myType), myElement);
   }
 
   private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue,
