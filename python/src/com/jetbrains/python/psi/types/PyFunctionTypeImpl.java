@@ -41,11 +41,15 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final PyCallable myCallable;
-  @NotNull private final List<PyCallableParameter> myCallableParameters;
+  @NotNull private final List<PyCallableParameter> myParameters;
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
+    this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::new));
+  }
+
+  public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     myCallable = callable;
-    myCallableParameters = ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::new);
+    myParameters = parameters;
   }
 
   @Nullable
@@ -63,7 +67,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return myCallableParameters;
+    return myParameters;
   }
 
   @Override
