@@ -265,9 +265,7 @@ public class GitLogUtil {
                                   boolean withChanges,
                                   @NotNull Consumer<GitLogRecord> converter,
                                   String... parameters) throws VcsException {
-    List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") && withChanges ?
-                                    Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(withChanges));
     readRecordsFromHandler(project, root, withRefs, withChanges, converter, handler, parameters);
   }
 
@@ -356,9 +354,7 @@ public class GitLogUtil {
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
-    List<String> configParameters = Registry.is("git.diff.renameLimit.infinity") ?
-                                    Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true));
 
     Ref<Exception> inputError = new Ref<>();
     handler.setInputProcessor(stream -> {
@@ -383,5 +379,11 @@ public class GitLogUtil {
     if (!inputError.isNull()) {
       throw new VcsException(inputError.get());
     }
+  }
+
+  @NotNull
+  private static List<String> createConfigParameters(boolean withChanges) {
+    return Registry.is("git.diff.renameLimit.infinity") && withChanges ?
+           Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
   }
 }
