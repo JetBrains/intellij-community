@@ -169,7 +169,7 @@ public abstract class ArrayAction extends DebuggerAction {
     }
   }
 
-  private static class AdjustArrayRangeAction extends ArrayAction {
+  public static class AdjustArrayRangeAction extends ArrayAction {
     @NotNull
     @Override
     protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
@@ -185,7 +185,7 @@ public abstract class ArrayAction extends DebuggerAction {
     }
   }
 
-  private static class FilterArrayAction extends ArrayAction {
+  public static class FilterArrayAction extends ArrayAction {
     @NotNull
     @Override
     protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
