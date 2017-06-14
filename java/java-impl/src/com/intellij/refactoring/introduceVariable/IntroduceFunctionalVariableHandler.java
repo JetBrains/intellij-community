@@ -78,7 +78,8 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           }
         }
         catch (PrepareFailedException e) {
-          showErrorMessage(project, editor);
+          showErrorMessage(project, editor, e.getMessage());
+          return;
         }
 
         if (!processor.showDialog()) return;
@@ -232,6 +233,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
     @Override
     protected boolean isFoldingApplicable() {
       return false;
+    }
+
+    @Override
+    protected void showMultipleOutputMessage(PsiType expressionType) throws PrepareFailedException {
+      throw new PrepareFailedException(buildMultipleOutputMessageError(expressionType), myElements[0]);
     }
 
     @Override

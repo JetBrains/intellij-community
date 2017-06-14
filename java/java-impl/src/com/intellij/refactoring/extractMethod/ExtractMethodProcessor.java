@@ -1741,37 +1741,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private void showMultipleOutputMessage(PsiType expressionType) {
+  protected void showMultipleOutputMessage(PsiType expressionType) throws PrepareFailedException {
     if (myShowErrorDialogs) {
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(RefactoringBundle.getCannotRefactorMessage(
-        RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
-      buffer.append("\n");
-      if (myHasExpressionOutput) {
-        buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
-        buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
-        buffer.append(",\n");
-      }
-      if (myGenerateConditionalExit) {
-        buffer.append("    ").append(RefactoringBundle.message("boolean.method.result"));
-        buffer.append(",\n");
-      }
-      for (int i = 0; i < myOutputVariables.length; i++) {
-        PsiVariable var = myOutputVariables[i];
-        buffer.append("    ");
-        buffer.append(var.getName());
-        buffer.append(" : ");
-        buffer.append(PsiFormatUtil.formatType(var.getType(), 0, PsiSubstitutor.EMPTY));
-        if (i < myOutputVariables.length - 1) {
-          buffer.append(",\n");
-        }
-        else {
-          buffer.append(".");
-        }
-      }
-      buffer.append("\nWould you like to Extract Method Object?");
-
-      String message = buffer.toString();
+      String message = buildMultipleOutputMessageError(expressionType) + "\nWould you like to Extract Method Object?";
 
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(myRefactoringName, message, myHelpId, "OptionPane.errorIcon", true,
@@ -1781,6 +1753,36 @@ public class ExtractMethodProcessor implements MatchProvider {
           .invoke(myProject, myEditor, myTargetClass.getContainingFile(), DataManager.getInstance().getDataContext());
       }
     }
+  }
+
+  protected String buildMultipleOutputMessageError(PsiType expressionType) {
+    StringBuilder buffer = new StringBuilder();
+    buffer.append(RefactoringBundle.getCannotRefactorMessage(
+      RefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
+    buffer.append("\n");
+    if (myHasExpressionOutput) {
+      buffer.append("    ").append(RefactoringBundle.message("expression.result")).append(": ");
+      buffer.append(PsiFormatUtil.formatType(expressionType, 0, PsiSubstitutor.EMPTY));
+      buffer.append(",\n");
+    }
+    if (myGenerateConditionalExit) {
+      buffer.append("    ").append(RefactoringBundle.message("boolean.method.result"));
+      buffer.append(",\n");
+    }
+    for (int i = 0; i < myOutputVariables.length; i++) {
+      PsiVariable var = myOutputVariables[i];
+      buffer.append("    ");
+      buffer.append(var.getName());
+      buffer.append(" : ");
+      buffer.append(PsiFormatUtil.formatType(var.getType(), 0, PsiSubstitutor.EMPTY));
+      if (i < myOutputVariables.length - 1) {
+        buffer.append(",\n");
+      }
+      else {
+        buffer.append(".");
+      }
+    }
+    return buffer.toString();
   }
 
   public PsiMethod getExtractedMethod() {
