@@ -30,7 +30,6 @@ import java.util.List;
  */
 public class ExecutionNode extends CachingSimpleNode {
   private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
-  private String myText;
   private long startTime;
   private long endTime;
   private boolean isFailed;
@@ -47,10 +46,8 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected void doUpdate() {
-    //setNameAndTooltip(getName(), null, myInfo.isUpToDate() ? "UP-TO-DATE" : null);
     setIcon(
       isRunning() ? ExecutionNodeProgressAnimator.getCurrentFrame() :
-      isRunning() ? AllIcons.Process.State.GreyProgr :
       isFailed() ? AllIcons.Process.State.RedExcl :
       isSkipped() ? AllIcons.Process.State.YellowStr :
       AllIcons.Process.State.GreenOK
@@ -59,11 +56,11 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   public String getName() {
-    return myText;
+    return myName;
   }
 
-  public void setText(String text) {
-    myText = text;
+  public void setName(String name) {
+    myName = name;
   }
 
   public void add(ExecutionNode node) {
