@@ -17,9 +17,6 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-/**
- * @author Dmitry Batkovich
- */
 public class AddJavadocIntentionTest extends LightIntentionActionTestCase {
 
   public void test() throws Exception { doAllTests(); }
