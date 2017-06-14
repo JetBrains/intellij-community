@@ -87,7 +87,8 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
       if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
         if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
           final PsiCall call = LambdaUtil.treeWalkUp(body);
-          if (call != null && call.resolveMethod() != null) {
+          PsiMethod oldTarget;
+          if (call != null && (oldTarget = call.resolveMethod()) != null) {
             final int offsetInTopCall = body.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
             PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
             if (copyCall == null) return null;
@@ -96,7 +97,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
               final PsiElement parent = codeBlock.getParent();
               if (parent instanceof PsiLambdaExpression) {
                 codeBlock.replace(psiExpression);
-                if (copyCall.resolveMethod() == null || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
+                if (copyCall.resolveMethod() != oldTarget || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
                   return null;
                 }
               }
