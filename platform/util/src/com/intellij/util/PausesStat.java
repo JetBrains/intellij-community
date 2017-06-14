@@ -76,16 +76,9 @@ public class PausesStat {
     long startTimeStamp = this.startTimeStamp;
     int durationMs = (int)TimeUnit.NANOSECONDS.toMillis(finishStamp - startTimeStamp);
     this.startTimeStamp = 0;
-    if (finishStamp < startTimeStamp || durationMs < 0) {
-      int lastPause = durations.size() == N_MAX ? durations.get((indexToOverwrite -1 + N_MAX) % N_MAX) : durations.get(durations.size()-1);
-      LOG.error("\n"+
-                "startTimeStamp: " + startTimeStamp +"\n"
-                + ";  finishStamp: " + finishStamp
-                + "; durationMs: " + durationMs
-                + "; lastPause: " + lastPause
-                + "\n; description: " + description
-                + (description.equals(startDescription) ? "" : "\n; startDescription: " + startDescription)
-      );
+    if (finishStamp - startTimeStamp < 0 || durationMs < 0) {
+      // sometimes despite all efforts the System.nanoTime() can be non-monotonic
+      // ignore
       return;
     }
 
