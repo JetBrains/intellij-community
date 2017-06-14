@@ -21,8 +21,11 @@ import java.beans.Introspector
 import java.beans.PropertyDescriptor
 import java.lang.ref.SoftReference
 import java.util.*
-import kotlin.reflect.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaType
+import kotlin.reflect.memberProperties
 
 /**
  * Tools to fetch properties both from Java and Kotlin code and to copy them from one object to another.
@@ -97,16 +100,19 @@ private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
   return this.annotations.find { annotation.java.isAssignableFrom(it.javaClass) } != null
 }
 
+
 private val membersCache: MutableMap<KClass<*>, SoftReference<Collection<KProperty<*>>>> = SoftHashMap()
 
 private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> {
-  val cache = membersCache[this]?.get()
-  if (cache != null) {
-    return cache
+  synchronized(membersCache) {
+    val cache = membersCache[this]?.get()
+    if (cache != null) {
+      return cache
+    }
+    val memberProperties = this.memberProperties
+    membersCache.put(this, SoftReference(memberProperties))
+    return memberProperties
   }
-  val memberProperties = this.memberProperties
-  membersCache.put(this, SoftReference(memberProperties))
-  return memberProperties
 }
 
 /**
