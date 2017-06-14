@@ -104,7 +104,8 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   public void testFixDocstringRemove() {
     getIndentOptions().INDENT_SIZE = 2;
-    doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false)));
+    runWithDocStringFormat(DocStringFormat.REST,
+                           () -> doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "a", null, false))));
   }
 
   // PY-9795
