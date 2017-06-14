@@ -19,9 +19,13 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessorBase {
 
@@ -57,24 +61,33 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
 
   @Override
   protected void onTreeChanged(@NotNull PsiTreeChangeEventImpl event) {
-    PsiModificationTracker tracker = myPsiManager.getModificationTracker();
-    long cur = tracker.getOutOfCodeBlockModificationCount();
-    super.onTreeChanged(event);
-    if (cur == tracker.getOutOfCodeBlockModificationCount()) {
-      PsiEventType code = event.getCode();
-      if (code == PsiEventType.CHILD_ADDED || code == PsiEventType.CHILD_REMOVED || code == PsiEventType.CHILD_REPLACED) {
-        if (hasClassesInside(event.getOldChild()) ||
-            event.getOldChild() != event.getChild() && hasClassesInside(event.getChild())) {
-          onOutOfCodeBlockModification(event);
-          doIncOutOfCodeBlockCounter();
-        }
+    Set<PsiElement> changedChildren = getChangedChildren(event);
+
+    PsiModificationTrackerImpl tracker = (PsiModificationTrackerImpl)myPsiManager.getModificationTracker();
+    if (!changedChildren.isEmpty() && changedChildren.stream().anyMatch(JavaCodeBlockModificationListener::hasClassesInside)) {
+      tracker.incCounter();
+    }
+
+    if (isOutOfCodeBlockChangeEvent(event)) {
+      if (changedChildren.isEmpty() || changedChildren.stream().anyMatch(e -> !isWhiteSpaceOrComment(e))) {
+        tracker.incCounter(); // java structure change
+      }
+      else {
+        tracker.incOutOfCodeBlockModificationCounter();
       }
     }
   }
 
-  @Override
-  protected void doIncOutOfCodeBlockCounter() {
-    ((PsiModificationTrackerImpl)myPsiManager.getModificationTracker()).incCounter();
+  private static boolean isWhiteSpaceOrComment(PsiElement e) {
+    return e instanceof PsiWhiteSpace || PsiTreeUtil.getParentOfType(e, PsiComment.class, false) != null;
+  }
+
+  private static Set<PsiElement> getChangedChildren(@NotNull PsiTreeChangeEventImpl event) {
+    PsiEventType code = event.getCode();
+    if (code == PsiEventType.CHILD_ADDED || code == PsiEventType.CHILD_REMOVED || code == PsiEventType.CHILD_REPLACED) {
+      return ContainerUtil.newHashSet(event.getOldChild(), event.getChild());
+    }
+    return Collections.emptySet();
   }
 
   private static boolean hasClassesInside(@Nullable PsiElement element) {

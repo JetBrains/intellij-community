@@ -64,51 +64,43 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
   }
 
   protected void onTreeChanged(@NotNull PsiTreeChangeEventImpl event) {
-    boolean outOfCodeBlock;
+    if (isOutOfCodeBlockChangeEvent(event)) {
+      onOutOfCodeBlockModification(event);
+      doIncOutOfCodeBlockCounter();
+    }
+  }
 
+  protected final boolean isOutOfCodeBlockChangeEvent(@NotNull PsiTreeChangeEventImpl event) {
     switch (event.getCode()) {
       case BEFORE_PROPERTY_CHANGE:
       case BEFORE_CHILD_MOVEMENT:
       case BEFORE_CHILD_ADDITION:
       case BEFORE_CHILD_REMOVAL:
       case BEFORE_CHILD_REPLACEMENT:
-        outOfCodeBlock = false;
-        break;
+        return false;
 
       case BEFORE_CHILDREN_CHANGE:
       case CHILDREN_CHANGED:
-        if (event.isGenericChange()) {
-          return;
-        }
-        outOfCodeBlock = outOfCodeBlock(event.getParent());
-        break;
+        return !event.isGenericChange() && outOfCodeBlock(event.getParent());
 
       case CHILD_ADDED:
       case CHILD_REMOVED:
       case CHILD_REPLACED:
-        outOfCodeBlock = outOfCodeBlock(event.getParent()) ||
-                         outOfCodeBlock(event.getChild()) ||
-                         outOfCodeBlock(event.getOldChild()) ||
-                         outOfCodeBlock(event.getNewChild());
-        break;
+        return outOfCodeBlock(event.getParent()) ||
+               outOfCodeBlock(event.getChild()) ||
+               outOfCodeBlock(event.getOldChild()) ||
+               outOfCodeBlock(event.getNewChild());
 
       case PROPERTY_CHANGED:
-        outOfCodeBlock = true;
-        break;
+        return true;
 
       case CHILD_MOVED:
-        outOfCodeBlock = outOfCodeBlock(event.getOldParent()) ||
-                         outOfCodeBlock(event.getNewParent()) ||
-                         outOfCodeBlock(event.getChild());
-        break;
-      default:
-        outOfCodeBlock = true;
-        break;
-    }
+        return outOfCodeBlock(event.getOldParent()) ||
+               outOfCodeBlock(event.getNewParent()) ||
+               outOfCodeBlock(event.getChild());
 
-    if (outOfCodeBlock) {
-      onOutOfCodeBlockModification(event);
-      doIncOutOfCodeBlockCounter();
+      default:
+        return true;
     }
   }
 

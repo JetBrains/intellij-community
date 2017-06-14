@@ -471,4 +471,17 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     WriteAction.run(() -> file.setWritable(true));
     assertEquals(mc, tracker.getModificationCount());
   }
+
+  public void testJavaStructureModCountNotAdvancedOnJavadocChange() {
+    configureByText(JavaFileType.INSTANCE, "/* <selection>abc</selection> */ class A{}");
+
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+    long javaCount = tracker.getJavaStructureModificationCount();
+    long codeBlockCount = tracker.getOutOfCodeBlockModificationCount();
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> replaceSelection("cde"));
+
+    assertEquals(javaCount, tracker.getJavaStructureModificationCount());
+    assertFalse(codeBlockCount == tracker.getOutOfCodeBlockModificationCount());
+  }
 }
