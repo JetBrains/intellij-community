@@ -91,7 +91,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> visibleHeads,
                                                    @Nullable Set<CommitId> matchingCommits) {
-    CascadeController baseController;
+    LinearGraphController baseController;
     if (sortType == SortType.Normal) {
       baseController = new BaseController(this);
     }
@@ -104,7 +104,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
 
     // TODO this code is unclear and obviously needs some refactoring
     // I'll leave it for later to reorganize, and add some duplication for now, in order just to fix stuff
-    CascadeController controller;
+    LinearGraphController controller;
     if (matchingCommits != null) {
       controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
       if (visibleHeads != null) {
