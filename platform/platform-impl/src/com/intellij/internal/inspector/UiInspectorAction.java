@@ -1305,6 +1305,19 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           return clickInfo;
         }
       }
+      if (component instanceof JTable) {
+        JTable table = (JTable)component;
+        int row = table.rowAtPoint(me.getPoint());
+        int column = table.columnAtPoint(me.getPoint());
+        if (row != -1 && column != -1) {
+          Component rendererComponent = table.getCellRenderer(row, column)
+            .getTableCellRendererComponent(table, table.getValueAt(row, column), table.getSelectionModel().isSelectedIndex(row),
+                                           table.hasFocus(), row, column);
+          clickInfo.add(new PropertyBean(RENDERER_BOUNDS, table.getCellRect(row, column, true)));
+          clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
+          return clickInfo;
+        }
+      }
       if (component instanceof JTree) {
         JTree tree = (JTree)component;
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
