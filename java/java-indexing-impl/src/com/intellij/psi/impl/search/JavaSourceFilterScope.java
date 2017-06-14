@@ -37,6 +37,11 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     this(delegate, false);
   }
 
+  /**
+   * By default, the scope excludes version-specific classes of multi-release .jar files
+   * (i.e. *.class files located under META-INF/versions/ directory).
+   * Setting {@code includeVersions} parameter to {@code true} allows such files to pass the filter.
+   */
   public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions) {
     super(delegate);
     Project project = getProject();
