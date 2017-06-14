@@ -504,5 +504,6 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
+    <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
   </extensions>
 </idea-plugin>

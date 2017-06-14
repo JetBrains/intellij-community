@@ -1951,7 +1951,6 @@
     <refactoring.elementListenerProvider implementation="com.intellij.codeInsight.ExternalAnnotationsRefactoringListenerProvider"/>
     <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
     <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
-    <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <refactoring.invertBoolean implementation="com.intellij.refactoring.invertBoolean.JavaInvertBooleanDelegate"/>
     <refactoring.introduceParameterObject language="JAVA"
                                           implementationClass="com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate"/>
