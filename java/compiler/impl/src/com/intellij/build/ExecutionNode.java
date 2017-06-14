@@ -76,21 +76,6 @@ public class ExecutionNode extends CachingSimpleNode {
     cleanUpCache();
   }
 
-  @Override
-  public boolean isAutoExpandNode() {
-    return false;
-  }
-
-  @Override
-  public boolean isAlwaysShowPlus() {
-    return !myChildrenList.isEmpty();
-  }
-
-  @Override
-  public boolean isAlwaysLeaf() {
-    return !isRunning() && myChildrenList.isEmpty();
-  }
-
   @Nullable
   public String getDuration() {
     if (isRunning()) {
