@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
@@ -279,45 +280,6 @@ public class JavaReflectionMemberAccessInspection extends BaseJavaBatchLocalInsp
     final List<ReflectiveType> argumentTypes =
       ContainerUtil.map(methodArguments.expressions, JavaReflectionReferenceUtil::getReflectiveType);
 
-    return matchMethod(methods, argumentTypes);
-  }
-
-  @Nullable
-  public static PsiMethod matchMethod(@NotNull PsiMethod[] methods, @NotNull List<ReflectiveType> argumentTypes) {
-    int mismatchCount = Integer.MAX_VALUE;
-    PsiMethod bestGuess = null;
-    for (PsiMethod method : methods) {
-      final int match = matchMethodArguments(method, argumentTypes);
-      if (match == 0) {
-        return method;
-      }
-      if (match < 0) {
-        continue;
-      }
-      if (mismatchCount > match) {
-        mismatchCount = match;
-        bestGuess = method;
-      }
-    }
-    return bestGuess;
-  }
-
-  private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != argumentTypes.size()) {
-      return -1;
-    }
-    int mismatchCount = 0;
-    for (int i = 0; i < parameters.length; i++) {
-      final ReflectiveType argumentType = argumentTypes.get(i);
-      if (argumentType == null) {
-        mismatchCount++;
-        continue;
-      }
-      if (!argumentType.isEqualTo(parameters[i].getType())) {
-        return -1;
-      }
-    }
-    return mismatchCount;
+    return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -439,6 +440,118 @@ public class JavaReflectionReferenceUtil {
 
   public static boolean isCallToMethod(@NotNull PsiMethodCallExpression methodCall, @NotNull String className, @NotNull String methodName) {
     return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
+  }
+
+  @Nullable
+  public static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
+    if (isVarargAsArray(maybeArray)) {
+      final PsiExpression argumentsDefinition = findDefinition(maybeArray);
+      if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
+        return ((PsiArrayInitializerExpression)argumentsDefinition).getInitializers();
+      }
+      if (argumentsDefinition instanceof PsiNewExpression) {
+        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)argumentsDefinition).getArrayInitializer();
+        if (arrayInitializer != null) {
+          return arrayInitializer.getInitializers();
+        }
+        final PsiExpression[] dimensions = ((PsiNewExpression)argumentsDefinition).getArrayDimensions();
+        if (dimensions.length == 1) { // special case: new Object[0]
+          final Integer itemCount = computeConstantExpression(findDefinition(dimensions[0]), Integer.class);
+          if (itemCount != null && itemCount == 0) {
+            return PsiExpression.EMPTY_ARRAY;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Contract("null -> false")
+  public static boolean isVarargAsArray(@Nullable PsiExpression maybeArray) {
+    final PsiType type = maybeArray != null ? maybeArray.getType() : null;
+    return type instanceof PsiArrayType &&
+           type.getArrayDimensions() == 1 &&
+           type.getDeepComponentType() instanceof PsiClassType;
+  }
+
+  /**
+   * Take method's return type and parameter types
+   * from arguments of MethodType.methodType(Class...) and MethodType.genericMethodType(int, boolean?)
+   */
+  @Nullable
+  public static ReflectiveSignature composeMethodSignature(@Nullable PsiExpression methodTypeExpression) {
+    final PsiExpression typeDefinition = findDefinition(methodTypeExpression);
+    if (typeDefinition instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)typeDefinition;
+      final String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
+
+      Function<PsiExpression[], ReflectiveSignature> composer = null;
+      if (METHOD_TYPE.equals(referenceName)) {
+        composer = JavaReflectionReferenceUtil::composeMethodSignatureFromTypes;
+      }
+      else if (GENERIC_METHOD_TYPE.equals(referenceName)) {
+        composer = JavaReflectionReferenceUtil::composeGenericMethodSignature;
+      }
+
+      if (composer != null) {
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method != null) {
+          final PsiClass psiClass = method.getContainingClass();
+          if (psiClass != null && JAVA_LANG_INVOKE_METHOD_TYPE.equals(psiClass.getQualifiedName())) {
+            final PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
+            return composer.apply(arguments);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ReflectiveSignature composeMethodSignatureFromTypes(@NotNull PsiExpression[] returnAndParameterTypes) {
+    final List<String> typeTexts = ContainerUtil.map(returnAndParameterTypes, JavaReflectionReferenceUtil::getTypeText);
+    return ReflectiveSignature.create(typeTexts);
+  }
+
+  @Nullable
+  public static Pair.NonNull<Integer, Boolean> getGenericSignature(@NotNull PsiExpression[] genericSignatureShape) {
+    if (genericSignatureShape.length == 0 || genericSignatureShape.length > 2) {
+      return null;
+    }
+
+    final Integer objectArgCount = computeConstantExpression(genericSignatureShape[0], Integer.class);
+    final Boolean finalArray = // there's an additional parameter which is an ellipsis or an array
+      genericSignatureShape.length > 1 ? computeConstantExpression(genericSignatureShape[1], Boolean.class) : false;
+
+    if (objectArgCount == null || objectArgCount < 0 || objectArgCount > 255) {
+      return null;
+    }
+    if (finalArray == null || finalArray && objectArgCount > 254) {
+      return null;
+    }
+    return Pair.createNonNull(objectArgCount, finalArray);
+  }
+
+  /**
+   * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
+   */
+  @Nullable
+  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
+    final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(genericSignatureShape);
+    if (signature == null) return null;
+    final int objectArgCount = signature.getFirst();
+    final boolean finalArray = signature.getSecond();
+
+    final List<String> typeNames = new ArrayList<>();
+    typeNames.add(CommonClassNames.JAVA_LANG_OBJECT); // return type
+
+    for (int i = 0; i < objectArgCount; i++) {
+      typeNames.add(CommonClassNames.JAVA_LANG_OBJECT);
+    }
+    if (finalArray) {
+      typeNames.add(CommonClassNames.JAVA_LANG_OBJECT + "[]");
+    }
+    return ReflectiveSignature.create(typeNames);
   }
 
 

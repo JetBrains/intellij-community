@@ -23,7 +23,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.ARRAY_ELEMENT_VAR_HANDLE;
@@ -302,86 +300,6 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     return methods.stream()
       .map(JavaReflectionReferenceUtil::getMethodSignature)
       .anyMatch(expectedMethodSignature::equals);
-  }
-
-  /**
-   * Take method's return type and parameter types
-   * from arguments of MethodType.methodType(Class...) and MethodType.genericMethodType(int, boolean?)
-   */
-  @Nullable
-  public static ReflectiveSignature composeMethodSignature(@Nullable PsiExpression methodTypeExpression) {
-    final PsiExpression typeDefinition = findDefinition(methodTypeExpression);
-    if (typeDefinition instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)typeDefinition;
-      final String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
-
-      Function<PsiExpression[], ReflectiveSignature> composer = null;
-      if (METHOD_TYPE.equals(referenceName)) {
-        composer = JavaLangInvokeHandleSignatureInspection::composeMethodSignatureFromTypes;
-      }
-      else if (GENERIC_METHOD_TYPE.equals(referenceName)) {
-        composer = JavaLangInvokeHandleSignatureInspection::composeGenericMethodSignature;
-      }
-
-      if (composer != null) {
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        if (method != null) {
-          final PsiClass psiClass = method.getContainingClass();
-          if (psiClass != null && JAVA_LANG_INVOKE_METHOD_TYPE.equals(psiClass.getQualifiedName())) {
-            final PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
-            return composer.apply(arguments);
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static ReflectiveSignature composeMethodSignatureFromTypes(@NotNull PsiExpression[] returnAndParameterTypes) {
-    final List<String> typeTexts = ContainerUtil.map(returnAndParameterTypes, JavaReflectionReferenceUtil::getTypeText);
-    return ReflectiveSignature.create(typeTexts);
-  }
-
-  @Nullable
-  static Pair.NonNull<Integer, Boolean> getGenericSignature(@NotNull PsiExpression[] genericSignatureShape) {
-    if (genericSignatureShape.length == 0 || genericSignatureShape.length > 2) {
-      return null;
-    }
-
-    final Integer objectArgCount = computeConstantExpression(genericSignatureShape[0], Integer.class);
-    final Boolean finalArray = // there's an additional parameter which is an ellipsis or an array
-      genericSignatureShape.length > 1 ? computeConstantExpression(genericSignatureShape[1], Boolean.class) : false;
-
-    if (objectArgCount == null || objectArgCount < 0 || objectArgCount > 255) {
-      return null;
-    }
-    if (finalArray == null || finalArray && objectArgCount > 254) {
-      return null;
-    }
-    return Pair.createNonNull(objectArgCount, finalArray);
-  }
-
-  /**
-   * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
-   */
-  @Nullable
-  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
-    final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(genericSignatureShape);
-    if (signature == null) return null;
-    final int objectArgCount = signature.getFirst();
-    final boolean finalArray = signature.getSecond();
-
-    final List<String> typeNames = new ArrayList<>();
-    typeNames.add(JAVA_LANG_OBJECT); // return type
-
-    for (int i = 0; i < objectArgCount; i++) {
-      typeNames.add(JAVA_LANG_OBJECT);
-    }
-    if (finalArray) {
-      typeNames.add(JAVA_LANG_OBJECT + "[]");
-    }
-    return ReflectiveSignature.create(typeNames);
   }
 
   private static class FieldTypeQuickFix implements LocalQuickFix {
