@@ -102,7 +102,4 @@
     <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache</interface-class>
       <implementation-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl</implementation-class></component>
   </project-components>
-  <extensions defaultExtensionNs="com.intellij">
-    <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesNotificationProvider"/>
-  </extensions>
 </idea-plugin>
