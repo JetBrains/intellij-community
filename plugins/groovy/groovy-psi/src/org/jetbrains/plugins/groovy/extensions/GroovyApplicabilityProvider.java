@@ -20,10 +20,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult;
 
+@ApiStatus.Experimental
 public abstract class GroovyApplicabilityProvider {
 
   public static final ExtensionPointName<GroovyApplicabilityProvider> EP_NAME =
