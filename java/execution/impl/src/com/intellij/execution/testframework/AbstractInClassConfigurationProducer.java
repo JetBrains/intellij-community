@@ -24,6 +24,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -109,7 +110,9 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       }
       else if (element instanceof PsiMember) {
         psiClass = contextLocation instanceof MethodLocation ? ((MethodLocation)contextLocation).getContainingClass()
-                                                             : ((PsiMember)element).getContainingClass();
+                                                             : contextLocation instanceof PsiMemberParameterizedLocation 
+                                                               ? ((PsiMemberParameterizedLocation)contextLocation).getContainingClass()
+                                                               : ((PsiMember)element).getContainingClass();
         if (isTestClass(psiClass)) {
           break;
         }
