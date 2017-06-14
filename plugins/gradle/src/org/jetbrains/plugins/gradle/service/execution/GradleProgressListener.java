@@ -25,9 +25,11 @@ import com.intellij.openapi.externalSystem.model.task.event.OperationResult;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 
@@ -39,10 +41,18 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final ExternalSystemTaskNotificationListener myListener;
   private final ExternalSystemTaskId myTaskId;
   private final Map<String, Integer> myStatusEventIds = new HashMap<>();
+  private final String myOperationId;
 
-  public GradleProgressListener(ExternalSystemTaskNotificationListener listener, ExternalSystemTaskId taskId) {
+  public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener, @NotNull ExternalSystemTaskId taskId) {
+    this(listener, taskId, UUID.randomUUID().toString() + "_");
+  }
+
+  public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
+                                @NotNull ExternalSystemTaskId taskId,
+                                @NotNull String operationId) {
     myListener = listener;
     myTaskId = taskId;
+    myOperationId = operationId;
   }
 
   @Override
@@ -52,7 +62,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   @Override
   public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
-    ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event);
+    ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId);
     myListener.onStatusChange(notificationEvent);
     if (notificationEvent instanceof ExternalSystemTaskExecutionEvent) {
       if (((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent() instanceof ExternalSystemStatusEvent) {

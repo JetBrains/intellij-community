@@ -39,17 +39,36 @@ public class GradleProgressEventConverter {
 
   @NotNull
   public static ExternalSystemTaskNotificationEvent convert(ExternalSystemTaskId id, ProgressEvent event) {
+    return convert(id, event, "");
+  }
+
+  @NotNull
+  public static ExternalSystemTaskNotificationEvent convert(@NotNull ExternalSystemTaskId id,
+                                                            @NotNull ProgressEvent event,
+                                                            @NotNull String operationId) {
     final InternalOperationDescriptor internalDesc =
       event.getDescriptor() instanceof DefaultOperationDescriptor ? ((DefaultOperationDescriptor)event.getDescriptor())
         .getInternalOperationDescriptor() : null;
-    final String eventId = internalDesc == null ? event.getDescriptor().getDisplayName() : internalDesc.getId().toString();
+    final String eventId;
+    if (internalDesc == null) {
+      eventId = operationId + event.getDescriptor().getDisplayName();
+    }
+    else {
+      eventId = operationId + internalDesc.getId().toString();
+    }
     final String parentEventId;
     if (event.getDescriptor().getParent() == null) {
       parentEventId = null;
     }
     else {
-      parentEventId = internalDesc == null ? event.getDescriptor().getParent().getDisplayName() : internalDesc.getParentId().toString();
+      if (internalDesc == null) {
+        parentEventId = operationId + event.getDescriptor().getParent().getDisplayName();
+      }
+      else {
+        parentEventId = operationId + internalDesc.getParentId().toString();
+      }
     }
+
     final String description = event.getDescriptor().getName();
 
     if (event instanceof StartEvent) {
