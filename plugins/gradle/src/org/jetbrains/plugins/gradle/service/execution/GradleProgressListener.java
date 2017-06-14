@@ -18,10 +18,7 @@ package org.jetbrains.plugins.gradle.service.execution;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemFinishEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
-import com.intellij.openapi.externalSystem.model.task.event.OperationResult;
+import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
@@ -40,7 +37,7 @@ import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 public class GradleProgressListener implements ProgressListener, org.gradle.tooling.events.ProgressListener {
   private final ExternalSystemTaskNotificationListener myListener;
   private final ExternalSystemTaskId myTaskId;
-  private final Map<String, Integer> myStatusEventIds = new HashMap<>();
+  private final Map<String, Long> myStatusEventIds = new HashMap<>();
   private final String myOperationId;
 
   public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener, @NotNull ExternalSystemTaskId taskId) {
@@ -57,7 +54,11 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   @Override
   public void statusChanged(ProgressEvent event) {
-    myListener.onStatusChange(new ExternalSystemTaskNotificationEvent(myTaskId, event.getDescription()));
+    String eventDescription = event.getDescription();
+    myListener.onStatusChange(new ExternalSystemTaskNotificationEvent(myTaskId, eventDescription));
+    if (StringUtil.equals("Starting Gradle Daemon", eventDescription)) {
+      reportGradleDaemonStartingEvent(eventDescription);
+    }
   }
 
   @Override
@@ -69,18 +70,18 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         ExternalSystemStatusEvent progressEvent =
           (ExternalSystemStatusEvent)((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
         if ("bytes".equals(progressEvent.getUnit())) {
-          Integer oldProgress = myStatusEventIds.get(progressEvent.getEventId());
+          Long oldProgress = myStatusEventIds.get(progressEvent.getEventId());
           if (oldProgress == null) {
             String totalSizeInfo = progressEvent.getTotal() > 0 ? (" (" + formatFileSize(progressEvent.getTotal()) + ")") : "";
             myListener.onTaskOutput(myTaskId, progressEvent.getDisplayName() + totalSizeInfo + "\n", true);
-            myStatusEventIds.put(progressEvent.getEventId(), 0);
+            myStatusEventIds.put(progressEvent.getEventId(), 0L);
           }
           else {
             double fraction = (double)progressEvent.getProgress() / progressEvent.getTotal();
             int progressBarSize = 14;
             int progress = (int)(fraction * progressBarSize + 0.5);
             if (oldProgress != progress) {
-              myStatusEventIds.put(progressEvent.getEventId(), progress);
+              myStatusEventIds.put(progressEvent.getEventId(), (long)progress);
               if (progressEvent.getTotal() > 0) {
                 int remaining = progressBarSize - progress;
                 remaining = remaining < 0 ? 0 : remaining;
@@ -113,5 +114,25 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         }
       }
     }
+  }
+
+  private void reportGradleDaemonStartingEvent(String eventDescription) {
+    ExternalSystemTaskExecutionEvent startDaemonEvent;
+    Long startTime = myStatusEventIds.get(eventDescription);
+    if (startTime == null) {
+      startTime = System.currentTimeMillis();
+      startDaemonEvent = new ExternalSystemTaskExecutionEvent(
+        myTaskId, new ExternalSystemStartEventImpl<>(eventDescription, null,
+                                                     new OperationDescriptorImpl(eventDescription, startTime)));
+      myStatusEventIds.put(eventDescription, startTime);
+    }
+    else {
+      long eventTime = System.currentTimeMillis();
+      startDaemonEvent = new ExternalSystemTaskExecutionEvent(
+        myTaskId, new ExternalSystemFinishEventImpl<>(eventDescription, null,
+                                                      new OperationDescriptorImpl(eventDescription, eventTime),
+                                                      new SuccessResultImpl(startTime, eventTime, false)));
+    }
+    myListener.onStatusChange(startDaemonEvent);
   }
 }
