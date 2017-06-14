@@ -63,6 +63,11 @@ public class PsiTypesUtil {
 
   @NotNull
   public static String getDefaultValueOfType(PsiType type) {
+    return getDefaultValueOfType(type, false);
+  }
+
+  @NotNull
+  public static String getDefaultValueOfType(PsiType type, boolean customDefaultValues) {
     if (type instanceof PsiArrayType) {
       int count = type.getArrayDimensions() - 1;
       PsiType componentType = type.getDeepComponentType();
@@ -87,6 +92,12 @@ public class PsiTypesUtil {
     }
     if (type instanceof PsiPrimitiveType) {
       return PsiType.BOOLEAN.equals(type) ? PsiKeyword.FALSE : "0";
+    }
+    if (customDefaultValues) {
+      PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
+      if (rawType != null && rawType.equalsToText(CommonClassNames.JAVA_UTIL_OPTIONAL)) {
+        return CommonClassNames.JAVA_UTIL_OPTIONAL + ".empty()";
+      }
     }
     return PsiKeyword.NULL;
   }

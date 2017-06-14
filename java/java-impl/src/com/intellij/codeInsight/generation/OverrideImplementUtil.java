@@ -353,7 +353,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
+    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
     properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
