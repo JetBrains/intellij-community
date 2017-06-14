@@ -334,7 +334,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return getEventMessage(event, getFileName());
   }
 
-  static String getEventMessage(@NotNull LocatableEvent event, String defaultFileName) {
+  static String getEventMessage(@NotNull LocatableEvent event, @NotNull String defaultFileName) {
     Location location = event.location();
     if (event instanceof MethodEntryEvent) {
       return getEventMessage(true, ((MethodEntryEvent)event).method(), location, defaultFileName);
