@@ -21,6 +21,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.junit.*;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.BaseConfigurationTestCase;
@@ -81,6 +82,31 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
       dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
     }
     dataContext.put(Location.DATA_KEY, MethodLocation.elementInClass(testMethod, psiClass));
+
+    ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    RunnerAndConfigurationSettings settings = context.getConfiguration();
+    JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+
+    checkClassName(qualifiedName, configuration);
+    checkMethodName(METHOD_NAME, configuration);
+    checkPackage(packageName, configuration);
+    checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
+  }
+  
+  //fake parameterized by providing corresponding location
+  public void testMethodInAbstractParameterizedTest() throws Exception {
+    String packageName = "abstractTests";
+    String shortName = "AbstractTestImpl1";
+    String qualifiedName = StringUtil.getQualifiedName(packageName, shortName);
+    PsiClass psiClass = findClass(getModule1(), qualifiedName);
+    PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, true)[0];
+
+    MapDataContext dataContext = new MapDataContext();
+    dataContext.put(CommonDataKeys.PROJECT, myProject);
+    if (LangDataKeys.MODULE.getData(dataContext) == null) {
+      dataContext.put(LangDataKeys.MODULE, ModuleUtilCore.findModuleForPsiElement(testMethod));
+    }
+    dataContext.put(Location.DATA_KEY, new PsiMemberParameterizedLocation(myProject, testMethod, psiClass, "param"));
 
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     RunnerAndConfigurationSettings settings = context.getConfiguration();
