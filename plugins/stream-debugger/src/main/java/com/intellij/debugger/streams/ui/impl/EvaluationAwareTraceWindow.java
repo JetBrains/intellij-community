@@ -116,7 +116,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
 
     for (int i = 1; i < myTabContents.size(); i++) {
-      if (i == myTabContents.size() - 1 && resolvedTrace.exceptionThrown()) {
+      if (i == myTabContents.size() - 1 &&
+          (resolvedTrace.exceptionThrown() ||
+           resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(GenericType.VOID))) {
         break;
       }
 
@@ -191,8 +193,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       controllers.add(controller);
     }
 
-    final IntermediateState afterTerminationState = chain.getTerminator().getStateAfter();
-    if (afterTerminationState != null) {
+    final ResolvedStreamCall.Terminator terminator = chain.getTerminator();
+    final IntermediateState afterTerminationState = terminator.getStateAfter();
+    if (afterTerminationState != null && !terminator.getCall().getResultType().equals(GenericType.VOID)) {
 
       final TraceControllerImpl terminationController = new TraceControllerImpl(afterTerminationState);
 

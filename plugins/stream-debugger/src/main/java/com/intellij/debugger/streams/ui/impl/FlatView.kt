@@ -21,7 +21,7 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.TraceController
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
-import com.intellij.debugger.streams.wrapper.StreamCallType
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 import java.awt.Component
 import java.awt.GridLayout
 import javax.swing.JPanel
@@ -34,6 +34,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
   private val myPool = mutableMapOf<TraceElement, ValueWithPositionImpl>()
 
   init {
+    assert(controllers.isNotEmpty())
     var prevMappingPane: MappingPane? = null
     var lastValues: List<ValueWithPositionImpl>? = null
     for ((index, controller) in controllers.subList(0, controllers.size - 1).withIndex()) {
@@ -74,9 +75,8 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
       val prevCall = lastController.prevCall
       val tree: CollectionTree
-      if (prevCall != null && prevCall.type == StreamCallType.TERMINATOR) {
+      if (prevCall != null && prevCall is TerminatorStreamCall) {
         val values = lastController.values
-        assert(values.size == 1)
         tree = SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext)
       }
       else {
@@ -93,6 +93,12 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       prevMappingPane?.let { it.addMouseWheelListener { e -> view.instancesTree.dispatchEvent(e) } }
 
       add(view)
+    }
+
+    if (controllers.size == 1) {
+      val controller = controllers[0]
+      val tree = CollectionTree(controller.values, controller.trace, evaluationContext)
+      add(CollectionView("", tree))
     }
   }
 
