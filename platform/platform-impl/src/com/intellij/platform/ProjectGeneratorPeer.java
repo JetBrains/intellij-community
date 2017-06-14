@@ -32,6 +32,7 @@ public interface ProjectGeneratorPeer<T> {
   /**
    * Returns new project settings component
    */
+  @NotNull
   JComponent getComponent();
 
   void buildUI(@NotNull SettingsStep settingsStep);
@@ -39,6 +40,7 @@ public interface ProjectGeneratorPeer<T> {
   /**
    * Returns new project settings
    */
+  @NotNull
   T getSettings();
 
   // null if ok
