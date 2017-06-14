@@ -17,10 +17,8 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -88,9 +86,8 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
   public Insets getBorderInsets(Component c) {
     if (c.getParent() instanceof ActionToolbar) {
       return JBUI.insets(4, 16).asUIResource();
-    } else if (DarculaButtonUI.isSquare(c)) {
-      int i = (UIUtil.getParentOfType(Wrapper.class, c) != null) ? 1 : 0;
-      return JBUI.insets(i).asUIResource();
+    } else if (isSquare(c)) {
+      return JBUI.insets(1).asUIResource();
     } else if (DarculaButtonUI.isHelpButton((JComponent)c)) {
       return JBUI.insets(0, 0, 0, 10).asUIResource();
     } else {

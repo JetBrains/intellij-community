@@ -20,16 +20,17 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
 
 import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustVerticalInsets;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,13 +39,13 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
   @Override
   public Insets getBorderInsets(Component c) {
     if (isSearchFieldWithHistoryPopup(c)) {
-      return JBUI.insets(3, 26, 3, 23).asUIResource();
+      return JBUI.insets(4, 27, 4, 24).asUIResource();
     } else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
-      return JBUI.insets(3, 20, 3, 23).asUIResource();
+      return JBUI.insets(4, 21, 4, 24).asUIResource();
     } else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     } else {
-      return JBUI.insets(3, 5).asUIResource();
+      return JBUI.insets(4, 6).asUIResource();
     }
   }
 
@@ -53,9 +54,13 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       Rectangle r = new Rectangle(x, y, width, height);
-      adjustVerticalInsets(r, (JComponent)c);
 
-      g2.translate(r.x, r.y);
+      if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+        JBInsets.removeFrom(r, JBUI.insets(2, 0));
+      }
+
+      JBInsets.removeFrom(r, JBUI.insets(1));
+
       Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
         DarculaUIUtil.paintErrorBorder(g2, r.width, r.height, 0, true, c.hasFocus());
@@ -71,16 +76,18 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
         }
 
         if (!jc.isEnabled()) {
-          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        int bw = JBUI.scale(1);
         Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(new Rectangle2D.Double(0, 0, r.width, r.height), false);
-        border.append(new Rectangle2D.Double(bw, bw, r.width - bw*2, r.height - bw*2), false);
+        border.append(r, false);
+
+        Rectangle innerRect = new Rectangle(r);
+        JBInsets.removeFrom(innerRect, JBUI.insets(1));
+        border.append(innerRect, false);
 
         g2.fill(border);
       }
