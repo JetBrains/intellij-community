@@ -150,7 +150,7 @@ public class PushController implements Disposable {
       MyRepoModel model = entry.getValue();
       Repository repository = model.getRepository();
       RepositoryNode repoNode = entry.getKey();
-      if (preselectByUser(repository)) {
+      if (mySingleRepoProject || preselectByUser(repository)) {
         priorityLoading.put(repoNode, model);
       }
       else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() && !repoNode.equals(nodeForCurrentEditor)) {
