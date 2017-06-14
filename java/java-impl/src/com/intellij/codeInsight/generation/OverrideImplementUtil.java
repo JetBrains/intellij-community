@@ -301,8 +301,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
+    return callSuper(superMethod, overriding, true);
+  }
+
+  @NotNull
+  private static String callSuper(PsiMethod superMethod, PsiMethod overriding, boolean prependReturn) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");
@@ -350,6 +355,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
+    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
