@@ -515,9 +515,10 @@ public class PyTypeChecker {
           substParams = new ArrayList<>();
           for (PyCallableParameter parameter : parameters) {
             final PyType substType = substitute(parameter.getType(context), substitutions, context);
-            final PyCallableParameter subst = parameter.getParameter() != null ?
-                                              new PyCallableParameterImpl(parameter.getParameter()) :
-                                              new PyCallableParameterImpl(parameter.getName(), substType);
+            final PyParameter psi = parameter.getParameter();
+            final PyCallableParameter subst = psi != null ?
+                                              new PyCallableParameterImpl(psi, substType) :
+                                              new PyCallableParameterImpl(parameter.getName(), substType, parameter.getDefaultValue());
             substParams.add(subst);
           }
         }

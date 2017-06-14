@@ -1932,6 +1932,20 @@ public class PyTypeTest extends PyTestCase {
            "        expr = cls");
   }
 
+  // PY-24323
+  public void testMethodQualifiedWithUnknownGenericsInstance() {
+    doTest("(object: Any) -> int",
+           "my_list = []\n" +
+           "expr = my_list.count");
+  }
+
+  // PY-24323
+  public void testMethodQualifiedWithKnownGenericsInstance() {
+    doTest("(object: int) -> int",
+           "my_list = [1, 2, 2, 3, 3]\n" +
+           "expr = my_list.count");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
