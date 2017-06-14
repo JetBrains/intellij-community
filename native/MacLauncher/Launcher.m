@@ -408,7 +408,6 @@ NSString *getOverridePropertiesPath() {
 
     [args_array addObject:classpathOption];
 
-    [args_array addObjectsFromArray:[[jvmInfo objectForKey:@"VMOptions"] componentsSeparatedByString:@" "]];
     [args_array addObjectsFromArray:parseVMOptions()];
 
     NSString *properties = getOverridePropertiesPath();
