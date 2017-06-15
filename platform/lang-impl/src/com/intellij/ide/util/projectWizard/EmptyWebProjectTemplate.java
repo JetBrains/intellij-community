@@ -40,7 +40,7 @@ public class EmptyWebProjectTemplate extends WebProjectTemplate<Object> {
   }
 
   @Override
-  public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @Nullable Object settings, @NotNull Module module) {
+  public void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull Object settings, @NotNull Module module) {
     //ignore
   }
 
