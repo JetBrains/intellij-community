@@ -44,3 +44,9 @@ def test_outer_comprehensions():
     print([y for y in range(10)])
     def f(x, <weak_warning descr="Shadows name 'y' from outer scope">y</weak_warning>):
         pass
+
+
+def test_outer_single_underscore():
+    _ = "abc"
+    def foo():
+        _ = "def"

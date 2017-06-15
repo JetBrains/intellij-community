@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -92,7 +93,7 @@ public class PyShadowingNamesInspection extends PyInspection {
       if (name != null) {
         final PsiElement identifier = element.getNameIdentifier();
         final PsiElement problemElement = identifier != null ? identifier : element;
-        if ("_".equals(name)) {
+        if (PyNames.UNDERSCORE.equals(name)) {
           return;
         }
         if (owner != null) {
