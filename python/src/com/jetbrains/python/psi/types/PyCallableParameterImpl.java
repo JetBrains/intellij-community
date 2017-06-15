@@ -36,29 +36,39 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final PyExpression myDefaultValue;
   @Nullable private final PyParameter myElement;
 
-  public PyCallableParameterImpl(@Nullable String name, @Nullable PyType type) {
-    this(name, type, null);
-  }
-
-  public PyCallableParameterImpl(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
+  private PyCallableParameterImpl(@Nullable String name,
+                                  @Nullable Ref<PyType> type,
+                                  @Nullable PyExpression defaultValue,
+                                  @Nullable PyParameter element) {
     myName = name;
-    myType = Ref.create(type);
+    myType = type;
     myDefaultValue = defaultValue;
-    myElement = null;
-  }
-
-  public PyCallableParameterImpl(@NotNull PyParameter element) {
-    myName = null;
-    myType = null;
-    myDefaultValue = null;
     myElement = element;
   }
 
-  public PyCallableParameterImpl(@NotNull PyParameter element, @Nullable PyType type) {
-    myName = null;
-    myType = Ref.create(type);
-    myDefaultValue = null;
-    myElement = element;
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable PyType type) {
+    return nonPsi(null, type);
+  }
+
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type) {
+    return nonPsi(name, type, null);
+  }
+
+  @NotNull
+  public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
+    return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null);
+  }
+
+  @NotNull
+  public static PyCallableParameter psi(@NotNull PyParameter parameter) {
+    return new PyCallableParameterImpl(null, null, null, parameter);
+  }
+
+  @NotNull
+  public static PyCallableParameter psi(@NotNull PyParameter parameter, @Nullable PyType type) {
+    return new PyCallableParameterImpl(null, Ref.create(type), null, parameter);
   }
 
   @Nullable

@@ -44,7 +44,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final List<PyCallableParameter> myParameters;
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
-    this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::new));
+    this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {

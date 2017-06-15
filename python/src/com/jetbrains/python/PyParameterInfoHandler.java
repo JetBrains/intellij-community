@@ -340,7 +340,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final List<PyCallableParameter> results = new ArrayList<>();
     for (PyParameter component : parameter.getContents()) {
       if (component instanceof PyNamedParameter) {
-        results.add(new PyCallableParameterImpl(component));
+        results.add(PyCallableParameterImpl.psi(component));
       }
       else if (component instanceof PyTupleParameter) {
         results.addAll(getFlattenedTupleParameterComponents((PyTupleParameter)component));
@@ -392,7 +392,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
         @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          visitNonPsiParameter(new PyCallableParameterImpl(param), first, last);
+          visitNonPsiParameter(PyCallableParameterImpl.psi(param), first, last);
         }
 
         @Override
