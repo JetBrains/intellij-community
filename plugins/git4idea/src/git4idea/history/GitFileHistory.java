@@ -120,13 +120,10 @@ public class GitFileHistory {
       try {
         Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(recordConsumer.getFirstCommit(), currentPath);
         if (firstCommitParentAndPath == null) {
-          currentPath = null;
-          firstCommitParent = null;
+          return;
         }
-        else {
-          currentPath = firstCommitParentAndPath.second;
-          firstCommitParent = firstCommitParentAndPath.first;
-        }
+        currentPath = firstCommitParentAndPath.second;
+        firstCommitParent = firstCommitParentAndPath.first;
       }
       catch (VcsException e) {
         LOG.warn("Tried to get first commit rename path", e);
