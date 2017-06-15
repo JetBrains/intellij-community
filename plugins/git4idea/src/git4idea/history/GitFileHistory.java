@@ -197,14 +197,6 @@ public class GitFileHistory {
     return revisions;
   }
 
-  @NotNull
-  public static List<VcsFileRevision> history(@NotNull Project project,
-                                              @NotNull FilePath path,
-                                              @Nullable VirtualFile root,
-                                              String... parameters) throws VcsException {
-    return history(project, path, root, GitRevisionNumber.HEAD, parameters);
-  }
-
   /**
    * Get history for the file
    *
@@ -215,7 +207,7 @@ public class GitFileHistory {
    */
   @NotNull
   public static List<VcsFileRevision> history(@NotNull Project project, @NotNull FilePath path, String... parameters) throws VcsException {
-    return history(project, path, getRoot(project, path), parameters);
+    return history(project, path, getRoot(project, path), GitRevisionNumber.HEAD, parameters);
   }
 
   private static class MyTokenAccumulator {
