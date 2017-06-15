@@ -239,6 +239,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   }
 
   @Nullable
+  @Override
+  public String getAnnotationContent() {
+    return getAnnotationContentFromStubOrPsi(this);
+  }
+
+  @Nullable
   private static PyType getWithItemVariableType(TypeEvalContext context, PyWithItem item) {
     final PyExpression expression = item.getExpression();
     if (expression != null) {
@@ -754,15 +760,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Nullable
   @Override
   public String getTypeCommentAnnotation() {
-    final PyTargetExpressionStub stub = getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-    
-    final PsiComment comment = getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
+    return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 }
