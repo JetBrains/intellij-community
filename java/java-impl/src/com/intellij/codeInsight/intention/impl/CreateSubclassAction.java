@@ -52,6 +52,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -280,23 +281,30 @@ public class CreateSubclassAction extends BaseIntentionAction {
           final Template template = templateBuilder.buildTemplate();
           template.addEndVariable();
 
-          final PsiFile containingFile = targetClass.getContainingFile();
+          PsiClassOwner containingFile = (PsiClassOwner)targetClass.getContainingFile();
+          int idxInFile = ArrayUtil.find(containingFile.getClasses(), targetClass);
 
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 
           final TextRange textRange = targetClass.getTextRange();
           final RangeMarker startClassOffset = editor.getDocument().createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
-          startClassOffset.setGreedyToLeft(true);
-          startClassOffset.setGreedyToRight(true);
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
               try {
                 LOG.assertTrue(startClassOffset.isValid(), startClassOffset);
-                final PsiElement psiElement = containingFile.findElementAt(startClassOffset.getStartOffset());
-                final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
-                LOG.assertTrue(aTargetClass != null, psiElement);
+                final PsiClass aTargetClass;
+                if (idxInFile >= 0) {
+                  PsiClass[] classes = containingFile.getClasses();
+                  LOG.assertTrue(idxInFile < classes.length, "idx: " + idxInFile + "; len: " + classes.length);
+                  aTargetClass = classes[idxInFile];
+                }
+                else {
+                  final PsiElement psiElement = containingFile.findElementAt(startClassOffset.getStartOffset());
+                  aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
+                  LOG.assertTrue(aTargetClass != null, psiElement);
+                }
                 if (!brokenOff) {
                   TransactionGuard.getInstance().submitTransactionAndWait(() -> chooseAndImplement(psiClass, project, aTargetClass, editor));
                 }
