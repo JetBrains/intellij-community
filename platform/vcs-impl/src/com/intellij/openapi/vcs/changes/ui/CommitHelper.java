@@ -406,7 +406,9 @@ public class CommitHelper {
     }
 
     boolean shouldDeleteWithConfirmation() {
+      // check that changelist exists before asking
       return myPostRefreshModification == ASK_BEFORE_DELETE &&
+             ChangeListManager.getInstance(myProject).findChangeList(myChangeList.getName()) != null &&
              showRemoveEmptyChangeListsProposal(myProject, myConfiguration, singleton(myChangeList));
     }
   }
