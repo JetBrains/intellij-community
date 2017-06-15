@@ -80,30 +80,29 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 public class GitFileHistory {
   private static final Logger LOG = Logger.getInstance("#git4idea.history.GitFileHistory");
 
-  public static void history(@NotNull Project project,
-                             @NotNull FilePath path,
-                             @Nullable VirtualFile root,
-                             @NotNull VcsRevisionNumber startingRevision,
-                             @NotNull Consumer<GitFileRevision> consumer,
-                             @NotNull Consumer<VcsException> exceptionConsumer,
-                             String... parameters) {
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myRoot;
+  @NotNull private final FilePath myPath;
+  @NotNull private final VcsRevisionNumber myStartingRevision;
+
+  public GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
+    myProject = project;
+    myRoot = root;
+    myPath = GitHistoryUtils.getLastCommitName(myProject, path);
+    myStartingRevision = revision;
+  }
+
+  public void history(@NotNull Consumer<GitFileRevision> consumer,
+                      @NotNull Consumer<VcsException> exceptionConsumer,
+                      String... parameters) {
     // adjust path using change manager
-    final FilePath filePath = GitHistoryUtils.getLastCommitName(project, path);
-    final VirtualFile finalRoot;
-    try {
-      finalRoot = (root == null ? GitUtil.getGitRoot(filePath) : root);
-    }
-    catch (VcsException e) {
-      exceptionConsumer.consume(e);
-      return;
-    }
-    final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
+    final GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
-    final AtomicReference<String> firstCommit = new AtomicReference<>(startingRevision.asString());
+    final AtomicReference<String> firstCommit = new AtomicReference<>(myStartingRevision.asString());
     final AtomicReference<String> firstCommitParent = new AtomicReference<>(firstCommit.get());
-    final AtomicReference<FilePath> currentPath = new AtomicReference<>(filePath);
+    final AtomicReference<FilePath> currentPath = new AtomicReference<>(myPath);
     final AtomicReference<GitLineHandler> logHandler = new AtomicReference<>();
     final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
 
@@ -129,7 +128,7 @@ public class GitFileHistory {
 
       FilePath revisionPath;
       try {
-        final List<FilePath> paths = record.getFilePaths(finalRoot);
+        final List<FilePath> paths = record.getFilePaths(myRoot);
         if (paths.size() > 0) {
           revisionPath = paths.get(0);
         }
@@ -141,14 +140,14 @@ public class GitFileHistory {
         Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
         Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
         Collection<String> parents = Arrays.asList(parentHashes);
-        consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
+        consumer.consume(new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
                                              null, new Date(record.getAuthorTimeStamp()), parents));
         List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
         if (statusInfos.isEmpty()) {
           // can safely be empty, for example, for simple merge commits that don't change anything.
           return;
         }
-        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !filePath.isDirectory()) {
+        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
           skipFurtherOutput.set(true);
         }
       }
@@ -157,11 +156,11 @@ public class GitFileHistory {
       }
     };
 
-    GitVcs vcs = GitVcs.getInstance(project);
+    GitVcs vcs = GitVcs.getInstance(myProject);
     GitVersion version = vcs != null ? vcs.getVersion() : GitVersion.NULL;
     final AtomicBoolean criticalFailure = new AtomicBoolean();
     while (currentPath.get() != null && firstCommitParent.get() != null) {
-      logHandler.set(getLogHandler(project, version, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
+      logHandler.set(getLogHandler(myProject, version, myRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
       final Semaphore semaphore = new Semaphore();
 
@@ -215,7 +214,7 @@ public class GitFileHistory {
       }
 
       try {
-        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(project, finalRoot, firstCommit.get(),
+        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(myProject, myRoot, firstCommit.get(),
                                                                                               currentPath.get(), version);
         currentPath.set(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.second);
         firstCommitParent.set(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.first);
@@ -293,6 +292,15 @@ public class GitFileHistory {
     return null;
   }
 
+  @NotNull
+  private static VirtualFile getRoot(@NotNull Project project, @NotNull FilePath path) throws VcsException {
+    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
+    if (root == null) {
+      throw new VcsException("The file " + path + " is not under vcs.");
+    }
+    return root;
+  }
+
   /**
    * Retrieves the history of the file, including renames.
    *
@@ -306,10 +314,43 @@ public class GitFileHistory {
   public static void history(@NotNull Project project,
                              @NotNull FilePath path,
                              @Nullable VirtualFile root,
+                             @Nullable VcsRevisionNumber startingFrom,
                              @NotNull Consumer<GitFileRevision> consumer,
                              @NotNull Consumer<VcsException> exceptionConsumer,
                              String... parameters) {
-    history(project, path, root, GitRevisionNumber.HEAD, consumer, exceptionConsumer, parameters);
+    try {
+      VirtualFile repositoryRoot = root == null ? getRoot(project, path) : root;
+      VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
+      new GitFileHistory(project, repositoryRoot, path, revision).history(consumer, exceptionConsumer, parameters);
+    }
+    catch (VcsException e) {
+      exceptionConsumer.consume(e);
+    }
+  }
+
+  @NotNull
+  public static List<VcsFileRevision> history(@NotNull Project project,
+                                              @NotNull FilePath path,
+                                              @Nullable VirtualFile root,
+                                              @NotNull VcsRevisionNumber startingFrom,
+                                              String... parameters) throws VcsException {
+    List<VcsFileRevision> revisions = new ArrayList<>();
+    List<VcsException> exceptions = new ArrayList<>();
+
+    history(project, path, root, startingFrom, revisions::add, exceptions::add, parameters);
+
+    if (!exceptions.isEmpty()) {
+      throw exceptions.get(0);
+    }
+    return revisions;
+  }
+
+  @NotNull
+  public static List<VcsFileRevision> history(@NotNull Project project,
+                                              @NotNull FilePath path,
+                                              @Nullable VirtualFile root,
+                                              String... parameters) throws VcsException {
+    return history(project, path, root, GitRevisionNumber.HEAD, parameters);
   }
 
   /**
@@ -322,35 +363,7 @@ public class GitFileHistory {
    */
   @NotNull
   public static List<VcsFileRevision> history(@NotNull Project project, @NotNull FilePath path, String... parameters) throws VcsException {
-    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
-    if (root == null) {
-      throw new VcsException("The file " + path + " is not under vcs.");
-    }
-    return history(project, path, root, parameters);
-  }
-
-  @NotNull
-  public static List<VcsFileRevision> history(@NotNull Project project,
-                                              @NotNull FilePath path,
-                                              @Nullable VirtualFile root,
-                                              String... parameters) throws VcsException {
-    return history(project, path, root, GitRevisionNumber.HEAD, parameters);
-  }
-
-  @NotNull
-  public static List<VcsFileRevision> history(@NotNull Project project,
-                                              @NotNull FilePath path,
-                                              @Nullable VirtualFile root,
-                                              @NotNull VcsRevisionNumber startingFrom,
-                                              String... parameters) throws VcsException {
-    final List<VcsFileRevision> rc = new ArrayList<>();
-    final List<VcsException> exceptions = new ArrayList<>();
-
-    history(project, path, root, startingFrom, rc::add, exceptions::add, parameters);
-    if (!exceptions.isEmpty()) {
-      throw exceptions.get(0);
-    }
-    return rc;
+    return history(project, path, getRoot(project, path), parameters);
   }
 
   private static class MyTokenAccumulator {

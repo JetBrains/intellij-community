@@ -355,7 +355,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
     Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
     Consumer<VcsException> exceptionConsumer = exception -> fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
-    GitFileHistory.history(myProject, toFilePath(bfile), null, consumer, exceptionConsumer);
+    GitFileHistory.history(myProject, toFilePath(bfile), myRepo.getRoot(), null, consumer, exceptionConsumer);
     assertHistory(revisions);
   }
 
