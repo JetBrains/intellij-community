@@ -517,8 +517,8 @@ public class PyTypeChecker {
             final PyType substType = substitute(parameter.getType(context), substitutions, context);
             final PyParameter psi = parameter.getParameter();
             final PyCallableParameter subst = psi != null ?
-                                              new PyCallableParameterImpl(psi, substType) :
-                                              new PyCallableParameterImpl(parameter.getName(), substType, parameter.getDefaultValue());
+                                              PyCallableParameterImpl.psi(psi, substType) :
+                                              PyCallableParameterImpl.nonPsi(parameter.getName(), substType, parameter.getDefaultValue());
             substParams.add(subst);
           }
         }
