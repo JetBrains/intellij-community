@@ -105,9 +105,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return;
     }
-    if (Thread.getDefaultUncaughtExceptionHandler() == null) {
-      Thread.setDefaultUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
-    }
+    Thread.currentThread().setUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
 
     myEditorController = new EditorController();
     updateCustomLibrary();
