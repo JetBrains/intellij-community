@@ -88,8 +88,6 @@ object GuiTestUtilKt {
     return sb.toString()
   }
 
-
-
   class ImmutableTree<Value> {
     var root: ImmutableTreeNode<Value>? = null
 

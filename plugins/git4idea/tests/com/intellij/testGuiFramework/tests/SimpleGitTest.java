@@ -23,13 +23,12 @@ import com.intellij.testGuiFramework.fixtures.*;
 import com.intellij.testGuiFramework.framework.ParentPlugin;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButton;
 import static com.intellij.testGuiFramework.matcher.TitleMatcher.withTitleMatcher;
 
 /**
@@ -64,14 +63,12 @@ public class SimpleGitTest extends GitGuiTestCase {
     fileChooserDialogFixture.waitFilledTextField().clickOk();
 
     pause("Wait when files will be added to Git Repository and marked as untracked",
-          () -> currentFileFixture.getVcsStatus().equals(FileStatus.UNKNOWN),
-          THIRTY_SEC_TIMEOUT);
+          30, () -> currentFileFixture.getVcsStatus().equals(FileStatus.UNKNOWN));
 
     invokeAction("ChangesView.AddUnversioned");
 
     pause("Wait when file will be marked as added",
-          () -> currentFileFixture.getVcsStatus().equals(FileStatus.ADDED),
-          THIRTY_SEC_TIMEOUT);
+          30, () -> currentFileFixture.getVcsStatus().equals(FileStatus.ADDED));
 
     invokeAction("CheckinProject");
 
@@ -85,9 +82,7 @@ public class SimpleGitTest extends GitGuiTestCase {
     if (MessagesFixture.exists(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now")) {
       MessagesFixture.findByTitle(myRobot, commitJDialogFixture.target(), "Check TODO is not possible right now").click("Commit");
     }
-    pause("Wait when file will be marked as not changed (committed)",
-          () -> currentFileFixture.getVcsStatus().equals(FileStatus.NOT_CHANGED),
-          LONG_TIMEOUT);
+    pause("Wait when file will be marked as not changed (committed)", 300, () -> currentFileFixture.getVcsStatus().equals(FileStatus.NOT_CHANGED));
   }
 
   private void waitForIdle() {

@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
-import com.intellij.testGuiFramework.impl.FirstStartToRemove;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
@@ -211,8 +210,6 @@ GuiTestUtil {
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
 
-      if(isFirstStart) (new FirstStartToRemove(robot)).completeBefore();
-
       final MyProjectManagerListener listener = new MyProjectManagerListener();
       final Ref<MessageBusConnection> connection = new Ref<>();
 
@@ -230,8 +227,6 @@ GuiTestUtil {
           return false;
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
-
-      if(isFirstStart) (new FirstStartToRemove(robot)).completeAfter();
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
@@ -821,7 +816,7 @@ GuiTestUtil {
     return new JTreeFixture(robot, actionTree);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text, @NotNull Timeout timeout){
+  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {

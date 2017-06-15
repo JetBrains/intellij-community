@@ -35,8 +35,11 @@ import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
 import java.nio.file.Paths
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.jar.JarInputStream
 import java.util.stream.Collectors
+import kotlin.concurrent.thread
 
 /**
  * @author Sergey Karashevich
@@ -59,47 +62,67 @@ object GuiTestLocalLauncher {
   fun runIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgs(ide = ide, port = port)
-    return startIde(ide, args)
+    return startIde(ide = ide, args = args)
   }
 
   fun runIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgsByPath(path, port)
-    return startIde(ide, args)
+    return startIde(ide = ide, args = args)
   }
 
   fun firstStartIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
     val args = createArgsForFirstStart(ide)
-    return startIde(ide, args)
+    return startIdeAndWait(ide = ide, args = args)
   }
 
   fun firstStartIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
     val args = createArgsForFirstStartByPath(ide, path)
-    return startIde(ide, args)
+    return startIdeAndWait(ide = ide, args = args)
   }
 
-  private fun startIde(ide: Ide, args: List<String>) {
-    LOG.info("Running $ide locally")
-    val runnable: () -> Unit = {
+  private fun startIde(ide: Ide,
+                       needToWait: Boolean = false,
+                       timeOut: Long = 0,
+                       timeOutUnit: TimeUnit = TimeUnit.SECONDS,
+                       args: List<String>): Unit {
+    LOG.info("Running $ide locally \n with args: $args")
+    val startLatch = CountDownLatch(1)
+    thread(start = true, name = "IdeaTestThread") {
       val ideaStartTest = ProcessBuilder().inheritIO().command(args)
       process = ideaStartTest.start()
-      val wait = process!!.waitFor()
-      if (process!!.exitValue() != 1) println("${ide.ideType} started successfully")
-      else {
-        System.err.println("Process execution error:")
-        System.err.println(BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n")))
+      startLatch.countDown()
+    }
+    if (needToWait) {
+      startLatch.await()
+      if (timeOut != 0L)
+        process!!.waitFor(timeOut, timeOutUnit)
+      else
+        process!!.waitFor()
+      if (process!!.exitValue() != 1) {
+        println("${ide.ideType} process completed successfully")
+        LOG.info("${ide.ideType} process completed successfully")
+      } else {
+        System.err.println("${ide.ideType} process execution error:")
+        val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
+        System.err.println(collectedError)
+        LOG.error("${ide.ideType} process execution error:")
+        LOG.error(collectedError)
         fail("Starting ${ide.ideType} failed.")
       }
     }
-    val ideaTestThread = Thread(runnable, "IdeaTestThread")
-    ideaTestThread.start()
+
   }
+
+  private fun startIdeAndWait(ide: Ide, args: List<String>): Unit
+    = startIde(ide = ide, needToWait = true, args = args)
+
 
   private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
     = createArgsBase(ide, mainClass, GuiTestStarter.COMMAND_NAME, port)
 
   private fun createArgsForFirstStart(ide: Ide, port: Int = 0): List<String>
-    = createArgsBase(ide, com.intellij.testGuiFramework.impl.FirstStart::class.qualifiedName!! + "Kt", null, port)
+    = createArgsBase(ide, "com.intellij.testGuiFramework.impl.FirstStarterKt", null, port)
 
   private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, port: Int): List<String> {
     var resultingArgs = listOf<String>()
@@ -125,7 +148,7 @@ object GuiTestLocalLauncher {
       .plus(getDefaultVmOptions(ide))
       .plus("-classpath")
       .plus(classpath)
-      .plus(com.intellij.testGuiFramework.impl.FirstStart::class.qualifiedName!! + "Kt")
+      .plus(com.intellij.testGuiFramework.impl.FirstStarter::class.qualifiedName!! + "Kt")
     return resultingArgs
   }
 
@@ -187,7 +210,7 @@ object GuiTestLocalLauncher {
   private fun getTestClasspath(): List<File> {
     val classLoader = this.javaClass.classLoader
     val urlClassLoaderClass = classLoader.javaClass
-    val getUrlsMethod = urlClassLoaderClass.methods.filter { it.name.toLowerCase() == "geturls"}.firstOrNull()!!
+    val getUrlsMethod = urlClassLoaderClass.methods.filter { it.name.toLowerCase() == "geturls" }.firstOrNull()!!
     @Suppress("UNCHECKED_CAST")
     val urlsListOrArray = getUrlsMethod.invoke(classLoader)
     var urls = (urlsListOrArray as? List<*> ?: (urlsListOrArray as Array<*>).toList()).filterIsInstance(URL::class.java)
@@ -236,6 +259,6 @@ object GuiTestLocalLauncher {
 }
 
 fun main(args: Array<String>) {
-//  GuiTestLocalLauncher.firstStartIdeLocally()
-  GuiTestLocalLauncher.firstStartIdeByPath("/Users/jetbrains/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/172.2300/IntelliJ IDEA 2017.2 EAP.app")
+  GuiTestLocalLauncher.firstStartIdeLocally(Ide(ideType = IdeType.WEBSTORM, version = 0, build = 0))
+//  GuiTestLocalLauncher.firstStartIdeByPath("/Users/jetbrains/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/172.2300/IntelliJ IDEA 2017.2 EAP.app")
 }
