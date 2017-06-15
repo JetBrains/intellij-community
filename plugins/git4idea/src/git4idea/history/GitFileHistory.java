@@ -33,7 +33,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
@@ -100,76 +99,23 @@ public class GitFileHistory {
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
-    final AtomicReference<String> firstCommit = new AtomicReference<>(myStartingRevision.asString());
-    final AtomicReference<String> firstCommitParent = new AtomicReference<>(firstCommit.get());
-    final AtomicReference<FilePath> currentPath = new AtomicReference<>(myPath);
-    final AtomicReference<GitLineHandler> logHandler = new AtomicReference<>();
-    final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
-
-    final Consumer<GitLogRecord> resultAdapter = record -> {
-      if (skipFurtherOutput.get()) {
-        return;
-      }
-      if (record == null) {
-        exceptionConsumer.consume(new VcsException("revision details are null."));
-        return;
-      }
-      record.setUsedHandler(logHandler.get());
-      final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
-      firstCommit.set(record.getHash());
-      final String[] parentHashes = record.getParentsHashes();
-      if (parentHashes.length < 1) {
-        firstCommitParent.set(null);
-      }
-      else {
-        firstCommitParent.set(parentHashes[0]);
-      }
-      final String message = record.getFullMessage();
-
-      FilePath revisionPath;
-      try {
-        final List<FilePath> paths = record.getFilePaths(myRoot);
-        if (paths.size() > 0) {
-          revisionPath = paths.get(0);
-        }
-        else {
-          // no paths are shown for merge commits, so we're using the saved path we're inspecting now
-          revisionPath = currentPath.get();
-        }
-
-        Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
-        Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
-        Collection<String> parents = Arrays.asList(parentHashes);
-        consumer.consume(new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
-                                             null, new Date(record.getAuthorTimeStamp()), parents));
-        List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
-        if (statusInfos.isEmpty()) {
-          // can safely be empty, for example, for simple merge commits that don't change anything.
-          return;
-        }
-        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
-          skipFurtherOutput.set(true);
-        }
-      }
-      catch (VcsException e) {
-        exceptionConsumer.consume(e);
-      }
-    };
+    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer, exceptionConsumer);
 
     GitVcs vcs = GitVcs.getInstance(myProject);
     GitVersion version = vcs != null ? vcs.getVersion() : GitVersion.NULL;
     final AtomicBoolean criticalFailure = new AtomicBoolean();
-    while (currentPath.get() != null && firstCommitParent.get() != null) {
-      logHandler.set(getLogHandler(myProject, version, myRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
+    while (recordConsumer.getCurrentPath() != null && recordConsumer.getFirstCommitParent() != null) {
+      recordConsumer.setLogHandler(getLogHandler(myProject, version, myRoot, logParser,
+                                                 recordConsumer.getCurrentPath(), recordConsumer.getFirstCommitParent(), parameters));
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
       final Semaphore semaphore = new Semaphore();
 
-      logHandler.get().addLineListener(new GitLineHandlerAdapter() {
+      recordConsumer.getLogHandler().addLineListener(new GitLineHandlerAdapter() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
           final GitLogRecord record = accumulator.acceptLine(line);
           if (record != null) {
-            resultAdapter.consume(record);
+            recordConsumer.consume(record);
           }
         }
 
@@ -191,7 +137,7 @@ public class GitFileHistory {
             super.processTerminated(exitCode);
             final GitLogRecord record = accumulator.processLast();
             if (record != null) {
-              resultAdapter.consume(record);
+              recordConsumer.consume(record);
             }
           }
           catch (ProcessCanceledException ignored) {
@@ -207,18 +153,19 @@ public class GitFileHistory {
         }
       });
       semaphore.down();
-      logHandler.get().start();
+      recordConsumer.getLogHandler().start();
       semaphore.waitFor();
       if (criticalFailure.get()) {
         return;
       }
 
       try {
-        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(myProject, myRoot, firstCommit.get(),
-                                                                                              currentPath.get(), version);
-        currentPath.set(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.second);
-        firstCommitParent.set(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.first);
-        skipFurtherOutput.set(false);
+        Pair<String, FilePath> firstCommitParentAndPath =
+          getFirstCommitParentAndPathIfRename(myProject, myRoot, recordConsumer.getFirstCommit(),
+                                              recordConsumer.getCurrentPath(), version);
+        recordConsumer.setCurrentPath(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.second);
+        recordConsumer.setFirstCommitParent(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.first);
+        recordConsumer.setSkipFurtherOutput(false);
       }
       catch (VcsException e) {
         LOG.warn("Tried to get first commit rename path", e);
@@ -414,6 +361,105 @@ public class GitFileHistory {
     @Nullable
     private GitLogRecord processResult(@NotNull String line) {
       return myParser.parseOneRecord(line);
+    }
+  }
+
+  private class GitLogRecordConsumer implements Consumer<GitLogRecord> {
+    @NotNull private final AtomicReference<GitLineHandler> myLogHandler = new AtomicReference<>();
+    @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
+    @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>(myStartingRevision.asString());
+    @NotNull private final AtomicReference<String> myFirstCommitParent = new AtomicReference<>(myStartingRevision.asString());
+    @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>(myPath);
+    @NotNull private final Consumer<VcsException> myExceptionConsumer;
+    @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
+
+    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer, @NotNull Consumer<VcsException> exceptionConsumer) {
+      myExceptionConsumer = exceptionConsumer;
+      myRevisionConsumer = revisionConsumer;
+    }
+
+    @Override
+    public void consume(GitLogRecord record) {
+      if (mySkipFurtherOutput.get()) {
+        return;
+      }
+      if (record == null) {
+        myExceptionConsumer.consume(new VcsException("revision details are null."));
+        return;
+      }
+      record.setUsedHandler(myLogHandler.get());
+      final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
+      myFirstCommit.set(record.getHash());
+      final String[] parentHashes = record.getParentsHashes();
+      if (parentHashes.length < 1) {
+        myFirstCommitParent.set(null);
+      }
+      else {
+        myFirstCommitParent.set(parentHashes[0]);
+      }
+      final String message = record.getFullMessage();
+
+      FilePath revisionPath;
+      try {
+        final List<FilePath> paths = record.getFilePaths(myRoot);
+        if (paths.size() > 0) {
+          revisionPath = paths.get(0);
+        }
+        else {
+          // no paths are shown for merge commits, so we're using the saved path we're inspecting now
+          revisionPath = myCurrentPath.get();
+        }
+
+        Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
+        Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
+        Collection<String> parents = Arrays.asList(parentHashes);
+        myRevisionConsumer
+          .consume(new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
+                                       null, new Date(record.getAuthorTimeStamp()), parents));
+        List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
+        if (statusInfos.isEmpty()) {
+          // can safely be empty, for example, for simple merge commits that don't change anything.
+          return;
+        }
+        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
+          mySkipFurtherOutput.set(true);
+        }
+      }
+      catch (VcsException e) {
+        myExceptionConsumer.consume(e);
+      }
+    }
+
+    public String getFirstCommit() {
+      return myFirstCommit.get();
+    }
+
+    public String getFirstCommitParent() {
+      return myFirstCommitParent.get();
+    }
+
+    public FilePath getCurrentPath() {
+      return myCurrentPath.get();
+    }
+
+    public GitLineHandler getLogHandler() {
+      return myLogHandler.get();
+    }
+
+    public void setCurrentPath(FilePath currentPath) {
+      myCurrentPath.set(currentPath);
+    }
+
+    public void setFirstCommitParent(String firstCommitParent) {
+      myFirstCommitParent.set(firstCommitParent);
+    }
+
+    public void setSkipFurtherOutput(boolean skipFurtherOutput) {
+      mySkipFurtherOutput.set(skipFurtherOutput);
+    }
+
+    public void setLogHandler(GitLineHandler logHandler) {
+      myLogHandler.set(logHandler);
     }
   }
 }
