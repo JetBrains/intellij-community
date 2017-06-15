@@ -370,7 +370,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private int getWeight(IntentionActionWithTextCaching action) {
     IntentionAction a = action.getAction();
     int group = getGroup(action);
-    if (a instanceof IntentionActionDelegate) {
+    while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
     if (a instanceof HighPriorityAction) {
@@ -431,15 +431,15 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       return value.getIcon();
     }
 
-    final IntentionAction action = value.getAction();
+    IntentionAction action = value.getAction();
 
+    while (action instanceof IntentionActionDelegate) {
+      action = ((IntentionActionDelegate)action).getDelegate();
+    }
     Object iconable = action;
     //custom icon
     if (action instanceof QuickFixWrapper) {
       iconable = ((QuickFixWrapper)action).getFix();
-    }
-    else if (action instanceof IntentionActionDelegate) {
-      iconable = ((IntentionActionDelegate)action).getDelegate();
     }
 
     if (iconable instanceof Iconable) {
