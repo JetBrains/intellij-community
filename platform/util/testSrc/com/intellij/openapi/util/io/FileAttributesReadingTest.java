@@ -401,13 +401,13 @@ public abstract class FileAttributesReadingTest {
     assertEquals(file.getPath(), target);
 
     if (SystemInfo.isWindows) {
-      String path = myTempDirectory.getPath();
+      StringBuilder path = new StringBuilder(myTempDirectory.getPath());
       int length = 250 - path.length();
       for (int i = 0; i < length / 10; i++) {
-        path += "\\x_x_x_x_x";
+        path.append("\\x_x_x_x_x");
       }
 
-      File baseDir = new File(path);
+      File baseDir = new File(path.toString());
       assertTrue(baseDir.mkdirs());
       assertTrue(getAttributes(baseDir).isDirectory());
 
