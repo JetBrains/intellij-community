@@ -24,7 +24,10 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -32,7 +35,9 @@ import java.util.concurrent.ConcurrentMap;
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("factoryMap");
-  protected Map<K, V> myMap;
+
+  // create map at once, no need to optimize here
+  private final Map<K, V> myMap = createMap();
 
   @NotNull
   protected Map<K, V> createMap() {
@@ -42,16 +47,9 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @Nullable
   protected abstract V create(K key);
 
-  private Map<K, V> getMap() {
-    if (myMap == null) {
-      myMap = createMap();
-    }
-    return myMap;
-  }
-  
   @Override
   public V get(Object key) {
-    final Map<K, V> map = getMap();
+    Map<K, V> map = myMap;
     K k = notNull(key);
     V value = map.get(k);
     if (value == null) {
@@ -82,20 +80,19 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @Override
   public final boolean containsKey(Object key) {
-    return myMap != null && myMap.containsKey(notNull(key));
+    return myMap.containsKey(notNull(key));
   }
 
   @Override
   public V put(K key, V value) {
     K k = notNull(key);
     V v = notNull(value);
-    v = getMap().put(k, v);
+    v = myMap.put(k, v);
     return v == FAKE_NULL() ? null : v;
   }
 
   @Override
   public V remove(Object key) {
-    if (myMap == null) return null;
     V v = myMap.remove(key);
     return v == FAKE_NULL() ? null : v;
   }
@@ -103,7 +100,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   @Override
   public Set<K> keySet() {
-    if (myMap == null) return Collections.emptySet();
     final Set<K> ts = myMap.keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
@@ -117,7 +113,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @NotNull
   public Collection<V> notNullValues() {
-    if (myMap == null) return Collections.emptyList();
     final Collection<V> values = ContainerUtil.newArrayList(myMap.values());
     for (Iterator<V> iterator = values.iterator(); iterator.hasNext();) {
       if (iterator.next() == FAKE_NULL()) {
@@ -128,7 +123,6 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public boolean removeValue(Object value) {
-    if (myMap == null) return false;
     Object t = ObjectUtils.notNull(value, FAKE_NULL());
     //noinspection SuspiciousMethodCalls
     return myMap.values().remove(t);
@@ -137,25 +131,22 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   @Override
   public void clear() {
-    if (myMap != null) {
-      myMap.clear();
-    }
+    myMap.clear();
   }
 
   @Override
   public int size() {
-    if (myMap == null) return 0;
     return myMap.size();
   }
 
   @Override
   public boolean isEmpty() {
-    return myMap == null || myMap.isEmpty();
+    return myMap.isEmpty();
   }
 
   @Override
   public boolean containsValue(final Object value) {
-    return myMap != null && myMap.containsValue(value);
+    return myMap.containsValue(value);
   }
 
   @Override
@@ -168,14 +159,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    if (myMap == null) return Collections.emptyList();
     return myMap.values();
   }
 
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    if (myMap == null) return Collections.emptySet();
     return myMap.entrySet();
   }
 
