@@ -23,4 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PyAnnotationOwner {
   @Nullable
   PyAnnotation getAnnotation();
+
+  @Nullable
+  String getAnnotationContent();
 }
