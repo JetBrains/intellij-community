@@ -23,6 +23,10 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 
 class GroovyStaticImportsTest extends LightGroovyTestCase {
 
@@ -66,9 +70,50 @@ class Baz {
   static Object someProp() { null }
   static Object someProp(p) { null }
   
-  static class someProp {}  
+  static private someProp       // field
+  static class someProp {}
+  
+  static groovyProp             // property with private field and a getter/setter
+  static final finalGroovyProp  // property with private field and a getter
+  static methodWithDefaultParams(a,b,c=1) {}  
 }
 '''
+  }
+
+  void 'test static import reference'() {
+    def results
+    def element
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>someProp'
+    assert results.size() == 9 // field is not valid result
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>getSomeProp'
+    assert results.size() == 2 // both getter and getter-like method are included
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>groovyProp'
+    assert results.size() == 1 // getter and setter collapsed into property
+    element = results[0].element
+    assert element instanceof GrField
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>getGroovyProp'
+    assert results.size() == 1 // getter only
+    element = results[0].element
+    assert element instanceof GrAccessorMethod
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>finalGroovyProp'
+    assert results.size() == 1 // getter collapsed into property
+    element = results[0].element
+    assert element instanceof GrField
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>getFinalGroovyProp'
+    assert results.size() == 1 // getter only
+    element = results[0].element
+    assert element instanceof GrAccessorMethod
+
+    results = multiResolveByText 'import static foo.bar.Baz.<caret>methodWithDefaultParams'
+    assert results.size() == 1 // collapsed into base
+    element = results[0].element
+    assert element instanceof GrMethod && !(element instanceof GrReflectedMethod)
   }
 
   void 'test resolve rValue reference'() {
