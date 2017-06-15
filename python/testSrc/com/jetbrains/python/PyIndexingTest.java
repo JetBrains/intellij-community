@@ -75,7 +75,7 @@ public class PyIndexingTest extends PyTestCase {
     return files;
   }
 
-  public void testTodoIndexInLibs() {
+  public void _testTodoIndexInLibs() {
     Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
 
     PsiFile file = myFixture.addFileToProject("libs/smtpd.py", "# TODO: fix it");
