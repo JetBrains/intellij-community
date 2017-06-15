@@ -636,7 +636,7 @@ public class StudyUtils {
   }
 
   @Nullable
-  private static String convertToHtml(@Nullable final String content) {
+  public static String convertToHtml(@Nullable final String content) {
     if (content == null) return null;
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
