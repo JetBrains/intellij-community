@@ -69,6 +69,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   @NonNls private static final String PREVIOUS_KEY = "previous";
   @NonNls private static final String AUTHOR_KEY = "author";
   @NonNls private static final String AUTHOR_EMAIL_KEY = "author-mail";
+  @NonNls private static final String AUTHOR_TIME_KEY = "author-time";
   @NonNls private static final String COMMITTER_TIME_KEY = "committer-time";
   private static final Logger LOG = Logger.getInstance(GitAnnotationProvider.class);
 
@@ -275,7 +276,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
             else if (AUTHOR_KEY.equals(key)) {
               authorName = value;
             }
-            else if (COMMITTER_TIME_KEY.equals(key)) {
+            else if (AUTHOR_TIME_KEY.equals(key)) {
               committerDate = GitUtil.parseTimestamp(value);
             }
             else if (FILENAME_KEY.equals(key)) {
