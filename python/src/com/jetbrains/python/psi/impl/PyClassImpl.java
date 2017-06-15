@@ -422,7 +422,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public ItemPresentation getPresentation() {
     return new PyElementPresentation(this) {
-      @Nullable
+      @NotNull
       @Override
       public String getPresentableText() {
         PyPsiUtils.assertValid(PyClassImpl.this);
@@ -707,6 +707,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     visitMethods(proc, inherited, true, context);
     return proc.getResult();
+  }
+
+  @NotNull
+  @Override
+  public List<PyFunction> multiFindInitOrNew(boolean inherited, @Nullable TypeEvalContext context) {
+    final MultiNameFinder<PyFunction> processor = isNewStyleClass(context)
+      ? new MultiNameFinder<>(PyNames.INIT, PyNames.NEW)
+      : new MultiNameFinder<>(PyNames.INIT);
+
+    visitMethods(processor, inherited, true, context);
+    return processor.myResult;
   }
 
   private final static Maybe<PyCallable> UNKNOWN_CALL = new Maybe<>(); // denotes _not_ a PyFunction, actually
