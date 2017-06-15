@@ -162,7 +162,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
   @Override
   public String getChosenMethodName() {
-    return myNameField.getEnteredName();
+    return myNameField.getEnteredName().trim();
   }
 
   @Override
@@ -613,9 +613,8 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      prototype = factory.createMethod(myNameField.getEnteredName().trim(), myReturnType);
+      prototype = factory.createMethod(getChosenMethodName(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
-      Set<String> usedNames = new HashSet<>(); 
       for (VariableData data : myInputVariables) {
         if (data.passAsParameter) {
           prototype.getParameterList().add(factory.createParameter(data.name, data.type));
@@ -633,10 +632,8 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   protected void checkParametersConflicts(MultiMap<PsiElement, String> conflicts) {
     Set<String> usedNames = new HashSet<>();
     for (VariableData data : myInputVariables) {
-      if (data.passAsParameter) {
-        if (!usedNames.add(data.name)) {
-          conflicts.putValue(null, "Conflicting parameter name: " + data.name);
-        }
+      if (data.passAsParameter && !usedNames.add(data.name)) {
+        conflicts.putValue(null, "Conflicting parameter name: " + data.name);
       }
     }
   }
