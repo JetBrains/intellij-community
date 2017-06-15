@@ -232,6 +232,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         myIconsPanel.add(myNewLineButton);
       }
       myIconsPanel.setBorder(myHelper.getIconsPanelBorder(rows));
+      myIconsPanel.revalidate();
+      myIconsPanel.repaint();
       myScrollPane.setHorizontalScrollBarPolicy(multiline ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
       myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
       myScrollPane.revalidate();
