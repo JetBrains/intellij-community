@@ -191,15 +191,6 @@ public class GitFileHistory {
     return h;
   }
 
-  @NotNull
-  private static VirtualFile getRoot(@NotNull Project project, @NotNull FilePath path) throws VcsException {
-    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
-    if (root == null) {
-      throw new VcsException("The file " + path + " is not under vcs.");
-    }
-    return root;
-  }
-
   /**
    * Get history for the file starting from specific revision and feed it to the consumer.
    *
@@ -218,14 +209,13 @@ public class GitFileHistory {
                              @NotNull Consumer<GitFileRevision> consumer,
                              @NotNull Consumer<VcsException> exceptionConsumer,
                              String... parameters) {
-    try {
-      VirtualFile repositoryRoot = root == null ? getRoot(project, path) : root;
-      VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
-      new GitFileHistory(project, repositoryRoot, path, revision).history(consumer, exceptionConsumer, parameters);
+    VirtualFile repositoryRoot = root == null ? ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path) : root;
+    if (repositoryRoot == null) {
+      exceptionConsumer.consume(new VcsException("The file " + path + " is not under vcs."));
+      return;
     }
-    catch (VcsException e) {
-      exceptionConsumer.consume(e);
-    }
+    VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
+    new GitFileHistory(project, repositoryRoot, path, revision).history(consumer, exceptionConsumer, parameters);
   }
 
   /**
