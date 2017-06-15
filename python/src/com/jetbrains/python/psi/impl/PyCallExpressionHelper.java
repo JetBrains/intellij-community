@@ -1101,7 +1101,7 @@ public class PyCallExpressionHelper {
           final PyExpression arg = argumentComponents[i];
           if (arg != null) {
             if (param instanceof PyNamedParameter) {
-              mappedParameters.put(arg, new PyCallableParameterImpl(param));
+              mappedParameters.put(arg, PyCallableParameterImpl.psi(param));
             }
             else if (param instanceof PyTupleParameter) {
               final TupleMappingResults nestedResults = mapComponentsOfTupleParameter(arg, (PyTupleParameter)param);
@@ -1114,11 +1114,11 @@ public class PyCallExpressionHelper {
             }
           }
           else {
-            unmappedParameters.add(new PyCallableParameterImpl(param));
+            unmappedParameters.add(PyCallableParameterImpl.psi(param));
           }
         }
         else {
-          unmappedParameters.add(new PyCallableParameterImpl(param));
+          unmappedParameters.add(PyCallableParameterImpl.psi(param));
         }
       }
       if (argumentComponents.length > parameterComponents.length) {

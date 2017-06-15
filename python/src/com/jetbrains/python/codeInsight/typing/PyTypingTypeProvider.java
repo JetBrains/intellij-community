@@ -647,7 +647,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
               final List<PyCallableParameter> parameters = new ArrayList<>();
               final PyListLiteralExpression listExpr = (PyListLiteralExpression)parametersExpr;
               for (PyExpression argExpr : listExpr.getElements()) {
-                parameters.add(new PyCallableParameterImpl(null, Ref.deref(getType(argExpr, context))));
+                parameters.add(PyCallableParameterImpl.nonPsi(Ref.deref(getType(argExpr, context))));
               }
               final PyType returnType = Ref.deref(getType(returnTypeExpr, context));
               return new PyCallableTypeImpl(parameters, returnType);
