@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -178,10 +177,10 @@ public abstract class Task implements StudyItem {
     if (entry == null) {
       return null;
     }
-    return StudyUtils.convertToHtml(entry.getValue());
+    return entry.getValue();
   }
 
-  protected String getTaskDescriptionNameWithoutExtension() {
+  public String getTaskDescriptionNameWithoutExtension() {
     return FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
   }
 
@@ -295,5 +294,9 @@ public abstract class Task implements StudyItem {
   public int getPosition() {
     final Lesson lesson = getLesson();
     return lesson.getTaskList().indexOf(this) + 1;
+  }
+
+  public void saveTaskText(String text) {
+    taskTexts.put(getTaskDescriptionNameWithoutExtension(), text);
   }
 }

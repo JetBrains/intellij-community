@@ -23,7 +23,7 @@ public class TaskWithSubtasks extends PyCharmTask {
   }
 
   @Override
-  protected String getTaskDescriptionNameWithoutExtension() {
+  public String getTaskDescriptionNameWithoutExtension() {
     return super.getTaskDescriptionNameWithoutExtension() + EduNames.SUBTASK_MARKER + myActiveSubtaskIndex;
   }
 

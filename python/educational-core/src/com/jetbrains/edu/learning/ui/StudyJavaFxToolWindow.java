@@ -47,6 +47,6 @@ public class StudyJavaFxToolWindow extends StudyToolWindow {
 
   @Override
   public void setText(@NotNull String text) {
-    myBrowserWindow.loadContent(text);
+    myBrowserWindow.loadContent(StudyUtils.convertToHtml(text));
   }
 }
