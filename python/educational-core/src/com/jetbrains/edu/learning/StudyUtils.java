@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -49,7 +48,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MarkdownUtil;
@@ -62,12 +60,8 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
-import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
-import com.jetbrains.edu.learning.stepic.EduStepikUtils;
 import com.jetbrains.edu.learning.stepic.OAuthDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
@@ -188,7 +182,7 @@ public class StudyUtils {
     if (studyToolWindow != null) {
       String taskText = getTaskText(project);
       if (taskText != null) {
-        studyToolWindow.setTaskText(taskText, null, project);
+        studyToolWindow.setTaskText(taskText, project);
       }
       else {
         LOG.warn("Task text is null");
@@ -406,91 +400,9 @@ public class StudyUtils {
     return !isRenameableOrMoveable(project, course, element);
   }
 
-  @Nullable
-  public static String getTaskTextFromTask(@Nullable final VirtualFile taskDirectory, @Nullable final Task task) {
-    if (task == null || task.getLesson() == null || task.getLesson().getCourse() == null) {
-      return null;
-    }
-    final Course course = task.getLesson().getCourse();
-    String text = task.getTaskDescription() != null ? task.getTaskDescription() : getTaskTextByTaskName(task, taskDirectory);
-
-    if (text == null) return null;
-    if (course.isAdaptive()) text = wrapAdaptiveCourseText(task, text);
-
-    return wrapTextToDisplayLatex(text);
-  }
-
-  @NotNull
-  public static String constructTaskTextFilename(@NotNull Task task, @NotNull String defaultName) {
-    String fileNameWithoutExtension = FileUtil.getNameWithoutExtension(defaultName);
-    if (task instanceof TaskWithSubtasks) {
-      int activeStepIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
-      fileNameWithoutExtension += EduNames.SUBTASK_MARKER + activeStepIndex;
-    }
-    return addExtension(fileNameWithoutExtension, defaultName);
-  }
-
-  private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
-    String finalText = text;
-    if (task instanceof TheoryTask) {
-      finalText += "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
-             "Please, read it and press \"Check\" to go further.";
-    }
-    else if (!(task instanceof ChoiceTask)) {
-      finalText += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
-    }
-    finalText += getFooterWithLink(task);
-
-    return finalText;
-  }
-
-  @NotNull
-  private static String getFooterWithLink(Task task) {
-    return
-    "<div class=\"footer\">" + "<a href=" + EduStepikUtils.getAdaptiveLink(task) + ">Open on Stepik</a>"  + "</div>";
-  }
-
-  @NotNull
-  private static String addExtension(@NotNull String fileNameWithoutExtension, @NotNull String defaultName) {
-    return fileNameWithoutExtension + "." + FileUtilRt.getExtension(defaultName);
-  }
-
   public static String wrapTextToDisplayLatex(String taskTextFileHtml) {
     final String prefix = String.format(ourPrefix, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
     return prefix + taskTextFileHtml + ourPostfix;
-  }
-
-  @Nullable
-  private static String getTaskTextByTaskName(@NotNull Task task, @Nullable VirtualFile taskDirectory) {
-    if (taskDirectory == null) return null;
-
-    String textFromHtmlFile = getTextByTaskFileFormat(task, taskDirectory, EduNames.TASK_HTML);
-    if (textFromHtmlFile != null) {
-      return textFromHtmlFile;
-    }
-
-    String taskTextFromMd = getTextByTaskFileFormat(task, taskDirectory, EduNames.TASK_HTML);
-    return convertToHtml(taskTextFromMd);
-  }
-
-  @Nullable
-  private static String getTextByTaskFileFormat(@NotNull Task task, @NotNull VirtualFile taskDirectory, @NotNull String taskTextFileName) {
-    String textFilename = constructTaskTextFilename(task, taskTextFileName);
-    VirtualFile taskTextFile = taskDirectory.findChild(textFilename);
-
-    if (taskTextFile != null) {
-      return String.valueOf(LoadTextUtil.loadText(taskTextFile));
-    }
-
-    VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
-    if (srcDir != null) {
-      VirtualFile taskTextSrcFile = srcDir.findChild(textFilename);
-      if (taskTextSrcFile != null) {
-        return String.valueOf(LoadTextUtil.loadText(taskTextSrcFile));
-      }
-    }
-
-    return null;
   }
 
   @Nullable
@@ -506,20 +418,11 @@ public class StudyUtils {
 
   @Nullable
   public static String getTaskText(@NotNull final Project project) {
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) {
+    Task task = getCurrentTask(project);
+    if (task == null) {
       return StudyToolWindow.EMPTY_TASK_TEXT;
     }
-    Document document = editor.getDocument();
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null) {
-      return StudyToolWindow.EMPTY_TASK_TEXT;
-    }
-    final Task task = getTaskForFile(project, virtualFile);
-    if (task != null) {
-      return getTaskTextFromTask(task.getTaskDir(project), task);
-    }
-    return null;
+    return task.getTaskDescription();
   }
 
   @Nullable
@@ -635,9 +538,7 @@ public class StudyUtils {
     return task;
   }
 
-  @Nullable
-  public static String convertToHtml(@Nullable final String content) {
-    if (content == null) return null;
+  public static String convertToHtml(@NotNull String content) {
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
     MarkdownUtil.replaceCodeBlock(lines);
@@ -654,22 +555,6 @@ public class StudyUtils {
       return false;
     }
     return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.SUBTASK_MARKER);
-  }
-
-  @Nullable
-  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull Project project, @NotNull VirtualFile taskDir) {
-    Task task = getTask(project, taskDir.getName().contains(EduNames.TASK) ? taskDir: taskDir.getParent());
-    if (task == null) {
-      return null;
-    }
-
-    return ObjectUtils.chooseNotNull(taskDir.findChild(constructTaskTextFilename(task, EduNames.TASK_HTML)),
-                                     taskDir.findChild(constructTaskTextFilename(task, EduNames.TASK_MD)));
-  }
-
-  @NotNull
-  public static String getTaskDescriptionFileName(final boolean useHtml) {
-    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;
   }
 
   @Nullable

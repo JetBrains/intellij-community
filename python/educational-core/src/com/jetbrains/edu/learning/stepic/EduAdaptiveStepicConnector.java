@@ -405,7 +405,7 @@ public class EduAdaptiveStepicConnector {
   private static void setToolWindowText(@NotNull Project project, @NotNull Task task) {
     final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
     if (window != null) {
-      window.setTaskText(StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription()), task.getTaskDir(project), project);
+      window.setTaskText(StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription()), project);
     }
   }
 

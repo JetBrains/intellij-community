@@ -42,6 +42,7 @@ import java.util.Map;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
+  public static final String TASK_DESCRIPTION_TEXT = "Write task description here using markdown or html";
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
