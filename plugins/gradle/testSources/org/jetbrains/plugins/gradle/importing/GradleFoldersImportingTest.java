@@ -38,15 +38,18 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
     assertDefaultGradleJavaProjectFolders("project");
 
+
+    final String mainClassesOutputPath = isGradle40orNewer() ? "/build/classes/java/main" : "/build/classes/main";
     assertModuleOutputs("project_main",
-                        getProjectPath() + "/build/classes/main",
+                        getProjectPath() + mainClassesOutputPath,
                         getProjectPath() + "/build/resources/main");
+    String testClassesOutputPath = isGradle40orNewer() ? "/build/classes/java/test" : "/build/classes/test";
     assertModuleOutputs("project_test",
-                        getProjectPath() + "/build/classes/test",
+                        getProjectPath() + testClassesOutputPath,
                         getProjectPath() + "/build/resources/test");
 
-    assertModuleOutput("project_main", getProjectPath() + "/build/classes/main", "");
-    assertModuleOutput("project_test", "", getProjectPath() + "/build/classes/test");
+    assertModuleOutput("project_main", getProjectPath() + mainClassesOutputPath, "");
+    assertModuleOutput("project_test", "", getProjectPath() + testClassesOutputPath);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project");
@@ -80,7 +83,8 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDefaultGradleJavaProjectFolders("project");
 
     assertModuleOutput("project_main", getProjectPath() + "/build", "");
-    assertModuleOutput("project_test", "", getProjectPath() + "/build/classes/test");
+    String testClassesOutputPath = isGradle40orNewer() ? "/build/classes/java/test" : "/build/classes/test";
+    assertModuleOutput("project_test", "", getProjectPath() + testClassesOutputPath);
 
     importProjectUsingSingeModulePerGradleProject();
     assertModules("project");

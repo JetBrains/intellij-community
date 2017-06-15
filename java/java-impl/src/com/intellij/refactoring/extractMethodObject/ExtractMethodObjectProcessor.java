@@ -874,7 +874,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           setMethodCall((PsiMethodCallExpression)((PsiLocalVariable)replace.getDeclaredElements()[0]).getInitializer());
         }
 
-        final List<PsiVariable> usedVariables = myControlFlowWrapper.filterUsedVariables(myOutputVariables);
+        PsiVariable[] usedVariables = myOutputVariables;
+        if (generatesConditionalExit() && myOutputVariable != null && !myControlFlowWrapper.isVariableUsedAfterEnd(myOutputVariable)) {
+          usedVariables = ArrayUtil.remove(usedVariables, myOutputVariable);
+        }
         Collection<ControlFlowUtil.VariableInfo> reassigned = myControlFlowWrapper.getInitializedTwice();
         for (PsiVariable variable : usedVariables) {
           String name = variable.getName();
