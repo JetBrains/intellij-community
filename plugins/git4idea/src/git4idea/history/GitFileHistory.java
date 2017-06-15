@@ -83,36 +83,50 @@ public class GitFileHistory {
   @NotNull private final VirtualFile myRoot;
   @NotNull private final FilePath myPath;
   @NotNull private final VcsRevisionNumber myStartingRevision;
+  @NotNull private final GitVersion myVersion;
 
   public GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
     myPath = GitHistoryUtils.getLastCommitName(myProject, path);
     myStartingRevision = revision;
+
+    GitVcs vcs = GitVcs.getInstance(myProject);
+    myVersion = vcs != null ? vcs.getVersion() : GitVersion.NULL;
   }
 
   public void history(@NotNull Consumer<GitFileRevision> consumer,
                       @NotNull Consumer<VcsException> exceptionConsumer,
                       String... parameters) {
-    GitVcs vcs = GitVcs.getInstance(myProject);
-    GitVersion version = vcs != null ? vcs.getVersion() : GitVersion.NULL;
-
     GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
                                               HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                               SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
-    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(version, consumer, exceptionConsumer);
+    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer, exceptionConsumer);
 
-    while (recordConsumer.getCurrentPath() != null && recordConsumer.getFirstCommitParent() != null) {
-      GitLineHandler handler = createLogHandler(myProject, version, myRoot, logParser,
-                                                recordConsumer.getCurrentPath(), recordConsumer.getFirstCommitParent(), parameters);
+    String firstCommitParent = myStartingRevision.asString();
+    FilePath currentPath = myPath;
+
+    while (currentPath != null && firstCommitParent != null) {
+      recordConsumer.reset(currentPath);
+
+      GitLineHandler handler = createLogHandler(myProject, myVersion, myRoot, logParser, currentPath, firstCommitParent, parameters);
       MyGitLineHandlerAdapter lineListener = new MyGitLineHandlerAdapter(handler, logParser, recordConsumer, exceptionConsumer);
+
       lineListener.runAndWait();
       if (lineListener.hasCriticalFailure()) {
         return;
       }
 
       try {
-        recordConsumer.updateFirstCommitParentAndPath();
+        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(recordConsumer.getFirstCommit(), currentPath);
+        if (firstCommitParentAndPath == null) {
+          currentPath = null;
+          firstCommitParent = null;
+        }
+        else {
+          currentPath = firstCommitParentAndPath.second;
+          firstCommitParent = firstCommitParentAndPath.first;
+        }
       }
       catch (VcsException e) {
         LOG.warn("Tried to get first commit rename path", e);
@@ -120,6 +134,45 @@ public class GitFileHistory {
         return;
       }
     }
+  }
+
+  /**
+   * Gets info of the given commit and checks if it was a RENAME.
+   * If yes, returns the older file path, which file was renamed from.
+   * If it's not a rename, returns null.
+   */
+  @Nullable
+  private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull String commit,
+                                                                     @NotNull FilePath filePath) throws VcsException {
+    // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
+    // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
+    GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.SHOW);
+    GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
+    h.setStdoutSuppressed(true);
+    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+    if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myVersion)) {
+      h.addParameters("--follow");
+      h.endOptions();
+      h.addRelativePaths(filePath);
+    }
+    else {
+      h.endOptions();
+    }
+    String output = h.run();
+    List<GitLogRecord> records = parser.parse(output);
+
+    if (records.isEmpty()) return null;
+    // we have information about all changed files of the commit. Extracting information about the file we need.
+    GitLogRecord record = records.get(0);
+    List<Change> changes = record.parseChanges(myProject, myRoot);
+    for (Change change : changes) {
+      if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
+        String[] parents = record.getParentsHashes();
+        String parent = parents.length > 0 ? parents[0] : null;
+        return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -348,19 +401,20 @@ public class GitFileHistory {
 
   private class GitLogRecordConsumer implements Consumer<GitLogRecord> {
     @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
-    @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>(myStartingRevision.asString());
-    @NotNull private final AtomicReference<String> myFirstCommitParent = new AtomicReference<>(myStartingRevision.asString());
-    @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>(myPath);
-    @NotNull private final GitVersion myVersion;
+    @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
+    @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
     @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    public GitLogRecordConsumer(@NotNull GitVersion version,
-                                @NotNull Consumer<GitFileRevision> revisionConsumer,
+    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
                                 @NotNull Consumer<VcsException> exceptionConsumer) {
-      myVersion = version;
       myExceptionConsumer = exceptionConsumer;
       myRevisionConsumer = revisionConsumer;
+    }
+
+    public void reset(@NotNull FilePath path) {
+      myCurrentPath.set(path);
+      mySkipFurtherOutput.set(false);
     }
 
     @Override
@@ -409,66 +463,9 @@ public class GitFileHistory {
       return myCurrentPath.get();
     }
 
-    @Nullable
-    public String getFirstCommitParent() {
-      return myFirstCommitParent.get();
-    }
-
-    @Nullable
-    public FilePath getCurrentPath() {
-      return myCurrentPath.get();
-    }
-
-    public void updateFirstCommitParentAndPath() throws VcsException {
-      Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(myFirstCommit.get(), myCurrentPath.get());
-      if (firstCommitParentAndPath == null) {
-        myCurrentPath.set(null);
-        myFirstCommitParent.set(null);
-      }
-      else {
-        myCurrentPath.set(firstCommitParentAndPath.second);
-        myFirstCommitParent.set(firstCommitParentAndPath.first);
-      }
-      mySkipFurtherOutput.set(false);
-    }
-
-    /**
-     * Gets info of the given commit and checks if it was a RENAME.
-     * If yes, returns the older file path, which file was renamed from.
-     * If it's not a rename, returns null.
-     */
-    @Nullable
-    private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull String commit,
-                                                                       @NotNull FilePath filePath) throws VcsException {
-      // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
-      // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.SHOW);
-      GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
-      h.setStdoutSuppressed(true);
-      h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-      if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myVersion)) {
-        h.addParameters("--follow");
-        h.endOptions();
-        h.addRelativePaths(filePath);
-      }
-      else {
-        h.endOptions();
-      }
-      String output = h.run();
-      List<GitLogRecord> records = parser.parse(output);
-
-      if (records.isEmpty()) return null;
-      // we have information about all changed files of the commit. Extracting information about the file we need.
-      GitLogRecord record = records.get(0);
-      List<Change> changes = record.parseChanges(myProject, myRoot);
-      for (Change change : changes) {
-        if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
-          String[] parents = record.getParentsHashes();
-          String parent = parents.length > 0 ? parents[0] : null;
-          return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
-        }
-      }
-      return null;
+    @NotNull
+    public String getFirstCommit() {
+      return myFirstCommit.get();
     }
   }
 }
