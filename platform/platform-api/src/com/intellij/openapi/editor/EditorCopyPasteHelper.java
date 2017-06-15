@@ -26,6 +26,11 @@ import java.awt.datatransfer.Transferable;
  * Support for data transfer between editor and clipboard.
  */
 public abstract class EditorCopyPasteHelper {
+  /**
+   *  Setup JTextComponent.getDocument().putProperty(TRIM_TEXT_ON_PASTE_KEY, Boolean.TRUE) to trim text that is being pasted
+   */
+  public static final String TRIM_TEXT_ON_PASTE_KEY = "trimTextOnPaste";
+
   public static EditorCopyPasteHelper getInstance() {
     return ServiceManager.getService(EditorCopyPasteHelper.class);
   }
