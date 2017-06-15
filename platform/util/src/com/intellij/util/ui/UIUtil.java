@@ -111,7 +111,9 @@ public class UIUtil {
   }
 
   public static void decorateFrame(@NotNull JRootPane pane) {
-    pane.putClientProperty("jetbrains.awt.windowDarkAppearance" , /*isUnderDarcula()*/false);
+    if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+    }
   }
 
   private static void blockATKWrapper() {
