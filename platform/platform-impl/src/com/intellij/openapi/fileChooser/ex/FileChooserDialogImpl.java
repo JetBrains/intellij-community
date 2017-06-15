@@ -319,6 +319,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         updateTreeFromPath(newValue);
       }
     };
+    myPathTextField.getField().setName("FileChooserDialogImpl.myPathTextField");  // Android Studio: for FileChooserDialogFixture
     Disposer.register(myDisposable, myPathTextField);
     myPathTextFieldWrapper.add(myPathTextField.getField(), BorderLayout.CENTER);
     if (getRecentFiles().length > 0) {
