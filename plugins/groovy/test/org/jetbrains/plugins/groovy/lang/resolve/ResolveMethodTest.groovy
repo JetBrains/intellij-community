@@ -1076,38 +1076,6 @@ def aa = 5 + x<caret>x()
     assertInstanceOf(ref.resolve(), GrMethod)
   }
 
-  void testStaticallyImportedProperty1() {
-    myFixture.addFileToProject('Foo.groovy', '''\
-class Foo {
-  static def getFoo() {2}
-  static def setFoo(def foo){}
-}''')
-
-    def ref = configureByText('''\
-import static Foo.f<caret>oo
-''')
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertEquals('getFoo', resolved.name)
-  }
-
-  void testStaticallyImportedProperty2() {
-    myFixture.addFileToProject('Foo.groovy', '''\
-class Foo {
-  static def getFoo() {2}
-  static def setFoo(def foo){}
-}''')
-
-    def ref = configureByText('''\
-import static Foo.foo
-
-setFo<caret>o(2)
-''')
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertEquals('setFoo', resolved.name)
-  }
-
   void testRuntimeMixin1() {
     resolveByText('''\
 class Foo {
