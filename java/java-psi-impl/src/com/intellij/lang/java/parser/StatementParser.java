@@ -24,11 +24,8 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
@@ -77,34 +74,6 @@ public class StatementParser {
 
       if (braceCount == 0) {
         break;
-      }
-      else if (braceCount == 1 && (tokenType == JavaTokenType.SEMICOLON || tokenType == JavaTokenType.RBRACE)) {
-        final PsiBuilder.Marker position = builder.mark();
-        final List<IElementType> list = new SmartList<>();
-        while (true) {
-          final IElementType type = builder.getTokenType();
-          if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(type) || ElementType.MODIFIER_BIT_SET.contains(type) ||
-              (type == JavaTokenType.IDENTIFIER && list.size() > 0) || type == JavaTokenType.LT || type == JavaTokenType.GT ||
-              type == JavaTokenType.GTGT || type == JavaTokenType.GTGTGT || type == JavaTokenType.COMMA ||
-              type == JavaTokenType.DOT || type == JavaTokenType.EXTENDS_KEYWORD || type == JavaTokenType.IMPLEMENTS_KEYWORD) {
-            list.add(type);
-            builder.advanceLexer();
-          }
-          else {
-            break;
-          }
-        }
-        if (builder.getTokenType() == JavaTokenType.LPARENTH && list.size() >= 2) {
-          final IElementType last = list.get(list.size() - 1);
-          final IElementType prevLast = list.get(list.size() - 2);
-          if (last == JavaTokenType.IDENTIFIER &&
-              (prevLast == JavaTokenType.IDENTIFIER || ElementType.PRIMITIVE_TYPE_BIT_SET.contains(prevLast))) {
-            position.rollbackTo();
-            greedyBlock = true;
-            break;
-          }
-        }
-        position.drop();
       }
     }
 

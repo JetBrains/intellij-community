@@ -66,6 +66,9 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
       Container parent = c.getParent();
       if (c.isOpaque() && parent != null) {
         g2.setColor(parent.getBackground());
@@ -85,25 +88,22 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
     g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("TextField.inactiveBackground"));
 
     if (!c.isEnabled()) {
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
     }
 
     Rectangle r = new Rectangle(c.getSize());
-    adjustVerticalInsets(r, c);
-    g2.fill(r);
-  }
+    JBInsets.removeFrom(r, JBUI.insets(2));
 
-  static void adjustVerticalInsets(Rectangle r, JComponent c) {
     if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
-      Insets i = c.getInsets();
-      i.left = i.right = 0;
-      JBInsets.removeFrom(r, i);
+      JBInsets.removeFrom(r, JBUI.insets(2, 0));
     }
+
+    g2.fill(r);
   }
 
   @Override public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    size.height = JBUI.scale(22);
+    size.height = Math.max(JBUI.scale(24), size.height);
     return size;
   }
 
@@ -115,17 +115,21 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
       searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
     }
 
-    int yOffset = isSearchFieldWithHistoryPopup(c) ? JBUI.scale(1) : 0;
-
-    searchIcon.paintIcon(c, g, JBUI.scale(4), (c.getHeight() - searchIcon.getIconHeight()) / 2 + yOffset);
+    if (searchIcon != null) {
+      int yOffset = isSearchFieldWithHistoryPopup(c) ? JBUI.scale(1) : 0;
+      searchIcon.paintIcon(c, g, JBUI.scale(5), (c.getHeight() - searchIcon.getIconHeight()) / 2 + yOffset);
+    }
 
     if (hasText()) {
       Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
       if (clearIcon == null) {
         clearIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
       }
-      clearIcon.paintIcon(c, g, c.getWidth() - clearIcon.getIconWidth() - JBUI.scale(4),
-                                (c.getHeight() - searchIcon.getIconHeight()) / 2);
+
+      if (clearIcon != null) {
+        clearIcon.paintIcon(c, g, c.getWidth() - clearIcon.getIconWidth() - JBUI.scale(5),
+                            (c.getHeight() - clearIcon.getIconHeight()) / 2);
+      }
     }
   }
 }

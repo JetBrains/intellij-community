@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.FunctionalInterfaceSuggester;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -43,6 +44,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -272,6 +274,21 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           String returnTypeString = myReturnType == null || PsiType.VOID.equals(myReturnType) 
                                     ? "{}" : myReturnType.getPresentableText();
           return "(" + parametersList + ") -> " + returnTypeString;
+        }
+
+        @Override
+        protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+          checkParametersConflicts(conflicts);
+          for (VariableData data : getChosenParameters()) {
+            if (!data.passAsParameter) {
+              PsiElement scope = PsiUtil.getVariableCodeBlock(data.variable, null);
+              if (PsiUtil.isLanguageLevel8OrHigher(data.variable) 
+                  ? scope != null && !HighlightControlFlowUtil.isEffectivelyFinal(data.variable, scope, null) 
+                  : data.variable.hasModifierProperty(PsiModifier.FINAL)) {
+                conflicts.putValue(null, "Variable " + data.name + " is not effectively final and won't be accessible inside functional expression");
+              }
+            }
+          }
         }
 
         @NotNull

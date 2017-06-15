@@ -133,7 +133,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
             }
           } else {
             g2.setColor(UIManager.getColor("Button.background"));
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
           }
 
           g2.fill(outerRect);

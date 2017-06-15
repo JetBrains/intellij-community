@@ -190,6 +190,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    config = injectRepo(config);
+    super.importProject(config);
+  }
+
+  @NotNull
+  protected String injectRepo(@NonNls @Language("Groovy") String config) {
     config = "allprojects {\n" +
               "  repositories {\n" +
               "    maven {\n" +
@@ -197,7 +203,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
               "    }\n" +
               "  }" +
               "}\n" + config;
-    super.importProject(config);
+    return config;
   }
 
   @Override
@@ -212,6 +218,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   protected VirtualFile createSettingsFile(@NonNls @Language("Groovy") String content) throws IOException {
     return createProjectSubFile("settings.gradle", content);
+  }
+
+  protected boolean isGradle40orNewer() {
+    return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.0")) >= 0;
   }
 
   private void configureWrapper() throws IOException, URISyntaxException {

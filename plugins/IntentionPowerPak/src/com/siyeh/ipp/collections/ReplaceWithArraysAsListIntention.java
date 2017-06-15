@@ -15,24 +15,26 @@
  */
 package com.siyeh.ipp.collections;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
+public class ReplaceWithArraysAsListIntention extends Intention implements HighPriorityAction {
 
   private String replacementText = null;
 
+  @NotNull
   @Override
-  protected String getTextForElement(PsiElement element) {
+  public String getText() {
     return IntentionPowerPackBundle.message("replace.with.arrays.as.list.intention.name", replacementText);
   }
 
@@ -57,7 +59,7 @@ public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
         return false;
       }
       final String name = method.getName();
-      return (replacementText = getReplacementMethodText(name, e)) != null;
+      return (replacementText = getReplacementMethodText(name, methodCallExpression)) != null;
     };
   }
 
@@ -68,7 +70,11 @@ public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
     PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + argumentList.getText());
   }
 
-  private static String getReplacementMethodText(String methodName, PsiElement context) {
+  private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {
+    if (methodName.equals("emptyList") && context.getArgumentList().getExpressions().length == 1 &&
+      !PsiUtil.isLanguageLevel9OrHigher(context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
+      return "java.util.Collections.singletonList";
+    }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
       if (PsiUtil.isLanguageLevel9OrHigher(context)) {
         return "java.util.List.of";
@@ -80,7 +86,7 @@ public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
         return "java.util.Arrays.asList";
       }
     }
-    else if (methodName.equals("emptySet") || methodName.equals("singleton")) {
+    if (methodName.equals("emptySet") || methodName.equals("singleton")) {
       if (PsiUtil.isLanguageLevel9OrHigher(context)) {
         return "java.util.Set.of";
       }

@@ -1180,4 +1180,22 @@ public class PsiTreeUtil {
       }
     };
   }
+
+  @Nullable
+  public static PsiElement getDeepestVisibleFirst(@NotNull PsiElement psiElement) {
+    PsiElement first = getDeepestFirst(psiElement);
+    if (StringUtil.isEmptyOrSpaces(first.getText())) {
+      first = nextVisibleLeaf(first);
+    }
+    return first;
+  }
+
+  @Nullable
+  public static PsiElement getDeepestVisibleLast(@NotNull PsiElement psiElement) {
+    PsiElement last = getDeepestLast(psiElement);
+    if (StringUtil.isEmptyOrSpaces(last.getText())) {
+      last = prevVisibleLeaf(last);
+    }
+    return last;
+  }
 }

@@ -25,6 +25,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -43,6 +45,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 import static com.intellij.util.ui.MacUIUtil.MAC_FILL_BORDER;
 import static javax.swing.SwingConstants.EAST;
@@ -284,45 +287,72 @@ public class DarculaUIUtil {
 
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      g.setColor(c.getBackground());
-      g.fillRect(x, y, width, height);
+      if (isComboBoxEditor(c)) {
+        g.setColor(c.getBackground());
+        g.fillRect(x, y, width, height);
+        return;
+      }
 
-      if (!isComboBoxEditor(c) && UIUtil.getParentOfType(EditorTextField.class, c) != null) {
-        Graphics2D g2 = (Graphics2D)g.create();
-        try {
-          g2.translate(x, y);
+      if (UIUtil.getParentOfType(EditorTextField.class, c) == null) {
+        return;
+      }
 
-          if (hasFocus(editorTextField)) {
-            g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-          } else if (editorTextField.isEnabled() &&
-                     editorComponent != null && editorComponent.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
-            g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
-          } else {
-            g2.setColor(UIManager.getColor("TextField.borderColor"));
-          }
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        Rectangle r = new Rectangle(x, y, width, height);
 
-          if (!editorTextField.isEnabled()) {
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
-          }
-
-          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-          int bw = JBUI.scale(1);
-          Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-          border.append(new Rectangle2D.Double(0, 0, width, height), false);
-          border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
-
-          g2.fill(border);
-        } finally {
-          g2.dispose();
+        if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+          JBInsets.removeFrom(r, JBUI.insets(2, 0));
         }
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        // Fill background area of border
+        if (isBorderOpaque() || c.getParent() != null) {
+          g2.setColor(c.getParent().getBackground());
+
+          Path2D borderArea = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+          borderArea.append(r, false);
+
+          Rectangle innerRect = new Rectangle(r);
+          JBInsets.removeFrom(innerRect, JBUI.insets(2));
+          borderArea.append(innerRect, false);
+          g2.fill(borderArea);
+        }
+
+        // draw border itself
+        if (hasFocus(editorTextField)) {
+          g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
+        } else if (editorTextField.isEnabled() &&
+                   editorComponent != null && editorComponent.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+          g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+        } else {
+          g2.setColor(UIManager.getColor("TextField.borderColor"));
+        }
+
+        if (!editorTextField.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
+        }
+
+
+        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        JBInsets.removeFrom(r, JBUI.insets(1));
+        border.append(r, false);
+
+        Rectangle innerRect = new Rectangle(r);
+        JBInsets.removeFrom(innerRect, JBUI.insets(1));
+        border.append(innerRect, false);
+
+        g2.fill(border);
+      } finally {
+        g2.dispose();
       }
     }
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ? JBUI.insets(0, 5).asUIResource() : JBUI.insets(3, 5).asUIResource();
+      return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
     }
   }
 

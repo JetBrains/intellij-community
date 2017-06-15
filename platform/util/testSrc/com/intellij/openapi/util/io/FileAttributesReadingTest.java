@@ -65,6 +65,7 @@ public abstract class FileAttributesReadingTest {
     @Override public void missingLink() { }
     @Override public void selfLink() { }
     @Override public void junction() { }
+    @Override public void permissionsCloning() { }
   }
 
   @AfterClass
@@ -401,13 +402,13 @@ public abstract class FileAttributesReadingTest {
     assertEquals(file.getPath(), target);
 
     if (SystemInfo.isWindows) {
-      String path = myTempDirectory.getPath();
+      StringBuilder path = new StringBuilder(myTempDirectory.getPath());
       int length = 250 - path.length();
       for (int i = 0; i < length / 10; i++) {
-        path += "\\x_x_x_x_x";
+        path.append("\\x_x_x_x_x");
       }
 
-      File baseDir = new File(path);
+      File baseDir = new File(path.toString());
       assertTrue(baseDir.mkdirs());
       assertTrue(getAttributes(baseDir).isDirectory());
 
@@ -517,6 +518,27 @@ public abstract class FileAttributesReadingTest {
     assertFalse(parentAttributes.isWritable());
   }
 
+  @Test
+  public void permissionsCloning() throws Exception {
+    assumeTrue(SystemInfo.isUnix);
+
+    File donor = IoTestUtil.createTestFile(myTempDirectory, "donor");
+    File recipient = IoTestUtil.createTestFile(myTempDirectory, "recipient");
+    assertTrue(donor.setWritable(true, true));
+    assertTrue(donor.setExecutable(true, true));
+    assertTrue(recipient.setWritable(false, false));
+    assertTrue(recipient.setExecutable(false, false));
+    assertNotEquals(donor.canWrite(), recipient.canWrite());
+    assertNotEquals(donor.canExecute(), recipient.canExecute());
+
+    assertTrue(FileSystemUtil.clonePermissionsToExecute(donor.getPath(), recipient.getPath()));
+    assertNotEquals(donor.canWrite(), recipient.canWrite());
+    assertEquals(donor.canExecute(), recipient.canExecute());
+
+    assertTrue(FileSystemUtil.clonePermissions(donor.getPath(), recipient.getPath()));
+    assertEquals(donor.canWrite(), recipient.canWrite());
+    assertEquals(donor.canExecute(), recipient.canExecute());
+  }
 
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {

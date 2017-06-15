@@ -95,10 +95,18 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       prefix = modulePath.getParentFile().getName();
     }
     char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '-';
-    return new String[]{
-      module.getInternalName(),
-      prefix + delimiter + module.getInternalName(),
-      prefix + delimiter + module.getInternalName() + "~1"};
+
+    if (prefix == null || StringUtil.startsWith(module.getInternalName(), prefix)) {
+      return new String[]{
+        module.getInternalName(),
+        module.getInternalName() + "~1"};
+    }
+    else {
+      return new String[]{
+        module.getInternalName(),
+        prefix + delimiter + module.getInternalName(),
+        prefix + delimiter + module.getInternalName() + "~1"};
+    }
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {

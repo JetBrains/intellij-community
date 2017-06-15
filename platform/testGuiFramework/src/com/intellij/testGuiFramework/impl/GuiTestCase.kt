@@ -27,6 +27,7 @@ import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
@@ -35,6 +36,8 @@ import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.*
 import org.fest.swing.image.ScreenshotTaker
+import org.fest.swing.timing.Condition
+import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.fest.swing.timing.Timeout.timeout
 import java.awt.Component
@@ -83,6 +86,11 @@ open class GuiTestCase : GuiTestBase() {
   val screenshotTaker = ScreenshotTaker()
   var pathToSaveScreenshots = getTestScreenshotDirPath()
   var defaultTimeout = 120L //timeout in seconds
+
+  val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
+  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val slash: String = File.separator
+
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -400,6 +408,11 @@ open class GuiTestCase : GuiTestBase() {
     this.item(itemName).doubleClick()
   }
 
+  fun JButtonFixture.waitEnabled(): JButtonFixture {
+    pause { this.isEnabled }
+    return this
+  }
+
   //necessary only for Windows
   fun getScaleSuffix(): String? {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(
@@ -416,6 +429,12 @@ open class GuiTestCase : GuiTestBase() {
     return GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
       override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
     }, timeout.toFestTimeout())
+  }
+
+  fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
+    Pause.pause(object: Condition(condition) {
+      override fun test() = testFunction()
+    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS) )
   }
 
 

@@ -70,6 +70,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.refactoring.util.occurrences.NotInSuperCallOccurrenceFilter;
+import com.intellij.refactoring.util.occurrences.OccurrenceFilter;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -815,7 +816,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     PsiElement lastScope = tempContainer;
     while (true) {
       if (containerParent instanceof PsiFile) break;
-      if (containerParent instanceof PsiMethod) break;
+      if (containerParent instanceof PsiMethod) {
+        if (!(((PsiMethod)containerParent).getContainingClass() instanceof PsiAnonymousClass)) break;
+      }
       if (containerParent instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
         if (Arrays.stream(parameters).anyMatch(parameter -> vars.contains(parameter))) {
@@ -833,8 +836,17 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         lastScope = containerParent;
       }
     }
-
-    return new ExpressionOccurrenceManager(expr, lastScope, NotInSuperCallOccurrenceFilter.INSTANCE);
+    PsiMethod exprMethod = PsiTreeUtil.getContextOfType(expr, PsiMethod.class);
+    return new ExpressionOccurrenceManager(expr, lastScope, new OccurrenceFilter() {
+      @Override
+      public boolean isOK(PsiExpression occurrence) {
+        if (!NotInSuperCallOccurrenceFilter.INSTANCE.isOK(occurrence)) return false;
+        PsiMethod method = PsiTreeUtil.getContextOfType(occurrence, PsiMethod.class);
+        return method == null || exprMethod == null ||
+               PsiTreeUtil.isAncestor(exprMethod, method, false) ||
+               PsiTreeUtil.isAncestor(method, exprMethod, false);
+      }
+    });
   }
 
   private static boolean isInJspHolderMethod(PsiExpression expr) {
