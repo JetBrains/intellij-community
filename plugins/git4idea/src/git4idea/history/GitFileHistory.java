@@ -405,14 +405,11 @@ public class GitFileHistory {
     }
 
     @Override
-    public void consume(GitLogRecord record) {
+    public void consume(@NotNull GitLogRecord record) {
       if (mySkipFurtherOutput.get()) {
         return;
       }
-      if (record == null) {
-        myExceptionConsumer.consume(new VcsException("revision details are null."));
-        return;
-      }
+
       final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
       myFirstCommit.set(record.getHash());
       final String[] parentHashes = record.getParentsHashes();
