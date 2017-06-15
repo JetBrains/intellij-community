@@ -109,7 +109,7 @@ public class GitFileHistory {
     while (currentPath != null && firstCommitParent != null) {
       recordConsumer.reset(currentPath);
 
-      GitLineHandler handler = createLogHandler(myProject, myVersion, myRoot, logParser, currentPath, firstCommitParent, parameters);
+      GitLineHandler handler = createLogHandler(logParser, currentPath, firstCommitParent, parameters);
       MyGitLineHandlerAdapter lineListener = new MyGitLineHandlerAdapter(handler, logParser, recordConsumer, exceptionConsumer);
 
       lineListener.runAndWait();
@@ -173,17 +173,14 @@ public class GitFileHistory {
   }
 
   @NotNull
-  private static GitLineHandler createLogHandler(@NotNull Project project,
-                                                 @NotNull GitVersion version,
-                                                 @NotNull VirtualFile root,
-                                                 @NotNull GitLogParser parser,
-                                                 @NotNull FilePath path,
-                                                 @NotNull String lastCommit,
-                                                 String... parameters) {
-    final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+  private GitLineHandler createLogHandler(@NotNull GitLogParser parser,
+                                          @NotNull FilePath path,
+                                          @NotNull String lastCommit,
+                                          String... parameters) {
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LOG);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
-    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(version) && Registry.is("git.file.history.full")) {
+    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(myVersion) && Registry.is("git.file.history.full")) {
       h.addParameters("--full-history", "--simplify-merges");
     }
     if (parameters != null && parameters.length > 0) {
