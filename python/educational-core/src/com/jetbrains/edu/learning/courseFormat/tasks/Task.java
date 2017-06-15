@@ -169,7 +169,7 @@ public abstract class Task implements StudyItem {
         return taskTexts.get(filenameHtml);
       }
       String filenameMd = StudyUtils.constructTaskTextFilename(this, EduNames.TASK_MD);
-      return taskTexts.get(filenameMd);
+      return StudyUtils.convertToHtml(taskTexts.get(filenameMd));
     }
     return null;
   }
