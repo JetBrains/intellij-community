@@ -95,7 +95,7 @@ public interface DirectoryProjectGenerator<T> {
 
   void generateProject(@NotNull final Project project,
                        @NotNull final VirtualFile baseDir,
-                       @Nullable final T settings,
+                       @NotNull final T settings,
                        @NotNull final Module module);
 
   @NotNull

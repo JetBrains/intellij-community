@@ -55,7 +55,7 @@ public class TemplateProjectDirectoryGenerator<T> extends DirectoryProjectGenera
   @Override
   public void generateProject(@NotNull Project newProject,
                               @NotNull VirtualFile baseDir,
-                              @Nullable T settings,
+                              @NotNull T settings,
                               @NotNull Module module) {
     throw new IllegalStateException("Usn't supposed to be invoked, use generateProject(String, String) instead.");
   }
