@@ -105,7 +105,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = null;
     try {
-      revisions = GitHistoryUtils.history(myProject, filePath);
+      revisions = GitFileHistory.history(myProject, filePath);
     } catch (VcsException e) {
       GitVcs.getInstance(myProject).getExecutableValidator().showNotificationOrThrow(e);
     }
@@ -143,7 +143,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   @Nullable
   @Override
   public VcsFileRevision getLastRevision(FilePath filePath) throws VcsException {
-    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, "--max-count=1");
+    List<VcsFileRevision> history = GitFileHistory.history(myProject, filePath, "--max-count=1");
     if (history.isEmpty()) return null;
     return history.get(0);
   }
@@ -185,14 +185,14 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
                               ArrayUtil.EMPTY_STRING_ARRAY;
 
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
-    GitHistoryUtils.history(myProject, refreshPath(path), null, startingRevision == null ? GitRevisionNumber.HEAD : startingRevision,
+    GitFileHistory.history(myProject, refreshPath(path), null, startingRevision == null ? GitRevisionNumber.HEAD : startingRevision,
                             fileRevision -> partner.acceptRevision(fileRevision),
                             exception -> {
                               if (validator.checkExecutableAndNotifyIfNeeded()) {
                                 partner.reportException(exception);
                               }
                             },
-                            additionalArgs);
+                           additionalArgs);
   }
 
   /**

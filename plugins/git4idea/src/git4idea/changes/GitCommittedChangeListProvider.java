@@ -39,6 +39,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
+import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
@@ -210,7 +211,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       }
     }
     String afterTime = "--after=" + GitUtil.gitTime(new Date(gitCommit.getCommitTime()));
-    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, repository.getRoot(), afterTime);
+    List<VcsFileRevision> history = GitFileHistory.history(myProject, filePath, repository.getRoot(), afterTime);
     if (history.isEmpty()) {
       return Pair.create(commit, filePath);
     }

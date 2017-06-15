@@ -32,6 +32,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import gnu.trove.THashSet;
@@ -152,7 +153,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
 
     try {
 
-      for (VcsFileRevision f : GitHistoryUtils.history(myProject, filePath)) {
+      for (VcsFileRevision f : GitFileHistory.history(myProject, filePath)) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {
           return GitContentRevision.createRevision(gitRevision.getPath(), revisionNumber, myProject, selectedFile.getCharset());
