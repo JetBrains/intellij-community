@@ -367,16 +367,9 @@ public class GitFileHistory {
       }
 
       myFirstCommit.set(record.getHash());
-      String[] parentHashes = record.getParentsHashes();
-      if (parentHashes.length < 1) {
-        myFirstCommitParent.set(null);
-      }
-      else {
-        myFirstCommitParent.set(parentHashes[0]);
-      }
 
       try {
-        myRevisionConsumer.consume(createGitFileRevision(record, parentHashes));
+        myRevisionConsumer.consume(createGitFileRevision(record));
         List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
         if (statusInfos.isEmpty()) {
           // can safely be empty, for example, for simple merge commits that don't change anything.
@@ -392,14 +385,12 @@ public class GitFileHistory {
     }
 
     @NotNull
-    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record,
-                                                  @NotNull String[] parentHashes)
-      throws VcsException {
+    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record) throws VcsException {
       GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
       FilePath revisionPath = getRevisionPath(record);
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
-      Collection<String> parents = Arrays.asList(parentHashes);
+      Collection<String> parents = Arrays.asList(record.getParentsHashes());
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),
                                  null, new Date(record.getAuthorTimeStamp()), parents);
