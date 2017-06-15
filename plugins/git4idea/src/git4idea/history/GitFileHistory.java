@@ -144,48 +144,6 @@ public class GitFileHistory {
     return h;
   }
 
-  /**
-   * Gets info of the given commit and checks if it was a RENAME.
-   * If yes, returns the older file path, which file was renamed from.
-   * If it's not a rename, returns null.
-   */
-  @Nullable
-  private static Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull Project project,
-                                                                            @NotNull VirtualFile root,
-                                                                            @NotNull String commit,
-                                                                            @NotNull FilePath filePath,
-                                                                            @NotNull GitVersion version) throws VcsException {
-    // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
-    // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
-    final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
-    h.setStdoutSuppressed(true);
-    h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(version)) {
-      h.addParameters("--follow");
-      h.endOptions();
-      h.addRelativePaths(filePath);
-    }
-    else {
-      h.endOptions();
-    }
-    final String output = h.run();
-    final List<GitLogRecord> records = parser.parse(output);
-
-    if (records.isEmpty()) return null;
-    // we have information about all changed files of the commit. Extracting information about the file we need.
-    GitLogRecord record = records.get(0);
-    final List<Change> changes = record.parseChanges(project, root);
-    for (Change change : changes) {
-      if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
-        final String[] parents = record.getParentsHashes();
-        String parent = parents.length > 0 ? parents[0] : null;
-        return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
-      }
-    }
-    return null;
-  }
-
   @NotNull
   private static VirtualFile getRoot(@NotNull Project project, @NotNull FilePath path) throws VcsException {
     VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
@@ -461,9 +419,7 @@ public class GitFileHistory {
     }
 
     public void updateFirstCommitParentAndPath() throws VcsException {
-      Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(myProject, myRoot,
-                                                                                            myFirstCommit.get(), myCurrentPath.get(),
-                                                                                            myVersion);
+      Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(myFirstCommit.get(), myCurrentPath.get());
       if (firstCommitParentAndPath == null) {
         myCurrentPath.set(null);
         myFirstCommitParent.set(null);
@@ -473,6 +429,45 @@ public class GitFileHistory {
         myFirstCommitParent.set(firstCommitParentAndPath.first);
       }
       mySkipFurtherOutput.set(false);
+    }
+
+    /**
+     * Gets info of the given commit and checks if it was a RENAME.
+     * If yes, returns the older file path, which file was renamed from.
+     * If it's not a rename, returns null.
+     */
+    @Nullable
+    private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull String commit,
+                                                                       @NotNull FilePath filePath) throws VcsException {
+      // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
+      // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
+      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.SHOW);
+      GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
+      h.setStdoutSuppressed(true);
+      h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
+      if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(myVersion)) {
+        h.addParameters("--follow");
+        h.endOptions();
+        h.addRelativePaths(filePath);
+      }
+      else {
+        h.endOptions();
+      }
+      String output = h.run();
+      List<GitLogRecord> records = parser.parse(output);
+
+      if (records.isEmpty()) return null;
+      // we have information about all changed files of the commit. Extracting information about the file we need.
+      GitLogRecord record = records.get(0);
+      List<Change> changes = record.parseChanges(myProject, myRoot);
+      for (Change change : changes) {
+        if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
+          String[] parents = record.getParentsHashes();
+          String parent = parents.length > 0 ? parents[0] : null;
+          return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
+        }
+      }
+      return null;
     }
   }
 }
