@@ -154,11 +154,12 @@ public class GitFileHistory {
   }
 
   /**
-   * Retrieves the history of the file, including renames.
+   * Get history for the file starting from specific revision and feed it to the consumer.
    *
-   * @param project
+   * @param project           Context project.
    * @param path              FilePath which history is queried.
    * @param root              Git root - optional: if this is null, then git root will be detected automatically.
+   * @param startingFrom      Revision from which to start file history, when null history is started from HEAD revision.
    * @param consumer          This consumer is notified ({@link Consumer#consume(Object)} when new history records are retrieved.
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
    * @param parameters        Optional parameters which will be added to the git log command just before the path.
@@ -180,16 +181,25 @@ public class GitFileHistory {
     }
   }
 
+  /**
+   * Get history for the file starting from specific revision.
+   *
+   * @param project      the context project
+   * @param path         the file path
+   * @param startingFrom revision from which to start file history
+   * @param parameters   optional parameters which will be added to the git log command just before the path
+   * @return list of the revisions
+   * @throws VcsException if there is problem with running git
+   */
   @NotNull
   public static List<VcsFileRevision> history(@NotNull Project project,
                                               @NotNull FilePath path,
-                                              @Nullable VirtualFile root,
                                               @NotNull VcsRevisionNumber startingFrom,
                                               String... parameters) throws VcsException {
     List<VcsFileRevision> revisions = new ArrayList<>();
     List<VcsException> exceptions = new ArrayList<>();
 
-    history(project, path, root, startingFrom, revisions::add, exceptions::add, parameters);
+    history(project, path, null, startingFrom, revisions::add, exceptions::add, parameters);
 
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);
@@ -198,16 +208,17 @@ public class GitFileHistory {
   }
 
   /**
-   * Get history for the file
+   * Get history for the file.
    *
-   * @param project the context project
-   * @param path    the file path
-   * @return the list of the revisions
+   * @param project    the context project
+   * @param path       the file path
+   * @param parameters optional parameters which will be added to the git log command just before the path
+   * @return list of the revisions
    * @throws VcsException if there is problem with running git
    */
   @NotNull
   public static List<VcsFileRevision> history(@NotNull Project project, @NotNull FilePath path, String... parameters) throws VcsException {
-    return history(project, path, getRoot(project, path), GitRevisionNumber.HEAD, parameters);
+    return history(project, path, GitRevisionNumber.HEAD, parameters);
   }
 
   private static class MyTokenAccumulator {

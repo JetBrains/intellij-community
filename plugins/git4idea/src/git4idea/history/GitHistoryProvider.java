@@ -173,8 +173,8 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  public void reportAppendableHistory(@NotNull FilePath path, 
-                                      @Nullable VcsRevisionNumber startingRevision, 
+  public void reportAppendableHistory(@NotNull FilePath path,
+                                      @Nullable VcsRevisionNumber startingRevision,
                                       @NotNull final VcsAppendableHistorySessionPartner partner) throws VcsException {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
@@ -185,13 +185,13 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
                               ArrayUtil.EMPTY_STRING_ARRAY;
 
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
-    GitFileHistory.history(myProject, refreshPath(path), null, startingRevision == null ? GitRevisionNumber.HEAD : startingRevision,
-                            fileRevision -> partner.acceptRevision(fileRevision),
-                            exception -> {
-                              if (validator.checkExecutableAndNotifyIfNeeded()) {
-                                partner.reportException(exception);
-                              }
-                            },
+    GitFileHistory.history(myProject, refreshPath(path), null, startingRevision,
+                           fileRevision -> partner.acceptRevision(fileRevision),
+                           exception -> {
+                             if (validator.checkExecutableAndNotifyIfNeeded()) {
+                               partner.reportException(exception);
+                             }
+                           },
                            additionalArgs);
   }
 
