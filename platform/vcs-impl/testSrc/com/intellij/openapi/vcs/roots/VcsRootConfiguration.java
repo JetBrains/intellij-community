@@ -26,7 +26,7 @@ import java.util.Collections;
  */
 class VcsRootConfiguration {
 
-  @NotNull private Collection<String> myMockRoots;
+  @NotNull private Collection<String> myVcsRoots;
   @NotNull private Collection<String> myContentRoots;
   @NotNull private Collection<String> myMappings;
   @NotNull private Collection<String> myUnregErrors;
@@ -34,15 +34,15 @@ class VcsRootConfiguration {
 
 
   public VcsRootConfiguration() {
-    myMockRoots = Collections.emptyList();
+    myVcsRoots = Collections.emptyList();
     myMappings = Collections.emptyList();
     myContentRoots = Collections.emptyList();
     myUnregErrors = Collections.emptyList();
     myExtraErrors = Collections.emptyList();
   }
 
-  public VcsRootConfiguration mock(@NotNull String... mockRoots) {
-    myMockRoots = Arrays.asList(mockRoots);
+  public VcsRootConfiguration vcsRoots(@NotNull String... vcsRoots) {
+    myVcsRoots = Arrays.asList(vcsRoots);
     return this;
   }
 
@@ -67,8 +67,8 @@ class VcsRootConfiguration {
   }
 
   @NotNull
-  public Collection<String> getMockRoots() {
-    return myMockRoots;
+  public Collection<String> getVcsRoots() {
+    return myVcsRoots;
   }
 
   @NotNull
