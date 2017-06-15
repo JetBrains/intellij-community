@@ -104,8 +104,8 @@ public class GitFileHistory {
     GitVersion version = vcs != null ? vcs.getVersion() : GitVersion.NULL;
 
     while (recordConsumer.getCurrentPath() != null && recordConsumer.getFirstCommitParent() != null) {
-      GitLineHandler handler = getLogHandler(myProject, version, myRoot, logParser,
-                                             recordConsumer.getCurrentPath(), recordConsumer.getFirstCommitParent(), parameters);
+      GitLineHandler handler = createLogHandler(myProject, version, myRoot, logParser,
+                                                recordConsumer.getCurrentPath(), recordConsumer.getFirstCommitParent(), parameters);
       MyGitLineHandlerAdapter lineListener = new MyGitLineHandlerAdapter(handler, logParser, recordConsumer, exceptionConsumer);
       lineListener.runAndWait();
       if (lineListener.hasCriticalFailure()) {
@@ -129,13 +129,13 @@ public class GitFileHistory {
   }
 
   @NotNull
-  private static GitLineHandler getLogHandler(@NotNull Project project,
-                                              @NotNull GitVersion version,
-                                              @NotNull VirtualFile root,
-                                              @NotNull GitLogParser parser,
-                                              @NotNull FilePath path,
-                                              @NotNull String lastCommit,
-                                              String... parameters) {
+  private static GitLineHandler createLogHandler(@NotNull Project project,
+                                                 @NotNull GitVersion version,
+                                                 @NotNull VirtualFile root,
+                                                 @NotNull GitLogParser parser,
+                                                 @NotNull FilePath path,
+                                                 @NotNull String lastCommit,
+                                                 String... parameters) {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
