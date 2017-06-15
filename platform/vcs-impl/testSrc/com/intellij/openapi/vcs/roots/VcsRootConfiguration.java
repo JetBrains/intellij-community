@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Nadya Zabrodina
- */
 class VcsRootConfiguration {
 
   @NotNull private Collection<String> myVcsRoots;
@@ -41,26 +38,31 @@ class VcsRootConfiguration {
     myExtraErrors = Collections.emptyList();
   }
 
+  @NotNull
   public VcsRootConfiguration vcsRoots(@NotNull String... vcsRoots) {
     myVcsRoots = Arrays.asList(vcsRoots);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration mappings(@NotNull String... mappings) {
     myMappings = Arrays.asList(mappings);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration contentRoots(@NotNull String... contentRoots) {
     myContentRoots = Arrays.asList(contentRoots);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration unregErrors(@NotNull String... unregErrors) {
     myUnregErrors = Arrays.asList(unregErrors);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration extraErrors(@NotNull String... extraErrors) {
     myExtraErrors = Arrays.asList(extraErrors);
     return this;
