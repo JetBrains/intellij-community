@@ -28,14 +28,14 @@ class VcsRootConfiguration {
 
   @NotNull private Collection<String> myMockRoots;
   @NotNull private Collection<String> myContentRoots;
-  @NotNull private Collection<String> myRoots;
+  @NotNull private Collection<String> myMappings;
   @NotNull private Collection<String> myUnregErrors;
   @NotNull private Collection<String> myExtraErrors;
 
 
   public VcsRootConfiguration() {
     myMockRoots = Collections.emptyList();
-    myRoots = Collections.emptyList();
+    myMappings = Collections.emptyList();
     myContentRoots = Collections.emptyList();
     myUnregErrors = Collections.emptyList();
     myExtraErrors = Collections.emptyList();
@@ -46,8 +46,8 @@ class VcsRootConfiguration {
     return this;
   }
 
-  public VcsRootConfiguration roots(@NotNull String... roots) {
-    myRoots = Arrays.asList(roots);
+  public VcsRootConfiguration mappings(@NotNull String... mappings) {
+    myMappings = Arrays.asList(mappings);
     return this;
   }
 
@@ -77,8 +77,8 @@ class VcsRootConfiguration {
   }
 
   @NotNull
-  public Collection<String> getRoots() {
-    return myRoots;
+  public Collection<String> getVcsMappings() {
+    return myMappings;
   }
 
   @NotNull
