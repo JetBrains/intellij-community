@@ -84,8 +84,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") } }");
 
     // test hints disappearance when caret moves out of parameter list
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    right();
+    right();
+    right();
 
     waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") } }");
@@ -119,8 +120,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
 
     // test hints don't disappear when caret moves out of parameter list
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    right();
+    right();
+    right();
 
     waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
@@ -250,7 +252,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("forDigit");
     waitForAllAsyncStuff();
     type("1");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    right();
     type("2");
     waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,2 <hint text=\"radix:\"/>) } }");
@@ -310,12 +312,29 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     assertFalse(getEditor().getInlayModel().hasInlineElementAt(getEditor().getCaretModel().getVisualPosition()));
   }
 
+  public void testPrevParameterFromOutsideWhenParametersAreNotEmpty() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("\"a");
+    next();
+    type("\"b");
+    next();
+    waitForAllAsyncStuff();
+    prev();
+    myFixture.checkResult("class C { void m() { System.getProperty(\"a\", <caret>\"b\") } }");
+    myFixture.checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>\"a\", <hint text=\"def:\"/>\"b\") } }");
+  }
+
   private void prev() {
-    myFixture.performEditorAction("PrevParameter");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREV_PARAMETER);
   }
 
   private void next() {
-    myFixture.performEditorAction("NextParameter");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_PARAMETER);
+  }
+
+  private void right() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
   }
 
   private void configureJava(String text) {

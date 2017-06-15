@@ -282,7 +282,7 @@ public class ParameterInfoController implements Disposable {
         int caretOffset = myEditor.getCaretModel().getOffset();
         TextRange ownerTextRange = owner.getTextRange();
         if (ownerTextRange != null) {
-          if (caretOffset > ownerTextRange.getStartOffset() && caretOffset < ownerTextRange.getEndOffset()) {
+          if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
             removeHints = false;
           }
           else {
