@@ -949,7 +949,8 @@
                      key="inspection.module.exports.package.to.itself" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection"/>
     <localInspection language="JAVA" shortName="JavaRequiresAutoModule" enabledByDefault="true" level="WARNING"
-                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids9"
+                     groupPath="Java,Java language level migration aids"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids9"
                      bundle="messages.InspectionsBundle" key="inspection.requires.auto.module"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaRequiresAutoModuleInspection"/>
     <localInspection language="JAVA" shortName="JavaLangInvokeHandleSignature" enabledByDefault="true" level="WARNING"
