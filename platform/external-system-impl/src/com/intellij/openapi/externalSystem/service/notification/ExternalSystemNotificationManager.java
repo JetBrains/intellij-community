@@ -58,6 +58,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -156,7 +157,12 @@ public class ExternalSystemNotificationManager implements Disposable {
   public void showNotification(@NotNull final ProjectSystemId externalSystemId,
                                @NotNull final NotificationData notificationData,
                                @Nullable Key<String> notificationKey) {
-    if(ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      @SuppressWarnings("UseOfSystemOutOrSystemErr")
+      PrintStream out = notificationData.getNotificationCategory() == NotificationCategory.INFO ? System.out : System.err;
+      out.println(notificationData.getMessage());
+      return;
+    }
 
     if (notificationKey != null && isNotificationActive(notificationKey)) return;
     myUpdater.submit(() -> {
