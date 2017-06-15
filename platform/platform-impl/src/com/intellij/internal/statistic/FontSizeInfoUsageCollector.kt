@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.beans.GroupDescriptor
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 
 /**
  * @author Konstantin Bulenkov
@@ -28,15 +29,31 @@ class FontSizeInfoUsageCollector : UsagesCollector() {
   override fun getUsages(): Set<UsageDescriptor> {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
-    return setOf(
+    var usages = setOf(
       UsageDescriptor("UI font size: ${ui.fontSize}"),
-      UsageDescriptor("Editor font size: ${scheme.editorFontSize}"),
-      UsageDescriptor("Console font size: ${scheme.consoleFontSize}"),
-      UsageDescriptor("Presentation mode font size: ${ui.presentationModeFontSize}"),
-      UsageDescriptor("Editor font name:  ${scheme.editorFontName}"),
-      UsageDescriptor("Console font name: ${scheme.consoleFontName}"),
-      UsageDescriptor("UI font name: ${ui.fontFace}")
+      UsageDescriptor("UI font name: ${ui.fontFace}"),
+      UsageDescriptor("Presentation mode font size: ${ui.presentationModeFontSize}")
     )
+    if (!scheme.isUseAppFontPreferencesInEditor) {
+      usages += setOf(
+        UsageDescriptor("Editor font size: ${scheme.editorFontSize}"),
+        UsageDescriptor("Editor font name:  ${scheme.editorFontName}")
+      )
+    }
+    else {
+      val appPrefs = AppEditorFontOptions.getInstance().fontPreferences
+      usages += setOf(
+        UsageDescriptor("IDE editor font size: ${appPrefs.getSize(appPrefs.fontFamily)}"),
+        UsageDescriptor("IDE editor font name: ${appPrefs.fontFamily}")
+      )
+    }
+    if (!scheme.isUseEditorFontPreferencesInConsole) {
+      usages += setOf(
+        UsageDescriptor("Console font size: ${scheme.consoleFontSize}"),
+        UsageDescriptor("Console font name: ${scheme.consoleFontName}")
+      )
+    }
+    return usages
   }
 
   override fun getGroupId(): GroupDescriptor {
