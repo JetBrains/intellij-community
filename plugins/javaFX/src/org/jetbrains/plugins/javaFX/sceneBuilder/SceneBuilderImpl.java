@@ -2,6 +2,7 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -104,6 +105,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return;
     }
+    if (Thread.getDefaultUncaughtExceptionHandler() == null) {
+      Thread.setDefaultUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
+    }
 
     myEditorController = new EditorController();
     updateCustomLibrary();
@@ -134,6 +138,12 @@ public class SceneBuilderImpl implements SceneBuilder {
       return;
     }
     UsageTrigger.trigger("scene-builder.open");
+  }
+
+  private static void logUncaughtException(Thread t, Throwable e) {
+    if (!(e instanceof ControlFlowException)) {
+      LOG.error("Uncaught exception in JavaFX " + t, e);
+    }
   }
 
   private void updateCustomLibrary() {
