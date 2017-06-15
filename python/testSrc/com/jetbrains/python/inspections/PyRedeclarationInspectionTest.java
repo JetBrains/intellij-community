@@ -94,6 +94,11 @@ public class PyRedeclarationInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-18375, PY-24408
+  public void testSingleUnderscore() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "inspections/PyRedeclarationInspection/" + getTestName(true) + ".py";
 

@@ -217,6 +217,8 @@ public class PyNames {
 
   public static final String UNNAMED_ELEMENT = "<unnamed>";
 
+  public static final String UNDERSCORE = "_";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */
