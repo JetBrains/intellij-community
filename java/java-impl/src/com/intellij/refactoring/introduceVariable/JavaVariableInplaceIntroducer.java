@@ -405,6 +405,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         occurrences.add(createMarker(reference.getElement()));
       });
       setOccurrenceMarkers(occurrences);
+      myOccurrences = new PsiExpression[occurrences.size()];
     }
 
     final PsiIdentifier identifier = variable.getNameIdentifier();
