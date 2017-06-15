@@ -366,9 +366,8 @@ public class GitFileHistory {
         return;
       }
 
-      final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
       myFirstCommit.set(record.getHash());
-      final String[] parentHashes = record.getParentsHashes();
+      String[] parentHashes = record.getParentsHashes();
       if (parentHashes.length < 1) {
         myFirstCommitParent.set(null);
       }
@@ -376,24 +375,8 @@ public class GitFileHistory {
         myFirstCommitParent.set(parentHashes[0]);
       }
 
-      FilePath revisionPath;
       try {
-        final List<FilePath> paths = record.getFilePaths(myRoot);
-        if (paths.size() > 0) {
-          revisionPath = paths.get(0);
-        }
-        else {
-          // no paths are shown for merge commits, so we're using the saved path we're inspecting now
-          revisionPath = myCurrentPath.get();
-        }
-
-        Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
-        Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
-        Collection<String> parents = Arrays.asList(parentHashes);
-        myRevisionConsumer
-          .consume(new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
-                                       record.getFullMessage(),
-                                       null, new Date(record.getAuthorTimeStamp()), parents));
+        myRevisionConsumer.consume(createGitFileRevision(record, parentHashes));
         List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
         if (statusInfos.isEmpty()) {
           // can safely be empty, for example, for simple merge commits that don't change anything.
@@ -406,6 +389,30 @@ public class GitFileHistory {
       catch (VcsException e) {
         myExceptionConsumer.consume(e);
       }
+    }
+
+    @NotNull
+    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record,
+                                                  @NotNull String[] parentHashes)
+      throws VcsException {
+      GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
+      FilePath revisionPath = getRevisionPath(record);
+      Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
+      Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
+      Collection<String> parents = Arrays.asList(parentHashes);
+      return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
+                                 record.getFullMessage(),
+                                 null, new Date(record.getAuthorTimeStamp()), parents);
+    }
+
+    @NotNull
+    private FilePath getRevisionPath(@NotNull GitLogRecord record) throws VcsException {
+      List<FilePath> paths = record.getFilePaths(myRoot);
+      if (paths.size() > 0) {
+        return paths.get(0);
+      }
+      // no paths are shown for merge commits, so we're using the saved path we're inspecting now
+      return myCurrentPath.get();
     }
 
     @Nullable
