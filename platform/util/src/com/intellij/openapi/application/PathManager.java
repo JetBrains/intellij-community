@@ -117,13 +117,8 @@ public class PathManager {
     if (rootPath == null) return null;
 
     File root = new File(rootPath).getAbsoluteFile();
-    do {
-      String parent = root.getParent();
-      if (parent == null) return null;
-      root = new File(parent).getAbsoluteFile();  // one step back to get folder
-    }
-    while (!isIdeaHome(root));
-    return root.getAbsolutePath();
+    do { root = root.getParentFile(); } while (root != null && !isIdeaHome(root));
+    return root != null ? root.getPath() : null;
   }
 
   private static boolean isIdeaHome(File root) {
