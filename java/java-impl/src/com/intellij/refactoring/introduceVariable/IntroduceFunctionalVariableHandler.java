@@ -43,6 +43,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -272,6 +273,11 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           String returnTypeString = myReturnType == null || PsiType.VOID.equals(myReturnType) 
                                     ? "{}" : myReturnType.getPresentableText();
           return "(" + parametersList + ") -> " + returnTypeString;
+        }
+
+        @Override
+        protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+          checkParametersConflicts(conflicts);
         }
 
         @NotNull

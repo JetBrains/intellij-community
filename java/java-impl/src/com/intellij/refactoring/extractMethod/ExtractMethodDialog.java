@@ -54,6 +54,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -607,11 +609,13 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   }
 
   protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+    checkParametersConflicts(conflicts);
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       prototype = factory.createMethod(myNameField.getEnteredName().trim(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
+      Set<String> usedNames = new HashSet<>(); 
       for (VariableData data : myInputVariables) {
         if (data.passAsParameter) {
           prototype.getParameterList().add(factory.createParameter(data.name, data.type));
@@ -624,6 +628,17 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     }
 
     ConflictsUtil.checkMethodConflicts(myTargetClass, null, prototype, conflicts);
+  }
+
+  protected void checkParametersConflicts(MultiMap<PsiElement, String> conflicts) {
+    Set<String> usedNames = new HashSet<>();
+    for (VariableData data : myInputVariables) {
+      if (data.passAsParameter) {
+        if (!usedNames.add(data.name)) {
+          conflicts.putValue(null, "Conflicting parameter name: " + data.name);
+        }
+      }
+    }
   }
 
   @Override
