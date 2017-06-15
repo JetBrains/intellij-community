@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -15,6 +16,7 @@ import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import one.util.streamex.EntryStream;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +71,12 @@ public abstract class Task implements StudyItem {
     for (TaskFile taskFile : getTaskFiles().values()) {
       taskFile.initTaskFile(this, isRestarted);
     }
+  }
+
+  @SuppressWarnings("unused")
+  //used for deserialization
+  public void setTaskTexts(Map<String, String> taskTexts) {
+    this.taskTexts = taskTexts;
   }
 
   @Override
@@ -163,15 +171,18 @@ public abstract class Task implements StudyItem {
   }
 
   public String getTaskDescription() {
-    if (!taskTexts.isEmpty()) {
-      String filenameHtml = StudyUtils.constructTaskTextFilename(this, EduNames.TASK_HTML);
-      if (taskTexts.containsKey(filenameHtml)) {
-        return taskTexts.get(filenameHtml);
-      }
-      String filenameMd = StudyUtils.constructTaskTextFilename(this, EduNames.TASK_MD);
-      return StudyUtils.convertToHtml(taskTexts.get(filenameMd));
+    String fileName = getTaskDescriptionNameWithoutExtension();
+    //TODO: replace this with simple get after implementing migration for taskTexts
+    Map.Entry<String, String> entry =
+      EntryStream.of(taskTexts).findFirst(e -> FileUtil.getNameWithoutExtension(e.getKey()).equals(fileName)).orElse(null);
+    if (entry == null) {
+      return null;
     }
-    return null;
+    return StudyUtils.convertToHtml(entry.getValue());
+  }
+
+  protected String getTaskDescriptionNameWithoutExtension() {
+    return FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
   }
 
   @NotNull

@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.checker.TaskWithSubtasksChecker;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
@@ -19,6 +20,11 @@ public class TaskWithSubtasks extends PyCharmTask {
 
   public TaskWithSubtasks(@NotNull final String name) {
     super(name);
+  }
+
+  @Override
+  protected String getTaskDescriptionNameWithoutExtension() {
+    return super.getTaskDescriptionNameWithoutExtension() + EduNames.SUBTASK_MARKER + myActiveSubtaskIndex;
   }
 
   public TaskWithSubtasks(Task task) {
