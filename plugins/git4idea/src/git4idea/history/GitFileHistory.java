@@ -375,7 +375,6 @@ public class GitFileHistory {
       else {
         myFirstCommitParent.set(parentHashes[0]);
       }
-      final String message = record.getFullMessage();
 
       FilePath revisionPath;
       try {
@@ -392,7 +391,8 @@ public class GitFileHistory {
         Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
         Collection<String> parents = Arrays.asList(parentHashes);
         myRevisionConsumer
-          .consume(new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
+          .consume(new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
+                                       record.getFullMessage(),
                                        null, new Date(record.getAuthorTimeStamp()), parents));
         List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
         if (statusInfos.isEmpty()) {
