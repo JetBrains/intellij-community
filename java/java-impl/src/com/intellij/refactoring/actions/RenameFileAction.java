@@ -39,6 +39,11 @@ public class RenameFileAction extends AnAction implements DumbAware {
     PsiElementRenameHandler.invoke(file, project, file, null);
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   public void update(AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
