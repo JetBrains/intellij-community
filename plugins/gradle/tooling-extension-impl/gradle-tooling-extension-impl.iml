@@ -25,28 +25,28 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="GradleToolingExtension">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-native-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-3.5.jar!/" />
-	  <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-dependency-management-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-base-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-jvm-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-workers-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-3.5.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-ear-3.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-native-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-4.0.jar!/" />
+	  <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-dependency-management-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-base-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-jvm-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-workers-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-ear-4.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-3.5-rc-2-src.zip!/gradle-3.3/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-3.5-rc-2-src.zip!/gradle-3.3/subprojects/ear/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-3.5-rc-2-src.zip!/gradle-3.3/subprojects/workers/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/ear/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/workers/src/main/java" />
         </SOURCES>
       </library>
     </orderEntry>
