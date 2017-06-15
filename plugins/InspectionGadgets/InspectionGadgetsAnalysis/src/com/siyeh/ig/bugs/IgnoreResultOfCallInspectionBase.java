@@ -17,7 +17,6 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -34,6 +33,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -228,8 +228,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
       if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
       return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure")) &&
-             ControlFlowAnalyzer.getMethodCallContracts(method, null).stream()
-               .noneMatch(c -> c.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION);
+             !SideEffectChecker.mayHaveExceptionalSideEffect(method);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {

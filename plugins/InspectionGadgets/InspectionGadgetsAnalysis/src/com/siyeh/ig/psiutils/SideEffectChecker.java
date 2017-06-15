@@ -126,11 +126,7 @@ public class SideEffectChecker {
     protected boolean isPure(PsiMethod method) {
       if (method == null) return false;
       if (PropertyUtil.isSimpleGetter(method)) return true;
-      if (ControlFlowAnalyzer.isPure(method)) {
-        return ControlFlowAnalyzer.getMethodContracts(method).stream()
-          .noneMatch(mc -> mc.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION);
-      }
-      return false;
+      return ControlFlowAnalyzer.isPure(method) && !mayHaveExceptionalSideEffect(method);
     }
 
     @Override
@@ -200,6 +196,21 @@ public class SideEffectChecker {
     public boolean mayHaveSideEffects() {
       return found;
     }
+  }
+
+  /**
+   * Returns true if given method function is likely to throw an exception (e.g. "assertEquals"). In some cases this means that
+   * the method call should be preserved in source code even if it's pure (i.e. does not change the program state).
+   *
+   * @param method a method to check
+   * @return true if the method has exceptional side effect
+   */
+  public static boolean mayHaveExceptionalSideEffect(PsiMethod method) {
+    if (method.getName().startsWith("assert")) {
+      return true;
+    }
+    return ControlFlowAnalyzer.getMethodContracts(method).stream()
+      .anyMatch(mc -> mc.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION);
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {
