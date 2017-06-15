@@ -94,14 +94,13 @@ public class GitFileHistory {
   public void history(@NotNull Consumer<GitFileRevision> consumer,
                       @NotNull Consumer<VcsException> exceptionConsumer,
                       String... parameters) {
-    // adjust path using change manager
-    final GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
-                                                    HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
-                                                    SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
-    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer, exceptionConsumer);
-
     GitVcs vcs = GitVcs.getInstance(myProject);
     GitVersion version = vcs != null ? vcs.getVersion() : GitVersion.NULL;
+
+    GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
+                                              HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
+                                              SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
+    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(version, consumer, exceptionConsumer);
 
     while (recordConsumer.getCurrentPath() != null && recordConsumer.getFirstCommitParent() != null) {
       GitLineHandler handler = createLogHandler(myProject, version, myRoot, logParser,
@@ -113,12 +112,7 @@ public class GitFileHistory {
       }
 
       try {
-        Pair<String, FilePath> firstCommitParentAndPath =
-          getFirstCommitParentAndPathIfRename(myProject, myRoot, recordConsumer.getFirstCommit(),
-                                              recordConsumer.getCurrentPath(), version);
-        recordConsumer.setCurrentPath(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.second);
-        recordConsumer.setFirstCommitParent(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.first);
-        recordConsumer.setSkipFurtherOutput(false);
+        recordConsumer.updateFirstCommitParentAndPath();
       }
       catch (VcsException e) {
         LOG.warn("Tried to get first commit rename path", e);
@@ -396,10 +390,14 @@ public class GitFileHistory {
     @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>(myStartingRevision.asString());
     @NotNull private final AtomicReference<String> myFirstCommitParent = new AtomicReference<>(myStartingRevision.asString());
     @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>(myPath);
+    @NotNull private final GitVersion myVersion;
     @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer, @NotNull Consumer<VcsException> exceptionConsumer) {
+    public GitLogRecordConsumer(@NotNull GitVersion version,
+                                @NotNull Consumer<GitFileRevision> revisionConsumer,
+                                @NotNull Consumer<VcsException> exceptionConsumer) {
+      myVersion = version;
       myExceptionConsumer = exceptionConsumer;
       myRevisionConsumer = revisionConsumer;
     }
@@ -452,28 +450,29 @@ public class GitFileHistory {
       }
     }
 
-    public String getFirstCommit() {
-      return myFirstCommit.get();
-    }
-
+    @Nullable
     public String getFirstCommitParent() {
       return myFirstCommitParent.get();
     }
 
+    @Nullable
     public FilePath getCurrentPath() {
       return myCurrentPath.get();
     }
 
-    public void setCurrentPath(FilePath currentPath) {
-      myCurrentPath.set(currentPath);
-    }
-
-    public void setFirstCommitParent(String firstCommitParent) {
-      myFirstCommitParent.set(firstCommitParent);
-    }
-
-    public void setSkipFurtherOutput(boolean skipFurtherOutput) {
-      mySkipFurtherOutput.set(skipFurtherOutput);
+    public void updateFirstCommitParentAndPath() throws VcsException {
+      Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(myProject, myRoot,
+                                                                                            myFirstCommit.get(), myCurrentPath.get(),
+                                                                                            myVersion);
+      if (firstCommitParentAndPath == null) {
+        myCurrentPath.set(null);
+        myFirstCommitParent.set(null);
+      }
+      else {
+        myCurrentPath.set(firstCommitParentAndPath.second);
+        myFirstCommitParent.set(firstCommitParentAndPath.first);
+      }
+      mySkipFurtherOutput.set(false);
     }
   }
 }
