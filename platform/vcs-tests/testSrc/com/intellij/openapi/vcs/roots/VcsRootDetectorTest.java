@@ -46,19 +46,19 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   }
 
   public void testProjectUnderSingleMockRoot() throws IOException {
-    doTest(new VcsRootConfiguration().mock("."), myProjectRoot, ".");
+    doTest(new VcsRootConfiguration().vcsRoots("."), myProjectRoot, ".");
   }
 
   public void testProjectWithMockRootUnderIt() throws IOException {
     cd(myProjectRoot);
     mkdir("src");
     mkdir(".idea");
-    doTest(new VcsRootConfiguration().mock("community"), myProjectRoot, "community");
+    doTest(new VcsRootConfiguration().vcsRoots("community"), myProjectRoot, "community");
   }
 
   public void testProjectWithAllSubdirsUnderMockRootShouldStillBeNotFullyControlled() throws IOException {
     String[] dirNames = {".idea", "src", "community"};
-    doTest(new VcsRootConfiguration().mock(dirNames), myProjectRoot, dirNames);
+    doTest(new VcsRootConfiguration().vcsRoots(dirNames), myProjectRoot, dirNames);
   }
 
   public void testProjectUnderVcsAboveIt() throws IOException {
@@ -66,28 +66,28 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     cd(myRepository);
     mkdir(subdir);
     VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(new VcsRootConfiguration().mock(myRepository.getName()), vfile, myRepository.getName()
+    doTest(new VcsRootConfiguration().vcsRoots(myRepository.getName()), vfile, myRepository.getName()
     );
   }
 
   public void testIDEAProject() throws IOException {
     String[] names = {"community", "contrib", "."};
-    doTest(new VcsRootConfiguration().mock(names), myProjectRoot, names);
+    doTest(new VcsRootConfiguration().vcsRoots(names), myProjectRoot, names);
   }
 
   public void testOneAboveAndOneUnder() throws IOException {
     String[] names = {myRepository.getName() + "/community", "."};
-    doTest(new VcsRootConfiguration().mock(names), myRepository, names);
+    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);
   }
 
   public void testOneAboveAndOneForProjectShouldShowOnlyProjectRoot() throws IOException {
     String[] names = {myRepository.getName(), "."};
-    doTest(new VcsRootConfiguration().mock(names), myRepository, myRepository.getName());
+    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, myRepository.getName());
   }
 
   public void testOneAboveAndSeveralUnderProject() throws IOException {
     String[] names = {".", myRepository.getName() + "/community", myRepository.getName() + "/contrib"};
-    doTest(new VcsRootConfiguration().mock(names), myRepository, names);
+    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);
   }
 
   public void testMultipleAboveShouldBeDetectedAsOneAbove() throws IOException {
@@ -95,24 +95,24 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     cd(myRepository);
     mkdir(subdir);
     VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(new VcsRootConfiguration().mock(".", myRepository.getName()), vfile, myRepository.getName());
+    doTest(new VcsRootConfiguration().vcsRoots(".", myRepository.getName()), vfile, myRepository.getName());
   }
 
   public void testUnrelatedRootShouldNotBeDetected() throws IOException {
-    doTest(new VcsRootConfiguration().mock("another"), myRepository);
+    doTest(new VcsRootConfiguration().vcsRoots("another"), myRepository);
   }
 
 
   public void testLinkedSourceRootAloneShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock("linked_root")
+      new VcsRootConfiguration().vcsRoots("linked_root")
         .contentRoots("linked_root");
     doTest(vcsRootConfiguration, myRepository, "linked_root");
   }
 
   public void testLinkedSourceRootAndProjectRootShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "linked_root")
+      new VcsRootConfiguration().vcsRoots(".", "linked_root")
         .contentRoots("linked_root");
     doTest(vcsRootConfiguration, myProjectRoot, ".", "linked_root");
   }
@@ -120,14 +120,14 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   public void testLinkedSourceBelowMockRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
       new VcsRootConfiguration().contentRoots("linked_root/src")
-        .mock(".", "linked_root");
+        .vcsRoots(".", "linked_root");
     doTest(vcsRootConfiguration, myProjectRoot, ".", "linked_root");
   }
 
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
+      new VcsRootConfiguration().vcsRoots("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
         .contentRoots("content_root");
     doTest(vcsRootConfiguration,
            myProjectRoot, "community", "content_root/lev1/lev2");

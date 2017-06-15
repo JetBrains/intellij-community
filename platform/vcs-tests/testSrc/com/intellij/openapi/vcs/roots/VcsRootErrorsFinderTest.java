@@ -45,21 +45,21 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testSameOneRootInBothThenNoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".")
+      new VcsRootConfiguration().vcsRoots(".")
         .mappings(".");
     doTest(vcsRootConfiguration);
   }
 
   public void testSameTwoRootsInBothThenNoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "community")
+      new VcsRootConfiguration().vcsRoots(".", "community")
         .mappings(".", "community");
     doTest(vcsRootConfiguration);
   }
 
   public void testOneMockRootNoVCSRootsThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".")
+      new VcsRootConfiguration().vcsRoots(".")
         .unregErrors(".");
     doTest(vcsRootConfiguration);
   }
@@ -75,7 +75,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testOneRootButDifferentThenTwoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".")
+      new VcsRootConfiguration().vcsRoots(".")
         .mappings("community")
         .unregErrors(".").extraErrors("community");
     doTest(vcsRootConfiguration);
@@ -83,7 +83,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testTwoRootsOneMatchingOneDifferentThenTwoErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "community")
+      new VcsRootConfiguration().vcsRoots(".", "community")
         .mappings(".", "contrib")
         .unregErrors("community").extraErrors("contrib");
     doTest(vcsRootConfiguration);
@@ -91,7 +91,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testTwoRootsInMockRootOneMatchingInVCSThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "community")
+      new VcsRootConfiguration().vcsRoots(".", "community")
         .mappings(".")
         .unregErrors("community");
     doTest(vcsRootConfiguration);
@@ -99,7 +99,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testTwoRootsBothNotMatchingThenFourErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "community")
+      new VcsRootConfiguration().vcsRoots(".", "community")
         .mappings("another", "contrib")
         .unregErrors("community", ".").extraErrors("contrib", "another");
     doTest(vcsRootConfiguration);
@@ -115,14 +115,14 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testProjectRootFullUnderMockRootThenCorrect() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".")
+      new VcsRootConfiguration().vcsRoots(".")
         .mappings(PROJECT);
     doTest(vcsRootConfiguration);
   }
 
   public void testProjectRootMockRootForAContentRootBelowProjectThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock("content_root")
+      new VcsRootConfiguration().vcsRoots("content_root")
         .contentRoots("content_root").mappings(PROJECT)
         .unregErrors("content_root").extraErrors(PROJECT);
     doTest(vcsRootConfiguration);
@@ -131,7 +131,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
   public void testProjectRootMockRootBelowProjectFolderNotInAContentRootThenUnregisteredRootError() throws IOException {
     // this is to be fixed: auto-detection of MockRoot repositories in subfolders for the <Project> mapping
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock("community")
+      new VcsRootConfiguration().vcsRoots("community")
         .contentRoots(".").mappings(PROJECT)
         .unregErrors("community").extraErrors(PROJECT);
     doTest(vcsRootConfiguration);
@@ -139,7 +139,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testProjectRootMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "content_root", "../linked_source_root", "folder")
+      new VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
         .mappings(PROJECT)
         .contentRoots(".", "content_root", "../linked_source_root")
         .unregErrors("content_root", "../linked_source_root", "folder");
@@ -148,7 +148,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testProjectRootForFolderMockRootForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "content_root", "../linked_source_root", "folder")
+      new VcsRootConfiguration().vcsRoots(".", "content_root", "../linked_source_root", "folder")
         .mappings(PROJECT, "folder")
         .contentRoots(".", "content_root", "../linked_source_root")
         .unregErrors("content_root", "../linked_source_root");
@@ -157,14 +157,14 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   public void testProjectRootMockRootLikeInIDEAProjectThenError() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "community", "contrib").mappings(PROJECT)
+      new VcsRootConfiguration().vcsRoots(".", "community", "contrib").mappings(PROJECT)
         .contentRoots(".", "community", "contrib").unregErrors("community", "contrib");
     doTest(vcsRootConfiguration);
   }
 
   public void testRealMockRootRootDeeperThanThreeLevelsShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "community", "contrib", "community/level1/level2/level3")
+      new VcsRootConfiguration().vcsRoots(".", "community", "contrib", "community/level1/level2/level3")
         .contentRoots(".", "community", "contrib").mappings(PROJECT, "community/level1/level2/level3")
         .unregErrors("community", "contrib");
     doTest(vcsRootConfiguration);
