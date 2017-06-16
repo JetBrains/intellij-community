@@ -1120,7 +1120,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         LOG.debug("External documentation URLs: ", urls);
         if (urls != null) {
           for (String url : urls) {
-            final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, myElement, Collections.singletonList(url));
+            final String doc = ApplicationManager.getApplication().runReadAction(
+              (NullableComputable<String>)() ->
+              ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(myProject, myElement, Collections.singletonList(url)));
             if (doc != null) {
               LOG.debug("Fetched documentation from ", url);
               myEffectiveUrl = url;
