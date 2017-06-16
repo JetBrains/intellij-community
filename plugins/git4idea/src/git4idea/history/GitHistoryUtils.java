@@ -614,8 +614,7 @@ public class GitHistoryUtils {
   public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
     List<String> parameters = ContainerUtil.newArrayList();
 
-    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
-    parameters.add(noWalk);
+    parameters.add(GitLogUtil.getNoWalkParameter(vcs));
     parameters.addAll(hashes);
 
     return ArrayUtil.toStringArray(parameters);

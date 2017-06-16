@@ -372,13 +372,17 @@ public class GitLogUtil {
       return false;
     });
 
-    readRecordsFromHandler(project, root, false, true, recordCollector, handler,
-                           GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk", "--stdin");
+    readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), "--stdin");
     recordCollector.finish();
 
     if (!inputError.isNull()) {
       throw new VcsException(inputError.get());
     }
+  }
+
+  @NotNull
+  public static String getNoWalkParameter(@NotNull GitVcs vcs) {
+    return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
   }
 
   @NotNull
