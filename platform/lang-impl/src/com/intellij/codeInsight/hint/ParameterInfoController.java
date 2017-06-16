@@ -334,7 +334,10 @@ public class ParameterInfoController implements Disposable {
       }
     }
     else {
-      context.removeHint();
+      myHint.hide();
+      if (!myKeepOnHintHidden) {
+        Disposer.dispose(this);
+      }
     }
   }
 

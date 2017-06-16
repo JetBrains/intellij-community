@@ -396,6 +396,17 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1) } }");
   }
 
+  public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+    myFixture.getEditor().getCaretModel().moveToOffset(0);
+    type(' ');
+    waitForAllAsyncStuff();
+    checkResultWithInlays(" class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+  }
+
   private void assertCaretBeforeInlay() {
     VisualPosition posFromOffset = myFixture.getEditor().offsetToVisualPosition(myFixture.getEditor().getCaretModel().getOffset());
     assertEquals(posFromOffset, myFixture.getEditor().getCaretModel().getVisualPosition());
