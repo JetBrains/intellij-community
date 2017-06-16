@@ -17,7 +17,11 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -435,14 +439,14 @@ public class ExternalSystemUtil {
             //executionConsole.print(text + '\n', ConsoleViewContentType.ERROR_OUTPUT);
             //processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
             //processHandler.notifyProcessTerminated(1);
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), projectName + ": sync failed"), "TREE");
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
+              id, null, System.currentTimeMillis(), "sync failed", new FailureResultImpl(e)), "TREE");
           }
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new FinishBuildEventImpl(id, null, System.currentTimeMillis(), projectName + ": synced successfully"), "TREE");
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
+              id, null, System.currentTimeMillis(), "synced successfully", new SuccessResultImpl()), "TREE");
           }
 
           @Override
@@ -559,7 +563,21 @@ public class ExternalSystemUtil {
       return new StartEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
     }
     else if (progressEvent instanceof ExternalSystemFinishEvent) {
-      return new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+      final EventResult eventResult;
+      final OperationResult operationResult = ((ExternalSystemFinishEvent)progressEvent).getOperationResult();
+      if (operationResult instanceof FailureResult) {
+        eventResult = new FailureResultImpl(null);
+      }
+      else if (operationResult instanceof SkippedResult) {
+        eventResult = new SkippedResultImpl();
+      }
+      else if (operationResult instanceof SuccessResult) {
+        eventResult = new SuccessResultImpl(((SuccessResult)operationResult).isUpToDate());
+      }
+      else {
+        eventResult = new SuccessResultImpl();
+      }
+      return new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName, eventResult);
     }
     else if (progressEvent instanceof ExternalSystemStatusEvent) {
       ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;

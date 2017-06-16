@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events;
+package com.intellij.build.events.impl;
 
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.build.events.SkippedResult;
 
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
-public interface FinishEvent extends BuildEvent {
-  EventResult getResult();
+public class SkippedResultImpl implements SkippedResult {
 }

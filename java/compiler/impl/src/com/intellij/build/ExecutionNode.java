@@ -15,6 +15,9 @@
  */
 package com.intellij.build;
 
+import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FailureResult;
+import com.intellij.build.events.SkippedResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
@@ -34,10 +37,13 @@ public class ExecutionNode extends CachingSimpleNode {
   private final List<ExecutionNode> myChildrenList = ContainerUtil.newSmartList();
   private long startTime;
   private long endTime;
-  private boolean isFailed;
-  private boolean isSkipped;
   @Nullable
   private String title;
+  @Nullable
+  private String tooltip;
+  @Nullable
+  private String hint;
+  private EventResult myResult;
 
   public ExecutionNode(Project aProject) {
     super(aProject, null);
@@ -53,7 +59,15 @@ public class ExecutionNode extends CachingSimpleNode {
     super.update(presentation);
     if (title != null) {
       presentation.addText(title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    }
+    if(title != null || hint != null) {
       presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+    if (hint != null) {
+      presentation.addText("  " + hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
+    if (tooltip != null) {
+      presentation.setTooltip(tooltip);
     }
   }
 
@@ -83,6 +97,24 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public void setTitle(@Nullable String title) {
     this.title = title;
+  }
+
+  @Nullable
+  public String getTooltip() {
+    return tooltip;
+  }
+
+  public void setTooltip(@Nullable String tooltip) {
+    this.tooltip = tooltip;
+  }
+
+  @Nullable
+  public String getHint() {
+    return hint;
+  }
+
+  public void setHint(@Nullable String hint) {
+    this.hint = hint;
   }
 
   public void add(ExecutionNode node) {
@@ -123,22 +155,22 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   public boolean isFailed() {
-    return isFailed;
-  }
-
-  public void setFailed(boolean failed) {
-    isFailed = failed;
+    return myResult instanceof FailureResult;
   }
 
   public boolean isSkipped() {
-    return isSkipped;
-  }
-
-  public void setSkipped(boolean skipped) {
-    isSkipped = skipped;
+    return myResult instanceof SkippedResult;
   }
 
   public boolean isRunning() {
-    return endTime <= 0 && !isSkipped && !isFailed;
+    return endTime <= 0 && !isSkipped() && !isFailed();
+  }
+
+  public void setResult(EventResult result) {
+    myResult = result;
+  }
+
+  public EventResult getResult() {
+    return myResult;
   }
 }

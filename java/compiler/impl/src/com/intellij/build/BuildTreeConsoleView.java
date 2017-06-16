@@ -268,14 +268,15 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       return;
     }
 
-    String eventMessage = event.getMessage();
-    currentNode.setName(eventMessage);
+    currentNode.setName(event.getMessage());
+    currentNode.setHint(event.getHint());
     if (currentNode.getStartTime() == 0) {
       currentNode.setStartTime(event.getEventTime());
     }
 
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
+      currentNode.setResult(((FinishEvent)event).getResult());
     }
 
     myProgressAnimator.setCurrentNode(currentNode);

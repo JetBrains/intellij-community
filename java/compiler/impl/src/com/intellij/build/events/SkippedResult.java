@@ -15,12 +15,8 @@
  */
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.ApiStatus;
-
 /**
  * @author Vladislav.Soroka
  */
-@ApiStatus.Experimental
-public interface FinishEvent extends BuildEvent {
-  EventResult getResult();
+public interface SkippedResult extends EventResult {
 }
