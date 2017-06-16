@@ -91,6 +91,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("str", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }
 
+  public void testAnonymousClass7() {
+    doTest(new MockIntroduceVariableHandler("str", true, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testLambda() {
     doTest(new MockIntroduceVariableHandler("j", true, false, false, "int"));
   }
