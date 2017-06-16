@@ -105,6 +105,7 @@ private fun disableUnneededConfigurationProducer() {
     if ((it is PyTestsConfigurationProducer && !newMode) ||
         (it is PythonTestLegacyConfigurationProducer<*> && newMode)) {
       extensionPoint.unregisterExtension(it)
+      Logger.getInstance("PyTestLegacyInterop").info("Disabling " + it)
     }
   }
 }
