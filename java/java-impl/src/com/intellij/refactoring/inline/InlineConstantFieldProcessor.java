@@ -145,8 +145,6 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);
     LOG.assertTrue(initializer != null);
-    initializer = normalize (initializer);
-
     final Set<PsiAssignmentExpression> assignments = new HashSet<>();
     for (UsageInfo info : usages) {
       if (info instanceof UsageFromJavaDoc) continue;
@@ -215,47 +213,9 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    if (expr instanceof PsiReferenceExpression) {
-      PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
-      if (qExpression != null) {
-        initializer1 = (PsiExpression)initializer1.copy();
-        PsiReferenceExpression referenceExpression = null;
-        if (initializer1 instanceof PsiReferenceExpression) {
-          referenceExpression = (PsiReferenceExpression)initializer1;
-        }
-        else if (initializer1 instanceof PsiMethodCallExpression) {
-          referenceExpression = ((PsiMethodCallExpression)initializer1).getMethodExpression();
-        }
-        if (referenceExpression != null &&
-            referenceExpression.getQualifierExpression() == null &&
-            !(referenceExpression.advancedResolve(false).getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) {
-          referenceExpression.setQualifierExpression(qExpression);
-        }
-      }
-    }
-
-    InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr);
-  }
-
-  private static PsiExpression normalize(PsiExpression expression) {
-    if (expression instanceof PsiArrayInitializerExpression) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-      try {
-        final PsiType type = expression.getType();
-        if (type != null) {
-          String typeString = type.getCanonicalText();
-          PsiNewExpression result = (PsiNewExpression)factory.createExpressionFromText("new " + typeString + "{}", expression);
-          result.getArrayInitializer().replace(expression);
-          return result;
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return expression;
-      }
-    }
-
-    return expression;
+    PsiExpression thisAccessExpr = expr instanceof PsiReferenceExpression ? ((PsiReferenceExpression)expr).getQualifierExpression() : null;
+    PsiExpression invalidationCopy = thisAccessExpr != null ? (PsiExpression)thisAccessExpr.copy() : null;
+    InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr, invalidationCopy);
   }
 
   @Override
