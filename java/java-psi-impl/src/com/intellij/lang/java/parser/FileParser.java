@@ -147,37 +147,41 @@ public class FileParser {
   private Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<PsiBuilder> stopper) {
     PsiBuilder.Marker list = builder.mark();
 
-    IElementType tokenType = builder.getTokenType();
-    boolean isEmpty = tokenType != JavaTokenType.IMPORT_KEYWORD && tokenType != JavaTokenType.SEMICOLON;
-    if (!isEmpty) {
-      PsiBuilder.Marker invalidElements = null;
-      while (!builder.eof()) {
-        if (stopper.test(builder)) {
-          break;
-        }
-        else if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
-          builder.advanceLexer();
-          continue;
-        }
-
-        final PsiBuilder.Marker statement = parseImportStatement(builder);
-        if (statement != null) {
-          if (invalidElements != null) {
-            invalidElements.errorBefore(JavaErrorMessages.message("unexpected.token"), statement);
-            invalidElements = null;
-          }
-          continue;
-        }
-
-        if (invalidElements == null) {
-          invalidElements = builder.mark();
-        }
+    boolean isEmpty = true;
+    PsiBuilder.Marker invalidElements = null;
+    while (!builder.eof()) {
+      if (stopper.test(builder)) {
+        break;
+      }
+      else if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         builder.advanceLexer();
+        continue;
       }
 
-      if (invalidElements != null) {
-        invalidElements.error(JavaErrorMessages.message("unexpected.token"));
+      final PsiBuilder.Marker statement = parseImportStatement(builder);
+      if (statement != null) {
+        isEmpty = false;
+        if (invalidElements != null) {
+          invalidElements.errorBefore(JavaErrorMessages.message("unexpected.token"), statement);
+          invalidElements = null;
+        }
+        continue;
       }
+
+      if (invalidElements == null) {
+        invalidElements = builder.mark();
+      }
+      builder.advanceLexer();
+    }
+
+    if (invalidElements != null) {
+      invalidElements.error(JavaErrorMessages.message("unexpected.token"));
+    }
+
+    if (isEmpty) {
+      PsiBuilder.Marker precede = list.precede();
+      list.rollbackTo();
+      list = precede;
     }
 
     done(list, JavaElementType.IMPORT_LIST);
