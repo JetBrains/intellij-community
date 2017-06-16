@@ -575,29 +575,16 @@ public class SearchDialog extends DialogWrapper {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          String name = showSaveTemplateAsDialog();
+          final Project project = searchContext.getProject();
+          final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
 
-          if (name != null) {
-            final Project project = searchContext.getProject();
-            final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
-            final Collection<Configuration> configurations = configurationManager.getConfigurations();
-
-            if (configurations != null) {
-              name = ConfigurationManager.findAppropriateName(configurations, name, project);
-              if (name == null) return;
-            }
-
-            final Configuration configuration = model.getConfig();
-            model = new SearchModel(createConfiguration());
-            model.setShadowConfig(configuration);
-            configuration.setName(name);
-            setValuesToConfig(configuration);
-            setDialogTitle(configuration);
-
-            filterOutUnusedVariableConstraints(configuration);
-            configurationManager.addConfiguration(configuration);
-            existingTemplatesComponent.setUserTemplates(configurationManager);
+          final Configuration configuration = getConfiguration();
+          if (!configurationManager.showSaveTemplateAsDialog(configuration)) {
+            return;
           }
+          setDialogTitle(configuration);
+
+          existingTemplatesComponent.setUserTemplates(configurationManager);
         }
       })
     );
@@ -688,13 +675,6 @@ public class SearchDialog extends DialogWrapper {
     return searchContext.getProject();
   }
 
-  public String showSaveTemplateAsDialog() {
-    return ConfigurationManager.showSaveTemplateAsDialog(
-      model.getShadowConfig() != null ? model.getShadowConfig().getName() : SSRBundle.message("user.defined.category"),
-      searchContext.getProject()
-    );
-  }
-
   protected boolean isReplaceDialog() {
     return false;
   }
@@ -759,8 +739,7 @@ public class SearchDialog extends DialogWrapper {
       final Configuration configuration = model.getConfig();
       if (model.getShadowConfig() != null) {
         if (model.getShadowConfig().isPredefined()) {
-          configuration.setName(model.getShadowConfig().getName()
-          );
+          configuration.setName(model.getShadowConfig().getName());
         } //else {
         //  // user template, save it
         //  setValuesToConfig(model.getShadowConfig());
@@ -787,7 +766,13 @@ public class SearchDialog extends DialogWrapper {
   }
 
   public Configuration getConfiguration() {
-    return model.getConfig();
+    final Configuration config = model.getConfig();
+    if (config.getName().equals(USER_DEFINED) && model.getShadowConfig() != null) {
+      config.setName(model.getShadowConfig().getName());
+    }
+    filterOutUnusedVariableConstraints(config);
+    setValuesToConfig(config);
+    return config;
   }
 
   private SearchScope getSelectedScope() {
@@ -796,23 +781,20 @@ public class SearchDialog extends DialogWrapper {
 
   protected boolean isValid() {
     setValuesToConfig(model.getConfig());
-    boolean result = true;
-
     try {
       Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {
         reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, (ex.getMessage() != null) ? ex.getMessage() : "");
-        result = false;
+        return false;
       }
     }
     catch (UnsupportedPatternException ex) {
       reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit, ex.getMessage());
-      result = false;
+      return false;
     }
-
-    return result;
+    return true;
   }
 
   protected void reportMessage(@NonNls final String messageId, final Editor editor, final Object... params) {
@@ -826,7 +808,6 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected void setValuesToConfig(Configuration config) {
-
     MatchOptions options = config.getMatchOptions();
 
     boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());

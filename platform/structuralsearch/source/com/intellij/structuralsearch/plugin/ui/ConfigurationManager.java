@@ -15,7 +15,6 @@
  */
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -43,9 +42,14 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   private final List<Configuration> configurations = new SmartList<>();
   private final List<Configuration> historyConfigurations = new SmartList<>();
+  private final Project myProject;
 
   public static ConfigurationManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ConfigurationManager.class);
+  }
+
+  public ConfigurationManager(Project project) {
+    myProject = project;
   }
 
   @Override
@@ -70,11 +74,6 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public void removeHistoryConfiguration(Configuration configuration) {
     historyConfigurations.remove(configuration);
-  }
-
-  public void addConfiguration(Configuration configuration) {
-    configurations.remove(configuration);
-    configurations.add(configuration);
   }
 
   public void removeConfiguration(Configuration configuration) {
@@ -168,37 +167,46 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return Collections.unmodifiableList(historyConfigurations);
   }
 
-  @Nullable
-  public static String findAppropriateName(@NotNull final Collection<Configuration> configurations, @NotNull String _name,
-                                           @NotNull final Project project) {
+  public boolean showSaveTemplateAsDialog(@NotNull Configuration newConfiguration) {
+    return showSaveTemplateAsDialog(configurations, newConfiguration, myProject);
+  }
+
+  public static boolean showSaveTemplateAsDialog(@NotNull Collection<Configuration> configurations,
+                                                 @NotNull Configuration newConfiguration,
+                                                 @NotNull Project project) {
+    String name = showInputDialog(newConfiguration.getName(), project);
     Configuration config;
-    String name = _name;
-
-    while ((config = findConfigurationByName(configurations, name)) != null) {
-      final int i = Messages.showYesNoDialog(
-        project,
-        SSRBundle.message("overwrite.message"),
-        SSRBundle.message("overwrite.title"),
-        AllIcons.General.QuestionDialog
-      );
-
-      if (i == Messages.YES) {
+    while ((config = findConfigurationByName(configurations, name)) != null && name !=  null) {
+     final int answer =
+        Messages.showYesNoDialog(
+          project,
+          SSRBundle.message("overwrite.message"),
+          SSRBundle.message("overwrite.title", name),
+          "Replace",
+          Messages.CANCEL_BUTTON,
+          Messages.getQuestionIcon()
+        );
+      if (answer == Messages.YES) {
         configurations.remove(config);
         break;
       }
-      name = showSaveTemplateAsDialog(name, project);
-      if (name == null) break;
+      name = showInputDialog(name, project);
     }
-    return name;
+    if (name != null) {
+      newConfiguration.setName(name);
+      configurations.add(newConfiguration);
+      return true;
+    }
+    return false;
   }
 
   @Nullable
-  public static String showSaveTemplateAsDialog(@NotNull String initial, @NotNull Project project) {
+  private static String showInputDialog(@NotNull String initial, @NotNull Project project) {
     return Messages.showInputDialog(
       project,
       SSRBundle.message("template.name.button"),
       SSRBundle.message("save.template.description.button"),
-      AllIcons.General.QuestionDialog,
+      Messages.getQuestionIcon(),
       initial,
       new NonEmptyInputValidator()
     );
