@@ -112,13 +112,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
   }
 
   private static PsiType findPsiType(Project project, Type type) {
-    AccessToken token = ReadAction.start();
-    try {
-      return DebuggerUtils.getType(type.name().replace('$', '.'), project);
-    }
-    finally {
-      token.finish();
-    }
+    return ReadAction.compute(() -> DebuggerUtils.getType(type.name().replace('$', '.'), project));
   }
 
   public static boolean isSubtypeable(PsiExpression expr) {
