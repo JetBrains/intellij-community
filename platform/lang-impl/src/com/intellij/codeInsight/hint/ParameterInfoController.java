@@ -417,7 +417,8 @@ public class ParameterInfoController implements Disposable {
         return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
       }
       else {
-        return parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
+        int startOffset = parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
+        return CharArrayUtil.shiftForward(myEditor.getDocument().getImmutableCharSequence(), startOffset, " \t");
       }
     }
     else {

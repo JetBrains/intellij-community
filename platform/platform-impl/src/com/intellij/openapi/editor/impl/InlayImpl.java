@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -88,6 +89,16 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   public int getOffset() {
     return myOffsetBeforeDisposal == -1 ? getStartOffset() : myOffsetBeforeDisposal;
+  }
+
+  @NotNull
+  @Override
+  public VisualPosition getVisualPosition() {
+    int offset = getOffset();
+    VisualPosition pos = myEditor.offsetToVisualPosition(offset);
+    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
+    int order = inlays.indexOf(this);
+    return new VisualPosition(pos.line, pos.column + order, true);
   }
 
   @NotNull
