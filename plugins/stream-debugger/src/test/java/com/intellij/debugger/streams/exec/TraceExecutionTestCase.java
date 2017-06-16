@@ -71,6 +71,10 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     doTest(isResultNull, DEFAULT_CHAIN_SELECTOR);
   }
 
+  protected void doTest(boolean isResultNull, @NotNull String className) {
+    doTest(isResultNull, className, DEFAULT_CHAIN_SELECTOR);
+  }
+
   protected void doTest(boolean isResultNull, @NotNull ChainSelector chainSelector) {
     final String className = getTestName(false);
     doTest(isResultNull, className, chainSelector);
