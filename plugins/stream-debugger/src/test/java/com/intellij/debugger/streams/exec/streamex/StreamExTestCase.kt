@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.exec.streamex
 
 import com.intellij.debugger.streams.exec.TraceExecutionTestCase
+import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
@@ -34,6 +35,13 @@ abstract class StreamExTestCase : TraceExecutionTestCase() {
       PsiTestUtil.addLibrary(myModule, "java/lib/streamex-0.6.5.jar")
     }
   }
+
+  override fun createJavaParameters(mainClass: String?): JavaParameters {
+    val parameters = super.createJavaParameters(mainClass)
+    parameters.classPath.add(File("java/lib/streamex-0.6.5.jar").absolutePath)
+    return parameters
+  }
+
   private val className: String
     get() = packageName + "." + getTestName(false)
 
