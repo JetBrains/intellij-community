@@ -42,30 +42,21 @@ const val MAIN_LOOP_NAME = "main loop"
  *    select them firstly.
  */
 abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProcess, protected val activeStack: ExecutionStackView) : XSuspendContext() {
-  protected open val stacks: Array<out XExecutionStack>  by lazy {
 
+  protected open val stacks: Array<out XExecutionStack>  by lazy {
     val mainVm = debugProcess.mainVm
     val vmList = debugProcess.collectVMs
     if (mainVm != null && !vmList.isEmpty()) {
       val list = ArrayList<XExecutionStack>()
-      if (activeStack.suspendContext.vm == mainVm) {
-        list.add(activeStack)
-      }
-      else {
-        list.add(createStackView(mainVm.suspendContextManager.context, MAIN_LOOP_NAME))
-      }
 
+      // main vm should go first
       vmList.mapNotNullTo(list) {
         val context = it.suspendContextManager.context
-        if (it == mainVm) {
-          null
-        }
-        else if (context == activeStack.suspendContext) {
+        if (context == activeStack.suspendContext) {
           activeStack
         }
         else {
-          val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
-          createStackView(context, displayName)
+          createStackView(context, it.presentableName)
         }
       }
       list.toTypedArray()

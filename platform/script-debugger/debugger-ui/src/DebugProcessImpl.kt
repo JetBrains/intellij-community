@@ -47,7 +47,7 @@ interface MultiVmDebugProcess {
       val result = mutableListOf<Vm>()
       fun addRecursively(vm: Vm) {
         result.add(vm)
-        vm.children.forEach { addRecursively(it) }
+        vm.childVMs.forEach { addRecursively(it) }
       }
       addRecursively(mainVm)
       return result
@@ -263,10 +263,10 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection) {
-    mainVm?.children?.add(vm)
+    mainVm?.childVMs?.add(vm)
     childConnection.stateChanged {
       if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
-        mainVm?.children?.remove(vm)
+        mainVm?.childVMs?.remove(vm)
       }
     }
 
