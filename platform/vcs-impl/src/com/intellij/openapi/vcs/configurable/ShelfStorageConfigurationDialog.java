@@ -44,8 +44,7 @@ import java.io.File;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
 import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurationPanel.getDefaultShelfPresentationPath;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
-import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static com.intellij.util.ui.UIUtil.*;
 
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
   @NotNull private final Project myProject;
@@ -62,6 +61,9 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
     myUseCustomShelfDirectory = new JBRadioButton("Custom directory:");
+    if (isUnderWin10LookAndFeel()) {
+      myUseCustomShelfDirectory.setBorder(JBUI.Borders.emptyRight(DEFAULT_HGAP));
+    }
     myUseDefaultShelfDirectory = new JBRadioButton("Default directory:", true);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
     myShelfDirectoryPath.addBrowseFolderListener("Shelf", "Select a directory to store shelves in", myProject,
