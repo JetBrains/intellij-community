@@ -1073,11 +1073,9 @@ public class TypeMigrationLabeler {
     myMigrationRoots = new LinkedList<>();
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
 
-    SmartTypePointerManager smartTypePointerManager = SmartTypePointerManager.getInstance(myProject);
+
     for (PsiElement victim : victims) {
-      // use deeply immediate types
-      PsiType migrationType = smartTypePointerManager.createSmartTypePointer(myMigrationRootTypeFunction.fun(victim)).getType();
-      addMigrationRoot(victim, migrationType, null, false, true, true);
+      addMigrationRoot(victim, myMigrationRootTypeFunction.fun(victim), null, false, true, true);
     }
 
     if (autoMigrate) {

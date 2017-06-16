@@ -218,6 +218,13 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @NotNull
+  public PsiClassType createImmediateCopy() {
+    ClassResolveResult resolveResult = resolveGenerics();
+    PsiClass element = resolveResult.getElement();
+    return element == null ? this : new PsiImmediateClassType(element, resolveResult.getSubstitutor());
+  }
+
+  @NotNull
   @Override
   public String getPresentableText(boolean annotated) {
     String presentableText = PsiNameHelper.getPresentableText(getReference());

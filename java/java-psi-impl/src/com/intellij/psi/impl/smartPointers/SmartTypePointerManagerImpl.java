@@ -18,6 +18,7 @@ package com.intellij.psi.impl.smartPointers;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
@@ -113,9 +114,9 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
 
   private static class ClassTypePointer extends TypePointerBase<PsiClassType> {
     private final SmartPsiElementPointer myClass;
-    private final Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> myMap;
+    private final Map<SmartPsiElementPointer, SmartTypePointer> myMap;
 
-    public ClassTypePointer(@NotNull PsiClassType type, @NotNull SmartPsiElementPointer aClass, @NotNull Map<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> map) {
+    public ClassTypePointer(@NotNull PsiClassType type, @NotNull SmartPsiElementPointer aClass, @NotNull Map<SmartPsiElementPointer, SmartTypePointer> map) {
       super(type);
       myClass = aClass;
       myMap = map;
@@ -126,10 +127,10 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       final PsiElement classElement = myClass.getElement();
       if (!(classElement instanceof PsiClass)) return null;
       Map<PsiTypeParameter, PsiType> resurrected = new HashMap<>();
-      final Set<Map.Entry<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer>> set = myMap.entrySet();
-      for (Map.Entry<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> entry : set) {
+      final Set<Map.Entry<SmartPsiElementPointer, SmartTypePointer>> set = myMap.entrySet();
+      for (Map.Entry<SmartPsiElementPointer, SmartTypePointer> entry : set) {
         PsiElement element = entry.getKey().getElement();
-        if (element != null) {
+        if (element instanceof PsiTypeParameter) {
           SmartTypePointer typePointer = entry.getValue();
           resurrected.put((PsiTypeParameter)element, typePointer == null ? null : typePointer.getType());
         }
@@ -186,22 +187,19 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       if (aClass == null) {
         return createClassReferenceTypePointer(classType);
       }
+      if (classType instanceof PsiClassReferenceType) {
+        classType = ((PsiClassReferenceType)classType).createImmediateCopy();
+      }
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-      final HashMap<SmartPsiElementPointer<PsiTypeParameter>, SmartTypePointer> pointerMap = new HashMap<>();
-      final Map<PsiTypeParameter, PsiType> map = new HashMap<>();
+      final HashMap<SmartPsiElementPointer, SmartTypePointer> map = new HashMap<>();
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         final PsiType substitutionResult = substitutor.substitute(typeParameter);
         if (substitutionResult != null) {
-          final SmartPsiElementPointer<PsiTypeParameter> pointer = myPsiPointerManager.createSmartPsiElementPointer(typeParameter);
-          SmartTypePointer typePointer = substitutionResult.accept(this);
-          pointerMap.put(pointer, typePointer);
-          map.put(typeParameter, typePointer.getType());
+          final SmartPsiElementPointer pointer = myPsiPointerManager.createSmartPsiElementPointer(typeParameter);
+          map.put(pointer, substitutionResult.accept(this));
         }
       }
-
-      return new ClassTypePointer(new PsiImmediateClassType(aClass, PsiSubstitutorImpl.createSubstitutor(map)),
-                                  myPsiPointerManager.createSmartPsiElementPointer(aClass),
-                                  pointerMap);
+      return new ClassTypePointer(classType, myPsiPointerManager.createSmartPsiElementPointer(aClass), map);
     }
 
     @Override
