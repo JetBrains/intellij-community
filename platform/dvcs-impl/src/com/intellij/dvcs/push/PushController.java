@@ -150,7 +150,7 @@ public class PushController implements Disposable {
       MyRepoModel model = entry.getValue();
       Repository repository = model.getRepository();
       RepositoryNode repoNode = entry.getKey();
-      if (mySingleRepoProject || preselectByUser(repository)) {
+      if (preselectByUser(repository)) {
         priorityLoading.put(repoNode, model);
       }
       else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() && !repoNode.equals(nodeForCurrentEditor)) {
@@ -170,7 +170,7 @@ public class PushController implements Disposable {
 
   private boolean shouldPreSelect(@NotNull MyRepoModel model) {
     Repository repository = model.getRepository();
-    return mySingleRepoProject || preselectByUser(repository) ||
+    return preselectByUser(repository) ||
            (notExcludedByUser(repository) && model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories());
   }
 
@@ -410,7 +410,7 @@ public class PushController implements Disposable {
   }
 
   private boolean preselectByUser(@NotNull Repository repository) {
-    return myPreselectedRepositories.contains(repository);
+    return mySingleRepoProject || myPreselectedRepositories.contains(repository);
   }
 
   private static boolean hasCommitsToPush(@NotNull MyRepoModel model) {
