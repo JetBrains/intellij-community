@@ -36,8 +36,8 @@ public class Main {
 
   public boolean ternaryFnMrGenericComment(List<String> list, Function<String, Boolean> fn, boolean b) {
     return list.stream().allMatch(b ? // select
-                             /* comment */ String::isEmpty :
-                             /* comment2 */fn::apply);
+            /* comment */ String::isEmpty :
+            /* comment2 */fn::apply);
   }
 
   public <T extends Boolean> boolean doubleTernaryMr(List<String> list, boolean b, boolean b2) {
@@ -49,7 +49,7 @@ public class Main {
   }
 
   public boolean anyMatchBooleanValue(List<String> list) {
-    /* ditto boolean!*/
+      /* ditto boolean!*/
       return list.stream().anyMatch(String::isEmpty);
   }
 
