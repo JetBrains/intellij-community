@@ -32,30 +32,40 @@ import java.util.*
 
 const val MAIN_LOOP_NAME = "main loop"
 
+/**
+ * Debugging several VMs simultaneously should be similar to debugging multi-threaded Java application when breakpoints suspend only one thread.
+ * 1. When thread is paused and another thread reaches breakpoint, show notification about it with possibility to switch thread.
+ * 2. Stepping and releasing affects only current thread.
+ * 3. When another thread is selected in Frames view, it changes its icon from (0) to (v) and becomes current, i.e. step/release commands
+ *    are applied to it.
+ * 4. Stepping/releasing updates current thread icon and clears frame, but doesn't switch thread. To release other threads, user needs to
+ *    select them firstly.
+ */
 abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProcess, protected val activeStack: ExecutionStackView) : XSuspendContext() {
-  protected open val stacks by lazy {
-    val childConnections = debugProcess.childConnections
-    if (childConnections.isNotEmpty()) {
-      val list = ArrayList<XExecutionStack>(1 + childConnections.size)
+  protected open val stacks: Array<out XExecutionStack>  by lazy {
 
-      val mainVm = debugProcess.mainVm
+    val mainVm = debugProcess.mainVm
+    val vmList = debugProcess.collectVMs
+    if (mainVm != null && !vmList.isEmpty()) {
+      val list = ArrayList<XExecutionStack>()
       if (activeStack.suspendContext.vm == mainVm) {
         list.add(activeStack)
       }
       else {
-        list.add(createStackView(mainVm?.suspendContextManager?.context, MAIN_LOOP_NAME))
+        list.add(createStackView(mainVm.suspendContextManager.context, MAIN_LOOP_NAME))
       }
 
-      childConnections.mapNotNullTo(list) {
-        it.vm?.let {
-          val context = it.suspendContextManager.context
-          if (context == activeStack.suspendContext) {
-            activeStack
-          }
-          else {
-            val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
-            createStackView(context, displayName)
-          }
+      vmList.mapNotNullTo(list) {
+        val context = it.suspendContextManager.context
+        if (it == mainVm) {
+          null
+        }
+        else if (context == activeStack.suspendContext) {
+          activeStack
+        }
+        else {
+          val displayName = it.name ?: throw IllegalStateException("Name must be not null for child VM")
+          createStackView(context, displayName)
         }
       }
       list.toTypedArray()

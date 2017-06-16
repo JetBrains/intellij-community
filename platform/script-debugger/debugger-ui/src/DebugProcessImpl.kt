@@ -33,6 +33,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.connection.RemoteVmConnection
 import org.jetbrains.debugger.connection.VmConnection
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,8 +41,17 @@ import java.util.concurrent.atomic.AtomicBoolean
 interface MultiVmDebugProcess {
   val mainVm: Vm?
   val activeOrMainVm: Vm?
-  val childConnections: List<VmConnection<*>>
-    get() = emptyList()
+  val collectVMs: List<Vm>
+    get() {
+      val mainVm = mainVm ?: return emptyList()
+      val result = mutableListOf<Vm>()
+      fun addRecursively(vm: Vm) {
+        result.add(vm)
+        vm.children.forEach { addRecursively(it) }
+      }
+      addRecursively(mainVm)
+      return result
+    }
 }
 
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
@@ -84,8 +94,6 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 
   override final val activeOrMainVm: Vm?
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
-
-  override final val childConnections = ContainerUtil.createConcurrentList<C>()
 
   init {
     connection.stateChanged {
@@ -254,20 +262,18 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   protected open fun beforeInitBreakpoints(vm: Vm) {
   }
 
-  protected fun addChildVm(vm: Vm) {
+  protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection) {
+    mainVm?.children?.add(vm)
+    childConnection.stateChanged {
+      if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
+        mainVm?.children?.remove(vm)
+      }
+    }
+
     beforeInitBreakpoints(vm)
 
     processBreakpoints { handler, breakpoint ->
       handler.manager.setBreakpoint(vm, breakpoint)
-    }
-  }
-
-  open protected fun initChildConnection(childConnection: C) {
-    childConnections.add(childConnection)
-    childConnection.stateChanged {
-      if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
-        childConnections.remove(childConnection)
-      }
     }
   }
 
@@ -288,10 +294,14 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
 class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, internal val manager: LineBreakpointManager)
     : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.setBreakpoint(manager.debugProcess.mainVm!!, breakpoint)
+    manager.debugProcess.collectVMs.forEach {
+      manager.setBreakpoint(it, breakpoint)
+    }
   }
 
   override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
-    manager.removeBreakpoint(manager.debugProcess.mainVm!!, breakpoint, temporary)
+    manager.debugProcess.collectVMs.forEach {
+      manager.removeBreakpoint(it, breakpoint, temporary)
+    }
   }
 }

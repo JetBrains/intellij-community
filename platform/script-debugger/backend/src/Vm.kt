@@ -48,4 +48,6 @@ interface Vm : UserDataHolderEx {
 
   val name: String?
     get() = null
+
+  val children: MutableList<Vm>
 }

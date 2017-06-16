@@ -16,6 +16,7 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.containers.ContainerUtil
 
 abstract class VmBase(override val debugListener: DebugEventListener) : Vm, AttachStateManager, UserDataHolderBase() {
   override val evaluateContext by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
@@ -27,4 +28,6 @@ abstract class VmBase(override val debugListener: DebugEventListener) : Vm, Atta
   override var captureAsyncStackTraces: Boolean
     get() = false
     set(value) { }
+
+  override val children: MutableList<Vm> = ContainerUtil.createConcurrentList()
 }
