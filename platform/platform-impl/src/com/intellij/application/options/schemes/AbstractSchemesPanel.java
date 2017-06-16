@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -121,7 +122,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
-    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, mySchemesCombo.getComponent().getPreferredSize().height));
+    int height = Math.max(mySchemesCombo.getComponent().getPreferredSize().height, myToolbar.getPreferredSize().height) + 2;
+    controlsPanel.setPreferredSize(new Dimension(controlsPanel.getMinimumSize().width, height));
+    controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
   }
   
@@ -131,6 +134,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
+    toolbarComponent.setBorder(IdeBorderFactory.createEmptyBorder());
     return toolbarComponent;
   }
 
