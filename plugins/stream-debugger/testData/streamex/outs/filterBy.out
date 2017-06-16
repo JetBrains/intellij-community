@@ -1,0 +1,42 @@
+LineBreakpoint created at FilterBy.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.FilterBy
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+FilterBy.java:8
+StreamEx.of(1, 2, 3, 4)
+.filterBy(x -> x * x, 9)
+.toArray()
+StreamEx.of
+    before: nothing
+    after: 1,2,3,5
+filterBy
+    before: 1,2,3,5
+    after: 4
+toArray
+    before: 4
+    after: 5
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 5
+mappings for filterBy
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+    5 -> nothing
+  reverse:
+    nothing <- 4
+mappings for toArray
+  direct:
+    4 -> 5
+  reverse:
+    4 <- 5
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+3

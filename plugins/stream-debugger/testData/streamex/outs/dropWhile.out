@@ -1,0 +1,42 @@
+LineBreakpoint created at DropWhile.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.DropWhile
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+DropWhile.java:8
+StreamEx.of(1, 2, 3, 4)
+.dropWhile(x -> x < 4)
+.count()
+StreamEx.of
+    before: nothing
+    after: 1,2,3,4
+dropWhile
+    before: 1,2,3,4
+    after: 5
+count
+    before: 5
+    after: nothing
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 4
+mappings for dropWhile
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+    4 -> nothing
+  reverse:
+    nothing <- 5
+mappings for count
+  direct:
+    5 -> nothing
+  reverse:
+    empty
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+1

@@ -1,0 +1,44 @@
+LineBreakpoint created at Greater.java:10
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.Greater
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Greater.java:10
+DoubleStreamEx.of(1., 2., 3., 4.)
+.greater(2)
+.min()
+DoubleStreamEx.of
+    before: nothing
+    after: 1,2,3,5
+greater
+    before: 1,2,3,5
+    after: 4,6
+min
+    before: 4,6
+    after: 2147483646
+mappings for DoubleStreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 5
+mappings for greater
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+    5 -> nothing
+  reverse:
+    nothing <- 4
+    nothing <- 6
+mappings for min
+  direct:
+    4 -> 2147483646
+    6 -> nothing
+  reverse:
+    4 <- 2147483646
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+3.0

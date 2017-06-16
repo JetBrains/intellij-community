@@ -1,0 +1,44 @@
+LineBreakpoint created at AtLeast.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.AtLeast
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+AtLeast.java:8
+IntStreamEx.of(1, 2, 3, 4)
+.atLeast(3)
+.sum()
+IntStreamEx.of
+    before: nothing
+    after: 1,2,3,5
+atLeast
+    before: 1,2,3,5
+    after: 4,6
+sum
+    before: 4,6
+    after: nothing
+mappings for IntStreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 5
+mappings for atLeast
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+    5 -> nothing
+  reverse:
+    nothing <- 4
+    nothing <- 6
+mappings for sum
+  direct:
+    4 -> nothing
+    6 -> nothing
+  reverse:
+    empty
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+7
