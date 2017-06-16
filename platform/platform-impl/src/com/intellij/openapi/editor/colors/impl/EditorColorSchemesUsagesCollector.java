@@ -46,6 +46,12 @@ public class EditorColorSchemesUsagesCollector extends UsagesCollector {
           schemeName = original.getName();
         }
       }
+      if (schemeName == SCHEME_NAME_OTHER) {
+        EditorColorsScheme parentScheme = ((AbstractColorsScheme)currentScheme).getParentScheme();
+        if (parentScheme != null) {
+          schemeName += " based on " + parentScheme.getName();
+        }
+      }
       usages.add(new UsageDescriptor(schemeName, 1));
     }
     return usages;
