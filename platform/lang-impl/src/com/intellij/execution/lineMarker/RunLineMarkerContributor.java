@@ -15,10 +15,15 @@
  */
 package com.intellij.execution.lineMarker;
 
+import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.testframework.TestIconMapper;
+import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,4 +79,22 @@ public abstract class RunLineMarkerContributor {
     return presentation.isEnabled() && presentation.isVisible() ? presentation.getText() : null;
   }
 
+  protected static Icon getTestStateIcon(String url, Project project, boolean isClass) {
+    TestStateStorage.Record state = TestStateStorage.getInstance(project).getState(url);
+    if (state != null) {
+      TestStateInfo.Magnitude magnitude = TestIconMapper.getMagnitude(state.magnitude);
+      if (magnitude != null) {
+        switch (magnitude) {
+          case ERROR_INDEX:
+          case FAILED_INDEX:
+            return AllIcons.RunConfigurations.TestState.Red2;
+          case PASSED_INDEX:
+          case COMPLETE_INDEX:
+            return AllIcons.RunConfigurations.TestState.Green2;
+          default:
+        }
+      }
+    }
+    return isClass ? AllIcons.RunConfigurations.TestState.Run_run : AllIcons.RunConfigurations.TestState.Run;
+  }
 }
