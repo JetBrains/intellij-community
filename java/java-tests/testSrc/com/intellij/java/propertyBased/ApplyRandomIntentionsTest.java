@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,7 +148,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
               assertFalse("Document is left blocked by PSI", documentManager.isDocumentBlockedByPsi(document));
               checkNoForeignDocuments(document, documentManager.getUncommittedDocuments());
               checkNoForeignDocuments(document, FileDocumentManager.getInstance().getUnsavedDocuments());
-              checkStubPsiWellFormed(psiFile);
+              PsiTestUtil.checkStubsMatchText(psiFile);
               if (psiFile.textMatches(currentFileText)) {
                 fail("No change was performed: " + currentFileText);
               }

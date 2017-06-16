@@ -29,6 +29,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -94,7 +95,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
 
             try {
               performCompletion(editor, i == 0, invocation, leaf);
-              checkStubPsiWellFormed(psiFile);
+              PsiTestUtil.checkStubsMatchText(psiFile);
             }
             finally {
               LookupManager.getInstance(myProject).hideActiveLookup();

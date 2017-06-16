@@ -37,20 +37,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import slowCheck.Generator;
 
 import java.io.File;
@@ -162,44 +155,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return messages.stream()
       .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
       .collect(Collectors.toList());
-  }
-
-  protected void checkPsiWellFormed(PsiFile file) {
-    PsiFile copy = PsiFileFactory.getInstance(myProject).createFileFromText(file.getName(), file.getLanguage(), file.getText());
-    assertEquals(DebugUtil.psiTreeToString(copy, false), DebugUtil.psiTreeToString(file, false));
-
-    Document document = file.getViewProvider().getDocument();
-    if (!PsiDocumentManager.getInstance(myProject).isCommitted(document)) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(document);
-      checkPsiWellFormed(file);
-    }
-  }
-
-  protected static void checkStubPsiWellFormed(@NotNull PsiFile file) {
-    Project project = file.getProject();
-
-    StubTree tree = getStubTree(file);
-    StubTree copyTree = getStubTree(
-      PsiFileFactory.getInstance(project).createFileFromText(file.getName(), file.getLanguage(), file.getText()));
-    if (tree == null || copyTree == null) return;
-
-    assertEquals(DebugUtil.stubTreeToString(copyTree.getRoot()), DebugUtil.stubTreeToString(tree.getRoot()));
-
-    Document document = file.getViewProvider().getDocument();
-    assert document != null;
-    if (!PsiDocumentManager.getInstance(project).isCommitted(document)) {
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      checkStubPsiWellFormed(file);
-    }
-  }
-
-  @Nullable
-  private static StubTree getStubTree(PsiFile file) {
-    if (!(file instanceof PsiFileImpl)) return null;
-    if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) return null;
-
-    StubTree tree = ((PsiFileImpl)file).getStubTree();
-    return tree != null ? tree : ((PsiFileImpl)file).calcStubTree();
   }
 
 }
