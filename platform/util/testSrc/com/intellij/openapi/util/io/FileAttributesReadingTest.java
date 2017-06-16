@@ -465,6 +465,11 @@ public abstract class FileAttributesReadingTest {
     assertTrue(target.length() > 0);
     assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
 
+    if (SystemInfo.isWindows) {
+      byte[] bytes = FileUtil.loadFileBytes(link);
+      assertEquals(myTestData.length, bytes.length);
+    }
+
     attributes = getAttributes(link, SystemInfo.areSymLinksSupported);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(target.length(), attributes.length);
