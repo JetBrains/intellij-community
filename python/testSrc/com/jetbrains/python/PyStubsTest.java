@@ -726,4 +726,38 @@ public class PyStubsTest extends PyTestCase {
       assertNotParsed(external);
     });
   }
+
+  // PY-18116
+  public void testParameterAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyNamedParameter param = func.getParameterList().findParameterByName("x");
+      final String annotation = param.getAnnotationContent();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testFunctionAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final String annotation = func.getAnnotationContent();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+    });
+  }
+  
+  // PY-18116
+  public void testVariableAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyTargetExpression var = file.findTopLevelAttribute("x");
+      final String annotation = var.getAnnotationContent();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+    });
+  }
 }
