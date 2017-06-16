@@ -115,4 +115,8 @@ public class RemoteObject implements Remote, Unreferenced {
   protected boolean isKnownException(Throwable ex) {
     return false;
   }
+
+  protected Iterable<RemoteObject> getExportedChildren() {
+    return myChildren.keySet();
+  }
 }
