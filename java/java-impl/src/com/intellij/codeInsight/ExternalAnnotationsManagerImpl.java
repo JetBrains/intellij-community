@@ -202,6 +202,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return false;
     }
+    String externalName = getExternalName(listOwner, false);
     new WriteCommandAction(project) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
@@ -212,7 +213,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
             notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
             return;
           }
-          annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value);
+          annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value, externalName);
         }
         else {
           final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
@@ -220,7 +221,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
             List<PsiFile> createdFiles = new SmartList<>(annotationsXml);
             cacheExternalAnnotations(packageName, fromFile, createdFiles);
           }
-          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
+          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value, externalName);
         }
       }
     }.execute();
@@ -300,13 +301,14 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       return;
     }
 
-    final Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<>() : new THashSet<>(xmlFiles);
-
+    Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<>() : new THashSet<>(xmlFiles);
+    String externalName = getExternalName(listOwner, false);
     new WriteCommandAction(project) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
+       
         if (existingXml != null) {
-          annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
+          annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value, externalName);
         }
         else {
           XmlFile newXml = createAnnotationsXml(root, packageName);
@@ -316,7 +318,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           else {
             annotationFiles.add(newXml);
             cacheExternalAnnotations(packageName, fromFile, new SmartList<>(annotationFiles));
-            annotateExternally(listOwner, annotationFQName, newXml, fromFile, value);
+            annotateExternally(listOwner, annotationFQName, newXml, fromFile, value, externalName);
           }
         }
 
@@ -573,7 +575,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                                   @NotNull final String annotationFQName,
                                   @Nullable final XmlFile xmlFile,
                                   @NotNull final PsiFile codeUsageFile,
-                                  @Nullable final PsiNameValuePair[] values) {
+                                  @Nullable final PsiNameValuePair[] values,
+                                  @Nullable final String externalName) {
     if (xmlFile == null) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return;
@@ -582,7 +585,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       final XmlDocument document = xmlFile.getDocument();
       if (document != null) {
         final XmlTag rootTag = document.getRootTag();
-        final String externalName = getExternalName(listOwner, false);
         if (externalName == null) {
           LOG.info("member without external name: " + listOwner);
         }
