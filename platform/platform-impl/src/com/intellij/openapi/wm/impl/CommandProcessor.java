@@ -71,7 +71,7 @@ public final class CommandProcessor implements Runnable {
   }
 
   public final void run() {
-    run(true);
+    while (run(false));
   }
 
   private boolean run(boolean synchronously) {
