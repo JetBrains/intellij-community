@@ -86,7 +86,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public synchronized void stop() {
-    LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
+    // LOG.assertTrue(myRunning, "stop() should be called only if start() called before");  // avoid youtrack.jetbrains.com/issue/CPP-6914
     myRunning = false;
     myFinished = true;
     stopSystemActivity();
