@@ -41,9 +41,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelperRegistrar;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -289,16 +289,8 @@ public class CopyReferenceAction extends DumbAwareAction {
   }
 
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    VirtualFile logicalRootFile = null;
-    for (final FileReferenceHelper helper : FileReferenceHelperRegistrar.getHelpers()) {
-      if (helper.isMine(project, virtualFile)) {
-        PsiFileSystemItem root = helper.findRoot(project, virtualFile);
-        if (root != null && root.getVirtualFile() != null) {
-          logicalRootFile = root.getVirtualFile();
-          break;
-        }
-      }
-    }
+    final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
+    VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null;
     if (logicalRootFile != null && !virtualFile.equals(logicalRootFile)) {
       return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
     }
