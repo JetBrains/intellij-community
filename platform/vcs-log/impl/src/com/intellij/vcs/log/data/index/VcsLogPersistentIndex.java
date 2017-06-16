@@ -19,7 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -36,6 +39,7 @@ import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
@@ -491,6 +495,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       ApplicationManager.getApplication().invokeLater(() -> {
         Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
                                                            PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             IndexingRequest request;
@@ -510,7 +515,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             taskCompleted(null);
           }
         };
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
+        HeavyAwareExecutor.executeOutOfHeavyProcess(task, indicator);
       });
       return indicator;
     }

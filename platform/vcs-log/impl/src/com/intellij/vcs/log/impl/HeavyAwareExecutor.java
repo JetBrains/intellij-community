@@ -16,13 +16,19 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-class HeavyAwareExecutor {
-  static void executeOutOfHeavyProcessLater(@NotNull Runnable command, int delayMs) {
+public class HeavyAwareExecutor {
+  public static void executeOutOfHeavyProcessLater(@NotNull Runnable command, int delayMs) {
     HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
         executeOutOfHeavyProcessLater(command, delayMs);
@@ -31,5 +37,36 @@ class HeavyAwareExecutor {
         command.run();
       }
     }, delayMs, TimeUnit.MILLISECONDS));
+  }
+
+  public static void executeOutOfHeavyProcess(@NotNull Task.Backgroundable task, @NotNull ProgressIndicator indicator) {
+    HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> {
+      if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        executeOutOfHeavyProcess(task, indicator);
+      }
+      else {
+        Disposable disposable = Disposer.newDisposable();
+        ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator,
+                                                                                                  () -> Disposer.dispose(disposable));
+        HeavyProcessLatch.INSTANCE.addListener(new CancellingOnHeavyProcessListener(indicator), disposable);
+      }
+    });
+  }
+
+  private static class CancellingOnHeavyProcessListener implements HeavyProcessLatch.HeavyProcessListener {
+    @NotNull private final ProgressIndicator myIndicator;
+
+    public CancellingOnHeavyProcessListener(@NotNull ProgressIndicator indicator) {
+      myIndicator = indicator;
+    }
+
+    @Override
+    public void processStarted() {
+      myIndicator.cancel();
+    }
+
+    @Override
+    public void processFinished() {
+    }
   }
 }
