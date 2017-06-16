@@ -71,7 +71,13 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public boolean isValid() {
     PsiJavaCodeReferenceElement reference = myReference.compute();
-    return reference != null && reference.isValid();
+    if (reference != null && reference.isValid()) {
+      for (PsiAnnotation annotation : getAnnotations(false)) {
+        if (!annotation.isValid()) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override

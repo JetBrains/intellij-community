@@ -92,6 +92,9 @@ public class PsiPrimitiveType extends PsiType.Stub {
    */
   @Override
   public boolean isValid() {
+    for (PsiAnnotation annotation : getAnnotations()) {
+      if (!annotation.isValid()) return false;
+    }
     return true;
   }
 
