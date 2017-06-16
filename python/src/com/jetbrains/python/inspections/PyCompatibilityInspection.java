@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,15 +169,14 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyCallExpression(PyCallExpression node) {
       super.visitPyCallExpression(node);
 
-      final Optional<PyFunction> optionalFunction = Optional
+      final PsiElement resolvedCallee = Optional
         .ofNullable(node.getCallee())
         .map(PyExpression::getReference)
         .map(PsiReference::resolve)
-        .filter(PyFunction.class::isInstance)
-        .map(PyFunction.class::cast);
+        .orElse(null);
 
-      if (optionalFunction.isPresent()) {
-        final PyFunction function = optionalFunction.get();
+      if (resolvedCallee instanceof PyFunction) {
+        final PyFunction function = (PyFunction)resolvedCallee;
         final PyClass containingClass = function.getContainingClass();
         final String originalFunctionName = function.getName();
 
@@ -204,6 +203,18 @@ public class PyCompatibilityInspection extends PyInspection {
             !myUsedImports.contains(functionName)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(functionName),
                                          " not have method " + functionName,
+                                         node,
+                                         null);
+        }
+      }
+      else if (resolvedCallee instanceof PyTargetExpression) {
+        final PyTargetExpression target = (PyTargetExpression)resolvedCallee;
+
+        if (!target.isQualified() &&
+            PyNames.TYPE_LONG.equals(target.getName()) &&
+            PyBuiltinCache.getInstance(resolvedCallee).isBuiltin(resolvedCallee)) {
+          registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(PyNames.TYPE_LONG),
+                                         " not have type long. Use int instead.",
                                          node,
                                          null);
         }
