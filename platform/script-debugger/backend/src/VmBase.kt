@@ -29,5 +29,5 @@ abstract class VmBase(override val debugListener: DebugEventListener) : Vm, Atta
     get() = false
     set(value) { }
 
-  override val children: MutableList<Vm> = ContainerUtil.createConcurrentList()
+  override val childVMs: MutableList<Vm> = ContainerUtil.createConcurrentList()
 }
