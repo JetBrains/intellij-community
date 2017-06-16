@@ -16,8 +16,10 @@
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +36,8 @@ public class ExecutionNode extends CachingSimpleNode {
   private long endTime;
   private boolean isFailed;
   private boolean isSkipped;
+  @Nullable
+  private String title;
 
   public ExecutionNode(Project aProject) {
     super(aProject, null);
@@ -42,6 +46,15 @@ public class ExecutionNode extends CachingSimpleNode {
   @Override
   protected SimpleNode[] buildChildren() {
     return myChildrenList.size() == 0 ? NO_CHILDREN : ContainerUtil.toArray(myChildrenList, new ExecutionNode[myChildrenList.size()]);
+  }
+
+  @Override
+  protected void update(PresentationData presentation) {
+    super.update(presentation);
+    if (title != null) {
+      presentation.addText(title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      presentation.addText(myName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
   }
 
   @Override
@@ -61,6 +74,15 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public void setName(String name) {
     myName = name;
+  }
+
+  @Nullable
+  public String getTitle() {
+    return title;
+  }
+
+  public void setTitle(@Nullable String title) {
+    this.title = title;
   }
 
   public void add(ExecutionNode node) {

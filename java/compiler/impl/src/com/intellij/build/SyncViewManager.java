@@ -56,7 +56,7 @@ public class SyncViewManager {
   public void onEvent(BuildEvent event, String... viewIds) {
     List<Runnable> runnables = new SmartList<>();
 
-    if (event instanceof StartBuildEvent && event.getParentId() == null) {
+    if (event instanceof StartBuildEvent) {
       runnables.add(() -> myConsoleView.clear());
     }
 

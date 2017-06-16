@@ -53,4 +53,10 @@ public interface BuildEvent {
    */
   @NotNull
   String getMessage();
+
+  @Nullable
+  String getHint();
+
+  @Nullable
+  String getDescription();
 }

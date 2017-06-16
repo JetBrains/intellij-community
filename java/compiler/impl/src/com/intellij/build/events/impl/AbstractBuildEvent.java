@@ -32,6 +32,8 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   @NotNull
   private final String myMessage;
   @Nullable
+  private String myHint;
+  @Nullable
   private String myDescription;
 
   public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
@@ -64,6 +66,16 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   }
 
   @Nullable
+  public String getHint() {
+    return myHint;
+  }
+
+  public void setHint(@Nullable String hint) {
+    myHint = hint;
+  }
+
+  @Nullable
+  @Override
   public String getDescription() {
     return myDescription;
   }

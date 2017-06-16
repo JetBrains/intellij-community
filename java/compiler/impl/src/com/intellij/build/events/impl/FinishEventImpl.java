@@ -15,26 +15,16 @@
  */
 package com.intellij.build.events.impl;
 
-import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.FinishEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
+public class FinishEventImpl extends AbstractBuildEvent implements FinishEvent {
 
-  private final String myBuildTitle;
-
-  public StartBuildEventImpl(@NotNull Object eventId,
-                             @NotNull String buildTitle,
-                             long eventTime,
-                             @NotNull String message) {
-    super(eventId, null, eventTime, message);
-    myBuildTitle = buildTitle;
-  }
-
-  @Override
-  public String getBuildTitle() {
-    return myBuildTitle;
+  public FinishEventImpl(@NotNull Object eventId, @Nullable Object parentId, long eventTime, @NotNull String message) {
+    super(eventId, parentId, eventTime, message);
   }
 }

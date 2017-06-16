@@ -13,28 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
+package com.intellij.build.events;
 
-import com.intellij.build.events.StartBuildEvent;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
-public class StartBuildEventImpl extends StartEventImpl implements StartBuildEvent {
-
-  private final String myBuildTitle;
-
-  public StartBuildEventImpl(@NotNull Object eventId,
-                             @NotNull String buildTitle,
-                             long eventTime,
-                             @NotNull String message) {
-    super(eventId, null, eventTime, message);
-    myBuildTitle = buildTitle;
-  }
-
-  @Override
-  public String getBuildTitle() {
-    return myBuildTitle;
-  }
+@ApiStatus.Experimental
+public interface StartEvent extends BuildEvent {
 }

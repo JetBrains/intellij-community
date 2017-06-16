@@ -17,10 +17,7 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.impl.FinishBuildEventImpl;
-import com.intellij.build.events.impl.OutputBuildEventImpl;
-import com.intellij.build.events.impl.ProgressBuildEventImpl;
-import com.intellij.build.events.impl.StartBuildEventImpl;
+import com.intellij.build.events.impl.*;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -419,9 +416,9 @@ public class ExternalSystemUtil {
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             long eventTime = System.currentTimeMillis();
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, null, eventTime, "\r"), "CONSOLE");
+              new StartBuildEventImpl(id, projectName, eventTime, "\r"), "CONSOLE");
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, null, eventTime, projectName + ": syncing..."), "TREE");
+              new StartBuildEventImpl(id, projectName, eventTime, "syncing..."), "TREE");
           }
 
           @Override
@@ -559,10 +556,10 @@ public class ExternalSystemUtil {
     long eventTime = progressEvent.getDescriptor().getEventTime();
     Object parentEventId = ObjectUtils.chooseNotNull(progressEvent.getParentEventId(), taskExecutionEvent.getId());
     if (progressEvent instanceof ExternalSystemStartEvent) {
-      return new StartBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+      return new StartEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
     }
     else if (progressEvent instanceof ExternalSystemFinishEvent) {
-      return new FinishBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+      return new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
     }
     else if (progressEvent instanceof ExternalSystemStatusEvent) {
       ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;

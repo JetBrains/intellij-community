@@ -21,5 +21,5 @@ import org.jetbrains.annotations.ApiStatus;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public interface FinishBuildEvent extends BuildEvent {
+public interface FinishBuildEvent extends FinishEvent {
 }

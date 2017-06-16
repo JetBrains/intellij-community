@@ -15,10 +15,7 @@
  */
 package com.intellij.build;
 
-import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FinishBuildEvent;
-import com.intellij.build.events.ProgressBuildEvent;
-import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.*;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
@@ -246,11 +243,16 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       parentNode = getRootElement();
     }
     ExecutionNode currentNode = nodesMap.get(event.getId());
-    if (event instanceof StartBuildEvent) {
+    if (event instanceof StartEvent) {
       assert currentNode == null;
       currentNode = new ExecutionNode(myProject);
       nodesMap.put(event.getId(), currentNode);
       parentNode.add(currentNode);
+
+      if (event instanceof StartBuildEvent) {
+        String buildTitle = ((StartBuildEvent)event).getBuildTitle();
+        currentNode.setTitle(buildTitle);
+      }
     }
     else {
       currentNode = nodesMap.get(event.getId());
@@ -271,12 +273,16 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     if (currentNode.getStartTime() == 0) {
       currentNode.setStartTime(event.getEventTime());
     }
-    if (event instanceof FinishBuildEvent) {
+
+    if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
-      myProgressAnimator.stopMovie();
     }
 
     myProgressAnimator.setCurrentNode(currentNode);
     myBuilder.queueUpdateFrom(currentNode, false, false);
+
+    if (event instanceof FinishBuildEvent) {
+      myProgressAnimator.stopMovie();
+    }
   }
 }
