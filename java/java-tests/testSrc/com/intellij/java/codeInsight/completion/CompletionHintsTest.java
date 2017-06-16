@@ -169,6 +169,28 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResult("class C { void m() { Character.toChars(123, <caret>, ) } }");
   }
 
+  public void testSwitchingOverloadsForMethodWithDisabledHints() throws Exception {
+    configureJava("class C {\n" +
+                  "  int some(int from, int to) { return 0; }\n" +
+                  "  int some(int from, int to, int other) { return 0; }\n" +
+                  "  void m() { s<caret> }\n" +
+                  "}");
+    complete("some(int from, int to, int other)");
+    checkResultWithInlays("class C {\n" +
+                          "  int some(int from, int to) { return 0; }\n" +
+                          "  int some(int from, int to, int other) { return 0; }\n" +
+                          "  void m() { some(<hint text=\"from:\"/>, <hint text=\"to:\"/>, <hint text=\"other:\"/>) }\n" +
+                          "}");
+    showParameterInfo();
+    myFixture.performEditorAction("MethodOverloadSwitchDown");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  int some(int from, int to) { return 0; }\n" +
+                          "  int some(int from, int to, int other) { return 0; }\n" +
+                          "  void m() { some(<hint text=\"from:\"/>, <hint text=\"to:\"/>) }\n" +
+                          "}");
+  }
+
   public void testNoHintsForMethodReference() {
     configureJava("class C {\n" +
                                                      "  interface I { void i(int p); }\n" +

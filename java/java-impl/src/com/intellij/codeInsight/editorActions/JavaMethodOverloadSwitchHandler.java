@@ -146,6 +146,7 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     CompletionMemory.registerChosenMethod(targetMethod, (PsiCall)exprList.getParent());
+    controller.resetHighlighted();
     controller.updateComponent(); // update popup immediately (otherwise, it will be updated only after delay)
   }
 

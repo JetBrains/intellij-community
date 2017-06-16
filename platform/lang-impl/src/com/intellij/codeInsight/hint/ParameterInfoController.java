@@ -456,6 +456,10 @@ public class ParameterInfoController implements Disposable {
     return myComponent.getHighlighted();
   }
 
+  public void resetHighlighted() {
+    myComponent.setHighlightedParameter(null);
+  }
+
   @TestOnly
   public static void waitForDelayedActions(@NotNull Editor editor, long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
