@@ -27,7 +27,7 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     return new MyVisitor(processor, options);
   }
 
-  private static class MyVisitor extends JavaRecursiveElementVisitor {
+  private static class MyVisitor extends JavaRecursiveElementWalkingVisitor {
     private final DependenciesBuilder.DependencyProcessor myProcessor;
     private final VisitorOptions myOptions;
 
