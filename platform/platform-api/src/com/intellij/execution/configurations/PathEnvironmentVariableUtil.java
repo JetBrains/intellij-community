@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +55,7 @@ public class PathEnvironmentVariableUtil {
    * listed in PATH environment variable and is accepted by filter.
    *
    * @param fileBaseName file base name
-   * @param filter exe file filter
+   * @param filter       exe file filter
    * @return {@link File} instance or null if not found
    */
   @Nullable
@@ -66,9 +67,9 @@ public class PathEnvironmentVariableUtil {
    * Finds an executable file with the specified base name, that is located in a directory
    * listed in the passed PATH environment variable value and is accepted by filter.
    *
-   * @param fileBaseName file base name
+   * @param fileBaseName      file base name
    * @param pathVariableValue value of PATH environment variable
-   * @param filter exe file filter
+   * @param filter            exe file filter
    * @return {@link File} instance or null if not found
    */
   @Nullable
@@ -152,9 +153,9 @@ public class PathEnvironmentVariableUtil {
    *
    * @param exePath String path to exe file (basename, relative path or absolute path)
    * @return if an exe file can be found in {@code EnvironmentUtil.getValue("PATH")} and
-   *            nothing found in original PATH (i.e. {@code System.getenv("PATH")}),
-   *         return the found exe file absolute path.
-   *         Otherwise, return the passed in exe path.
+   * nothing found in original PATH (i.e. {@code System.getenv("PATH")}),
+   * return the found exe file absolute path.
+   * Otherwise, return the passed in exe path.
    */
   @NotNull
   public static String toLocatableExePath(@NotNull String exePath) {
@@ -171,5 +172,18 @@ public class PathEnvironmentVariableUtil {
       }
     }
     return exePath;
+  }
+
+  @NotNull
+  public static List<String> getWindowsExecutableFileExtensions() {
+    if (SystemInfo.isWindows) {
+      String allExtensions = System.getenv("PATHEXT");
+      if (allExtensions != null) {
+        Collection<String> extensions = StringUtil.split(allExtensions, ";", true, true);
+        extensions = ContainerUtil.filter(extensions, s -> !StringUtil.isEmpty(s) && s.startsWith("."));
+        return ContainerUtil.map2List(extensions, s -> StringUtil.toLowerCase(s));
+      }
+    }
+    return Collections.emptyList();
   }
 }
