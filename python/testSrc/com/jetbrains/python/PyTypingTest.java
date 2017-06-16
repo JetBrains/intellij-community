@@ -21,11 +21,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -993,13 +991,7 @@ public class PyTypingTest extends PyTestCase {
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(),expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
-    assertType(expectedType, expr, codeAnalysis, "code analysis");
-    assertType(expectedType, expr, userInitiated, "user initiated");
-  }
-
-  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context, String contextName) {
-    final PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals("Failed in " + contextName + " context", expectedType, actualType);
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }
 }

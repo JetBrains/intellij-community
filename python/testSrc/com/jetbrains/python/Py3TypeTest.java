@@ -18,11 +18,9 @@ package com.jetbrains.python;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
@@ -615,11 +613,5 @@ public class Py3TypeTest extends PyTestCase {
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
-  }
-
-  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context) {
-    final PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals(expectedType, actualType);
   }
 }
