@@ -615,6 +615,8 @@
 
     <toolWindow id="Data View" factoryClass="com.jetbrains.python.debugger.containerview.PyDataViewToolWindowFactory" anchor="right" icon="PythonIcons.Python.DataView"/>
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
+
+    <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
   </extensions>
 
   <extensionPoints>
