@@ -3,8 +3,6 @@ package slowCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Random;
 import java.util.function.Predicate;
 
@@ -109,7 +107,7 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
 
   private void shrink(Generator<T> gen, Predicate<T> property) {
     while (true) {
-      Optional<CounterExampleImpl<T>> shrank = minimized.data.shrink().map(node -> {
+      CounterExampleImpl<T> shrank = ShrinkRunner.findShrink(minimized.data, node -> {
         try {
           T value = gen.generateUnstructured(new ReplayDataStructure(node));
           totalSteps++;
@@ -118,13 +116,14 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
         catch (CannotRestoreValue e) {
           return null;
         }
-      }).filter(Objects::nonNull).findFirst();
-      if (shrank.isPresent()) {
-        minimized = shrank.get();
+      });
+      if (shrank != null) {
+        minimized = shrank;
       } else {
         break;
       }
     }
   }
+
 
 }
