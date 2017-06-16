@@ -367,6 +367,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testThisExpressionValidationForLocalClasses() throws Exception {
+    doTestInlineThisOnly();
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();
