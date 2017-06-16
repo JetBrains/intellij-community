@@ -27,7 +27,7 @@ class RemoveListRange implements Shrink.ElementaryShrink {
     list.addAll(original.subList(1, start + 1));
     list.addAll(original.subList(end + 1, original.size()));
 
-    return new StructureNode(list, start == end - 1 ? start: 0);
+    return new StructureNode(list);
   }
 
   @Override
@@ -41,5 +41,10 @@ class RemoveListRange implements Shrink.ElementaryShrink {
   @Override
   public int hashCode() {
     return Objects.hash(start, end);
+  }
+
+  @Override
+  public String toString() {
+    return "RemoveListRange{" + + start + ", " + end + '}';
   }
 }

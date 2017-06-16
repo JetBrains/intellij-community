@@ -58,7 +58,7 @@ abstract class StructurePath {
         int index = indicesFromRoot.get(depth);
         List<StructureElement> children = new ArrayList<>(((StructureNode)source).children);
         children.set(index, expandShrinks(children.get(index), depth + 1));
-        return new StructureNode(children, index);
+        return new StructureNode(children);
       }
     }.expandShrinks(source, 0);
   }

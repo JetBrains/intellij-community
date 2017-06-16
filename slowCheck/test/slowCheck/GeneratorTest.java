@@ -50,7 +50,7 @@ public class GeneratorTest extends TestCase {
   public void testIsSorted() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   218);
+                   99);
   }
 
   public void testSuccess() {
@@ -61,7 +61,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   399);
+                   299);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -99,9 +99,9 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testLongListsHappen() {
-    checkFalsified(listOf(integers()).noShrink(),
+    checkFalsified(listOf(integers()),
                    l -> l.size() < 200,
-                   0);
+                   6714);
   }
 
   public void testNonEmptyList() {

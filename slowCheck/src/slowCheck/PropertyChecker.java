@@ -106,8 +106,9 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   }
 
   private void shrink(Generator<T> gen, Predicate<T> property) {
+    ShrinkRunner shrinkRunner = new ShrinkRunner();
     while (true) {
-      CounterExampleImpl<T> shrank = ShrinkRunner.findShrink(minimized.data, node -> {
+      CounterExampleImpl<T> shrank = shrinkRunner.findShrink(minimized.data, node -> {
         try {
           T value = gen.generateUnstructured(new ReplayDataStructure(node));
           totalSteps++;

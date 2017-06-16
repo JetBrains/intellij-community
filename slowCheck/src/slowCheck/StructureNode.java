@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author peter
@@ -15,16 +14,14 @@ interface StructureElement {
 
 class StructureNode implements StructureElement {
   final List<StructureElement> children;
-  final int lastModifiedChild;
   boolean shrinkProhibited;
 
   StructureNode() {
-    this(new ArrayList<>(), -1);
+    this(new ArrayList<>());
   }
 
-  StructureNode(List<StructureElement> children, int lastModifiedChild) {
+  StructureNode(List<StructureElement> children) {
     this.children = children;
-    this.lastModifiedChild = lastModifiedChild;
   }
 
   Iterator<StructureElement> childrenIterator() {
@@ -48,14 +45,6 @@ class StructureNode implements StructureElement {
     children.remove(children.size() - 1);
   }
 
-  static IntStream indices(int size, int lastModified) {
-    if (lastModified > 0) {
-      return IntStream.concat(IntStream.range(lastModified, size), IntStream.range(0, lastModified));
-    }
-    
-    return IntStream.range(0, size);
-  }
-
   @Override
   public List<Shrink> shrink() {
     if (shrinkProhibited) return Collections.emptyList();
@@ -63,13 +52,15 @@ class StructureNode implements StructureElement {
     return isList() ? shrinkList(children.size() - 1) : Collections.singletonList(Shrink.SHRINK_ALL_CHILDREN);
   }
 
-  private List<Shrink> shrinkList(int size) {
+  private static List<Shrink> shrinkList(int size) {
     List<Shrink> result = new ArrayList<>();
     if (size > 4) {
       result.add(new RemoveListRange(size / 2, size));
       result.add(new RemoveListRange(0, size / 2));
     }
-    indices(size, lastModifiedChild - 1).forEach(i -> result.add(new RemoveListRange(i, i + 1)));
+    for (int i = 0; i < size; i++) {
+      result.add(new RemoveListRange(i, i + 1));
+    }
     result.add(Shrink.SHRINK_LIST_ELEMENTS);
     return result;
   }

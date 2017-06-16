@@ -61,14 +61,14 @@ interface Shrink {
     @NotNull
     public List<ShrinkAction> expandShrinks(@NotNull StructureNode source) {
       List<ShrinkAction> result = new ArrayList<>();
-      StructureNode.indices(source.children.size(), source.lastModifiedChild).forEach(i -> {
+      for (int i = 0; i < source.children.size(); i++) {
         StructureElement child = source.children.get(i);
-        if (child instanceof IntData && !myShrinkInts) return;
+        if (child instanceof IntData && !myShrinkInts) continue;
 
         for (Shrink shrink : child.shrink()) {
           result.add(new ShrinkAction(new StructurePath.ChildPath(StructurePath.EMPTY, i), shrink));
         }
-      });
+      }
       return result;
     }
 
