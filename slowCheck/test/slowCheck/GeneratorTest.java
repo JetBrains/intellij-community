@@ -20,19 +20,19 @@ public class GeneratorTest extends TestCase {
   public void testMod() {
     checkFalsified(integers(), 
                    i -> i % 12 != 0,
-                   3);
+                   1);
   }
 
   public void testListSumMod() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   118);
+                   163);
   }
 
   public void testListContainsDivisible() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   13);
+                   11);
   }
 
   public void testStringContains() {
@@ -50,7 +50,7 @@ public class GeneratorTest extends TestCase {
   public void testIsSorted() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   99);
+                   101);
   }
 
   public void testSuccess() {
@@ -61,7 +61,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   299);
+                   113);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -76,7 +76,7 @@ public class GeneratorTest extends TestCase {
   public void testPropertyThrowsException() {
     checkFalsified(integers(), p -> {
       throw new AssertionError(p);
-    }, 32);
+    }, 1);
   }
 
   public void testSuchThat() {
@@ -101,7 +101,7 @@ public class GeneratorTest extends TestCase {
   public void testLongListsHappen() {
     checkFalsified(listOf(integers()),
                    l -> l.size() < 200,
-                   6714);
+                   781);
   }
 
   public void testNonEmptyList() {

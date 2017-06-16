@@ -97,6 +97,9 @@ class IntData implements StructureElement, Shrink.ElementaryShrink {
     if (value == 0) return Collections.emptyList();
 
     Set<IntData> builder = new LinkedHashSet<>();
+    if (distribution.isValidValue(0)) {
+      builder.add(new IntData(0, distribution));
+    }
     if (value < 0 && distribution.isValidValue(-value)) {
       builder.add(new IntData(-value, distribution));
     }
