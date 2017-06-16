@@ -38,6 +38,7 @@ public class PyNames {
    * int type
    */
   public static final String TYPE_INT = "int";
+  public static final String TYPE_LONG = "long";
   /**
    * unicode string type (see {@link #TYPE_STRING_TYPES}
    */

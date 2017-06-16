@@ -448,8 +448,12 @@ public class PyStringFormatInspection extends PyInspection {
     }
 
     private static class NewStyleInspection {
-      private static final List<String> CHECKED_TYPES = Arrays.asList("str", "int", "long", "float", "complex", "None");
-      private static final List<String> NUMERIC_TYPES = Arrays.asList("int", "long", "float", "complex");
+
+      private static final List<String> CHECKED_TYPES =
+        Arrays.asList(PyNames.TYPE_STR, PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex", "None");
+
+      private static final List<String> NUMERIC_TYPES = Arrays.asList(PyNames.TYPE_INT, PyNames.TYPE_LONG, "float", "complex");
+
       private static final ImmutableMap<Character, String> NEW_STYLE_FORMAT_CONVERSIONS = ImmutableMap.<Character, String>builder()
         .put('s', "str or None")
         .put('b', "int")
