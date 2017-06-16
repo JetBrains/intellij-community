@@ -750,8 +750,8 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl("/a/b/c/d/" + i), disposable, listener);
       events.add(new VFileCreateEvent(this, temp, "xxx" + i, false, true));
     }
-    PlatformTestUtil.startPerformanceTest("vfp update", 4000, () -> {
-      for (int i=0; i<100; i++) {
+    PlatformTestUtil.startPerformanceTest("vfp update", 5000, () -> {
+      for (int i=0; i< 100; i++) {
         // simulate VFS refresh events since launching the actual refresh is too slow
         myVirtualFilePointerManager.before(events);
         myVirtualFilePointerManager.after(events);
