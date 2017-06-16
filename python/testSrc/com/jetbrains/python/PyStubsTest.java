@@ -721,8 +721,7 @@ public class PyStubsTest extends PyTestCase {
       final PyTargetExpression attr = current.findTopLevelAttribute("x");
       assertNotNull(attr);
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), current);
-      // Will turn into concrete type when we start saving annotations in stubs 
-      assertNull(context.getType(attr));
+      assertType("int", attr, context);
       assertNotParsed(external);
     });
   }
@@ -736,6 +735,9 @@ public class PyStubsTest extends PyTestCase {
       final String annotation = param.getAnnotationContent();
       assertEquals("int", annotation);
       assertNotParsed(file);
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      assertType("int", param, context);
+      assertNotParsed(file);
     });
   }
 
@@ -747,6 +749,8 @@ public class PyStubsTest extends PyTestCase {
       final String annotation = func.getAnnotationContent();
       assertEquals("int", annotation);
       assertNotParsed(file);
+      assertType("() -> int", func, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
     });
   }
   
@@ -757,6 +761,8 @@ public class PyStubsTest extends PyTestCase {
       final PyTargetExpression var = file.findTopLevelAttribute("x");
       final String annotation = var.getAnnotationContent();
       assertEquals("int", annotation);
+      assertNotParsed(file);
+      assertType("int", var, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
       assertNotParsed(file);
     });
   }
