@@ -155,7 +155,7 @@ bool FindJVMInSettings() {
   if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH)) {
     ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
     std::wstring path(copy);
-    path += L"\\config" + module.substr(module.find_last_of('\\')) + L".jdk";
+    path += module.substr(module.find_last_of('\\')) + L".jdk";
     FILE *f = _tfopen(path.c_str(), _T("rt"));
     if (!f) return false;
 
