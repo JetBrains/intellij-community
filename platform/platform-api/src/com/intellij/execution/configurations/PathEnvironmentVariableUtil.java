@@ -172,14 +172,6 @@ public class PathEnvironmentVariableUtil {
    */
   @NotNull
   public static String toLocatableExePath(@NotNull String exePath) {
-    //noinspection deprecation
-    return findAbsolutePathOnMac(exePath);
-  }
-
-  /**
-   * @deprecated use {@link #toLocatableExePath(String)} instead
-   */
-  public static String findAbsolutePathOnMac(@NotNull String exePath) {
     if (SystemInfo.isMac) {
       if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         File originalResolvedExeFile = findInOriginalPath(exePath);

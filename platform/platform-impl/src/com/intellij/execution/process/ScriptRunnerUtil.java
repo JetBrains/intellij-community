@@ -33,10 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
-/**
- * @author Elena Shaverdova
- * @author Nikolay Matveev
- */
 public final class ScriptRunnerUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ScriptRunnerUtil");
@@ -100,7 +96,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
-    exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
+    exePath = PathEnvironmentVariableUtil.toLocatableExePath(exePath);
     return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
   }
 
