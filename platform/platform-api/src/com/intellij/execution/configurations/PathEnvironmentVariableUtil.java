@@ -74,7 +74,7 @@ public class PathEnvironmentVariableUtil {
    */
   @Nullable
   public static File findInPath(@NotNull String fileBaseName, @Nullable String pathVariableValue, @Nullable FileFilter filter) {
-    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, filter, pathVariableValue);
+    List<File> exeFiles = findExeFilesInPath(true, filter, pathVariableValue, fileBaseName);
     return ContainerUtil.getFirstItem(exeFiles);
   }
 
@@ -87,7 +87,7 @@ public class PathEnvironmentVariableUtil {
    * @return {@link File} instance or null if not found
    */
   private static File findInOriginalPath(@NotNull String fileBaseName) {
-    List<File> exeFiles = findExeFilesInPath(fileBaseName, true, null, System.getenv(PATH));
+    List<File> exeFiles = findExeFilesInPath(true, null, System.getenv(PATH), fileBaseName);
     return ContainerUtil.getFirstItem(exeFiles);
   }
 
@@ -105,14 +105,14 @@ public class PathEnvironmentVariableUtil {
 
   @NotNull
   public static List<File> findAllExeFilesInPath(@NotNull String fileBaseName, @Nullable FileFilter filter) {
-    return findExeFilesInPath(fileBaseName, false, filter, EnvironmentUtil.getValue(PATH));
+    return findExeFilesInPath(false, filter, EnvironmentUtil.getValue(PATH), fileBaseName);
   }
 
   @NotNull
-  private static List<File> findExeFilesInPath(@NotNull String fileBaseName,
-                                               boolean stopAfterFirstMatch,
+  private static List<File> findExeFilesInPath(boolean stopAfterFirstMatch,
                                                @Nullable FileFilter filter,
-                                               @Nullable String pathEnvVarValue) {
+                                               @Nullable String pathEnvVarValue,
+                                               @NotNull String... fileBaseNames) {
     if (pathEnvVarValue == null) {
       return Collections.emptyList();
     }
@@ -121,12 +121,14 @@ public class PathEnvironmentVariableUtil {
     for (String dirPath : dirPaths) {
       File dir = new File(dirPath);
       if (dir.isAbsolute() && dir.isDirectory()) {
-        File exeFile = new File(dir, fileBaseName);
-        if (exeFile.isFile() && exeFile.canExecute()) {
-          if (filter == null || filter.accept(exeFile)) {
-            result.add(exeFile);
-            if (stopAfterFirstMatch) {
-              return result;
+        for (String fileBaseName : fileBaseNames) {
+          File exeFile = new File(dir, fileBaseName);
+          if (exeFile.isFile() && exeFile.canExecute()) {
+            if (filter == null || filter.accept(exeFile)) {
+              result.add(exeFile);
+              if (stopAfterFirstMatch) {
+                return result;
+              }
             }
           }
         }
@@ -185,5 +187,26 @@ public class PathEnvironmentVariableUtil {
       }
     }
     return Collections.emptyList();
+  }
+
+  public static String findExecutableInWindowsPath(@NotNull String exePath) {
+    if (SystemInfo.isWindows) {
+      if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
+        List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
+
+        String[] baseNames = new String[executableFileExtensions.size()+1];
+        baseNames[0] = exePath;
+        int i = 0;
+        for (String extension : executableFileExtensions) {
+          baseNames[i]= exePath + extension;
+        }
+        List<File> exeFiles = findExeFilesInPath(true, null, EnvironmentUtil.getValue(PATH), baseNames);
+        File foundFile = ContainerUtil.getFirstItem(exeFiles);
+        if(foundFile != null){
+          return foundFile.getAbsolutePath();
+        }
+      }
+    }
+    return exePath;
   }
 }
