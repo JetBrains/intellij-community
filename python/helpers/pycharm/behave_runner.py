@@ -168,7 +168,12 @@ class _BehaveRunner(_bdd_utils.BddRunner):
                     error_message = element.exception
                 message_as_string = utils.to_unicode(error_message)
                 if fetch_log and self.__real_runner.config.log_capture:
-                    message_as_string += u"\n" + utils.to_unicode(self.__real_runner.log_capture.getvalue())
+                    try:
+                        capture = self.__real_runner.log_capture  # 1.2.5
+                    except AttributeError:
+                        capture = self.__real_runner.capture_controller.log_capture  # 1.2.6
+
+                    message_as_string += u"\n" + utils.to_unicode(capture.getvalue())
                 self._test_failed(step_name, message_as_string, trace, duration=duration_ms)
             elif element.status == 'undefined':
                 self._test_undefined(step_name, element.location)
