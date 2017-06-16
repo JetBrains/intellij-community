@@ -167,10 +167,8 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
       myRefreshSessionId = session.getId();
       session.launch();
       LOG.debug("vfs refreshed");
-      System.out.println("vfs refreshed");
     }
     else if (LOG.isDebugEnabled()) {
-      System.out.println("vfs refresh rejected, blocked");
       LOG.debug("vfs refresh rejected, blocked: " +
                 (myBlockSyncOnFrameActivationCount.get() != 0) +
                 ", isSyncOnFrameActivation: " +
