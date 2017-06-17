@@ -97,6 +97,7 @@ public final class ScriptRunnerUtil {
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
     exePath = PathEnvironmentVariableUtil.toLocatableExePath(exePath);
+    exePath = PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath);
     return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
   }
 
