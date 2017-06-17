@@ -1385,6 +1385,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           updatePopup();
           check();
 
+          checkModelsUpToDate();
           runReadAction(() -> buildRunConfigurations(pattern), true);
           runReadAction(() -> buildClasses(pattern), true);
           runReadAction(() -> buildFiles(pattern), false);
