@@ -50,7 +50,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected VirtualFile myRepository;
 
   private VcsRootChecker myExtension;
-  private RootModelImpl myRootModel;
+  protected RootModelImpl myRootModel;
 
   @Override
   protected void setUp() throws Exception {

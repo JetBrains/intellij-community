@@ -103,7 +103,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return roots;
     }
 
-    if (myProject.isDisposed() || !dir.isDirectory()) {
+    if (myProject.isDisposed() || !dir.isDirectory() || myProjectManager.getFileIndex().isExcluded(dir)) {
       return roots;
     }
     List<AbstractVcs> vcsList = getVcsListFor(dir);
