@@ -3817,6 +3817,15 @@ public class UIUtil {
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
+  @Nullable
+  public static UndoManager getUndoManager(Component component) {
+    if (component instanceof JTextComponent) {
+      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
+      if (o instanceof UndoManager) return (UndoManager)o;
+    }
+    return null;
+  }
+
   public static void playSoundFromResource(final String resourceName) {
     final Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return;
