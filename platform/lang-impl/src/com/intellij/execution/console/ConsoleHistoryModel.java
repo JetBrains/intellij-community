@@ -15,130 +15,40 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
- * @author Gregory.Shrago
+ * @author Yuli Fiterman
  */
-class ConsoleHistoryModel extends SimpleModificationTracker {
-  /** @noinspection FieldCanBeLocal*/
-  private final Object myLock;
-  private final LinkedList<String> myEntries;
-  private int myIndex;
+public interface ConsoleHistoryModel extends ModificationTracker {
+  void resetEntries(@NotNull List<String> entries);
 
-  ConsoleHistoryModel(@Nullable ConsoleHistoryModel masterModel) {
-    myEntries = masterModel == null ? new LinkedList<>() : masterModel.myEntries;
-    myLock = masterModel == null ? this : masterModel.myLock;  // hard ref to master model
-    resetIndex();
-  }
+  void addToHistory(@Nullable String statement);
 
-  ConsoleHistoryModel copy() {
-    return new ConsoleHistoryModel(this);
-  }
+  int getMaxHistorySize();
 
-  public void resetEntries(@NotNull List<String> entries) {
-    synchronized (myLock) {
-      myEntries.clear();
-      myEntries.addAll(entries.subList(0, Math.min(entries.size(), getMaxHistorySize())));
-      incModificationCount();
-    }
-  }
+  void removeFromHistory(String statement);
 
-  public void addToHistory(@Nullable String statement) {
-    if (StringUtil.isEmptyOrSpaces(statement)) return;
+  List<String> getEntries();
 
-    synchronized (myLock) {
-      int maxHistorySize = getMaxHistorySize();
-      myEntries.remove(statement);
-      int size = myEntries.size();
-      if (size >= maxHistorySize && size > 0) {
-        myEntries.removeFirst();
-      }
-      myEntries.addLast(statement);
-      incModificationCount();
-    }
-  }
+  boolean isEmpty();
 
-  @Override
-  public void incModificationCount() {
-    resetIndex();
-    super.incModificationCount();
-  }
-
-  protected void resetIndex() {
-    synchronized (myLock) {
-      myIndex = myEntries.size();
-    }
-  }
-
-  public int getMaxHistorySize() {
-    return UISettings.getInstance().getConsoleCommandHistoryLimit();
-  }
-
-  public void removeFromHistory(String statement) {
-    synchronized (myLock) {
-      myEntries.remove(statement);
-      incModificationCount();
-    }
-  }
-
-  public List<String> getEntries() {
-    synchronized (myLock) {
-      return ContainerUtil.newArrayList(myEntries);
-    }
-  }
-
-  public boolean isEmpty() {
-    synchronized (myLock) {
-      return myEntries.isEmpty();
-    }
-  }
-
-  public int getHistorySize() {
-    synchronized (myLock) {
-      return myEntries.size();
-    }
-  }
+  int getHistorySize();
 
   @Nullable
-  public String getHistoryNext() {
-    synchronized (myLock) {
-      if (myIndex >= 0) --myIndex;
-      return getCurrentEntry();
-    }
-  }
+  String getHistoryNext();
 
   @Nullable
-  public String getHistoryPrev() {
-    synchronized (myLock) {
-      if (myIndex <= myEntries.size() - 1) ++myIndex;
-      return getCurrentEntry();
-    }
-  }
+  String getHistoryPrev();
 
-  public boolean hasHistory(final boolean next) {
-    synchronized (myLock) {
-      return next ? myIndex > 0 : myIndex < myEntries.size() - 1;
-    }
-  }
+  boolean hasHistory(boolean next);
 
-  String getCurrentEntry() {
-    synchronized (myLock) {
-      return myIndex >= 0 && myIndex < myEntries.size() ? myEntries.get(myIndex) : null;
-    }
-  }
+  ConsoleHistoryModel copy();
 
-  int getCurrentIndex() {
-    synchronized (myLock) {
-      return myIndex;
-    }
-  }
+  int getCurrentIndex();
+
 }
