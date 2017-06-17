@@ -1194,7 +1194,7 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-21519
   public void testTypeComment() {
-    myFixture.copyFileToProject("../typing/typing.py");
+    myFixture.copyDirectoryToProject("../typing", "");
     final List<String> variants = doTestByFile();
     assertContainsElements(variants, "List", "Union", "Optional");
   }
