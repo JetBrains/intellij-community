@@ -15,40 +15,49 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Yuli Fiterman
  */
-public interface ConsoleHistoryModel extends ModificationTracker {
-  void resetEntries(@NotNull List<String> entries);
 
-  void addToHistory(@Nullable String statement);
-
-  int getMaxHistorySize();
-
-  void removeFromHistory(String statement);
-
-  List<String> getEntries();
-
-  boolean isEmpty();
-
-  int getHistorySize();
+public interface ConsoleHistoryModel extends ConsoleHistoryBaseModel {
 
   @Nullable
-  String getHistoryNext();
+  Entry getHistoryNext();
 
   @Nullable
-  String getHistoryPrev();
+  Entry getHistoryPrev();
 
-  boolean hasHistory(boolean next);
-
-  ConsoleHistoryModel copy();
+  boolean hasHistory();
 
   int getCurrentIndex();
 
+  void setContent(@NotNull String userContent);
+
+  /* if true then overrides the navigation behavior such that the down key on last line always navigates to prev instead of only when there
+     are no more characters in from of the caret
+   */
+  default boolean prevOnLastLine() {
+    return false;
+  }
+
+  class Entry {
+    private final String text;
+    private final int offset;
+
+    public Entry(String text, int offset) {
+      this.text = text;
+      this.offset = offset;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    public int getOffset() {
+      return offset;
+    }
+  }
 }

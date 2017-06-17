@@ -18,23 +18,38 @@ package com.intellij.execution.console;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gregory.Shrago
  */
-class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
+public class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
   /**
    * @noinspection FieldCanBeLocal
    */
+
+  /**
+   * @noinspection MismatchedQueryAndUpdateOfCollection
+   */
+  private final static Map<String, DefaultConsoleHistoryModel> ourModels =
+    ConcurrentFactoryMap.createMap(key -> new DefaultConsoleHistoryModel(null),
+                                   ContainerUtil::createConcurrentWeakValueMap);
+
+  public static DefaultConsoleHistoryModel createModel(String persistenceId) {
+    return ourModels.get(persistenceId).copy();
+  }
+
   private final Object myLock;
   private final LinkedList<String> myEntries;
   private int myIndex;
+  private String myContent;
 
   DefaultConsoleHistoryModel(@Nullable DefaultConsoleHistoryModel masterModel) {
     myEntries = masterModel == null ? new LinkedList<>() : masterModel.myEntries;
@@ -96,6 +111,7 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
     }
   }
 
+  @NotNull
   @Override
   public List<String> getEntries() {
     synchronized (myLock) {
@@ -119,32 +135,33 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
 
   @Override
   @Nullable
-  public String getHistoryNext() {
+  public Entry getHistoryNext() {
     synchronized (myLock) {
       if (myIndex >= 0) --myIndex;
-      return getCurrentEntry();
+      return new Entry(getCurrentEntry(), -1);
     }
   }
 
   @Override
   @Nullable
-  public String getHistoryPrev() {
+  public Entry getHistoryPrev() {
     synchronized (myLock) {
       if (myIndex <= myEntries.size() - 1) ++myIndex;
-      return getCurrentEntry();
+      return new Entry(getCurrentEntry(), -1);
     }
   }
 
   @Override
-  public boolean hasHistory(final boolean next) {
+  public boolean hasHistory() {
     synchronized (myLock) {
-      return next ? myIndex > 0 : myIndex < myEntries.size() - 1;
+      return myIndex <= myEntries.size() - 1;
     }
   }
 
   String getCurrentEntry() {
     synchronized (myLock) {
-      return myIndex >= 0 && myIndex < myEntries.size() ? myEntries.get(myIndex) : null;
+      return myIndex >= 0 && myIndex < myEntries.size() ? myEntries.get(myIndex) :
+             myIndex == myEntries.size() ? myContent : null;
     }
   }
 
@@ -152,5 +169,10 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
     synchronized (myLock) {
       return myIndex;
     }
+  }
+
+  @Override
+  public void setContent(@NotNull String userContent) {
+    myContent = userContent;
   }
 }
