@@ -105,7 +105,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   }
   
   private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
-  private final SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
+  @Nullable private final SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
 
 
   /**
@@ -163,7 +163,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       }
     };
 
-    final PyCallSiteExpression originalCallSite = myOriginalCallSiteExpression.getElement();
+    final PyCallSiteExpression originalCallSite = myOriginalCallSiteExpression != null ? myOriginalCallSiteExpression.getElement() : null;
     try {
       if (originalCallSite != null) {
         originalCallSite.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);
