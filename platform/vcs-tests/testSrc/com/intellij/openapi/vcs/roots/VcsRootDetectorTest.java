@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +33,9 @@ import java.util.Collection;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
-
-
-/**
- * @author Nadya Zabrodina
- */
+import static com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class VcsRootDetectorTest extends VcsRootBaseTest {
 
@@ -102,7 +100,6 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     doTest(new VcsRootConfiguration().vcsRoots("another"), myRepository);
   }
 
-
   public void testLinkedSourceRootAloneShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
       new VcsRootConfiguration().vcsRoots("linked_root")
@@ -133,8 +130,26 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
            myProjectRoot, "community", "content_root/lev1/lev2");
   }
 
-  void assertRoots(@NotNull Collection<String> expectedRelativePaths, @NotNull Collection<String> actual) {
-    VcsTestUtil.assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
+  public void testDontScanExcludedDirs() throws IOException {
+    VcsRootConfiguration vcsRootConfiguration = new VcsRootConfiguration()
+        .contentRoots("community", "excluded")
+        .vcsRoots("community", "excluded/lev1");
+    setUp(vcsRootConfiguration, myProjectRoot);
+
+    VirtualFile excludedFolder = myProjectRoot.findChild("excluded");
+    assertNotNull(excludedFolder);
+    markAsExcluded(excludedFolder);
+
+    Collection<VcsRoot> vcsRoots = detect(myProjectRoot);
+    assertRoots(singletonList("community"), getPaths(vcsRoots));
+  }
+
+  private void assertRoots(@NotNull Collection<String> expectedRelativePaths, @NotNull Collection<String> actual) {
+    assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
+  }
+
+  private void markAsExcluded(@NotNull VirtualFile dir) {
+    ModuleRootModificationUtil.updateExcludedFolders(myRootModel.getModule(), dir, emptyList(), singletonList(dir.getUrl()));
   }
 
   @NotNull
@@ -167,12 +182,8 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
 
   public void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration,
                      @Nullable VirtualFile startDir,
-                     @NotNull String... expectedPaths)
-    throws IOException {
-    initProject(vcsRootConfiguration);
-    if (startDir != null) {
-      startDir.refresh(false, true);
-    }
+                     @NotNull String... expectedPaths) throws IOException {
+    setUp(vcsRootConfiguration, startDir);
     Collection<VcsRoot> vcsRoots = detect(startDir);
     assertRoots(Arrays.asList(expectedPaths), getPaths(
       ContainerUtil.filter(vcsRoots, root -> {
@@ -180,5 +191,12 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
         return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
       })
     ));
+  }
+
+  private void setUp(@NotNull VcsRootConfiguration vcsRootConfiguration, @Nullable VirtualFile startDir) throws IOException {
+    initProject(vcsRootConfiguration);
+    if (startDir != null) {
+      startDir.refresh(false, true);
+    }
   }
 }
