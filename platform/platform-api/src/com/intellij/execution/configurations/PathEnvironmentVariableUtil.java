@@ -216,12 +216,7 @@ public class PathEnvironmentVariableUtil {
       if (!StringUtil.containsChar(exePath, '/') && !StringUtil.containsChar(exePath, '\\')) {
         List<String> executableFileExtensions = getWindowsExecutableFileExtensions();
 
-        String[] baseNames = new String[executableFileExtensions.size()+1];
-        baseNames[0] = exePath;
-        int i = 0;
-        for (String extension : executableFileExtensions) {
-          baseNames[i]= exePath + extension;
-        }
+        String[] baseNames = ContainerUtil.map2Array(executableFileExtensions, String.class, s -> exePath+s);
         List<File> exeFiles = findExeFilesInPath(true, null, EnvironmentUtil.getValue(PATH), baseNames);
         File foundFile = ContainerUtil.getFirstItem(exeFiles);
         if(foundFile != null){
