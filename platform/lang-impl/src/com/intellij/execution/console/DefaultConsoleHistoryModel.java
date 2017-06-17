@@ -19,11 +19,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Gregory.Shrago
@@ -32,6 +34,25 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
   /**
    * @noinspection FieldCanBeLocal
    */
+
+  /**
+   * @noinspection MismatchedQueryAndUpdateOfCollection
+   */
+  private final static FactoryMap<String, DefaultConsoleHistoryModel> ourModels = new FactoryMap<String, DefaultConsoleHistoryModel>() {
+    @Override
+    protected Map<String, DefaultConsoleHistoryModel> createMap() {
+      return ContainerUtil.createConcurrentWeakValueMap();
+    }
+
+    @Override
+    protected DefaultConsoleHistoryModel create(String key) {
+      return new DefaultConsoleHistoryModel(null);
+    }
+  };
+
+  public static DefaultConsoleHistoryModel createModel(String persistenceId) {
+    return ourModels.get(persistenceId).copy();
+  }
   private final Object myLock;
   private final LinkedList<String> myEntries;
   private int myIndex;
