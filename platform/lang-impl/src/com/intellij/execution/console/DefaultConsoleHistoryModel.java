@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author Gregory.Shrago
  */
-class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
+public class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
   /**
    * @noinspection FieldCanBeLocal
    */
@@ -56,6 +56,7 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
   private final Object myLock;
   private final LinkedList<String> myEntries;
   private int myIndex;
+  private String myContent;
 
   DefaultConsoleHistoryModel(@Nullable DefaultConsoleHistoryModel masterModel) {
     myEntries = masterModel == null ? new LinkedList<>() : masterModel.myEntries;
@@ -140,32 +141,33 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
 
   @Override
   @Nullable
-  public String getHistoryNext() {
+  public TextWithOffset getHistoryNext() {
     synchronized (myLock) {
       if (myIndex >= 0) --myIndex;
-      return getCurrentEntry();
+      return new TextWithOffset(getCurrentEntry(), -1);
     }
   }
 
   @Override
   @Nullable
-  public String getHistoryPrev() {
+  public TextWithOffset getHistoryPrev() {
     synchronized (myLock) {
       if (myIndex <= myEntries.size() - 1) ++myIndex;
-      return getCurrentEntry();
+      return new TextWithOffset(getCurrentEntry(), -1);
     }
   }
 
   @Override
-  public boolean hasHistory(final boolean next) {
+  public boolean hasHistory() {
     synchronized (myLock) {
-      return next ? myIndex > 0 : myIndex < myEntries.size() - 1;
+      return myIndex <= myEntries.size() - 1;
     }
   }
 
   String getCurrentEntry() {
     synchronized (myLock) {
-      return myIndex >= 0 && myIndex < myEntries.size() ? myEntries.get(myIndex) : null;
+      return myIndex >= 0 && myIndex < myEntries.size() ? myEntries.get(myIndex) :
+             myIndex == myEntries.size() ? myContent : null;
     }
   }
 
@@ -173,5 +175,10 @@ class DefaultConsoleHistoryModel extends SimpleModificationTracker implements Co
     synchronized (myLock) {
       return myIndex;
     }
+  }
+
+  @Override
+  public void setContent(String userContent) {
+    myContent = userContent;
   }
 }

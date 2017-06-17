@@ -25,6 +25,23 @@ import java.util.List;
  * @author Yuli Fiterman
  */
 public interface ConsoleHistoryModel extends ModificationTracker {
+  class TextWithOffset {
+    private final String text;
+    private final int offset;
+
+    public TextWithOffset(String text, int offset) {
+      this.text = text;
+      this.offset = offset;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    public int getOffset() {
+      return offset;
+    }
+  }
   void resetEntries(@NotNull List<String> entries);
 
   void addToHistory(@Nullable String statement);
@@ -33,22 +50,31 @@ public interface ConsoleHistoryModel extends ModificationTracker {
 
   void removeFromHistory(String statement);
 
+  @NotNull
   List<String> getEntries();
 
   boolean isEmpty();
 
   int getHistorySize();
 
-  @Nullable
-  String getHistoryNext();
 
   @Nullable
-  String getHistoryPrev();
+  TextWithOffset getHistoryNext();
 
-  boolean hasHistory(boolean next);
+  @Nullable
+  TextWithOffset getHistoryPrev();
 
-  ConsoleHistoryModel copy();
+  boolean hasHistory();
 
   int getCurrentIndex();
+
+  void setContent(@NotNull String userContent);
+
+  /* if true then overrides the navigation behavior such that the down key on last line always navigates to prev instead of only when there
+     are no more characters in from of the caret
+   */
+  default boolean prevOnLastLine() {
+    return false;
+  }
 
 }

@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="diff-impl" />
     <orderEntry type="module" module-name="built-in-server-api" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="pcollections-2.1.2" level="project" />
   </component>
 </module>

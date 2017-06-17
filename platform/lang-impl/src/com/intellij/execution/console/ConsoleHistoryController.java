@@ -17,6 +17,7 @@ package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.execution.console.ConsoleHistoryModel.TextWithOffset;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -54,7 +55,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
@@ -63,6 +63,7 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
@@ -88,7 +89,7 @@ public class ConsoleHistoryController {
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
-  private final ModelHelper myHelper;
+  private ModelHelper myHelper;
   private long myLastSaveStamp;
 
   @Deprecated
@@ -105,6 +106,11 @@ public class ConsoleHistoryController {
                                    @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
     myHelper = new ModelHelper(rootType, persistenceId, model);
     myConsole = console;
+  }
+
+  @TestOnly
+  public void setModel(@NotNull ConsoleHistoryModel model){
+    myHelper = new ModelHelper(myHelper.myRootType, myHelper.myId, model);
   }
 
   //@Nullable
@@ -212,7 +218,7 @@ public class ConsoleHistoryController {
     boolean result = myHelper.loadHistory(id, myConsole.getVirtualFile());
     String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
-      setConsoleText(userValue, false, false);
+      setConsoleText(new TextWithOffset(userValue, -1), false, false);
     }
     return result;
   }
@@ -236,8 +242,8 @@ public class ConsoleHistoryController {
     return myBrowseHistory;
   }
 
-  protected void setConsoleText(final String command, final boolean storeUserText, final boolean regularMode) {
-    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command)) return;
+  protected void setConsoleText(final TextWithOffset command, final boolean storeUserText, final boolean regularMode) {
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction.Simple(myConsole.getProject()) {
@@ -245,10 +251,11 @@ public class ConsoleHistoryController {
       public void run() {
         if (storeUserText) {
           String text = document.getText();
-          if (Comparing.equal(command, text) && myHelper.getContent() != null) return;
+          if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
           myHelper.setContent(text);
+          myHelper.getModel().setContent(text);
         }
-        String text = StringUtil.notNullize(command);
+        String text = StringUtil.notNullize(command.getText());
         int offset;
         if (regularMode) {
           if (myMultiline) {
@@ -256,7 +263,7 @@ public class ConsoleHistoryController {
           }
           else {
             document.setText(text);
-            offset = document.getTextLength();
+            offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
           }
         }
         else {
@@ -300,15 +307,10 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      String command;
-      if (myNext) {
-        command = getModel().getHistoryNext();
-        if (!myMultiline && command == null) return;
-      }
-      else {
-        command = ObjectUtils.chooseNotNull(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
-      }
-      setConsoleText(command, myNext && !getModel().hasHistory(false), true);
+      boolean hasHistory = getModel().hasHistory(); // need to check before next line's side effect
+      TextWithOffset command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
+      if (!myMultiline && command == null) return;
+      setConsoleText(command, myNext && !hasHistory, true);
     }
 
     @Override
@@ -342,7 +344,7 @@ public class ConsoleHistoryController {
     else {
       final int lineCount = document.getLineCount();
       return (lineCount == 0 || document.getLineNumber(caretModel.getOffset()) == lineCount - 1) &&
-             StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+             (StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset())) || myHelper.getModel().prevOnLastLine());
     }
   }
 
@@ -374,6 +376,7 @@ public class ConsoleHistoryController {
           return content;
         }
 
+        @NotNull
         @Override
         protected List<String> getContents() {
           List<String> entries = getModel().getEntries();
@@ -410,7 +413,7 @@ public class ConsoleHistoryController {
       chooser.setSplitterOrientation(false);
       chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - getModel().getCurrentIndex() - 1));
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
-        setConsoleText(chooser.getSelectedText(), false, true);
+        setConsoleText(new TextWithOffset(chooser.getSelectedText(), -1), false, true);
       }
     }
   }

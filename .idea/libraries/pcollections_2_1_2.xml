@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="pcollections-2.1.2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/pcollections-2.1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ideaLibSources/pcollections-2.1.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
