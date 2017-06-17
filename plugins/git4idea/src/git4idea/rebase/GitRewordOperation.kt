@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -34,6 +35,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.Git
+import git4idea.config.GitConfigUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.rebase.GitRebaseEntry.Action.pick
 import git4idea.rebase.GitRebaseEntry.Action.reword
@@ -101,7 +103,9 @@ class GitRewordOperation(private val repository: GitRepository,
       return newMessage
     }
     else {
-      throw IllegalStateException("Unexpected editor content: $editorText")
+      LOG.error("Unexpected editor content. Charset: ${GitConfigUtil.getCommitEncoding(project, commit.root)}",
+                Attachment("actual.txt", editorText), Attachment("expected.txt", commit.fullMessage))
+      throw IllegalStateException("Unexpected editor content")
     }
   }
 
