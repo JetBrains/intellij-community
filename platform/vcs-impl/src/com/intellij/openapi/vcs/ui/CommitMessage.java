@@ -45,6 +45,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import org.jetbrains.annotations.*;
 
@@ -70,10 +71,10 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @NotNull private List<ChangeList> myChangeLists = emptyList(); // guarded with WriteLock
 
   public CommitMessage(@NotNull Project project) {
-    this(project, true, true);
+    this(project, true, true, true);
   }
 
-  public CommitMessage(@NotNull Project project, boolean withSeparator, boolean runInspections) {
+  public CommitMessage(@NotNull Project project, boolean withSeparator, boolean showToolbar, boolean runInspections) {
     super(new BorderLayout());
 
     myEditorField = createCommitMessageEditor(project, runInspections);
@@ -81,23 +82,34 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     add(myEditorField, BorderLayout.CENTER);
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), withSeparator);
-    toolbar.updateActionsImmediately();
-    toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.getComponent().setBorder(createEmptyBorder());
-
     if (withSeparator) {
       mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
       JPanel separatorPanel = simplePanel().addToBottom(mySeparator).addToTop(Box.createVerticalGlue());
-      JPanel labelPanel = simplePanel(separatorPanel).addToRight(toolbar.getComponent()).withBorder(createEmptyBorder());
+      BorderLayoutPanel labelPanel = simplePanel(separatorPanel).withBorder(createEmptyBorder());
+      if (showToolbar) {
+        labelPanel.addToRight(createToolbar(true));
+      }
       add(labelPanel, BorderLayout.NORTH);
     }
     else {
       mySeparator = null;
-      add(toolbar.getComponent(), BorderLayout.EAST);
+      if (showToolbar) {
+        add(createToolbar(false), BorderLayout.EAST);
+      }
     }
 
     setBorder(createEmptyBorder());
+  }
+
+  @NotNull
+  private static JComponent createToolbar(boolean horizontal) {
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), horizontal);
+
+    toolbar.updateActionsImmediately();
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.getComponent().setBorder(createEmptyBorder());
+
+    return toolbar.getComponent();
   }
 
   @Nullable
