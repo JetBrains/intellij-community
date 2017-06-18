@@ -202,13 +202,13 @@ public class GitFileHistory {
    * @param exceptionConsumer This consumer is notified in case of error while executing git command.
    * @param parameters        Optional parameters which will be added to the git log command just before the path.
    */
-  public static void history(@NotNull Project project,
-                             @NotNull FilePath path,
-                             @Nullable VirtualFile root,
-                             @Nullable VcsRevisionNumber startingFrom,
-                             @NotNull Consumer<GitFileRevision> consumer,
-                             @NotNull Consumer<VcsException> exceptionConsumer,
-                             String... parameters) {
+  public static void loadHistory(@NotNull Project project,
+                                 @NotNull FilePath path,
+                                 @Nullable VirtualFile root,
+                                 @Nullable VcsRevisionNumber startingFrom,
+                                 @NotNull Consumer<GitFileRevision> consumer,
+                                 @NotNull Consumer<VcsException> exceptionConsumer,
+                                 String... parameters) {
     VirtualFile repositoryRoot = root == null ? ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path) : root;
     if (repositoryRoot == null) {
       exceptionConsumer.consume(new VcsException("The file " + path + " is not under vcs."));
@@ -229,14 +229,14 @@ public class GitFileHistory {
    * @throws VcsException if there is problem with running git
    */
   @NotNull
-  public static List<VcsFileRevision> history(@NotNull Project project,
-                                              @NotNull FilePath path,
-                                              @NotNull VcsRevisionNumber startingFrom,
-                                              String... parameters) throws VcsException {
+  public static List<VcsFileRevision> collectHistoryForRevision(@NotNull Project project,
+                                                                @NotNull FilePath path,
+                                                                @NotNull VcsRevisionNumber startingFrom,
+                                                                String... parameters) throws VcsException {
     List<VcsFileRevision> revisions = new ArrayList<>();
     List<VcsException> exceptions = new ArrayList<>();
 
-    history(project, path, null, startingFrom, revisions::add, exceptions::add, parameters);
+    loadHistory(project, path, null, startingFrom, revisions::add, exceptions::add, parameters);
 
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);
@@ -254,8 +254,9 @@ public class GitFileHistory {
    * @throws VcsException if there is problem with running git
    */
   @NotNull
-  public static List<VcsFileRevision> history(@NotNull Project project, @NotNull FilePath path, String... parameters) throws VcsException {
-    return history(project, path, GitRevisionNumber.HEAD, parameters);
+  public static List<VcsFileRevision> collectHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
+    throws VcsException {
+    return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, parameters);
   }
 
   private static class MyTokenAccumulator {

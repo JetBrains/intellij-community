@@ -202,7 +202,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     Collections.reverse(commits);
     VirtualFile vFile = VcsUtil.getVirtualFileWithRefresh(new File(filePath));
     assertNotNull(vFile);
-    List<VcsFileRevision> history = GitFileHistory.history(myProject, VcsUtil.getFilePath(vFile));
+    List<VcsFileRevision> history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile));
     assertEquals("History size doesn't match. Actual history: \n" + toReadable(history), commits.size(), history.size());
     assertEquals("History is different.", toReadable(commits), toReadable(history));
   }
@@ -346,7 +346,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   @Test
   public void testHistory() throws Exception {
-    List<VcsFileRevision> revisions = GitFileHistory.history(myProject, toFilePath(bfile));
+    List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, toFilePath(bfile));
     assertHistory(revisions);
   }
 
@@ -355,7 +355,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
     Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
     Consumer<VcsException> exceptionConsumer = exception -> fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
-    GitFileHistory.history(myProject, toFilePath(bfile), myRepo.getRoot(), null, consumer, exceptionConsumer);
+    GitFileHistory.loadHistory(myProject, toFilePath(bfile), myRepo.getRoot(), null, consumer, exceptionConsumer);
     assertHistory(revisions);
   }
 

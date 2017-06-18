@@ -153,7 +153,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
 
     try {
 
-      for (VcsFileRevision f : GitFileHistory.history(myProject, filePath)) {
+      for (VcsFileRevision f : GitFileHistory.collectHistory(myProject, filePath)) {
         GitFileRevision gitRevision = (GitFileRevision)f;
         if (f.getRevisionNumber().equals(revisionNumber)) {
           return GitContentRevision.createRevision(gitRevision.getPath(), revisionNumber, myProject, selectedFile.getCharset());

@@ -184,7 +184,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
             return loadFileHistory(filePath);
           }
           else {
-            return GitFileHistory.history(myProject, filePath, currentRevision);
+            return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
           }
         }
         catch (VcsException e) {
