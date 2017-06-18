@@ -19,12 +19,12 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +38,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
+
+import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configureRecentMessagesComponent;
 
 public class ImportOptionsDialog extends DialogWrapper implements ActionListener {
 
@@ -166,12 +166,11 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
     panel.add(new JLabel("Recent Messages: "), gc);
     gc.gridy += 1;
 
-    final ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
-    Collections.reverse(messages);
 
-    final String[] model = ArrayUtil.toStringArray(messages);
-    final JComboBox messagesBox = new JComboBox(model);
-    messagesBox.setRenderer(new MessageBoxCellRenderer());
+    ComboBox<String> messagesBox = configureRecentMessagesComponent(myProject, new ComboBox<>(), message -> {
+      myCommitMessage.setText(message);
+      myCommitMessage.selectAll();
+    });
     panel.add(messagesBox, gc);
 
     String lastMessage = VcsConfiguration.getInstance(myProject).getLastNonEmptyCommitMessage();
@@ -179,10 +178,6 @@ public class ImportOptionsDialog extends DialogWrapper implements ActionListener
       myCommitMessage.setText(lastMessage);
       myCommitMessage.selectAll();
     }
-    messagesBox.addActionListener(e -> {
-      myCommitMessage.setText(messagesBox.getSelectedItem().toString());
-      myCommitMessage.selectAll();
-    });
     return panel;
   }
 

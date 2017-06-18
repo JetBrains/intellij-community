@@ -20,17 +20,20 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.CommitMessage;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
@@ -44,8 +47,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class CopyOptionsDialog extends DialogWrapper {
 
@@ -56,7 +60,6 @@ public class CopyOptionsDialog extends DialogWrapper {
   private JLabel myURLLabel;
   private RepositoryBrowserComponent myBrowser;
   private JLabel myTargetURL;
-  private JComboBox myMessagesBox;
   private JPanel myMainPanel;
 
   public CopyOptionsDialog(String title, Project project, final RepositoryTreeNode root, final RepositoryTreeNode node,
@@ -92,29 +95,31 @@ public class CopyOptionsDialog extends DialogWrapper {
       }
     });
 
-    ArrayList<String> messages = VcsConfiguration.getInstance(myProject).getRecentMessages();
-    Collections.reverse(messages);
-    Object[] model = messages.toArray();
-    myMessagesBox.setModel(new DefaultComboBoxModel(model));
-    myMessagesBox.setRenderer(new MessageBoxCellRenderer());
-
     String lastMessage = VcsConfiguration.getInstance(myProject).getLastNonEmptyCommitMessage();
     if (lastMessage != null) {
       myCommitMessage.setText(lastMessage);
       myCommitMessage.getEditorField().selectAll();
     }
-    myMessagesBox.addActionListener(e -> {
-      final Object item = myMessagesBox.getSelectedItem();
-      if (item != null) {
-        myCommitMessage.setText(item.toString());
-        myCommitMessage.getEditorField().selectAll();
-      }
-    });
     Disposer.register(getDisposable(), myBrowser);
 
     setTitle(title);
     init();
     update();
+  }
+
+  @NotNull
+  public static ComboBox<String> configureRecentMessagesComponent(@NotNull Project project,
+                                                                  @NotNull ComboBox<String> comboBox,
+                                                                  @NotNull Consumer<String> messageConsumer) {
+    List<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
+    Collections.reverse(messages);
+    CollectionComboBoxModel<String> model = new CollectionComboBoxModel<>(messages);
+
+    comboBox.setModel(model);
+    comboBox.setRenderer(new MessageBoxCellRenderer());
+    comboBox.addActionListener(e -> messageConsumer.accept(model.getSelected()));
+
+    return comboBox;
   }
 
   private void createUI() {
@@ -150,8 +155,13 @@ public class CopyOptionsDialog extends DialogWrapper {
     myMainPanel.add(splitter, BorderLayout.CENTER);
     final JPanel recentMessagesWrapper = new JPanel(new BorderLayout());
     recentMessagesWrapper.add(new JLabel("Recent Messages:"), BorderLayout.NORTH);
-    myMessagesBox = new JComboBox();
-    recentMessagesWrapper.add(myMessagesBox, BorderLayout.SOUTH);
+    ComboBox<String> messagesBox = configureRecentMessagesComponent(myProject, new ComboBox<>(), message -> {
+      if (message != null) {
+        myCommitMessage.setText(message);
+        myCommitMessage.getEditorField().selectAll();
+      }
+    });
+    recentMessagesWrapper.add(messagesBox, BorderLayout.SOUTH);
     recentMessagesWrapper.setBorder(JBUI.Borders.emptyTop(4));
     myMainPanel.add(recentMessagesWrapper, BorderLayout.SOUTH);
   }
