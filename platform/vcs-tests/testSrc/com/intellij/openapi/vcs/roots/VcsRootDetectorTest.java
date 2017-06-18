@@ -121,13 +121,12 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     doTest(vcsRootConfiguration, myProjectRoot, ".", "linked_root");
   }
 
-  // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
-  public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
+  public void testScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().vcsRoots("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
+      new VcsRootConfiguration()
+        .vcsRoots("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
         .contentRoots("content_root");
-    doTest(vcsRootConfiguration,
-           myProjectRoot, "community", "content_root/lev1/lev2");
+    doTest(vcsRootConfiguration, myProjectRoot, "community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3");
   }
 
   public void testDontScanExcludedDirs() throws IOException {
