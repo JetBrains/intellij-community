@@ -106,15 +106,16 @@ public class GitResetOperation {
                                              @NotNull final GitRepository repository, @NotNull final String target) {
     Collection<String> absolutePaths = GitUtil.toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
     List<Change> affectedChanges = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
-    int choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "reset", "&Hard Reset");
-    if (choice == GitSmartOperationDialog.SMART_EXIT_CODE) {
+    GitSmartOperationDialog.Choice choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths,
+                                                                                 "reset", "&Hard Reset");
+    if (choice == GitSmartOperationDialog.Choice.SMART) {
       final Ref<GitCommandResult> result = Ref.create();
       new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), "reset", target,
                                GitVcsSettings.UpdateChangesPolicy.STASH, myIndicator,
                                () -> result.set(myGit.reset(repository, myMode, target))).execute();
       return result.get();
     }
-    if (choice == GitSmartOperationDialog.FORCE_EXIT_CODE) {
+    if (choice == GitSmartOperationDialog.Choice.FORCE) {
       return myGit.reset(repository, GitResetMode.HARD, target);
     }
     return null;

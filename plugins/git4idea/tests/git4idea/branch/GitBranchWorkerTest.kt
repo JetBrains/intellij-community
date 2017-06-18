@@ -19,7 +19,6 @@ import com.intellij.notification.Notification
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -34,6 +33,7 @@ import git4idea.GitCommit
 import git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision
 import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
 import git4idea.branch.GitDeleteBranchOperation.*
+import git4idea.branch.GitSmartOperationDialog.Choice.*
 import git4idea.commands.GitCommandResult
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
@@ -333,9 +333,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?): Int {
+                                            forceButton: String?): GitSmartOperationDialog.Choice {
         actualChanges.addAll(changes)
-        return DialogWrapper.CANCEL_EXIT_CODE
+        return GitSmartOperationDialog.Choice.CANCEL
       }
     })
 
@@ -405,7 +405,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?) = GitSmartOperationDialog.CANCEL_EXIT_CODE
+                                            forceButton: String?) = GitSmartOperationDialog.Choice.CANCEL
     })
 
     assertNull("Notification was unexpectedly shown:" + myVcsNotifier.lastNotification, myVcsNotifier.lastNotification)
@@ -432,7 +432,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?) = GitSmartOperationDialog.CANCEL_EXIT_CODE
+                                            forceButton: String?) = CANCEL
 
       override fun notifyErrorWithRollbackProposal(title: String,
                                                    message: String,
@@ -454,7 +454,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                             changes: List<Change>,
                                             paths: Collection<String>,
                                             operation: String,
-                                            forceButton: String?) = GitSmartOperationDialog.FORCE_EXIT_CODE
+                                            forceButton: String?) = FORCE
     })
     brancher.checkoutNewBranchStartingFrom("new_branch", "feature", myRepositories)
 
@@ -936,9 +936,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
                                           changes: List<Change>,
                                           paths: Collection<String>,
                                           operation: String,
-                                          forceButton: String?): Int {
-      return GitSmartOperationDialog.SMART_EXIT_CODE
-    }
+                                          forceButton: String?): GitSmartOperationDialog.Choice = SMART
 
     override fun showBranchIsNotFullyMergedDialog(project: Project,
                                                   history: Map<GitRepository, List<GitCommit>>,

@@ -133,9 +133,13 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     return myProgressIndicator;
   }
 
+  @NotNull
   @Override
-  public int showSmartOperationDialog(@NotNull Project project, @NotNull List<Change> changes, @NotNull Collection<String> paths,
-                                      @NotNull String operation, @Nullable String forceButtonTitle) {
+  public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
+                                                                 @NotNull List<Change> changes,
+                                                                 @NotNull Collection<String> paths,
+                                                                 @NotNull String operation,
+                                                                 @Nullable String forceButtonTitle) {
     JComponent fileBrowser;
     if (!changes.isEmpty()) {
       fileBrowser = new ChangesBrowserWithRollback(project, changes);
