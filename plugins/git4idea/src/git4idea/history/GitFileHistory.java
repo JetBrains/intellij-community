@@ -85,7 +85,7 @@ public class GitFileHistory {
   @NotNull private final VcsRevisionNumber myStartingRevision;
   @NotNull private final GitVersion myVersion;
 
-  public GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
+  private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
     myPath = GitHistoryUtils.getLastCommitName(myProject, path);
@@ -95,9 +95,9 @@ public class GitFileHistory {
     myVersion = vcs != null ? vcs.getVersion() : GitVersion.NULL;
   }
 
-  public void history(@NotNull Consumer<GitFileRevision> consumer,
-                      @NotNull Consumer<VcsException> exceptionConsumer,
-                      String... parameters) {
+  private void load(@NotNull Consumer<GitFileRevision> consumer,
+                    @NotNull Consumer<VcsException> exceptionConsumer,
+                    String... parameters) {
     GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
                                               HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                               SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
@@ -215,7 +215,7 @@ public class GitFileHistory {
       return;
     }
     VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
-    new GitFileHistory(project, repositoryRoot, path, revision).history(consumer, exceptionConsumer, parameters);
+    new GitFileHistory(project, repositoryRoot, path, revision).load(consumer, exceptionConsumer, parameters);
   }
 
   /**
