@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -51,7 +50,7 @@ import java.util.Collections;
 public class CopyOptionsDialog extends DialogWrapper {
 
   private final SVNURL myURL;
-  private EditorTextField myCommitMessage;
+  private CommitMessage myCommitMessage;
   private final Project myProject;
   private JTextField myNameField;
   private JLabel myURLLabel;
@@ -102,13 +101,13 @@ public class CopyOptionsDialog extends DialogWrapper {
     String lastMessage = VcsConfiguration.getInstance(myProject).getLastNonEmptyCommitMessage();
     if (lastMessage != null) {
       myCommitMessage.setText(lastMessage);
-      myCommitMessage.selectAll();
+      myCommitMessage.getEditorField().selectAll();
     }
     myMessagesBox.addActionListener(e -> {
       final Object item = myMessagesBox.getSelectedItem();
       if (item != null) {
         myCommitMessage.setText(item.toString());
-        myCommitMessage.selectAll();
+        myCommitMessage.getEditorField().selectAll();
       }
     });
     Disposer.register(getDisposable(), myBrowser);
@@ -161,7 +160,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     final JPanel commitMessageWrapper = new JPanel(new BorderLayout());
     commitMessageWrapper.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
 
-    myCommitMessage = CommitMessage.createCommitMessageEditor(myProject);
+    myCommitMessage = new CommitMessage(myProject, false, false, true);
 
     commitMessageWrapper.add(myCommitMessage, BorderLayout.CENTER);
     return commitMessageWrapper;
@@ -222,7 +221,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   }
 
   public String getCommitMessage() {
-    return myCommitMessage.getText();
+    return myCommitMessage.getComment();
   }
 
   public SVNURL getSourceURL() {
