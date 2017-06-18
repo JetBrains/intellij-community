@@ -1,6 +1,6 @@
 import dis
 import traceback
-from opcode import opmap, EXTENDED_ARG
+from opcode import opmap, EXTENDED_ARG, HAVE_ARGUMENT
 from types import CodeType
 
 MAX_BYTE = 255
@@ -67,6 +67,27 @@ def _modify_new_lines(code_to_modify, all_inserted_code):
     return bytes(new_list)
 
 
+def _unpack_opargs(code, inserted_code_list, current_index):
+    """
+    Modified version of `_unpack_opargs` function from module `dis`
+    """
+    extended_arg = 0
+    for i in range(0, len(code), 2):
+        op = code[i]
+        if op >= HAVE_ARGUMENT:
+            if not extended_arg:
+                # in case if we added EXTENDED_ARG, but haven't inserted it to the source code yet.
+                for code_index in range(current_index, len(inserted_code_list)):
+                    inserted_offset, inserted_code = inserted_code_list[code_index]
+                    if inserted_offset == i and inserted_code[0] == EXTENDED_ARG:
+                        extended_arg = inserted_code[1] << 8
+            arg = code[i+1] | extended_arg
+            extended_arg = (arg << 8) if op == EXTENDED_ARG else 0
+        else:
+            arg = None
+        yield (i, op, arg)
+
+
 def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
     """
     Update labels for the relative and absolute jump targets
@@ -86,7 +107,7 @@ def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
         current_offset, current_code_list = inserted_code[j]
         offsets_for_modification = []
 
-        for offset, op, arg in dis._unpack_opargs(code_list):
+        for offset, op, arg in _unpack_opargs(code_list, inserted_code, j):
             if arg is not None:
                 if op in dis.hasjrel:
                     # has relative jump target
