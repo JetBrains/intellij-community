@@ -32,7 +32,6 @@ import java.util.*;
 
 public class VcsRootDetectorImpl implements VcsRootDetector {
   private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
-  private static final int MAXIMUM_SCAN_DEPTH = Registry.intValue("vcs.root.detector.folder.depth");
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
@@ -99,8 +98,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
     LOG.debug("Scanning inside [" + dir + "], depth = " + depth);
     final Set<VcsRoot> roots = new HashSet<>();
-    if (MAXIMUM_SCAN_DEPTH >= 0 && MAXIMUM_SCAN_DEPTH < depth) {
-      // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
+    if (depthLimitExceeded(depth)) {
       return roots;
     }
 
@@ -116,6 +114,11 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       roots.addAll(scanForRootsInsideDir(child, depth + 1));
     }
     return roots;
+  }
+
+  private static boolean depthLimitExceeded(int depth) {
+    int maxDepth = Registry.intValue("vcs.root.detector.folder.depth");
+    return maxDepth >= 0 && maxDepth < depth;
   }
 
   @NotNull
