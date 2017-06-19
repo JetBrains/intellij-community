@@ -565,7 +565,7 @@ class time(object):
         self.minute = minute
         self.second = second
         self.microsecond = microsecond
-        sefl.tzinfo = tzinfo
+        self.tzinfo = tzinfo
 
     def replace(self, hour=None, minute=None, second=None, microsecond=None,
                 tzinfo=None):
