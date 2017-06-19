@@ -60,7 +60,7 @@ public class PyTestFinder implements TestFinder {
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
           for (PyClass eachClass : PyClassNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestCaseClass(eachClass, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
+            if (PythonUnitTestUtil.isTestClass(eachClass, null, null) || PythonDocTestUtil.isDocTestClass(eachClass)) {
               classesWithProximities.add(
                   new Pair<PsiNamedElement, Integer>(eachClass, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }
@@ -73,8 +73,8 @@ public class PyTestFinder implements TestFinder {
       for (String eachName : names) {
         if (eachName.contains(sourceName)) {
           for (PyFunction eachFunction : PyFunctionNameIndex.find(eachName, element.getProject(), GlobalSearchScope.projectScope(element.getProject()))) {
-            if (PythonUnitTestUtil.isTestCaseFunction(
-              eachFunction) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
+            if (PythonUnitTestUtil.isTestFunction(
+              eachFunction, null, null) || PythonDocTestUtil.isDocTestFunction(eachFunction)) {
               classesWithProximities.add(
                 new Pair<PsiNamedElement, Integer>(eachFunction, TestFinderHelper.calcTestNameProximity(sourceName, eachName)));
             }

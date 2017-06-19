@@ -41,6 +41,11 @@ val factories: Array<com.jetbrains.python.run.PythonConfigurationFactoryBase> = 
 
 internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
 
+/**
+ * If runner name is here that means test runner only can run inheritors for TestCase
+ */
+val RunnersThatRequireTestCaseClass = setOf(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME)
+
 
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
@@ -303,11 +308,10 @@ private val com.jetbrains.reflection.Property.prefixedName: String
  * Parent of all new test configurations.
  * All config-specific fields are implemented as properties. They are saved/restored automatically and passed to GUI form.
  *
- * @param runBareFunctions if config supports running functions directly in modules or only class methods
  */
 abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project.Project,
                                            configurationFactory: com.intellij.execution.configurations.ConfigurationFactory,
-                                           private val runBareFunctions: Boolean = true)
+                                           private val runnerName: String)
   : com.jetbrains.python.testing.AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project,
                                                                                                  configurationFactory), com.jetbrains.python.testing.PyRerunAwareConfiguration,
     com.intellij.execution.configurations.RefactoringListenerProvider {
@@ -544,23 +548,25 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
    * If yes, and element is [PsiElement] then it is [TestTargetType.PYTHON].
    * If file then [TestTargetType.PATH]
    */
-  fun couldBeTestTarget(element: com.intellij.psi.PsiElement) =
+  fun couldBeTestTarget(element: com.intellij.psi.PsiElement): Boolean {
+
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
-    when (element) {
-      is com.jetbrains.python.psi.PyFile -> com.jetbrains.python.testing.isTestFile(element)
+    val context = com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(element.project, element.containingFile)
+    val testCaseClassRequired = RunnersThatRequireTestCaseClass.contains(runnerName)
+    return when (element) {
+      is com.jetbrains.python.psi.PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, context)
       is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
-        it is com.jetbrains.python.psi.PyFile && com.jetbrains.python.testing.isTestFile(
-          it)
+        it is com.jetbrains.python.psi.PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, context)
       }
-      is com.jetbrains.python.psi.PyFunction -> com.jetbrains.python.testing.PythonUnitTestUtil.isTestCaseFunction(element,
-                                                                                                                   runBareFunctions)
-      is com.jetbrains.python.psi.PyClass -> com.jetbrains.python.testing.PythonUnitTestUtil.isTestCaseClass(element,
-                                                                                                             com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(
-                                                                                                               element.project,
-                                                                                                               element.containingFile))
+      is com.jetbrains.python.psi.PyFunction -> PythonUnitTestUtil.isTestFunction(element,
+                                                                                  testCaseClassRequired, context)
+      is com.jetbrains.python.psi.PyClass -> {
+        com.jetbrains.python.testing.PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, context)
+      }
       else -> false
     }
+  }
 
   /**
    * There are 2 ways to provide target to runner:
@@ -570,13 +576,6 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
    *  Second approach is prefered if this flag is set. It is generally better because filesystem path does not need __init__.py
    */
   internal open fun shouldSeparateTargetPath(): Boolean = true
-}
-
-private fun isTestFile(file: com.jetbrains.python.psi.PyFile): Boolean {
-  return com.jetbrains.python.testing.PythonUnitTestUtil.isUnitTestFile(file) ||
-         com.jetbrains.python.testing.PythonUnitTestUtil.getTestCaseClassesFromFile(file,
-                                                                                    com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(
-                                                                                      file.project, file)).isNotEmpty()
 }
 
 abstract class PyAbstractTestFactory<out CONF_T : com.jetbrains.python.testing.PyAbstractTestConfiguration> : com.jetbrains.python.run.PythonConfigurationFactoryBase(

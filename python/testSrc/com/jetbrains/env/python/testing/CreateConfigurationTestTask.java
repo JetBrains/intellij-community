@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
@@ -81,11 +82,21 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
 
-        @SuppressWarnings("unchecked") // Checked one line above
-        final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
-        checkConfiguration(typedConfiguration, elementToRightClickOn);
+        if (isConfigurationShouldBeProducedForElement(elementToRightClickOn)) {
+          @SuppressWarnings("unchecked") // Checked one line above
+          final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
+          checkConfiguration(typedConfiguration, elementToRightClickOn);
+        } else {
+          // Any py file could be run script
+          // If no test config should be produced for this element then run script should be created
+          createConfigurationByElement(elementToRightClickOn, PythonRunConfiguration.class);
+        }
       }
     }), ModalityState.NON_MODAL);
+  }
+
+  protected boolean isConfigurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+    return true;
   }
 
   /**

@@ -42,9 +42,7 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
 
     @Override
     public final void visitPyFunction(@NotNull PyFunction node) {
-      if (PythonUnitTestUtil.isUnitTestCaseFunction(node)) return;
-      final PyClass containingClass = node.getContainingClass();
-      if (containingClass != null && PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
+      if (PythonUnitTestUtil.isTestFunction(node, null, myTypeEvalContext)) return;
       final Property property = node.getProperty();
       if (property != null && (node == property.getSetter().valueOrNull() || node == property.getDeleter().valueOrNull())) {
         return;
@@ -55,7 +53,7 @@ public abstract class PyBaseDocstringInspection extends PyInspection {
 
     @Override
     public final void visitPyClass(@NotNull PyClass node) {
-      if (PythonUnitTestUtil.isUnitTestCaseClass(node)) return;
+      if (PythonUnitTestUtil.isTestClass(node, null, myTypeEvalContext)) return;
       final String name = node.getName();
       if (name == null || name.startsWith("_")) {
         return;

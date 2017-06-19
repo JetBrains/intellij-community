@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
@@ -512,8 +513,15 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testMultipleCases() throws Exception {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                 PyUnitTestConfiguration.class));
+      new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                 PyUnitTestConfiguration.class){
+        @Override
+        protected boolean isConfigurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+          // test_functions.py does not conttain any TestCase and can't be launched with unittest
+          final PsiFile file = element.getContainingFile();
+          return file == null || ! file.getName().endsWith("test_functions.py");
+        }
+      });
   }
 
   /**

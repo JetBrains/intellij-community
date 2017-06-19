@@ -46,6 +46,6 @@ public class PythonNoseTestConfigurationProducer extends
 
   @Override
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestCaseFunction(pyFunction, true);
+    return PythonUnitTestUtil.isTestFunction(pyFunction, false, null);
   }
 }

@@ -88,7 +88,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (clazz != null && PythonUnitTestUtil.isTestCaseClass(clazz, null)) return true;
+      if (clazz != null && PythonUnitTestUtil.isTestClass(clazz, null, null)) return true;
     }
     return false;
   }
