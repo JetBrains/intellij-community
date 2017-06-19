@@ -92,6 +92,11 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
       public boolean isConnected() {
         return true;
       }
+
+      @Override
+      public int getTtyPid() {
+        return -1;
+      }
     };
   }
 

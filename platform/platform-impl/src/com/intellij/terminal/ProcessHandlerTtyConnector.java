@@ -102,4 +102,9 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   public int waitFor() throws InterruptedException {
     return myPtyProcess.waitFor();
   }
+
+  @Override
+  public int getTtyPid() {
+    return myPtyProcess.getPid();
+  }
 }

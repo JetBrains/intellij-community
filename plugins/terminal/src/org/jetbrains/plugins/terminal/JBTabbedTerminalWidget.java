@@ -48,6 +48,7 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.pty.PtyTabChangeListener;
 import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +103,10 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
                                                   }
 
     ).install();
+
+    if (settingsProvider.showProcessNameInTabTitle()) {
+      setTabChangeListener(new PtyTabChangeListener());
+    }
   }
 
   public static void convertActions(@NotNull JComponent component,

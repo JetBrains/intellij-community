@@ -68,4 +68,9 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   public boolean overrideIdeShortcuts() {
     return TerminalOptionsProvider.Companion.getInstance().overrideIdeShortcuts();
   }
+
+  @Override
+  public boolean showProcessNameInTabTitle() {
+    return true;
+  }
 }
