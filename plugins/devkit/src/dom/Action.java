@@ -117,19 +117,6 @@ public interface Action extends ActionOrGroup {
 	 */
 	MouseShortcut addMouseShortcut();
 
-
-	/**
-	 * Returns the list of shortcut children.
-	 * @return the list of shortcut children.
-	 */
-	@NotNull
-	List<Shortcut> getShortcuts();
-	/**
-	 * Adds new child to the list of shortcut children.
-	 * @return created child
-	 */
-	Shortcut addShortcut();
-
         /**
  	 * Returns the list of abbreviation children.
  	 * @return the list of abbreviation children.
