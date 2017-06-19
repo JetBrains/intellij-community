@@ -151,8 +151,8 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
-      .map(repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(),
-                                    !userWantsSyncControl() || myMultiRootBranchConfig.diverged() ? getDisplayableBranchText(repo) : null))
+      .map(
+        repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(), getDisplayableBranchText(repo)))
       .collect(toList());
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
