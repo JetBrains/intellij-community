@@ -1995,6 +1995,10 @@
     <codeInsight.intention.jvmCommonIntentionActionsFactory language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.jvm">
+    <createClass implementation="com.intellij.jvm.createClass.java.CreateJavaClassFactory"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.uast">
     <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
   </extensions>

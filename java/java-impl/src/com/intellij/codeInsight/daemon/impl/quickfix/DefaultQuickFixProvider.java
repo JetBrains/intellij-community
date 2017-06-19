@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.jvm.createClass.java.CreateClassFromJavaFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -82,6 +83,8 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
+
+    registrar.register(new CreateClassFromJavaFix(ref));
   }
 
   private static void registerPriorityActions(@NotNull QuickFixActionRegistrar registrar,
