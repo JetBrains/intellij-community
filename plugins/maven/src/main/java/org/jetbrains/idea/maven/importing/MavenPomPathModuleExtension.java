@@ -20,7 +20,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +85,9 @@ public class MavenPomPathModuleExtension extends ModuleExtension implements Pers
   }
 
   public static class MavenPomPathState {
+
+    @Property(filter = SkipDefaultsSerializationFilter.class)
+    @Nullable
     public String mavenPomFileUrl;
   }
 }
