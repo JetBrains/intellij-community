@@ -472,7 +472,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertEquals(mc, tracker.getModificationCount());
   }
 
-  public void testJavaStructureModCountNotAdvancedOnJavadocChange() {
+  public void testJavaStructureModCountMustNotBeAdvancedOnJavadocChange() {
     configureByText(JavaFileType.INSTANCE, "/* <selection>abc</selection> */ class A{}");
 
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
@@ -485,7 +485,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     assertFalse(codeBlockCount == tracker.getOutOfCodeBlockModificationCount());
   }
 
-  public void testJavaStructureModCountNotAdvancedOnAddingSpace() {
+  public void testJavaStructureModCountMustNotBeAdvancedOnAddingSpace() {
     configureByText(JavaFileType.INSTANCE, "class A{ <selection></selection> }");
 
     PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
