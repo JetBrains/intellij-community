@@ -71,7 +71,7 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
       RunningThreadExecutionStackView(displayName)
     }
     else {
-      ExecutionStackView(context, activeStack.viewSupport, null, null, displayName)
+      InactiveAtBreakpointExecutionStackView(displayName)
     }
   }
 
@@ -105,12 +105,17 @@ class RunningThreadExecutionStackView(displayName: String) : XExecutionStack(dis
   override fun getTopFrame(): XStackFrame? = null
 }
 
-// icon ThreadCurrent would be preferred for active thread, but it won't be updated on stack change
+class InactiveAtBreakpointExecutionStackView(displayName: String) : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
+  override fun getTopFrame(): XStackFrame? = null
+
+  override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {}
+}
+
 class ExecutionStackView(val suspendContext: SuspendContext<*>,
                          internal val viewSupport: DebuggerViewSupport,
                          private val topFrameScript: Script?,
                          private val topFrameSourceInfo: SourceInfo? = null,
-                         displayName: String = "") : XExecutionStack(displayName, AllIcons.Debugger.ThreadAtBreakpoint) {
+                         displayName: String = "") : XExecutionStack(displayName, AllIcons.Debugger.ThreadCurrent) {
   private var topCallFrameView: CallFrameView? = null
 
   override fun getTopFrame(): CallFrameView? {
