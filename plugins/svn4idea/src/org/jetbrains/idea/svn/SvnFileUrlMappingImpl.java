@@ -15,12 +15,8 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -87,12 +83,13 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public static SvnFileUrlMappingImpl getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, SvnFileUrlMappingImpl.class);
+  @NotNull
+  public static SvnFileUrlMappingImpl getInstance(@NotNull Project project) {
+    return (SvnFileUrlMappingImpl)ServiceManager.getService(project, SvnFileUrlMapping.class);
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private SvnFileUrlMappingImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
+  private SvnFileUrlMappingImpl(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
