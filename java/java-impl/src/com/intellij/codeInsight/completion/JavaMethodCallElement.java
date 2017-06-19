@@ -331,7 +331,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     if (handler.findElementForParameterInfo(infoContext) == null) {
-      editor.getDocument().deleteString(offset, commas.length());
+      editor.getDocument().deleteString(offset, offset + commas.length());
       caretModel.moveToOffset(offset);
       return;
     }
