@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
@@ -36,6 +37,7 @@ public interface KeyboardShortcut extends DomElement {
 	 */
 	@NotNull
 	@Required
+        @NoSpellchecking
 	GenericAttributeValue<String> getFirstKeystroke();
 
 	/**
@@ -61,6 +63,7 @@ public interface KeyboardShortcut extends DomElement {
 	 * @return the value of the second-keystroke child.
 	 */
 	@NotNull
+	@NoSpellchecking
 	GenericAttributeValue<String> getSecondKeystroke();
 
         /**

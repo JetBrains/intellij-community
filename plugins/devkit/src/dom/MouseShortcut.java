@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
@@ -45,6 +46,7 @@ public interface MouseShortcut extends DomElement {
 	 */
 	@NotNull
 	@Required
+        @NoSpellchecking
 	GenericAttributeValue<String> getKeystroke();
 
         /**
