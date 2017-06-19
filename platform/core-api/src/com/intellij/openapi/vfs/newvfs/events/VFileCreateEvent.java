@@ -101,11 +101,15 @@ public class VFileCreateEvent extends VFileEvent {
   @Override
   public boolean isValid() {
     if (myParent.isValid()) {
-      final VirtualFile child = myParent.findChild(myChildName);
-      return !myReCreation && child == null || myReCreation && child != null;
+      boolean childExists = myParent.findChild(myChildName) != null;
+      return isValid(childExists);
     }
 
     return false;
+  }
+
+  public boolean isValid(boolean childExists) {
+    return myReCreation == childExists;
   }
 
   @Override
@@ -118,9 +122,7 @@ public class VFileCreateEvent extends VFileEvent {
     if (myDirectory != event.myDirectory) return false;
     if (!myChildName.equals(event.myChildName)) return false;
     if (!myParent.equals(event.myParent)) return false;
-    if (myReCreation != event.myReCreation) return false;
-
-    return true;
+    return myReCreation == event.myReCreation;
   }
 
   @Override

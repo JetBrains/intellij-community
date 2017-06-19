@@ -36,10 +36,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.JITSensitive;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -83,7 +80,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 10_000; i++) {
           String name = i + ".txt";
           vDir.createChildData(vDir, name);
         }
@@ -94,13 +91,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(theChild);
     UIUtil.pump(); // wait for all event handlers to calm down
 
-    System.out.println("Start searching...");
-    PlatformTestUtil.startPerformanceTest("finding child", 1000, () -> {
-      for (int i = 0; i < 1000000; i++) {
+    LOG.debug("Start searching...");
+    PlatformTestUtil.startPerformanceTest("finding child", 1500, () -> {
+      for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
         assertEquals(theChild, child);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
 
     new WriteCommandAction.Simple(null) {
       @Override
@@ -121,18 +118,17 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     JarFileSystem fs = JarFileSystem.getInstance();
     String path = jar.getPath() + "!/";
     NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest(
-      "finding root", 5000,
-      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    PlatformTestUtil.startPerformanceTest("finding root", 10_000,
+        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
         Collections.nCopies(500, null), null, false, false,
-        o -> {
-          for (int i = 0; i < 20000; i++) {
+        __ -> {
+          for (int i = 0; i < 20_000; i++) {
             NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
             assertNotNull(rootJar);
             assertSame(root, rootJar);
           }
           return true;
-        })).useLegacyScaling().assertTiming();
+        })).assertTiming();
   }
 
   @Test
@@ -163,7 +159,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
           @Override
           public void run() throws Throwable {
-            for (int i = 0; i < 5000000; i++) {
+            for (int i = 0; i < 5_000_000; i++) {
               checkRootsEqual();
             }
           }
@@ -173,13 +169,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           }
         };
         int time = 1200;
-        PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).useLegacyScaling().assertTiming();
+        PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
         VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
         VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
         for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
           dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
         }
-        PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).useLegacyScaling().assertTiming();
+        PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
       }
     }.execute();
   }
@@ -204,11 +200,11 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
                     "fff.txt";
       VirtualFile file = fixture.findOrCreateDir(path);
 
-      PlatformTestUtil.startPerformanceTest("VF.getPath()", 4000, () -> {
-        for (int i = 0; i < 1000000; ++i) {
+      PlatformTestUtil.startPerformanceTest("VF.getPath()", 10_000, () -> {
+        for (int i = 0; i < 1_000_000; ++i) {
           file.getPath();
         }
-      }).useLegacyScaling().assertTiming();
+      }).assertTiming();
     });
   }
 
@@ -289,7 +285,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void addingManyChildrenToTheSameDirectoryMustNotBeQuadratic() throws Exception {
+  public void PersistentFS_processEvents_onAddingManyChildrenToTheSameDirectoryMustNotBeQuadratic() throws Exception {
     int N = 1_000_000;
     // measures create N children inside one directory.
     // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
@@ -300,16 +296,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         .mapToObj(i -> new VFileCreateEvent(this, validVTemp, i + ".txt", false, false))
         .collect(Collectors.toList());
 
-      WriteCommandAction.runWriteCommandAction(null, () -> {
-        PersistentFS.getInstance().processEvents(events);
-      });
+      WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
 
       assertEquals(N, validVTemp.getChildren().length);
     }).assertTiming());
   }
 
   @Test
-  public void deleteManyChildrenFromTheSameDirectoryMustNotBeQuadratic() throws IOException {
+  public void PersistentFS_processEvents_onDeletingManyChildrenFromTheSameDirectoryMustNotBeQuadratic() throws IOException {
     int N = 1_000_000;
     // measures delete N children inside one directory.
     // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
@@ -319,9 +313,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       List<VFileEvent> deleteEvents = new ArrayList<>();
       PlatformTestUtil.startPerformanceTest("deleting many children", 45000, () -> {
         assertEquals(N, deleteEvents.size());
-        WriteCommandAction.runWriteCommandAction(null, () -> {
-          PersistentFS.getInstance().processEvents(deleteEvents);
-        });
+        WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(deleteEvents));
 
         assertEquals(0, validVTemp[0].getChildren().length);
       }).setup(()-> {
@@ -336,9 +328,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           .mapToObj(i -> new VFileCreateEvent(this, validVTemp[0], i + ".txt", false, false))
           .collect(Collectors.toList());
 
-        WriteCommandAction.runWriteCommandAction(null, () -> {
-          PersistentFS.getInstance().processEvents(createEvents);
-        });
+        WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(createEvents));
         assertEquals(N, validVTemp[0].getChildren().length);
 
         deleteEvents.clear();
@@ -438,5 +428,27 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     public String getUrl() {
       return getPath();
     }
+  }
+
+  @Test
+  public void PersistentFS_validateEvents_performanceInCaseOfManyCreatedFiles() throws Exception {
+    int N = 100_000;
+    List<VFileEvent> events = new ArrayList<>(N);
+    final VirtualFile[] temp = {null};
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() ->
+      PlatformTestUtil.startPerformanceTest("validate many creations", 5000, () -> {
+        WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
+        assertEquals(N, temp[0].getChildren().length);
+      })
+        .setup(() -> {
+          temp[0] = PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(myTempDir.newFolder()));
+          events.clear();
+          IntStream.range(0, N)
+            .mapToObj(i -> new VFileCreateEvent(this, temp[0], i + ".txt", false, false))
+            .peek(event -> FileUtil.createIfDoesntExist(new File(event.getPath())))
+            .forEach(events::add);
+        })
+        .assertTiming()
+    );
   }
 }

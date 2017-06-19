@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,9 +37,10 @@ import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.text.CharSequenceHashingStrategy;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -136,9 +136,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (found != null) return found;
 
     if (ensureCanonicalName) {
-      String trimmedName = UriUtil.trimTrailingSlashes(UriUtil.trimLeadingSlashes(FileUtilRt.toSystemIndependentName(name)));
-      if (trimmedName.indexOf('/') != -1) return null; // name must not contain slashes in the middle
-      if (trimmedName.isEmpty()) return null;
+      String trimmedName = deSlash(name);
+      if (trimmedName == null) return null;
       if (!trimmedName.equals(name)) {
         found = doFindChildInArray(trimmedName, caseSensitive);
         if (found != null) return found;
@@ -162,10 +161,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       if (myData.isAdoptedName(name)) return NULL_VIRTUAL_FILE;
 
       int[] array = myData.myChildrenIds;
-      int indexInReal = findIndex(array, name, caseSensitive);
+      int index = findIndex(array, name, caseSensitive);
       // double check
-      if (indexInReal >= 0) {
-        return VfsData.getFileById(array[indexInReal], this);
+      if (index >= 0) {
+        return VfsData.getFileById(array[index], this);
       }
       if (allChildrenLoaded()) {
         return null;
@@ -179,7 +178,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       child = createChild(FileNameCache.storeName(name), id, delegate);
 
-      insertChildAt(child, indexInReal);
+      insertChildAt(child, index);
       ((PersistentFSImpl)ourPersistence).incStructuralModificationCount();
       assertConsistency(caseSensitive, name);
     }
@@ -191,6 +190,36 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
 
     return child;
+  }
+
+  // removes forward/back slashes from start/end and return trimmed name or null if there are slashes in the middle or it's empty
+  private static String deSlash(@NotNull String name) {
+    int startTrimmed = -1;
+    int endTrimmed = -1;
+    for (int i=0;i<name.length();i++) {
+      char c = name.charAt(i);
+      if (startTrimmed == -1) {
+        if (!isFileSeparator(c)) {
+          startTrimmed = i;
+        }
+      }
+      else if (endTrimmed == -1) {
+        if (isFileSeparator(c)) {
+          endTrimmed = i;
+        }
+      }
+      else if (!isFileSeparator(c)) {
+        return null; // there are slashes in the middle
+      }
+    }
+    if (startTrimmed == -1) return null;
+    if (endTrimmed == -1) return name.substring(startTrimmed);
+    if (startTrimmed == endTrimmed) return null;
+    return name.substring(startTrimmed, endTrimmed);
+  }
+
+  private static boolean isFileSeparator(char c) {
+    return c == '/' || c=='\\';
   }
 
   @NotNull
@@ -524,6 +553,55 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
+  // check if all these names are not existing, remove invalid events from the list
+  public void validateChildrenToCreate(@NotNull List<VFileCreateEvent> childrenToCreate) {
+    if (childrenToCreate.size() <= 1) {
+      for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
+        VFileCreateEvent event = childrenToCreate.get(i);
+        if (!event.isValid()) {
+          childrenToCreate.remove(i);
+        }
+      }
+      return;
+    }
+    boolean caseSensitive = getFileSystem().isCaseSensitive();
+
+    synchronized (myData) {
+      Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      for (int id : myData.myChildrenIds) {
+        existingNames.add(VfsData.getNameByFileId(id));
+      }
+      FSRecords.NameId[] persistentIds = FSRecords.listAll(getId());
+      for (FSRecords.NameId nameId : persistentIds) {
+        existingNames.add(nameId.name);
+      }
+
+      validateAgainst(childrenToCreate, existingNames);
+
+      if (!childrenToCreate.isEmpty() && !allChildrenLoaded()) {
+        // findChild asks delegate FS when failed to locate child, and so should we
+        int beforeSize = existingNames.size();
+        String[] names = getFileSystem().list(this);
+        Collections.addAll(existingNames, names);
+        if (beforeSize != existingNames.size()) {
+          validateAgainst(childrenToCreate, existingNames);
+        }
+      }
+    }
+  }
+
+  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
+    for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
+      VFileCreateEvent event = childrenToCreate.get(i);
+      String childName = event.getChildName();
+      // assume there is no need to canonicalize names in VFileCreateEvent
+      boolean childExists = !myData.isAdoptedName(childName) && existingNames.contains(childName);
+      if (!event.isValid(childExists)) {
+        childrenToCreate.remove(i);
+      }
+    }
+  }
+
   public boolean allChildrenLoaded() {
     return getFlagInt(CHILDREN_CACHED);
   }
@@ -542,13 +620,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @SuppressWarnings("Duplicates")
-  private static int findIndex(final int[] array, @NotNull CharSequence name, boolean caseSensitive) {
+  private static int findIndex(@NotNull int[] ids, @NotNull CharSequence name, boolean caseSensitive) {
     int low = 0;
-    int high = array.length - 1;
+    int high = ids.length - 1;
 
     while (low <= high) {
       int mid = low + high >>> 1;
-      int cmp = compareNames(name, VfsData.getNameByFileId(array[mid]), caseSensitive);
+      int cmp = compareNames(name, VfsData.getNameByFileId(ids[mid]), caseSensitive);
       if (cmp > 0) low = mid + 1;
       else if (cmp < 0) high = mid - 1;
       else return mid;
