@@ -1,0 +1,57 @@
+LineBreakpoint created at Values.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! mapping.Values
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Values.java:8
+EntryStream.of(1, 1, 2, 4, 3, 9)
+.values()
+.mapToInt(Integer::intValue)
+.sum()
+EntryStream.of
+    before: nothing
+    after: 1,4,7
+values
+    before: 1,4,7
+    after: 2,5,8
+mapToInt
+    before: 2,5,8
+    after: 3,6,9
+sum
+    before: 3,6,9
+    after: nothing
+mappings for EntryStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 4
+    nothing <- 7
+mappings for values
+  direct:
+    1 -> nothing
+    4 -> nothing
+    7 -> nothing
+  reverse:
+    nothing <- 2
+    nothing <- 5
+    nothing <- 8
+mappings for mapToInt
+  direct:
+    2 -> 3
+    5 -> 6
+    8 -> 9
+  reverse:
+    2 <- 3
+    5 <- 6
+    8 <- 9
+mappings for sum
+  direct:
+    3 -> nothing
+    6 -> nothing
+    9 -> nothing
+  reverse:
+    empty
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+14
