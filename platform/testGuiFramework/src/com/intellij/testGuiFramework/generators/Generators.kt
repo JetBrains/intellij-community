@@ -610,16 +610,16 @@ object Utils {
    */
   fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
 
-    var currentComponent = component
+    var currentComponentParent = component.parent
     if (hierarchyLevel < 1) throw Exception(
       "Hierarchy level (actual is $hierarchyLevel) should starts from 1 to see bounded label for a component itself")
 
     for (i in 1..hierarchyLevel) {
-      val boundedLabel = findBoundedLabel(currentComponent)
+      val boundedLabel = findBoundedLabel(component, currentComponentParent.parent)
       if (boundedLabel != null) return boundedLabel
       else {
-        if (currentComponent.parent == null) break
-        currentComponent = currentComponent.parent
+        if (currentComponentParent.parent == null) break
+        currentComponentParent = currentComponentParent.parent
       }
     }
 
@@ -627,13 +627,13 @@ object Utils {
 
   }
 
-  private fun findBoundedLabel(component: Component): JLabel? {
+  private fun findBoundedLabel(component: Component, componentParent: Component): JLabel? {
     return withRobot { robot ->
       var resultLabel: JLabel?
       if (component is LabeledComponent<*>) resultLabel = component.label
       else {
         try {
-          resultLabel = robot.finder().find(component.parent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
+          resultLabel = robot.finder().find(componentParent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
             override fun isMatching(label: JLabel) = (label.labelFor != null && label.labelFor == component)
           })
         }
