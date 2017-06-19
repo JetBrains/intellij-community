@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,13 @@ package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierListOwner;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -34,6 +39,7 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
 
       if (MissingMethodAndPropertyUtil.isPropertyMissing(method)) return true;
       if (MissingMethodAndPropertyUtil.isMethodMissing(method)) return true;
+      if (isDelegateAnnotated(method)) return true;
     }
     else if (element instanceof GrParameter) {
       final GrParameter parameter = (GrParameter)element;
@@ -48,11 +54,16 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitRead(PsiElement element) {
+    if (element instanceof GrField && isDelegateAnnotated((GrField)element)) return true;
     return false;
   }
 
   @Override
   public boolean isImplicitWrite(PsiElement element) {
     return false;
+  }
+
+  boolean isDelegateAnnotated(@NotNull PsiModifierListOwner owner) {
+    return PsiImplUtil.getAnnotation(owner, GroovyCommonClassNames.GROOVY_LANG_DELEGATE) != null;
   }
 }
