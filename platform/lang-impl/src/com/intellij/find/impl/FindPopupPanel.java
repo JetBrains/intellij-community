@@ -848,7 +848,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
           } else {
             merged = false;
           }
-          recentUsageRef.set(usage);
+          if (!merged) {
+            recentUsageRef.set(usage);
+          }
 
 
           ApplicationManager.getApplication().invokeLater(() -> {
