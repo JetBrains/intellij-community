@@ -15,6 +15,8 @@
  */
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
@@ -23,6 +25,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.*;
@@ -109,6 +113,28 @@ public class ExistingTemplatesComponent {
           final Configuration configuration = (Configuration)node.getUserObject();
           if (configuration.isPredefined()) {
             return;
+          }
+          final String configurationName = configuration.getName();
+          for (Configuration configuration1 : ConfigurationManager.getInstance(project).getConfigurations()) {
+            final MatchVariableConstraint constraint =
+              configuration1.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+            if (constraint == null) {
+              continue;
+            }
+            final String within = constraint.getWithinConstraint();
+            if (configurationName.equals(within)) {
+              if (Messages.CANCEL == Messages.showOkCancelDialog(
+                project,
+                SSRBundle.message("template.in.use.message", configurationName, configuration1.getName()),
+                SSRBundle.message("template.in.use.title", configurationName),
+                CommonBundle.message("button.remove"),
+                Messages.CANCEL_BUTTON,
+                AllIcons.General.WarningDialog
+              )) {
+                return;
+              }
+              break;
+            }
           }
           final int[] rows = patternTree.getSelectionRows();
           if (rows != null && rows.length > 0) {
