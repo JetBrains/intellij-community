@@ -63,7 +63,7 @@ public class GrImplicitUsageProvider implements ImplicitUsageProvider {
     return false;
   }
 
-  boolean isDelegateAnnotated(@NotNull PsiModifierListOwner owner) {
+  private static boolean isDelegateAnnotated(@NotNull PsiModifierListOwner owner) {
     return PsiImplUtil.getAnnotation(owner, GroovyCommonClassNames.GROOVY_LANG_DELEGATE) != null;
   }
 }
