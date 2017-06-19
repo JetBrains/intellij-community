@@ -168,6 +168,14 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
     }
+  },
+
+  INCORRECT_SEPARATORS_IN_STDIN {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
+      return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

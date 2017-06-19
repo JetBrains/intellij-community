@@ -356,14 +356,15 @@ public class GitLogUtil {
     };
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true));
 
+    String separator = getSeparator(vcs);
     Ref<Exception> inputError = new Ref<>();
     handler.setInputProcessor(stream -> {
       try (OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset())) {
         for (String hash : hashes) {
           writer.write(hash);
-          writer.write(System.lineSeparator());
+          writer.write(separator);
         }
-        writer.write(System.lineSeparator());
+        writer.write(separator);
         writer.flush();
       }
       catch (IOException e) {
@@ -378,6 +379,14 @@ public class GitLogUtil {
     if (!inputError.isNull()) {
       throw new VcsException(inputError.get());
     }
+  }
+
+  @NotNull
+  private static String getSeparator(@NotNull GitVcs vcs) {
+    if (GitVersionSpecialty.INCORRECT_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion())) {
+      return "\n";
+    }
+    return System.lineSeparator();
   }
 
   @NotNull
