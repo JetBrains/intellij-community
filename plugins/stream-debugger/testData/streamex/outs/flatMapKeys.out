@@ -1,0 +1,50 @@
+LineBreakpoint created at FlatMapKeys.java:9
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! flatMapping.FlatMapKeys
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+FlatMapKeys.java:9
+EntryStream.of(1, 1, 2, 4, 3, 9)
+.flatMapKeys(k -> StreamEx.of(k, k + 1))
+.count()
+EntryStream.of
+    before: nothing
+    after: 1,4,7
+flatMapKeys
+    before: 1,4,7
+    after: 2,3,5,6,8,9
+count
+    before: 2,3,5,6,8,9
+    after: nothing
+mappings for EntryStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 4
+    nothing <- 7
+mappings for flatMapKeys
+  direct:
+    1 -> nothing
+    4 -> nothing
+    7 -> nothing
+  reverse:
+    nothing <- 2
+    nothing <- 3
+    nothing <- 5
+    nothing <- 6
+    nothing <- 8
+    nothing <- 9
+mappings for count
+  direct:
+    2 -> nothing
+    3 -> nothing
+    5 -> nothing
+    6 -> nothing
+    8 -> nothing
+    9 -> nothing
+  reverse:
+    empty
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+6
