@@ -58,13 +58,12 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   }
 
   private void appendNode(StringBuilder buf, DefaultMutableTreeNode node, String lineSeparator, String indent) {
-    buf.append(indent);
     final String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";
       final HierarchyNodeDescriptor descriptor = myHierarchyBrowserBase.getDescriptor(node);
       if (descriptor != null) {
-        buf.append(descriptor.getHighlightedText().getText()).append(lineSeparator);
+        buf.append(indent).append(descriptor.getHighlightedText().getText()).append(lineSeparator);
       }
     }
     else {
