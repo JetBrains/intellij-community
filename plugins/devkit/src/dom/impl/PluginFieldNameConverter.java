@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,8 +101,6 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
   private static PsiClass getEPBeanClass(ConvertContext context) {
     ExtensionPoint ep = context.getInvocationElement().getParentOfType(ExtensionPoint.class, true);
     if (ep == null) return null;
-    PsiClass value = ep.getBeanClass().getValue();
-    if (value == null) return null;
-    return value;
+    return ep.getBeanClass().getValue();
   }
 }
