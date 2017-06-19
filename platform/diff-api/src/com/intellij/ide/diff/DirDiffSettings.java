@@ -68,19 +68,18 @@ public class DirDiffSettings {
   }
 
   public enum CompareMode {
-    CONTENT, // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
-    SIZE, // Compares size only
-    TIMESTAMP; // Compares size, if equal compares timestamps
+    CONTENT("Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
+    SIZE("Size"), // Compares size only
+    TIMESTAMP("Size and Timestamp"); // Compares size, if equal compares timestamps
 
-    public String getPresentableName(DirDiffSettings settings) {
-      Object provider = settings.customSettings.get(DirDiffSettings.CompareModeNameProvider.COMPARE_MODE_NAME_PROVIDER);
-      if (provider instanceof DirDiffSettings.CompareModeNameProvider) {
-        String name = ((DirDiffSettings.CompareModeNameProvider)provider).getName(this);
-        if (name != null) {
-          return name;
-        }
-      }
-      return StringUtil.capitalize(name().toLowerCase());
+    private final String myPresentableName;
+
+    CompareMode(String presentableName) {
+      myPresentableName = presentableName;
+    }
+
+    public String getPresentableName() {
+      return myPresentableName;
     }
   }
 
@@ -90,13 +89,6 @@ public class DirDiffSettings {
 
   public List<AnAction> getExtraActions() {
     return extraToolbarActions;
-  }
-
-  public interface CompareModeNameProvider {
-    String COMPARE_MODE_NAME_PROVIDER = "Compare mode name provider"; //NON-NLS
-
-    @Nullable
-    String getName(CompareMode mode);
   }
 
   public interface CustomSourceChooser {
