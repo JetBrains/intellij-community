@@ -202,7 +202,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       boolean edt = ApplicationManager.getApplication().isDispatchThread();
 
       if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
-        if (edt) {
+        if (edt || ((ActionWrapper)value).hasPresentation() && ((ActionWrapper)o.value).hasPresentation()) {
           boolean p1Enable = ((ActionWrapper)value).isAvailable();
           boolean p2enable = ((ActionWrapper)o.value).isAvailable();
           if (p1Enable && !p2enable) return -1;
