@@ -41,11 +41,13 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.ApplyDefaultStateMode.EXCEPT_CARET_REGION;
@@ -56,11 +58,6 @@ public class FoldingUpdate {
 
   static final Key<ParameterizedCachedValue<Runnable, Boolean>> CODE_FOLDING_KEY = Key.create("code folding");
   private static final Key<String> CODE_FOLDING_FILE_EXTENSION_KEY = Key.create("code folding file extension");
-
-  private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
-    int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
-    return startOffsetDiff == 0 ? element1.getTextRange().getEndOffset() - element.getTextRange().getEndOffset() : startOffsetDiff;
-  };
 
   private FoldingUpdate() {
   }
@@ -109,8 +106,8 @@ public class FoldingUpdate {
                                                                       final Editor editor,
                                                                       final boolean applyDefaultState) {
 
-    final FoldingMap elementsToFoldMap = getFoldingsFor(file, document, quick);
-    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap,
+    final List<RegionInfo> elementsToFold = getFoldingsFor(file, document, quick);
+    final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFold,
                                                                                 applyDefaultState ? EXCEPT_CARET_REGION : NO, 
                                                                                 !applyDefaultState, false);
     AtomicBoolean alreadyExecuted = new AtomicBoolean();
@@ -122,7 +119,7 @@ public class FoldingUpdate {
     Set<Object> dependencies = new HashSet<>();
     dependencies.add(document);
     dependencies.add(editor.getFoldingModel());
-    for (RegionInfo info : elementsToFoldMap.values()) {
+    for (RegionInfo info : elementsToFold) {
       dependencies.addAll(info.descriptor.getDependencies());
     }
     return CachedValueProvider.Result.create(runnable, ArrayUtil.toObjectArray(dependencies));
@@ -147,7 +144,7 @@ public class FoldingUpdate {
     if (injectedDocuments.isEmpty()) return null;
     final List<EditorWindow> injectedEditors = new ArrayList<>();
     final List<PsiFile> injectedFiles = new ArrayList<>();
-    final List<FoldingMap> maps = new ArrayList<>();
+    final List<List<RegionInfo>> lists = new ArrayList<>();
     for (final DocumentWindow injectedDocument : injectedDocuments) {
       if (!injectedDocument.isValid()) {
         continue;
@@ -159,8 +156,8 @@ public class FoldingUpdate {
 
         injectedEditors.add((EditorWindow)injectedEditor);
         injectedFiles.add(injectedFile);
-        final FoldingMap map = new FoldingMap();
-        maps.add(map);
+        final List<RegionInfo> map = new ArrayList<>();
+        lists.add(map);
         getFoldingsFor(injectedFile, injectedEditor.getDocument(), map, false);
       });
     }
@@ -171,8 +168,8 @@ public class FoldingUpdate {
         EditorWindow injectedEditor = injectedEditors.get(i);
         PsiFile injectedFile = injectedFiles.get(i);
         if (!injectedEditor.getDocument().isValid()) continue;
-        FoldingMap map = maps.get(i);
-        updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, map,
+        List<RegionInfo> list = lists.get(i);
+        updateOperations.add(new UpdateFoldRegionsOperation(project, injectedEditor, injectedFile, list,
                                                             applyDefaultState ? EXCEPT_CARET_REGION : NO, !applyDefaultState, true));
       }
       foldingModel.runBatchFoldingOperation(() -> {
@@ -219,8 +216,8 @@ public class FoldingUpdate {
     return true;
   }
 
-  static FoldingMap getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, boolean quick) {
-    FoldingMap foldingMap = new FoldingMap();
+  static List<RegionInfo> getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, boolean quick) {
+    List<RegionInfo> foldingMap = new ArrayList<>();
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     }
@@ -230,7 +227,7 @@ public class FoldingUpdate {
 
   private static void getFoldingsFor(@NotNull PsiFile file,
                                      @NotNull Document document,
-                                     @NotNull FoldingMap elementsToFoldMap,
+                                     @NotNull List<RegionInfo> elementsToFold,
                                      boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     TextRange docRange = TextRange.from(0, document.getTextLength());
@@ -249,7 +246,7 @@ public class FoldingUpdate {
             continue;
           }
           RegionInfo regionInfo = new RegionInfo(descriptor, psiElement);
-          elementsToFoldMap.putValue(psiElement, regionInfo);
+          elementsToFold.add(regionInfo);
         }
       }
     }
@@ -270,34 +267,15 @@ public class FoldingUpdate {
                                : Attachment.EMPTY_ARRAY);
   }
 
-  static class FoldingMap extends MultiMap<PsiElement, RegionInfo>{    
-    FoldingMap() {
-    }
-
-    FoldingMap(FoldingMap map) {
-      super(map);
-    }
-    
-    @NotNull
-    @Override
-    protected Map<PsiElement, Collection<RegionInfo>> createMap() {
-      return new TreeMap<>(COMPARE_BY_OFFSET_REVERSED);
-    }
-
-    @NotNull
-    @Override
-    protected Collection<RegionInfo> createCollection() {
-      return new ArrayList<>(1);
-    }
-  }
-
   static class RegionInfo {
     @NotNull
     public final FoldingDescriptor descriptor;
+    public final PsiElement element;
     public final boolean collapsedByDefault;
 
     private RegionInfo(@NotNull FoldingDescriptor descriptor, @NotNull PsiElement psiElement) {
       this.descriptor = descriptor;
+      this.element = psiElement;
       this.collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
     }
 
