@@ -50,7 +50,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       if (this == MAIN) TempFileSystem.getInstance().findFileByPath("/test_src")!! else null
   }
 
-  override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
+  override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk19()
 
   override fun setUpProject(project: Project, handler: SetupHandler) {
     super.setUpProject(project, handler)

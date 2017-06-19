@@ -100,6 +100,11 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   @TestOnly
+  public static Sdk getMockJdk19() {
+    return createMockJdk("java 9", getMockJdk9Path().getPath());
+  }
+
+  @TestOnly
   public static Sdk getMockJdk14() {
     return createMockJdk("java 1.4", getMockJdk14Path().getPath());
   }
@@ -114,6 +119,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static File getMockJdk18Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
+  }
+
+  public static File getMockJdk9Path() {
+    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.9");
   }
 
   public static String getMockJdkVersion(String path) {
