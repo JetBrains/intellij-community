@@ -68,25 +68,14 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   @Override
   protected void runTest() throws Throwable {
-    if (getTestName(false).contains("NoVerify")) {
+    if (getTestName(false).contains("NoCommand")) {
       super.runTest();
       return;
     }
-    boolean oldVerify = RedBlackTree.VERIFY;
-    RedBlackTree.VERIFY = !isStressTest();
-    try {
-      if (getTestName(false).contains("NoCommand")) {
-        super.runTest();
-        return;
-      }
-      WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
-        super.runTest();
-        return null;
-      });
-    }
-    finally {
-      RedBlackTree.VERIFY = oldVerify;
-    }
+    WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Void, Throwable>)() -> {
+      super.runTest();
+      return null;
+    });
   }
 
   @Override
@@ -450,7 +439,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     synchronizer.replaceString(document, 3, 5, "bb");
     buffer.replace(3, 5, "bb");
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
     assertSize(2, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -472,7 +461,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       synchronizer.insertString(document, i, String.valueOf(i));
       buffer.insert(i, String.valueOf(i));
     }
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
     assertSize(1, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -522,7 +511,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     synchronizer.insertString(document, 7, "d");
     buffer.insert(7, "d");
 
-    final PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = synchronizer.getTransaction(document);
+    PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = PlatformTestUtil.notNull(synchronizer.getTransaction(document));
     assertSize(3, transaction.getAffectedFragments().keySet());
 
     synchronizer.commitTransaction(document);
@@ -604,6 +593,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker marker7 = document.createRangeMarker(12, 13);
     RangeMarker marker8 = document.createRangeMarker(14, 15);
     document.deleteString(1, 2);
+    assertTrue(marker2.isValid());
+    assertTrue(marker3.isValid());
+    assertTrue(marker4.isValid());
+    assertTrue(marker5.isValid());
+    assertTrue(marker6.isValid());
+    assertTrue(marker7.isValid());
+    assertTrue(marker8.isValid());
   }
 
   public void testDevourMarkerWithDeletion() {
@@ -795,57 +791,47 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testE6() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 4,8, 4,4, 4,9, 0,2, 6,8
-      );
+    List<RangeMarker> mm = add(document, 4,8, 4,4, 4,9, 0,2, 6,8);
     edit(document, 3,2,0);
+    assertNotNull(mm);
   }
 
   public void testE7() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 6,7, 0,3, 3,6, 5,9, 2,9
-      );
+    List<RangeMarker> mm = add(document, 6,7, 0,3, 3,6, 5,9, 2,9);
     edit(document, 5,2,0);
+    assertNotNull(mm);
   }
 
   public void testE8() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 5,5, 8,8, 1,3, 3,9
-      );
+    List<RangeMarker> mm = add(document, 5,5, 8,8, 1,3, 3,9);
     edit(document, 4,3,0);
+    assertNotNull(mm);
   }
 
   public void testE9() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 4,5, 9,9, 1,2, 0,3
-      );
+    List<RangeMarker> mm = add(document, 4,5, 9,9, 1,2, 0,3);
     edit(document, 0,3,0);
+    assertNotNull(mm);
   }
 
   public void testE10() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 9,9, 6,8, 8,8, 5,9
-      );
+    List<RangeMarker> mm = add(document, 9,9, 6,8, 8,8, 5,9);
     edit(document, 2,6,0,  2,0,4);
+    assertNotNull(mm);
   }
 
   public void testE11() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 9,9, 7,7, 1,6, 3,7
-      );
-    //edit(document, 0,0,0);
+    List<RangeMarker> mm = add(document, 9,9, 7,7, 1,6, 3,7);
     delete(mm, 1);
   }
   public void testE12() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 10));
-    List<RangeMarker> mm =
-      add(document, 3,3, 8,8, 5,5, 5,6
-      );
+    List<RangeMarker> mm = add(document, 3,3, 8,8, 5,5, 5,6);
     edit(document, 2,0,2);
     delete(mm, 2);
   }
@@ -859,41 +845,39 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
   public void testE14() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 100));
-    List<RangeMarker> mm = add(document, 6,11, 2,13, 17,17, 13,19, 2,3, 9,10, 10,11, 14,14, 1,3, 4,12, 14,15, 3,10, 14,14, 4,4, 4,8, 6,14, 8,16, 2,12, 11,19, 10,13
-    );
+    List<RangeMarker> mm = add(document, 6,11, 2,13, 17,17, 13,19, 2,3, 9,10, 10,11, 14,14, 1,3, 4,12, 14,15, 3,10, 14,14, 4,4, 4,8, 6,14, 8,16, 2,12, 11,19, 10,13);
     edit(document, 19,0,0,  7,3,0,  16,0,3);
+    assertNotNull(mm);
   }
 
   public void testE15() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 100));
-    List<RangeMarker> mm = add(document, 90,93, 0,9, 44,79, 4,48, 44,99, 53,64, 59,82, 12,99, 81,86, 8,40, 24,55, 32,50, 74,79, 14,94, 7,14
-    );
+    List<RangeMarker> mm = add(document, 90,93, 0,9, 44,79, 4,48, 44,99, 53,64, 59,82, 12,99, 81,86, 8,40, 24,55, 32,50, 74,79, 14,94, 7,14);
     edit(document, 34,0,4,  99,0,3);
+    assertNotNull(mm);
   }
 
   public void testE16() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 100));
-    List<RangeMarker> mm = add(document, 29,63, 47,52, 72,86, 19,86, 13,55, 18,57, 92,95, 83,99, 41,80, 53,85, 10,30, 28,44, 23,32, 70,95, 14,28
-    );
+    List<RangeMarker> mm = add(document, 29,63, 47,52, 72,86, 19,86, 13,55, 18,57, 92,95, 83,99, 41,80, 53,85, 10,30, 28,44, 23,32, 70,95, 14,28);
     edit(document, 67,5,0,  1,0,4);
     delete(mm, 11);
   }
   public void testE17() {
     DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', 100));
 
-    List<RangeMarker> mm = add(document, 15,85, 79,88, 90,94, 43,67, 54,89, 81,98, 1,34, 58,93, 22,23, 44,45, 63,84, 45,76, 58,87, 40,59, 5,81, 95,95, 12,61, 52,65, 80,95, 6,16, 7,67, 59,63, 91,96, 99,99, 50,96, 72,78, 78,78, 85,85, 5,51, 90,91
-    );
+    List<RangeMarker> mm = add(document, 15,85, 79,88, 90,94, 43,67, 54,89, 81,98, 1,34, 58,93, 22,23, 44,45, 63,84, 45,76, 58,87, 40,59, 5,81, 95,95, 12,61, 52,65, 80,95, 6,16, 7,67, 59,63, 91,96, 99,99, 50,96, 72,78, 78,78, 85,85, 5,51, 90,91);
     edit(document, 20,26,0,  15,0,4,  64,4,0);
+    assertNotNull(mm);
   }
 
-  public void testRandomEdit_NoCommand() {
-    final int N = 100;
-
+  public void testRandomStressEdit_NoCommand() {
     final Random gen = new Random();
     int N_TRIES = Timings.adjustAccordingToMySpeed(7000, false);
     System.out.println("N_TRIES = " + N_TRIES);
     DocumentEx document = null;
-    for (int tryn=0; tryn < N_TRIES;tryn++) {
+    final int N = 100;
+    for (int tryn = 0; tryn < N_TRIES; tryn++) {
       ((UndoManagerImpl)UndoManager.getInstance(getProject())).flushCurrentCommandMerger();
       ((UndoManagerImpl)UndoManager.getGlobalInstance()).flushCurrentCommandMerger();
       if (document != null) {
@@ -979,7 +963,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private RangeMarkerEx createMarker(PsiFile psiFile, final int start, final int end) {
-    document = documentManager.getDocument(psiFile);
+    document = PlatformTestUtil.notNull(documentManager.getDocument(psiFile));
     return (RangeMarkerEx)document.createRangeMarker(start, end);
   }
 
@@ -993,7 +977,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     return createMarker(string, start, end);
   }
 
-  public void testRangeMarkersAreWeakReferenced_NoVerify() throws Exception {
+  public void testRangeMarkersAreWeakReferenced() throws Exception {
     final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Set<RangeMarker> markers = ContainerUtil.newHashSet();
     for (int i = 0; i < 10; i++) {
@@ -1040,6 +1024,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, HighlighterTargetArea.EXACT_RANGE);
       RangeMarker m3 = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
       markupModel.removeAllHighlighters();
+      assertFalse(m.isValid());
+      assertFalse(m2.isValid());
+      assertFalse(m3.isValid());
     }
   }
   public void testValidationBug() throws Exception {
@@ -1053,7 +1040,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       document.deleteString(1,2);
 
       assertTrue(marker.isValid());
-      //assertFalse(fold[0].isValid());
+      assertNotNull(fold[0]);
     }
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
@@ -1147,7 +1134,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
         assertEquals(2, list.size());  // 1 line plus one exact range marker
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   public void testRangeHighlighterIteratorOrder() throws Exception {
@@ -1217,13 +1204,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     IntStream.range(0, 10_000).parallel().forEach(iter -> {
       DocumentEx doc = new DocumentImpl(text, true);
       List<Integer> offsets = new ArrayList<>();
-      List<RangeMarker> markers = new ArrayList<>();
 
       try {
         List<Integer> oldOffsets = minOffsets.get();
         int n = oldOffsets == null ? 261 : oldOffsets.size()/4;
         //if (iter%1000==0) System.out.println(iter +" (length="+n+")");
-        
+
+        List<RangeMarker> markers = new ArrayList<>();
         for (int i = 0; i < n; i++) {
           int limit = doc.getTextLength() + 1;
           int offset = raaand(limit);
@@ -1265,7 +1252,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
   }
 
-  public static int raaand(int limit) {
+  private static int raaand(int limit) {
     return limit == 0 ? 0 : ThreadLocalRandom.current().nextInt(limit);
   }
 
@@ -1355,7 +1342,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("insert/delete string", 10000, ()->{
+    PlatformTestUtil.startPerformanceTest("insert/delete string", 2000, ()->{
       for (int i=0; i<15000; i++) {
         doc.insertString(0, " ");
         doc.deleteString(0, 1);
@@ -1393,7 +1380,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("processRangeMarkersOverlappingWith", 2000, ()->{
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, ()->{
       for (int it=0;it<50;it++) {
         for (int i=1; i<doc.getTextLength()-1;i++) {
           List<RangeMarker> overlaps = new ArrayList<>();
