@@ -1,0 +1,17 @@
+LineBreakpoint created at SortedByDouble.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! sorted.SortedByDouble
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+SortedByDouble.java:8
+StreamEx.of(10, 1, 2)
+.sortedByDouble(Integer::doubleValue)
+.forEach(System.out::println)
+Exception caught: junit.framework.AssertionFailedError, null
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+1
+2
+10
+1
+2
+10
