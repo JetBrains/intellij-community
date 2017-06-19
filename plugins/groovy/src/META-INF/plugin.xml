@@ -278,6 +278,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <jvm.createClass implementation="org.jetbrains.plugins.groovy.jvm.createClass.CreateGroovyClassFactory"/>
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
