@@ -429,7 +429,7 @@ interface TxANotAnno {}
   }
 
   void testPreferClassToItsConstants() {
-    checkPreferredItems 0, 'Calendar.FIELD_COUNT', 'Calendar', 'Calendar.AM'
+    checkPreferredItems 0, 'MyCalendar.FIELD_COUNT', 'MyCalendar', 'MyCalendar.AM'
   }
 
   void testPreferLocalsToStaticsInSecondCompletion() {
