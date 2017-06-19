@@ -17,6 +17,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.impl.RegExHelpPopup;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +66,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -305,7 +308,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   boolean validateParameters() {
-    return validateRegExp(regexp) && validateCounts() && validateRegExp(regexprForExprType) && validateRegExp(formalArgType) && validateScript();
+    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateRegExp(regexprForExprType) &&
+           validateRegExp(formalArgType) && validateScript();
   }
 
   @Override
@@ -497,6 +501,27 @@ class EditVarConstraintsDialog extends DialogWrapper {
     return showError(field, ScriptSupport.checkValidScript(field.getText()));
   }
 
+  private boolean validateWithin() {
+    final String within = withinTextField.getText();
+    if (StringUtil.isEmpty(within)) {
+      return true;
+    }
+    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(myProject);
+    final Set<String> seen = new HashSet<>();
+    Configuration configuration = configurationManager.findConfigurationByName(within);
+    while (configuration != null) {
+      if (!seen.add(within)) {
+        return showError(withinTextField.getChildComponent(), "Pattern recursively contained within itself");
+      }
+      final MatchVariableConstraint constraint = configuration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+      if (constraint == null) {
+        break;
+      }
+      configuration = configurationManager.findConfigurationByName(constraint.getWithinConstraint());
+    }
+    return true;
+  }
+
   private boolean validateCounts() {
     final int minValue;
     try {
@@ -519,7 +544,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean showError(JComponent component, String message) {
     if (message == null) return true;
-    final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null).createBalloon();
+    final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, AllIcons.General.BalloonError,
+                                                                                      MessageType.ERROR.getPopupBackground(), null).createBalloon();
     balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
     Disposer.register(myDisposable, balloon);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
