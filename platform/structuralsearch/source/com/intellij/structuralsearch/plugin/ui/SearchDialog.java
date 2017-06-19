@@ -97,8 +97,6 @@ public class SearchDialog extends DialogWrapper {
   private final Alarm myAlarm;
 
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
-  protected final ExistingTemplatesComponent existingTemplatesComponent;
-
   private boolean useLastConfiguration;
 
   @NonNls private FileType ourFtSearchVariant = StructuralSearchUtil.getDefaultFileType();
@@ -130,7 +128,6 @@ public class SearchDialog extends DialogWrapper {
       setOKButtonText(FindBundle.message("find.dialog.find.button"));
     }
 
-    existingTemplatesComponent = ExistingTemplatesComponent.getInstance(this.searchContext.getProject());
     model = new SearchModel(createConfiguration());
 
     init();
@@ -141,7 +138,7 @@ public class SearchDialog extends DialogWrapper {
     this.useLastConfiguration = useLastConfiguration;
   }
 
-  private void setSearchPattern(final Configuration config) {
+  void setSearchPattern(final Configuration config) {
     model.setShadowConfig(config);
     setValuesFromConfig(config);
     initiateValidation();
@@ -293,7 +290,7 @@ public class SearchDialog extends DialogWrapper {
     updateDialectsAndContexts();
   }
 
-  private void updateEditor() {
+  void updateEditor() {
     if (myContentPanel != null) {
       if (myEditorPanel != null) {
         myContentPanel.remove(myEditorPanel);
@@ -306,7 +303,7 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void updateDialectsAndContexts() {
+  void updateDialectsAndContexts() {
     final FileType fileType = (FileType)fileTypes.getSelectedItem();
     if (fileType instanceof LanguageFileType) {
       Language language = ((LanguageFileType)fileType).getLanguage();
@@ -418,7 +415,7 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void setDialogTitle(final Configuration configuration) {
+  void setDialogTitle(final Configuration configuration) {
     setTitle(getDefaultTitle() + " - " + configuration.getName());
   }
 
@@ -428,11 +425,11 @@ public class SearchDialog extends DialogWrapper {
     return configuration;
   }
 
-  protected void addOrReplaceSelection(final String selection) {
-    addOrReplaceSelectionForEditor(selection, searchCriteriaEdit);
+  protected void setText(String text) {
+    setTextForEditor(text, searchCriteriaEdit);
   }
 
-  protected final void addOrReplaceSelectionForEditor(final String selection, Editor editor) {
+  protected final void setTextForEditor(final String selection, Editor editor) {
     final Project project = searchContext.getProject();
     UIUtil.setContent(editor, selection, 0, -1, project);
     final Document document = editor.getDocument();
@@ -575,16 +572,11 @@ public class SearchDialog extends DialogWrapper {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          final Project project = searchContext.getProject();
-          final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
-
           final Configuration configuration = getConfiguration();
-          if (!configurationManager.showSaveTemplateAsDialog(configuration)) {
+          if (!ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(configuration)) {
             return;
           }
           setDialogTitle(configuration);
-
-          existingTemplatesComponent.setUserTemplates(configurationManager);
         }
       })
     );
@@ -691,17 +683,15 @@ public class SearchDialog extends DialogWrapper {
         final SelectionModel selectionModel = editor.getSelectionModel();
 
         if (selectionModel.hasSelection()) {
-          addOrReplaceSelection(selectionModel.getSelectedText());
-          existingTemplatesComponent.getPatternTree().setSelectionPath(null);
-          existingTemplatesComponent.getHistoryList().setSelectedIndex(-1);
+          setText(selectionModel.getSelectedText());
           setSomeText = true;
         }
       }
 
       if (!setSomeText) {
-        int selection = existingTemplatesComponent.getHistoryList().getSelectedIndex();
-        if (selection != -1) {
-          setValuesFromConfig((Configuration)existingTemplatesComponent.getHistoryList().getSelectedValue());
+        final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
+        if (configuration != null) {
+          setValuesFromConfig(configuration);
         }
       }
     }
@@ -746,7 +736,7 @@ public class SearchDialog extends DialogWrapper {
         //}
       }
       filterOutUnusedVariableConstraints(configuration);
-      existingTemplatesComponent.addConfigurationToHistory(configuration);
+      ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(configuration);
 
       startSearching();
     }

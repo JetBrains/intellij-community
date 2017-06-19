@@ -39,6 +39,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko
@@ -60,7 +61,7 @@ public class SelectTemplateDialog extends DialogWrapper {
   @NonNls private static final String SELECT_TEMPLATE_CARD = "SelectCard";
 
   public SelectTemplateDialog(Project project, boolean showHistory, boolean replace) {
-    super(project, false);
+    super(project, true);
 
     this.project = project;
     this.showHistory = showHistory;
@@ -87,6 +88,18 @@ public class SelectTemplateDialog extends DialogWrapper {
     }
 
     setupListeners();
+  }
+
+  @Override
+  protected void doOKAction() {
+    super.doOKAction();
+    existingTemplatesComponent.finish(true);
+  }
+
+  @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    existingTemplatesComponent.finish(false);
   }
 
   class MySelectionListener implements TreeSelectionListener, ListSelectionListener {
@@ -196,23 +209,17 @@ public class SelectTemplateDialog extends DialogWrapper {
     selectionListener = new MySelectionListener();
 
     if (showHistory) {
-      existingTemplatesComponent.getHistoryList().getSelectionModel().addListSelectionListener(
-        selectionListener
-      );
+      existingTemplatesComponent.getHistoryList().getSelectionModel().addListSelectionListener(selectionListener);
     }
     else {
-      existingTemplatesComponent.getPatternTree().getSelectionModel().addTreeSelectionListener(
-        selectionListener
-      );
+      existingTemplatesComponent.getPatternTree().getSelectionModel().addTreeSelectionListener(selectionListener);
     }
   }
 
   private void removeListeners() {
     existingTemplatesComponent.setOwner(null);
     if (showHistory) {
-      existingTemplatesComponent.getHistoryList().getSelectionModel().removeListSelectionListener(
-        selectionListener
-      );
+      existingTemplatesComponent.getHistoryList().getSelectionModel().removeListSelectionListener(selectionListener);
     }
     else {
       existingTemplatesComponent.getPatternTree().getSelectionModel().removeTreeSelectionListener(selectionListener);
@@ -279,17 +286,8 @@ public class SelectTemplateDialog extends DialogWrapper {
 
   @NotNull public Configuration[] getSelectedConfigurations() {
     if (showHistory) {
-      Object[] selectedValues = existingTemplatesComponent.getHistoryList().getSelectedValues();
-      if (selectedValues == null) {
-        return new Configuration[0];
-      }
-      Collection<Configuration> configurations = new ArrayList<>();
-      for (Object selectedValue : selectedValues) {
-        if (selectedValue instanceof Configuration) {
-          configurations.add((Configuration)selectedValue);
-        }
-      }
-      return configurations.toArray(new Configuration[configurations.size()]);
+      final List<Configuration> selectedValues = existingTemplatesComponent.getHistoryList().getSelectedValuesList();
+      return selectedValues.toArray(Configuration.EMPTY_ARRAY);
     }
     else {
       TreePath[] paths = existingTemplatesComponent.getPatternTree().getSelectionModel().getSelectionPaths();

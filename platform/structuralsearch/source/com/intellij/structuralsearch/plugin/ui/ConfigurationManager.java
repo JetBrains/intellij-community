@@ -36,6 +36,7 @@ import java.util.stream.Stream;
 
 @State(name = "StructuralSearchPlugin", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ConfigurationManager implements PersistentStateComponent<Element> {
+  private static final int MAX_RECENT_SIZE = 30;
   @NonNls static final String SEARCH_TAG_NAME = "searchConfiguration";
   @NonNls static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
@@ -66,14 +67,17 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     readConfigurations(state, configurations, historyConfigurations);
   }
 
-  public void addHistoryConfigurationToFront(Configuration configuration) {
-    historyConfigurations.remove(configuration);
-    historyConfigurations.add(0, configuration);
+  public void addHistoryConfiguration(Configuration configuration) {
+    historyConfigurations.remove(configuration); // move to most recent
     configuration.setCreated(System.currentTimeMillis());
+    historyConfigurations.add(0, configuration);
+    while (historyConfigurations.size() > MAX_RECENT_SIZE) {
+      historyConfigurations.remove(historyConfigurations.size() - 1);
+    }
   }
 
-  public void removeHistoryConfiguration(Configuration configuration) {
-    historyConfigurations.remove(configuration);
+  public Configuration getMostRecentConfiguration() {
+    return historyConfigurations.isEmpty() ? null : historyConfigurations.get(0);
   }
 
   public void removeConfiguration(Configuration configuration) {
@@ -148,22 +152,16 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   @Nullable
   public Configuration findConfigurationByName(String name) {
     final Configuration configuration = findConfigurationByName(configurations, name);
-    if (configuration != null) {
-      return configuration;
-    }
-    return findConfigurationByName(StructuralSearchUtil.getPredefinedTemplates(), name);
+    return configuration != null ? configuration : findConfigurationByName(StructuralSearchUtil.getPredefinedTemplates(), name);
   }
 
   @Nullable
   private static Configuration findConfigurationByName(final Collection<Configuration> configurations, final String name) {
-    for(Configuration config : configurations) {
-      if (config.getName().equals(name)) return config;
-    }
-    return null;
+    return configurations.stream().filter(config -> config.getName().equals(name)).findFirst().orElse(null);
   }
 
   @NotNull
-  public Collection<Configuration> getHistoryConfigurations() {
+  public List<Configuration> getHistoryConfigurations() {
     return Collections.unmodifiableList(historyConfigurations);
   }
 
