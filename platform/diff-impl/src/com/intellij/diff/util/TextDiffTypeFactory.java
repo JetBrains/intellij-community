@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,26 +98,20 @@ public class TextDiffTypeFactory {
     @NotNull
     @Override
     public Color getColor(@Nullable Editor editor) {
-      return getAttributes(editor).getBackgroundColor();
+      return ObjectUtils.notNull(getAttributes(editor).getBackgroundColor(), JBColor.DARK_GRAY);
     }
 
     @NotNull
     @Override
     public Color getIgnoredColor(@Nullable Editor editor) {
-      TextAttributes attributes = getAttributes(editor);
-      Color color = attributes.getForegroundColor();
+      Color color = getAttributes(editor).getForegroundColor();
       if (color != null) return color;
 
-      if (editor instanceof EditorEx) {
-        Color fg = attributes.getBackgroundColor();
-        Color bg = ((EditorEx)editor).getBackgroundColor();
-        return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
-      }
-      else {
-        Color fg = attributes.getBackgroundColor();
-        Color bg = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-        return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
-      }
+      Color fg = getColor(editor);
+      Color bg = editor instanceof EditorEx
+                 ? ((EditorEx)editor).getBackgroundColor()
+                 : EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      return ColorUtil.mix(fg, bg, MIDDLE_COLOR_FACTOR);
     }
 
     @Nullable
