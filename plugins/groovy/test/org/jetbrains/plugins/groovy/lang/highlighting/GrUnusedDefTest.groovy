@@ -132,4 +132,24 @@ def bar() { fsdasdfsgsdsfadfgs("s") }
 bar()
 '''
   }
+
+  void 'test delegate'() {
+    fixture.addClass '''
+package groovy.lang;
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Delegate {}
+'''
+
+    testHighlighting '''\
+class Foo {
+  @Delegate
+  Integer i
+  @Delegate
+  String bar() {}
+}
+
+new Foo()
+'''
+  }
+
 }
