@@ -103,7 +103,11 @@ public class HelpManagerImpl extends HelpManager {
 
   @Nullable
   private static HelpSet createHelpSet() {
-    String urlToHelp = ApplicationInfo.getInstance().getHelpURL() + "/" + HELP_HS;
+    String applicationHelpUrl = ApplicationInfo.getInstance().getHelpURL();
+    if( applicationHelpUrl == null ){
+      return null;
+    }
+    String urlToHelp = applicationHelpUrl + "/" + HELP_HS;
     HelpSet mainHelpSet = loadHelpSet(urlToHelp);
     if (mainHelpSet == null) return null;
 
