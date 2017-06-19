@@ -28,12 +28,15 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
  */
 public class WithinPredicate extends MatchPredicate {
+  private static final Set<String> recursionGuard = new HashSet<>();
   private final MatchOptions myMatchOptions;
   private final Matcher matcher;
 
@@ -44,16 +47,23 @@ public class WithinPredicate extends MatchPredicate {
       myMatchOptions.setLooseMatching(true);
       myMatchOptions.setFileType(fileType);
       myMatchOptions.fillSearchCriteria(StringUtil.unquoteString(within));
+      matcher = new Matcher(project, myMatchOptions);
     }
     else {
-      final Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(within);
-      if (configuration == null) {
-        throw new MalformedPatternException();
+      if (!recursionGuard.add(within)) {
+        throw new MalformedPatternException("Pattern recursively contained within itself");
       }
-      myMatchOptions = configuration.getMatchOptions();
+      try {
+        final Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(within);
+        if (configuration == null) {
+          throw new MalformedPatternException("Configuration '" + within + "' not found");
+        }
+        myMatchOptions = configuration.getMatchOptions();
+        matcher = new Matcher(project, myMatchOptions);
+      } finally {
+        recursionGuard.remove(within);
+      }
     }
-
-    matcher = new Matcher(project, myMatchOptions);
   }
 
   @Override
