@@ -37,7 +37,8 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
 }
 
 
-class PyTestConfiguration(project: Project, factory: PyTestFactory) : PyAbstractTestConfiguration(project, factory) {
+class PyTestConfiguration(project: Project, factory: PyTestFactory)
+  : PyAbstractTestConfiguration(project, factory, PythonTestConfigurationsModel.PY_TEST_NAME) {
   @ConfigField
   var keywords = ""
 
