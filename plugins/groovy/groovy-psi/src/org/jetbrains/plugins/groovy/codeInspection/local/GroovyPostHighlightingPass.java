@@ -225,7 +225,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
-    if (UnusedSymbolUtil.isImplicitRead(field) || UnusedSymbolUtil.isImplicitWrite(field)) {
+    if (UnusedSymbolUtil.isImplicitRead(field.getProject(), field, null)
+        || UnusedSymbolUtil.isImplicitWrite(field.getProject(), field, null)) {
       return false;
     }
 
