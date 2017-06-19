@@ -153,7 +153,7 @@ public interface JavacRef {
     public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache) {
       if (qualifier != null) {
         TypeMirror type = qualifier.asType();
-        if (type == null || type.getKind() == TypeKind.NONE) {
+        if (type == null || type.getKind() == TypeKind.NONE || type.getKind() == TypeKind.OTHER) {
           return null;
         }
       }
