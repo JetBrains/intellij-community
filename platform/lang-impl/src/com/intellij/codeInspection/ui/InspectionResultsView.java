@@ -475,63 +475,67 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   public void syncRightPanel() {
     final Editor oldEditor = myPreviewEditor;
-    if (myLoadingProgressPreview != null) {
-      Disposer.dispose(myLoadingProgressPreview);
-      myLoadingProgressPreview = null;
-    }
-    if (myApplyingFix) {
-      final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper(true);
-      LOG.assertTrue(wrapper != null);
-      mySplitter.setSecondComponent(InspectionResultsViewUtil.getApplyingFixLabel(wrapper));
-    } else {
-      if (myTree.getSelectionModel().getSelectionCount() != 1) {
-        if (myTree.getSelectedToolWrapper(true) == null) {
-          mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
-        }
-        else {
-          showInRightPanel(myTree.getCommonSelectedElement());
-        }
+    try {
+      if (myLoadingProgressPreview != null) {
+        Disposer.dispose(myLoadingProgressPreview);
+        myLoadingProgressPreview = null;
+      }
+      if (myApplyingFix) {
+        final InspectionToolWrapper wrapper = myTree.getSelectedToolWrapper(true);
+        LOG.assertTrue(wrapper != null);
+        mySplitter.setSecondComponent(InspectionResultsViewUtil.getApplyingFixLabel(wrapper));
       }
       else {
-        TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
-        if (pathSelected != null) {
-          final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
-          if (node instanceof ProblemDescriptionNode) {
-            final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
-            showInRightPanel(problemNode.getElement());
-          }
-          else if (node instanceof InspectionPackageNode ||
-                   node instanceof InspectionModuleNode ||
-                   node instanceof RefElementNode) {
-            showInRightPanel(node.getContainingFileLocalEntity());
-          }
-          else if (node instanceof InspectionNode) {
-            if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
-              mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
-            }
-            else {
-              showInRightPanel(null);
-            }
-          }
-          else if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
-            final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
-            myLoadingProgressPreview = panel;
-            mySplitter.setSecondComponent(panel);
+        if (myTree.getSelectionModel().getSelectionCount() != 1) {
+          if (myTree.getSelectedToolWrapper(true) == null) {
+            mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
           }
           else {
-            LOG.error("Unexpected node: " + node.getClass());
+            showInRightPanel(myTree.getCommonSelectedElement());
+          }
+        }
+        else {
+          TreePath pathSelected = myTree.getSelectionModel().getLeadSelectionPath();
+          if (pathSelected != null) {
+            final InspectionTreeNode node = (InspectionTreeNode)pathSelected.getLastPathComponent();
+            if (node instanceof ProblemDescriptionNode) {
+              final ProblemDescriptionNode problemNode = (ProblemDescriptionNode)node;
+              showInRightPanel(problemNode.getElement());
+            }
+            else if (node instanceof InspectionPackageNode ||
+                     node instanceof InspectionModuleNode ||
+                     node instanceof RefElementNode) {
+              showInRightPanel(node.getContainingFileLocalEntity());
+            }
+            else if (node instanceof InspectionNode) {
+              if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
+                mySplitter.setSecondComponent(InspectionResultsViewUtil.getNothingToShowTextLabel());
+              }
+              else {
+                showInRightPanel(null);
+              }
+            }
+            else if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode) {
+              final InspectionViewNavigationPanel panel = new InspectionViewNavigationPanel(node, myTree);
+              myLoadingProgressPreview = panel;
+              mySplitter.setSecondComponent(panel);
+            }
+            else {
+              LOG.error("Unexpected node: " + node.getClass());
+            }
           }
         }
       }
-    }
-    if (oldEditor != null) {
-      if (Boolean.TRUE.equals(oldEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY))) {
-        oldEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, null);
-      }
-      else {
-        InspectionResultsViewUtil.releaseEditor(oldEditor);
-        if (oldEditor == myPreviewEditor) {
-          myPreviewEditor = null;
+    } finally {
+      if (oldEditor != null) {
+        if (Boolean.TRUE.equals(oldEditor.getUserData(PREVIEW_EDITOR_IS_REUSED_KEY))) {
+          oldEditor.putUserData(PREVIEW_EDITOR_IS_REUSED_KEY, null);
+        }
+        else {
+          InspectionResultsViewUtil.releaseEditor(oldEditor);
+          if (oldEditor == myPreviewEditor) {
+            myPreviewEditor = null;
+          }
         }
       }
     }
