@@ -170,6 +170,7 @@ public class AllIcons {
     public static final Icon SplitVertically = IconLoader.getIcon("/actions/splitVertically.png"); // 16x16
     public static final Icon StartDebugger = IconLoader.getIcon("/actions/startDebugger.png"); // 16x16
     public static final Icon StepOut = IconLoader.getIcon("/actions/stepOut.png"); // 16x16
+    public static final Icon Stub = IconLoader.getIcon("/actions/stub.png"); // 16x16
     public static final Icon Submit1 = IconLoader.getIcon("/actions/submit1.png"); // 11x11
     public static final Icon Suspend = IconLoader.getIcon("/actions/suspend.png"); // 16x16
     public static final Icon SwapPanels = IconLoader.getIcon("/actions/swapPanels.png"); // 16x16
