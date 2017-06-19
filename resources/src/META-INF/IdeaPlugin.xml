@@ -329,6 +329,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="jvm.createClass" interface="com.intellij.jvm.createClass.api.CreateJvmClassFactory"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
