@@ -756,26 +756,28 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       deletionsWithPath.add(Pair.create((VFileDeleteEvent)event, event.getPath()));
     }
 
-    filterOutInvalidDeletions(deletionsWithPath);
+    if (!deletionsWithPath.isEmpty()) {
+      filterOutInvalidDeletions(deletionsWithPath);
 
-    Map<VirtualDirectoryImpl, List<VFileDeleteEvent>> grouped = new HashMap<>(); // can be nulls
-    boolean hasValidEvents = false;
-    for (Pair<VFileDeleteEvent, String> pair : deletionsWithPath) {
-      if (pair == null) continue; // filtered out
-      VFileDeleteEvent event = pair.getFirst();
-      @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getFile().getParent();
-      List<VFileDeleteEvent> changes = grouped.computeIfAbsent(parent, __ -> new SmartList<>());
-      changes.add(event);
-      outValidated.add(event);
-      hasValidEvents = true;
-    }
+      Map<VirtualDirectoryImpl, List<VFileDeleteEvent>> grouped = new HashMap<>(); // can be nulls
+      boolean hasValidEvents = false;
+      for (Pair<VFileDeleteEvent, String> pair : deletionsWithPath) {
+        if (pair == null) continue; // filtered out
+        VFileDeleteEvent event = pair.getFirst();
+        @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getFile().getParent();
+        List<VFileDeleteEvent> changes = grouped.computeIfAbsent(parent, __ -> new SmartList<>());
+        changes.add(event);
+        outValidated.add(event);
+        hasValidEvents = true;
+      }
 
-    if (hasValidEvents) {
-      outApplyEvents.add(() -> {
-        clearIdCache();
-        applyDeletions(grouped);
-        incStructuralModificationCount();
-      });
+      if (hasValidEvents) {
+        outApplyEvents.add(() -> {
+          clearIdCache();
+          applyDeletions(grouped);
+          incStructuralModificationCount();
+        });
+      }
     }
   }
 
