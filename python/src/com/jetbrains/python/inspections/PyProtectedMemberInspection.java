@@ -21,10 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -38,7 +35,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import com.jetbrains.python.testing.pytest.PyTestUtil;
+import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,9 +134,17 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
 
+
+        if (ignoreTestFunctions) {
+          for (PsiElement item = node.getParent(); item != null && !(item instanceof PsiFileSystemItem); item = item.getParent()) {
+            if (PyTestsSharedKt.isTestElement(item, null, myTypeEvalContext)) {
+              return;
+            }
+          }
+        }
+
         final PyClass parentClass = getClassOwner(node);
         if (parentClass != null) {
-          if (PyTestUtil.isPyTestClass(parentClass, null) && ignoreTestFunctions) return;
 
           if (parentClass.isSubclass(resolvedClass, myTypeEvalContext))
             return;

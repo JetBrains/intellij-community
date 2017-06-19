@@ -46,6 +46,23 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
  */
 val RunnersThatRequireTestCaseClass = setOf(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME)
 
+/**
+ * Checks if element could be test target
+ * @param testCaseClassRequired see [PythonUnitTestUtil] docs
+ */
+fun isTestElement(element:PsiElement, testCaseClassRequired:Boolean?, typeEvalContext: TypeEvalContext) = when (element) {
+  is com.jetbrains.python.psi.PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, typeEvalContext)
+  is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
+    it is com.jetbrains.python.psi.PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, typeEvalContext)
+  }
+  is com.jetbrains.python.psi.PyFunction -> PythonUnitTestUtil.isTestFunction(element,
+                                                                              testCaseClassRequired, typeEvalContext)
+  is com.jetbrains.python.psi.PyClass -> {
+    com.jetbrains.python.testing.PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, typeEvalContext)
+  }
+  else -> false
+}
+
 
 /**
  * Since runners report names of tests as qualified name, no need to convert it to PSI and back to string.
@@ -554,18 +571,7 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
     // contains tests etc
     val context = com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(element.project, element.containingFile)
     val testCaseClassRequired = RunnersThatRequireTestCaseClass.contains(runnerName)
-    return when (element) {
-      is com.jetbrains.python.psi.PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, context)
-      is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
-        it is com.jetbrains.python.psi.PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, context)
-      }
-      is com.jetbrains.python.psi.PyFunction -> PythonUnitTestUtil.isTestFunction(element,
-                                                                                  testCaseClassRequired, context)
-      is com.jetbrains.python.psi.PyClass -> {
-        com.jetbrains.python.testing.PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, context)
-      }
-      else -> false
-    }
+    return isTestElement(element, testCaseClassRequired, context)
   }
 
   /**
