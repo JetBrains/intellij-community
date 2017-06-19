@@ -15,41 +15,29 @@
  */
 package com.intellij.dvcs.branch;
 
-import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
-import static com.intellij.util.containers.ContainerUtil.map2List;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-
-public abstract class DvcsBranchManager<T extends Repository> {
-  @NotNull private final AbstractRepositoryManager<T> myRepositoryManager;
+public abstract class DvcsBranchManager {
   @NotNull private final DvcsBranchSettings myBranchSettings;
-  @NotNull public final BranchStorage myPredefinedFavoriteBranches = new BranchStorage();
+  @NotNull private final Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = ContainerUtil.newHashMap();
 
-  protected DvcsBranchManager(@NotNull AbstractRepositoryManager<T> repositoryManager,
-                              @NotNull DvcsBranchSettings settings,
+  protected DvcsBranchManager(@NotNull DvcsBranchSettings settings,
                               @NotNull BranchType[] branchTypes) {
-    myRepositoryManager = repositoryManager;
     myBranchSettings = settings;
     for (BranchType type : branchTypes) {
       String defaultBranchName = getDefaultBranchName(type);
       if (!StringUtil.isEmptyOrSpaces(defaultBranchName)) {
-        myPredefinedFavoriteBranches.myBranches.put(type.getName(), constructDefaultBranchPredefinedList(defaultBranchName));
+        myPredefinedFavoriteBranches.put(type, Collections.singleton(defaultBranchName));
       }
     }
-  }
-
-  @NotNull
-  private List<DvcsBranchInfo> constructDefaultBranchPredefinedList(@NotNull String defaultBranchName) {
-    List<DvcsBranchInfo> branchInfos = newArrayList(new DvcsBranchInfo("", defaultBranchName));
-    branchInfos.addAll(map2List(myRepositoryManager.getRepositories(),
-                                repository -> new DvcsBranchInfo(repository.getRoot().getPath(), defaultBranchName)));
-    return branchInfos;
   }
 
   @Nullable
@@ -60,7 +48,12 @@ public abstract class DvcsBranchManager<T extends Repository> {
     String branchTypeName = branchType.getName();
     if (myBranchSettings.getFavorites().contains(branchTypeName, repository, branchName)) return true;
     if (myBranchSettings.getExcludedFavorites().contains(branchTypeName, repository, branchName)) return false;
-    return myPredefinedFavoriteBranches.contains(branchTypeName, repository, branchName);
+    return isPredefinedAsFavorite(branchType, branchName);
+  }
+
+  private boolean isPredefinedAsFavorite(@NotNull BranchType type, @NotNull String branchName) {
+    Collection<String> predefinedNames = myPredefinedFavoriteBranches.get(type);
+    return predefinedNames != null && predefinedNames.contains(branchName);
   }
 
   public void setFavorite(@Nullable BranchType branchType,
@@ -70,14 +63,14 @@ public abstract class DvcsBranchManager<T extends Repository> {
     if (branchType == null) return;
     String branchTypeName = branchType.getName();
     if (shouldBeFavorite) {
-      myBranchSettings.getFavorites().add(branchTypeName, repository, branchName);
       myBranchSettings.getExcludedFavorites().remove(branchTypeName, repository, branchName);
+      if (!isPredefinedAsFavorite(branchType, branchName)) {
+        myBranchSettings.getFavorites().add(branchTypeName, repository, branchName);
+      }
     }
     else {
-      if (myBranchSettings.getFavorites().contains(branchTypeName, repository, branchName)) {
-        myBranchSettings.getFavorites().remove(branchTypeName, repository, branchName);
-      }
-      else if (myPredefinedFavoriteBranches.contains(branchTypeName, repository, branchName)) {
+      myBranchSettings.getFavorites().remove(branchTypeName, repository, branchName);
+      if (isPredefinedAsFavorite(branchType, branchName)) {
         myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
       }
     }

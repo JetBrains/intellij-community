@@ -19,18 +19,16 @@ import com.intellij.dvcs.branch.BranchType;
 import com.intellij.dvcs.branch.DvcsBranchManager;
 import git4idea.branch.GitBranchType;
 import git4idea.config.GitVcsSettings;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static git4idea.log.GitRefManager.MASTER;
 import static git4idea.log.GitRefManager.ORIGIN_MASTER;
 
-public class GitBranchManager extends DvcsBranchManager<GitRepository> {
+public class GitBranchManager extends DvcsBranchManager {
 
-  public GitBranchManager(@NotNull GitRepositoryManager repositoryManager, @NotNull GitVcsSettings settings) {
-    super(repositoryManager, settings.getFavoriteBranchSettings(), GitBranchType.values());
+  public GitBranchManager(@NotNull GitVcsSettings settings) {
+    super(settings.getFavoriteBranchSettings(), GitBranchType.values());
   }
 
   @Nullable
