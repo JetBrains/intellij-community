@@ -51,7 +51,6 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -61,6 +60,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenPomPathModuleExtension;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -718,6 +718,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Nullable
   private VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
+    String pomFileUrl = MavenPomPathModuleExtension.getInstance(module).getPomFileUrl();
+    if (pomFileUrl != null) {
+      return VirtualFileManager.getInstance().findFileByUrl(pomFileUrl);
+    }
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
       List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).collect(Collectors.toList());
       if (pomFiles.isEmpty()) {

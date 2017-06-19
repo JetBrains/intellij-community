@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -83,6 +84,11 @@ public class MavenModuleImporter {
     myMavenProjectToModuleName = mavenProjectToModuleName;
     mySettings = settings;
     myModifiableModelsProvider = modifiableModelsProvider;
+
+    VirtualFile pomFile = mavenProject.getFile();
+    if (!FileUtil.namesEqual("pom", pomFile.getNameWithoutExtension())) {
+      MavenPomPathModuleExtension.getInstance(module).setPomFileUrl(pomFile.getUrl());
+    }
   }
 
   public ModifiableRootModel getRootModel() {
