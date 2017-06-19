@@ -23,8 +23,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.testing.PythonTestConfigurationsModel
-import com.jetbrains.python.testing.VFSTestFrameworkListener
 
 /**
  * Nose runner
@@ -41,7 +39,8 @@ class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, env
 }
 
 
-class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) : PyAbstractTestConfiguration(project, factory) {
+class PyNoseTestConfiguration(project: Project, factory: PyNoseTestFactory) :
+  PyAbstractTestConfiguration(project, factory, PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) {
   @ConfigField
   var regexPattern = ""
 
