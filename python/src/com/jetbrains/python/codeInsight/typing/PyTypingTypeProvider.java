@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -402,7 +403,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return tupleExpr != null ? StreamEx.of(tupleExpr.getElements()) : StreamEx.of(e);
       })
       .nonNull()
-      .flatMap(e -> tryResolvingOnStubs(e, typeEvalContext).stream())
+      .flatMap(e -> tryResolving(e, typeEvalContext).stream())
       .map(e -> getGenericTypeFromTypeVar(e, context))
       .select(PyType.class)
       .distinct()
@@ -422,7 +423,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
     final List<PyType> members = Lists.newArrayList();
     boolean foundAny = false;
-    for (PsiElement resolved : tryResolvingOnStubs(expression, context.getTypeContext())) {
+    for (PsiElement resolved : tryResolving(expression, context.getTypeContext())) {
       final Ref<PyType> typeRef = getTypeForResolvedElement(resolved, context);
       if (typeRef != null) {
         final PyType type = typeRef.get();
@@ -613,7 +614,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyExpression createExpressionFromFragment(@NotNull String contents, @NotNull PsiElement anchor) {
     final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", contents, false);
-    codeFragment.setContext(anchor.getContainingFile());
+    codeFragment.setContext(getFragmentContainingFile(anchor));
     final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
     return statement != null ? statement.getExpression() : null;
   }
@@ -774,10 +775,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
         }
         final String name = element != null ? getQualifiedName(element) : null;
+        // For the following names we shouldn't go to the RHS of assignments,
+        // since in typing.py there are not type aliases already and assigned to
+        // something not so useful.
         if (name != null && OPAQUE_NAMES.contains(name)) {
           elements.add(element);
           continue;
         }
+        // Presumably, a TypeVar definition or a type alias
         if (element instanceof PyTargetExpression) {
           final PyTargetExpression targetExpr = (PyTargetExpression)element;
           // XXX: Requires switching from stub to AST
@@ -808,14 +813,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static List<PsiElement> tryResolvingOnStubs(@NotNull PyExpression expression,
                                                       @NotNull TypeEvalContext context) {
-
-    final QualifiedName qualifiedName = PyPsiUtils.asQualifiedName(expression);
-    final PyFile pyFile = as(expression.getContainingFile().getContext(), PyFile.class);
+    
+    // PyPsiUtils.asQualifiedName() also takes into account subscription and prefix expressions
+    final QualifiedName qualifiedName = makeQualifiedNameFromReferenceExpression(expression);
+    final PyFile pyFile = getFragmentContainingFile(expression);
 
     if (pyFile != null && qualifiedName != null && qualifiedName.getComponentCount() > 0) {
       List<RatedResolveResult> results = new ArrayList<>();
       //noinspection ConstantConditions
-      results.addAll(pyFile.multiResolveName(qualifiedName.getFirstComponent()));
+      results.addAll(pyFile.multiResolveName(qualifiedName.getFirstComponent(), false));
       if (results.isEmpty() && expression instanceof PyQualifiedExpression) {
         for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
           if (provider instanceof PyOverridingReferenceResolveProvider) {
@@ -849,6 +855,29 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return Collections.singletonList(expression);
   }
 
+  @Nullable
+  private static PyFile getFragmentContainingFile(@NotNull PsiElement anchor) {
+    // PyExpressionCodeFragment#getContext() should return not-null value for expression fragments
+    final PsiElement contextElement = ObjectUtils.chooseNotNull(anchor.getContainingFile().getContext(), anchor);
+    return as(contextElement.getContainingFile(), PyFile.class);
+  }
+
+  @Nullable
+  private static QualifiedName makeQualifiedNameFromReferenceExpression(@NotNull PyExpression expression) {
+    final List<String> components = new ArrayList<>();
+    PyExpression remaining = expression;
+    while (remaining != null) {
+      final PyReferenceExpression remainingReference = as(remaining, PyReferenceExpression.class);
+      if (remainingReference == null) {
+        return null;
+      }
+      components.add(remainingReference.getReferencedName());
+      remaining = remainingReference.getQualifier();
+    }
+    Collections.reverse(components);
+    return QualifiedName.fromComponents(components);
+  }
+
   private static boolean isBuiltinPathLike(@Nullable PsiElement element) {
     return element instanceof PyClass &&
            PyBuiltinCache.getInstance(element).isBuiltin(element) &&
@@ -858,7 +887,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   private static Collection<String> resolveToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final Set<String> names = Sets.newLinkedHashSet();
-    for (PsiElement resolved : tryResolvingOnStubs(expression, context)) {
+    for (PsiElement resolved : tryResolving(expression, context)) {
       final String name = getQualifiedName(resolved);
       if (name != null) {
         names.add(name);
