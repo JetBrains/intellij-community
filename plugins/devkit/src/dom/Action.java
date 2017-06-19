@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public interface Action extends ActionOrGroup {
 	@Attribute ("class")
 	@Required
         @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
-            instantiatable = true, allowNonPublic = true, allowAbstract = false, allowInterface = false)
+		allowNonPublic = true, allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
         GenericAttributeValue<PsiClass> getClazz();
 
@@ -91,14 +91,6 @@ public interface Action extends ActionOrGroup {
 	@Required
 	@Stubbed
 	GenericAttributeValue<String> getId();
-
-	///**
-	// * Returns the value of the overrides child.
-	// * Attribute overrides
-	// * @return the value of the overrides child.
-	// */
-	//@NotNull
-	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the list of keyboard-shortcut children.
