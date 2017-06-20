@@ -32,6 +32,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +123,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
-    int height = Math.max(mySchemesCombo.getComponent().getPreferredSize().height, myToolbar.getPreferredSize().height) + 2;
+    int height = Math.max(mySchemesCombo.getComponent().getPreferredSize().height, myToolbar.getPreferredSize().height);
+    height += UIUtil.isUnderWin10LookAndFeel() ? 0 : 2;
     controlsPanel.setPreferredSize(new Dimension(controlsPanel.getMinimumSize().width, height));
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
