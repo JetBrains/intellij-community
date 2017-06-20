@@ -587,21 +587,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
         counter.indicator.checkCanceled();
 
-        if (indexOneByOne(batch)) {
-          counter.newIndexedCommits += batch.size();
-        }
+        List<String> hashes = TroveUtil.map(batch, value -> myStorage.getCommitId(value).getHash().asString());
+        myProviders.get(myRoot).readFullDetails(myRoot, hashes, VcsLogPersistentIndex.this::storeDetail, true);
+        counter.newIndexedCommits += batch.size();
 
         counter.displayProgress();
       });
 
       flush();
-    }
-
-    private boolean indexOneByOne(@NotNull TIntHashSet commits) throws VcsException {
-      VcsLogProvider provider = myProviders.get(myRoot);
-      List<String> hashes = TroveUtil.map(commits, value -> myStorage.getCommitId(value).getHash().asString());
-      provider.readFullDetails(myRoot, hashes, VcsLogPersistentIndex.this::storeDetail, true);
-      return true;
     }
 
     public void indexAll(@NotNull TIntHashSet commits, @NotNull CommitsCounter counter) throws VcsException {
