@@ -15,8 +15,6 @@
  */
 package com.intellij.debugger.streams.exec.streamex
 
-import com.intellij.debugger.streams.exec.TraceExecutionTestCase
-
 /**
  * @author Vitaliy.Bibaev
  */
