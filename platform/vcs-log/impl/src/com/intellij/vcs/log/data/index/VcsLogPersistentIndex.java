@@ -500,13 +500,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                 indicator.checkCanceled();
               }
               catch (ProcessCanceledException reThrown) {
+                taskCompleted(null);
                 throw reThrown;
               }
               catch (Throwable t) {
                 LOG.error("Error while indexing", t);
               }
             }
-
             taskCompleted(null);
           }
         };
@@ -555,10 +555,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             indexOneByOne(commits, counter);
           }
         }
+        catch (ProcessCanceledException e) {
+          scheduleReindex();
+          throw e;
+        }
         catch (VcsException e) {
           LOG.error(e);
-          commits.forEach(value -> markForIndexing(value, myRoot));
-          scheduleIndex(false);
+          scheduleReindex();
         }
       }
       finally {
@@ -578,6 +581,15 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       if (leftCommits > 0) {
         LOG.warn("Did not index " + leftCommits + " commits");
       }
+    }
+
+    private void scheduleReindex() {
+      LOG.debug("Schedule reindexing of " + myCommits.size() + " commits in " + myRoot.getName());
+      myCommits.forEach(value -> {
+        markForIndexing(value, myRoot);
+        return true;
+      });
+      scheduleIndex(false);
     }
 
     private void indexOneByOne(@NotNull IntStream commits, @NotNull CommitsCounter counter) throws VcsException {
