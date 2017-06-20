@@ -95,6 +95,7 @@ public class JUnitUtil {
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
   public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
+  private static final String HIERARCHICAL_RUNNER = "de.bechte.junit.runners.context.HierarchicalContextRunner";
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -213,7 +214,12 @@ public class JUnitUtil {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(modifierList, PsiClass.class);
-    if (topLevelClass != null && AnnotationUtil.isAnnotated(topLevelClass, RUN_WITH, true)) return true;
+    if (topLevelClass != null) {
+      PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
+      if (annotation != null && (topLevelClass == psiClass || isSpecifiedRunner(annotation, HIERARCHICAL_RUNNER))) {
+        return true;
+      }
+    }
 
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
@@ -392,11 +398,16 @@ public class JUnitUtil {
   }
 
   public static boolean isParameterized(PsiAnnotation annotation) {
+    return isSpecifiedRunner(annotation, "org.junit.runners.Parameterized");
+  }
+
+  private static boolean isSpecifiedRunner(PsiAnnotation annotation,
+                                           String runnerQName) {
     final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     if (value instanceof PsiClassObjectAccessExpression) {
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)value).getOperand();
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
-      return psiClass != null && "org.junit.runners.Parameterized".equals(psiClass.getQualifiedName());
+      return psiClass != null && runnerQName.equals(psiClass.getQualifiedName());
     }
     return false;
   }
