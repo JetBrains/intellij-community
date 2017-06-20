@@ -46,8 +46,8 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final Module module = getConfigurationModule().getModule();
-    if (module != null) { // default value
+    final String moduleName = getConfigurationModule().getModuleName();
+    if (moduleName != null) { // default value
       writeModule(element);
     }
     DefaultJDOMExternalizer.writeExternal(this, element);
