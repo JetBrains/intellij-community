@@ -19,6 +19,7 @@ import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -30,7 +31,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -285,21 +289,21 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   private boolean canShowDiff() {
-    return ShowDiffAction.canShowDiff(myProject, getChangesSelection().getChanges());
+    return ShowDiffAction.canShowDiff(myProject, getChangesSelection().getList());
   }
 
   private void showDiff() {
-    ChangesSelection selection = getChangesSelection();
-    List<Change> changes = selection.getChanges();
+    ListSelection<Change> selection = getChangesSelection();
+    List<Change> changes = selection.getList();
 
     Change[] changesArray = changes.toArray(new Change[changes.size()]);
-    showDiffForChanges(changesArray, selection.getIndex());
+    showDiffForChanges(changesArray, selection.getSelectedIndex());
 
     afterDiffRefresh();
   }
 
   @NotNull
-  protected ChangesSelection getChangesSelection() {
+  protected ListSelection<Change> getChangesSelection() {
     final Change leadSelection = ObjectUtils.tryCast(myViewer.getLeadSelection(), Change.class);
     List<Change> changes = getSelectedChanges();
 
@@ -310,18 +314,11 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       }
     }
 
-    if (leadSelection != null) {
-      int indexInSelection = changes.indexOf(leadSelection);
-      if (indexInSelection == -1) {
-        return new ChangesSelection(Collections.singletonList(leadSelection), 0);
-      }
-      else {
-        return new ChangesSelection(changes, indexInSelection);
-      }
+    if (leadSelection != null && !changes.contains(leadSelection)) {
+      return ListSelection.createSingleton(leadSelection);
     }
-    else {
-      return new ChangesSelection(changes, 0);
-    }
+
+    return ListSelection.create(changes, leadSelection);
   }
 
   protected void afterDiffRefresh() {
