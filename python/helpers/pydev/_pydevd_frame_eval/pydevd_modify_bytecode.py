@@ -126,10 +126,15 @@ def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
                 if new_arg <= MAX_BYTE:
                     code_list[i + 1] = new_arg
                 else:
-                    # if new argument > 255 we need to insert the new operator EXTENDED_ARG
-                    extended_arg_code = [EXTENDED_ARG, new_arg >> 8]
+                    # handle bytes overflow
+                    if i - 2 > 0 and code_list[i - 2] == EXTENDED_ARG and code_list[i - 1] < MAX_BYTE:
+                        # if new argument > 255 and EXTENDED_ARG already exists we need to increase it's argument
+                        code_list[i - 1] += 1
+                    else:
+                        # if there isn't EXTENDED_ARG operator yet we have to insert the new operator
+                        extended_arg_code = [EXTENDED_ARG, new_arg >> 8]
+                        inserted_code.append((i, extended_arg_code))
                     code_list[i + 1] = new_arg & MAX_BYTE
-                    inserted_code.append((i, extended_arg_code))
 
         code_list = code_list[:current_offset] + current_code_list + code_list[current_offset:]
 
