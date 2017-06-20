@@ -27,13 +27,13 @@ mappings for EntryStream.of
     nothing <- 7
 mappings for values
   direct:
-    1 -> nothing
-    4 -> nothing
-    7 -> nothing
+    1 -> 2
+    4 -> 5
+    7 -> 8
   reverse:
-    nothing <- 2
-    nothing <- 5
-    nothing <- 8
+    1 <- 2
+    4 <- 5
+    7 <- 8
 mappings for mapToInt
   direct:
     2 -> 3
@@ -50,7 +50,6 @@ mappings for sum
     9 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -23,13 +23,13 @@ mappings for EntryStream.of
     nothing <- 5
 mappings for mapToKey
   direct:
-    1 -> nothing
-    3 -> nothing
-    5 -> nothing
+    1 -> 2
+    3 -> 4
+    5 -> 6
   reverse:
-    nothing <- 2
-    nothing <- 4
-    nothing <- 6
+    1 <- 2
+    3 <- 4
+    5 <- 6
 mappings for count
   direct:
     2 -> nothing
@@ -37,7 +37,6 @@ mappings for count
     6 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
