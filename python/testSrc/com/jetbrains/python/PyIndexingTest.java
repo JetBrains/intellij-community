@@ -20,10 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.IndexPatternUtil;
@@ -75,7 +72,7 @@ public class PyIndexingTest extends PyTestCase {
     return files;
   }
 
-  public void _testTodoIndexInLibs() {
+  public void testTodoIndexInLibs() {
     Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
 
     PsiFile file = myFixture.addFileToProject("libs/smtpd.py", "# TODO: fix it");
@@ -83,6 +80,8 @@ public class PyIndexingTest extends PyTestCase {
     VirtualFile libsRoot = file.getVirtualFile().getParent();
 
     ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
+    ContentEntry[] entries = modifiableModel.getContentEntries();
+
     modifiableModel.clear();
     modifiableModel.addContentEntry(myFixture.findFileInTempDir("project"));
 
@@ -109,14 +108,24 @@ public class PyIndexingTest extends PyTestCase {
 
       // but if it is added as a content root - it should be in the TodoIndex
       assertTrue(indexFiles.stream().anyMatch((x) -> "smtpd.py".equals(x.getName())));
-    } finally {
+    }
+    finally {
       // revert changes to sdk roots
       SdkModificator modificator = sdk.getSdkModificator();
       modificator.removeRoot(libsRoot, OrderRootType.CLASSES);
       modificator.addRoot(root, OrderRootType.CLASSES);
 
+      ModifiableRootModel m = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
+
+      m.clear();
+
+      for (ContentEntry e : entries) {
+        m.addContentEntry(e.getFile());
+      }
+
       ApplicationManager.getApplication().runWriteAction(() -> {
         modificator.commitChanges();
+        m.commit();
       });
     }
   }
