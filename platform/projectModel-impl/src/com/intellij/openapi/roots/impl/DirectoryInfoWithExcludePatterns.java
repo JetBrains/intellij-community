@@ -45,20 +45,23 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile file) {
-    if (myLibraryExcludePatterns == null || !myInLibrarySource) {
-      return myInLibrarySource;
-    }
+    return myInLibrarySource && !isExcludedByPatterns(file, myLibraryExcludePatterns);
+  }
+
+  private boolean isExcludedByPatterns(@NotNull VirtualFile file, @Nullable FileTypeAssocTable<Boolean> patterns) {
+    if (patterns == null) return false;
+
     VirtualFile current = file;
     while (current != null && !myRoot.equals(current)) {
-      if (myLibraryExcludePatterns.findAssociatedFileType(current.getNameSequence()) != null) {
-        return false;
+      if (patterns.findAssociatedFileType(current.getNameSequence()) != null) {
+        return true;
       }
       current = current.getParent();
     }
     if (current == null) {
       LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -86,5 +89,10 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
       LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
     }
     return false;
+  }
+
+  @Override
+  public boolean isInModuleSource(@NotNull VirtualFile file) {
+    return myInModuleSource && !isExcludedByPatterns(file, myContentExcludePatterns);
   }
 }

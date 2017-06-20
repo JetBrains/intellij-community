@@ -563,7 +563,7 @@ public class RootIndex {
     if (!includeLibrarySources) {
       result = ContainerUtil.filter(result, file -> {
         DirectoryInfo info = getInfoForFile(file);
-        return info.isInProject(file) && (!info.isInLibrarySource(file) || info.isInModuleSource() || info.hasLibraryClassRoot());
+        return info.isInProject(file) && (!info.isInLibrarySource(file) || info.isInModuleSource(file) || info.hasLibraryClassRoot());
       });
     }
     return new CollectionQuery<>(result);

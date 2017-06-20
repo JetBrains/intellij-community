@@ -161,7 +161,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() || info.isInLibrarySource(fileOrDir);
+    return info.isInModuleSource(fileOrDir) || info.isInLibrarySource(fileOrDir);
   }
 
   @Override
@@ -195,19 +195,19 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
-    return getInfoForFileOrDirectory(fileOrDir).isInModuleSource();
+    return getInfoForFileOrDirectory(fileOrDir).isInModuleSource(fileOrDir);
   }
 
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
+    return info.isInModuleSource(fileOrDir) && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
   }
 
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+    return info.isInModuleSource(fileOrDir) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
   @Override

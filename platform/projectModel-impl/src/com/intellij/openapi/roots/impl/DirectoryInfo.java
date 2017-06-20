@@ -55,6 +55,14 @@ public abstract class DirectoryInfo {
    */
   public abstract boolean isExcluded(@NotNull VirtualFile file);
 
+  /**
+   * Returns {@code true} if {@code file} is located under a module source root and not excluded or ignored
+   */
+  public abstract boolean isInModuleSource(@NotNull VirtualFile file);
+
+  /**
+   * @deprecated use {@link #isInModuleSource(VirtualFile)} instead, this method doesn't take {@link ContentEntry#getExcludePatterns() exclude patterns} into account
+   */
   public abstract boolean isInModuleSource();
 
   /**
