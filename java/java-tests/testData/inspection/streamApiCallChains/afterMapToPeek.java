@@ -5,7 +5,7 @@ import java.util.List;
 public class Main {
   void test(List<String> list) {
       // hello
-/* in return */
+      /* in return */
       long count = list.stream()
       .peek(System.out::println)
       .count();

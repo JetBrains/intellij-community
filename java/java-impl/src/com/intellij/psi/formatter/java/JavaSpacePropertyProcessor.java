@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.formatter.java;
 
+import com.intellij.formatting.Block;
 import com.intellij.formatting.Spacing;
+import com.intellij.formatting.blocks.CStyleCommentBlock;
+import com.intellij.formatting.blocks.TextLineBlock;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
@@ -76,7 +79,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static final ThreadLocal<JavaSpacePropertyProcessor> mySharedProcessorAllocator = new ThreadLocal<>();
 
-  private void doInit(ASTNode child, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
+  private void doInit(Block block, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
+    ASTNode child = AbstractJavaBlock.getTreeNode(block);
     if (isErrorElement(child)) {
       myResult = Spacing.getReadOnlySpacing();
       return;
@@ -101,11 +105,17 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return;
     }
 
+    if (block instanceof TextLineBlock) {
+      myResult = ((TextLineBlock)block).getSpacing();
+      return;
+    }
+    if (block instanceof CStyleCommentBlock) {
+      myResult = ((CStyleCommentBlock)block).getSpacing();
+      return;
+    }
+
     if (myChild2 != null && StdTokenSets.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
-      if (myChild2.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-        myResult = Spacing.getReadOnlySpacing();
-      }
-      else if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
+      if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
       else {
@@ -1758,7 +1768,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @SuppressWarnings({"ConstantConditions"})
-  public static Spacing getSpacing(ASTNode node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
+  public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     JavaSpacePropertyProcessor spacePropertyProcessor = mySharedProcessorAllocator.get();
     try {
       if (spacePropertyProcessor == null) {

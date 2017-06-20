@@ -172,10 +172,6 @@ public abstract class JavaTestFramework implements TestFramework {
     return isTestMethod(element, true);
   }
 
-  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return isTestMethod(element);
-  }
-
   public boolean isMyConfigurationType(ConfigurationType type) {
     return false;
   }

@@ -603,7 +603,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
 
     String expected =
       "/*\n" +
-      "\t* comment\n" +
+      " * comment\n" +
       " */\n" +
       "class Test {\n" +
       "}";

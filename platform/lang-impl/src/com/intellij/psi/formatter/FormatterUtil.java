@@ -307,6 +307,12 @@ public class FormatterUtil {
                                        @Nullable final TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
 
+    if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
+        textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
+      replaceInnerWhiteSpace(whiteSpace, leafElement, textRange);
+      return;
+    }
+
     ASTNode treePrev = findPreviousWhiteSpace(leafElement, whiteSpaceToken);
     if (treePrev == null) {
       treePrev = getWsCandidate(leafElement);

@@ -683,7 +683,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     myAdComponent.showRandomText();
-    if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.ALWAYS_AUTO_POPUP_NO_ADS))) {
+    if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.NO_ADS))) {
       myAdComponent.clearAdvertisements();
     }
 
