@@ -76,7 +76,8 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   private boolean myShowFlatten;
   private boolean myIsModelFlat;
 
-  @NotNull private final Set<T> myIncludedChanges;
+  @NotNull private final List<T> myRawChanges = new ArrayList<>();
+  @NotNull private final Set<T> myIncludedChanges = new HashSet<>();
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
@@ -99,9 +100,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     myHighlightProblems = highlightProblems;
     myInclusionListener = inclusionListener;
     myChangeDecorator = decorator;
-    myIncludedChanges = new HashSet<>(initiallyIncluded);
     myAlwaysExpandList = true;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
+
+    myIncludedChanges.addAll(initiallyIncluded);
 
     setHorizontalAutoScrollingEnabled(false);
     setRootVisible(false);
@@ -236,7 +238,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       myNonFlatTreeState = TreeState.createOn(this, getRoot());
     }
     myShowFlatten = showFlatten;
-    setChangesToDisplay(getChanges());
+    rebuildTree(null);
     if (!myAlwaysExpandList && !myShowFlatten && myNonFlatTreeState != null) {
       myNonFlatTreeState.applyTo(this, getRoot());
     }
@@ -261,15 +263,22 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     return isFlat;
   }
 
-  public void setChangesToDisplay(final List<T> changes) {
+  public void setChangesToDisplay(final List<? extends T> changes) {
     setChangesToDisplay(changes, null);
   }
 
-  public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
+  public void setChangesToDisplay(final List<? extends T> changes, @Nullable final VirtualFile toSelect) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
 
-    final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
+    myRawChanges.clear();
+    myRawChanges.addAll(changes);
+
+    rebuildTree(toSelect);
+  }
+
+  private void rebuildTree(@Nullable VirtualFile toSelect) {
+    final DefaultTreeModel model = buildTreeModel(myRawChanges, myChangeDecorator);
     TreeState state = null;
     if (!myAlwaysExpandList) {
       state = TreeState.createOn(this, getRoot());
