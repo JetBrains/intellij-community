@@ -204,7 +204,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @NotNull
   @Override
-  protected List<Object> getSelectedObjects(@NotNull ChangesBrowserNode<Object> node) {
+  protected List<Object> getSelectedObjects(@NotNull ChangesBrowserNode<?> node) {
     List<Object> result = ContainerUtil.newArrayList();
 
     result.addAll(node.getAllChangesUnder());
@@ -217,7 +217,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @Nullable
   @Override
-  protected Object getLeadSelectedObject(@NotNull ChangesBrowserNode node) {
+  protected Object getLeadSelectedObject(@NotNull ChangesBrowserNode<?> node) {
     Object result = null;
     Object userObject = node.getUserObject();
 

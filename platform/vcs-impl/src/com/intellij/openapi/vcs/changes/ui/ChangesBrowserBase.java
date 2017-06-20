@@ -116,12 +116,12 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
         return ChangesBrowserBase.this.buildTreeModel(changes, changeNodeDecorator, isShowFlatten());
       }
 
-      protected List<T> getSelectedObjects(final ChangesBrowserNode<T> node) {
+      protected List<T> getSelectedObjects(final ChangesBrowserNode<?> node) {
         return ChangesBrowserBase.this.getSelectedObjects(node);
       }
 
       @Nullable
-      protected T getLeadSelectedObject(final ChangesBrowserNode node) {
+      protected T getLeadSelectedObject(final ChangesBrowserNode<?> node) {
         return ChangesBrowserBase.this.getLeadSelectedObject(node);
       }
 
@@ -151,10 +151,10 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected abstract DefaultTreeModel buildTreeModel(final List<T> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten);
 
   @NotNull
-  protected abstract List<T> getSelectedObjects(@NotNull ChangesBrowserNode<T> node);
+  protected abstract List<T> getSelectedObjects(@NotNull ChangesBrowserNode<?> node);
 
   @Nullable
-  protected abstract T getLeadSelectedObject(@NotNull ChangesBrowserNode node);
+  protected abstract T getLeadSelectedObject(@NotNull ChangesBrowserNode<?> node);
 
   @NotNull
   protected Runnable getDoubleClickHandler() {

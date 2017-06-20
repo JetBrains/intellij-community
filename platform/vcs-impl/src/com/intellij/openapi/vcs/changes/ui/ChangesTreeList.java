@@ -292,7 +292,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       return;
     }
 
-    TreeUtil.expandAll(ChangesTreeList.this);
+    TreeUtil.expandAll(this);
 
     int selectedTreeRow = -1;
 
@@ -332,7 +332,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     if (selectedTreeRow >= 0) {
       setSelectionRow(selectedTreeRow);
     }
-    TreeUtil.showRowCentered(ChangesTreeList.this, selectedTreeRow, false);
+    TreeUtil.showRowCentered(this, selectedTreeRow, false);
   }
 
   private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
@@ -390,7 +390,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     else {
       LinkedHashSet<T> changes = ContainerUtil.newLinkedHashSet();
       for (TreePath path : paths) {
-        //noinspection unchecked
         changes.addAll(getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent()));
       }
       return ContainerUtil.newArrayList(changes);
@@ -404,10 +403,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     return getChanges();
   }
 
-  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode<T> node);
+  protected abstract List<T> getSelectedObjects(final ChangesBrowserNode<?> node);
 
   @Nullable
-  protected abstract T getLeadSelectedObject(final ChangesBrowserNode node);
+  protected abstract T getLeadSelectedObject(final ChangesBrowserNode<?> node);
 
   @Nullable
   public T getHighestLeadSelection() {
@@ -415,15 +414,15 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     if (path == null) {
       return null;
     }
-    //noinspection unchecked
-    return getLeadSelectedObject((ChangesBrowserNode<T>)path.getLastPathComponent());
+
+    return getLeadSelectedObject((ChangesBrowserNode)path.getLastPathComponent());
   }
 
   @Nullable
   public T getLeadSelection() {
     final TreePath path = getSelectionPath();
-    //noinspection unchecked
-    return path == null ? null : ContainerUtil.getFirstItem(getSelectedObjects(((ChangesBrowserNode<T>)path.getLastPathComponent())));
+
+    return path == null ? null : ContainerUtil.getFirstItem(getSelectedObjects(((ChangesBrowserNode)path.getLastPathComponent())));
   }
 
   @NotNull
@@ -565,7 +564,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
         @SuppressWarnings("unchecked")
         CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
-        //noinspection unchecked
+
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
 
@@ -583,7 +582,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   }
 
 
-  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<T> node) {
+  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -601,7 +600,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     return CheckboxTree.NodeState.CLEAR;
   }
 
-  protected boolean isNodeEnabled(ChangesBrowserNode<T> node) {
+  protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
     return getNodeStatus(node) != CheckboxTree.NodeState.PARTIAL;
   }
 
@@ -635,10 +634,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     HashSet<T> changesSet = new HashSet<>(changes);
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
-      @SuppressWarnings("unchecked")
-      final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
-      if (changesSet.contains(change)) {
-        treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
+      DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
+      //noinspection SuspiciousMethodCalls
+      if (changesSet.contains(mutableNode.getUserObject())) {
+        treeSelection.add(new TreePath(mutableNode.getPath()));
       }
       return true;
     });
