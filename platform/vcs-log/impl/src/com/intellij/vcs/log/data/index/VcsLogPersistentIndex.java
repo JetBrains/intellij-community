@@ -636,6 +636,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       flush();
     }
+
+    @Override
+    public String toString() {
+      return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
+    }
   }
 
   private static class CommitsCounter {
