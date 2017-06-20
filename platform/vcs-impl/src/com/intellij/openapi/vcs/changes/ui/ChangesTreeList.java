@@ -80,8 +80,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
-  @NotNull private final MyTreeCellRenderer myNodeRenderer;
-
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   @Nullable private final Runnable myInclusionListener;
@@ -103,8 +101,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     myChangeDecorator = decorator;
     myIncludedChanges = new HashSet<>(initiallyIncluded);
     myAlwaysExpandList = true;
-    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
-    myNodeRenderer = new MyTreeCellRenderer(nodeRenderer);
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
     setHorizontalAutoScrollingEnabled(false);
@@ -112,7 +108,9 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     setShowsRootHandles(true);
     setOpaque(false);
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
-    setCellRenderer(myNodeRenderer);
+
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
+    setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     registerKeyboardAction(new ActionListener() {
@@ -163,7 +161,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
       }
     }.installOn(this);
 
-    new TreeLinkMouseListener(myNodeRenderer.myTextRenderer) {
+    new TreeLinkMouseListener(nodeRenderer) {
       @Override
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
         int x = super.getRendererRelativeX(e, tree, path);
