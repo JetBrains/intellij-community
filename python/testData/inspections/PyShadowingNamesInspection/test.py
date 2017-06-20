@@ -50,3 +50,18 @@ def test_outer_single_underscore():
     _ = "abc"
     def foo():
         _ = "def"
+
+
+# PY-3996
+def test_outer_underscore_prefixed():
+    _a = "abc"
+    def foo():
+        <weak_warning descr="Shadows name '_a' from outer scope">_a</weak_warning> = "def"
+
+
+# PY-3996
+def test_outer_underscore_prefixed_parameter():
+    def foo(_a):
+        def bar(_a):
+            print(_a)
+        print(_a)

@@ -93,7 +93,7 @@ public class PyShadowingNamesInspection extends PyInspection {
       if (name != null) {
         final PsiElement identifier = element.getNameIdentifier();
         final PsiElement problemElement = identifier != null ? identifier : element;
-        if (PyNames.UNDERSCORE.equals(name)) {
+        if (PyNames.UNDERSCORE.equals(name) || name.startsWith(PyNames.UNDERSCORE) && element instanceof PyParameter) {
           return;
         }
         if (owner != null) {
