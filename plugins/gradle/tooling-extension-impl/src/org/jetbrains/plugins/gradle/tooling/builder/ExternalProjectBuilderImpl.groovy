@@ -174,7 +174,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   private static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies, SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
-    boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
+    boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: true
     def ideaOutDir = ideaPluginModule?.outputDir
     def ideaTestOutDir = ideaPluginModule?.testOutputDir
     def generatedSourceDirs
