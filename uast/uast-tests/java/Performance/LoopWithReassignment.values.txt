@@ -1,0 +1,60 @@
+UFile (package = ) [public class LoopWithReassignment {...]
+    UClass (name = LoopWithReassignment) [public class LoopWithReassignment {...}]
+        UMethod (name = foo) [public static fun foo() : java.lang.String {...}]
+            UBlockExpression [{...}] = Nothing
+                UDeclarationsExpression [var name: java.lang.String = ""] = Undetermined
+                    ULocalVariable (name = name) [var name: java.lang.String = ""]
+                        ULiteralExpression (value = "") [""] = ""
+                UWhileExpression [while (bar(name) !== null) {...}] = Undetermined
+                    UBinaryExpression (operator = !==) [bar(name) !== null] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar(name)] = external bar(name)(Undetermined)
+                            UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                            USimpleNameReferenceExpression (identifier = name) [name] = Undetermined
+                        ULiteralExpression (value = null) [null] = null
+                    UBlockExpression [{...}] = external bar(name)(Undetermined)
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [baz(Color(128, 64, 0))] = external baz(Color(128, 64, 0))(external Color(128, 64, 0)(128, 64, 0))
+                            UIdentifier (Identifier (baz)) [UIdentifier (Identifier (baz))]
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [Color(128, 64, 0)] = external Color(128, 64, 0)(128, 64, 0)
+                                USimpleNameReferenceExpression (identifier = Color) [Color] = external Color()
+                                ULiteralExpression (value = 128) [128] = 128
+                                ULiteralExpression (value = 64) [64] = 64
+                                ULiteralExpression (value = 0) [0] = 0
+                        UBinaryExpression (operator = =) [name = bar(name)] = external bar(name)(Undetermined)
+                            USimpleNameReferenceExpression (identifier = name) [name] = Undetermined
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [bar(name)] = external bar(name)(Undetermined)
+                                UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
+                                USimpleNameReferenceExpression (identifier = name) [name] = Undetermined
+                UReturnExpression [return name] = Nothing
+                    USimpleNameReferenceExpression (identifier = name) [name] = Undetermined
+        UMethod (name = bar) [private static fun bar(name: java.lang.String) : java.lang.String {...}]
+            UParameter (name = name) [var name: java.lang.String]
+            UBlockExpression [{...}] = Nothing
+                UReturnExpression [return null] = Nothing
+                    ULiteralExpression (value = null) [null] = null
+        UMethod (name = baz) [private static fun baz(icon: Color) : void {...}]
+            UParameter (name = icon) [var icon: Color]
+            UBlockExpression [{...}] = Undetermined
+    UClass (name = Color) [class Color {...}]
+        UField (name = r) [private final var r: int]
+        UField (name = g) [private final var g: int]
+        UField (name = b) [private final var b: int]
+        UMethod (name = Color) [fun Color(r: int, g: int, b: int) {...}]
+            UParameter (name = r) [var r: int]
+            UParameter (name = g) [var g: int]
+            UParameter (name = b) [var b: int]
+            UBlockExpression [{...}] = Undetermined
+                UBinaryExpression (operator = =) [this.r = r] = Undetermined
+                    UQualifiedReferenceExpression [this.r] = Undetermined
+                        UThisExpression (label = null) [this] = Undetermined
+                        USimpleNameReferenceExpression (identifier = r) [r] = Undetermined
+                    USimpleNameReferenceExpression (identifier = r) [r] = Undetermined
+                UBinaryExpression (operator = =) [this.g = g] = Undetermined
+                    UQualifiedReferenceExpression [this.g] = Undetermined
+                        UThisExpression (label = null) [this] = Undetermined
+                        USimpleNameReferenceExpression (identifier = g) [g] = Undetermined
+                    USimpleNameReferenceExpression (identifier = g) [g] = Undetermined
+                UBinaryExpression (operator = =) [this.b = b] = Undetermined
+                    UQualifiedReferenceExpression [this.b] = Undetermined
+                        UThisExpression (label = null) [this] = Undetermined
+                        USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
+                    USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
