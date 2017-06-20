@@ -15,8 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.jvm.createClass
 
-import com.intellij.jvm.createClass.api.JvmClassKind
-import com.intellij.jvm.createClass.api.KeyedClassKind
+import com.intellij.jvm.createClass.SourceClassKind
 import com.intellij.lang.Language
 import icons.JetgroovyIcons
 import org.jetbrains.plugins.groovy.GroovyLanguage
@@ -24,16 +23,14 @@ import javax.swing.Icon
 
 enum class GroovyClassKind(
   override val icon: Icon?,
-  override val displayName: String,
-  override val key: Any?
-) : KeyedClassKind {
+  override val displayName: String
+) : SourceClassKind {
 
-  CLASS(JetgroovyIcons.Groovy.Class, "Class", JvmClassKind.CLASS),
-  INTERFACE(JetgroovyIcons.Groovy.Interface, "Interface", JvmClassKind.INTERFACE),
-  ANNOTATION(JetgroovyIcons.Groovy.AnnotationType, "Annotation", JvmClassKind.ANNOTATION),
-  ENUM(JetgroovyIcons.Groovy.Enum, "Enum", JvmClassKind.ENUM),
-  TRAIT(JetgroovyIcons.Groovy.Trait, "Trait", null);
+  CLASS(JetgroovyIcons.Groovy.Class, "Class"),
+  INTERFACE(JetgroovyIcons.Groovy.Interface, "Interface"),
+  ANNOTATION(JetgroovyIcons.Groovy.AnnotationType, "Annotation"),
+  ENUM(JetgroovyIcons.Groovy.Enum, "Enum"),
+  TRAIT(JetgroovyIcons.Groovy.Trait, "Trait");
 
   override val language: Language get() = GroovyLanguage
-
 }

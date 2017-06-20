@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.jarFinder;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.jvm.createClass.CreateClassFromGroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 
 /**
@@ -27,6 +28,7 @@ public class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixPr
   @Override
   public void registerFixes(@NotNull GrReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new GroovyFindJarFix(ref));
+    new CreateClassFromGroovyFix(ref).register(ref, registrar);
   }
 
   @NotNull

@@ -15,20 +15,27 @@
  */
 package org.jetbrains.plugins.groovy.jvm.createClass
 
-import com.intellij.jvm.createClass.api.CreateClassAction
-import com.intellij.jvm.createClass.api.CreateClassRequest
-import com.intellij.jvm.createClass.api.CreateJvmClassFactory
-import com.intellij.jvm.createClass.api.JvmClassKind
+import com.intellij.jvm.JvmClassKind
+import com.intellij.jvm.createClass.CreateClassRequest
+import com.intellij.jvm.createClass.CreateJvmClassFactory
+import com.intellij.jvm.createClass.SourceClassKind
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 
 class CreateGroovyClassFactory : CreateJvmClassFactory {
 
-  override fun createActions(request: CreateClassRequest): List<CreateClassAction> {
-    val kinds = when (request.classKind) {
-      JvmClassKind.CLASS -> listOf(GroovyClassKind.CLASS)
-      JvmClassKind.INTERFACE -> listOf(GroovyClassKind.INTERFACE, GroovyClassKind.TRAIT)
-      JvmClassKind.ANNOTATION -> listOf(GroovyClassKind.ANNOTATION)
-      JvmClassKind.ENUM -> listOf(GroovyClassKind.ENUM)
+  override fun getSourceKinds(jvmClassKinds: Collection<JvmClassKind>, context: PsiElement): Collection<SourceClassKind> {
+    return jvmClassKinds.flatMap {
+      when (it) {
+        JvmClassKind.CLASS -> listOf(GroovyClassKind.CLASS)
+        JvmClassKind.INTERFACE -> listOf(GroovyClassKind.INTERFACE, GroovyClassKind.TRAIT)
+        JvmClassKind.ANNOTATION -> listOf(GroovyClassKind.ANNOTATION)
+        JvmClassKind.ENUM -> listOf(GroovyClassKind.ENUM)
+      }
     }
-    return kinds.map { CreateGroovyClassAction(it) }
+  }
+
+  override fun createClass(request: CreateClassRequest): PsiClass {
+    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
   }
 }
