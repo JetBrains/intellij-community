@@ -86,6 +86,11 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-3996
+  public void testUnderscorePrefixed() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
 

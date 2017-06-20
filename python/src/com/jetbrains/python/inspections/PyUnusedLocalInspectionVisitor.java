@@ -160,6 +160,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (name == null || PyNames.UNDERSCORE.equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
           continue;
         }
+        // Ignore underscore-prefixed parameters
+        if (name.startsWith(PyNames.UNDERSCORE) && element instanceof PyParameter) {
+          continue;
+        }
         // Ignore elements out of scope
         if (element == null || !PsiTreeUtil.isAncestor(owner, element, false)) {
           continue;
