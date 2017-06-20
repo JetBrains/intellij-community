@@ -22,11 +22,11 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -614,7 +614,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyExpression createExpressionFromFragment(@NotNull String contents, @NotNull PsiElement anchor) {
     final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", contents, false);
-    codeFragment.setContext(getFragmentContainingFile(anchor));
+    codeFragment.setContext(FileContextUtil.getContextFile(anchor));
     final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
     return statement != null ? statement.getExpression() : null;
   }
@@ -816,7 +816,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     
     // PyPsiUtils.asQualifiedName() also takes into account subscription and prefix expressions
     final QualifiedName qualifiedName = makeQualifiedNameFromReferenceExpression(expression);
-    final PyFile pyFile = getFragmentContainingFile(expression);
+    final PyFile pyFile = as(FileContextUtil.getContextFile(expression), PyFile.class);
 
     if (pyFile != null && qualifiedName != null && qualifiedName.getComponentCount() > 0) {
       List<RatedResolveResult> results = new ArrayList<>();
@@ -853,13 +853,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return PyUtil.filterTopPriorityResults(results.toArray(RatedResolveResult.EMPTY_ARRAY));
     }
     return Collections.singletonList(expression);
-  }
-
-  @Nullable
-  private static PyFile getFragmentContainingFile(@NotNull PsiElement anchor) {
-    // PyExpressionCodeFragment#getContext() should return not-null value for expression fragments
-    final PsiElement contextElement = ObjectUtils.chooseNotNull(anchor.getContainingFile().getContext(), anchor);
-    return as(contextElement.getContainingFile(), PyFile.class);
   }
 
   @Nullable
