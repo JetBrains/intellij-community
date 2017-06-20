@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.streams.resolve.impl
 
-import com.intellij.debugger.streams.resolve.FilterResolver
-import com.intellij.debugger.streams.resolve.MapResolver
-import com.intellij.debugger.streams.resolve.ResolverFactory
-import com.intellij.debugger.streams.resolve.ValuesOrderResolver
+import com.intellij.debugger.streams.resolve.*
 
 /**
  * @author Vitaliy.Bibaev
@@ -35,7 +32,8 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "mapFirst", "mapFirstOrElse", "mapLast", "mapLastOrElse",
       "keys", "values",
       "mapKeyValue", "mapKeys", "mapValues", "mapToEntry", "mapToKey", "mapToValue",
-      "elements", "invert", "pairMap", "join", "withFirst" -> MapResolver()
+      "elements", "invert", "join", "withFirst" -> MapResolver()
+      "pairMap" -> PairMapResolver()
       else -> null
     }
   }
