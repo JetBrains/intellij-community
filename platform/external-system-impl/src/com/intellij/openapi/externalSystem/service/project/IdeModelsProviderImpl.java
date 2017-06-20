@@ -16,10 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -123,6 +120,20 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Override
   public Module findIdeModule(@NotNull String ideModuleName) {
     return ModuleManager.getInstance(myProject).findModuleByName(ideModuleName);
+  }
+
+  @Nullable
+  @Override
+  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
+    for (String moduleName : suggestModuleNameCandidates(moduleData)) {
+      UnloadedModuleDescription unloadedModuleDescription = ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
+
+      // TODO external system module options should be honored to handle duplicated module names issues
+      if(unloadedModuleDescription != null) {
+        return unloadedModuleDescription;
+      }
+    }
+    return null;
   }
 
   @Nullable
