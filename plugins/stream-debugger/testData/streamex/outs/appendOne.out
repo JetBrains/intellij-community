@@ -1,0 +1,42 @@
+LineBreakpoint created at AppendOne.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! concatenate.AppendOne
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+AppendOne.java:8
+StreamEx.of(1, 2)
+.append(3)
+.count()
+StreamEx.of
+    before: nothing
+    after: 1,3
+append
+    before: 1,3
+    after: 2,4,5
+count
+    before: 2,4,5
+    after: nothing
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+mappings for append
+  direct:
+    1 -> nothing
+    3 -> nothing
+  reverse:
+    nothing <- 2
+    nothing <- 4
+    nothing <- 5
+mappings for count
+  direct:
+    2 -> nothing
+    4 -> nothing
+    5 -> nothing
+  reverse:
+    empty
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+3
