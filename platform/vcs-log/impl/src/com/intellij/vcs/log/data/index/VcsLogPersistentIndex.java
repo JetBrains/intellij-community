@@ -142,7 +142,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     boolean isFull = full && myIndexStorage.isFresh();
     if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
-    mySingleTaskController.request(new IndexingRequest(commitsToIndex, isFull));
+    for (VirtualFile root : commitsToIndex.keySet()) {
+      TIntHashSet commits = commitsToIndex.get(root);
+      if (!commits.isEmpty()) {
+        mySingleTaskController.request(new IndexingRequest(root, commits, isFull));
+      }
+    }
     if (isFull) myIndexStorage.unmarkFresh();
   }
 
@@ -514,10 +519,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private class IndexingRequest {
     private static final int BATCH_SIZE = 20000;
     private static final int FLUSHED_COMMITS_NUMBER = 15000;
-    private final Map<VirtualFile, TIntHashSet> myCommits;
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final TIntHashSet myCommits;
     private final boolean myFull;
 
-    public IndexingRequest(@NotNull Map<VirtualFile, TIntHashSet> commits, boolean full) {
+    public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full) {
+      myRoot = root;
       myCommits = commits;
       myFull = full;
     }
@@ -528,42 +535,38 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       long time = System.currentTimeMillis();
 
-      CommitsCounter counter = new CommitsCounter(indicator, myCommits.values().stream().mapToInt(TIntHashSet::size).sum());
-      LOG.debug("Indexing " + counter.allCommits + " commits");
+      CommitsCounter counter = new CommitsCounter(indicator, myCommits.size());
+      LOG.debug("Indexing " + counter.allCommits + " commits in " + myRoot.getName());
 
-      for (VirtualFile root : myCommits.keySet()) {
-        try {
-          if (myFull) {
-            indexAll(root, myCommits.get(root), counter);
-          }
-          else {
-            indexOneByOne(root, myCommits.get(root), counter);
-          }
+      try {
+        if (myFull) {
+          indexAll(counter);
         }
-        finally {
-          myNumberOfTasks.get(root).decrementAndGet();
+        else {
+          indexOneByOne(counter);
         }
+      }
+      finally {
+        myNumberOfTasks.get(myRoot).decrementAndGet();
+      }
 
-        if (isIndexed(root)) {
-          myListeners.forEach(listener -> listener.indexingFinished(root));
-        }
+      if (isIndexed(myRoot)) {
+        myListeners.forEach(listener -> listener.indexingFinished(myRoot));
       }
 
       LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - time) +
                 " for indexing " +
                 counter.newIndexedCommits +
                 " new commits out of " +
-                counter.allCommits);
+                counter.allCommits + " in " + myRoot.getName());
       int leftCommits = counter.allCommits - counter.newIndexedCommits - counter.oldCommits;
       if (leftCommits > 0) {
         LOG.warn("Did not index " + leftCommits + " commits");
       }
     }
 
-    private void indexOneByOne(@NotNull VirtualFile root,
-                               @NotNull TIntHashSet commitsSet,
-                               @NotNull CommitsCounter counter) {
-      IntStream commits = TroveUtil.stream(commitsSet).filter(c -> {
+    private void indexOneByOne(@NotNull CommitsCounter counter) {
+      IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
         if (isIndexed(c)) {
           counter.oldCommits++;
           return false;
@@ -571,11 +574,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         return true;
       });
 
-      indexOneByOne(root, counter, commits);
+      indexOneByOne(counter, commits);
     }
 
-    private void indexOneByOne(@NotNull VirtualFile root,
-                               @NotNull CommitsCounter counter,
+    private void indexOneByOne(@NotNull CommitsCounter counter,
                                @NotNull IntStream commits) {
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
@@ -583,7 +585,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
         counter.indicator.checkCanceled();
 
-        if (indexOneByOne(root, batch)) {
+        if (indexOneByOne(batch)) {
           counter.newIndexedCommits += batch.size();
         }
 
@@ -593,16 +595,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       flush();
     }
 
-    private boolean indexOneByOne(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
-      VcsLogProvider provider = myProviders.get(root);
+    private boolean indexOneByOne(@NotNull TIntHashSet commits) {
+      VcsLogProvider provider = myProviders.get(myRoot);
       try {
         List<String> hashes = TroveUtil.map(commits, value -> myStorage.getCommitId(value).getHash().asString());
-        provider.readFullDetails(root, hashes, VcsLogPersistentIndex.this::storeDetail, true);
+        provider.readFullDetails(myRoot, hashes, VcsLogPersistentIndex.this::storeDetail, true);
       }
       catch (VcsException e) {
         LOG.error(e);
         commits.forEach(value -> {
-          markForIndexing(value, root);
+          markForIndexing(value, myRoot);
           return true;
         });
         return false;
@@ -610,11 +612,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       return true;
     }
 
-    public void indexAll(@NotNull VirtualFile root,
-                         @NotNull TIntHashSet commitsSet,
-                         @NotNull CommitsCounter counter) {
+    public void indexAll(@NotNull CommitsCounter counter) {
       TIntHashSet notIndexed = new TIntHashSet();
-      TroveUtil.stream(commitsSet).forEach(c -> {
+      TroveUtil.stream(myCommits).forEach(c -> {
         if (isIndexed(c)) {
           counter.oldCommits++;
         }
@@ -625,7 +625,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       counter.displayProgress();
 
       try {
-        myProviders.get(root).readAllFullDetails(root, details -> {
+        myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
           int index = myStorage.getCommitIndex(details.getId(), details.getRoot());
           if (notIndexed.contains(index)) {
             storeDetail(details);
@@ -641,7 +641,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       catch (VcsException e) {
         LOG.error(e);
         notIndexed.forEach(value -> {
-          markForIndexing(value, root);
+          markForIndexing(value, myRoot);
           return true;
         });
       }
