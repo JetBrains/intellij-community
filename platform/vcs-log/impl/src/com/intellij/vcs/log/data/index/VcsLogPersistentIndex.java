@@ -559,6 +559,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         catch (VcsException e) {
           LOG.error(e);
           commits.forEach(value -> markForIndexing(value, myRoot));
+          scheduleIndex(false);
         }
       }
       finally {
