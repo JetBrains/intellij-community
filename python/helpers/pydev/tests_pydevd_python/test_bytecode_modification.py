@@ -53,7 +53,7 @@ class TestInsertCode(unittest.TestCase):
             _, op2, arg2 = seq2[i]
             self.assertEqual(op1, op2, "Different operators at offset {}".format(of))
             if arg1 != arg2:
-                if op1 in (100, 101, 116):
+                if op1 in (100, 101, 106, 116):
                     # Sometimes indexes of variable names and consts may be different, when we insert them, it's ok
                     continue
                 else:
@@ -412,8 +412,14 @@ class TestInsertCode(unittest.TestCase):
         sys.stdout = StringIO()
 
         try:
-            from tests_pydevd_python._many_names_example import foo
+            from tests_pydevd_python._bytecode_many_names_example import foo
             self.check_insert_to_line_with_exec(foo, tracing, foo.__code__.co_firstlineno + 2)
 
         finally:
             sys.stdout = self.original_stdout
+
+    def test_extended_arg_overflow(self):
+
+        from tests_pydevd_python._bytecode_overflow_example import Dummy, DummyTracing
+        self.check_insert_to_line_by_symbols(Dummy.fun, call_tracing, Dummy.fun.__code__.co_firstlineno + 3,
+                                             DummyTracing.fun.__code__)
