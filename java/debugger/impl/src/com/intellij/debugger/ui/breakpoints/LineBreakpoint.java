@@ -317,7 +317,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   @Override
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     String className = null;
-    final ObjectReference thisObject = (ObjectReference)context.getThisObject();
+    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
     if (thisObject != null) {
       className = thisObject.referenceType().name();
     }
