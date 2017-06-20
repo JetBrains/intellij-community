@@ -977,7 +977,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     return createMarker(string, start, end);
   }
 
-  public void testRangeMarkersAreWeakReferenced() throws Exception {
+  public void testRangeMarkersAreWeakReferenced_NoCommand() throws Exception {
     final Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
     Set<RangeMarker> markers = ContainerUtil.newHashSet();
     for (int i = 0; i < 10; i++) {
