@@ -383,7 +383,7 @@ public class GitLogUtil {
 
   @NotNull
   private static String getSeparator(@NotNull GitVcs vcs) {
-    if (GitVersionSpecialty.INCORRECT_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion())) {
+    if (GitVersionSpecialty.LF_SEPARATORS_IN_STDIN.existsIn(vcs.getVersion())) {
       return "\n";
     }
     return System.lineSeparator();
