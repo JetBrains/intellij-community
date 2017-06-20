@@ -512,6 +512,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
 
 
   public void clearAllIndices() {
+    if (ourForcedClean.get() == Boolean.TRUE) return;
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       try {
         index.clear();
