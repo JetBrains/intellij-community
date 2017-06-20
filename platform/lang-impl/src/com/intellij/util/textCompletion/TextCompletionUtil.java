@@ -70,7 +70,7 @@ public class TextCompletionUtil {
       editor.addFocusListener(new FocusChangeListener() {
         @Override
         public void focusGained(final Editor editor) {
-          if (Boolean.TRUE.equals(editor.getUserData(AutoPopupController.ALWAYS_AUTO_POPUP_NO_ADS))) {
+          if (Boolean.TRUE.equals(editor.getUserData(AutoPopupController.AUTO_POPUP_ON_FOCUS_GAINED))) {
             AutoPopupController.getInstance(editor.getProject()).scheduleAutoPopup(editor);
             return;
           }
