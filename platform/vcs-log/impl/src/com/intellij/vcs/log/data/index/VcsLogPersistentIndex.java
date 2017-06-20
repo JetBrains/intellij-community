@@ -515,7 +515,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
             taskCompleted(null);
           }
         };
-        HeavyAwareExecutor.executeOutOfHeavyProcess(task, indicator);
+        HeavyAwareExecutor.executeOutOfHeavyProcess(task, indicator, 50, 100);
       });
       return indicator;
     }
