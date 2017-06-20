@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jvm.createClass.api
+package com.intellij.jvm.createClass
 
-import com.intellij.lang.Language
-import javax.swing.Icon
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
 
-/**
- * This class represents class kind in sources of partucular JVM language.
- */
-interface LanguageClassKind {
-
-  val language: Language
-
-  val icon: Icon?
-
-  val displayName: String
-}
+class CreateClassRequestImpl(
+  override val requestorContext: PsiElement,
+  override val targetDirectory: PsiDirectory,
+  override val classKind: SourceClassKind,
+  override val className: String,
+  override val superTypeFqn: String? = null,
+  override val argumentTypes: List<PsiType?> = emptyList(),
+  override val typeArguments: List<PsiType?> = emptyList()
+) : CreateClassRequest

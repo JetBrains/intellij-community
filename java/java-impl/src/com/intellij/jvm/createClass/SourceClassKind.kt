@@ -13,23 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jvm.createClass.api
+package com.intellij.jvm.createClass
+
+import com.intellij.lang.Language
+import javax.swing.Icon
 
 /**
+ * This class represents class kind in sources of particular JVM language.
+ * Each JVM language has its own kinds of sources.
+ * The mapping between what-would-be a JVM class and a source kind is provided via [CreateJvmClassFactory.getSourceKinds].
+ *
  * Some class kinds are common between languages, e.g. annotation.
- * Given a situation where only annotations could be generated we still get two comboboxes,
+ * Given a situation where only annotations could be generated we still get two comboboxes in the dialog,
  * first one for language, and the second (kind) combobox will contain the only option to generate an annotation for each language.
  *
  * The natural desire is to hide the second combobox.
  * But we don't want to mix language class types, i.e. inherit Kotlin ones from Java ones.
  *
- * This class represents such similarity between language source class kinds.
- * In the above example we merge by key, which is [JvmClassKind.ANNOTATION] and then hide the combo completely.
- * Also title of the dialog is changed to 'Create Annotation %name%'.
- *
+ * The similarity between such class kinds is represented by display name.
+ * In above cast the title of the dialog will be changed to 'Create Annotation %name%'.
  * This also opens extensibility to merge kinds not present in Java at all, such as Traits.
  */
-interface KeyedClassKind : LanguageClassKind {
+interface SourceClassKind {
 
-  val key: Any?
+  val language: Language
+
+  val icon: Icon?
+
+  val displayName: String
 }

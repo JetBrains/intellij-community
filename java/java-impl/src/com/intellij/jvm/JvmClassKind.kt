@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jvm.createClass.api
+package com.intellij.jvm
 
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-
-class CreateClassInfo(
-  val context: PsiElement,
-  val classKind: LanguageClassKind,
-  val className: String,
-  val targetDirectory: PsiDirectory?
-)
+/**
+ * This enum represents class kinds present in JVM.
+ */
+enum class JvmClassKind {
+  CLASS,
+  INTERFACE,
+  ANNOTATION,
+  ENUM
+}
