@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.resolve.impl
 
+import com.intellij.debugger.streams.resolve.FilterResolver
 import com.intellij.debugger.streams.resolve.ResolverFactory
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 
@@ -24,6 +25,12 @@ import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 class StreamExResolverFactoryImpl : ResolverFactory {
   override fun getResolver(methodName: String): ValuesOrderResolver? {
     return when (methodName) {
+      "atLeast", "atMost", "less", "greater",
+      "filterBy", "filterKeys", "filterValues", "filterKeyValue",
+      "nonNull", "nonNullKeys", "nonNullValues",
+      "remove", "removeBy", "removeKeys", "removeValues", "removeKeyValue", "without",
+      "select", "selectKeys", "selectValues",
+      "dropWhile", "takeWhile", "takeWhileInclusive" -> FilterResolver()
       else -> null
     }
   }
