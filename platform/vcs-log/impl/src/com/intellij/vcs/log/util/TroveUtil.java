@@ -145,4 +145,11 @@ public class TroveUtil {
       consumer.consume(batch.get());
     }
   }
+
+  @NotNull
+  public static TIntHashSet collect(@NotNull IntStream stream) {
+    TIntHashSet result = new TIntHashSet();
+    stream.forEach(result::add);
+    return result;
+  }
 }
