@@ -63,7 +63,7 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     labelLocation = BorderLayout.WEST
     component = myLanguageCombo
   }
-  val selectedLanguage: Language get() = myLanguageCombo.selectedItem as Language
+  private val mySelectedLanguage: Language get() = myLanguageCombo.selectedItem as Language
 
   private var mySingleKind: LanguageClassKind? = null
   private val myClassKindCombo = ComboBox<LanguageClassKind>().apply {
@@ -74,7 +74,7 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     labelLocation = BorderLayout.WEST
     component = myClassKindCombo
   }
-  val selectedClassKind: LanguageClassKind get() = myClassKindCombo.selectedItem as LanguageClassKind
+  private val mySelectedClassKind: LanguageClassKind get() = myClassKindCombo.selectedItem as LanguageClassKind
 
   private val myPackageComponent = PackageNameReferenceEditorCombo(
     null, project, RECENTS_KEY, message("dialog.create.class.package.chooser.title")
@@ -95,9 +95,9 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     labelLocation = BorderLayout.WEST
     component = myClassNameField
   }
-  val className: String get() = if (myClassNameEditable) myClassNameField.text else myInitialClassName!!
+  private val myClassName: String get() = if (myClassNameEditable) myClassNameField.text else myInitialClassName!!
 
-  var targetDirectory: PsiDirectory? = null
+  private var myTargetDirectory: PsiDirectory? = null
   private val myDestinationFolderCombo = object : DestinationFolderComboBox() {
     override fun getTargetPackage(): String = myPackageComponent.text.trim { it <= ' ' }
   }
@@ -108,7 +108,7 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
   }
 
   private fun languageChanged() {
-    val languageKinds = myKindsMap[selectedLanguage]!!.toList()
+    val languageKinds = myKindsMap[mySelectedLanguage]!!.toList()
     myClassKindCombo.model = CollectionComboBoxModel<LanguageClassKind>(languageKinds)
   }
 
@@ -188,14 +188,14 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
 
   override fun doOKAction() {
     RecentsManager.getInstance(project).registerRecentEntry(RECENTS_KEY, myPackageComponent.text)
-    val packageName = myPackageComponent.text?.trim { it <= ' ' } ?: ""
+    val packageName = myPackageComponent.text?.trim() ?: ""
 
     var errorString: String? = null
     CommandProcessor.getInstance().executeCommand(project, {
       try {
         val targetPackage = PackageWrapper(PsiManager.getInstance(project), packageName)
         val destination = myDestinationFolderCombo.selectDirectory(targetPackage, false) ?: return@executeCommand
-        targetDirectory = runWriteAction {
+        myTargetDirectory = runWriteAction {
           val baseDir = getBaseDir(packageName)
           if (baseDir == null && destination is MultipleRootsMoveDestination) {
             errorString = "Destination not found for package '$packageName'"
@@ -203,10 +203,10 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
           }
           destination.getTargetDirectory(baseDir)
         }
-        if (targetDirectory == null) {
+        if (myTargetDirectory == null) {
           return@executeCommand
         }
-        errorString = RefactoringMessageUtil.checkCanCreateClass(targetDirectory, className)
+        errorString = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, myClassName)
       }
       catch (e: IncorrectOperationException) {
         errorString = e.message
@@ -224,5 +224,13 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
 
   private fun getBaseDir(packageName: String?): PsiDirectory? {
     return if (myModule == null) null else PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName)
+  }
+
+  val userInfo: CreateClassUserInfo get() {
+    return CreateClassUserInfo(
+      mySelectedClassKind,
+      myClassName,
+      myTargetDirectory
+    )
   }
 }
