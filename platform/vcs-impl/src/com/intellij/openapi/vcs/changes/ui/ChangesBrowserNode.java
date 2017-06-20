@@ -26,6 +26,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.Convertor;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -39,6 +40,8 @@ import java.util.stream.Stream;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+  @NonNls private static final String ROOT_NODE_VALUE = "root";
+
   public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
   public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
   public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
@@ -70,6 +73,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createRoot(@NotNull Project project) {
+    return create(project, ROOT_NODE_VALUE);
   }
 
   @NotNull

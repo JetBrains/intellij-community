@@ -82,8 +82,6 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   @NotNull private final MyTreeCellRenderer myNodeRenderer;
 
-  @NonNls private static final String ROOT = "root";
-
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
   @Nullable private final Runnable myInclusionListener;
@@ -98,7 +96,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
                          final boolean highlightProblems,
                          @Nullable final Runnable inclusionListener,
                          @Nullable final ChangeNodeDecorator decorator) {
-    super(ChangesBrowserNode.create(project, ROOT));
+    super(ChangesBrowserNode.createRoot(project));
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;

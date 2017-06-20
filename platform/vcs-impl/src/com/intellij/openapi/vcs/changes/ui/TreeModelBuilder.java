@@ -41,8 +41,6 @@ import java.util.*;
 
 @SuppressWarnings("UnusedReturnValue")
 public class TreeModelBuilder {
-  @NonNls private static final String ROOT_NODE_VALUE = "root";
-
   private static final int UNVERSIONED_MAX_SIZE = 50;
 
   @NotNull protected final Project myProject;
@@ -74,7 +72,7 @@ public class TreeModelBuilder {
   public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
     myProject = project;
     myShowFlatten = showFlatten;
-    myRoot = ChangesBrowserNode.create(myProject, ROOT_NODE_VALUE);
+    myRoot = ChangesBrowserNode.createRoot(myProject);
     myModel = new DefaultTreeModel(myRoot);
     myGroupingPoliciesCache = FactoryMap.createMap(key-> {
           ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
@@ -86,7 +84,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public static DefaultTreeModel buildEmpty(@NotNull Project project) {
-    return new DefaultTreeModel(ChangesBrowserNode.create(project, ROOT_NODE_VALUE));
+    return new DefaultTreeModel(ChangesBrowserNode.createRoot(project));
   }
 
   @NotNull
