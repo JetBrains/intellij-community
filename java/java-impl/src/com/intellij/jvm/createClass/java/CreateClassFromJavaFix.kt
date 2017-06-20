@@ -15,49 +15,45 @@
  */
 package com.intellij.jvm.createClass.java
 
-import com.intellij.jvm.createClass.api.CreateClassRequest
-import com.intellij.jvm.createClass.api.JvmClassKind
-import com.intellij.jvm.createClass.impl.CreateJvmClassFix
+import com.intellij.jvm.JvmClassKind
+import com.intellij.jvm.createClass.CreateClassRequest
+import com.intellij.jvm.createClass.CreateClassRequestImpl
+import com.intellij.jvm.createClass.fix.CreateJvmClassFix
+import com.intellij.jvm.createClass.ui.CreateClassUserInfo
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.PsiUtil.isLanguageLevel5OrHigher
+import java.util.*
 
-class CreateClassFromJavaFix(ref: PsiJavaCodeReferenceElement)
-  : CreateJvmClassFix<PsiJavaCodeReferenceElement>(ref.project, ref.referenceName!!) {
+class CreateClassFromJavaFix(ref: PsiJavaCodeReferenceElement) : CreateJvmClassFix<PsiJavaCodeReferenceElement>() {
 
-  private val myRefPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(ref)
+  private val myRefPointer = SmartPointerManager.getInstance(ref.project).createSmartPsiElementPointer(ref)
 
   override val reference: PsiJavaCodeReferenceElement? get() = myRefPointer.element
 
-  override fun createRequests(reference: PsiJavaCodeReferenceElement): List<CreateClassRequest> {
-    val level5OrHigher = PsiUtil.isLanguageLevel5OrHigher(reference)
+  override fun getClassName(reference: PsiJavaCodeReferenceElement): String? = reference.referenceName
+
+  override fun getJvmKinds(reference: PsiJavaCodeReferenceElement): Set<JvmClassKind> {
+    val level5OrHigher = isLanguageLevel5OrHigher(reference)
     val parent = reference.parent
     if (parent is PsiAnnotation) {
-      return if (level5OrHigher) listOf(CreateClassFromJavaRequest(JvmClassKind.ANNOTATION, reference)) else emptyList()
+      return if (level5OrHigher) setOf(JvmClassKind.ANNOTATION) else emptySet()
     }
-//    if (parent is PsiReferenceList) {
-//      if (myKind == CreateClassKind.ENUM) return false
-//      if (parent.getParent() is PsiClass) {
-//        val psiClass = parent.getParent() as PsiClass
-//        if (psiClass.extendsList === parent) {
-//          if (myKind == CreateClassKind.CLASS && !psiClass.isInterface) return true
-//          if (myKind == CreateClassKind.INTERFACE && psiClass.isInterface) return true
-//        }
-//        if (psiClass.implementsList === parent && myKind == CreateClassKind.INTERFACE) return true
-//      }
-//      else if (parent.getParent() is PsiMethod) {
-//        val method = parent.getParent() as PsiMethod
-//        if (method.throwsList === parent && myKind == CreateClassKind.CLASS) return true
-//      }
-//    }
+    val set = EnumSet.allOf(JvmClassKind::class.java)
+    if (!level5OrHigher) {
+      set.remove(JvmClassKind.ENUM)
+      set.remove(JvmClassKind.ANNOTATION)
+    }
+    return set
+  }
 
-    val requests = mutableListOf<CreateClassRequest>()
-    requests += CreateClassFromJavaRequest(JvmClassKind.INTERFACE, reference)
-    if (level5OrHigher) {
-      requests += CreateClassFromJavaRequest(JvmClassKind.ENUM, reference)
-      requests += CreateClassFromJavaRequest(JvmClassKind.ANNOTATION, reference)
-    }
-    return requests
+  override fun createRequest(reference: PsiJavaCodeReferenceElement, userInfo: CreateClassUserInfo): CreateClassRequest {
+    return CreateClassRequestImpl(
+      reference,
+      userInfo.targetDirectory,
+      userInfo.classKind,
+      userInfo.className
+    )
   }
 }

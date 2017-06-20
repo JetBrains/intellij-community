@@ -16,25 +16,23 @@
 package com.intellij.jvm.createClass.java
 
 import com.intellij.icons.AllIcons
-import com.intellij.jvm.createClass.api.JvmClassKind
-import com.intellij.jvm.createClass.api.KeyedClassKind
+import com.intellij.jvm.createClass.SourceClassKind
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import javax.swing.Icon
 
 /**
- * Java source class kind has one-to-one mapping to JVM class kinds.
+ * Java source class kinds has one-to-one mapping to JVM class kinds.
  */
 enum class JavaClassKind(
   override val icon: Icon,
-  override val displayName: String,
-  override val key: Any
-) : KeyedClassKind {
+  override val displayName: String
+) : SourceClassKind {
 
-  CLASS(AllIcons.Nodes.Class, "Class", JvmClassKind.CLASS),
-  INTERFACE(AllIcons.Nodes.Interface, "Interface", JvmClassKind.INTERFACE),
-  ANNOTATION(AllIcons.Nodes.Annotationtype, "Annotation", JvmClassKind.ANNOTATION),
-  ENUM(AllIcons.Nodes.Enum, "Enum", JvmClassKind.ENUM);
+  CLASS(AllIcons.Nodes.Class, "Class"),
+  INTERFACE(AllIcons.Nodes.Interface, "Interface"),
+  ANNOTATION(AllIcons.Nodes.Annotationtype, "Annotation"),
+  ENUM(AllIcons.Nodes.Enum, "Enum");
 
   override val language: Language get() = JavaLanguage.INSTANCE
 }
