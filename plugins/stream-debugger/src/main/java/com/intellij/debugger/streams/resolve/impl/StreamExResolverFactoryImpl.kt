@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.resolve;
+package com.intellij.debugger.streams.resolve.impl
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.streams.resolve.ResolverFactory
+import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface ResolverFactory {
-  @Nullable
-  ValuesOrderResolver getResolver(@NotNull String methodName);
-
-  interface StrongFactory extends ResolverFactory {
-    @NotNull
-    @Override
-    ValuesOrderResolver getResolver(@NotNull String methodName);
+class StreamExResolverFactoryImpl : ResolverFactory {
+  override fun getResolver(methodName: String): ValuesOrderResolver? {
+    return when (methodName) {
+      else -> null
+    }
   }
 }
