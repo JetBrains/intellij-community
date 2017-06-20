@@ -1,0 +1,42 @@
+LineBreakpoint created at Chain.java:10
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! misc.Chain
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Chain.java:10
+StreamEx.of(1, 2, 3, 4)
+.chain(x -> dividable(x, 3))
+.count()
+StreamEx.of
+    before: nothing
+    after: 1,2,3,5
+chain
+    before: 1,2,3,5
+    after: 4
+count
+    before: 4
+    after: nothing
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 5
+mappings for chain
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+    5 -> nothing
+  reverse:
+    nothing <- 4
+mappings for count
+  direct:
+    4 -> nothing
+  reverse:
+    empty
+wrong
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+1
