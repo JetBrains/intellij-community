@@ -548,11 +548,17 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           return true;
         });
 
-        if (myFull) {
-          indexAll(collect(commits), counter);
+        try {
+          if (myFull) {
+            indexAll(collect(commits), counter);
+          }
+          else {
+            indexOneByOne(commits, counter);
+          }
         }
-        else {
-          indexOneByOne(commits, counter);
+        catch (VcsException e) {
+          LOG.error(e);
+          commits.forEach(value -> markForIndexing(value, myRoot));
         }
       }
       finally {
@@ -574,7 +580,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
 
-    private void indexOneByOne(@NotNull IntStream commits, @NotNull CommitsCounter counter) {
+    private void indexOneByOne(@NotNull IntStream commits, @NotNull CommitsCounter counter) throws VcsException {
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
@@ -591,47 +597,28 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       flush();
     }
 
-    private boolean indexOneByOne(@NotNull TIntHashSet commits) {
+    private boolean indexOneByOne(@NotNull TIntHashSet commits) throws VcsException {
       VcsLogProvider provider = myProviders.get(myRoot);
-      try {
-        List<String> hashes = TroveUtil.map(commits, value -> myStorage.getCommitId(value).getHash().asString());
-        provider.readFullDetails(myRoot, hashes, VcsLogPersistentIndex.this::storeDetail, true);
-      }
-      catch (VcsException e) {
-        LOG.error(e);
-        commits.forEach(value -> {
-          markForIndexing(value, myRoot);
-          return true;
-        });
-        return false;
-      }
+      List<String> hashes = TroveUtil.map(commits, value -> myStorage.getCommitId(value).getHash().asString());
+      provider.readFullDetails(myRoot, hashes, VcsLogPersistentIndex.this::storeDetail, true);
       return true;
     }
 
-    public void indexAll(@NotNull TIntHashSet commits, @NotNull CommitsCounter counter) {
+    public void indexAll(@NotNull TIntHashSet commits, @NotNull CommitsCounter counter) throws VcsException {
       counter.displayProgress();
 
-      try {
-        myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
-          int index = myStorage.getCommitIndex(details.getId(), details.getRoot());
-          if (commits.contains(index)) {
-            storeDetail(details);
-            counter.newIndexedCommits++;
+      myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
+        int index = myStorage.getCommitIndex(details.getId(), details.getRoot());
+        if (commits.contains(index)) {
+          storeDetail(details);
+          counter.newIndexedCommits++;
 
-            if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
-          }
+          if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
+        }
 
-          counter.indicator.checkCanceled();
-          counter.displayProgress();
-        });
-      }
-      catch (VcsException e) {
-        LOG.error(e);
-        commits.forEach(value -> {
-          markForIndexing(value, myRoot);
-          return true;
-        });
-      }
+        counter.indicator.checkCanceled();
+        counter.displayProgress();
+      });
 
       flush();
     }

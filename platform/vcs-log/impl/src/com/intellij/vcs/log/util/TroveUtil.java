@@ -16,14 +16,15 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -127,13 +128,20 @@ public class TroveUtil {
     return stream(set).mapToObj(function).collect(Collectors.toList());
   }
 
-  public static void processBatches(@NotNull IntStream stream, int batchSize, @NotNull Consumer<TIntHashSet> consumer) {
+  public static void processBatches(@NotNull IntStream stream,
+                                    int batchSize,
+                                    @NotNull ThrowableConsumer<TIntHashSet, VcsException> consumer)
+    throws VcsException {
     Ref<TIntHashSet> batch = new Ref<>(new TIntHashSet());
+    Ref<VcsException> exception = new Ref<>();
     stream.forEach(commit -> {
       batch.get().add(commit);
       if (batch.get().size() >= batchSize) {
         try {
           consumer.consume(batch.get());
+        }
+        catch (VcsException e) {
+          exception.set(e);
         }
         finally {
           batch.set(new TIntHashSet());
@@ -144,6 +152,8 @@ public class TroveUtil {
     if (!batch.get().isEmpty()) {
       consumer.consume(batch.get());
     }
+
+    if (!exception.isNull()) throw exception.get();
   }
 
   @NotNull
