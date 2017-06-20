@@ -538,7 +538,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       indicator.setIndeterminate(false);
       indicator.setFraction(0);
 
-      long time = System.currentTimeMillis();
+      long startTime = System.currentTimeMillis();
 
       CommitsCounter counter = new CommitsCounter(indicator, myCommits.size());
       LOG.debug("Indexing " + counter.allCommits + " commits in " + myRoot.getName());
@@ -571,12 +571,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
       finally {
         myNumberOfTasks.get(myRoot).decrementAndGet();
-      }
 
-      if (isIndexed(myRoot)) {
-        myListeners.forEach(listener -> listener.indexingFinished(myRoot));
-      }
+        if (isIndexed(myRoot)) {
+          myListeners.forEach(listener -> listener.indexingFinished(myRoot));
+        }
 
+        report(startTime, counter);
+      }
+    }
+
+    private void report(long time, @NotNull CommitsCounter counter) {
       LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - time) +
                 " for indexing " +
                 counter.newIndexedCommits +
