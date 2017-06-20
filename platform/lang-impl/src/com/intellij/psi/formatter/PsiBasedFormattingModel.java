@@ -85,7 +85,8 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     ASTNode leafElement = findElementAt(offset);
 
     if (leafElement != null) {
-      PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(myASTNode.getPsi().getContainingFile(), offset);
+      PsiFile hostFile = myASTNode.getPsi().getContainingFile();
+      PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, offset);
 
       TextRange effectiveRange = injectedElement != null ? rangeInInjectedDocument(textRange, injectedElement) : null;
       if (effectiveRange == null) {
@@ -95,24 +96,17 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
       if (leafElement.getPsi() instanceof PsiFile) {
         return null;
       } else {
-        if (!leafElement.getPsi().isValid()) {
-          String message = "Invalid element found in '\n" +
-                           myASTNode.getText() +
-                           "\n' at " +
-                           offset +
-                           "(" +
-                           myASTNode.getText().substring(offset, Math.min(offset + 10, myASTNode.getTextLength()));
-          LOG.error(message);
-        }
+        LOG.assertTrue(leafElement.getPsi().isValid());
         return replaceWithPsiInLeaf(effectiveRange, whiteSpace, leafElement);
       }
-    } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
-
+    }
+    else if (textRange.getEndOffset() == myASTNode.getTextLength()){
       CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(
-        (Runnable)() -> FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange));
-
+        (Runnable)() -> FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange)
+      );
       return whiteSpace;
-    } else {
+    }
+    else {
       return null;
     }
   }
