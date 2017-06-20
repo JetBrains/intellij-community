@@ -561,12 +561,12 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           }
         }
         catch (ProcessCanceledException e) {
-          scheduleReindex();
+          scheduleReindex(counter);
           throw e;
         }
         catch (VcsException e) {
           LOG.error(e);
-          scheduleReindex();
+          scheduleReindex(counter);
         }
       }
       finally {
@@ -581,19 +581,18 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void report(long time, @NotNull CommitsCounter counter) {
+      int leftCommits = counter.getLeftCommits();
+      String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
+
       LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - time) +
                 " for indexing " +
                 counter.newIndexedCommits +
                 " new commits out of " +
-                counter.allCommits + " in " + myRoot.getName());
-      int leftCommits = counter.allCommits - counter.newIndexedCommits - counter.oldCommits;
-      if (leftCommits > 0) {
-        LOG.warn("Did not index " + leftCommits + " commits");
-      }
+                counter.allCommits + " in " + myRoot.getName() + leftCommitsMessage);
     }
 
-    private void scheduleReindex() {
-      LOG.debug("Schedule reindexing of " + myCommits.size() + " commits in " + myRoot.getName());
+    private void scheduleReindex(@NotNull CommitsCounter counter) {
+      LOG.debug("Schedule reindexing of " + counter.getLeftCommits() + " commits in " + myRoot.getName());
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
         return true;
@@ -609,8 +608,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         counter.indicator.checkCanceled();
 
         List<String> hashes = TroveUtil.map(batch, value -> myStorage.getCommitId(value).getHash().asString());
-        myProviders.get(myRoot).readFullDetails(myRoot, hashes, VcsLogPersistentIndex.this::storeDetail, true);
-        counter.newIndexedCommits += batch.size();
+        myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
+          VcsLogPersistentIndex.this.storeDetail(detail);
+          counter.newIndexedCommits++;
+        }, true);
 
         counter.displayProgress();
       });
@@ -656,6 +657,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     public void displayProgress() {
       indicator.setFraction(((double)newIndexedCommits + oldCommits) / allCommits);
+    }
+
+    public int getLeftCommits() {
+      return allCommits - newIndexedCommits - oldCommits;
     }
   }
 }
