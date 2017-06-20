@@ -170,7 +170,7 @@ public enum GitVersionSpecialty {
     }
   },
 
-  INCORRECT_SEPARATORS_IN_STDIN {
+  LF_SEPARATORS_IN_STDIN {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
