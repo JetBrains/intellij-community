@@ -1,0 +1,55 @@
+LineBreakpoint created at RunLengths.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! partialReduction.RunLengths
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+RunLengths.java:8
+StreamEx.of(1, 2, 2, 3, 2, 2, 4)
+.runLengths()
+.count()
+StreamEx.of
+    before: nothing
+    after: 1,2,4,5,7,9,10
+runLengths
+    before: 1,2,4,5,7,9,10
+    after: 3,6,8,11,12
+count
+    before: 3,6,8,11,12
+    after: nothing
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 4
+    nothing <- 5
+    nothing <- 7
+    nothing <- 9
+    nothing <- 10
+mappings for runLengths
+  direct:
+    1 -> nothing
+    2 -> nothing
+    4 -> nothing
+    5 -> nothing
+    7 -> nothing
+    9 -> nothing
+    10 -> nothing
+  reverse:
+    nothing <- 3
+    nothing <- 6
+    nothing <- 8
+    nothing <- 11
+    nothing <- 12
+mappings for count
+  direct:
+    3 -> nothing
+    6 -> nothing
+    8 -> nothing
+    11 -> nothing
+    12 -> nothing
+  reverse:
+    empty
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+5
