@@ -22,18 +22,17 @@ mappings for IntStreamEx.of
     nothing <- 3
 mappings for takeWhileInclusive
   direct:
-    1 -> nothing
-    3 -> nothing
+    1 -> 2
+    3 -> 4
   reverse:
-    nothing <- 2
-    nothing <- 4
+    1 <- 2
+    3 <- 4
 mappings for count
   direct:
     2 -> nothing
     4 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

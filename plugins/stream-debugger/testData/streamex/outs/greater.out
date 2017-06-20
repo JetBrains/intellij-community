@@ -26,18 +26,17 @@ mappings for greater
   direct:
     1 -> nothing
     2 -> nothing
-    3 -> nothing
-    5 -> nothing
+    3 -> 4
+    5 -> 6
   reverse:
-    nothing <- 4
-    nothing <- 6
+    3 <- 4
+    5 <- 6
 mappings for min
   direct:
     4 -> 2147483646
     6 -> nothing
   reverse:
     4 <- 2147483646
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

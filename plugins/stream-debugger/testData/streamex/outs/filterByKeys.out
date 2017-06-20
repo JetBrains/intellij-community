@@ -23,17 +23,16 @@ mappings for EntryStream.of
     nothing <- 4
 mappings for filterKeys
   direct:
-    1 -> nothing
+    1 -> 2
     3 -> nothing
     4 -> nothing
   reverse:
-    nothing <- 2
+    1 <- 2
 mappings for count
   direct:
     2 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

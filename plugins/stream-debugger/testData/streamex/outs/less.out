@@ -24,18 +24,17 @@ mappings for DoubleStreamEx.of
     nothing <- 5
 mappings for less
   direct:
-    1 -> nothing
+    1 -> 2
     3 -> nothing
     4 -> nothing
     5 -> nothing
   reverse:
-    nothing <- 2
+    1 <- 2
 mappings for max
   direct:
     2 -> 2147483646
   reverse:
     2 <- 2147483646
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

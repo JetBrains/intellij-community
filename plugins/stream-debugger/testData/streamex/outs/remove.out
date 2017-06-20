@@ -24,14 +24,14 @@ mappings for StreamEx.of
     nothing <- 6
 mappings for remove
   direct:
-    1 -> nothing
-    3 -> nothing
+    1 -> 2
+    3 -> 4
     5 -> nothing
-    6 -> nothing
+    6 -> 7
   reverse:
-    nothing <- 2
-    nothing <- 4
-    nothing <- 7
+    1 <- 2
+    3 <- 4
+    6 <- 7
 mappings for forEach
   direct:
     2 -> nothing
@@ -39,7 +39,6 @@ mappings for forEach
     7 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

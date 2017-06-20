@@ -3,16 +3,16 @@ LineBreakpoint created at RemoveKeys.java:8
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 RemoveKeys.java:8
 EntryStream.of(1, 1, 2, 4, 3, 9)
-.removeKeys(x -> x < 7)
+.removeKeys(x -> x < 3)
 .count()
 EntryStream.of
     before: nothing
     after: 1,2,3
 removeKeys
     before: 1,2,3
-    after: nothing
+    after: 4
 count
-    before: nothing
+    before: 4
     after: nothing
 mappings for EntryStream.of
   direct:
@@ -25,16 +25,15 @@ mappings for removeKeys
   direct:
     1 -> nothing
     2 -> nothing
-    3 -> nothing
+    3 -> 4
   reverse:
-    empty
+    3 <- 4
 mappings for count
   direct:
-    empty
+    4 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
-0
+1

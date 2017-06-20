@@ -25,15 +25,14 @@ mappings for removeValues
   direct:
     1 -> nothing
     2 -> nothing
-    3 -> nothing
+    3 -> 4
   reverse:
-    nothing <- 4
+    3 <- 4
 mappings for count
   direct:
     4 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

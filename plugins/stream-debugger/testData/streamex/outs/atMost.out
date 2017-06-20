@@ -24,20 +24,19 @@ mappings for LongStreamEx.of
     nothing <- 6
 mappings for atMost
   direct:
-    1 -> nothing
-    3 -> nothing
+    1 -> 2
+    3 -> 4
     5 -> nothing
     6 -> nothing
   reverse:
-    nothing <- 2
-    nothing <- 4
+    1 <- 2
+    3 <- 4
 mappings for min
   direct:
     2 -> 2147483646
     4 -> nothing
   reverse:
     2 <- 2147483646
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

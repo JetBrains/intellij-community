@@ -26,16 +26,15 @@ mappings for filterBy
   direct:
     1 -> nothing
     2 -> nothing
-    3 -> nothing
+    3 -> 4
     5 -> nothing
   reverse:
-    nothing <- 4
+    3 <- 4
 mappings for toArray
   direct:
     4 -> 5
   reverse:
     4 <- 5
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

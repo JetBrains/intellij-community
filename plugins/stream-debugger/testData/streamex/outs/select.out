@@ -28,16 +28,15 @@ mappings for select
     1 -> nothing
     2 -> nothing
     3 -> nothing
-    4 -> nothing
+    4 -> 5
     6 -> nothing
   reverse:
-    nothing <- 5
+    4 <- 5
 mappings for count
   direct:
     5 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -24,16 +24,15 @@ mappings for EntryStream.of
 mappings for selectKeys
   direct:
     1 -> nothing
-    2 -> nothing
+    2 -> 3
     4 -> nothing
   reverse:
-    nothing <- 3
+    2 <- 3
 mappings for count
   direct:
     3 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
