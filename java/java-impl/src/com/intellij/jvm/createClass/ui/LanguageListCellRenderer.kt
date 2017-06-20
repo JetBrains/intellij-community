@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jvm.createClass.impl.ui
+package com.intellij.jvm.createClass.ui
 
 import com.intellij.lang.Language
 import com.intellij.ui.ListCellRendererWrapper

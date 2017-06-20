@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jvm.createClass.impl.ui
+package com.intellij.jvm.createClass.ui
 
-import com.intellij.jvm.createClass.api.LanguageClassKind
-import com.intellij.psi.PsiDirectory
+import com.intellij.jvm.createClass.SourceClassKind
+import com.intellij.ui.ListCellRendererWrapper
+import javax.swing.JList
 
-class CreateClassUserInfo(
-  val classKind: LanguageClassKind,
-  val className: String,
-  val targetDirectory: PsiDirectory?
-)
+class ClassKindListCellRenderer : ListCellRendererWrapper<SourceClassKind>() {
+
+  override fun customize(list: JList<*>?, value: SourceClassKind?, index: Int, selected: Boolean, hasFocus: Boolean) {
+    value ?: return
+    setIcon(value.icon)
+    setText(value.displayName)
+  }
+}

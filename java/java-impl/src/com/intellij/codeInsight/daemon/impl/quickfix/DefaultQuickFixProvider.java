@@ -65,26 +65,26 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registerPriorityActions(registrar, fixRange, refExpr);
     }
 
-    registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
-    if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
-    }
+    //registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.INTERFACE));
+    //if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
+    //registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
+    //registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+    //}
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
     PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
     if (parent instanceof PsiNewExpression &&
         !(ref.getParent() instanceof PsiTypeElement) &&
         (expressionList == null || !PsiTreeUtil.isAncestor(parent, expressionList, false))) {
-      registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
+      //registrar.register(new CreateClassFromNewFix((PsiNewExpression)parent));
       registrar.register(new CreateInnerClassFromNewFix((PsiNewExpression)parent));
     }
     else {
-      registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
+      //registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
 
-    registrar.register(new CreateClassFromJavaFix(ref));
+    new CreateClassFromJavaFix(ref).register(ref, registrar);
   }
 
   private static void registerPriorityActions(@NotNull QuickFixActionRegistrar registrar,

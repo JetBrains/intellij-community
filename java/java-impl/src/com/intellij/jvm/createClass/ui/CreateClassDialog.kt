@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.jvm.createClass.impl.ui
+package com.intellij.jvm.createClass.ui
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.CodeInsightBundle.message
 import com.intellij.codeInsight.intention.impl.CreateClassDialog.RECENTS_KEY
 import com.intellij.ide.util.PackageUtil
-import com.intellij.jvm.createClass.api.LanguageClassKind
+import com.intellij.jvm.createClass.SourceClassKind
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -47,9 +47,8 @@ import javax.swing.JPanel
 
 class CreateClassDialog(private val project: Project, private val myModule: Module?) : DialogWrapper(project) {
 
-  private lateinit var myKindsMap: Map<Language, List<LanguageClassKind>>
+  private lateinit var myKindsMap: Map<Language, List<SourceClassKind>>
 
-  private var mySingleLanguage: Language? = null
   private val myLanguageCombo = ComboBox<Language>().apply {
     renderer = LanguageListCellRenderer()
     addItemListener {
@@ -63,10 +62,10 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     labelLocation = BorderLayout.WEST
     component = myLanguageCombo
   }
-  private val mySelectedLanguage: Language get() = myLanguageCombo.selectedItem as Language
+  private var mySingleLanguage: Language? = null
+  private val mySelectedLanguage: Language get() = mySingleLanguage ?: myLanguageCombo.selectedItem as Language
 
-  private var mySingleKind: LanguageClassKind? = null
-  private val myClassKindCombo = ComboBox<LanguageClassKind>().apply {
+  private val myClassKindCombo = ComboBox<SourceClassKind>().apply {
     renderer = ClassKindListCellRenderer()
   }
   private val myClassKindRow = LabeledComponent<JComponent>().apply {
@@ -74,7 +73,17 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     labelLocation = BorderLayout.WEST
     component = myClassKindCombo
   }
-  private val mySelectedClassKind: LanguageClassKind get() = myClassKindCombo.selectedItem as LanguageClassKind
+  private var mySingleKind: SourceClassKind? = null
+  private val mySelectedClassKind: SourceClassKind get() {
+    if (mySingleKind == null) {
+      // regular bahaviour
+      return myClassKindCombo.selectedItem as SourceClassKind
+    }
+    else {
+      // each language has single kind with same diplayName
+      return myKindsMap[mySelectedLanguage]!!.single()
+    }
+  }
 
   private val myPackageComponent = PackageNameReferenceEditorCombo(
     null, project, RECENTS_KEY, message("dialog.create.class.package.chooser.title")
@@ -87,17 +96,18 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     component = myPackageComponent
   }
 
-  private var myClassNameEditable: Boolean = true
-  private var myInitialClassName: String? = null
   private val myClassNameField = JBTextField()
   private val myClassNameRow: LabeledComponent<JComponent> = LabeledComponent<JComponent>().apply {
     text = message("dialog.create.class.label.name")
     labelLocation = BorderLayout.WEST
     component = myClassNameField
   }
-  private val myClassName: String get() = if (myClassNameEditable) myClassNameField.text else myInitialClassName!!
+  private var myClassNameEditable: Boolean = true
+  private lateinit var myInitialClassName: String
+  private val myClassName: String get() {
+    return if (myClassNameEditable) myClassNameField.text else myInitialClassName
+  }
 
-  private var myTargetDirectory: PsiDirectory? = null
   private val myDestinationFolderCombo = object : DestinationFolderComboBox() {
     override fun getTargetPackage(): String = myPackageComponent.text.trim { it <= ' ' }
   }
@@ -106,13 +116,15 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     labelLocation = BorderLayout.WEST
     component = myDestinationFolderCombo
   }
+  private var myTargetDirectory: PsiDirectory? = null
 
   private fun languageChanged() {
     val languageKinds = myKindsMap[mySelectedLanguage]!!.toList()
-    myClassKindCombo.model = CollectionComboBoxModel<LanguageClassKind>(languageKinds)
+    myClassKindCombo.model = CollectionComboBoxModel<SourceClassKind>(languageKinds)
   }
 
-  fun initKinds(kindsMap: Map<Language, List<LanguageClassKind>>) {
+  fun initKinds(kindsMap: Map<Language, List<SourceClassKind>>) {
+    require(kindsMap.isNotEmpty())
     myKindsMap = kindsMap
     mySingleLanguage = myKindsMap.keys.singleOrNull()
     mySingleKind = computeSingleKind(kindsMap)
@@ -120,7 +132,7 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     languageChanged()
   }
 
-  fun initClassName(editable: Boolean, className: String?) {
+  fun initClassName(editable: Boolean, className: String) {
     myClassNameField.text = className
     myClassNameEditable = editable
     myInitialClassName = className
@@ -141,7 +153,7 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     }
     title.append(' ')
     mySingleKind?.let { title.append(it.displayName) } ?: title.append("Class")
-    if (!myClassNameEditable && myInitialClassName != null) {
+    if (!myClassNameEditable) {
       title.append(" '").append(myInitialClassName).append('\'')
     }
     setTitle(title.toString())
@@ -226,11 +238,26 @@ class CreateClassDialog(private val project: Project, private val myModule: Modu
     return if (myModule == null) null else PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName)
   }
 
-  val userInfo: CreateClassUserInfo get() {
+  private fun computeSingleKind(kindsMap: Map<Language, List<SourceClassKind>>): SourceClassKind? {
+    var singleKind: SourceClassKind? = null
+    for ((@Suppress("UNUSED_VARIABLE") language, kinds) in kindsMap) {
+      val languageKind = kinds.singleOrNull() ?: return null
+      if (singleKind == null) {
+        singleKind = languageKind
+      }
+      else if (singleKind.displayName != languageKind.displayName) {
+        return null
+      }
+    }
+    return singleKind
+  }
+
+  val userInfo: CreateClassUserInfo? get() {
+    val targetDirectory = myTargetDirectory ?: return null
     return CreateClassUserInfo(
       mySelectedClassKind,
       myClassName,
-      myTargetDirectory
+      targetDirectory
     )
   }
 }
