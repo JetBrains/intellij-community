@@ -258,7 +258,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
         WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName));
       if (sdkHome != null) {
         selectedSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
-        if (selectedSdk != null && PythonSdkType.isVirtualEnv(selectedSdk)) {
+        if (selectedSdk != null) {
           if (PythonSdkType.isVirtualEnv(selectedSdk)) {
             final SdkModificator sdkModificator = selectedSdk.getSdkModificator();
             final PythonSdkAdditionalData additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(selectedSdk));
