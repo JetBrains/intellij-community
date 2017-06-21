@@ -135,7 +135,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   val XSuspendContext?.vm: Vm
-    get() = (this as? SuspendContextView)?.activeExecutionStack?.suspendContext?.vm ?: mainVm!!
+    get() = (this as? SuspendContextView)?.activeVm ?: mainVm!!
 
   override final fun startForceStepInto(context: XSuspendContext?) {
     isForceStep = true
