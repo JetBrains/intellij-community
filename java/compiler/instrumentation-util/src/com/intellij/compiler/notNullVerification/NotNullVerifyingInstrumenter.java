@@ -145,7 +145,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   }
 
   @Override
-  public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
+  public MethodVisitor visitMethod(final int access, final String name, final String desc, String signature, String[] exceptions) {
     if ((access & Opcodes.ACC_BRIDGE) != 0) {
       return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, desc, signature, exceptions));
     }
@@ -175,16 +175,33 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         };
       }
 
-      public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
-        AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
-        if (isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
-          NotNullState state = new NotNullState(anno, IAE_CLASS_NAME);
-          myNotNullParams.put(new Integer(parameter), state);
-          av = collectNotNullArgs(av, state);
+      @Override
+      public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+        TypeReference ref = new TypeReference(typeRef);
+        if (ref.getSort() == TypeReference.METHOD_RETURN) {
+          return checkNotNullMethod(desc, mv.visitTypeAnnotation(typeRef, typePath, desc, visible));
         }
-        else if (anno.equals(SYNTHETIC_TYPE)) {
+        if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER) {
+          return checkNotNullParameter(ref.getFormalParameterIndex(), desc, mv.visitTypeAnnotation(typeRef, typePath, desc, visible));
+        }
+        return null;
+      }
+
+      public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
+        if (anno.equals(SYNTHETIC_TYPE)) {
           // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
           mySyntheticCount++;
+          return null;
+        }
+
+        return checkNotNullParameter(parameter, anno, mv.visitParameterAnnotation(parameter, anno, visible));
+      }
+
+      private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {
+        if (isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
+          NotNullState state = new NotNullState(anno, IAE_CLASS_NAME);
+          myNotNullParams.put(parameter, state);
+          return collectNotNullArgs(av, state);
         }
 
         return av;
@@ -192,12 +209,14 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       @Override
       public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
-        AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
+        return checkNotNullMethod(anno, mv.visitAnnotation(anno, isRuntime));
+      }
+
+      private AnnotationVisitor checkNotNullMethod(String anno, AnnotationVisitor av) {
         if (isReferenceType(returnType) && myNotNullAnnos.contains(anno)) {
           myMethodNotNull = new NotNullState(anno, ISE_CLASS_NAME);
-          av = collectNotNullArgs(av, myMethodNotNull);
+          return collectNotNullArgs(av, myMethodNotNull);
         }
-
         return av;
       }
 
