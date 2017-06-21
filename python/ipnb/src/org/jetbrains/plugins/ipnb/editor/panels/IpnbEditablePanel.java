@@ -135,7 +135,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   protected String getRawCellText() { return ""; }
 
-  public void setupOnFinish(Runnable onFinish) {
+  public void onFinishExecutionAction(Runnable onFinish) {
     myOnFinish = onFinish;
   }
 
