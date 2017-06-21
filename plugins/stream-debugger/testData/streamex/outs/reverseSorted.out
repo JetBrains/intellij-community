@@ -5,7 +5,38 @@ ReverseSorted.java:8
 StreamEx.of(1, 2, 3)
 .reverseSorted()
 .forEach(System.out::println)
-Exception caught: junit.framework.AssertionFailedError, null
+StreamEx.of
+    before: nothing
+    after: 1,2,3
+reverseSorted
+    before: 1,2,3
+    after: 4,5,6
+forEach
+    before: 4,5,6
+    after: nothing
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+mappings for reverseSorted
+  direct:
+    1 -> 6
+    2 -> 5
+    3 -> 4
+  reverse:
+    3 <- 4
+    2 <- 5
+    1 <- 6
+mappings for forEach
+  direct:
+    4 -> nothing
+    5 -> nothing
+    6 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
