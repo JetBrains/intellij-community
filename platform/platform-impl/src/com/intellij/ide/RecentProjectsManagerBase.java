@@ -94,18 +94,47 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         names.remove(recentPaths.get(index));
         recentPaths.remove(index);
       }
+    }
 
-      // TODO Should be removed later (required to convert the already saved system-dependent paths).
-      List<String> paths = new ArrayList<>(recentPaths);
-      recentPaths.clear();
-      for (String path : paths) {
-        recentPaths.add(PathUtil.toSystemIndependentName(path));
+    // TODO Should be removed later (required to convert the already saved system-dependent paths).
+    private void makePathsSystemIndependent() {
+      makeSystemIndependent(recentPaths);
+
+      makeSystemIndependent(openPaths);
+
+      Map<String, String> namesCopy = new HashMap<>(names);
+      names.clear();
+      for (Map.Entry<String, String> entry : namesCopy.entrySet()) {
+        names.put(PathUtil.toSystemIndependentName(entry.getKey()), entry.getValue());
       }
-      Map<String, RecentProjectMetaInfo> info = new HashMap<>(additionalInfo);
+
+      for (ProjectGroup group : groups) {
+        List<String> paths = new ArrayList<>(group.getProjects());
+        makeSystemIndependent(paths);
+        group.save(paths);
+      }
+
+      if (lastPath != null) {
+        lastPath = PathUtil.toSystemIndependentName(lastPath);
+      }
+
+      Map<String, RecentProjectMetaInfo> additionalInfoCopy = new HashMap<>(additionalInfo);
       additionalInfo.clear();
-      for (Map.Entry<String, RecentProjectMetaInfo> entry : info.entrySet()) {
+      for (Map.Entry<String, RecentProjectMetaInfo> entry : additionalInfoCopy.entrySet()) {
         entry.getValue().binFolder = PathUtil.toSystemIndependentName(entry.getValue().binFolder);
         additionalInfo.put(PathUtil.toSystemIndependentName(entry.getKey()), entry.getValue());
+      }
+
+      if (lastProjectLocation != null) {
+        lastProjectLocation = PathUtil.toSystemIndependentName(lastProjectLocation);
+      }
+    }
+
+    private static void makeSystemIndependent(List<String> paths) {
+      List<String> copy = new ArrayList<>(paths);
+      paths.clear();
+      for (String path : copy) {
+        paths.add(PathUtil.toSystemIndependentName(path));
       }
     }
   }
@@ -136,6 +165,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void loadState(final State state) {
+    state.makePathsSystemIndependent();
     removeDuplicates(state);
     if (state.lastPath != null && !new File(state.lastPath).exists()) {
       state.lastPath = null;
