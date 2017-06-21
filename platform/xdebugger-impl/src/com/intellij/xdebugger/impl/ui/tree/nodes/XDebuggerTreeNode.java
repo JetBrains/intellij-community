@@ -192,4 +192,9 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
   public void invokeNodeUpdate(Runnable runnable) {
     myTree.getLaterInvocator().offer(runnable);
   }
+
+  @Override
+  public String toString() {
+    return myText.toString();
+  }
 }
