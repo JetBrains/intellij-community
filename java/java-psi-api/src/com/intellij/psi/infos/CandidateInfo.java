@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * @author ik,dsl
  */
@@ -56,7 +58,11 @@ public class CandidateInfo implements JavaResolveResult {
     myPackagePrefixPackageReference = packagePrefixPackageReference;
   }
 
-  public CandidateInfo(@NotNull PsiElement candidate, @NotNull PsiSubstitutor substitutor, boolean accessProblem, boolean staticsProblem, PsiElement currFileContext) {
+  public CandidateInfo(@NotNull PsiElement candidate,
+                       @NotNull PsiSubstitutor substitutor,
+                       boolean accessProblem,
+                       boolean staticsProblem,
+                       PsiElement currFileContext) {
     this(candidate, substitutor, !accessProblem, staticsProblem, currFileContext, null, null, false);
   }
 
@@ -171,27 +177,23 @@ public class CandidateInfo implements JavaResolveResult {
 
     if (myPackagePrefixPackageReference != that.myPackagePrefixPackageReference) return false;
     if (myStaticsProblem != that.myStaticsProblem) return false;
-    if (myAccessClass != null ? !myAccessClass.equals(that.myAccessClass) : that.myAccessClass != null) return false;
+    if (!Objects.equals(myAccessClass, that.myAccessClass)) return false;
     if (isAccessible() != that.isAccessible()) return false;
     if (!myCandidate.equals(that.myCandidate)) return false;
-    if (myCurrentFileResolveContext != null
-        ? !myCurrentFileResolveContext.equals(that.myCurrentFileResolveContext)
-        : that.myCurrentFileResolveContext != null) {
-      return false;
-    }
-    if (myPlace != null ? !myPlace.equals(that.myPlace) : that.myPlace != null) return false;
+    if (!Objects.equals(myCurrentFileResolveContext, that.myCurrentFileResolveContext)) return false;
+    if (!Objects.equals(myPlace, that.myPlace)) return false;
     return mySubstitutor.equals(that.mySubstitutor);
   }
 
   @Override
   public int hashCode() {
-    int result = myPlace != null ? myPlace.hashCode() : 0;
-    result = 31 * result + (myAccessClass != null ? myAccessClass.hashCode() : 0);
+    int result = Objects.hashCode(myPlace);
+    result = 31 * result + Objects.hashCode(myAccessClass);
     result = 31 * result + myCandidate.hashCode();
     result = 31 * result + (isAccessible() ? 1 : 0);
     result = 31 * result + (myStaticsProblem ? 1 : 0);
     result = 31 * result + mySubstitutor.hashCode();
-    result = 31 * result + (myCurrentFileResolveContext != null ? myCurrentFileResolveContext.hashCode() : 0);
+    result = 31 * result + Objects.hashCode(myCurrentFileResolveContext);
     result = 31 * result + (myPackagePrefixPackageReference ? 1 : 0);
     return result;
   }
