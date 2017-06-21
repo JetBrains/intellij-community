@@ -101,4 +101,4 @@ echo $BNUM > ../adt/idea/native/installer/win/version
 ABS_OUT=`cd "$OUT"; pwd`
 ABS_DIST=`cd "$DIST"; pwd`
 # execute a bunch of sanity checks on the final artifacts
-../base/bazel/bazel test //tools/idea:test_studio --test_output=streamed --test_arg=--out=$ABS_OUT --test_arg=--dist=$ABS_DIST --test_arg=--build=$BNUM --test_strategy=standalone --spawn_strategy=standalone  --no_cache_test_results
+../base/bazel/bazel test //tools/idea:test_studio --test_output=streamed --test_arg=--out=$ABS_OUT --test_arg=--dist=$ABS_DIST --test_arg=--build=$BNUM --test_strategy=standalone --spawn_strategy=standalone  --nocache_test_results
