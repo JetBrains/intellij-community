@@ -204,7 +204,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     while (!position.isAtEnd()) {
       if (currLanguage == Language.ANY || currLanguage == null) currLanguage = position.getLanguage();
       if (position.isAt(Colon)) {
-        SemanticEditorPosition afterColon = getPosition(position.getEditor(), position.getStartOffset()).after().afterOptional(Whitespace);
+        SemanticEditorPosition afterColon = getPosition(position.getEditor(), position.getStartOffset())
+          .after().afterOptionalMix(Whitespace, LineComment);
         if (getPosition(position.getEditor(), position.getStartOffset()).isAfterOnSameLine(SwitchCase, SwitchDefault)) {
           return afterColon.getStartOffset();
         }
