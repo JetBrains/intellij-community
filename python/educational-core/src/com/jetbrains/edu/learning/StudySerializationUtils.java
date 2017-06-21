@@ -96,6 +96,8 @@ public class StudySerializationUtils {
     public static final String SELECTED = "selected";
     public static final String TASK_TEXT = "taskText";
     public static final String PLACEHOLDER_TEXT = "placeholderText";
+    private static final String TASK_HTML = "task.html";
+    private static final String TASK_MD = "task.md";
     private static String LAST_SUBTASK_INDEX = "lastSubtaskIndex";
     private static String THEORY_TAG = "theoryTask";
     private static String ADAPTIVE_TASK_PARAMETERS = "adaptiveTaskParameters";
@@ -321,7 +323,7 @@ public class StudySerializationUtils {
             throw new StudyUnrecognizedFormatException();
           }
           List<VirtualFile> taskDescriptionFiles = Arrays.stream(taskDir.getChildren())
-            .filter(file -> StudyUtils.isTaskDescriptionFile(file.getName()))
+            .filter(file -> isTaskDescriptionFile(file.getName()))
             .collect(Collectors.toList());
           Map<String, String> taskTextsMap = new HashMap<>();
           for (VirtualFile file : taskDescriptionFiles) {
@@ -522,6 +524,17 @@ public class StudySerializationUtils {
         }
       }
       return Collections.emptyMap();
+    }
+
+    private static boolean isTaskDescriptionFile(@NotNull final String fileName) {
+      if (TASK_HTML.equals(fileName) || TASK_MD.equals(fileName)) {
+        return true;
+      }
+      String extension = FileUtilRt.getExtension(fileName);
+      if (!extension.equals(FileUtilRt.getExtension(TASK_HTML)) && !extension.equals(FileUtilRt.getExtension(TASK_MD))) {
+        return false;
+      }
+      return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.SUBTASK_MARKER);
     }
   }
 

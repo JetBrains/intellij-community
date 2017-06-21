@@ -50,8 +50,7 @@ public class CCUtils {
   public static int getSubtaskIndex(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();
     String name = FileUtil.getNameWithoutExtension(fileName);
-    boolean canBeSubtaskFile = isTestsFile(project, file) || StudyUtils.isTaskDescriptionFile(fileName);
-    if (!canBeSubtaskFile) {
+    if (!isTestsFile(project, file)) {
       return -1;
     }
     if (!name.contains(EduNames.SUBTASK_MARKER)) {
@@ -280,7 +279,7 @@ public class CCUtils {
         }
         if (file.isDirectory()) return true;
 
-        if (StudyUtils.isTaskDescriptionFile(name) || StudyUtils.isTestsFile(project, name)) return true;
+        if (StudyUtils.isTestsFile(project, name)) return true;
 
         if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(file.getPath()))) {
           return false;

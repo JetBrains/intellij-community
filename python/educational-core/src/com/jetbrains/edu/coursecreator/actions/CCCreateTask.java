@@ -117,7 +117,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
       return null;
     }
     task.setLesson(((Lesson)parentItem));
-    task.addTaskText(task.getTaskDescriptionNameWithoutExtension(), CCUtils.TASK_DESCRIPTION_TEXT);
+    task.addTaskText(task.getTaskDescriptionName(), CCUtils.TASK_DESCRIPTION_TEXT);
     return task;
   }
 }

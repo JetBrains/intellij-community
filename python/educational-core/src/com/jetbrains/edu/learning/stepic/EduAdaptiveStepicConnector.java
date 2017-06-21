@@ -164,7 +164,7 @@ public class EduAdaptiveStepicConnector {
     final Task task = new TheoryTask(lessonName);
     task.setStepId(stepId);
 
-    task.addTaskText(EduNames.TASK_HTML, block.text);
+    task.addTaskText(EduNames.TASK, block.text);
 
     createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
     return task;
@@ -176,7 +176,7 @@ public class EduAdaptiveStepicConnector {
                                             int stepId, int userId) {
     final ChoiceTask task = new ChoiceTask(lessonName);
     task.setStepId(stepId);
-    task.addTaskText(EduNames.TASK_HTML, block.text);
+    task.addTaskText(EduNames.TASK, block.text);
 
     final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(stepId, userId);
     if (attempt != null) {
@@ -437,7 +437,7 @@ public class EduAdaptiveStepicConnector {
       taskDescription.append("<br>").append("<b>Memory limit</b>: ").append(step.options.executionMemoryLimit).append(" Mb").append("<br>")
         .append("<b>Time limit</b>: ").append(step.options.executionTimeLimit).append("s").append("<br><br>");
     }
-    task.addTaskText(EduNames.TASK_HTML, taskDescription.toString());
+    task.addTaskText(EduNames.TASK, taskDescription.toString());
 
     if (step.options.test != null) {
       for (StepicWrappers.FileWrapper wrapper : step.options.test) {
