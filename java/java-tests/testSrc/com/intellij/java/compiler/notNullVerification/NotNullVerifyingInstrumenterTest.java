@@ -187,6 +187,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     Object instance = test.newInstance();
     verifyCallThrowsException("@FooAnno method TypeUseOnlyAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
     verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseOnlyAnnotations.foo2 must not be null", instance, test.getMethod("foo2", String.class), (String)null);
+    test.getMethod("foo3", List.class).invoke(instance, (List)null);
   }
 
   public void testTypeUseAndMemberAnnotations() throws Exception {
