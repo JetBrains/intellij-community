@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -364,7 +363,7 @@ public class StudyUtils {
         return false;
       }
       String name = virtualFile.getName();
-      return !isTestsFile(project, name) && !isTaskDescriptionFile(name);
+      return !isTestsFile(project, name);
     }
     if (element instanceof PsiDirectory) {
       VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
@@ -544,17 +543,6 @@ public class StudyUtils {
     MarkdownUtil.replaceCodeBlock(lines);
 
     return new MarkdownProcessor().markdown(StringUtil.join(lines, "\n"));
-  }
-
-  public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
-    if (EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName)) {
-      return true;
-    }
-    String extension = FileUtilRt.getExtension(fileName);
-    if (!extension.equals(FileUtilRt.getExtension(EduNames.TASK_HTML)) && !extension.equals(FileUtilRt.getExtension(EduNames.TASK_MD))) {
-      return false;
-    }
-    return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.SUBTASK_MARKER);
   }
 
   @Nullable

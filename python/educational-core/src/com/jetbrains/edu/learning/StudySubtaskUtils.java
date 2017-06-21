@@ -168,7 +168,7 @@ public class StudySubtaskUtils {
     if (toolWindow != null) {
       String text = task.getTaskDescription();
       if (text == null) {
-        task.addTaskText(task.getTaskDescriptionNameWithoutExtension(), CCUtils.TASK_DESCRIPTION_TEXT);
+        task.addTaskText(task.getTaskDescriptionName(), CCUtils.TASK_DESCRIPTION_TEXT);
         text = CCUtils.TASK_DESCRIPTION_TEXT;
       }
       toolWindow.setTaskText(text, project);

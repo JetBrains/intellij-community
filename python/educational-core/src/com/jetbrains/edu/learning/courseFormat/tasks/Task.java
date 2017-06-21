@@ -170,7 +170,7 @@ public abstract class Task implements StudyItem {
   }
 
   public String getTaskDescription() {
-    String fileName = getTaskDescriptionNameWithoutExtension();
+    String fileName = getTaskDescriptionName();
     //TODO: replace this with simple get after implementing migration for taskTexts
     Map.Entry<String, String> entry =
       EntryStream.of(taskTexts).findFirst(e -> FileUtil.getNameWithoutExtension(e.getKey()).equals(fileName)).orElse(null);
@@ -180,8 +180,8 @@ public abstract class Task implements StudyItem {
     return entry.getValue();
   }
 
-  public String getTaskDescriptionNameWithoutExtension() {
-    return FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
+  public String getTaskDescriptionName() {
+    return EduNames.TASK;
   }
 
   @NotNull
@@ -297,6 +297,6 @@ public abstract class Task implements StudyItem {
   }
 
   public void saveTaskText(String text) {
-    taskTexts.put(getTaskDescriptionNameWithoutExtension(), text);
+    taskTexts.put(getTaskDescriptionName(), text);
   }
 }
