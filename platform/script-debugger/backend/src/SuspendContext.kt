@@ -58,9 +58,6 @@ interface SuspendContext<CALL_FRAME : CallFrame> {
 
   val vm: Vm
     get() = throw UnsupportedOperationException()
-
-  val workerId: String?
-    get() = null
 }
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : Consumer<T> {
