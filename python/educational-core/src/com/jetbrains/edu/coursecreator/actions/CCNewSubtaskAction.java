@@ -13,6 +13,7 @@ import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
@@ -61,6 +62,11 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     list.set(i, task);
     final VirtualFile taskDir = task.getTaskDir(project);
     renameFiles(taskDir, project, -1);
+    String oldTaskText = task.getTaskTexts().get(EduNames.TASK);
+    if (oldTaskText != null) {
+      task.addTaskText(EduNames.TASK + EduNames.SUBTASK_MARKER + 0, oldTaskText);
+      task.getTaskTexts().remove(EduNames.TASK);
+    }
     return task;
   }
 
