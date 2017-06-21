@@ -35,7 +35,7 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
       final int nextIndex = i + 1;
       if (nextIndex < cells.size()) {
         final IpnbEditablePanel nextCell = cells.get(nextIndex);
-        cell.setupOnFinish(() -> nextCell.runCell(nextIndex != cells.size() - 1));
+        cell.onFinishExecutionAction(() -> nextCell.runCell(nextIndex != cells.size() - 1));
       }
     }
     final IpnbEditablePanel firstPanel = cells.get(0);
