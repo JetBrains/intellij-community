@@ -36,10 +36,10 @@ import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
@@ -713,21 +713,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                               int end,
                               @NotNull List<VFileEvent> outValidated,
                               @NotNull List<Runnable> outApplyEvents) {
-    Map<VirtualDirectoryImpl, List<VFileCreateEvent>> grouped = new THashMap<>();
+    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = MultiMap.createSmart();
 
     for (int i = start; i < end; i++) {
       VFileCreateEvent event = (VFileCreateEvent)events.get(i);
       VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
-      List<VFileCreateEvent> changes = grouped.computeIfAbsent(parent, __ -> new SmartList<>());
-      changes.add(event);
+      grouped.putValue(parent, event);
     }
 
     // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
     // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
     boolean hasValidEvents = false;
-    for (Map.Entry<VirtualDirectoryImpl, List<VFileCreateEvent>> entry : grouped.entrySet()) {
+    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : grouped.entrySet()) {
       VirtualDirectoryImpl directory = entry.getKey();
-      List<VFileCreateEvent> createEvents = entry.getValue();
+      List<VFileCreateEvent> createEvents = (List<VFileCreateEvent>)entry.getValue();
       directory.validateChildrenToCreate(createEvents);
       hasValidEvents |= !createEvents.isEmpty();
       outValidated.addAll(createEvents);
@@ -759,14 +758,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (!deletionsWithPath.isEmpty()) {
       filterOutInvalidDeletions(deletionsWithPath);
 
-      Map<VirtualDirectoryImpl, List<VFileDeleteEvent>> grouped = new HashMap<>(); // can be nulls
+      MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = MultiMap.create(); // can be nulls
       boolean hasValidEvents = false;
       for (Pair<VFileDeleteEvent, String> pair : deletionsWithPath) {
         if (pair == null) continue; // filtered out
         VFileDeleteEvent event = pair.getFirst();
         @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getFile().getParent();
-        List<VFileDeleteEvent> changes = grouped.computeIfAbsent(parent, __ -> new SmartList<>());
-        changes.add(event);
+        grouped.putValue(parent, event);
         outValidated.add(event);
         hasValidEvents = true;
       }
@@ -834,10 +832,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
-  private void applyDeletions(@NotNull Map<VirtualDirectoryImpl, List<VFileDeleteEvent>> deletions) {
-    for (Map.Entry<VirtualDirectoryImpl, List<VFileDeleteEvent>> entry : deletions.entrySet()) {
+  private void applyDeletions(@NotNull MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> deletions) {
+    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> entry : deletions.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
-      List<VFileDeleteEvent> deleteEvents = entry.getValue();
+      Collection<VFileDeleteEvent> deleteEvents = entry.getValue();
       if (parent == null) {
         deleteEvents.forEach(this::applyEvent);
         return;
@@ -866,18 +864,18 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   // add children to specified directories using VirtualDirectoryImpl.createAndAddChildren() optimised for bulk additions
-  private void applyCreations(@NotNull Map<VirtualDirectoryImpl, List<VFileCreateEvent>> creations) {
-    for (Map.Entry<VirtualDirectoryImpl, List<VFileCreateEvent>> entry : creations.entrySet()) {
+  private void applyCreations(@NotNull MultiMap<VirtualDirectoryImpl, VFileCreateEvent> creations) {
+    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : creations.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
-      List<VFileCreateEvent> createEvents = entry.getValue();
+      Collection<VFileCreateEvent> createEvents = entry.getValue();
       int parentId = parent.getId();
       int[] oldIds = FSRecords.list(parentId);
       TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(createEvents.size(), oldIds.length));
       parentChildrenIds.addAll(oldIds);
 
       List<FSRecords.NameId> childrenAdded = new ArrayList<>(createEvents.size());
-      final NewVirtualFileSystem delegate = getDelegate(parent);
-
+      final NewVirtualFileSystem delegate = replaceWithNativeFS(getDelegate(parent));
+      delegate.list(parent); // cache children getAttributes
       for (VFileCreateEvent createEvent : createEvents) {
         createEvent.resetCache();
         String name = createEvent.getChildName();
