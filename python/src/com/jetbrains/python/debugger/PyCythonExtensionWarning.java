@@ -86,7 +86,7 @@ public class PyCythonExtensionWarning {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        HelpManager.getInstance().invokeHelp("");
+        HelpManager.getInstance().invokeHelp("Cython_Speedups");
       }
     };
   }
