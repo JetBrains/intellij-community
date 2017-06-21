@@ -38,6 +38,10 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "append" -> AppendResolver()
       "sortedBy", "sortedByInt", "sortedByDouble", "sortedByLong", "reverseSorted" -> IdentityResolver()
       "peekFirst", "peekLast", "peekKeys", "peekValues", "peekKeyValue" -> FilterResolver()
+      "flatMapToInt", "flatMapToLong", "flatMapToDouble", "flatMapToObj", "flatMapToEntry",
+      "cross",
+      "flatMapToKey", "flatMapToValue", "flatMapKeys", "flatMapValues", "flatMapKeyValue",
+      "flatArray", "flatCollection" -> FlatMapResolver()
       else -> null
     }
   }
