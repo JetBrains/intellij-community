@@ -10,16 +10,22 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.packaging.PyPackage;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.DebugAwareConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRunConfiguration> implements DebugAwareConfiguration {
 
@@ -49,7 +55,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     return new IpnbConfigurationEditor(this);
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     myAdditionalOptions = JDOMExternalizerUtil.readField(element, ATTR_ADDITIONAL_OPTIONS);
     final String host = JDOMExternalizerUtil.readField(element, ATTR_HOST);
@@ -58,7 +64,7 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     myPort = port != null && port.length() > 0 ? port : null;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JDOMExternalizerUtil.writeField(element, ATTR_ADDITIONAL_OPTIONS, myAdditionalOptions);
     JDOMExternalizerUtil.writeField(element, ATTR_HOST, myHost);
@@ -76,6 +82,21 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     }
     if (StringUtil.isEmptyOrSpaces(getPort())) {
       throw new RuntimeConfigurationError("Please select valid port");
+    }
+    final Sdk sdk = getSdk();
+    assert sdk != null;
+    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+    final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
+    final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
+    if (ipythonPackage == null && jupyterPackage == null) {
+      throw new RuntimeConfigurationError("Install Jupyter Notebook to the interpreter of the current project.",
+                                          () -> {
+                                            try {
+                                              PyPackageManager.getInstance(sdk).install("jupyter");
+                                            }
+                                            catch (ExecutionException ignored) {
+                                            }
+                                          });
     }
   }
 
