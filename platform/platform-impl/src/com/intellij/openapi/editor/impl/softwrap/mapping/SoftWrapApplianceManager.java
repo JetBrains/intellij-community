@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,10 @@ import java.util.List;
 public class SoftWrapApplianceManager implements Dumpable {
 
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
-  
+  private static final int QUICK_DUMMY_WRAPPING = Integer.MAX_VALUE; // special value to request a tentative wrapping
+                                                                     // before editor is shown and actual available width is known
+  private static final int QUICK_WRAP_CHAR_COUNT = 1000;
+
   /** Enumerates possible type of soft wrap indents to use. */
   enum IndentType {
     /** Don't apply special indent to soft-wrapped line at all. */
@@ -94,7 +97,6 @@ public class SoftWrapApplianceManager implements Dumpable {
    * during viewport's <code>'y'</code> coordinate adjustment on visual area width change.
    */
   private int myLastTopLeftCornerOffset = 0;
-  private int myVerticalScrollBarWidth  = -1;
 
   private VisibleAreaWidthProvider       myWidthProvider;
   private LineWrapPositionStrategy       myLineWrapPositionStrategy;
@@ -105,8 +107,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private boolean                        myInProgress;
   private boolean                        myIsDirty = true;
   private IncrementalCacheUpdateEvent    myDocumentChangedEvent;
-  @NotNull
-  private final Rectangle                myAvailableArea = new Rectangle(); // mutable
+  private int                            myAvailableWidth = QUICK_DUMMY_WRAPPING; 
 
 
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
@@ -228,16 +229,30 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
     myInProgress = true;
     try {
-      doRecalculateSoftWraps(event);
+      myEventBeingProcessed = event;
+      notifyListenersOnCacheUpdateStart(event);
+      int endOffsetUpperEstimate = getEndOffsetUpperEstimate(event);
+      if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
+        doRecalculateSoftWrapsRoughly(event);
+      }
+      else {
+        doRecalculateSoftWraps(event, endOffsetUpperEstimate);
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
+      }
+      if (event.getActualEndOffset() > endOffsetUpperEstimate) {
+        LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
+      }
+      notifyListenersOnCacheUpdateEnd(event);
+      myEventBeingProcessed = null;
     }
     finally {
       myInProgress = false;
     }
   }
   
-  private void doRecalculateSoftWraps(IncrementalCacheUpdateEvent event) {
-    myEventBeingProcessed = event;
-    notifyListenersOnCacheUpdateStart(event);
+  private void doRecalculateSoftWraps(IncrementalCacheUpdateEvent event, int endOffsetUpperEstimate) {
     // Preparation.
     myContext.reset();
     myOffset2fontType.clear();
@@ -248,10 +263,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     // Define start of the visual line that holds target range start.
-    final int start = event.getStartOffset(); 
+    final int start = event.getStartOffset();
     final LogicalPosition logical = event.getStartLogicalPosition();
-
-    int endOffsetUpperEstimate = getEndOffsetUpperEstimate(event);
 
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
@@ -274,7 +287,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     myContext.softWrapStartOffset = position.offset;
 
     myContext.reservedWidthInPixels = myPainter.getMinDrawingWidth(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
-    
+
     SoftWrap softWrapAtStartPosition = myStorage.getSoftWrap(start);
     if (softWrapAtStartPosition != null) {
       myContext.currentPosition.x = softWrapAtStartPosition.getIndentInPixels();
@@ -314,14 +327,39 @@ public class SoftWrapApplianceManager implements Dumpable {
       myStorage.remove(myContext.delayedSoftWrap);
     }
     event.setActualEndOffset(myContext.currentPosition.offset);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Soft wrap recalculation done: " + event.toString() + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
+  }
+
+  // this method generates soft-wraps at some places just to ensure visual lines have limited width, to avoid related performance problems
+  // correct procedure is not used to speed up editor opening
+  private void doRecalculateSoftWrapsRoughly(IncrementalCacheUpdateEvent event) {
+    Document document = myEditor.getDocument();
+    int lineCount = document.getLineCount();
+    int offset = event.getStartOffset();
+    int line = document.getLineNumber(offset);
+    int mandatoryEnd = event.getMandatoryEndOffset();
+    while (true) {
+      if ((offset += QUICK_WRAP_CHAR_COUNT) >= document.getLineEndOffset(line)) {
+        if (++line >= lineCount) {
+          offset = document.getTextLength();
+          break;
+        }
+        offset = document.getLineStartOffset(line);
+        if (offset > mandatoryEnd && myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1) == null) break;
+        else continue;
+      }
+      FoldRegion foldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset);
+      if (foldRegion != null) {
+        offset = foldRegion.getEndOffset();
+        line = document.getLineNumber(offset);
+      }
+      if (DocumentUtil.isInsideSurrogatePair(document, offset)) offset++;
+      if (offset < document.getLineEndOffset(line)) {
+        SoftWrapImpl wrap = new SoftWrapImpl(new TextChangeImpl("\n", offset), 1, 1);
+        myStorage.storeOrReplace(wrap);
+        if (offset > mandatoryEnd && myDataMapper.matchesOldSoftWrap(wrap, event.getLengthDiff())) break;
+      }
     }
-    if (event.getActualEndOffset() > endOffsetUpperEstimate) {
-      LOG.error("Unexpected error at soft wrap recalculation", new Attachment("softWrapModel.txt", myEditor.getSoftWrapModel().toString()));
-    }
-    notifyListenersOnCacheUpdateEnd(event);
-    myEventBeingProcessed = null;
+    event.setActualEndOffset(offset);
   }
 
   private int getEndOffsetUpperEstimate(IncrementalCacheUpdateEvent event) {
@@ -786,17 +824,15 @@ public class SoftWrapApplianceManager implements Dumpable {
     myCustomIndentValueUsedLastTime = currentCustomIndent;
 
     // Check if we need to recalculate soft wraps due to visible area width change.
-    int currentVisibleAreaWidth = myAvailableArea.width;
+    int currentVisibleAreaWidth = myAvailableWidth;
     if (!indentChanged && myVisibleAreaWidth == currentVisibleAreaWidth) {
       return recalculateSoftWraps(); // Recalculate existing dirty regions if any.
     }
 
     final JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
-    if (myVerticalScrollBarWidth < 0) {
-      myVerticalScrollBarWidth = scrollBar.getWidth();
-      if (myVerticalScrollBarWidth <= 0) {
-        myVerticalScrollBarWidth = scrollBar.getPreferredSize().width;
-      }
+    int verticalScrollBarWidth = scrollBar.getWidth();
+    if (verticalScrollBarWidth <= 0) {
+      verticalScrollBarWidth = scrollBar.getPreferredSize().width;
     }
     
     // We experienced the following situation:
@@ -811,7 +847,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     // I.e. we have an endless EDT activity that stops only when editor is re-sized in a way to avoid vertical scroll bar.
     // That's why we don't recalculate soft wraps when visual area width is changed to the vertical scroll bar width value assuming
     // that such a situation is triggered by the scroll bar (dis)appearance.
-    if (Math.abs(currentVisibleAreaWidth - myVisibleAreaWidth) == myVerticalScrollBarWidth) {
+    if (Math.abs(currentVisibleAreaWidth - myVisibleAreaWidth) == verticalScrollBarWidth) {
       myVisibleAreaWidth = currentVisibleAreaWidth;
       return recalculateSoftWraps();
     }
@@ -920,8 +956,8 @@ public class SoftWrapApplianceManager implements Dumpable {
   @Override
   public String dumpState() {
     return String.format(
-      "recalculation in progress: %b; event being processed: %s, available area: %s, visible width: %d, dirty: %b",
-      myInProgress, myEventBeingProcessed, myAvailableArea.toString(), myVisibleAreaWidth, myIsDirty
+      "recalculation in progress: %b; event being processed: %s, available width: %d, visible width: %d, dirty: %b",
+      myInProgress, myEventBeingProcessed, myAvailableWidth, myVisibleAreaWidth, myIsDirty
     );
   }
 
@@ -935,14 +971,12 @@ public class SoftWrapApplianceManager implements Dumpable {
     myPainter = painter;
   }
 
-  @NotNull
-  public Rectangle getAvailableArea() {
-    return myAvailableArea;
-  }
-
   public void updateAvailableArea() {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    myAvailableArea.setSize(myWidthProvider.getVisibleAreaWidth(), visibleArea.height);
+    if (visibleArea.isEmpty()) return;
+    int width = myWidthProvider.getVisibleAreaWidth();
+    if (width <= 0) return;
+    myAvailableWidth = width;
   }
 
   /**
