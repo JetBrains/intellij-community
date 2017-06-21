@@ -307,6 +307,10 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       if (mySelectNext) {
         filePanel.selectNext(this, true);
       }
+      if (myOnFinish != null) {
+        myOnFinish.run();
+        myOnFinish = null;
+      }
     }, ModalityState.stateForComponent(this));
   }
 
