@@ -82,15 +82,15 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
       private void addAffectedJavaSdk(VFileEvent event, Set<Sdk> affected) {
         final VirtualFile file = event.getFile();
-        String fileName = null;
+        CharSequence fileName = null;
         if (file != null && file.isValid()) {
           if (file.isDirectory()) {
             return;
           }
-          fileName = file.getName();
+          fileName = file.getNameSequence();
         }
-        final String eventPath = event.getPath();
         if (fileName == null) {
+          final String eventPath = event.getPath();
           fileName = VfsUtil.extractFileName(eventPath);
         }
         if (fileName != null) {
@@ -104,6 +104,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         for (Sdk sdk : mySdks) {
           if (sdk.getSdkType() instanceof JavaSdkType && !affected.contains(sdk)) {
             final String homePath = sdk.getHomePath();
+            final String eventPath = event.getPath();
             if (!StringUtil.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
               affected.add(sdk);
             }

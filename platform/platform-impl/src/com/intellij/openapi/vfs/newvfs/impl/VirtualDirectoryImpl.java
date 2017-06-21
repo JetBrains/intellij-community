@@ -544,9 +544,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.myChildrenIds = newIds;
 
       if (!allChildrenLoaded()) {
-        for (CharSequence name : namesToRemove) {
-          myData.addAdoptedName(name, caseSensitive);
-        }
+        myData.addAdoptedNames(namesToRemove, caseSensitive);
       }
 
       assertConsistency(caseSensitive, namesToRemove);
@@ -582,7 +580,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         // findChild asks delegate FS when failed to locate child, and so should we
         int beforeSize = existingNames.size();
         String[] names = getFileSystem().list(this);
-        Collections.addAll(existingNames, names);
+        existingNames.addAll(Arrays.asList(names));
         if (beforeSize != existingNames.size()) {
           validateAgainst(childrenToCreate, existingNames);
         }

@@ -22,7 +22,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implement {@link com.intellij.openapi.components.PersistentStateComponent} to be serializable.
+ * Extend this class to provide additional module-level properties which can be edited in Project Structure dialog. For ordinary module-level
+ * properties use {@link com.intellij.openapi.module.ModuleServiceManager module service} instead.
+ * <p/>
+ * If the inheritor implements {@link com.intellij.openapi.components.PersistentStateComponent} its state will be persisted in the module
+ * configuration file.
  */
 public abstract class ModuleExtension implements Disposable {
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");

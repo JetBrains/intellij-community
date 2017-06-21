@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
+import com.intellij.psi.util.PsiFormatUtil
+import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.UClass
@@ -59,19 +61,29 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     val paramsString = parameters.mapIndexed { i, t -> "${t.type.presentableText} ${t.name ?: "arg$i"}" }.joinToString()
     val signatureString =
       "${VisibilityUtil.getVisibilityString(visibilityModifier)} ${returnType.presentableText} $methodName($paramsString){}"
-    val smartPsi = SmartPointerManager.getInstance(uClass.project).createSmartPsiElementPointer(uClass.psi)
+    val targetClassPointer = SmartPointerManager.getInstance(uClass.project).createSmartPsiElementPointer(uClass.psi)
     return object : AbstractIntentionAction() {
 
-      private val text = QuickFixBundle.message("add.method.text", methodName, uClass.name)
+      private val text = targetClassPointer.element?.let { psiClass ->
+        QuickFixBundle.message("create.method.from.usage.text",
+                               PsiFormatUtil.formatMethod(createMethod(psiClass), PsiSubstitutor.EMPTY,
+                                                          PsiFormatUtilBase.SHOW_NAME or
+                                                            PsiFormatUtilBase.SHOW_TYPE or
+                                                            PsiFormatUtilBase.SHOW_PARAMETERS or
+                                                            PsiFormatUtilBase.SHOW_RAW_TYPE,
+                                                          PsiFormatUtilBase.SHOW_TYPE or PsiFormatUtilBase.SHOW_RAW_TYPE, 2))
+      } ?: ""
 
       override fun getText(): String = text
 
       override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-        val psi = smartPsi.element ?: return
-        val createMethodFromText = PsiElementFactory.SERVICE.getInstance(uClass.project)
-          .createMethodFromText(signatureString, psi)
-        psi.add(createMethodFromText)
+        targetClassPointer.element?.let { targetClass ->
+          targetClass.add(createMethod(targetClass))
+        }
       }
+
+      private fun createMethod(targetClass: PsiClass): PsiMethod = PsiElementFactory.SERVICE.getInstance(targetClass.project)
+        .createMethodFromText(signatureString, targetClass)
     }
   }
 
