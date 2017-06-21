@@ -59,8 +59,10 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @NotNull
   @Override
   public Module[] getModules(@NotNull final ProjectData projectData) {
-    final List<Module> modules = ContainerUtil.filter(getModules(), module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
-                                                                          StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
+    final List<Module> modules = ContainerUtil.filter(
+      getModules(),
+      module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
+                StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
     return ContainerUtil.toArray(modules, new Module[modules.size()]);
   }
 
@@ -129,7 +131,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
       UnloadedModuleDescription unloadedModuleDescription = ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
 
       // TODO external system module options should be honored to handle duplicated module names issues
-      if(unloadedModuleDescription != null) {
+      if (unloadedModuleDescription != null) {
         return unloadedModuleDescription;
       }
     }
