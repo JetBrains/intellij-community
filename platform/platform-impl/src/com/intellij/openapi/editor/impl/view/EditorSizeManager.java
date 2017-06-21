@@ -452,7 +452,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   }
 
   @TestOnly
-  public void validateState() {
+  void validateState() {
     assertValidState();
   }
 }
