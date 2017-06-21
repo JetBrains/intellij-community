@@ -31,6 +31,8 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
+import org.gradle.util.GUtil
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
@@ -44,6 +46,8 @@ import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
  * @since 12/20/13
  */
 class ExternalProjectBuilderImpl implements ModelBuilderService {
+
+  private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
 
   @Override
   boolean canBuild(String modelName) {
@@ -174,9 +178,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
   private static Map<String, ExternalSourceSet> getSourceSets(Project project, boolean isPreview, boolean resolveSourceSetDependencies, SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
-    boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: true
-    def ideaOutDir = ideaPluginModule?.outputDir
-    def ideaTestOutDir = ideaPluginModule?.testOutputDir
+    boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
+    def ideaPluginOutDir = ideaPluginModule?.outputDir
+    def ideaPluginTestOutDir = ideaPluginModule?.testOutputDir
     def generatedSourceDirs
     def ideaSourceDirs
     def ideaTestSourceDirs
@@ -254,13 +258,20 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      resourcesDirectorySet.gradleOutputDir = chooseNotNull(sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir)
+
+      def firstClassesDir = is4OrBetter ? sourceSet.output.classesDirs.files.find { true } : sourceSet.output.classesDir
+      resourcesDirectorySet.gradleOutputDir = chooseNotNull(
+        sourceSet.output.resourcesDir, firstClassesDir, project.buildDir)
+
+      def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ? "production" : GUtil.toLowerCamelCase(sourceSet.name)))
+      resourcesDirectorySet.outputDir = new File(ideaOutDir, "resources")
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      javaDirectorySet.gradleOutputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir)
+      javaDirectorySet.gradleOutputDir = chooseNotNull(firstClassesDir, project.buildDir)
+      javaDirectorySet.outputDir = new File(ideaOutDir, "classes")
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
@@ -279,15 +290,16 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           generatedDirectorySet.name = "generated " + javaDirectorySet.name
           generatedDirectorySet.srcDirs = files
           generatedDirectorySet.gradleOutputDir = javaDirectorySet.outputDir
+          generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
         additionalIdeaGenDirs.removeAll(files)
       }
 
       if (SourceSet.TEST_SOURCE_SET_NAME == sourceSet.name) {
-        if (!inheritOutputDirs && ideaTestOutDir != null) {
-          javaDirectorySet.outputDir = ideaTestOutDir
-          resourcesDirectorySet.outputDir = ideaTestOutDir
+        if (!inheritOutputDirs && ideaPluginTestOutDir != null) {
+          javaDirectorySet.outputDir = ideaPluginTestOutDir
+          resourcesDirectorySet.outputDir = ideaPluginTestOutDir
         }
         resourcesDirectorySet.excludes = testResourcesExcludes + sourceSet.resources.excludes
         resourcesDirectorySet.includes = testResourcesIncludes + sourceSet.resources.includes
@@ -299,9 +311,9 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
         }
       }
       else {
-        if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name && ideaOutDir != null) {
-          javaDirectorySet.outputDir = ideaOutDir
-          resourcesDirectorySet.outputDir = ideaOutDir
+        if (!inheritOutputDirs && SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name && ideaPluginOutDir != null) {
+          javaDirectorySet.outputDir = ideaPluginOutDir
+          resourcesDirectorySet.outputDir = ideaPluginOutDir
         }
         resourcesDirectorySet.excludes = resourcesExcludes + sourceSet.resources.excludes
         resourcesDirectorySet.includes = resourcesIncludes + sourceSet.resources.includes
@@ -318,6 +330,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             testDirectorySet.name = javaDirectorySet.name
             testDirectorySet.srcDirs = testDirs
             testDirectorySet.gradleOutputDir = javaDirectorySet.outputDir
+            testDirectorySet.outputDir = javaDirectorySet.outputDir
             testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
           }
@@ -330,6 +343,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             testResourcesDirectorySet.name = resourcesDirectorySet.name
             testResourcesDirectorySet.srcDirs = testResourcesDirs
             testResourcesDirectorySet.gradleOutputDir = resourcesDirectorySet.outputDir
+            testResourcesDirectorySet.outputDir = resourcesDirectorySet.outputDir
             testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
           }
@@ -346,6 +360,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
               testGeneratedDirectorySet.name = generatedDirectorySet.name
               testGeneratedDirectorySet.srcDirs = testGeneratedDirs
               testGeneratedDirectorySet.gradleOutputDir = generatedDirectorySet.outputDir
+              testGeneratedDirectorySet.outputDir = generatedDirectorySet.outputDir
               testGeneratedDirectorySet.inheritedCompilerOutput = generatedDirectorySet.isCompilerOutputPathInherited()
 
               sources.put(ExternalSystemSourceType.TEST_GENERATED, testGeneratedDirectorySet)
@@ -390,6 +405,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             generatedDirectorySet.name = "generated " + mainSourceSet.name
             generatedDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
             generatedDirectorySet.gradleOutputDir = mainSourceDirectorySet.outputDir
+            generatedDirectorySet.outputDir = mainSourceDirectorySet.outputDir
             generatedDirectorySet.inheritedCompilerOutput = mainSourceDirectorySet.isCompilerOutputPathInherited()
             mainSourceSet.sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
           }
@@ -417,6 +433,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             generatedDirectorySet.name = "generated " + testSourceSet.name
             generatedDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
             generatedDirectorySet.gradleOutputDir = testSourceDirectorySet.outputDir
+            generatedDirectorySet.outputDir = testSourceDirectorySet.outputDir
             generatedDirectorySet.inheritedCompilerOutput = testSourceDirectorySet.isCompilerOutputPathInherited()
             testSourceSet.sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)
           }
