@@ -35,6 +35,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -406,14 +407,29 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
+  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements) {
     List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
     if (!toUpdate.isEmpty()) {
       updateActions(toUpdate);
     }
 
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
-    objects.addAll(elements);
+    if (Registry.is("goto.action.skip.disabled")) {
+      for (Object o : elements) {
+        if (o instanceof MatchedValue) {
+          Comparable v = ((MatchedValue)o).value;
+          if (!(v instanceof ActionWrapper) || ((ActionWrapper)v).isAvailable()) {
+            objects.add(o);
+          }
+        }
+        else {
+          objects.add(o);
+        }
+      }
+    }
+    else {
+      objects.addAll(elements);
+    }
     return objects;
   }
 
