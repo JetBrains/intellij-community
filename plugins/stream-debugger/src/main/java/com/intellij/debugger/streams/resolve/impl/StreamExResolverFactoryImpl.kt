@@ -36,6 +36,7 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "pairMap" -> PairMapResolver()
       "prepend" -> PrependResolver()
       "append" -> AppendResolver()
+      "sortedBy", "sortedByInt", "sortedByDouble", "sortedByLong", "reverseSorted" -> IdentityResolver()
       else -> null
     }
   }
