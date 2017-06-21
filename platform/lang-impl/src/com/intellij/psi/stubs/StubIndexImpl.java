@@ -518,6 +518,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   public void clearAllIndices() {
+    if (ourForcedClean.get() == Boolean.TRUE) return;
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       try {
         index.clear();
