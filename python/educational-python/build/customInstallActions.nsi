@@ -10,7 +10,7 @@ deletePythonFileInfo:
   Delete "$TEMP\python.txt"
 getPythonFileInfo:
   inetc::get "https://www.jetbrains.com/updates/python.txt" "$TEMP\python.txt"
-  ${LineSum} "$TEMP\python.txt" $R0
+  ${LineSum} "$TEMP\test\python.txt" $R0
   IfErrors cantOpenFile
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
@@ -25,18 +25,16 @@ getPythonInfo:
 ; check if pythons are already installed
   StrCpy $R2 $0
   Call searchPython
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Text" "Python $0"
-  StrCmp $R2 "Absent" checkPython3
-  StrCpy $R2 $0
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Text" "Python $R2"
+  StrCmp $4 "Absent" checkPython3
   StrCpy $R4 "Field 6"
   StrCpy $R5 "Field 7"
   Call updatePythonControls
 checkPython3:
   StrCpy $R2 $R0
   Call searchPython
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Text" "Python $R0"
-  StrCmp $R2 "Absent" done
-  StrCpy $R2 $R0
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Text" "Python $R2"
+  StrCmp $4 "Absent" done
   StrCpy $R4 "Field 7"
   StrCpy $R5 "Field 6"
   Call updatePythonControls
@@ -48,7 +46,7 @@ Function customInstallActions
   IfErrors cantOpenFile
 ; info about 2 and 3 version of python
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
-cantOpenFile:  
+cantOpenFile:
   MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded."
   goto skip_python_download
 getPythonInfo:  
@@ -128,30 +126,35 @@ FunctionEnd
 
 Function searchPython
 ; $R2 - version of python
-  ReadRegStr $1 "HKCU" "Software\Python\PythonCore\$R2\InstallPath" ""
-  StrCmp $1 "" CU_32bit verifyPythonLauncher
-CU_32bit:  
-  ReadRegStr $1 "HKCU" "Software\Python\PythonCore\$R2-32\InstallPath" ""
-  StrCmp $1 "" CU_64bit verifyPythonLauncher
-CU_64bit:
-  ReadRegStr $1 "HKCU" "Software\Python\PythonCore\$R2-64\InstallPath" ""
-  StrCmp $1 "" installationForAllUsers verifyPythonLauncher
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Python\PythonCore\$R2\InstallPath"
+  StrCpy $2 ""
+  SetRegView 64
+  call OMReadRegStr
+  SetRegView 32
+  StrCmp $3 "" CU_32bit verifyPythonLauncher
+
+CU_32bit:
+  call OMReadRegStr
+  StrCmp $3 "" installationForAllUsers verifyPythonLauncher
 
 installationForAllUsers:
-  ReadRegStr $1 "HKLM" "Software\Python\PythonCore\$R2\InstallPath" ""
-  StrCmp $1 "" LM_32bit verifyPythonLauncher
-LM_32bit:    
-  ReadRegStr $1 "HKLM" "Software\Python\PythonCore\$R2-32\InstallPath" ""
-  StrCmp $1 "" LM_64bit verifyPythonLauncher
-LM_64bit:      
-  ReadRegStr $1 "HKLM" "Software\Python\PythonCore\$R2-64\InstallPath" ""
-  StrCmp $1 "" pythonAbsent
+  StrCpy $0 "HKLM"
+  call OMReadRegStr
+  SetRegView 64
+  call OMReadRegStr
+  SetRegView 32
+  StrCmp $3 "" LM_32bit verifyPythonLauncher
+
+LM_32bit:
+  call OMReadRegStr
+  StrCmp $3 "" pythonAbsent
 verifyPythonLauncher:
-  IfFileExists $1python.exe pythonExists pythonAbsent
+  IfFileExists $3python.exe pythonExists pythonAbsent
 pythonAbsent:  
-  StrCpy $R2 "Absent"
+  StrCpy $4 "Absent"
   goto done
 pythonExists:  
-  StrCpy $R2 "Exists" 	
+  StrCpy $4 "Exists"
 done:  
 FunctionEnd
