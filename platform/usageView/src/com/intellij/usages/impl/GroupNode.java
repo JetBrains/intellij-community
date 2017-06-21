@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,37 +156,39 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     removeUsagesBulk(Collections.singleton(usage), treeModel);
   }
 
-  boolean removeUsagesBulk(@NotNull Set<UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
+  int removeUsagesBulk(@NotNull Set<UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean removed;
+    int removed = 0;
     synchronized (this) {
-      removed = myChildren.removeAll(usages);
+      for (UsageNode usage : usages) {
+        if (myChildren.remove(usage)) {
+          removed++;
+        }
+      }
 
-      if (!removed) {
+      if (removed == 0) {
         for (GroupNode groupNode : getSubGroups()) {
-          if (groupNode.removeUsagesBulk(usages, treeModel)) {
+          int delta = groupNode.removeUsagesBulk(usages, treeModel);
+          if (delta > 0) {
             if (groupNode.getRecursiveUsageCount() == 0) {
               treeModel.removeNodeFromParent(groupNode);
               myChildren.remove(groupNode);
             }
-            removed = true;
-            break;
+            removed += delta;
+            if (removed == usages.size()) break;
           }
         }
       }
     }
 
-    if (removed) {
-      wasRemoved(treeModel);
+    if (removed > 0) {
+      myRecursiveUsageCount -= removed;
+      if (myRecursiveUsageCount != 0) {
+        treeModel.nodeChanged(this);
+      }
     }
 
     return removed;
-  }
-
-  private void wasRemoved(@NotNull DefaultTreeModel treeModel) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myRecursiveUsageCount--;
-    treeModel.nodeChanged(this);
   }
 
   @NotNull
