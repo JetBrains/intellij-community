@@ -16,24 +16,21 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MavenPomPathModuleExtension extends ModuleExtension implements PersistentStateComponent<MavenPomPathModuleExtension.MavenPomPathState> {
+@State(name = "MavenCustomPomFilePath")
+public class MavenPomPathModuleService implements PersistentStateComponent<MavenPomPathModuleService.MavenPomPathState> {
 
   private MavenPomPathState myState = new MavenPomPathState();
-  private boolean myPomFileUrlChanged = false;
 
-  public static MavenPomPathModuleExtension getInstance(final Module module) {
-    return ModuleRootManager.getInstance(module).getModuleExtension(MavenPomPathModuleExtension.class);
+  public static MavenPomPathModuleService getInstance(final Module module) {
+    return ModuleServiceManager.getService(module, MavenPomPathModuleService.class);
   }
 
   public String getPomFileUrl() {
@@ -41,10 +38,7 @@ public class MavenPomPathModuleExtension extends ModuleExtension implements Pers
   }
 
   public void setPomFileUrl(String pomFileUrl) {
-    if (!FileUtil.pathsEqual(myState.mavenPomFileUrl, pomFileUrl)) {
-      myState.mavenPomFileUrl = pomFileUrl;
-      myPomFileUrlChanged = true;
-    }
+    myState.mavenPomFileUrl = pomFileUrl;
   }
 
   @Nullable
@@ -56,32 +50,6 @@ public class MavenPomPathModuleExtension extends ModuleExtension implements Pers
   @Override
   public void loadState(MavenPomPathState state) {
     XmlSerializerUtil.copyBean(state, myState);
-  }
-
-  @Override
-  public ModuleExtension getModifiableModel(boolean writable) {
-    return new MavenPomPathModuleExtension();
-  }
-
-  @Override
-  public void commit() {
-  }
-
-  @Override
-  public boolean isChanged() {
-    return myPomFileUrlChanged;
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  @Override
-  public void readExternal(@NotNull Element element) {
-  }
-
-  @Override
-  public void writeExternal(@NotNull Element element) {
   }
 
   public static class MavenPomPathState {

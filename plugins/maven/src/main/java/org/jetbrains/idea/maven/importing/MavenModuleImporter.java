@@ -87,7 +87,7 @@ public class MavenModuleImporter {
 
     VirtualFile pomFile = mavenProject.getFile();
     if (!FileUtil.namesEqual("pom", pomFile.getNameWithoutExtension())) {
-      MavenPomPathModuleExtension.getInstance(module).setPomFileUrl(pomFile.getUrl());
+      MavenPomPathModuleService.getInstance(module).setPomFileUrl(pomFile.getUrl());
     }
   }
 
