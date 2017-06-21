@@ -431,6 +431,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertTrue(myFileIndex.isExcluded(myExcludedLibClsDir));
     assertFalse(myFileIndex.isUnderIgnored(myExcludedLibClsDir));
     assertFalse(myFileIndex.isInLibrarySource(myExcludedLibSrcDir));
+    assertFalse(myFileIndex.isInSource(myExcludedLibSrcDir));
     assertTrue(myFileIndex.isExcluded(myExcludedLibSrcDir));
     assertFalse(myFileIndex.isUnderIgnored(myExcludedLibSrcDir));
   }
@@ -953,11 +954,11 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     DirectoryInfo info = assertInProject(file);
     assertEquals(module, info.getModule());
     if (moduleSourceRootType != null) {
-      assertTrue("isInModuleSource", info.isInModuleSource());
+      assertTrue("isInModuleSource", info.isInModuleSource(file));
       assertEquals(moduleSourceRootType, myIndex.getSourceRootType(info));
     }
     else {
-      assertFalse("isInModuleSource", info.isInModuleSource());
+      assertFalse("isInModuleSource", info.isInModuleSource(file));
     }
     assertEquals(isInLibraryClasses, info.hasLibraryClassRoot());
     assertEquals(isInLibrarySource, info.isInLibrarySource(file));

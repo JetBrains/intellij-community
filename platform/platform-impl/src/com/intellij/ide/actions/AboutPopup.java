@@ -34,7 +34,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
@@ -301,7 +300,7 @@ public class AboutPopup {
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {
-          renderer.render(30, 0, myLines);
+          renderer.render(60, 0, myLines);
           break;
         }
         catch (TextRenderer.OverflowException ignore) { }
@@ -325,10 +324,8 @@ public class AboutPopup {
         g2.setColor(JBColor.BLACK);
       }
 
-      if (Registry.is("ide.new.about")) {
-        g2.setColor(Gray.x33);
-        g2.setFont(JBUI.Fonts.label(12));
-      }
+      g2.setFont(JBUI.Fonts.label(12));
+
       final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
       final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
       g2.drawString(getCopyrightText(), copyrightX, copyrightY);
@@ -400,7 +397,7 @@ public class AboutPopup {
             myLinks.add(new Link(new Rectangle(xBase + x, yBase + y - fontAscent, metrics.stringWidth(s + " "), fontHeight), line.getUrl()));
           }
           else {
-            g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());
+            g2.setColor(appInfo.getAboutForeground());
           }
           renderString(s, indentX);
           if (showCopyButton) {

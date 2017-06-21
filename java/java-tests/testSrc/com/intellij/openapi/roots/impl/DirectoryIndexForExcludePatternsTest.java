@@ -26,8 +26,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,14 +54,29 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
   public void testExcludeFileByExtension() {
     addExcludePattern("*.txt");
     VirtualFile dir = createChildDirectory(myContentRoot, "dir");
+    VirtualFile src = createChildDirectory(myContentRoot, "src");
+    PsiTestUtil.addSourceRoot(myModule, src);
+    VirtualFile testSrc = createChildDirectory(myContentRoot, "testSrc");
+    PsiTestUtil.addSourceRoot(myModule, testSrc, true);
     VirtualFile txt1 = createChildData(myContentRoot, "a.txt");
     VirtualFile txt2 = createChildData(dir, "a.txt");
+    VirtualFile txt3 = createChildData(src, "a.txt");
+    VirtualFile txt4 = createChildData(testSrc, "a.txt");
     VirtualFile java1 = createChildData(myContentRoot, "A.java");
     VirtualFile java2 = createChildData(dir, "A.java");
+    VirtualFile java3 = createChildData(src, "A.java");
+    VirtualFile java4 = createChildData(testSrc, "A.java");
     assertExcluded(txt1, myModule);
     assertExcluded(txt2, myModule);
+    assertExcluded(txt3, myModule);
+    assertExcluded(txt4, myModule);
     assertNotExcluded(java1);
     assertNotExcluded(java2);
+    assertNotExcluded(java3);
+    assertNotExcluded(java4);
+    assertTrue(myFileIndex.isUnderSourceRootOfType(java3, Collections.singleton(JavaSourceRootType.SOURCE)));
+    assertTrue(myFileIndex.isInTestSourceContent(java4));
+    assertTrue(myFileIndex.isUnderSourceRootOfType(java4, Collections.singleton(JavaSourceRootType.TEST_SOURCE)));
     assertIteratedContent(myModule, Arrays.asList(java1, java2), Arrays.asList(txt1, txt2));
   }
 
