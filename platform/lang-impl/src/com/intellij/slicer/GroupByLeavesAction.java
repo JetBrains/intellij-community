@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-class GroupByLeavesAction extends AnAction {
+public class GroupByLeavesAction extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
   private static final String TEXT = "Group by leaf expression";
 
-  GroupByLeavesAction(@NotNull SliceTreeBuilder treeBuilder) {
+  public GroupByLeavesAction(@NotNull SliceTreeBuilder treeBuilder) {
     super(TEXT, "Show original expression values that might appear in this place", PlatformIcons.XML_TAG_ICON);
     myTreeBuilder = treeBuilder;
   }

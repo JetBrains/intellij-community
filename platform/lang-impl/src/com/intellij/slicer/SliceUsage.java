@@ -110,4 +110,8 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
 
   @NotNull
   protected abstract SliceUsage copy();
+
+  public boolean canBeLeaf() {
+    return getElement() != null;
+  }
 }

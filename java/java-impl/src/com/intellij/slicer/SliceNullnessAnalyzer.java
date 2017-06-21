@@ -74,7 +74,7 @@ public class SliceNullnessAnalyzer {
     SliceLeafValueClassNode valueRoot = new SliceLeafValueClassNode(root.getProject(), root, nodeName);
     root.myCachedChildren.add(valueRoot);
 
-    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY);
+    Set<PsiElement> uniqueValues = new THashSet<>(groupedByValue, JavaSlicerAnalysisUtil.LEAF_ELEMENT_EQUALITY);
     for (final PsiElement expression : uniqueValues) {
       SliceNode newRoot = SliceLeafAnalyzer.filterTree(oldRootStart, oldNode -> {
         if (oldNode.getDuplicate() != null) {
@@ -93,8 +93,12 @@ public class SliceNullnessAnalyzer {
         if (element == null) return false;
         return PsiEquivalenceUtil.areElementsEquivalent(element, expression); // leaf can be there only if it's filtering expression
       });
-      valueRoot.myCachedChildren.add(new SliceLeafValueRootNode(root.getProject(), expression, valueRoot, Collections.singletonList(newRoot),
-                                                                oldRoot.getValue().params));
+      valueRoot.myCachedChildren.add(
+        new SliceLeafValueRootNode(root.getProject(),
+                                   valueRoot,
+                                   JavaSliceUsage.createRootUsage(expression, oldRoot.getValue().params),
+                                   Collections.singletonList(newRoot))
+      );
     }
   }
 

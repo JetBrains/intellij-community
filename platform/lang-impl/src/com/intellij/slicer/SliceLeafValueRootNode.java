@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,10 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   final List<SliceNode> myCachedChildren;
 
   SliceLeafValueRootNode(@NotNull Project project,
-                         @NotNull PsiElement leafExpression,
                          @NotNull SliceNode root,
-                         @NotNull List<SliceNode> children,
-                         @NotNull SliceAnalysisParams params) {
-    super(project, JavaSliceUsage.createRootUsage(leafExpression, params), root.targetEqualUsages);
+                         @NotNull SliceUsage sliceUsage,
+                         @NotNull List<SliceNode> children) {
+    super(project, sliceUsage, root.targetEqualUsages);
     myCachedChildren = children;
   }
 

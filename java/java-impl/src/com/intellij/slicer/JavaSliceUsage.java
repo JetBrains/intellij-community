@@ -81,4 +81,9 @@ public class JavaSliceUsage extends SliceUsage {
   public String getSyntheticField() {
     return syntheticField;
   }
+
+  @Override
+  public boolean canBeLeaf() {
+    return indexNesting == 0 && super.canBeLeaf();
+  }
 }

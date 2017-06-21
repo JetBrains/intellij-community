@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +27,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsageTransformer {
+  public static JavaSliceProvider getInstance() {
+    return (JavaSliceProvider)LanguageSlicing.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+  }
+
   @NotNull
   @Override
   public SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
@@ -83,7 +88,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
 
   @Override
   public void startAnalyzeLeafValues(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable) {
-    SliceLeafAnalyzer.startAnalyzeValues(structure, finalRunnable);
+    JavaSlicerAnalysisUtil.createLeafAnalyzer().startAnalyzeValues(structure, finalRunnable);
   }
 
   @Override
