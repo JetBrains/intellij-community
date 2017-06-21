@@ -64,6 +64,8 @@ public class PyNames {
    */
   public static final String TYPE_TIME = "datetime.time";
 
+  public static final String TYPE_ENUM = "enum.Enum";
+
   private PyNames() {
   }
 

@@ -132,7 +132,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyClass cls = (PyClass)owner;
         final List<PyClassLikeType> types = cls.getAncestorTypes(context);
         for (PyClassLikeType type : types) {
-          if (type != null && "enum.Enum".equals(type.getClassQName())) {
+          if (type != null && PyNames.TYPE_ENUM.equals(type.getClassQName())) {
             final PyType classType = context.getType(cls);
             if (classType instanceof PyClassType) {
               return ((PyClassType)classType).toInstance();
@@ -144,10 +144,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (referenceTarget instanceof PyQualifiedNameOwner) {
       final PyQualifiedNameOwner qualifiedNameOwner = (PyQualifiedNameOwner)referenceTarget;
       final String name = qualifiedNameOwner.getQualifiedName();
-      if ("enum.Enum.name".equals(name)) {
+      if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
         return PyBuiltinCache.getInstance(referenceTarget).getStrType();
       }
-      else if ("enum.Enum.value".equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
+      else if ((PyNames.TYPE_ENUM + ".value").equals(name) && anchor instanceof PyReferenceExpression && context.maySwitchToAST(anchor)) {
         final PyReferenceExpression anchorExpr = (PyReferenceExpression)anchor;
         final PyExpression qualifier = anchorExpr.getQualifier();
         if (qualifier instanceof PyReferenceExpression) {
