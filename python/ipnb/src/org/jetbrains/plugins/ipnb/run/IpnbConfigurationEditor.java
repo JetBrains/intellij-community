@@ -17,8 +17,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class IpnbConfigurationEditor extends SettingsEditor<IpnbRunConfiguration> implements PanelWithAnchor {
-  private static final String DEFAULT_HOST = "127.0.0.1";
-  private static final String DEFAULT_PORT = "8888";
+  public static final String DEFAULT_HOST = "127.0.0.1";
+  public static final String DEFAULT_PORT = "8888";
 
   private JPanel myPanel;
   private JTextField myAdditionalOptionsTextField;
