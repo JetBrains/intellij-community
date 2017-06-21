@@ -45,6 +45,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
     super(settings);
     myIndentOptionsEditor = new IndentOptionsEditorWithSmartTabs();
     myIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
+    addPanelToWatch(myIndentOptionsPanel);
   }
 
   @Override
