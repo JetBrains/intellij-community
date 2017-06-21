@@ -22,12 +22,12 @@ mappings for StreamEx.of
     nothing <- 4
 mappings for prepend
   direct:
-    2 -> nothing
-    4 -> nothing
+    2 -> 3
+    4 -> 5
   reverse:
     nothing <- 1
-    nothing <- 3
-    nothing <- 5
+    2 <- 3
+    4 <- 5
 mappings for count
   direct:
     1 -> nothing
@@ -35,7 +35,6 @@ mappings for count
     5 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
