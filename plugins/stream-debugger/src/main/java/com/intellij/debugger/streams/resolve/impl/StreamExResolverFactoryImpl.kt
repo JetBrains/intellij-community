@@ -34,6 +34,7 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "mapKeyValue", "mapKeys", "mapValues", "mapToEntry", "mapToKey", "mapToValue",
       "elements", "invert", "join", "withFirst" -> MapResolver()
       "pairMap" -> PairMapResolver()
+      "append" -> AppendResolver()
       else -> null
     }
   }
