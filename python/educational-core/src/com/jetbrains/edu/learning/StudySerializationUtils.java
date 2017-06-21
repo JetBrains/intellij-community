@@ -327,7 +327,13 @@ public class StudySerializationUtils {
           for (VirtualFile file : taskDescriptionFiles) {
             try {
               String text = VfsUtilCore.loadText(file);
-              taskTextsMap.put(FileUtil.getNameWithoutExtension(file.getName()), text);
+              String key = FileUtil.getNameWithoutExtension(file.getName());
+              if (key.equals(EduNames.TASK) && taskDescriptionFiles.size() > 1) {
+                taskTextsMap.put(EduNames.TASK + EduNames.SUBTASK_MARKER + 0, text);
+              }
+              else {
+                taskTextsMap.put(key, text);
+              }
             }
             catch (IOException e) {
               LOG.error(e);
