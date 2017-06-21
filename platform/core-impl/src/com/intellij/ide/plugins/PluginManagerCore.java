@@ -817,8 +817,7 @@ public class PluginManagerCore {
         int oldIndex = result.indexOf(descriptor);
         if (oldIndex >= 0) {
           final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
-          if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0
-              || descriptor.isBundled()) { // AndroidStudio: we prefer bundled plugins over user-installed versions.
+          if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
             result.set(oldIndex, descriptor);
           }
         }
