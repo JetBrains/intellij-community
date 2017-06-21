@@ -1019,7 +1019,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
 
-    return AbstractPopup.all.stream().filter(popup -> {
+    return AbstractPopup.all.toStrongList().stream().filter(popup -> {
       Component owner = popup.getOwner();
       while (owner != null) {
         if (owner.equals(component)) {
