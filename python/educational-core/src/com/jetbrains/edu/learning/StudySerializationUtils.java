@@ -2,12 +2,15 @@ package com.jetbrains.edu.learning;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -22,11 +25,10 @@ import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class StudySerializationUtils {
   private static final Logger LOG = Logger.getInstance(StudySerializationUtils.class);
@@ -103,6 +105,7 @@ public class StudySerializationUtils {
     private static String THEORY_TASK = "TheoryTask";
     private static String CHOICE_TASK = "ChoiceTask";
     private static String CODE_TASK = "CodeTask";
+    private static String TASK_TEXTS = "taskTexts";
 
     private Xml() {
     }
@@ -301,6 +304,65 @@ public class StudySerializationUtils {
       return state;
     }
 
+    public static Element convertToSixthVersion(Element state, Project project) throws StudyUnrecognizedFormatException {
+      Element taskManagerElement = state.getChild(MAIN_ELEMENT);
+      Element courseHolder = getChildWithName(taskManagerElement, COURSE);
+      Element courseElement = courseHolder.getChild(COURSE_TITLED);
+      if (courseElement == null) {
+        courseElement = courseHolder.getChild(REMOTE_COURSE);
+        if (courseElement == null) {
+          throw new StudyUnrecognizedFormatException();
+        }
+      }
+      for (Element lesson : getChildList(courseElement, LESSONS)) {
+        for (Element task : getChildList(lesson, TASK_LIST)) {
+          VirtualFile taskDir = getTaskDir(project, lesson, task);
+          if (taskDir == null) {
+            throw new StudyUnrecognizedFormatException();
+          }
+          List<VirtualFile> taskDescriptionFiles = Arrays.stream(taskDir.getChildren())
+            .filter(file -> StudyUtils.isTaskDescriptionFile(file.getName()))
+            .collect(Collectors.toList());
+          Map<String, String> taskTextsMap = new HashMap<>();
+          for (VirtualFile file : taskDescriptionFiles) {
+            try {
+              String text = VfsUtilCore.loadText(file);
+              taskTextsMap.put(FileUtil.getNameWithoutExtension(file.getName()), text);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+          addTextChildMap(task, TASK_TEXTS, taskTextsMap);
+          for (VirtualFile file : taskDescriptionFiles) {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              try {
+                file.delete(project);
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            });
+          }
+        }
+      }
+      return state;
+    }
+
+    public static VirtualFile getTaskDir(Project project, Element lesson, Element task)
+      throws StudyUnrecognizedFormatException {
+      VirtualFile taskDir =
+        project.getBaseDir().findChild(EduNames.LESSON + getAsInt(lesson, INDEX)).findChild(EduNames.TASK + getAsInt(task, INDEX));
+      if (taskDir == null) {
+        return null;
+      }
+      VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
+      if (srcDir != null) {
+        taskDir = srcDir;
+      }
+      return taskDir;
+    }
+
     public static String addStatus(XMLOutputter outputter,
                                    Map<String, String> placeholderTextToStatus,
                                    String taskStatus,
@@ -384,6 +446,18 @@ public class StudySerializationUtils {
         Element valueElement = new Element("value");
         valueElement.addContent(entry.getValue());
         entryElement.addContent(valueElement);
+      }
+      return addChildWithName(parent, name, mapElement);
+    }
+
+    public static Element addTextChildMap(Element parent, String name, Map<String, String> value) {
+      Element mapElement = new Element(MAP);
+      for (Map.Entry<String, String> entry : value.entrySet()) {
+        Element entryElement = new Element("entry");
+        mapElement.addContent(entryElement);
+        String key = entry.getKey();
+        entryElement.setAttribute("key", key);
+        entryElement.setAttribute("value", entry.getValue());
       }
       return addChildWithName(parent, name, mapElement);
     }
