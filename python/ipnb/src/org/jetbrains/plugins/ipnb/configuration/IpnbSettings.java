@@ -14,51 +14,11 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "IpnbSettings")
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   private static final String IPNB_PASSWORD_KEY = "IPNB_SSH_SETTINGS_PASSWORD_KEY";
-  public static final String DEFAULT_URL = "http://127.0.0.1:8888";
-  public String URL = DEFAULT_URL;
-  private String myWorkingDirectory;
-  private String myArguments = "";
   private String myUsername;
-  private boolean myIsRemote;
-
-  public boolean isRemote() {
-    return myIsRemote;
-  }
-
-  public void setRemote(boolean remote) {
-    myIsRemote = remote;
-  }
 
   public static IpnbSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, IpnbSettings.class);
   }
-
-  public void setURL(@NotNull final String url) {
-    URL = url;
-  }
-
-  @Transient
-  public String getURL() {
-    return URL;
-  }
-
-  public void setWorkingDirectory(@Nullable final String workingDirectory) {
-    myWorkingDirectory = workingDirectory;
-  }
-
-  @NotNull
-  public String getWorkingDirectory() {
-    return StringUtil.notNullize(myWorkingDirectory);
-  }
-
-  public String getArguments() {
-    return myArguments;
-  }
-
-  public void setArguments(String arguments) {
-    myArguments = arguments;
-  }
-  
   @NotNull
   public String getUsername() {
     return StringUtil.notNullize(myUsername);
@@ -72,7 +32,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   @NotNull
   public String getPassword(@NotNull String projectPathHash) {
   final String username = getUsername();
-    final String url = getURL();
+    final String url = "";
     final String accountName = createAccountName(username, url, projectPathHash);
     final String newStylePassword = PasswordSafe.getInstance().getPassword(IpnbSettings.class, accountName);
     
@@ -82,7 +42,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   @Transient
   public void setPassword(@NotNull String password, @NotNull String projectPathHash) {
     final String username = getUsername();
-    final String url = getURL();
+    final String url = "";
     final String accountName = createAccountName(username, url, projectPathHash);
     PasswordSafe.getInstance().setPassword(IpnbSettings.class, accountName, password);
   }
