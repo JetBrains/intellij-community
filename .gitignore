@@ -1,6 +1,8 @@
 /android
 /config
 /system
+.idea/saveactions_settings.xml
+.idea/shelf
 .idea/workspace.xml
 /out
 .DS_Store
