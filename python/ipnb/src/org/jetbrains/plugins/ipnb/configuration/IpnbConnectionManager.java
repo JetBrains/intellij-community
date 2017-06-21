@@ -1,13 +1,17 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -22,6 +26,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.TimeoutUtil;
+import com.jetbrains.python.run.PyRunConfigurationFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
@@ -31,7 +36,9 @@ import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionV3;
+import org.jetbrains.plugins.ipnb.run.IpnbConfigurationEditor;
 import org.jetbrains.plugins.ipnb.run.IpnbRunConfiguration;
+import org.jetbrains.plugins.ipnb.run.IpnbRunConfigurationType;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -94,7 +101,10 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       settings -> settings.getConfiguration() instanceof IpnbRunConfiguration
     );
     if (descriptors.isEmpty()) {
-      connectToExternal(codePanel, filePath);
+      if (!connectToExternal(codePanel, filePath)) {
+        showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook. <a href=\"\">Run Jupyter Notebook</a>",
+                    new IpnbRunAdapter(), MessageType.WARNING);
+      }
     }
     else {
       if (descriptors.size() == 1) {
@@ -130,7 +140,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     popup.showInScreenCoordinates(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), point);
   }
 
-  private void connectToExternal(@NotNull IpnbCodePanel codePanel, @NotNull String filePath) {
+  private boolean connectToExternal(@NotNull IpnbCodePanel codePanel, @NotNull String filePath) {
     if (myToken == null || myUrl == null) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         final Pair<String, String> pair = askForUrlAndToken();
@@ -142,7 +152,9 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     }
     if (myUrl != null) {
       startConnection(codePanel, filePath, myUrl, myToken);
+      return true;
     }
+    return false;
   }
 
   @NotNull
@@ -271,8 +283,8 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
                     MessageType.WARNING);
       }
       else if (message.startsWith(CONNECTION_REFUSED) || message.startsWith(IpnbConnection.CANNOT_START_JUPYTER)) {
-        showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook",
-                    new IpnbSettingsAdapter(), MessageType.WARNING);
+        showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook. <a href=\"\">Run Jupyter Notebook</a>",
+                    new IpnbRunAdapter(), MessageType.WARNING);
       }
       LOG.warn("Jupyter Notebook connection refused: " + message);
       return false;
@@ -369,6 +381,53 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     @Override
     protected void hyperlinkActivated(HyperlinkEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "Jupyter Notebook");
+    }
+  }
+
+  class IpnbRunAdapter extends HyperlinkAdapter {
+    @Override
+    protected void hyperlinkActivated(HyperlinkEvent e) {
+      final List<RunnerAndConfigurationSettings> configurationsList =
+        RunManager.getInstance(myProject).getConfigurationSettingsList(IpnbRunConfigurationType.getInstance());
+
+      if (configurationsList.isEmpty()) {
+        final RunnerAndConfigurationSettings configurationSettings = PyRunConfigurationFactory.getInstance()
+          .createRunConfiguration(ModuleManager.getInstance(myProject).getModules()[0],
+                                  IpnbRunConfigurationType.getInstance().getConfigurationFactories()[0]);
+        final IpnbRunConfiguration configuration = (IpnbRunConfiguration)configurationSettings.getConfiguration();
+        configuration.setHost(IpnbConfigurationEditor.DEFAULT_HOST);
+        configuration.setPort(IpnbConfigurationEditor.DEFAULT_PORT);
+        configurationSettings.setSingleton(true);
+
+        ExecutionUtil.runConfiguration(configurationSettings, DefaultRunExecutor.getRunExecutorInstance());
+      }
+      else {
+        if (configurationsList.size() == 1) {
+          ExecutionUtil.runConfiguration(configurationsList.get(0), DefaultRunExecutor.getRunExecutorInstance());
+        }
+        else {
+          final JList<RunnerAndConfigurationSettings> list = new JBList<>(configurationsList);
+          list.setCellRenderer(new ColoredListCellRenderer<RunnerAndConfigurationSettings>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends RunnerAndConfigurationSettings> list,
+                                                 RunnerAndConfigurationSettings value, int index,
+                                                 boolean selected, boolean hasFocus) {
+              append(value.getName());
+            }
+          });
+          final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+          builder.setTitle("Choose Jupyter Notebook Server");
+          builder.setItemChoosenCallback(() -> {
+            final RunnerAndConfigurationSettings configuration = list.getSelectedValue();
+            ExecutionUtil.runConfiguration(configuration, DefaultRunExecutor.getRunExecutorInstance());
+          });
+          final JBPopup popup = builder.createPopup();
+          final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+          if (pointerInfo == null) return;
+          final Point point = pointerInfo.getLocation();
+          popup.showInScreenCoordinates(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), point);
+        }
+      }
     }
   }
 }
