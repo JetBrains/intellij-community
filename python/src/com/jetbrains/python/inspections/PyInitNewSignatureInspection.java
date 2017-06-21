@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
@@ -28,14 +30,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
-
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
  *
  * @author dcheryasov
  */
 public class PyInitNewSignatureInspection extends PyInspection {
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -59,12 +60,13 @@ public class PyInitNewSignatureInspection extends PyInspection {
     public void visitPyFunction(PyFunction node) {
       final String functionName = node.getName();
       if (!PyNames.NEW.equals(functionName) && !PyNames.INIT.equals(functionName)) return;
+
       final PyClass cls = node.getContainingClass();
-      if (cls == null) return;
-      if (!cls.isNewStyleClass(myTypeEvalContext)) return;
-      final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
-      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true, myTypeEvalContext);
-      if (complementaryMethod == null || PyUtil.isObjectClass(assertNotNull(complementaryMethod.getContainingClass()))) return;
+      if (cls == null || !cls.isNewStyleClass(myTypeEvalContext)) return;
+
+      final PyFunction complementaryMethod = findComplementaryMethod(cls, node);
+      if (complementaryMethod == null) return;
+
       if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
           !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
           node.getContainingFile() == cls.getContainingFile()) {
@@ -72,6 +74,24 @@ public class PyInitNewSignatureInspection extends PyInspection {
                                                                                                      : "INSP.init.incompatible.to.new"),
                         PyChangeSignatureQuickFix.forMismatchingMethods(node, complementaryMethod));
       }
+    }
+
+    @Nullable
+    private PyFunction findComplementaryMethod(@NotNull PyClass cls, @NotNull PyFunction original) {
+      final String complementaryName = PyNames.NEW.equals(original.getName()) ? PyNames.INIT : PyNames.NEW;
+      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true, myTypeEvalContext);
+
+      if (complementaryMethod == null) return null;
+
+      final PyClass complementaryMethodClass = complementaryMethod.getContainingClass();
+      if (complementaryMethodClass == null ||
+          PyUtil.isObjectClass(complementaryMethodClass) ||
+          ContainerUtil.exists(Extensions.getExtensions(PyInspectionExtension.EP_NAME),
+                               extension -> extension.ignoreInitNewSignatures(original, complementaryMethod))) {
+        return null;
+      }
+
+      return complementaryMethod;
     }
   }
 }

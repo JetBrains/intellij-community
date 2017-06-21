@@ -164,8 +164,12 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyInitNewSignatureInspection() {
-    LocalInspectionTool inspection = new PyInitNewSignatureInspection();
-    doTest(getTestName(false), inspection);
+    final String folderPath = "inspections/" + getTestName(false) + "/";
+
+    myFixture.copyDirectoryToProject(folderPath, "");
+    myFixture.configureFromTempProjectFile("test.py");
+    myFixture.enableInspections(PyInitNewSignatureInspection.class);
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyCallByClassInspection() {
