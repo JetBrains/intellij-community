@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,18 +72,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     createCompoundReferenceRenderer(
       "Map", CommonClassNames.JAVA_UTIL_MAP,
       createLabelRenderer(" size = ", "size()", null),
-      createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
+      createExpressionArrayChildrenRenderer("entrySet().toArray()", "!isEmpty()", myArrayRenderer)
     ),
     createCompoundReferenceRenderer(
       "Map.Entry", "java.util.Map$Entry",
       new MapEntryLabelRenderer()/*createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null)*/,
       createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
     ),
-    new ListObjectRenderer(this),
+    new ListObjectRenderer(this, myArrayRenderer),
     createCompoundReferenceRenderer(
       "Collection", "java.util.Collection",
       createLabelRenderer(" size = ", "size()", null),
-      createExpressionChildrenRenderer("toArray()", "!isEmpty()")
+      createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", myArrayRenderer)
     )
   };
   @NonNls private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
@@ -340,6 +340,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return renderer;
   }
 
+  private static ExpressionChildrenRenderer createExpressionArrayChildrenRenderer(String expressionText,
+                                                                                  String childrenExpandableText,
+                                                                                  ArrayRenderer arrayRenderer) {
+    ExpressionChildrenRenderer renderer = createExpressionChildrenRenderer(expressionText, childrenExpandableText);
+    renderer.setPredictedRenderer(arrayRenderer);
+    return renderer;
+  }
+
   public static ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText,
                                                                              @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
@@ -469,11 +477,11 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class ListObjectRenderer extends CompoundReferenceRenderer {
-    public ListObjectRenderer(NodeRendererSettings rendererSettings) {
+    public ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
             createLabelRenderer(" size = ", "size()", null),
-            createExpressionChildrenRenderer("toArray()", "!isEmpty()"));
+            createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
     }
 
