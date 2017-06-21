@@ -37,6 +37,7 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "prepend" -> PrependResolver()
       "append" -> AppendResolver()
       "sortedBy", "sortedByInt", "sortedByDouble", "sortedByLong", "reverseSorted" -> IdentityResolver()
+      "peekFirst", "peekLast", "peekKeys", "peekValues", "peekKeyValue" -> FilterResolver()
       else -> null
     }
   }
