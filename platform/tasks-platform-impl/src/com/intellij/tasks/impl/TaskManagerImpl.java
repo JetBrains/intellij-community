@@ -652,9 +652,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return ServiceManager.getService(myProject, TaskProjectConfiguration.class);
   }
 
-  public void projectClosed() {
-  }
-
   @NotNull
   public String getComponentName() {
     return "Task Manager";
