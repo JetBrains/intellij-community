@@ -36,7 +36,9 @@ import java.util.concurrent.ConcurrentMap;
  * and its register instance wrapped with {@link LanguageFileType} instance via {@code FileTypeManager.getInstance().registerFileType()}.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@code com.intellij.lang.StdLanguages}.
+ * For the list of standard languages, see {@code com.intellij.lang.StdLanguages}.<p/>
+ *
+ * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}
  */
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
