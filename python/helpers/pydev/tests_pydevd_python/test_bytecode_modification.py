@@ -423,3 +423,75 @@ class TestInsertCode(unittest.TestCase):
         from tests_pydevd_python._bytecode_overflow_example import Dummy, DummyTracing
         self.check_insert_to_line_by_symbols(Dummy.fun, call_tracing, Dummy.fun.__code__.co_firstlineno + 3,
                                              DummyTracing.fun.__code__)
+
+    def test_double_extended_arg(self):
+        self.original_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        try:
+            def foo():
+                a = 1
+                b = 2
+                if b > 0:
+                    d = a + b
+                    d += 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                a = a + 1
+                return a
+
+            def foo_check():
+                a = 1
+                b = 2
+                tracing()
+                if b > 0:
+                    d = a + b
+                    d += 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                    b = b - 1 if a > 0 else b + 1
+                a = a + 1
+                return a
+
+            self.check_insert_to_line_with_exec(foo, tracing, foo.__code__.co_firstlineno + 2)
+            sys.stdout = self.original_stdout
+
+            self.check_insert_to_line_by_symbols(foo, call_tracing, foo.__code__.co_firstlineno + 3,
+                                                 foo_check.__code__)
+
+
+        finally:
+            sys.stdout = self.original_stdout
