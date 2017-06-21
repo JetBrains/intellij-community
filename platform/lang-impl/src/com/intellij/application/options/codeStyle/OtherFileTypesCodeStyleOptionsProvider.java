@@ -33,7 +33,7 @@ public class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSettingsPro
   @NotNull
   @Override
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings clonedSettings) {
-    return new OtherFileTypesCodeStyleConfigurable(clonedSettings);
+    return new OtherFileTypesCodeStyleConfigurable(settings, clonedSettings);
   }
 
   @Nullable
