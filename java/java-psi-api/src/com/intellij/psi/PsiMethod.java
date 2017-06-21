@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.jvm.JvmMethod;
+import com.intellij.jvm.JvmReferenceType;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -32,7 +35,7 @@ import java.util.List;
  * @see PsiClass#getMethods()
  */
 public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner,
-                                   PomRenameableTarget<PsiElement>, PsiTarget, PsiParameterListOwner {
+                                   PomRenameableTarget<PsiElement>, PsiTarget, PsiParameterListOwner, JvmMethod {
   /**
    * The empty array of PSI methods which can be reused to avoid unnecessary allocations.
    */
@@ -196,4 +199,16 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull
   HierarchicalMethodSignature getHierarchicalMethodSignature();
+
+  @NotNull
+  @Override
+  default List<? extends PsiParameter> getMethodParameters() {
+    return Arrays.asList(getParameterList().getParameters());
+  }
+
+  @NotNull
+  @Override
+  default List<? extends JvmReferenceType> getThrowsTypes() {
+    return Arrays.asList(getThrowsList().getReferencedTypes());
+  }
 }

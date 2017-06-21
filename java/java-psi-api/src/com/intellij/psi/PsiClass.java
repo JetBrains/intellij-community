@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.psi;
 
+import com.intellij.jvm.JvmClass;
+import com.intellij.jvm.JvmClassKind;
+import com.intellij.jvm.JvmReferenceType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.PomRenameableTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +34,8 @@ import java.util.List;
  *
  * @see PsiJavaFile#getClasses()
  */
-public interface PsiClass
-  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner, PsiTarget, PomRenameableTarget<PsiElement> {
+public interface PsiClass extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner,
+                                  PsiTypeParameterListOwner, PsiTarget, PomRenameableTarget<PsiElement>, JvmClass {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
@@ -352,4 +355,25 @@ public interface PsiClass
 
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
+
+  @NotNull
+  @Override
+  default JvmClassKind getClassKind() {
+    if (isInterface()) return JvmClassKind.INTERFACE;
+    if (isAnnotationType()) return JvmClassKind.ANNOTATION;
+    if (isEnum()) return JvmClassKind.ENUM;
+    return JvmClassKind.CLASS;
+  }
+
+  @Nullable
+  @Override
+  default JvmReferenceType getSuperClassType() {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  default JvmReferenceType[] getInterfacesTypes() {
+    return JvmReferenceType.EMPTY_ARRAY;
+  }
 }

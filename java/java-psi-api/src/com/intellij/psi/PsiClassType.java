@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.jvm.JvmReferenceType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author max
  */
-public abstract class PsiClassType extends PsiType {
+public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
   public static final ArrayFactory<PsiClassType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiClassType[count];
 
