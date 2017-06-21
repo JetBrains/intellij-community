@@ -43,58 +43,58 @@ mappings for StreamEx.of
     nothing <- 10
 mappings for peekFirst
   direct:
-    1 -> nothing
-    3 -> nothing
-    10 -> nothing
+    1 -> 2
+    3 -> 4
+    10 -> 11
   reverse:
-    nothing <- 2
-    nothing <- 4
-    nothing <- 11
+    1 <- 2
+    3 <- 4
+    10 <- 11
 mappings for peekLast
   direct:
-    2 -> nothing
-    4 -> nothing
-    11 -> nothing
+    2 -> 5
+    4 -> 12
+    11 -> 17
   reverse:
-    nothing <- 5
-    nothing <- 12
-    nothing <- 17
+    2 <- 5
+    4 <- 12
+    11 <- 17
 mappings for mapToEntry
   direct:
-    5 -> nothing
-    12 -> nothing
-    17 -> nothing
+    5 -> 6
+    12 -> 13
+    17 -> 18
   reverse:
-    nothing <- 6
-    nothing <- 13
-    nothing <- 18
+    5 <- 6
+    12 <- 13
+    17 <- 18
 mappings for peekKeys
   direct:
-    6 -> nothing
-    13 -> nothing
-    18 -> nothing
+    6 -> 7
+    13 -> 14
+    18 -> 19
   reverse:
-    nothing <- 7
-    nothing <- 14
-    nothing <- 19
+    6 <- 7
+    13 <- 14
+    18 <- 19
 mappings for peekValues
   direct:
-    7 -> nothing
-    14 -> nothing
-    19 -> nothing
+    7 -> 8
+    14 -> 15
+    19 -> 20
   reverse:
-    nothing <- 8
-    nothing <- 15
-    nothing <- 20
+    7 <- 8
+    14 <- 15
+    19 <- 20
 mappings for peekKeyValue
   direct:
-    8 -> nothing
-    15 -> nothing
-    20 -> nothing
+    8 -> 9
+    15 -> 16
+    20 -> 21
   reverse:
-    nothing <- 9
-    nothing <- 16
-    nothing <- 21
+    8 <- 9
+    15 <- 16
+    20 <- 21
 mappings for count
   direct:
     9 -> nothing
@@ -102,7 +102,6 @@ mappings for count
     21 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
