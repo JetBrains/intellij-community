@@ -90,7 +90,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second, component, e), false);
   }
 
-  @Nullable
+  @NotNull
   private static ChooseByNamePopup createPopup(@Nullable Project project,
                                                @NotNull final GotoActionModel model,
                                                String initialText,
@@ -248,7 +248,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               String id = ActionManager.getInstance().getId(action);
               KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
               Keymap k = km.getActiveKeymap();
-              if (!k.canModify()) return;
+              if (k == null || !k.canModify()) return;
               KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
               popup.repaintListImmediate();
             }
