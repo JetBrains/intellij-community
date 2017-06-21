@@ -25,7 +25,6 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -270,28 +269,12 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
       }
     }
 
-    beforeInitBreakpoints(vm)
-
-    processBreakpoints { handler, breakpoint ->
-      handler.manager.setBreakpoint(vm, breakpoint)
-    }
-  }
-
-  protected inline fun processBreakpoints(processor: (handler: LineBreakpointHandler, breakpoint: XLineBreakpoint<*>) -> Unit) {
-    val breakpointManager = XDebuggerManager.getInstance(session.project).breakpointManager
-    for (breakpointHandler in breakpointHandlers) {
-      if (breakpointHandler is LineBreakpointHandler) {
-        val breakpoints = runReadAction { breakpointManager.getBreakpoints(breakpointHandler.breakpointTypeClass) }
-        for (breakpoint in breakpoints) {
-          processor(breakpointHandler, breakpoint)
-        }
-      }
-    }
+    mainVm?.debugListener?.childVmAdded(vm)
   }
 }
 
 @Suppress("UNCHECKED_CAST")
-class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, internal val manager: LineBreakpointManager)
+class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, val manager: LineBreakpointManager)
     : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
     manager.debugProcess.collectVMs.forEach {

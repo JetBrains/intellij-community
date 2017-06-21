@@ -68,4 +68,7 @@ public interface DebugEventListener extends EventListener {
 
   default void errorOccurred(@NotNull String errorMessage) {
   }
+
+  default void childVmAdded(@NotNull Vm childVm) {
+  }
 }
