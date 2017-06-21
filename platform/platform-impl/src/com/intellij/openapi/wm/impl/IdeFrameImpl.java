@@ -330,8 +330,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (myRootPane != null) { //already disposed
         myRootPane.deinstallNorthComponents();
       }
-
-      FocusTrackback.release(this);
     }
 
     if (myRestoreFullScreen && isVisible()) {
@@ -423,8 +421,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
-
-    FocusTrackback.release(this);
 
     super.dispose();
   }

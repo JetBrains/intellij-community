@@ -45,7 +45,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -72,10 +71,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.Presentation.*;
 
@@ -1020,7 +1018,26 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   @NotNull
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
-    return FocusTrackback.getChildPopups(component);
+
+    return AbstractPopup.all.stream().filter(popup -> {
+      Component owner = popup.getOwner();
+      while (owner != null) {
+        if (owner.equals(component)) {
+          return true;
+        }
+        owner = owner.getParent();
+      }
+      return false;
+    }).collect(Collectors.toList());
+
+    /*Window[] windows = SwingUtilities.windowForComponent(component).getOwnedWindows();
+    for (Window w : windows) {
+      if (w.isFocused() *//*&& w.getClass().getName().contains("Popup")*//* && w instanceof JBPopup) {
+        //return UIUtil.uiTraverser(w).filter(c -> c.getClass().getName().contains("Popup")).toList();
+        System.err.println("");
+      }
+    }
+    return UIUtil.uiTraverser(component).filter(JBPopup.class).toList();*/
   }
 
   @Override
