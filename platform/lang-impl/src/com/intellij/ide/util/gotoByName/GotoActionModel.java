@@ -103,6 +103,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     myFile = file;
     myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
+    assert mainMenu != null;
     collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
   }
 
