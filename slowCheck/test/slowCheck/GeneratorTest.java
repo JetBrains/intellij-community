@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static slowCheck.GenBoolean.bool;
 import static slowCheck.GenChar.asciiLetter;
 import static slowCheck.GenChar.asciiPrintable;
 import static slowCheck.GenCollection.listOf;
@@ -132,6 +133,12 @@ public class GeneratorTest extends TestCase {
     checkFalsified(GenString.asciiIdentifier(), 
                    s -> !s.contains("_"), 
                    1);
+  }
+
+  public void testBoolean() {
+    checkFalsified(listOf(bool()), 
+                   l -> !l.contains(true) || !l.contains(false), 
+                   4);
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {

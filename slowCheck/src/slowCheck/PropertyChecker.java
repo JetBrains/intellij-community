@@ -50,11 +50,17 @@ public class PropertyChecker<T> {
   }
 
   private void forAll(int iterationCount) {
-    for (int i = 0; i < iterationCount; i++) {
-      int sizeHint = i + 1;
-      CounterExampleImpl<T> example = findCounterExample(sizeHint);
+    long lastPrint = System.currentTimeMillis();
+    for (int i = 1; i <= iterationCount; i++) {
+      if (System.currentTimeMillis() - lastPrint > 5_000) {
+        lastPrint = System.currentTimeMillis();
+        System.out.println("Iteration " + i + " of " + iterationCount + "...");
+      }
+
+      CounterExampleImpl<T> example = findCounterExample(i);
       if (example != null) {
-        PropertyFailureImpl failure = new PropertyFailureImpl(example, sizeHint);
+        System.err.println("Failed on iteration " + i + ", shrinking...");
+        PropertyFailureImpl failure = new PropertyFailureImpl(example, i);
         throw new PropertyFalsified(seed, failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, failure.sizeHint));
       }
     }
