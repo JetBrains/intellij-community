@@ -546,8 +546,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       long startTime = System.currentTimeMillis();
 
-      CommitsCounter counter = new CommitsCounter(indicator, myCommits.size());
-      LOG.debug("Indexing " + (myFull ? "full repository" : counter.allCommits + " commits") + " in " + myRoot.getName());
+      CommitsCounter counter = new CommitsCounter(indicator);
+      LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
       try {
         try {
@@ -601,7 +601,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                   " for indexing " +
                   counter.newIndexedCommits +
                   " new commits out of " +
-                  counter.allCommits + " in " + myRoot.getName() + leftCommitsMessage);
+                  myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
       }
     }
 
@@ -653,25 +653,24 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     public String toString() {
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
     }
-  }
 
-  private static class CommitsCounter {
-    @NotNull public final ProgressIndicator indicator;
-    public final int allCommits;
-    public volatile int newIndexedCommits;
-    public volatile int oldCommits;
+    private class CommitsCounter {
+      @NotNull public final ProgressIndicator indicator;
+      public volatile int newIndexedCommits;
+      public volatile int oldCommits;
 
-    private CommitsCounter(@NotNull ProgressIndicator indicator, int commits) {
-      this.indicator = indicator;
-      this.allCommits = commits;
+      private CommitsCounter(@NotNull ProgressIndicator indicator) {
+        this.indicator = indicator;
+      }
+
+      public void displayProgress() {
+        indicator.setFraction(((double)newIndexedCommits + oldCommits) / myCommits.size());
+      }
+
+      public int getLeftCommits() {
+        return myCommits.size() - newIndexedCommits - oldCommits;
+      }
     }
 
-    public void displayProgress() {
-      indicator.setFraction(((double)newIndexedCommits + oldCommits) / allCommits);
-    }
-
-    public int getLeftCommits() {
-      return allCommits - newIndexedCommits - oldCommits;
-    }
   }
 }
