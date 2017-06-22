@@ -2021,8 +2021,6 @@ public class UIUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}
    * When {@code dstBounds} is null, the image bounds are used instead.
-   *
-   * @see #bounds(int, int, int, int)
    */
   public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, ImageObserver observer) {
       drawImage(g, image, dstBounds, null, observer);
@@ -2031,8 +2029,6 @@ public class UIUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, int, int, int, int, ImageObserver)}
    * When {@code dstBounds} or {@code srcBounds} is null, the image bounds are used instead.
-   *
-   * @see #bounds(int, int, int, int)
    */
   public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, @Nullable Rectangle srcBounds, ImageObserver observer) {
     Image drawImage = image;
@@ -2120,16 +2116,6 @@ public class UIUtil {
       ((Graphics2D)g).drawImage(image, op, x, y);
     }
   }
-
-  /**
-   * An alias for the new rectangle call. Use as static import.
-   *
-   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
-   */
-  public static Rectangle bounds(int x, int y, int width, int height) {
-    return new Rectangle(x, y, width, height);
-  }
-
 
   public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
     paintWithXorOnRetina(size, g, true, paintRoutine);
