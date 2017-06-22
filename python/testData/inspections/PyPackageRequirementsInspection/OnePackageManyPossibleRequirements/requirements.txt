@@ -1,0 +1,2 @@
+django-recaptcha-mozilla
+pyzmq-ctypes
