@@ -17,9 +17,13 @@ package org.jetbrains.plugins.groovy.jarFinder;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.jvm.createClass.CreateClassFromGroovyFix;
+import org.jetbrains.plugins.groovy.jvm.createMember.CreateClosurePropertyFix;
+import org.jetbrains.plugins.groovy.jvm.createMember.CreateMethodGromGroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
 /**
  * @author Sergey Evdokimov
@@ -29,6 +33,12 @@ public class GroovyFindJarQuickFixProvider extends UnresolvedReferenceQuickFixPr
   public void registerFixes(@NotNull GrReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new GroovyFindJarFix(ref));
     new CreateClassFromGroovyFix(ref).register(ref, registrar);
+    PsiElement parent = ref.getParent();
+    if (parent instanceof GrMethodCall) {
+      GrMethodCall call = (GrMethodCall)parent;
+      registrar.register(new CreateMethodGromGroovyFix(call));
+      registrar.register(new CreateClosurePropertyFix(call));
+    }
   }
 
   @NotNull

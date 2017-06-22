@@ -1654,6 +1654,10 @@
     <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.jvm">
+    <createMember implementation="org.jetbrains.plugins.groovy.jvm.createMember.CreateGroovyMethodFactory"/>
+  </extensions>
+
   <actions>
     <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
             text="Execute Groovy Code"
