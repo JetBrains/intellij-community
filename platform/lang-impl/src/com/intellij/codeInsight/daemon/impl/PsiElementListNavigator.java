@@ -75,8 +75,22 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, null);
-    if (popup != null) popup.showInBestPositionFor(e);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
+  }
+
+  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
+                                 ListCellRenderer listRenderer, @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    final JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
+    if (popup != null) {
+      if (listUpdaterTask != null) {
+        Alarm alarm = new Alarm(popup);
+        alarm.addRequest(() -> popup.showInBestPositionFor(e), 300);
+        ProgressManager.getInstance().run(listUpdaterTask);
+      }
+      else {
+        popup.showInBestPositionFor(e);
+      }
+    }
   }
 
   @Nullable
