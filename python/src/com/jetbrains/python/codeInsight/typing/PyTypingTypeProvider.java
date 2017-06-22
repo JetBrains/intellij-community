@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
@@ -786,25 +787,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         // Presumably, a TypeVar definition or a type alias
         if (element instanceof PyTargetExpression) {
           final PyTargetExpression targetExpr = (PyTargetExpression)element;
+          PyExpression assignedValue = null;
           if (context.maySwitchToAST(expression)) {
-            final PyExpression assignedValue = targetExpr.findAssignedValue();
-            if (assignedValue != null) {
-              elements.add(assignedValue);
-              continue;
-            }
+            assignedValue = targetExpr.findAssignedValue();
           }
           else {
             final PyTargetExpressionStub stub = targetExpr.getStub();
             if (stub != null) {
               final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
               if (aliasStub != null) {
-                final PyExpression assignedValue = createExpressionFromFragment(aliasStub.getText(), expression);
-                if (assignedValue != null) {
-                  elements.add(assignedValue);
-                  continue;
-                }
+                assignedValue = createExpressionFromFragment(aliasStub.getText(), expression);
               }
             }
+            else {
+              // Use PSI to get the assigned value but only if the same expression would be saved in stubs
+              assignedValue = PyTypingAliasStubType.getAssignedValueIfTypeAliasLike(targetExpr);
+            }
+          }
+          if (assignedValue != null) {
+            elements.add(assignedValue);
+            continue;
           }
         }
         if (isBuiltinPathLike(element)) {
