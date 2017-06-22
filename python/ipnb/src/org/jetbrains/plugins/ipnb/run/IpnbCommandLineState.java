@@ -82,8 +82,8 @@ public class IpnbCommandLineState extends PythonCommandLineState {
     if (home != null) {
       String ipython = findJupyterRunner(home);
       if (ipython == null) {
-        envs.put("PYCHARM_EP_DIST", "ipython");
-        envs.put("PYCHARM_EP_NAME", "ipython");
+        envs.put("PYCHARM_EP_DIST", "jupyter");
+        envs.put("PYCHARM_EP_NAME", "jupyter");
       }
     }
   }
