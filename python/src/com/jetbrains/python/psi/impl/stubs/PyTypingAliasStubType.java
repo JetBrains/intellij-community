@@ -52,14 +52,20 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
   @Nullable
   @Override
   public PyTypingAliasStub createStub(PyTargetExpression psi) {
-    if (!PyUtil.isTopLevel(psi) || !looksLikeTypeAliasTarget(psi)) {
+    final PyExpression value = getAssignedValueIfTypeAliasLike(psi);
+    return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
+  }
+
+  @Nullable
+  public static PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target) {
+    if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
-    final PyExpression value = psi.findAssignedValue();
+    final PyExpression value = target.findAssignedValue();
     if (value == null || !looksLikeTypeHint(value)) {
       return null;
     }
-    return new PyTypingTypeAliasStubImpl(value.getText());
+    return value;
   }
 
   private static boolean looksLikeTypeAliasTarget(@NotNull PyTargetExpression target) {
