@@ -1999,6 +1999,7 @@
 
   <extensions defaultExtensionNs="com.intellij.jvm">
     <createClass implementation="com.intellij.jvm.createClass.java.CreateJavaClassFactory"/>
+    <createMember implementation="com.intellij.jvm.createMember.java.CreateJavaMethodFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
