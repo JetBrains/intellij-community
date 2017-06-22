@@ -635,15 +635,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
           if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk)) {
-            if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
-              addInstallPackageAction(actions, packageName, module, sdk);
-            }
-            else {
-              if (PyPIPackageUtil.PACKAGES_TOPLEVEL.containsKey(packageName)) {
-                final String suggestedPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL.get(packageName);
-                addInstallPackageAction(actions, suggestedPackage, module, sdk);
-              }
-            }
+            StreamEx
+              .of(packageName)
+              .append(PyPIPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))
+              .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
+              .forEach(pkg -> addInstallPackageAction(actions, pkg, module, sdk));
           }
         }
       }

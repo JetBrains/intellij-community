@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
@@ -159,10 +160,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-        final String possiblePyPIPackageName = PyPIPackageUtil.PACKAGES_TOPLEVEL.get(packageName);
+        final List<String> possiblePyPIPackageNames = PyPIPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList());
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
-            StreamEx.of(packageName, possiblePyPIPackageName).nonNull().noneMatch(PyPIPackageUtil.INSTANCE::isInPyPI)) return;
+            !PyPIPackageUtil.INSTANCE.isInPyPI(packageName) &&
+            !ContainerUtil.exists(possiblePyPIPackageNames, PyPIPackageUtil.INSTANCE::isInPyPI)) return;
 
         if (PyPackageUtil.SETUPTOOLS.equals(packageName)) return;
 
@@ -177,16 +179,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
         for (PyRequirement req : requirements) {
           final String name = req.getName();
-          if (packageName.equalsIgnoreCase(name) || possiblePyPIPackageName != null && possiblePyPIPackageName.equalsIgnoreCase(name)) {
+          if (name.equalsIgnoreCase(packageName) || ContainerUtil.exists(possiblePyPIPackageNames, name::equalsIgnoreCase)) {
             return;
           }
           final String nameWhereUnderscoreReplacedWithHyphen = name.replaceAll("_", "-");
-          if (possiblePyPIPackageName != null && possiblePyPIPackageName.equalsIgnoreCase(nameWhereUnderscoreReplacedWithHyphen)) {
+          if (ContainerUtil.exists(possiblePyPIPackageNames, nameWhereUnderscoreReplacedWithHyphen::equalsIgnoreCase)) {
             return;
           }
           final String nameWhereHyphenReplacedWithUnderscore = name.replaceAll("-", "_");
-          if (packageName.equalsIgnoreCase(nameWhereHyphenReplacedWithUnderscore) ||
-              possiblePyPIPackageName != null && possiblePyPIPackageName.equalsIgnoreCase(nameWhereHyphenReplacedWithUnderscore)) {
+          if (nameWhereHyphenReplacedWithUnderscore.equalsIgnoreCase(packageName) ||
+              ContainerUtil.exists(possiblePyPIPackageNames, nameWhereHyphenReplacedWithUnderscore::equalsIgnoreCase)) {
             return;
           }
         }
@@ -208,8 +210,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
 
         final String suggestedPackageName = StreamEx
-          .of(packageName, possiblePyPIPackageName)
-          .nonNull()
+          .of(packageName)
+          .append(possiblePyPIPackageNames)
           .findFirst(PyPIPackageUtil.INSTANCE::isInPyPI)
           .orElse(packageName);
 
