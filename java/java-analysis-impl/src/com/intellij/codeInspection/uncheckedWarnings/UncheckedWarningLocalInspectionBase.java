@@ -474,14 +474,18 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
 
           @Override
           public Boolean visitClassType(PsiClassType classType) {
-            PsiClass psiClass = classType.resolve();
+            PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+            PsiClass psiClass = result.getElement();
             if (psiClass instanceof PsiTypeParameter) {
               if (((PsiTypeParameter)psiClass).getOwner() == method) return Boolean.FALSE;
               return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
             }
-            PsiType[] parameters = classType.getParameters();
-            for (PsiType parameter : parameters) {
-              if (parameter.accept(this).booleanValue()) return Boolean.TRUE;
+            if (psiClass != null) {
+              PsiSubstitutor typeSubstitutor = result.getSubstitutor();
+              for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+                PsiType psiType = typeSubstitutor.substitute(parameter);
+                if (psiType != null && psiType.accept(this).booleanValue()) return Boolean.TRUE;
+              }
             }
             return Boolean.FALSE;
           }
