@@ -70,19 +70,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
 
   @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null, false);
-    if (region == null) return null;
-    if (!addFoldRegion(region)) {
-      region.dispose();
-      return null;
-    }
-
-    return region;
-  }
-
-  @Override
-  public boolean addFoldRegion(@NotNull final FoldRegion region) {
-    return myDelegate.addFoldRegion((FoldRegion)((FoldingRegionWindow)region).getDelegate());
+    return createFoldRegion(startOffset, endOffset, placeholderText, null, false);
   }
 
   @Override

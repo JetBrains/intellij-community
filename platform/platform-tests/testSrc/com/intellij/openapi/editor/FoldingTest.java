@@ -36,7 +36,7 @@ public class FoldingTest extends AbstractEditorTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    init("I don't know what you mean by `glory,'\" Alice said" +
+    init("I don't know what you mean by `glory,'\" Alice said. " +
       "Humpty Dumpty smiled contemptuously. \"Of course you don't -- till I tell you. I meant `there's a nice knock-down argument for you!'" +
       "But glory doesn't mean `a nice knock-down argument,'\" Alice objected." +
       "When I use a word,\" Humpty Dumpty said, in a rather scornful tone, \"it means just what I choose it to mean -- neither more nor less." +
@@ -206,7 +206,6 @@ public class FoldingTest extends AbstractEditorTest {
       FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      assertTrue(myModel.addFoldRegion(region));
       region.setExpanded(false);
       regionRef.set(region);
     });

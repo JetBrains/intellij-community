@@ -1048,7 +1048,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     model.runBatchFoldingOperation(() -> {
       for (FoldRegion region : toAdd) {
         region.setExpanded(false);
-        model.addFoldRegion(region);
       }
     });
   }
