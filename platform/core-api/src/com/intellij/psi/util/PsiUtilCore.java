@@ -51,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -441,6 +443,15 @@ public class PsiUtilCore {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
     //noinspection SSBasedInspection
     return collection.toArray(new PsiFile[collection.size()]);
+  }
+
+  @NotNull
+  public static <VF extends VirtualFile> List<PsiFile> toPsiFiles(@NotNull PsiManager psiManager,
+                                                                  @NotNull Collection<VF> virtualFiles) {
+    return virtualFiles.stream()
+      .map(psiManager::findFile)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 
   /**
