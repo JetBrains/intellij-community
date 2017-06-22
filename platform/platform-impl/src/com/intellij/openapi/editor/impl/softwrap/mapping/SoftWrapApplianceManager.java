@@ -260,7 +260,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       if (myStorage.isEmpty()) {
         myEditor.putUserData(EditorImpl.SOFT_WRAPS_EXIST, null);
       }
-      else {
+      else if (myEditor.getUserData(EditorImpl.SOFT_WRAPS_EXIST) == null) {
         myEditor.putUserData(EditorImpl.SOFT_WRAPS_EXIST, Boolean.TRUE);
         EditorNotifications.getInstance(project).updateNotifications(file);
       }
