@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -75,7 +75,7 @@ public class Java9ReflectionClassVisibilityInspection extends BaseJavaBatchLocal
           final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
             if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
-              String message = JavaErrorMessages.message(
+              String message = InspectionsBundle.message(
                 "module.not.in.requirements", javaModule.getName(), otherModule.getName());
               holder.registerProblem(classNameArgument, message, new AddRequiredModuleFix(javaModule, otherModule.getName()));
               return;
@@ -94,7 +94,7 @@ public class Java9ReflectionClassVisibilityInspection extends BaseJavaBatchLocal
               if (publicApi && isPackageAccessible(otherModule.getExports(), packageName, javaModule)) {
                 return;
               }
-              final String message = JavaErrorMessages.message(
+              final String message = InspectionsBundle.message(
                 publicApi ? "module.package.not.exported" : "module.package.not.open",
                 otherModule.getName(), packageName, javaModule.getName());
               holder.registerProblem(classNameArgument, message);
