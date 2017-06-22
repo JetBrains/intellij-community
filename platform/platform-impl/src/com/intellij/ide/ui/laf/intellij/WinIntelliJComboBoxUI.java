@@ -20,6 +20,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -27,9 +28,11 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -55,13 +58,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private KeyListener   editorKeyListener;
   private FocusListener editorFocusListener;
 
-  public WinIntelliJComboBoxUI(JComboBox comboBox) {
-    super(comboBox);
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new WinIntelliJComboBoxUI((JComboBox)c);
+    return new WinIntelliJComboBoxUI();
   }
 
   @Override protected void installListeners() {
@@ -198,7 +197,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       } else if (!comboBox.isEnabled()) {
         return opaque ? UIManager.getColor("Button.background.opaque") : UIManager.getColor("Button.background");
       } else if (!comboBox.isEditable()) {
-        if (isPressed()) {
+        if (isPressed() || popup.isVisible()) {
           return UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
         } else if (isHover()) {
           return UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
@@ -225,7 +224,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
           // paint background
           if (comboBox.isEditable() && comboBox.isEnabled()) {
-            if (isPressed()) {
+            if (isPressed() || popup.isVisible()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBackgroundColor"));
             } else if (comboBox.hasFocus() || isHover()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.focusedBackgroundColor"));
@@ -243,7 +242,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             border.append(outerRect, false);
             border.append(innerRect, false);
 
-            if (getModel().isPressed()) {
+            if (getModel().isPressed() || popup.isVisible()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBorderColor"));
               g2.fill(border);
             } else if (comboBox.hasFocus() || isHover()) {
@@ -443,7 +442,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             g2.setColor(UIManager.getColor(isEditorHover() ? "TextField.hoverBorderColor" : "TextField.borderColor"));
           }
         } else {
-          if (isPressed()) {
+          if (isPressed() || popup.isVisible()) {
             g2.setColor(UIManager.getColor("Button.intellij.native.pressedBorderColor"));
           } else if (isHover() || hasFocus) {
             g2.setColor(UIManager.getColor("Button.intellij.native.focusedBorderColor"));
@@ -568,5 +567,19 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       comboBox.putClientProperty(HOVER_PROPERTY, Boolean.valueOf(isHover));
       comboBox.repaint();
     }
+  }
+
+
+  @Override protected ComboPopup createPopup() {
+    ComboPopup popup = super.createPopup();
+    if (popup instanceof JPopupMenu) {
+      ((JPopupMenu)popup).addPopupMenuListener(new PopupMenuListenerAdapter() {
+        @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+          comboBox.repaint();
+        }
+      });
+    }
+
+    return popup;
   }
 }
