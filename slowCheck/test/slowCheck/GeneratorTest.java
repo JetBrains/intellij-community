@@ -2,6 +2,7 @@ package slowCheck;
 
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -116,6 +117,13 @@ public class GeneratorTest extends TestCase {
   public void testNoDuplicateData() {
     Set<List<Integer>> visited = new HashSet<>();
     PropertyChecker.forAll(listOf(integers()), l -> visited.add(l));
+  }
+
+  public void testOneOf() {
+    List<Integer> values = new ArrayList<>(); 
+    PropertyChecker.forAll(Generator.oneOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
+    assertTrue(values.stream().anyMatch(i -> i < 2));
+    assertTrue(values.stream().anyMatch(i -> i > 5));
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {

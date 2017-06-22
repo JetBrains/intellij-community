@@ -21,9 +21,6 @@ public class GenChar {
   }
 
   public static Generator<Character> asciiLetter() {
-    return Generator.from(new Frequency<Character>()
-      .withAlternative(9, asciiLowercase())
-      .withAlternative(1, asciiUppercase()))
-      .noShrink();
+    return Generator.frequency(9, asciiLowercase(), 1, asciiUppercase()).noShrink();
   }
 }

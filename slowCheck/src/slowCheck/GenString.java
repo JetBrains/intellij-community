@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 public class GenString {
   public static Generator<String> stringOf(@NotNull String possibleChars) {
     List<Character> chars = IntStream.range(0, possibleChars.length()).mapToObj(possibleChars::charAt).collect(Collectors.toList());
-    return stringOf(Generator.oneOf(chars));
+    return stringOf(Generator.anyValue(chars));
   }
 
   public static Generator<String> stringOf(@NotNull Generator<Character> charGen) {
