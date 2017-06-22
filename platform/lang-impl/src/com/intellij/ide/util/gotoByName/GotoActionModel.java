@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -130,7 +129,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable
   @Override
   public String getCheckBoxName() {
-    return null;
+    return IdeBundle.message("checkbox.disabled.included");
   }
 
   @Override
@@ -150,7 +149,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public boolean loadInitialCheckBoxState() {
-    return true;
+    return false;
   }
 
   @Override
@@ -407,14 +406,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements) {
+  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements, boolean inclideDisabled) {
     List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
     if (!toUpdate.isEmpty()) {
       updateActions(toUpdate);
     }
 
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
-    if (Registry.is("goto.action.skip.disabled")) {
+    if (!inclideDisabled) {
       for (Object o : elements) {
         if (o instanceof MatchedValue) {
           Comparable v = ((MatchedValue)o).value;
