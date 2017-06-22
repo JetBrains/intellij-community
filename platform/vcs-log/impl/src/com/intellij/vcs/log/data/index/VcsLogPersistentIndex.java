@@ -588,8 +588,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
 
-    private void report(long time) {
-      String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - time);
+    private void report(long startTime) {
+      String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - startTime);
       if (myFull) {
         LOG.debug(formattedTime +
                   " for indexing " +
