@@ -31,8 +31,11 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapsStorage;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -249,6 +252,18 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
     finally {
       myInProgress = false;
+    }
+
+    Project project = myEditor.getProject();
+    VirtualFile file = myEditor.getVirtualFile();
+    if (project != null && file != null && myEditor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) {
+      if (myStorage.isEmpty()) {
+        myEditor.putUserData(EditorImpl.SOFT_WRAPS_EXIST, null);
+      }
+      else {
+        myEditor.putUserData(EditorImpl.SOFT_WRAPS_EXIST, Boolean.TRUE);
+        EditorNotifications.getInstance(project).updateNotifications(file);
+      }
     }
   }
   
