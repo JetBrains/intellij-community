@@ -366,7 +366,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           @Override
           public void initChildrenArrayRenderer(ArrayRenderer renderer) {
             renderer.START_INDEX = myCurrentChildrenStart;
-            renderer.END_INDEX = myCurrentChildrenStart + XCompositeNode.MAX_CHILDREN_TO_SHOW - 1;
             myCurrentChildrenStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
           }
 
