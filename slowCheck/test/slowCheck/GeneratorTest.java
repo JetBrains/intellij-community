@@ -26,31 +26,31 @@ public class GeneratorTest extends TestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   163);
+                   23);
   }
 
   public void testListContainsDivisible() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   11);
+                   41);
   }
 
   public void testStringContains() {
     checkFalsified(stringOf(asciiPrintable()), 
                    s -> !s.contains("a"),
-                   10);
+                   6);
   }
 
   public void testLetterStringContains() {
     checkFalsified(stringOf(asciiLetter()), 
                    s -> !s.contains("a"),
-                   8);
+                   6);
   }
   
   public void testIsSorted() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   101);
+                   172);
   }
 
   public void testSuccess() {
@@ -61,7 +61,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   113);
+                   106);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -95,13 +95,13 @@ public class GeneratorTest extends TestCase {
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringOf("abc "), 
                    s -> !s.contains(" "),
-                   6);
+                   5);
   }
 
   public void testLongListsHappen() {
     checkFalsified(listOf(integers()),
                    l -> l.size() < 200,
-                   781);
+                   682);
   }
 
   public void testNonEmptyList() {

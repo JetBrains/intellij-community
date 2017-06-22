@@ -9,13 +9,12 @@ import java.util.function.Predicate;
 /**
  * @author peter
  */
-class GenerativeDataStructure implements DataStructure {
+class GenerativeDataStructure extends AbstractDataStructure {
   private final Random random;
-  private final StructureNode node;
 
-  GenerativeDataStructure(Random random, StructureNode node) {
+  GenerativeDataStructure(Random random, StructureNode node, int sizeHint) {
+    super(node, sizeHint);
     this.random = random;
-    this.node = node;
   }
 
   @Override
@@ -28,7 +27,7 @@ class GenerativeDataStructure implements DataStructure {
   @NotNull
   @Override
   public GenerativeDataStructure subStructure() {
-    return new GenerativeDataStructure(random, node.subStructure());
+    return new GenerativeDataStructure(random, node.subStructure(), childSizeHint());
   }
 
   @Override
@@ -41,7 +40,7 @@ class GenerativeDataStructure implements DataStructure {
   @Override
   public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
     for (int i = 0; i < 100; i++) {
-      GenerativeDataStructure structure = new GenerativeDataStructure(random, node.subStructure());
+      GenerativeDataStructure structure = new GenerativeDataStructure(random, node.subStructure(), childSizeHint());
       T value = generator.generateUnstructured(structure);
       if (condition.test(value)) return value;
       

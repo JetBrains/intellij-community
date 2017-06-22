@@ -22,19 +22,20 @@ public class PropertyChecker {
     }
     Random random = new Random(seed);
     for (int i = 0; i < settings.iterationCount; i++) {
-      PropertyFailureImpl<T> failure = iteration(gen, property, random);
+      int sizeHint = i + 1;
+      PropertyFailureImpl<T> failure = iteration(gen, property, random, sizeHint);
       if (failure != null) {
-        throw new PropertyFalsified(seed, failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data));
+        throw new PropertyFalsified(seed, failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, sizeHint));
       }
     }
   }
 
   @Nullable
-  private static <T> PropertyFailureImpl<T> iteration(Generator<T> gen, Predicate<T> property, Random random) {
+  private static <T> PropertyFailureImpl<T> iteration(Generator<T> gen, Predicate<T> property, Random random, int sizeHint) {
     StructureNode node = new StructureNode();
-    T value = gen.generateUnstructured(new GenerativeDataStructure(random, node));
+    T value = gen.generateUnstructured(new GenerativeDataStructure(random, node, sizeHint));
     CounterExampleImpl<T> failure = CounterExampleImpl.checkProperty(property, value, node);
-    return failure != null ? new PropertyFailureImpl<>(failure, gen, property) : null;
+    return failure != null ? new PropertyFailureImpl<>(failure, gen, property, sizeHint) : null;
   }
 
 }
@@ -82,10 +83,10 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   private CounterExampleImpl<T> minimized;
   private int totalSteps;
 
-  PropertyFailureImpl(@NotNull CounterExampleImpl<T> initial, Generator<T> gen, Predicate<T> property) {
+  PropertyFailureImpl(@NotNull CounterExampleImpl<T> initial, Generator<T> gen, Predicate<T> property, int sizeHint) {
     this.initial = initial;
     this.minimized = initial;
-    shrink(gen, property);
+    shrink(gen, property, sizeHint);
   }
 
   @NotNull
@@ -105,12 +106,12 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
     return totalSteps;
   }
 
-  private void shrink(Generator<T> gen, Predicate<T> property) {
+  private void shrink(Generator<T> gen, Predicate<T> property, int sizeHint) {
     ShrinkRunner shrinkRunner = new ShrinkRunner();
     while (true) {
       CounterExampleImpl<T> shrank = shrinkRunner.findShrink(minimized.data, node -> {
         try {
-          T value = gen.generateUnstructured(new ReplayDataStructure(node));
+          T value = gen.generateUnstructured(new ReplayDataStructure(node, sizeHint));
           totalSteps++;
           return CounterExampleImpl.checkProperty(property, value, node);
         }
