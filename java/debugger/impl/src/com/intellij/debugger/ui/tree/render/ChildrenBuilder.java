@@ -36,6 +36,9 @@ public interface ChildrenBuilder extends XCompositeNode {
     setChildren(children);
   }
 
+  /**
+   * @deprecated use {@link #tooManyChildren}
+   */
   @Deprecated
   default void setRemaining(int remaining) {
     tooManyChildren(remaining);
