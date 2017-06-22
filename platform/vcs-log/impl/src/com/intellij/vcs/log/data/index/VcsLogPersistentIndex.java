@@ -534,6 +534,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final TIntHashSet myCommits;
     private final boolean myFull;
 
+    public volatile int myNewIndexedCommits;
+    public volatile int myOldCommits;
+
     public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full) {
       myRoot = root;
       myCommits = commits;
@@ -546,33 +549,32 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       long startTime = System.currentTimeMillis();
 
-      CommitsCounter counter = new CommitsCounter(indicator);
       LOG.debug("Indexing " + (myFull ? "full repository" : myCommits.size() + " commits") + " in " + myRoot.getName());
 
       try {
         try {
           if (myFull) {
-            indexAll(counter);
+            indexAll(indicator);
           }
           else {
             IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
               if (isIndexed(c)) {
-                counter.oldCommits++;
+                myOldCommits++;
                 return false;
               }
               return true;
             });
 
-            indexOneByOne(commits, counter);
+            indexOneByOne(commits, indicator);
           }
         }
         catch (ProcessCanceledException e) {
-          scheduleReindex(counter);
+          scheduleReindex();
           throw e;
         }
         catch (VcsException e) {
           LOG.error(e);
-          scheduleReindex(counter);
+          scheduleReindex();
         }
       }
       finally {
@@ -582,31 +584,31 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           myListeners.forEach(listener -> listener.indexingFinished(myRoot));
         }
 
-        report(startTime, counter);
+        report(startTime);
       }
     }
 
-    private void report(long time, @NotNull CommitsCounter counter) {
+    private void report(long time) {
       String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - time);
       if (myFull) {
         LOG.debug(formattedTime +
                   " for indexing " +
-                  counter.newIndexedCommits + " commits in " + myRoot.getName());
+                  myNewIndexedCommits + " commits in " + myRoot.getName());
       }
       else {
-        int leftCommits = counter.getLeftCommits();
+        int leftCommits = myCommits.size() - myNewIndexedCommits - myOldCommits;
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
 
         LOG.debug(formattedTime +
                   " for indexing " +
-                  counter.newIndexedCommits +
+                  myNewIndexedCommits +
                   " new commits out of " +
                   myCommits.size() + " in " + myRoot.getName() + leftCommitsMessage);
       }
     }
 
-    private void scheduleReindex(@NotNull CommitsCounter counter) {
-      LOG.debug("Schedule reindexing of " + counter.getLeftCommits() + " commits in " + myRoot.getName());
+    private void scheduleReindex() {
+      LOG.debug("Schedule reindexing of " + (myCommits.size() - myNewIndexedCommits - myOldCommits) + " commits in " + myRoot.getName());
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
         return true;
@@ -614,63 +616,48 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       scheduleIndex(false);
     }
 
-    private void indexOneByOne(@NotNull IntStream commits, @NotNull CommitsCounter counter) throws VcsException {
+    private void indexOneByOne(@NotNull IntStream commits, @NotNull ProgressIndicator indicator) throws VcsException {
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
       TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
-        counter.indicator.checkCanceled();
+        indicator.checkCanceled();
 
         List<String> hashes = TroveUtil.map(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
           VcsLogPersistentIndex.this.storeDetail(detail);
-          counter.newIndexedCommits++;
+          myNewIndexedCommits++;
         }, true);
 
-        counter.displayProgress();
+        displayProgress(indicator);
       });
 
       flush();
     }
 
-    public void indexAll(@NotNull CommitsCounter counter) throws VcsException {
-      counter.displayProgress();
+    public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
+      displayProgress(indicator);
 
       myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
         storeDetail(details);
-        counter.newIndexedCommits++;
+        myNewIndexedCommits++;
 
-        if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
+        if (myNewIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
 
-        counter.indicator.checkCanceled();
-        counter.displayProgress();
+        indicator.checkCanceled();
+        displayProgress(indicator);
       });
 
       flush();
+    }
+
+    public void displayProgress(@NotNull ProgressIndicator indicator) {
+      indicator.setFraction(((double)myNewIndexedCommits + myOldCommits) / myCommits.size());
     }
 
     @Override
     public String toString() {
       return "IndexingRequest of " + myCommits.size() + " commits in " + myRoot.getName() + (myFull ? " (full)" : "");
     }
-
-    private class CommitsCounter {
-      @NotNull public final ProgressIndicator indicator;
-      public volatile int newIndexedCommits;
-      public volatile int oldCommits;
-
-      private CommitsCounter(@NotNull ProgressIndicator indicator) {
-        this.indicator = indicator;
-      }
-
-      public void displayProgress() {
-        indicator.setFraction(((double)newIndexedCommits + oldCommits) / myCommits.size());
-      }
-
-      public int getLeftCommits() {
-        return myCommits.size() - newIndexedCommits - oldCommits;
-      }
-    }
-
   }
 }
