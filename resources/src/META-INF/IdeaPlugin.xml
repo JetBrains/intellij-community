@@ -330,6 +330,8 @@
     </extensionPoint>
 
     <extensionPoint name="jvm.createClass" interface="com.intellij.jvm.createClass.CreateJvmClassFactory"/>
+
+    <extensionPoint name="jvm.createMember" interface="com.intellij.jvm.createMember.CreateJvmMemberFactory"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
