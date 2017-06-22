@@ -32,19 +32,19 @@ public class GeneratorTest extends TestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   23);
+                   6);
   }
 
   public void testListContainsDivisible() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   38);
+                   8);
   }
 
   public void testStringContains() {
     checkFalsified(stringOf(asciiPrintable()), 
                    s -> !s.contains("a"),
-                   2);
+                   10);
   }
 
   public void testLetterStringContains() {
@@ -56,7 +56,7 @@ public class GeneratorTest extends TestCase {
   public void testIsSorted() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   104);
+                   95);
   }
 
   public void testSuccess() {
@@ -101,13 +101,13 @@ public class GeneratorTest extends TestCase {
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringOf("abc "), 
                    s -> !s.contains(" "),
-                   4);
+                   3);
   }
 
   public void testLongListsHappen() {
     checkFalsified(listOf(integers()),
                    l -> l.size() < 200,
-                   636);
+                   631);
   }
 
   public void testNonEmptyList() {
@@ -124,6 +124,14 @@ public class GeneratorTest extends TestCase {
     PropertyChecker.forAll(Generator.oneOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
     assertTrue(values.stream().anyMatch(i -> i < 2));
     assertTrue(values.stream().anyMatch(i -> i > 5));
+  }
+
+  public void testAsciiIdentifier() {
+    PropertyChecker.forAll(GenString.asciiIdentifier(), 
+                           s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
+    checkFalsified(GenString.asciiIdentifier(), 
+                   s -> !s.contains("_"), 
+                   1);
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {

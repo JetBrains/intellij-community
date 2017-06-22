@@ -24,10 +24,10 @@ public interface IntDistribution {
   }
 
   /**
-   * Geometric distribution with a given mean
+   * Geometric distribution ("number of failures until first success") with a given mean
    */
   static IntDistribution geometric(int mean) {
-    double p = 1.0 / mean;
+    double p = 1.0 / (mean + 1);
     return new IntDistribution() {
       @Override
       public int generateInt(Random random) {

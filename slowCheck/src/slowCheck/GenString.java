@@ -22,4 +22,11 @@ public class GenString {
       return sb.toString();
     });
   }
+
+  public static Generator<String> asciiIdentifier() {
+    return stringOf(Generator.frequency(50, GenChar.asciiLetter(), 
+                                        5, GenChar.digit(),
+                                        1, Generator.constant('_')))
+      .suchThat(s -> s.length() > 0 && !Character.isDigit(s.charAt(0)));
+  }
 }

@@ -23,4 +23,8 @@ public class GenChar {
   public static Generator<Character> asciiLetter() {
     return Generator.frequency(9, asciiLowercase(), 1, asciiUppercase()).noShrink();
   }
+
+  public static Generator<Character> digit() {
+    return range('0', '9');
+  }
 }

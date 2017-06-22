@@ -81,6 +81,16 @@ public final class Generator<T> {
     alternatives.put(weight2, alternative2);
     return frequency(alternatives);
   }
+
+  public static <T> Generator<T> frequency(int weight1, Generator<? extends T> alternative1, 
+                                           int weight2, Generator<? extends T> alternative2,
+                                           int weight3, Generator<? extends T> alternative3) {
+    Map<Integer, Generator<? extends T>> alternatives = new HashMap<>();
+    alternatives.put(weight1, alternative1);
+    alternatives.put(weight2, alternative2);
+    alternatives.put(weight3, alternative3);
+    return frequency(alternatives);
+  }
   
   public static <T> Generator<T> frequency(Map<Integer, Generator<? extends T>> alternatives) {
     List<Integer> weights = new ArrayList<>(alternatives.keySet());
