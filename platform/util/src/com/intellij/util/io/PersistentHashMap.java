@@ -129,8 +129,21 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     this(file, keyDescriptor, valueExternalizer, initialSize, 0);
   }
 
-  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize, int version) throws IOException {
-    super(checkDataFiles(file), keyDescriptor, initialSize, null, version);
+  public PersistentHashMap(@NotNull final File file,
+                           @NotNull KeyDescriptor<Key> keyDescriptor,
+                           @NotNull DataExternalizer<Value> valueExternalizer,
+                           final int initialSize,
+                           int version) throws IOException {
+    this(file, keyDescriptor, valueExternalizer, initialSize, version, null);
+  }
+
+  public PersistentHashMap(@NotNull final File file,
+                           @NotNull KeyDescriptor<Key> keyDescriptor,
+                           @NotNull DataExternalizer<Value> valueExternalizer,
+                           final int initialSize,
+                           int version,
+                           @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    super(checkDataFiles(file), keyDescriptor, initialSize, lockContext, version);
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
@@ -255,6 +268,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           myStreamPool.recycle(bytes);
         }
         catch (IOException e) {
+          markCorrupted();
           throw new RuntimeException(e);
         }
         finally {
@@ -344,7 +358,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public final void put(Key key, Value value) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
-      doPut(key, value);
+      try {
+        doPut(key, value);
+      } catch (IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
+      }
     }
   }
 
@@ -420,7 +439,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
-      doAppendData(key, appender);
+      try {
+        doAppendData(key, appender);
+      } catch (IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
+      }
     }
   }
 
@@ -449,8 +473,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final boolean processKeys(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
-      myAppendCache.clear();
-      return myEnumerator.iterateData(processor);
+      try {
+        myAppendCache.clear();
+        return myEnumerator.iterateData(processor);
+      }
+      catch (IOException e) {
+        myEnumerator.markCorrupted();
+        throw e;
+      }
     }
   }
 
@@ -463,13 +493,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public final boolean processKeysWithExistingMapping(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
-      myAppendCache.clear();
-      return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
-        @Override
-        public boolean accept(final int id) {
-          return readValueId(id) != NULL_ADDR;
-        }
-      });
+      try {
+        myAppendCache.clear();
+        return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
+          @Override
+          public boolean accept(final int id) {
+            return readValueId(id) != NULL_ADDR;
+          }
+        });
+      }
+      catch (IOException e) {
+        myEnumerator.markCorrupted();
+        throw e;
+      }
     }
   }
 
@@ -479,6 +515,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myBusyReading = true;
       try {
         return doGet(key);
+      } catch(IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
       } finally {
         myBusyReading = false;
       }
@@ -669,7 +708,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     try {
       try {
         myAppendCacheFlusher.stop();
-        myAppendCache.clear();
+        try {
+          myAppendCache.clear();
+        } catch (RuntimeException ex) {
+          Throwable cause = ex.getCause();
+          if (cause instanceof IOException) throw (IOException)cause;
+          throw ex;
+        }
       }
       finally {
         final PersistentHashMapValueStorage valueStorage = myValueStorage;
