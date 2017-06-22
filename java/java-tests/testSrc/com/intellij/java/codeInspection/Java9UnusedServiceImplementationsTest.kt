@@ -15,17 +15,21 @@
  */
 package com.intellij.java.codeInspection
 
+import com.intellij.ToolExtensionPoints
 import com.intellij.analysis.AnalysisScope
+import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
+import com.intellij.codeInspection.reference.EntryPoint
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.InspectionTestCase
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import org.intellij.lang.annotations.Language
 
 /**
@@ -70,8 +74,14 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
 
   fun testUnusedExternalProvider() = doTest(false, sameModule = false)
 
+  fun testUnusedImplementationWithEntryPoint() = doTest(false, moduleEntryPoints = true)
 
-  private fun doTest(withUsage: Boolean = true, sameModule: Boolean = true) {
+  fun testUnusedConstructorWithEntryPoint() = doTest(false, moduleEntryPoints = true)
+
+  fun testUnusedProviderWithEntryPoint() = doTest(false, moduleEntryPoints = true)
+
+
+  private fun doTest(withUsage: Boolean = true, sameModule: Boolean = true, moduleEntryPoints: Boolean = false) {
     @Language("JAVA")
     val usageText = """
     import my.api.MyService;
@@ -104,6 +114,9 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
       addFile("my/impl/MyServiceImpl.java", implText, M2)
     else
       addFile("my/ext/MyServiceExt.java", implText, M4)
+
+    val point = Extensions.getRootArea().getExtensionPoint<EntryPoint>(ToolExtensionPoints.DEAD_CODE_TOOL)
+    point.extensions.find { it is Java9ModuleEntryPoint }?.let { it.isSelected = moduleEntryPoints }
 
     val toolWrapper = InspectionTestCase.getUnusedDeclarationWrapper()
     val scope = AnalysisScope(project)
