@@ -16,11 +16,8 @@
 package com.intellij.junit4;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.PatternConfigurationProducer;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -82,15 +79,14 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
           return super.getData(dataId);
         }
       });
-      RunConfigurationProducer producer = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class);
       MapDataContext dataContext = new MapDataContext();
       
       dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
       dataContext.put(CommonDataKeys.PROJECT, myProject);
-      ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext));
+      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext);
       assertNotNull(fromContext);
 
-      RunConfiguration configuration = fromContext.getConfiguration();
+      RunConfiguration configuration = fromContext.getConfiguration().getConfiguration();
       assertNotNull(configuration);
 
       ArrayList<String> out = new ArrayList<>();
@@ -101,6 +97,7 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
       doStartTestsProcess(configuration, out, err, sys, messages);
 
       assertTrue(sys.toString().contains("-junit5"));
+      assertEmpty(err);
       assertEmpty(out);
 
       assertSize(2, messages.stream().filter(message -> message instanceof TestFailed).collect(Collectors.toList()));
