@@ -22,8 +22,11 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -31,6 +34,22 @@ public class EditorColorSchemesUsagesCollector extends UsagesCollector {
 
   public static final String GROUP_ID = "Color Schemes";
   public static final String SCHEME_NAME_OTHER = "Other";
+  public final static String[] KNOWN_NAMES = {
+    "Obsidian",
+    "Visual Studio",
+    "Solarized",
+    "Wombat",
+    "Monkai",
+    "XCode",
+    "Sublime",
+    "Oblivion",
+    "Zenburn",
+    "Cobalt",
+    "Netbeans",
+    "Eclipse",
+    "Aptana",
+    "Flash Builder"
+  };
 
   @NotNull
   @Override
@@ -47,14 +66,26 @@ public class EditorColorSchemesUsagesCollector extends UsagesCollector {
         }
       }
       if (schemeName == SCHEME_NAME_OTHER) {
-        EditorColorsScheme parentScheme = ((AbstractColorsScheme)currentScheme).getParentScheme();
-        if (parentScheme != null) {
-          schemeName += " based on " + parentScheme.getName();
+        String knownName = getKnownSchemeName(name);
+        if (knownName != null) {
+          schemeName = knownName;
         }
+        boolean isDark = ColorUtil.isDark(currentScheme.getDefaultBackground());
+        schemeName += " (" + (isDark ? "Dark" : "Light") + ")";
       }
       usages.add(new UsageDescriptor(schemeName, 1));
     }
     return usages;
+  }
+
+  @Nullable
+  private static String getKnownSchemeName(@NonNls @NotNull String schemeName) {
+    for (@NonNls String knownName : KNOWN_NAMES) {
+      if (schemeName.toUpperCase().contains(knownName.toUpperCase())) {
+        return knownName;
+      }
+    }
+    return null;
   }
 
   @NotNull

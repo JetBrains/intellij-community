@@ -31,9 +31,14 @@ public class SystemInfo extends SystemInfoRt {
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
-  public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
+  public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
+
+  private static String getRtVersion(String fallback) {
+    String rtVersion = System.getProperty("java.runtime.version");
+    return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
+  }
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
   public static final boolean isMac = SystemInfoRt.isMac;
