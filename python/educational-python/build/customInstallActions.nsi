@@ -10,7 +10,7 @@ deletePythonFileInfo:
   Delete "$TEMP\python.txt"
 getPythonFileInfo:
   inetc::get "https://www.jetbrains.com/updates/python.txt" "$TEMP\python.txt"
-  ${LineSum} "$TEMP\test\python.txt" $R0
+  ${LineSum} "$TEMP\python.txt" $R0
   IfErrors cantOpenFile
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
