@@ -992,8 +992,14 @@ public class InferenceSession {
           }
           return false;
         }
-        for (PsiType psiType : classType.getParameters()) {
-          if (!psiType.accept(this)) return false;
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        PsiClass aClass = result.getElement();
+        if (aClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
+            PsiType psiType = substitutor.substitute(typeParameter);
+            if (psiType != null && !psiType.accept(this)) return false;
+          }
         }
         return true;
       }
