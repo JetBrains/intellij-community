@@ -1638,7 +1638,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   private int getAdComponentHeight() {
-    return myAdComponent != null && myAdComponent.isShowing() ? myAdComponent.getPreferredSize().height + 1 : 0;
+    return myAdComponent != null && myAdComponent.isShowing() ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
   }
 
   @Override
