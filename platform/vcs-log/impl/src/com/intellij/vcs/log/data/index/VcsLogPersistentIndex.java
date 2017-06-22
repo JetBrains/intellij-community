@@ -499,22 +499,26 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            IndexingRequest request;
-            while ((request = popRequest()) != null) {
-              try {
-                request.run(indicator);
-                indicator.checkCanceled();
-              }
-              catch (ProcessCanceledException reThrown) {
-                taskCompleted(null);
-                throw reThrown;
-              }
-              catch (Throwable t) {
-                LOG.error("Error while indexing", t);
+            try {
+
+              IndexingRequest request;
+              while ((request = popRequest()) != null) {
+                try {
+                  request.run(indicator);
+                  indicator.checkCanceled();
+                }
+                catch (ProcessCanceledException reThrown) {
+                  throw reThrown;
+                }
+                catch (Throwable t) {
+                  LOG.error("Error while indexing", t);
+                }
               }
 
             }
-            taskCompleted(null);
+            finally {
+              taskCompleted(null);
+            }
           }
         };
         HeavyAwareExecutor.executeOutOfHeavyProcess(task, indicator, 50, 100);
