@@ -263,6 +263,7 @@ public class GradleExecutionHelper {
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
         final String[] lines = {
+          "",
           "gradle.taskGraph.afterTask { Task task ->",
           "    if (task instanceof Wrapper) {",
           "        def wrapperPropertyFileLocation = task.jarFile.getCanonicalPath() - '.jar' + '.properties'",
@@ -270,6 +271,7 @@ public class GradleExecutionHelper {
           StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) +
           "').write wrapperPropertyFileLocation",
           "}}",
+          "",
         };
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
         settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
