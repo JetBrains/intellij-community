@@ -77,6 +77,11 @@ class StructureNode implements StructureElement {
   }
 
   @Override
+  public int hashCode() {
+    return children.hashCode();
+  }
+
+  @Override
   public String toString() {
     return "(" + children.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
   }
@@ -118,5 +123,10 @@ class IntData implements StructureElement, Shrink.ElementaryShrink {
   @Override
   public String toString() {
     return String.valueOf(value);
+  }
+
+  @Override
+  public int hashCode() {
+    return value;
   }
 }

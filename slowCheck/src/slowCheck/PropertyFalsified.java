@@ -12,7 +12,9 @@ public class PropertyFalsified extends RuntimeException {
 
   public PropertyFalsified(int seed, PropertyFailure<?> failure, Supplier<DataStructure> data) {
     super("Falsified on " + failure.getMinimalCounterexample().getExampleValue() + "\n" +
-          "Minimized in " + failure.getTotalMinimizationStepCount() + " steps\n" +
+          (failure.getTotalMinimizationStepCount() > 0
+           ? "Minimized in " + failure.getTotalMinimizationStepCount() + " steps\n"
+           : "") +
           "Seed=" + seed, failure.getMinimalCounterexample().getExceptionCause());
     this.failure = failure;
     this.data = data;

@@ -118,19 +118,20 @@ object ScriptGenerator {
 //        }
   }
 
-  fun processKeyActionEvent(anAction: AnAction, anActionEvent: AnActionEvent) {
-    //retrieve shortcut here
-    val keyEvent = anActionEvent.inputEvent as KeyEvent
-    val keyStroke = getKeyStrokeForEvent(keyEvent)
-    val actionId = anActionEvent.actionManager.getId(anAction)
-    if (IgnoredActions.ignore(actionId)) return
-    val keyStrokeStr = KeyStrokeAdapter.toString(keyStroke)
-    if (IgnoredActions.ignore(keyStrokeStr)) return
+  fun processKeyActionEvent(action: AnAction, event: AnActionEvent) {
     ScriptGenerator.flushTyping()
 
-    addToScript(Templates.invokeActionComment(actionId))
-    addToScript(Templates.shortcut(keyStrokeStr))
+    val keyEvent = event.inputEvent as KeyEvent
+    val actionId = event.actionManager.getId(action)
+    if(actionId != null) {
+      if (IgnoredActions.ignore(actionId)) return
+      addToScript(Templates.invokeActionComment(actionId))
+    }
 
+    val keyStroke = getKeyStrokeForEvent(keyEvent)
+    val keyStrokeStr = KeyStrokeAdapter.toString(keyStroke)
+    if (IgnoredActions.ignore(keyStrokeStr)) return
+    addToScript(Templates.shortcut(keyStrokeStr))
   }
 
   //    clickComponent methods

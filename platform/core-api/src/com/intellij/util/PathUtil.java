@@ -129,16 +129,32 @@ public class PathUtil {
   }
 
   /**
-   * Makes sure that the given path is system-independent (with <code>/</code> separators).
+   * Ensures that the given argument doesn't contain <code>\</code> separators.
+   * <p>
+   * The violations are reported via the <code>LOG.error</code>.
+   * <p>
+   * This method is used by <code>SystemIndependentInstrumentingBuilder</code>.
    *
-   * @param path Path
-   * @throws IllegalArgumentException
+   * @param className     Class name
+   * @param methodName    Method name
+   * @param parameterName Parameter name
+   * @param argument      Path
    * @see SystemDependent
    * @see SystemIndependent
    */
-  public static void assertSystemIndependentName(@Nullable String path) {
-    if (path != null && path.contains("\\")) {
-      LOG.error("System-dependent path: " + path);
+  @Deprecated
+  public static void assertArgumentIsSystemIndependent(String className, String methodName, String parameterName, String argument) {
+    if (argument != null && argument.contains("\\")) {
+      String message = String.format("Argument for @SystemIndependent parameter '%s' of %s.%s must be system-independent: %s",
+                                     parameterName, className, methodName, argument);
+
+      IllegalArgumentException exception = new IllegalArgumentException(message);
+
+      StackTraceElement[] stackTrace = new StackTraceElement[exception.getStackTrace().length - 1];
+      System.arraycopy(exception.getStackTrace(), 1, stackTrace, 0, stackTrace.length);
+      exception.setStackTrace(stackTrace);
+
+      LOG.error(exception);
     }
   }
 

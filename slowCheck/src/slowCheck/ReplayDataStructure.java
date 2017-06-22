@@ -5,12 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-class ReplayDataStructure implements DataStructure {
-  private final StructureNode node;
+class ReplayDataStructure extends AbstractDataStructure {
   private final Iterator<StructureElement> iterator;
 
-  public ReplayDataStructure(StructureNode node) {
-    this.node = node;
+  public ReplayDataStructure(StructureNode node, int sizeHint) {
+    super(node, sizeHint);
     this.iterator = node.childrenIterator();
   }
 
@@ -33,7 +32,7 @@ class ReplayDataStructure implements DataStructure {
   @NotNull
   @Override
   public DataStructure subStructure() {
-    return new ReplayDataStructure(nextChild(StructureNode.class));
+    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint());
   }
 
   @Override

@@ -39,6 +39,7 @@ import javax.swing.SwingUtilities
 object EventDispatcher {
 
   private val LOG = Logger.getInstance("#${EventDispatcher::class.qualifiedName}")
+  private val MAC_NATIVE_ACTIONS = arrayOf("ShowSettings", "EditorEscape")
 
   fun processMouseEvent(event: MouseEvent) {
     ScriptGenerator.flushTyping()
@@ -72,26 +73,33 @@ object EventDispatcher {
 
     if (keyEvent.id == KeyEvent.KEY_TYPED) ScriptGenerator.processTyping(keyEvent.keyChar)
     if (SystemInfo.isMac && keyEvent.id == KeyEvent.KEY_PRESSED) {
-      //we are redirecting native Mac Preferences action as an Intellij action "Show Settings" has been invoked
+      //we are redirecting native Mac action as an Intellij actions
       LOG.info(keyEvent.toString())
-      val showSettingsId = "ShowSettings"
-      if (KeymapManager.getInstance().activeKeymap.getActionIds(KeyStroke.getKeyStrokeForEvent(keyEvent)).contains(showSettingsId)) {
-        val showSettingsAction = ActionManager.getInstance().getAction(showSettingsId)
-        val actionEvent = AnActionEvent.createFromInputEvent(keyEvent, ActionPlaces.UNKNOWN, showSettingsAction.templatePresentation,
-                                                             DataContext.EMPTY_CONTEXT)
-        ScriptGenerator.processKeyActionEvent(showSettingsAction, actionEvent)
+      val actionIds = KeymapManager.getInstance().activeKeymap.getActionIds(KeyStroke.getKeyStrokeForEvent(keyEvent))
+      for(actionId in actionIds){
+        if(isMacNativeAction(keyEvent)) {
+          val action = ActionManager.getInstance().getAction(actionId)
+          val actionEvent = AnActionEvent.createFromInputEvent(keyEvent, ActionPlaces.UNKNOWN, action.templatePresentation,
+                                                               DataContext.EMPTY_CONTEXT)
+          ScriptGenerator.processKeyActionEvent(action, actionEvent)
+        }
       }
     }
   }
 
   fun processActionEvent(action: AnAction, event: AnActionEvent?) {
-    val actionManager = ActionManager.getInstance()
     if (event == null) return
 
-    if (event.inputEvent is KeyEvent) ScriptGenerator.processKeyActionEvent(action, event)
-
-    val mainActions = (actionManager.getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup).getFlatIdList()
-    if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action, event)
+    val inputEvent = event.inputEvent
+    if (inputEvent is KeyEvent) {
+      if(!isMacNativeAction(inputEvent)) {
+        ScriptGenerator.processKeyActionEvent(action, event)
+      }
+    } else {
+      val actionManager = ActionManager.getInstance()
+      val mainActions = (actionManager.getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup).getFlatIdList()
+      if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action, event)
+    }
   }
 
   private fun ActionGroup.getFlatIdList(): List<String> {
@@ -106,5 +114,11 @@ object EventDispatcher {
 
   private fun isMainFrame(component: Component?): Boolean {
     return component is JFrame && component.title == GuiScriptEditorFrame.GUI_SCRIPT_FRAME_TITLE
+  }
+
+  private fun isMacNativeAction(keyEvent: KeyEvent): Boolean{
+    if (!SystemInfo.isMac) return false
+    val actionIds = KeymapManager.getInstance().activeKeymap.getActionIds(KeyStroke.getKeyStrokeForEvent(keyEvent))
+    return actionIds.any { it in MAC_NATIVE_ACTIONS }
   }
 }
