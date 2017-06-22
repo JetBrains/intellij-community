@@ -112,37 +112,8 @@ public class LambdaHighlightingUtil {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
       MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);
       if (functionalMethod != null && functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
-      if (checkReturnTypeApplicable(resolveResult, aClass)) {
-        return "No instance of type " + functionalInterfaceType.getPresentableText() + " exists so that lambda expression can be type-checked";
-      }
       return checkInterfaceFunctional(aClass);
     }
     return functionalInterfaceType.getPresentableText() + " is not a functional interface";
-  }
-
-  private static boolean checkReturnTypeApplicable(PsiClassType.ClassResolveResult resolveResult, final PsiClass aClass) {
-    final MethodSignature methodSignature = LambdaUtil.getFunction(aClass);
-    if (methodSignature == null) return false;
-
-    for (PsiTypeParameter parameter : aClass.getTypeParameters()) {
-      if (parameter.getExtendsListTypes().length == 0) continue;
-      final PsiType substitution = resolveResult.getSubstitutor().substitute(parameter);
-      if (substitution instanceof PsiWildcardType && !((PsiWildcardType)substitution).isBounded()) {
-        boolean depends = false;
-        for (PsiType paramType : methodSignature.getParameterTypes()) {
-          if (LambdaUtil.depends(paramType, new LambdaUtil.TypeParamsChecker((PsiMethod)null, aClass) {
-            @Override
-            public boolean startedInference() {
-              return true;
-            }
-          }, parameter)) {
-            depends = true;
-            break;
-          }
-        }
-        if (!depends) return true;
-      }
-    }
-    return false;
   }
 }
