@@ -29,7 +29,9 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.org.objectweb.asm.*;
 import sun.management.counter.perf.InstrumentationException;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -114,22 +116,29 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       Type[] argumentTypes = Type.getArgumentTypes(desc);
 
-      List<String> parameterNames = new ArrayList<>(argumentTypes.length);
-      Set<Integer> stringParameterIndices = new HashSet<>(argumentTypes.length);
-      Set<Integer> annotatedParameterIndices = new HashSet<>(argumentTypes.length);
+      Parameter[] parameters = new Parameter[argumentTypes.length];
 
-      int i = 0;
-      for (Type argumentType : argumentTypes) {
-        if (argumentType.getSort() == Type.OBJECT && "java.lang.String".equals(argumentType.getClassName())) {
-          stringParameterIndices.add(i);
-        }
-        i++;
+      int slot = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
+      for (int i = 0; i < argumentTypes.length; i++) {
+        Type argumentType = argumentTypes[i];
+
+        Parameter parameter = new Parameter();
+        parameter.name = Integer.toString(i);
+        parameter.slot = slot;
+        parameter.isString = argumentType.getSort() == Type.OBJECT && "java.lang.String".equals(argumentType.getClassName());
+
+        parameters[i] = parameter;
+
+        slot += argumentType.getSize();
       }
 
       return new MethodVisitor(api, super.visitMethod(access, name, desc, signature, exceptions)) {
+        private int myParameterIndex = 0;
+
         @Override
         public void visitParameter(String name, int access) {
-          parameterNames.add(name);
+          parameters[myParameterIndex].name = name;
+          myParameterIndex++;
           super.visitParameter(name, access);
         }
 
@@ -137,36 +146,30 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
         public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
           if (typePath == null) {
             TypeReference ref = new TypeReference(typeRef);
-
-            if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && "Lcom/intellij/util/SystemIndependent;".equals(desc)) {
-              annotatedParameterIndices.add(ref.getFormalParameterIndex());
-            }
+            parameters[ref.getFormalParameterIndex()].isSystemIndependent =
+              ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && "Lcom/intellij/util/SystemIndependent;".equals(desc);
           }
-
           return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
         }
 
         @Override
         public void visitCode() {
-          for (Integer parameterIndex : annotatedParameterIndices) {
-            if (stringParameterIndices.contains(parameterIndex)) {
-              addAssertionFor(parameterIndex);
-            }
-            else {
-              throw new InstrumentationException("Only String can be annotated as @SystemIndependent");
+          for (Parameter parameter : parameters) {
+            if (parameter.isSystemIndependent) {
+              if (!parameter.isString) {
+                throw new InstrumentationException("Only String can be annotated as @SystemIndependent");
+              }
+              addAssertionFor(parameter.name, parameter.slot);
             }
           }
-
           super.visitCode();
         }
 
-        private void addAssertionFor(Integer parameterIndex) {
-          String parameterName = parameterNames.isEmpty() ? Integer.toString(parameterIndex) : parameterNames.get(parameterIndex);
-          int variableOffset = (access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
+        private void addAssertionFor(String parameterName, int parameterSlot) {
           visitLdcInsn(myClassName);
           visitLdcInsn(name);
           visitLdcInsn(parameterName);
-          visitVarInsn(Opcodes.ALOAD, variableOffset + parameterIndex);
+          visitVarInsn(Opcodes.ALOAD, parameterSlot);
           visitMethodInsn(Opcodes.INVOKESTATIC,
                           "com/intellij/util/PathUtil",
                           "assertArgumentIsSystemIndependent",
@@ -174,6 +177,13 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
                           false);
         }
       };
+    }
+
+    private static class Parameter {
+      String name;
+      int slot;
+      boolean isString;
+      boolean isSystemIndependent;
     }
   }
 }
