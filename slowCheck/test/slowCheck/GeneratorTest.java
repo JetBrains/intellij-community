@@ -2,14 +2,19 @@ package slowCheck;
 
 import junit.framework.TestCase;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static slowCheck.GenChar.*;
-import static slowCheck.GenCollection.*;
-import static slowCheck.GenNumber.*;
-import static slowCheck.GenString.*;
+import static slowCheck.GenChar.asciiLetter;
+import static slowCheck.GenChar.asciiPrintable;
+import static slowCheck.GenCollection.listOf;
+import static slowCheck.GenCollection.nonEmptyListOf;
+import static slowCheck.GenNumber.doubles;
+import static slowCheck.GenNumber.integers;
+import static slowCheck.GenString.stringOf;
 
 /**
  * @author peter
@@ -32,25 +37,25 @@ public class GeneratorTest extends TestCase {
   public void testListContainsDivisible() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   41);
+                   38);
   }
 
   public void testStringContains() {
     checkFalsified(stringOf(asciiPrintable()), 
                    s -> !s.contains("a"),
-                   6);
+                   2);
   }
 
   public void testLetterStringContains() {
     checkFalsified(stringOf(asciiLetter()), 
                    s -> !s.contains("a"),
-                   6);
+                   5);
   }
   
   public void testIsSorted() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   172);
+                   104);
   }
 
   public void testSuccess() {
@@ -61,7 +66,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   106);
+                   141);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -80,7 +85,7 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuchThat() {
-    PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
+    PropertyChecker.forAll(integers().suchThat(i -> i < 0), i -> i < 0);
   }
 
   public void testUnsatisfiableSuchThat() {
@@ -95,17 +100,22 @@ public class GeneratorTest extends TestCase {
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringOf("abc "), 
                    s -> !s.contains(" "),
-                   5);
+                   4);
   }
 
   public void testLongListsHappen() {
     checkFalsified(listOf(integers()),
                    l -> l.size() < 200,
-                   682);
+                   636);
   }
 
   public void testNonEmptyList() {
     PropertyChecker.forAll(nonEmptyListOf(integers()), l -> !l.isEmpty());
+  }
+
+  public void testNoDuplicateData() {
+    Set<List<Integer>> visited = new HashSet<>();
+    PropertyChecker.forAll(listOf(integers()), l -> visited.add(l));
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
