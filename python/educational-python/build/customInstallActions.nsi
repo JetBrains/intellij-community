@@ -53,14 +53,16 @@ getPythonInfo:
   Call getPythonInfo
   StrCmp $0 "Error" skip_python_download
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 6" "State"
+  StrCpy $R7 "msiexec.exe /i "
   StrCpy $R8 "$0.msi"
-  StrCpy $R9 "/quiet /qn /norestart"
+  StrCpy $R9 "/quiet /qn"
   StrCmp $R2 1 "" python3
   StrCpy $R2 $0
   StrCpy $R3 $1
   goto check_python
 python3:  
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 7" "State"
+  StrCpy $R7 ""
   StrCpy $R8 "$R0.exe"
   StrCpy $R9 "InstallAllUsers=1 /quiet"
   StrCmp $R2 1 "" skip_python_download
@@ -80,7 +82,7 @@ get_python:
   inetc::get "$R3" "$INSTDIR\python\python_$R8" /END
   Pop $0
   ${If} $0 == "OK"
-    ExecDos::exec '"$INSTDIR\python\python_$R8" $R9'
+    ExecDos::exec '$R7"$INSTDIR\python\python_$R8" $R9'
   ${Else}
     MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed: $0"
   ${EndIf}
