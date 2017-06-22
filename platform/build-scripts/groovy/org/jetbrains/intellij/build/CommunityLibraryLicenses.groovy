@@ -369,7 +369,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
     new LibraryLicense(name: "TestNG", version: "6.9 snapshot", license: "Apache 2.0", url: "http://testng.org/doc/",
                        licenseUrl: "https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
-    new LibraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213 and 217",
+    new LibraryLicense(name: "Trilead SSH", libraryName: "trilead-ssh2", version: "build 213 and 220",
                        license: "BSD style (see LICENSE.txt in trilead.jar)", url: "http://www.trilead.com/SSH_Library/"),
     new LibraryLicense(name: "Twitter4J", libraryName: "twitter4j-core-4.0.4.jar", version: "4.0.4", license: "Apache 2.0",
                        url: "http://twitter4j.org/", licenseUrl: "http://twitter4j.org/en/index.html#license"),
