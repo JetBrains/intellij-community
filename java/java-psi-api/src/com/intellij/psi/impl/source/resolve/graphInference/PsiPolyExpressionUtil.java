@@ -106,10 +106,15 @@ public class PsiPolyExpressionUtil {
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
-        for (PsiType type : classType.getParameters()) {
-          if (type.accept(this)) return true;
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass psiClass = result.getElement();
+        if (psiClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+            PsiType type = substitutor.substitute(parameter);
+            if (type != null && type.accept(this)) return true;
+          }
         }
-        final PsiClass psiClass = classType.resolve();
         return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
       }
 
