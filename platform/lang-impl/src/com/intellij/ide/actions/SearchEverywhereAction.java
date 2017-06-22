@@ -2243,12 +2243,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
         sz = new Dimension(Math.min(getPopupMaxWidth(), Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(getPopupMaxWidth(), sz.height + extraHeight));
         sz.width += 20;
-        sz.height+=2;
       } else {
-        sz.width+=2;
-        sz.height+=2;
+        sz.width += 2;
       }
     }
+    sz.height += 2;
     sz.width = Math.max(sz.width, myPopup.getSize().width);
     myPopup.setSize(sz);
     if (myActionEvent != null && myActionEvent.getInputEvent() == null) {
