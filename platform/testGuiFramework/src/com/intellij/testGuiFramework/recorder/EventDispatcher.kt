@@ -38,51 +38,39 @@ import javax.swing.SwingUtilities
  */
 object EventDispatcher {
 
-  val mainActions by lazy { (ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup).getFlatIdList() }
+  private val LOG = Logger.getInstance("#${EventDispatcher::class.qualifiedName}")
 
-  val LOG = Logger.getInstance(EventDispatcher::class.java)
-  fun processMouseEvent(me: MouseEvent) {
-
-//        if (!(me.clickCount == 1 && me.id == MOUSE_CLICKED && me.button == BUTTON1)) return
-    if (!(me.id == MOUSE_PRESSED)) return
-
+  fun processMouseEvent(event: MouseEvent) {
     ScriptGenerator.flushTyping()
+    if (event.id != MOUSE_PRESSED) return
 
-    var component: Component? = me.component
-    val mousePoint = me.point
+    val eventComponent: Component? = event.component
+    if (isMainFrame(eventComponent)) return
 
-    if (component is JFrame)
-      if (component.title == GuiScriptEditorFrame.GUI_SCRIPT_FRAME_TITLE) return // ignore mouse events from GUI Script Editor Frame
-
-    if (component is RootPaneContainer) {
-
-      val layeredPane = component.layeredPane
-      val pt = SwingUtilities.convertPoint(component, mousePoint, layeredPane)
-      component = layeredPane.findComponentAt(pt)
+    val mousePoint = event.point
+    var actualComponent: Component? = null
+    when (eventComponent) {
+      is RootPaneContainer -> {
+        val layeredPane = eventComponent.layeredPane
+        val point = SwingUtilities.convertPoint(eventComponent, mousePoint, layeredPane)
+        actualComponent = layeredPane.findComponentAt(point)
+      }
+      is Container -> actualComponent = eventComponent.findComponentAt(mousePoint)
     }
-    else if (component is Container) {
-      component = component.findComponentAt(mousePoint)
-    }
+    if (actualComponent == null) actualComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
 
-    if (component == null) {
-      component = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-    }
-    if (component != null) {
-      val convertedPoint = Point(
-        me.locationOnScreen.x - component.locationOnScreen.x,
-        me.locationOnScreen.y - component.locationOnScreen.y)
-
-      //get all extended code generators and get with the highest priority
-      LOG.info("Delegate click from component:${component}")
-      ScriptGenerator.clickComponent(component, convertedPoint, me)
+    if (actualComponent != null) {
+      LOG.info("Delegate click from component:${actualComponent}")
+      val convertedPoint = Point(event.locationOnScreen.x - actualComponent.locationOnScreen.x,
+                                 event.locationOnScreen.y - actualComponent.locationOnScreen.y)
+      ScriptGenerator.clickComponent(actualComponent, convertedPoint, event)
     }
   }
 
-
   fun processKeyBoardEvent(keyEvent: KeyEvent) {
-    if (keyEvent.component is JFrame && (keyEvent.component as JFrame).title == GuiScriptEditorFrame.GUI_SCRIPT_FRAME_TITLE) return
-    if (keyEvent.id == KeyEvent.KEY_TYPED)
-      ScriptGenerator.processTyping(keyEvent.keyChar)
+    if (isMainFrame(keyEvent.component)) return
+
+    if (keyEvent.id == KeyEvent.KEY_TYPED) ScriptGenerator.processTyping(keyEvent.keyChar)
     if (SystemInfo.isMac && keyEvent.id == KeyEvent.KEY_PRESSED) {
       //we are redirecting native Mac Preferences action as an Intellij action "Show Settings" has been invoked
       LOG.info(keyEvent.toString())
@@ -96,21 +84,27 @@ object EventDispatcher {
     }
   }
 
-  fun processActionEvent(anActionTobePerformed: AnAction, anActionEvent: AnActionEvent?) {
-    val actMgr = ActionManager.getInstance()
-    if (anActionEvent!!.inputEvent is KeyEvent) ScriptGenerator.processKeyActionEvent(anActionTobePerformed, anActionEvent)
-    if (mainActions.contains(actMgr.getId(anActionTobePerformed))) ScriptGenerator.processMainMenuActionEvent(anActionTobePerformed,
-                                                                                                              anActionEvent)
+  fun processActionEvent(action: AnAction, event: AnActionEvent?) {
+    val actionManager = ActionManager.getInstance()
+    if (event == null) return
+
+    if (event.inputEvent is KeyEvent) ScriptGenerator.processKeyActionEvent(action, event)
+
+    val mainActions = (actionManager.getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup).getFlatIdList()
+    if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action, event)
   }
 
-
   private fun ActionGroup.getFlatIdList(): List<String> {
-    val actMgr = ActionManager.getInstance()
+    val actionManager = ActionManager.getInstance()
     val result = ArrayList<String>()
-    this.getChildren(null).forEach { anAction ->
-      if (anAction is ActionGroup) result.addAll(anAction.getFlatIdList())
-      else result.add(actMgr.getId(anAction))
+    this.getChildren(null).forEach { action ->
+      if (action is ActionGroup) result.addAll(action.getFlatIdList())
+      else result.add(actionManager.getId(action))
     }
     return result
+  }
+
+  private fun isMainFrame(component: Component?): Boolean {
+    return component is JFrame && component.title == GuiScriptEditorFrame.GUI_SCRIPT_FRAME_TITLE
   }
 }
