@@ -1012,26 +1012,30 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void updateFoldings(final int line1, final int endLine) {
-    final Document document = myEditor.getDocument();
-    final CharSequence chars = document.getCharsSequence();
-    final int startLine = Math.max(0, line1);
     final List<FoldRegion> toAdd = new ArrayList<>();
-    for (int line = startLine; line <= endLine; line++) {
-      boolean flushOnly = line == endLine;
-      /*
-      Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
+    FoldingModel model = myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(() -> {
+      final Document document = myEditor.getDocument();
+      final CharSequence chars = document.getCharsSequence();
+      final int startLine = Math.max(0, line1);
+      for (int line = startLine; line <= endLine; line++) {
+        boolean flushOnly = line == endLine;
+        /*
+        Grep Console plugin allows to fold empty lines. We need to handle this case in a special way.
 
-      Multiple lines are grouped into one folding, but to know when you can create the folding,
-      you need a line which does not belong to that folding.
-      When a new line, or a chunk of lines is printed, #addFolding is called for that lines + for an empty string
-      (which basically does only one thing, gets a folding displayed).
-      We do not want to process that empty string, but also we do not want to wait for another line
-      which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
-      So therefore the condition, the last line(empty string) should still flush, but not be processed by
-      com.intellij.execution.ConsoleFolding.
-       */
-      addFolding(document, chars, line, toAdd, flushOnly);
-    }
+        Multiple lines are grouped into one folding, but to know when you can create the folding,
+        you need a line which does not belong to that folding.
+        When a new line, or a chunk of lines is printed, #addFolding is called for that lines + for an empty string
+        (which basically does only one thing, gets a folding displayed).
+        We do not want to process that empty string, but also we do not want to wait for another line
+        which will create and display the folding - we'd see an unfolded stacktrace until another text came and flushed it.
+        So therefore the condition, the last line(empty string) should still flush, but not be processed by
+        com.intellij.execution.ConsoleFolding.
+         */
+        addFolding(document, chars, line, toAdd, flushOnly);
+      }
+    });
+
     if (!toAdd.isEmpty()) {
       doUpdateFolding(toAdd);
     }
