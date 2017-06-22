@@ -83,7 +83,7 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
     }
   }
 
-  private class Model(val vFile: VirtualFile, val fixture: CodeInsightTestFixture) {
+  internal class Model(val vFile: VirtualFile, val fixture: CodeInsightTestFixture) {
     val refs = hashMapOf<RefKind, Any?>()
     val project = fixture.project!!
     var docClassName = "Foo"
@@ -94,7 +94,7 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
     fun getDocument() = FileDocumentManager.getInstance().getDocument(vFile)!!
   }
 
-  private interface Action {
+  internal interface Action {
 
     fun performAction(model: Model)
 
@@ -203,7 +203,7 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
     }
   }
 
-  private enum class RefKind(val loadRef: (Model) -> Any) {
+  internal enum class RefKind(val loadRef: (Model) -> Any) {
     ClassRef({ it.findPsiClass() }), 
     PsiFileRef({ it.findPsiFile()}), 
     AstRef({ it.findPsiClass().node }), 
