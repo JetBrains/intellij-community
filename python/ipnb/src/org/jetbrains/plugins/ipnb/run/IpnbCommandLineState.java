@@ -70,9 +70,9 @@ public class IpnbCommandLineState extends PythonCommandLineState {
       parameters.addParameters(StringUtil.split(additionalOptions, " "));
     }
 
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfiguration.getWorkingDirectory());
-    }
+    final String workingDirectory = myConfiguration.getWorkingDirectory();
+    commandLine.setWorkDirectory(!StringUtil.isEmptyOrSpaces(workingDirectory) ?
+                                 workingDirectory : myConfiguration.getProject().getBasePath());
   }
 
   @Override
