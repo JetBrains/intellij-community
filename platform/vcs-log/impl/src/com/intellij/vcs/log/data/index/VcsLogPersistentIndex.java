@@ -60,7 +60,6 @@ import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
 import static com.intellij.vcs.log.util.PersistentUtil.*;
-import static com.intellij.vcs.log.util.TroveUtil.collect;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -138,6 +137,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Override
   public synchronized void scheduleIndex(boolean full) {
     if (myCommitsToIndex.isEmpty() || myIndexStorage == null) return;
+    // for fresh index, wait for complete log to load and index everything in one command
+    if (myIndexStorage.isFresh() && !full) return;
     Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
 
     for (VirtualFile root : commitsToIndex.keySet()) {
@@ -511,6 +512,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
               catch (Throwable t) {
                 LOG.error("Error while indexing", t);
               }
+
             }
             taskCompleted(null);
           }
@@ -541,22 +543,22 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       long startTime = System.currentTimeMillis();
 
       CommitsCounter counter = new CommitsCounter(indicator, myCommits.size());
-      LOG.debug("Indexing " + counter.allCommits + " commits in " + myRoot.getName());
+      LOG.debug("Indexing " + (myFull ? "full repository" : counter.allCommits + " commits") + " in " + myRoot.getName());
 
       try {
-        IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
-          if (isIndexed(c)) {
-            counter.oldCommits++;
-            return false;
-          }
-          return true;
-        });
-
         try {
           if (myFull) {
-            indexAll(collect(commits), counter);
+            indexAll(counter);
           }
           else {
+            IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
+              if (isIndexed(c)) {
+                counter.oldCommits++;
+                return false;
+              }
+              return true;
+            });
+
             indexOneByOne(commits, counter);
           }
         }
@@ -581,14 +583,22 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void report(long time, @NotNull CommitsCounter counter) {
-      int leftCommits = counter.getLeftCommits();
-      String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
+      String formattedTime = StopWatch.formatTime(System.currentTimeMillis() - time);
+      if (myFull) {
+        LOG.debug(formattedTime +
+                  " for indexing " +
+                  counter.newIndexedCommits + " commits in " + myRoot.getName());
+      }
+      else {
+        int leftCommits = counter.getLeftCommits();
+        String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
 
-      LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - time) +
-                " for indexing " +
-                counter.newIndexedCommits +
-                " new commits out of " +
-                counter.allCommits + " in " + myRoot.getName() + leftCommitsMessage);
+        LOG.debug(formattedTime +
+                  " for indexing " +
+                  counter.newIndexedCommits +
+                  " new commits out of " +
+                  counter.allCommits + " in " + myRoot.getName() + leftCommitsMessage);
+      }
     }
 
     private void scheduleReindex(@NotNull CommitsCounter counter) {
@@ -619,17 +629,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       flush();
     }
 
-    public void indexAll(@NotNull TIntHashSet commits, @NotNull CommitsCounter counter) throws VcsException {
+    public void indexAll(@NotNull CommitsCounter counter) throws VcsException {
       counter.displayProgress();
 
       myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
-        int index = myStorage.getCommitIndex(details.getId(), details.getRoot());
-        if (commits.contains(index)) {
-          storeDetail(details);
-          counter.newIndexedCommits++;
+        storeDetail(details);
+        counter.newIndexedCommits++;
 
-          if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
-        }
+        if (counter.newIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
 
         counter.indicator.checkCanceled();
         counter.displayProgress();
