@@ -1013,6 +1013,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testNonGenericInnerOfGenericOuter() { doTest(); }
+
   public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() throws Exception {
     doTest();
   }
