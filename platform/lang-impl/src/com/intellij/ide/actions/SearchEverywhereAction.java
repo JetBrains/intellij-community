@@ -1470,7 +1470,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myActionProvider = createActionProvider();
       }
 
-      myActionProvider.filterElements(pattern, true, matched -> {
+      myActionProvider.filterElements(pattern, matched -> {
         check();
         Object object = matched.value;
         if (myListModel.contains(object)) return true;
