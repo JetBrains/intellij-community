@@ -82,7 +82,7 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
             parent.replace(operand!!)
           }
 
-          JavaCodeStyleManager.getInstance(project).qualifyClassReferences(anonymousClass);
+          JavaCodeStyleManager.getInstance(project).qualifyClassReferences(anonymousClass)
         }
       }
     }
@@ -177,7 +177,6 @@ object LambdaToAnonymousTransformer : PsiElementTransformer.Base() {
     }
     val functionalInterfaceType = lambdaExpression.functionalInterfaceType
     if (functionalInterfaceType != null &&
-        LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) &&
         LambdaUtil.isFunctionalType(functionalInterfaceType)) {
       val interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType)
       if (interfaceMethod != null) {
