@@ -334,7 +334,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.getValueText();
   }
 
-  private int myCurrentChildrenStart = 0;
+  private int myChildrenRemaining = -1;
 
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
@@ -364,9 +364,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          public void initChildrenArrayRenderer(ArrayRenderer renderer) {
-            renderer.START_INDEX = myCurrentChildrenStart;
-            myCurrentChildrenStart += XCompositeNode.MAX_CHILDREN_TO_SHOW;
+          public void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength) {
+            renderer.START_INDEX = 0;
+            if (myChildrenRemaining >= 0) {
+              renderer.START_INDEX = Math.max(0, arrayLength - myChildrenRemaining);
+            }
           }
 
           @Override
@@ -409,6 +411,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
           @Override
           public void tooManyChildren(int remaining) {
+            myChildrenRemaining = remaining;
             node.tooManyChildren(remaining);
           }
 
@@ -645,7 +648,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   public void reBuild(final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    myCurrentChildrenStart = 0;
+    myChildrenRemaining = -1;
     node.invokeNodeUpdate(() -> {
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);

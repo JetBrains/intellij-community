@@ -112,13 +112,13 @@ public class ArrayRenderer extends NodeRendererImpl{
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-    if (!myForced) {
-      builder.initChildrenArrayRenderer(this);
-    }
-
     ArrayReference array = (ArrayReference)value;
     int arrayLength = array.length();
     if (arrayLength > 0) {
+      if (!myForced) {
+        builder.initChildrenArrayRenderer(this, arrayLength);
+      }
+
       if (ENTRIES_LIMIT <= 0) {
         ENTRIES_LIMIT = 1;
       }
@@ -226,8 +226,6 @@ public class ArrayRenderer extends NodeRendererImpl{
       NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
       NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-      builder.initChildrenArrayRenderer(this);
-
       builder.setMessage(DebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
                          AllIcons.General.Filter,
                          SimpleTextAttributes.REGULAR_ATTRIBUTES,
@@ -240,6 +238,8 @@ public class ArrayRenderer extends NodeRendererImpl{
       ArrayReference array = (ArrayReference)value;
       int arrayLength = array.length();
       if (arrayLength > 0) {
+        builder.initChildrenArrayRenderer(this, arrayLength);
+
         CachedEvaluator cachedEvaluator = new CachedEvaluator() {
           @Override
           protected String getClassName() {
