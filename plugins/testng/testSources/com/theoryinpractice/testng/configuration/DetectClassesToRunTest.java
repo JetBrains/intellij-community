@@ -19,11 +19,13 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.theoryinpractice.testng.TestNGFramework;
+import com.theoryinpractice.testng.model.TestClassFilter;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -86,6 +88,17 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test public class MyTestClass {void testOne(){}}");
     assertFalse(new TestNGFramework().isTestMethod(aClass.getMethods()[0], false));
   }
+  
+  public void testClassWithSingleParameterConstructor() {
+    PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test " +
+                                         "public class MyTestClass {" +
+                                         "public MyTetClass(String defaultName){}\n" +
+                                         " public void testOne(){}" +
+                                         "}");
+    Project project = getProject();
+    TestClassFilter classFilter = new TestClassFilter(GlobalSearchScope.projectScope(project), project, false, true);
+    assertTrue(classFilter.isAccepted(aClass));
+  } 
 
   public void testOneMethodWithDependencies() throws Exception {
     final PsiClass aClass =
