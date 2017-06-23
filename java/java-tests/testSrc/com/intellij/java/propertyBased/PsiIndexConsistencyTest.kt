@@ -57,7 +57,7 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
                                                       GenBoolean.bool().generateValue(data),
                                                       GenBoolean.bool().generateValue(data)) }
     ))
-    PropertyChecker.forAll(GenCollection.listOf(genAction)) { actions ->
+    PropertyChecker.forAll(CheckerSettings.DEFAULT_SETTINGS.withIterationCount(20), GenCollection.listOf (genAction)) { actions ->
       runActions(*actions.toTypedArray())
       true
     }
