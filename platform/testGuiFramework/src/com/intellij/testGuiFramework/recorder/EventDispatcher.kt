@@ -70,7 +70,7 @@ object EventDispatcher {
   fun processKeyBoardEvent(keyEvent: KeyEvent) {
     if (isMainFrame(keyEvent.component)) return
 
-    if (keyEvent.id == KeyEvent.KEY_TYPED) ScriptGenerator.processTyping(keyEvent.keyChar)
+    if (keyEvent.id == KeyEvent.KEY_TYPED) ScriptGenerator.processTyping(keyEvent)
     if (SystemInfo.isMac && keyEvent.id == KeyEvent.KEY_PRESSED) {
       //we are redirecting native Mac action as an Intellij actions
       LOG.info(keyEvent.toString())

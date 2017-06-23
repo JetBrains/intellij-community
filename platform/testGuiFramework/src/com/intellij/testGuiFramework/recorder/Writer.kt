@@ -21,6 +21,8 @@ import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 object Writer {
 
   private val scriptBuffer = StringBuilder()
+  val indent = 2
+  val withIndent = true
 
   fun getScript(): String {
     return scriptBuffer.toString()
@@ -49,4 +51,13 @@ object Writer {
       WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
     }
   }
+
+  fun writeWithIndent(code: String){
+    var indentedString = ""
+    if (withIndent) {
+      indentedString = (0..(indent * ContextChecker.getContextDepth() - 1)).map { i -> ' ' }.joinToString(separator = "")
+    }
+    Writer.writeln("$indentedString$code")
+  }
+
 }

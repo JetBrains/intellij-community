@@ -34,13 +34,11 @@ import javax.swing.KeyStroke.getKeyStrokeForEvent
 object ScriptGenerator {
   private val generators: List<ComponentCodeGenerator<*>> = Generators.getGenerators()
 
-  fun processTyping(keyChar: Char) {
-    Typer.type(keyChar)
+  fun processTyping(keyEvent: KeyEvent) {
+    Typer.type(keyEvent)
   }
 
   fun processKeyActionEvent(action: AnAction, event: AnActionEvent) {
-    Typer.flushBuffer()
-
     val keyEvent = event.inputEvent as KeyEvent
     val actionId = event.actionManager.getId(action)
     if (actionId != null) {
@@ -55,10 +53,7 @@ object ScriptGenerator {
   }
 
   fun clickComponent(component: Component, convertedPoint: Point, mouseEvent: MouseEvent) {
-    Typer.flushBuffer()
-    if (isPopupList(component)) {
-    }
-    else {
+    if (!isPopupList(component)) {
       ContextChecker.checkContext(component, mouseEvent, convertedPoint)
     }
 
@@ -76,12 +71,9 @@ object ScriptGenerator {
     addToScript(Templates.invokeMainMenuAction(actionId))
   }
 
-  fun addToScript(code: String, withIndent: Boolean = true, indent: Int = 2) {
-    if (withIndent) {
-      val indentedString = (0..(indent * ContextChecker.getContextDepth() - 1)).map { i -> ' ' }.joinToString(separator = "")
-      ScriptGenerator.addToScriptDelegate("$indentedString$code")
-    }
-    else ScriptGenerator.addToScriptDelegate(code)
+  fun addToScript(code: String) {
+    Typer.flushBuffer()
+    Writer.writeWithIndent(code)
   }
 
   private fun isPopupList(component: Component) = component.javaClass.name.toLowerCase().contains("listpopup")
@@ -91,28 +83,23 @@ object ScriptGenerator {
     val ignoreShortcuts = listOf("space")
     return ignoreActions.contains(actionOrShortCut) || ignoreShortcuts.contains(actionOrShortCut)
   }
-
-  //use it for outer generators
-  private fun addToScriptDelegate(code: String?) {
-    if (code != null) Writer.writeln(code)
-  }
-
 }
 
 private object Typer {
-  val strBuffer = StringBuilder()
-  val rawBuffer = StringBuilder()
+  private val strBuffer = StringBuilder()
 
-  fun type(keyChar: Char) {
-    strBuffer.append(KeyUtil.patch(keyChar))
-    rawBuffer.append("${if (rawBuffer.isNotEmpty()) ", " else ""}\"${keyChar.toInt()}\"")
+  fun type(keyEvent: KeyEvent) {
+    if(keyEvent.keyCode == KeyEvent.VK_BACK_SPACE && !strBuffer.isEmpty()){
+      strBuffer.setLength(strBuffer.length - 1)
+    } else {
+      strBuffer.append(KeyUtil.patch(keyEvent.keyChar))
+    }
   }
 
   fun flushBuffer() {
     if (strBuffer.isEmpty()) return
-    ScriptGenerator.addToScript("//typed:[${strBuffer.length},\"$strBuffer\", raw=[$rawBuffer]]")
-    ScriptGenerator.addToScript(Templates.typeText(strBuffer.toString()))
+    Writer.writeWithIndent("//typed:[${strBuffer.length},\"$strBuffer\"]")
+    Writer.writeWithIndent(Templates.typeText(strBuffer.toString()))
     strBuffer.setLength(0)
-    rawBuffer.setLength(0)
   }
 }
