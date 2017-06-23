@@ -7,6 +7,13 @@ Each feature could be file, folder with feature files or folder with "features" 
 Other args are tag expressionsin format (--tags=.. --tags=..).
 See https://pythonhosted.org/behave/behave.html#tag-expression
 """
+
+
+#
+# TODO: Rewrite using Formatters API (http://behave.readthedocs.io/en/latest/formatters.html) before any change
+#
+
+
 import functools
 import glob
 import sys
