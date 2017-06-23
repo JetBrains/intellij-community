@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,11 @@ public class MavenSettings implements SearchableConfigurable.Parent {
   private final Configurable myConfigurable;
   private final List<Configurable> myChildren;
 
-  public MavenSettings(Project project) {
+  public MavenSettings(@NotNull Project project) {
     myProject = project;
 
     myConfigurable = new MavenGeneralConfigurable() {
+      @Override
       protected MavenGeneralSettings getState() {
         return MavenProjectsManager.getInstance(myProject).getGeneralSettings();
       }
@@ -60,44 +61,54 @@ public class MavenSettings implements SearchableConfigurable.Parent {
     }
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
+  @Override
   public JComponent createComponent() {
     return myConfigurable.createComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myConfigurable.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myConfigurable.apply();
   }
 
+  @Override
   public void reset() {
     myConfigurable.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myConfigurable.disposeUIResources();
   }
 
+  @Override
   public Configurable[] getConfigurables() {
     return myChildren.toArray(new Configurable[myChildren.size()]);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return MavenSettings.class.getSimpleName();
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
     return myConfigurable.getHelpTopic();
   }
@@ -107,6 +118,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
       super(project, false);
     }
 
+    @Override
     protected MavenRunnerSettings getState() {
       return MavenRunner.getInstance(myProject).getState();
     }

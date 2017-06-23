@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,29 +24,33 @@ import org.jetbrains.annotations.Nullable;
  * @author Sergey Evdokimov
  */
 public abstract class MavenGeneralConfigurable extends MavenGeneralPanel implements SearchableConfigurable {
-
   protected abstract MavenGeneralSettings getState();
 
+  @Override
   public boolean isModified() {
     MavenGeneralSettings formData = new MavenGeneralSettings();
     setData(formData);
     return !formData.equals(getState());
   }
 
+  @Override
   public void apply() {
     setData(getState());
   }
 
+  @Override
   public void reset() {
     getData(getState());
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return "reference.settings.dialog.project.maven";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
