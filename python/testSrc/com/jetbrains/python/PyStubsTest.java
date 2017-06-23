@@ -783,6 +783,11 @@ public class PyStubsTest extends PyTestCase {
       assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
     }
 
+    final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
+    final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
+    assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
+    assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
+
     final PyClass pyClass = file.findTopLevelClass("C");
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);

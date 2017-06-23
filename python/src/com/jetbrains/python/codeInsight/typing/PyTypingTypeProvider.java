@@ -41,8 +41,6 @@ import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -615,7 +613,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyExpression createExpressionFromFragment(@NotNull String contents, @NotNull PsiElement anchor) {
+  public static PyExpression createExpressionFromFragment(@NotNull String contents, @NotNull PsiElement anchor) {
     final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", contents, false);
     codeFragment.setContext(FileContextUtil.getContextFile(anchor));
     final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
@@ -787,22 +785,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         // Presumably, a TypeVar definition or a type alias
         if (element instanceof PyTargetExpression) {
           final PyTargetExpression targetExpr = (PyTargetExpression)element;
-          PyExpression assignedValue = null;
+          final PyExpression assignedValue;
           if (context.maySwitchToAST(expression)) {
             assignedValue = targetExpr.findAssignedValue();
           }
           else {
-            final PyTargetExpressionStub stub = targetExpr.getStub();
-            if (stub != null) {
-              final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
-              if (aliasStub != null) {
-                assignedValue = createExpressionFromFragment(aliasStub.getText(), expression);
-              }
-            }
-            else {
-              // Use PSI to get the assigned value but only if the same expression would be saved in stubs
-              assignedValue = PyTypingAliasStubType.getAssignedValueIfTypeAliasLike(targetExpr);
-            }
+            assignedValue = PyTypingAliasStubType.getAssignedValueStubSafe(targetExpr);
           }
           if (assignedValue != null) {
             elements.add(assignedValue);
