@@ -23,11 +23,14 @@ import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -52,17 +55,17 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
   @Nullable
   @Override
   public PyTypingAliasStub createStub(PyTargetExpression psi) {
-    final PyExpression value = getAssignedValueIfTypeAliasLike(psi);
+    final PyExpression value = getAssignedValueIfTypeAliasLike(psi, true);
     return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
   }
 
   @Nullable
-  public static PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target) {
+  private static PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
     if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
     final PyExpression value = target.findAssignedValue();
-    if (value == null || !looksLikeTypeHint(value)) {
+    if (value == null || !looksLikeTypeHint(value, forStubCreation)) {
       return null;
     }
     return value;
@@ -84,7 +87,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
     return targets.length == 1 && targets[0] == target;
   }
 
-  private static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
+  private static boolean looksLikeTypeHint(@NotNull PyExpression expression, boolean forStubCreation) {
     final PyCallExpression call = as(expression, PyCallExpression.class);
     if (call != null) {
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);
@@ -100,7 +103,10 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
       return TYPE_ANNOTATION_LIKE.matcher(content).matches();
     }
 
-    if (expression instanceof PyReferenceExpression || expression instanceof PySubscriptionExpression) {
+    // Plain reference expressions are handled by PyTargetExpressionStub.getInitializer() 
+    // when initializer type is ReferenceExpression. We don't want to override these stubs,
+    // so as not to break existing resolve functionality (see PyTargetExpression.getAssignedQName()).
+    if ((!forStubCreation && expression instanceof PyReferenceExpression) || expression instanceof PySubscriptionExpression) {
       return isSyntacticallyValidAnnotation(expression);
     }
     
@@ -128,5 +134,29 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
   public PyTypingAliasStub deserializeStub(StubInputStream stream) throws IOException {
     final StringRef ref = stream.readName();
     return ref != null ? new PyTypingTypeAliasStubImpl(ref.getString()) : null;
+  }
+
+  @Nullable
+  public static PyExpression getAssignedValueStubSafe(@NotNull PyTargetExpression target) {
+    final PyTargetExpressionStub stub = target.getStub();
+    PyExpression result = null;
+    if (stub != null) {
+      final PyTypingAliasStub aliasStub = stub.getCustomStub(PyTypingAliasStub.class);
+      String aliasText = null;
+      if (aliasStub != null) {
+        aliasText = aliasStub.getText();
+      }
+      else if (stub.getInitializerType() == InitializerType.ReferenceExpression) {
+        aliasText = Objects.toString(stub.getInitializer(), null);
+      }
+      if (aliasText != null) {
+        result = PyTypingTypeProvider.createExpressionFromFragment(aliasText, target);
+      }
+    }
+    else {
+      // Use PSI to get the assigned value but only if the same expression would be saved in stubs
+      result = getAssignedValueIfTypeAliasLike(target, false);
+    }
+    return result;
   }
 }

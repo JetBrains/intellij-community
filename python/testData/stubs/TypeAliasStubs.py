@@ -6,7 +6,10 @@ S1_ok = "foo"
 S2_ok = "foo.bar"
 S3_ok = "foo.bar[baz]"
 
-plain_ref_ok = foo.bar.baz
+# Such expressions are kept as qualified expressions in PyTargetExpressionStub 
+# with initializer type of ReferenceExpression instead of custom stubs for
+# typing aliases
+plain_ref = foo.bar.baz
 illegal_ref = foo[42].bar.baz
 
 T1_ok = TypeVar('T1')
