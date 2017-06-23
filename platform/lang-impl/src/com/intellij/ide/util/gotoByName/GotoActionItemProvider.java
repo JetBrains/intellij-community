@@ -34,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -184,7 +185,13 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
     JBIterable<AnAction> actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    JBIterable<ActionWrapper> actionWrappers = actions.transform(action -> {
+
+    QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
+    if (provider != null) {
+      actions = actions.append(provider.getActions(true));
+    }
+
+    JBIterable<ActionWrapper> actionWrappers = actions.unique().transform(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext);
