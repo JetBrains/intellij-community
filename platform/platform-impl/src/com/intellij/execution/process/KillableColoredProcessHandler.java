@@ -35,7 +35,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
    * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
    */
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    super(mediate(commandLine, withMediator));
+    super(mediate(commandLine, withMediator, false));
     setShouldKillProcessSoftly(true);
   }
 
