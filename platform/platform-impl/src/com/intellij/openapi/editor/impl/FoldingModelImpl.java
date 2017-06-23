@@ -170,8 +170,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    if (!myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
-
     return createFoldRegion(startOffset, endOffset, placeholderText, null, false);
   }
 
@@ -185,12 +183,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return false;
     }
-    if (!region.isValid() ||
-        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) ||
-        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset())) {
-      return false;
-    }
-    return true;
+    return region.isValid() &&
+           !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) &&
+           !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset());
   }
 
   @Override
@@ -575,6 +570,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
                                      @NotNull String placeholder,
                                      @Nullable FoldingGroup group,
                                      boolean neverExpands) {
+    if (!myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
+
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     myRegionTree.addInterval(region, startOffset, endOffset, false, false, false, 0);
     if (!checkIfValid(region)) {

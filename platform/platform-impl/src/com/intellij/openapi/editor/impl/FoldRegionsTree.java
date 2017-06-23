@@ -17,10 +17,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.util.Segment;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -69,39 +69,38 @@ abstract class FoldRegionsTree {
   protected abstract boolean isFoldingEnabled();
 
   CachedData rebuild() {
-    List<FoldRegion> topLevels = new ArrayList<>(myMarkerTree.size() / 2);
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
 
-    Set<FoldRegion> distinctRegions = new THashSet<>(OFFSET_BASED_HASHING_STRATEGY);
-    Set<FoldRegion> duplicateRegions = new THashSet<>(ContainerUtil.identityStrategy());
+    List<FoldRegion> duplicatesToKill = new ArrayList<>();
     SweepProcessor.Generator<FoldRegion> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
     SweepProcessor.sweep(generator, new SweepProcessor<FoldRegion>() {
       int outerCollapsedCount;
-      int lastCollapsedRegionEndOffset=-1;
       @Override
       public boolean process(int offset, @NotNull FoldRegion region, boolean atStart, @NotNull Collection<FoldRegion> overlapping) {
         if (!atStart) {
-          if (duplicateRegions.contains(region)) {
-            return true;
-          }
           if (!region.isExpanded()) {
             outerCollapsedCount--;
-            // there can be multiple regions with the same offsets, collapsed and expanded.
-            // in that case treat expanded regions as if they were inside collapsed
-            lastCollapsedRegionEndOffset = offset;
+          }
+          if (!visible.isEmpty()) {
+            FoldRegion lastVisible = visible.get(visible.size() - 1);
+            if (lastVisible != region && Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(lastVisible, region) == 0) {
+              // there can be multiple regions with the same offsets, collapsed and expanded.
+              // in that case dispose the expanded and preserve collapsed (to reduce flickering)
+              if (region.isExpanded() == lastVisible.isExpanded() || region.isExpanded()) {
+                duplicatesToKill.add(region);
+              }
+              else {
+                // dispose last visible and replace it with region
+                duplicatesToKill.add(lastVisible);
+                visible.set(visible.size() - 1, region);
+              }
+            }
           }
 
           return true;
         }
-        if (!distinctRegions.add(region)) {
-          duplicateRegions.add(region);
-          return true;
-        }
-        if (outerCollapsedCount == 0 && lastCollapsedRegionEndOffset != region.getEndOffset()) {
+        if (outerCollapsedCount == 0) {
           visible.add(region);
-          if (!region.isExpanded()) {
-            topLevels.add(region);
-          }
         }
 
         if (!region.isExpanded()) {
@@ -111,17 +110,15 @@ abstract class FoldRegionsTree {
       }
     });
 
-    for (FoldRegion region : duplicateRegions) {
+    for (FoldRegion region : duplicatesToKill) {
       region.dispose();
     }
 
-    FoldRegion[] topLevelRegions = toFoldArray(topLevels);
     FoldRegion[] visibleRegions = toFoldArray(visible);
 
-    Arrays.sort(topLevelRegions, BY_END_OFFSET);
     Arrays.sort(visibleRegions, BY_END_OFFSET_REVERSE);
 
-    return updateCachedOffsets(visibleRegions, topLevelRegions);
+    return updateCachedAndSortOffsets(visibleRegions);
   }
 
   @NotNull
@@ -131,24 +128,31 @@ abstract class FoldRegionsTree {
 
   void updateCachedOffsets() {
     CachedData cachedData = myCachedData;
-    updateCachedOffsets(cachedData.visibleRegions, cachedData.topLevelRegions);
+    updateCachedAndSortOffsets(cachedData.visibleRegions);
   }
   
-  private CachedData updateCachedOffsets(FoldRegion[] visibleRegions, FoldRegion[] topLevelRegions) {
+  private CachedData updateCachedAndSortOffsets(FoldRegion[] visibleRegions) {
     if (!isFoldingEnabled()) {
       return null;
     }
     if (visibleRegions == null) {
       return rebuild();
     }
-    
+
+    List<FoldRegion> topLevel = new ArrayList<>(visibleRegions.length/2);
+
     Set<FoldRegion> distinctRegions = new THashSet<>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
 
-    for (FoldRegion foldRegion : visibleRegions) {
-      if (!foldRegion.isValid() || !distinctRegions.add(foldRegion)) {
+    for (FoldRegion region : visibleRegions) {
+      if (!region.isValid() || !distinctRegions.add(region)) {
         return rebuild();
       }
+      if (!region.isExpanded()) {
+        topLevel.add(region);
+      }
     }
+    FoldRegion[] topLevelRegions = topLevel.toArray(new FoldRegion[topLevel.size()]);
+    Arrays.sort(topLevelRegions, BY_END_OFFSET);
 
     int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] endOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
@@ -287,6 +291,7 @@ abstract class FoldRegionsTree {
   }
 
   int getFoldedLinesCountBefore(int offset) {
+    if (!isFoldingEnabled()) return 0;
     CachedData cachedData = ensureAvailableData();
     int idx = getLastTopLevelIndexBefore(cachedData, offset);
     if (idx == -1) return 0;
