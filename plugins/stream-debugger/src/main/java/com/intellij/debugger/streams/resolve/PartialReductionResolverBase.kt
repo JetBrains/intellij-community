@@ -27,7 +27,7 @@ abstract class PartialReductionResolverBase : ValuesOrderResolver {
     val valuesBefore = TraceUtil.sortedByTime(info.valuesOrderBefore.values)
     val valuesAfter = TraceUtil.sortedByTime(info.valuesOrderAfter.values)
 
-    val reverseMapping: MutableMap<TraceElement, List<TraceElement>> = mutableMapOf()
+    val reverseMapping: MutableMap<TraceElement, MutableList<TraceElement>> = mutableMapOf()
     var i = 0
     for (valueAfter in valuesAfter) {
       val reverseList = mutableListOf<TraceElement>()
@@ -36,12 +36,11 @@ abstract class PartialReductionResolverBase : ValuesOrderResolver {
         i++
       }
 
-      if (i == valuesBefore.size - 1) {
-        reverseList += valuesBefore.last()
-        i++
-      }
-
       reverseMapping[valueAfter] = reverseList
+    }
+
+    if (valuesAfter.isNotEmpty() && valuesBefore.isNotEmpty()) {
+      reverseMapping[valuesAfter.last()]!! += valuesBefore.last()
     }
 
     return buildResult(reverseMapping)
