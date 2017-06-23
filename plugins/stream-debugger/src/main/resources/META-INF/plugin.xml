@@ -34,6 +34,10 @@
     ]]></description>
 
   <change-notes><![CDATA[
+      0.1.3 <br>
+        <ul>
+            <li> Remove usage of unsupported API </li>
+        </ul>
       0.1.2 <br>
         <ul>
             <li> Add transitions for toArray/collect/find*/*Match terminal methods </li>
