@@ -285,7 +285,7 @@ class Pluralizer {
     JBIterable.of(new String[][]{
       {"/(.)s$", "$1"},
       {"/([^aeiou]s)es$", "$1"},
-      {"/((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)(?:sis|ses)$", "$1sis"},
+      {"/(analy|^ba|diagno|parenthe|progno|synop|the)(?:sis|ses)$", "$1sis"},
       {"/(^analy)(?:sis|ses)$", "$1sis"},
       {"/(wi|kni|(?:after|half|high|low|mid|non|night|[^\\w]|^)li)ves$", "$1fe"},
       {"/(ar|(?:wo|[ae])l|[eo][ao])ves$", "$1f"},
@@ -390,6 +390,7 @@ class Pluralizer {
       "species",
       "staff",
       "swine",
+      "tennis",
       "trout",
       "traffic",
       "transportation",
