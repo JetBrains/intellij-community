@@ -91,13 +91,13 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
                 loginComponent.orgName.value = orgName.value
                 loginComponent.login.value = login.value
                 IdeaPersistence.delete("circlet_token")
-                loginComponent.token.value++
+                loginComponent.token.value = "dsf"
                 return@async
             }
             loginComponent.url.value = url.value
             loginComponent.orgName.value = orgName.value
             loginComponent.login.value = login.value
-            loginComponent.token.value++
+            loginComponent.token.value ="sdf"
         }
     }
 }
