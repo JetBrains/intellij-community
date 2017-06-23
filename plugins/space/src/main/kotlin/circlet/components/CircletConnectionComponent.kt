@@ -21,7 +21,6 @@ class CircletConnectionComponent(val project: Project) :
 
     val loginDataComponent = component<CircletLoginComponent>()
     val refreshLifetimes = SequentialLifetimes(componentLifetime)
-    val client = mutableProperty<CircletClient?>(null)
 
     init {
         loginDataComponent.token.view(componentLifetime) { tklt, tk ->
@@ -33,6 +32,7 @@ class CircletConnectionComponent(val project: Project) :
                             if (!refreshLt.isTerminated) {
                                 async {
                                     try {
+/*
                                         val client = CircletClient(refreshLt)
                                         client.connected.whenTrue(refreshLt) { ntlt ->
                                             notifyConnected()
@@ -42,6 +42,7 @@ class CircletConnectionComponent(val project: Project) :
                                             notifyReconnect(ntlt)
                                         }
                                         client.start(IdeaPersistence, url, orgName)
+*/
                                     } catch (th: Throwable) {
                                         refreshLt.terminate()
                                         authCheckFailedNotification()

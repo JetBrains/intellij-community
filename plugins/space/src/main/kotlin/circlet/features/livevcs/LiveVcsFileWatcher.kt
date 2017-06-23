@@ -1,7 +1,6 @@
 package circlet.features.livevcs
 
 import circlet.*
-import circlet.api.client.graphql.*
 import circlet.components.*
 import circlet.utils.*
 import com.intellij.codeInsight.daemon.impl.*
@@ -43,13 +42,12 @@ class LiveVcsFileWatcher(private val project: Project,
         private val PUSH_DELAY_MS = 1 * 1000
     }
 
-    private val client: CircletClient? get() = if (connection.client.hasValue) connection.client.value else null
-
     val haacklt = SequentialLifetimes(componentLifetime)
 
     init {
         val seq = SequentialLifetimes(componentLifetime)
 
+/*
         connection.client.view(componentLifetime, { lt, client ->
             client ?: return@view
             val nextLt = seq.next()
@@ -74,13 +72,15 @@ class LiveVcsFileWatcher(private val project: Project,
                 }
             }, 2000)
         })
+*/
     }
 
-    private fun pullConflicts(poller: SequentialLifetimes, client: CircletClient) {
+    private fun pullConflicts(poller: SequentialLifetimes) {
         log.info { "pullConflicts" }
         async {
             val lifetime = poller.next()
             try {
+/*
                 val modifiedFiles = client.query.livevcs {
                     this.modifiedFiles {
                         this.path()
@@ -104,23 +104,24 @@ class LiveVcsFileWatcher(private val project: Project,
                         pullConflicts(poller, client)
                     }, 5000)
                 }
+*/
             } catch (th: Throwable) {
                 poller.next()
                 Alarm().addRequest({
-                    pullConflicts(poller, client)
+                    pullConflicts(poller)
                 }, 3000)
                 log.error(th)
             }
         }
     }
 
-    private suspend fun processConflicts(lifetime: Lifetime, modifiedFiles: Array<ModifiedFileWire>, client: CircletClient) {
-        MyTask(lifetime, modifiedFiles, this, client).scheduleTask()
+    private suspend fun processConflicts(lifetime: Lifetime, modifiedFiles: Array<ModifiedFileWire>) {
+        MyTask(lifetime, modifiedFiles, this).scheduleTask()
     }
 
     private class MyTask(private val lifetime: Lifetime,
                          private val modifiedFiles: Array<ModifiedFileWire>,
-                         private val owner: LiveVcsFileWatcher, val client: CircletClient) : ReadTask() {
+                         private val owner: LiveVcsFileWatcher) : ReadTask() {
 
         override fun onCanceled(indicator: ProgressIndicator) {
         }
@@ -190,8 +191,7 @@ class LiveVcsFileWatcher(private val project: Project,
 
         private data class Patch(val aliveChanges: List<TextChange>,
                                  val conflicts: List<Conflict>,
-                                 val doc: Document,
-                                 val user: UserWire)
+                                 val doc: Document)
 
         private fun doWork(indicator: ProgressIndicator): List<Patch> {
             try {
@@ -200,6 +200,7 @@ class LiveVcsFileWatcher(private val project: Project,
                     val file = owner.fileDocumentManager.getFile(it.editor.document)
                     if (file != null) {
                         val relativePath = file.getRelativePath(owner.vcsManager)
+/*
                         val modifiedFile = modifiedFiles.firstOrNull { it.path == relativePath }
                         if (modifiedFile != null) {
                             for (change in modifiedFile.changes) {
@@ -210,6 +211,7 @@ class LiveVcsFileWatcher(private val project: Project,
                                 indicator.checkCanceled()
                             }
                         }
+*/
                     }
                 }
                 return patches
@@ -221,14 +223,17 @@ class LiveVcsFileWatcher(private val project: Project,
             }
         }
 
+/*
         private fun createPath(vFile: VirtualFile, c: FileChangeOverviewWire): Patch? {
             val remoteText = c.newText
             // getting already loaded document
             val document = owner.fileDocumentManager.getCachedDocument(vFile) ?: return null
 
             val change = owner.changeListManager.getChange(vFile)
-            val baseText = change?.oldText ?: document.text/* if file's not modified */
-            val myText = change?.newText ?: document.text/* if file's not modified */
+            val baseText = change?.oldText ?: document.text
+
+            val myText = change?.newText ?: document.text
+
             val remoteChanges = diff(baseText, remoteText)
             val localChanges = diff(baseText, myText)
 
@@ -241,6 +246,7 @@ class LiveVcsFileWatcher(private val project: Project,
 
             return Patch(aliveChanges, conflicts, document, c.user)
         }
+*/
 
         private fun findFileByVcsRoots(path: String): VirtualFile? {
             var vFile: VirtualFile? = null
@@ -284,32 +290,30 @@ class LiveVcsFileWatcher(private val project: Project,
 
     private fun pushChange(change: Change, origin: String) {
         if (project.isDisposed) return
-        val client = client ?: return
         log.trace { "Push change from" }
-        val mutation = client.mutation
         async {
             when (change.type) {
                 Change.Type.MODIFICATION -> {
                     val path = change.file ?: return@async
                     val oldText = change.oldText ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileChanged(path.getRelativePath(vcsManager), oldText, newText)
+                //    mutation.addFileChanged(path.getRelativePath(vcsManager), oldText, newText)
                 }
                 Change.Type.NEW -> {
                     val path = change.file ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileCreated(path.getRelativePath(vcsManager), newText)
+//                    mutation.addFileCreated(path.getRelativePath(vcsManager), newText)
                 }
                 Change.Type.DELETED -> {
                     val path = change.file ?: return@async
-                    mutation.addFileRemoved(path.getRelativePath(vcsManager))
+//                    mutation.addFileRemoved(path.getRelativePath(vcsManager))
                 }
                 Change.Type.MOVED -> {
                     val oldPath = change.oldFile ?: return@async
                     val newPath = change.file ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileRemoved(oldPath.getRelativePath(vcsManager))
-                    mutation.addFileCreated(newPath.getRelativePath(vcsManager), newText)
+//                    mutation.addFileRemoved(oldPath.getRelativePath(vcsManager))
+//                    mutation.addFileCreated(newPath.getRelativePath(vcsManager), newText)
                 }
                 else -> {
                     log.error { "undefined type: ${change.type.name}" }
@@ -317,6 +321,10 @@ class LiveVcsFileWatcher(private val project: Project,
             }
         }
     }
+}
+
+class ModifiedFileWire {
+
 }
 
 fun VirtualFile.getRelativePath(vcsManager: ProjectLevelVcsManager): String {

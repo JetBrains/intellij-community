@@ -20,17 +20,5 @@ class TestCircletAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val ql = e.project?.component<CircletConnectionComponent>()?.client?.value?.api?.ql?.query
-        if (ql != null) {
-            async {
-                val ret = ql.teams {
-                    this.id()
-                    this.title()
-                }
-                ret.forEach {
-                    log.info { it.title }
-                }
-            }
-        }
     }
 }

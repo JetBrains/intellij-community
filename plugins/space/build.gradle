@@ -23,9 +23,8 @@ gradle.taskGraph.whenReady { taskGraph ->
 dependencies {
     compile project(':runtime')
     compile project(':runtime-jvm')
-
-    compile project(':client-core')
-    compile project(':client-core-jvm')
+    compile project(':kclient-jvm')
+    compile project(':client-api')
 
     compile 'org.glassfish.jersey.core:jersey-common:2.23'
     compile 'org.glassfish.jersey.core:jersey-client:2.23'

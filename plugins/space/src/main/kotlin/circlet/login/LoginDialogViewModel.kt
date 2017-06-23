@@ -72,9 +72,12 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
         val ur = URL(url.value)
         if (ur.host == null)
             error("host is null")
+/*
         val client = CircletClient(lt)
         client.start(SandboxPersistence, url.value, orgName.value)
         return client.tryLogin(login.value, pass.value).raw
+*/
+        TODO("impl")
     }
 
     fun commit() {
