@@ -44,5 +44,5 @@ public interface ChildrenBuilder extends XCompositeNode {
     tooManyChildren(remaining);
   }
 
-  void initChildrenArrayRenderer(ArrayRenderer renderer);
+  void initChildrenArrayRenderer(ArrayRenderer renderer, int arrayLength);
 }

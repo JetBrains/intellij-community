@@ -171,7 +171,10 @@ public abstract class Task implements StudyItem {
     return null;
   }
 
-  public String getTaskDescription() {
+  /**
+   * @param wrap if true, text will be wrapped with ancillary information (e.g. to display latex)
+   */
+  public String getTaskDescription(boolean wrap) {
     String fileName = getTaskDescriptionName();
     //TODO: replace this with simple get after implementing migration for taskTexts
     Map.Entry<String, String> entry =
@@ -179,11 +182,19 @@ public abstract class Task implements StudyItem {
     if (entry == null) {
       return null;
     }
-    String taskText = StudyUtils.wrapTextToDisplayLatex(entry.getValue());
+    String taskText = entry.getValue();
+    if (!wrap) {
+      return taskText;
+    }
+    taskText = StudyUtils.wrapTextToDisplayLatex(StudyUtils.convertToHtml(taskText));
     if (getLesson().getCourse().isAdaptive()) {
       taskText = EduAdaptiveStepicConnector.wrapAdaptiveCourseText(this, taskText);
     }
     return taskText;
+  }
+
+  public String getTaskDescription() {
+    return getTaskDescription(true);
   }
 
   public String getTaskDescriptionName() {

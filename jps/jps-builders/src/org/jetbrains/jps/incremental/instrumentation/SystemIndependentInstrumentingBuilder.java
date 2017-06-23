@@ -146,8 +146,9 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
         public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
           if (typePath == null) {
             TypeReference ref = new TypeReference(typeRef);
-            parameters[ref.getFormalParameterIndex()].isSystemIndependent =
-              ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && "Lcom/intellij/util/SystemIndependent;".equals(desc);
+            if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && "Lcom/intellij/util/SystemIndependent;".equals(desc)) {
+              parameters[ref.getFormalParameterIndex()].isSystemIndependent = true;
+            }
           }
           return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
         }
