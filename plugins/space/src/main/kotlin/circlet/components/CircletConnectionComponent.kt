@@ -1,6 +1,7 @@
 package circlet.components
 
 import circlet.*
+import circlet.client.*
 import runtime.async.*
 import circlet.login.*
 import circlet.utils.*
@@ -32,17 +33,13 @@ class CircletConnectionComponent(val project: Project) :
                             if (!refreshLt.isTerminated) {
                                 async {
                                     try {
-/*
-                                        val client = CircletClient(refreshLt)
-                                        client.connected.whenTrue(refreshLt) { ntlt ->
-                                            notifyConnected()
-                                            this@CircletConnectionComponent.client.value = client
+                                        KCircletClient.start(loginDataComponent.loginModel, "http://localhost:8083", false)
+                                        KCircletClient.connection.status.forEach(refreshLt) { status ->
+                                            when(status) {
+                                                ConnectionStatus.CONNECTED -> notifyConnected()
+                                                ConnectionStatus.AUTH_FAILED -> notifyReconnect(refreshLt)
+                                            }
                                         }
-                                        client.failed.whenTrue(refreshLt) { ntlt ->
-                                            notifyReconnect(ntlt)
-                                        }
-                                        client.start(IdeaPersistence, url, orgName)
-*/
                                     } catch (th: Throwable) {
                                         refreshLt.terminate()
                                         authCheckFailedNotification()

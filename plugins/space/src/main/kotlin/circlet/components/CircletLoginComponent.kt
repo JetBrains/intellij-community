@@ -1,5 +1,6 @@
 package circlet.components
 
+import circlet.client.*
 import circlet.utils.*
 import com.intellij.openapi.components.*
 import klogging.*
@@ -23,10 +24,12 @@ class CircletLoginComponent() :
     ILifetimedApplicationComponent by LifetimedApplicationComponent(),
     PersistentStateComponent<IdePLuginClientData> {
 
+    val loginModel = LoginModel(IdeaPersistence, "http://localhost:8083/auth")
+
     val enabled = Property.createMutable(false)
     val orgName = Property.createMutable("")
     val url = Property.createMutable("")
-    val token = mutableProperty<Int>(0)
+    val token = mutableProperty<String>("")
     val login = Property.createMutable("")
 
     override fun loadState(state: IdePLuginClientData) {
