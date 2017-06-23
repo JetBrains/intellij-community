@@ -216,7 +216,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   public void enterEditingMode(Project project) {
     Task task = StudyUtils.getCurrentTask(project);
     assert task != null;
-    String taskDescription = task.getTaskDescription();
+    String taskDescription = task.getTaskDescription(false);
     final EditorFactory factory = EditorFactory.getInstance();
     Document document = factory.createDocument(taskDescription);
     WebBrowserManager.getInstance().setShowBrowserHover(false);
