@@ -54,7 +54,7 @@ object ScriptGenerator {
 
   fun clickComponent(component: Component, convertedPoint: Point, mouseEvent: MouseEvent) {
     if (!isPopupList(component)) {
-      ContextChecker.checkContext(component, mouseEvent, convertedPoint)
+      ContextChecker.checkContext(component, mouseEvent)
     }
 
     val suitableGenerator = generators.filter { generator -> generator.accept(component) }.sortedByDescending(

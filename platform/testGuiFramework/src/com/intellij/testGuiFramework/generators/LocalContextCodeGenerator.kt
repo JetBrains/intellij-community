@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.generators
 
 import java.awt.Component
-import java.awt.Point
 import java.awt.event.MouseEvent
 
 /**
@@ -29,8 +28,8 @@ abstract class LocalContextCodeGenerator<C : Component> : ContextCodeGenerator<C
   override fun priority(): Int = 0 // prioritize component code generators 0 - for common, (n) - for the most specific
   @Suppress("UNCHECKED_CAST")
 
-  fun generateCode(cmp: Component, me: MouseEvent, cp: Point): String {
-    return generate(typeSafeCast(cmp), me, cp)
+  fun generateCode(cmp: Component, me: MouseEvent): String {
+    return generate(typeSafeCast(cmp), me)
   }
 
   fun findComponentInHierarchy(componentDeepest: Component): Component? {
@@ -45,9 +44,9 @@ abstract class LocalContextCodeGenerator<C : Component> : ContextCodeGenerator<C
   override fun accept(cmp: Component) = (findComponentInHierarchy(cmp) != null)
 
 
-  override fun buildContext(component: Component, mouseEvent: MouseEvent, convertedPoint: Point) =
+  override fun buildContext(component: Component, mouseEvent: MouseEvent) =
     Context(originalGenerator = this, component = typeSafeCast(findComponentInHierarchy(component)!!),
-            code = generate(typeSafeCast(findComponentInHierarchy(component)!!), mouseEvent, convertedPoint))
+            code = generate(typeSafeCast(findComponentInHierarchy(component)!!), mouseEvent))
 
 }
 

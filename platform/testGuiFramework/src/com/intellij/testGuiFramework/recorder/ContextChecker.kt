@@ -18,7 +18,6 @@ package com.intellij.testGuiFramework.recorder
 
 import com.intellij.testGuiFramework.generators.*
 import java.awt.Component
-import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JComponent
@@ -37,9 +36,9 @@ object ContextChecker {
   fun getContextDepth(): Int = contextTree.getSize()
   fun clearContext() = contextTree.clear()
 
-  fun checkContext(component: Component, me: MouseEvent, cp: Point) {
-    val globalContext = getGlobalApplicableContext(component, me, cp)
-    val localContextList: List<Context> = getLocalApplicableContext(component, me, cp)
+  fun checkContext(component: Component, me: MouseEvent) {
+    val globalContext = getGlobalApplicableContext(component, me)
+    val localContextList: List<Context> = getLocalApplicableContext(component, me)
     contextTree.checkAliveContexts(me)
     if (globalContext != null) contextTree.addContext(globalContext)
     if (!localContextList.isNullOrEmpty()) contextTree.addContexts(localContextList)
@@ -47,15 +46,15 @@ object ContextChecker {
 
   private fun List<*>?.isNullOrEmpty(): Boolean = this == null || this.isEmpty()
 
-  private fun getGlobalApplicableContext(component: Component, me: MouseEvent, cp: Point): Context? =
+  private fun getGlobalApplicableContext(component: Component, me: MouseEvent): Context? =
     globalContextGenerators.filter { generator -> generator.accept(component) }.sortedByDescending(
-      ContextCodeGenerator<*>::priority).firstOrNull()?.buildContext(component, me, cp)
+      ContextCodeGenerator<*>::priority).firstOrNull()?.buildContext(component, me)
 
 
-  private fun getLocalApplicableContext(component: Component, me: MouseEvent, cp: Point): List<Context> =
+  private fun getLocalApplicableContext(component: Component, me: MouseEvent): List<Context> =
     localContextGenerators.filter { generator -> generator.accept(component) }
       .sortedBy(ContextCodeGenerator<*>::priority)
-      .map { applicableGenerator -> applicableGenerator.buildContext(component, me, cp) }
+      .map { applicableGenerator -> applicableGenerator.buildContext(component, me) }
 }
 
 private class ContextTree(val writeFun: (String) -> Unit) {

@@ -29,10 +29,11 @@ abstract class GlobalContextCodeGenerator<C : Component> : ContextCodeGenerator<
 
   override fun priority(): Int = 0 // prioritize component code generators 0 - for common, (n) - for the most specific
   fun generateCode(cmp: Component, me: MouseEvent, cp: Point): String {
-    return generate(typeSafeCast(cmp), me, cp)
+    return generate(typeSafeCast(cmp), me)
   }
 
-  override fun buildContext(component: Component, mouseEvent: MouseEvent, convertedPoint: Point) = Context(originalGenerator = this, component = (component as JComponent).rootPane.parent, code = generate(typeSafeCast(component.rootPane.parent), mouseEvent, convertedPoint))
+  override fun buildContext(component: Component, mouseEvent: MouseEvent) = Context(originalGenerator = this, component = (component as JComponent).rootPane.parent, code = generate(
+    typeSafeCast(component.rootPane.parent), mouseEvent))
 
 }
 
