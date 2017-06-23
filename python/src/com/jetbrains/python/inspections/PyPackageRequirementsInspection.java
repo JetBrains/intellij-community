@@ -209,17 +209,19 @@ public class PyPackageRequirementsInspection extends PyInspection {
           }
         }
 
-        final String suggestedPackageName = StreamEx
+        final List<LocalQuickFix> quickFixes = new ArrayList<>();
+
+        StreamEx
           .of(packageName)
           .append(possiblePyPIPackageNames)
-          .findFirst(PyPIPackageUtil.INSTANCE::isInPyPI)
-          .orElse(packageName);
+          .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
+          .map(name -> new AddToRequirementsFix(module, name, LanguageLevel.forElement(importedExpression)))
+          .forEach(quickFixes::add);
 
-        final List<LocalQuickFix> quickFixes = new ArrayList<>();
-        quickFixes.add(new AddToRequirementsFix(module, suggestedPackageName, LanguageLevel.forElement(importedExpression)));
         quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
+
         registerProblem(packageReferenceExpression,
-                        String.format("Package '%s' is not listed in project requirements", suggestedPackageName),
+                        String.format("Package containing module '%s' is not listed in project requirements", packageName),
                         ProblemHighlightType.WEAK_WARNING,
                         null,
                         quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
