@@ -20,6 +20,7 @@ import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -64,9 +65,7 @@ public class PsiElementListNavigator {
     JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) {
       if (listUpdaterTask != null) {
-        Alarm alarm = new Alarm(popup);
-        alarm.addRequest(() -> popup.show(new RelativePoint(e)), 300);
-        ProgressManager.getInstance().run(listUpdaterTask);
+        runActionAndListUpdaterTask(popup, () -> popup.show(new RelativePoint(e)), listUpdaterTask);
       }
       else {
         popup.show(new RelativePoint(e));
@@ -83,14 +82,22 @@ public class PsiElementListNavigator {
     final JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) {
       if (listUpdaterTask != null) {
-        Alarm alarm = new Alarm(popup);
-        alarm.addRequest(() -> popup.showInBestPositionFor(e), 300);
-        ProgressManager.getInstance().run(listUpdaterTask);
+        runActionAndListUpdaterTask(popup, () -> popup.showInBestPositionFor(e), listUpdaterTask);
       }
       else {
         popup.showInBestPositionFor(e);
       }
     }
+  }
+
+  /**
+   * @see #navigateOrCreatePopup(NavigatablePsiElement[], String, String, ListCellRenderer, ListBackgroundUpdaterTask, Consumer)
+   */
+  private static void runActionAndListUpdaterTask(@NotNull Disposable popup, @NotNull Runnable action,
+                                                  @NotNull ListBackgroundUpdaterTask listUpdaterTask) {
+    Alarm alarm = new Alarm(popup);
+    alarm.addRequest(action, 300);
+    ProgressManager.getInstance().run(listUpdaterTask);
   }
 
   @Nullable
