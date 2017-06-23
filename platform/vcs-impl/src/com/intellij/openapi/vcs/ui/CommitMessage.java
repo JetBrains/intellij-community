@@ -135,7 +135,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   /**
    * Creates a text editor appropriate for creating commit messages.
    * @return a commit message editor
-   * @deprecated Use {@link CommitMessage#createCommitMessageEditor(Project, boolean)}.
+   * @deprecated Use {@link CommitMessage} component.
    */
   @Deprecated
   public static EditorTextField createCommitTextEditor(@NotNull Project project, @SuppressWarnings("unused") boolean forceSpellCheckOn) {
@@ -143,11 +143,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @NotNull
-  public static EditorTextField createCommitMessageEditor(@NotNull Project project) {
-    return createCommitMessageEditor(project, true);
-  }
-
-  public static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
+  private static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
     Set<EditorCustomization> features = newHashSet();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
