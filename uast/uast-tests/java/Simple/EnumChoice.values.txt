@@ -20,4 +20,4 @@ UFile (package = ) [public final enum EnumChoice {...]
                             USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                             USimpleNameReferenceExpression (identifier = SECOND) [SECOND] = SECOND (enum entry)
                 UReturnExpression [return result] = Nothing
-                    USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = FIRST (enum entry)), (var result = SECOND (enum entry)))
+                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = Phi(FIRST (enum entry), SECOND (enum entry)))

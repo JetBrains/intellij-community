@@ -42,4 +42,4 @@ UFile (package = ) [public class CascadeIf {...]
                                     USimpleNameReferenceExpression (identifier = z) [z] = (var z = Undetermined)
                                     USimpleNameReferenceExpression (identifier = w) [w] = (var w = 3)
                 UReturnExpression [return z] = Nothing
-                    USimpleNameReferenceExpression (identifier = z) [z] = Phi((var z = (var y = 1)), (var z = (var x = 0)), (var z = (var v = 2)), (var z = (var w = 3)))
+                    USimpleNameReferenceExpression (identifier = z) [z] = (var z = Phi((var y = 1), (var x = 0), (var v = 2), (var w = 3)))

@@ -22,4 +22,4 @@ UFile (package = ) [public class AliveThenElse {...]
                             USimpleNameReferenceExpression (identifier = z) [z] = (var z = Undetermined)
                             USimpleNameReferenceExpression (identifier = x) [x] = (var x = 0)
                 UReturnExpression [return z] = Nothing
-                    USimpleNameReferenceExpression (identifier = z) [z] = Phi((var z = (var y = 1)), (var z = (var x = 0)))
+                    USimpleNameReferenceExpression (identifier = z) [z] = (var z = Phi((var y = 1), (var x = 0)))
