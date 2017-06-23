@@ -413,14 +413,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements, boolean inclideDisabled) {
+  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements, boolean includeDisabled) {
     List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
     if (!toUpdate.isEmpty()) {
       updateActions(toUpdate);
     }
 
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
-    if (!inclideDisabled) {
+    if (!includeDisabled) {
       for (Object o : elements) {
         if (o instanceof MatchedValue) {
           Comparable v = ((MatchedValue)o).value;
