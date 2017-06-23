@@ -56,7 +56,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   @NotNull
   public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
     return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
-                                        psi.getTypeCommentAnnotation(), psi.getAnnotationContent() , parentStub, getStubElementType());
+                                        psi.getTypeCommentAnnotation(), psi.getAnnotationValue() , parentStub, getStubElementType());
   }
 
   @NotNull

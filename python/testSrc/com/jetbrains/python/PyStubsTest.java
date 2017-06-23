@@ -729,7 +729,7 @@ public class PyStubsTest extends PyTestCase {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
-      final String annotation = param.getAnnotationContent();
+      final String annotation = param.getAnnotationValue();
       assertEquals("int", annotation);
       assertNotParsed(file);
       final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
@@ -743,7 +743,7 @@ public class PyStubsTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
-      final String annotation = func.getAnnotationContent();
+      final String annotation = func.getAnnotationValue();
       assertEquals("int", annotation);
       assertNotParsed(file);
       assertType("() -> int", func, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
@@ -756,7 +756,7 @@ public class PyStubsTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final PyFile file = getTestFile();
       final PyTargetExpression var = file.findTopLevelAttribute("x");
-      final String annotation = var.getAnnotationContent();
+      final String annotation = var.getAnnotationValue();
       assertEquals("int", annotation);
       assertNotParsed(file);
       assertType("int", var, TypeEvalContext.codeInsightFallback(myFixture.getProject()));

@@ -24,6 +24,12 @@ public interface PyAnnotationOwner {
   @Nullable
   PyAnnotation getAnnotation();
 
+  /**
+   * Returns the text of the annotation with the leading colon and arrow stripped.
+   * <p>
+   * It's supposed to be the same value as one can get by calling {@code elem.getAnnotation().getValue().getText()},
+   * but taken from the corresponding stub instead of AST.
+   */
   @Nullable
-  String getAnnotationContent();
+  String getAnnotationValue();
 }

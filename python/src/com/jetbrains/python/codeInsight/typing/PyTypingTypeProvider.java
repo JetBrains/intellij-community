@@ -201,7 +201,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static Ref<PyType> getParameterTypeFromAnnotation(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
     final Ref<PyType> annotationValueTypeRef = Optional
-      .ofNullable(parameter.getAnnotationContent())
+      .ofNullable(parameter.getAnnotationValue())
       .map(text -> getStringBasedType(text, parameter, context))
       .orElse(null);
 
@@ -258,7 +258,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyExpression getReturnTypeAnnotation(@NotNull PyFunction function) {
-    final String annotation = function.getAnnotationContent();
+    final String annotation = function.getAnnotationValue();
     if (annotation != null) {
       return createExpressionFromFragment(annotation, function);
     }
@@ -303,7 +303,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (GENERIC.equals(target.getQualifiedName())) {
         return createTypingGenericType();
       }
-      final String annotation = target.getAnnotationContent();
+      final String annotation = target.getAnnotationValue();
       if (annotation != null) {
         return Ref.deref(getStringBasedType(annotation, target, context));
       }

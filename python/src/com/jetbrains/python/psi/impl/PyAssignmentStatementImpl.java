@@ -104,7 +104,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
 
   @Nullable
   @Override
-  public String getAnnotationContent() {
+  public String getAnnotationValue() {
     return getAnnotationContentFromPsi(this);
   }
 

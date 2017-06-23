@@ -193,7 +193,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   @Nullable
   @Override
-  public String getAnnotationContent() {
+  public String getAnnotationValue() {
     return getAnnotationContentFromStubOrPsi(this);
   }
 
