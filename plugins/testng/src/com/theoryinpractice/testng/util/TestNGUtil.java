@@ -239,8 +239,8 @@ public class TestNGUtil {
       return false;
     }
     else if (element instanceof PsiMethod) {
-      //even if it has a global test, we ignore private and static methods
-      if (element.hasModifierProperty(PsiModifier.PRIVATE) || 
+      //even if it has a global test, we ignore non-public and static methods
+      if (!element.hasModifierProperty(PsiModifier.PUBLIC) || 
           element.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
