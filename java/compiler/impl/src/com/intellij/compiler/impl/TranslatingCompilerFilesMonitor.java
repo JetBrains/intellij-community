@@ -19,6 +19,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -55,7 +56,7 @@ import java.util.Set;
  * 2. corresponding source file has been deleted
  */
 public class TranslatingCompilerFilesMonitor {
-  public static boolean ourDebugMode = false;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   private static final SequentialTaskExecutor ourFSEventQueue = new SequentialTaskExecutor("_build_notify_queue_", PooledThreadExecutor.INSTANCE);
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, Application application) {
@@ -120,7 +121,7 @@ public class TranslatingCompilerFilesMonitor {
     @Override
     public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-        processEventFile(event.getFile(), (eventFile)->{
+        processEventFile("PropertyChanged", event.getFile(), (eventFile)->{
           if (isInContentOfOpenedProject(eventFile)) {
             final VirtualFile parent = event.getParent();
             if (parent != null) {
@@ -169,32 +170,32 @@ public class TranslatingCompilerFilesMonitor {
 
     @Override
     public void contentsChanged(@NotNull final VirtualFileEvent event) {
-      processEventFile(event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
+      processEventFile("contentsChanged", event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
     }
 
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
-      processEventFile(event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
+      processEventFile("fileCreated", event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
     }
 
     @Override
     public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
-      processEventFile(event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
+      processEventFile("fileCopied", event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
     }
 
     @Override
     public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-      processEventFile(event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
+      processEventFile("fileMoved", event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_CHANGED));
     }
 
     @Override
     public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
-      processEventFile(event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_DELETED));
+      processEventFile("beforeFileDeletion", event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_DELETED));
     }
 
     @Override
     public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-      processEventFile(event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_DELETED));
+      processEventFile("beforeFileMovement", event.getFile(), (eventFile)-> collectPathsAndNotify(eventFile, NOTIFY_DELETED));
     }
   }
 
@@ -259,13 +260,19 @@ public class TranslatingCompilerFilesMonitor {
     }
   }
 
-  private static void processEventFile(final VirtualFile file, final Consumer<VirtualFile> consumer) {
+  private static void processEventFile(String eventName, final VirtualFile file, final Consumer<VirtualFile> consumer) {
     if (Registry.is("build.manager.async.fs.events", false)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Processing " + eventName + "; file:" + file.getPath() + "; isValid=" + file.isValid());
+      }
       ourFSEventQueue.execute(()-> ApplicationManager.getApplication().runReadAction(()->{
         if (file.isValid()) {
           consumer.consume(file);
         }
         else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("File invalidated for event " + eventName + " before we were able to process it; " + file.getPath());
+          }
           BuildManager.getInstance().clearState();
         }
       }));
