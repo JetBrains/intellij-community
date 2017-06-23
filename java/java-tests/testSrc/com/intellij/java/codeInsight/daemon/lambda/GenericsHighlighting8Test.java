@@ -1030,4 +1030,6 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testConditionalExpressionInIncompleteCall() throws Exception {
     doTest();
   }
+
+  public void testBridgeMethodOverriding() { doTest(); }
 }
