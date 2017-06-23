@@ -84,6 +84,7 @@ abstract class UValueBase : UValue {
     override fun merge(other: UValue): UValue = when (other) {
         this -> this
         is UVariableValue -> other.merge(this)
+        is UCallResultValue -> other.merge(this)
         else -> UPhiValue.create(this, other)
     }
 
