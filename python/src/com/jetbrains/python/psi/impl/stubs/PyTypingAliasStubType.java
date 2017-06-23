@@ -39,7 +39,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author Mikhail Golubev
  */
 public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
-  private static final int STRING_LITERAL_LENGTH_THRESHOLD = 120;
+  private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
 
   private static final Pattern TYPE_ANNOTATION_LIKE = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*" +
                                                                       "(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*" +
@@ -96,7 +96,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
 
     final PyStringLiteralExpression pyString = as(expression, PyStringLiteralExpression.class);
     if (pyString != null) {
-      if (pyString.getStringNodes().size() != 1 && pyString.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD) {
+      if (pyString.getStringNodes().size() != 1 || pyString.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD) {
         return false;
       }
       final String content = pyString.getStringValue();
