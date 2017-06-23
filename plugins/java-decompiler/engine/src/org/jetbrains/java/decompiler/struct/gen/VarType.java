@@ -38,6 +38,8 @@ public class VarType {  // TODO: optimize switch
   public static final VarType VARTYPE_STRING = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/String");
   public static final VarType VARTYPE_CLASS = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Class");
   public static final VarType VARTYPE_OBJECT = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Object");
+  public static final VarType VARTYPE_INTEGER = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Integer");
+  public static final VarType VARTYPE_CHARACTER = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Character");
   public static final VarType VARTYPE_VOID = new VarType(CodeConstants.TYPE_VOID);
 
   public final int type;
