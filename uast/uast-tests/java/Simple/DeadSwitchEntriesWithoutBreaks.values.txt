@@ -33,13 +33,13 @@ UFile (package = ) [public final enum DeadSwitchEntriesWithoutBreaks {...]
                             USimpleNameReferenceExpression (identifier = THIRD) [THIRD] = THIRD (enum entry)
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [result = 13] = 13
-                                    USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = 7), (var result = Undetermined))
+                                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                     ULiteralExpression (value = 13) [13] = 13
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
                             UDefaultCaseExpression [else] = NON-EVALUATED
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [result = 66] = 66
-                                    USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = 13), (var result = Undetermined))
+                                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                     ULiteralExpression (value = 66) [66] = 66
                                 UBreakExpression (label = null) [break] = Nothing(break)
                 UReturnExpression [return result] = Nothing
