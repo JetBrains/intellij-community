@@ -630,7 +630,7 @@ object Utils {
   private fun findBoundedLabel(component: Component, componentParent: Component): JLabel? {
     return withRobot { robot ->
       var resultLabel: JLabel?
-      if (component is LabeledComponent<*>) resultLabel = component.label
+      if (componentParent is LabeledComponent<*>) resultLabel = componentParent.label
       else {
         try {
           resultLabel = robot.finder().find(componentParent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
