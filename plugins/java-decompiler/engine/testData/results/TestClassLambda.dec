@@ -18,7 +18,7 @@ public class TestClassLambda {
       List var1 = Arrays.asList(1, 2, 3, 4, 5, 6, 7);// 29
       int var2 = (int)Math.random();// 30
       var1.forEach((var2x) -> {// 32
-         int var3 = 2 * var2x.intValue();// 33
+         int var3 = 2 * var2x;// 33
          System.out.println(var3 + var2 + this.field);// 34
       });// 35
    }// 36
