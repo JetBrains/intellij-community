@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +52,14 @@ import java.util.Map;
 public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbAware, PopupAction {
   private static final String EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY = "emmet.recent.update.abbreviations";
   private static final String EMMET_LAST_UPDATE_ABBREVIATIONS_KEY = "emmet.last.update.abbreviations";
+  private static final String DOCUMENTATION = "Update existing HTML tag with Emmet abbreviation:\n" +
+                                              ".class[attribute] to overwrite existing value;\n" +
+                                              ".+class[attribute] to append value;\n" +
+                                              ".-class[attribute] to remove value.\n" +
+                                              "\n" +
+                                              "For example, <code>.+c2[title=Hello]</code> abbreviation updates\n" +
+                                              "<code>&lt;div class=\"c1\"&gt;</code> to \n" +
+                                              "<code>&lt;div class=\"c1 c2\" title=\"Hello\"&gt;</code>.";
 
   @NotNull
   @Override
@@ -72,7 +79,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
                                            catch (EmmetException ignore) {
                                            }
                                          }
-                                       }, XmlBundle.message("emmet.update.tag.title")).show(new CustomTemplateCallback(editor, file));
+                                       }, DOCUMENTATION).show(new CustomTemplateCallback(editor, file));
         }
       }
 
@@ -157,7 +164,7 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
   @NotNull
   private static WriteCommandAction<Void> doUpdateTagAttributes(@NotNull final XmlTag tag,
                                                                 @NotNull final PsiFile file,
-                                                                @Nullable final String newTagName, 
+                                                                @Nullable final String newTagName,
                                                                 @NotNull final Collection<String> classes,
                                                                 @NotNull final Map<String, String> attributes) {
     return new WriteCommandAction<Void>(file.getProject(), file) {
