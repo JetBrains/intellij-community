@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.recorder
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.testGuiFramework.generators.ComponentCodeGenerator
 import com.intellij.testGuiFramework.generators.Generators
 import com.intellij.testGuiFramework.recorder.ui.KeyUtil
@@ -35,6 +36,7 @@ object ScriptGenerator {
   private val generators: List<ComponentCodeGenerator<*>> = Generators.getGenerators()
 
   fun processTyping(keyEvent: KeyEvent) {
+    ContextChecker.checkContext(FocusManagerImpl.getGlobalInstance().focusOwner, keyEvent)
     Typer.type(keyEvent)
   }
 

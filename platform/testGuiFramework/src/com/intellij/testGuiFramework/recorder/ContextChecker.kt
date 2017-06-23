@@ -18,6 +18,8 @@ package com.intellij.testGuiFramework.recorder
 
 import com.intellij.testGuiFramework.generators.*
 import java.awt.Component
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JComponent
@@ -36,10 +38,10 @@ object ContextChecker {
   fun getContextDepth(): Int = contextTree.getSize()
   fun clearContext() = contextTree.clear()
 
-  fun checkContext(component: Component, me: MouseEvent) {
+  fun checkContext(component: Component, inputEvent: InputEvent) {
     val globalContext = getGlobalApplicableContext(component)
     val localContextList: List<Context> = getLocalApplicableContext(component)
-    contextTree.checkAliveContexts(me)
+    contextTree.checkAliveContexts(inputEvent)
     if (globalContext != null) contextTree.addContext(globalContext)
     if (!localContextList.isNullOrEmpty()) contextTree.addContexts(localContextList)
   }
@@ -61,9 +63,9 @@ private class ContextTree(val writeFun: (String) -> Unit) {
   private val myContextsTree: ArrayList<Context> = ArrayList()
   private var lastContext: Context? = null
 
-  fun checkAliveContexts(mouseEvent: MouseEvent) {
+  fun checkAliveContexts(inputEvent: InputEvent) {
     for (i in 0..myContextsTree.lastIndex) {
-      if (!myContextsTree[i].isAlive(mouseEvent)) {
+      if (!myContextsTree[i].isAlive(inputEvent)) {
         // from i to myContextsTree.lastIndex contexts should be dropped
         while (myContextsTree.lastIndex >= i) removeLastContext()
         break
@@ -118,17 +120,27 @@ private class ContextTree(val writeFun: (String) -> Unit) {
     writeFun("}")
   }
 
-  private fun Context.isAlive(mouseEvent: MouseEvent): Boolean {
+  private fun Context.isAlive(inputEvent: InputEvent): Boolean {
     when (this.originalGenerator) {
       is GlobalContextCodeGenerator -> {
         return (this.component.isShowing && this.component.isEnabled)
       }
       is LocalContextCodeGenerator -> {
         if (!this.component.isEnabled || !this.component.isShowing) return false
-        val locationOnScreen = this.component.locationOnScreen
-        val visibleRect = (this.component as JComponent).visibleRect
-        visibleRect.location = locationOnScreen
-        return (visibleRect.contains(mouseEvent.locationOnScreen))
+        when(inputEvent){
+          is MouseEvent -> {
+            val locationOnScreen = this.component.locationOnScreen
+            val visibleRect = (this.component as JComponent).visibleRect
+            visibleRect.location = locationOnScreen
+            return (visibleRect.contains(inputEvent.locationOnScreen))
+          }
+          is KeyEvent -> {
+            return this.component == inputEvent.component
+          }
+          else -> {
+            return false;
+          }
+        }
       }
       else -> throw UnsupportedOperationException("Error: Unidentified context generator type!")
     }
