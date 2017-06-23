@@ -186,7 +186,7 @@ public abstract class Task implements StudyItem {
     if (!wrap) {
       return taskText;
     }
-    taskText = StudyUtils.wrapTextToDisplayLatex(taskText);
+    taskText = StudyUtils.wrapTextToDisplayLatex(StudyUtils.convertToHtml(taskText));
     if (getLesson().getCourse().isAdaptive()) {
       taskText = EduAdaptiveStepicConnector.wrapAdaptiveCourseText(this, taskText);
     }
