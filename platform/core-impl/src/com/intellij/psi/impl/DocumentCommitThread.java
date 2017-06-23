@@ -853,14 +853,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog) {
     CodeStyleManager.getInstance(file.getProject()).performActionWithFormatterDisabled((Runnable)() -> {
-      synchronized (PsiLock.LOCK) {
+      PsiFileImpl fileImpl = (PsiFileImpl)file;
+      synchronized (fileImpl.getFilePsiLock()) {
         file.getViewProvider().beforeContentsSynchronized();
 
         final Document document = file.getViewProvider().getDocument();
         PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject());
         PsiToDocumentSynchronizer.DocumentChangeTransaction transaction = documentManager.getSynchronizer().getTransaction(document);
-
-        final PsiFileImpl fileImpl = (PsiFileImpl)file;
 
         if (transaction == null) {
           final PomModel model = PomManager.getModel(fileImpl.getProject());

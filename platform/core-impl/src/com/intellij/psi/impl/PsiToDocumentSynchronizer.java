@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiToDocumentSynchronizer");
@@ -46,7 +47,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private final PsiDocumentManagerBase myPsiDocumentManager;
   private final MessageBus myBus;
-  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<>();
+  private final ConcurrentMap<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = ContainerUtil.newConcurrentMap();
 
   private volatile Document mySyncDocument;
 
@@ -234,6 +235,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   public void startTransaction(@NotNull Project project, @NotNull Document doc, @NotNull PsiElement scope) {
     LOG.assertTrue(!project.isDisposed());
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
+    Pair<DocumentChangeTransaction, Integer> prev = pair;
     if (pair == null) {
       final PsiFile psiFile = scope.getContainingFile();
       pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
@@ -242,7 +244,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     else {
       pair = new Pair<>(pair.getFirst(), pair.getSecond().intValue() + 1);
     }
-    myTransactionsMap.put(doc, pair);
+    LOG.assertTrue(myTransactionsMap.put(doc, pair) == prev);
   }
 
   public boolean commitTransaction(final Document document){
