@@ -43,7 +43,7 @@ class GitRebaseUnstructuredEditor extends DialogWrapper {
 
     myRootLabel = new JBLabel("Git Root: " + root.getPresentableUrl());
 
-    myTextEditor = new CommitMessage(project, false, false, true);
+    myTextEditor = new CommitMessage(project, false, false, false);
     myTextEditor.setText(initialText);
     myTextEditor.getEditorField().setCaretPosition(0);
     init();
