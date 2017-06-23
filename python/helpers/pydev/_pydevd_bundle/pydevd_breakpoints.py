@@ -19,6 +19,8 @@ class ExceptionBreakpoint:
     def __init__(
         self,
         qname,
+        condition,
+        expression,
         notify_always,
         notify_on_terminate,
         notify_on_first_raise_only,
@@ -31,6 +33,8 @@ class ExceptionBreakpoint:
         else:
             self.name = None
 
+        self.condition = condition
+        self.expression = expression
         self.notify_on_terminate = notify_on_terminate
         self.notify_always = notify_always
         self.notify_on_first_raise_only = notify_on_first_raise_only

@@ -609,6 +609,8 @@ class PyDB:
     def add_break_on_exception(
             self,
             exception,
+            condition,
+            expression,
             notify_always,
             notify_on_terminate,
             notify_on_first_raise_only,
@@ -617,6 +619,8 @@ class PyDB:
         try:
             eb = ExceptionBreakpoint(
                     exception,
+                    condition,
+                    expression,
                     notify_always,
                     notify_on_terminate,
                     notify_on_first_raise_only,

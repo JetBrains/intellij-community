@@ -29,6 +29,11 @@ class FCode(object):
 def add_exception_to_frame(frame, exception_info):
     frame.f_locals['__exception__'] = exception_info
 
+
+def remove_exception_from_frame(frame):
+    frame.f_locals.pop('__exception__')
+
+
 FILES_WITH_IMPORT_HOOKS = ['pydev_monkey_qt.py', 'pydev_import_hook.py']
 
 def just_raised(trace):

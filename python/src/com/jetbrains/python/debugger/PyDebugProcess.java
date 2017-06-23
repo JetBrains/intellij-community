@@ -888,6 +888,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
     myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
     if (isConnected()) {
+      String conditionExpression = breakpoint.getConditionExpression() == null
+                                   ? null
+                                   : breakpoint.getConditionExpression().getExpression();
+      breakpoint.getProperties().setCondition(conditionExpression);
+      String logExpression = breakpoint.getLogExpressionObject() == null
+                             ? null
+                             : breakpoint.getLogExpressionObject().getExpression();
+      breakpoint.getProperties().setLogExpression(logExpression);
       myDebugger.addExceptionBreakpoint(breakpoint.getProperties());
     }
   }

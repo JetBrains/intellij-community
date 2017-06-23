@@ -40,18 +40,4 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
     payload.add(buildCondition(myFuncName)).add(mySuspendPolicy.name()).add(buildCondition(myCondition))
       .add(buildCondition(myLogExpression));
   }
-
-  @NotNull
-  private static String buildCondition(String expression) {
-    String condition;
-
-    if (expression != null) {
-      condition = expression.replaceAll("\n", NEW_LINE_CHAR);
-      condition = condition.replaceAll("\t", TAB_CHAR);
-    }
-    else {
-      condition = "None";
-    }
-    return condition;
-  }
 }
