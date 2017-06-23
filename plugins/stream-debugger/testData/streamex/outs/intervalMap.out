@@ -27,18 +27,18 @@ mappings for StreamEx.of
     nothing <- 9
 mappings for intervalMap
   direct:
-    1 -> nothing
-    2 -> nothing
+    1 -> 3
+    2 -> 7
     4 -> nothing
-    5 -> nothing
-    6 -> nothing
-    8 -> nothing
-    9 -> nothing
+    5 -> 7
+    6 -> 10
+    8 -> 10
+    9 -> 11
   reverse:
-    nothing <- 3
-    nothing <- 7
-    nothing <- 10
-    nothing <- 11
+    1 <- 3
+    2,5 <- 7
+    6,8 <- 10
+    9 <- 11
 mappings for forEach
   direct:
     3 -> nothing
@@ -47,7 +47,6 @@ mappings for forEach
     11 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

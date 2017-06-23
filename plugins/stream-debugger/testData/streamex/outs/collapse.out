@@ -26,16 +26,16 @@ mappings for StreamEx.of
     nothing <- 7
 mappings for collapse
   direct:
-    1 -> nothing
-    2 -> nothing
-    3 -> nothing
-    4 -> nothing
-    6 -> nothing
-    7 -> nothing
+    1 -> 5
+    2 -> 5
+    3 -> 5
+    4 -> 8
+    6 -> 8
+    7 -> 9
   reverse:
-    nothing <- 5
-    nothing <- 8
-    nothing <- 9
+    1,2,3 <- 5
+    4,6 <- 8
+    7 <- 9
 mappings for forEach
   direct:
     5 -> nothing
@@ -43,7 +43,6 @@ mappings for forEach
     9 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
