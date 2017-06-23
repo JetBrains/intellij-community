@@ -419,7 +419,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
 
 }
 
-class MacMessageGenerator : LocalContextCodeGenerator<JDialog>() {
+class MacMessageGenerator : LocalContextCodeGenerator<JButton>() {
 
   override fun priority() = 2
 
@@ -440,7 +440,7 @@ class MacMessageGenerator : LocalContextCodeGenerator<JDialog>() {
 
   override fun acceptor(): (Component) -> Boolean = { component -> acceptMacSheetPanel(component) }
 
-  override fun generate(cmp: JDialog): String {
+  override fun generate(cmp: JButton): String {
     val panel = cmp.rootPane.contentPane as JPanel
     val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
     return "message(\"$title\") {"
