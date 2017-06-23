@@ -1,9 +1,7 @@
 package circlet.components
 
-import circlet.*
 import circlet.client.*
 import runtime.async.*
-import circlet.login.*
 import circlet.utils.*
 import com.intellij.concurrency.*
 import com.intellij.notification.*
@@ -67,10 +65,6 @@ class CircletConnectionComponent(val project: Project) :
         loginDataComponent.enabled.value = false
     }
 
-    fun askPassword() {
-        LoginDialog(LoginDialogViewModel(component<CircletLoginComponent>())).show()
-    }
-
     private fun notifyReconnect(lt: Lifetime) {
         val notification = Notification(
             "IdePLuginClient.notifyReconnect",
@@ -107,8 +101,11 @@ class CircletConnectionComponent(val project: Project) :
             "Circlet",
             XmlStringUtil.wrapInHtml("Authorization failed.<br> <a href=\"update\">Re-enter credentials</a>"),
             NotificationType.INFORMATION,
-            { a, b -> project.component<CircletConnectionComponent>().askPassword() })
+            { a, b ->  })
             .notify(project)
+    }
+
+    fun askPassword() {
     }
 }
 

@@ -22,5 +22,6 @@ class ReEnterCredentials : AnAction() {
         project ?: return
 
         project.component<CircletConnectionComponent>().askPassword()
+
     }
 }
