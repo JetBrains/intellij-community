@@ -255,11 +255,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     if (icon == null) return new JLabel(layeredIcon);
     
     int width = icon.getIconWidth();
-    int emptyWidth = EMPTY_ICON.getIconWidth();
     int height = icon.getIconHeight();
+    int emptyIconWidth = EMPTY_ICON.getIconWidth();
     int emptyIconHeight = EMPTY_ICON.getIconHeight();
-    if (width <= emptyWidth && height <= emptyIconHeight) {
-      layeredIcon.setIcon(disabled ? IconLoader.getDisabledIcon(icon) : icon, 1, (emptyWidth - width) / 2, (emptyIconHeight - height) / 2);
+    if (width <= emptyIconWidth && height <= emptyIconHeight) {
+      layeredIcon.setIcon(disabled ? IconLoader.getDisabledIcon(icon) : icon, 1, 
+                          (emptyIconWidth - width) / 2, 
+                          (emptyIconHeight - height) / 2);
     }
 
     return new JLabel(layeredIcon);
