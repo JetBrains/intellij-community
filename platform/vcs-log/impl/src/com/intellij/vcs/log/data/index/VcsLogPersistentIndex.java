@@ -319,6 +319,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private void processRuntimeException(@NotNull RuntimeException e) {
+    if (e instanceof ProcessCanceledException) throw e;
     if (myIndexStorage != null) myIndexStorage.markCorrupted();
     if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
       myFatalErrorsConsumer.consume(this, e);
