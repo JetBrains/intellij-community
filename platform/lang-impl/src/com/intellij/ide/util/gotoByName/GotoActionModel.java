@@ -44,6 +44,7 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -249,12 +250,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  private static JLabel createIconLabel(@Nullable Icon icon) {
+  private static JLabel createIconLabel(@Nullable Icon icon, boolean disabled) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon
-        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
+    if (icon == null) return new JLabel(layeredIcon);
+    
+    int width = icon.getIconWidth();
+    int emptyWidth = EMPTY_ICON.getIconWidth();
+    int height = icon.getIconHeight();
+    int emptyIconHeight = EMPTY_ICON.getIconHeight();
+    if (width <= emptyWidth && height <= emptyIconHeight) {
+      layeredIcon.setIcon(disabled ? IconUtil.desaturate(icon) : icon, 1, (emptyWidth - width) / 2, (emptyIconHeight - height) / 2);
     }
 
     return new JLabel(layeredIcon);
@@ -614,7 +620,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         }
         
         if (showIcon) {
-          panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
+          Icon icon = presentation.getIcon();
+          panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
         }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
         panel.setToolTipText(presentation.getDescription());
