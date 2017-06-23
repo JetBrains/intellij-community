@@ -16,7 +16,6 @@
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -25,14 +24,10 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.org.objectweb.asm.*;
 import sun.management.counter.perf.InstrumentationException;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.io.IOException;
 
 /**
  * Adds assertions for method / constructor parameters that are annotated as <code>@SystemDependent</code>.
@@ -42,12 +37,12 @@ import java.util.stream.Collectors;
  * TODO Add other kind of checks (method return, etc).
  */
 public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuilder {
-  // A heuristics to enable the instrumentation only in IDEA Community / IDEA Ultimate projects.
-  private static final List<String> IDEA_MODULES = Arrays.asList("openapi", "platform-impl", "idea-ui");
-  private static final Key<Boolean> IS_IDEA_PROJECT = Key.create("_is_idea_project_");
+  private static final String ANNOTATION = "@SystemIndependent";
+  private static final String ANNOTATION_CLASS = "com/intellij/util/SystemIndependent";
 
-  public SystemIndependentInstrumentingBuilder() {
-  }
+  private static final String ASSERTION_CLASS = "com/intellij/util/PathUtil";
+  private static final String ASSERTION_METHOD = "assertArgumentIsSystemIndependent";
+  private static final String ASSERTION_SIGNATURE = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V";
 
   @NotNull
   @Override
@@ -62,18 +57,12 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
 
   @Override
   protected boolean isEnabled(CompileContext context, ModuleChunk chunk) {
-    if (!NotNullInstrumentingBuilder.isEnabledIn(context)) {
-      return false;
-    }
+    return NotNullInstrumentingBuilder.isEnabledIn(context);
+  }
 
-    if (!IS_IDEA_PROJECT.isIn(context)) {
-      Set<String> moduleNames = context.getProjectDescriptor().getProject().getModules().stream()
-        .map(JpsModule::getName).collect(Collectors.toSet());
-
-      IS_IDEA_PROJECT.set(context, moduleNames.containsAll(IDEA_MODULES));
-    }
-
-    return IS_IDEA_PROJECT.get(context, Boolean.FALSE);
+  @Override
+  protected boolean isEnabled(CompileContext context, InstrumentationClassFinder finder) throws IOException {
+    return finder.isAvaiable(ANNOTATION_CLASS + ".class");
   }
 
   @Override
@@ -146,7 +135,7 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
         public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
           if (typePath == null) {
             TypeReference ref = new TypeReference(typeRef);
-            if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && "Lcom/intellij/util/SystemIndependent;".equals(desc)) {
+            if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && ("L" + ANNOTATION_CLASS + ";").equals(desc)) {
               parameters[ref.getFormalParameterIndex()].isSystemIndependent = true;
             }
           }
@@ -155,15 +144,16 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
 
         @Override
         public void visitCode() {
+          super.visitCode();
+
           for (Parameter parameter : parameters) {
             if (parameter.isSystemIndependent) {
               if (!parameter.isString) {
-                throw new InstrumentationException("Only String can be annotated as @SystemIndependent");
+                throw new InstrumentationException("Only String can be annotated as " + ANNOTATION);
               }
               addAssertionFor(parameter.name, parameter.slot);
             }
           }
-          super.visitCode();
         }
 
         private void addAssertionFor(String parameterName, int parameterSlot) {
@@ -171,11 +161,7 @@ public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuil
           visitLdcInsn(name);
           visitLdcInsn(parameterName);
           visitVarInsn(Opcodes.ALOAD, parameterSlot);
-          visitMethodInsn(Opcodes.INVOKESTATIC,
-                          "com/intellij/util/PathUtil",
-                          "assertArgumentIsSystemIndependent",
-                          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
-                          false);
+          visitMethodInsn(Opcodes.INVOKESTATIC, ASSERTION_CLASS, ASSERTION_METHOD, ASSERTION_SIGNATURE, false);
         }
       };
     }
