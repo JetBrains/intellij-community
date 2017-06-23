@@ -36,7 +36,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -110,11 +109,9 @@ public class JUnit4IntegrationTest extends JUnitAbstractIntegrationTest {
       assertNotNull(psiClass);
       PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
       JUnitConfiguration configuration = createConfiguration(testMethod);
-      ArrayList<String> out = new ArrayList<>();
-      ArrayList<String> err = new ArrayList<>();
-      doStartTestsProcess(configuration, out, err, new ArrayList<>(), new ArrayList<>());
-      String testOutput = out.toString();
-      assertEmpty(err);
+      ProcessOutput processOutput = doStartTestsProcess(configuration);
+      String testOutput = processOutput.out.toString();
+      assertEmpty(processOutput.err);
       switch (myJUnitVersion) {
         case "4.4": case "4.5": break; //shouldn't work for old versions
         default:

@@ -1,11 +1,11 @@
-package junit.v5;
+package mixed.v5;
 
 import org.junit.jupiter.api.Test;
 
-public class MyTest5 { 
+class MyTest5 {
 
   @Test
-  public void singleMethodTest () {
+  void singleMethodTest () {
     org.junit.jupiter.api.Assertions.fail("junit 5: single method failed");
   }
 }

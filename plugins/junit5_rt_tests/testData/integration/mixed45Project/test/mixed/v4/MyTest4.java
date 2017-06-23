@@ -1,4 +1,4 @@
-package junit.v4;
+package mixed.v4;
 
 import org.junit.Test;
 
