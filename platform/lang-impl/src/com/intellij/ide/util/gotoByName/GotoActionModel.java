@@ -44,7 +44,6 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -260,7 +259,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     int height = icon.getIconHeight();
     int emptyIconHeight = EMPTY_ICON.getIconHeight();
     if (width <= emptyWidth && height <= emptyIconHeight) {
-      layeredIcon.setIcon(disabled ? IconUtil.desaturate(icon) : icon, 1, (emptyWidth - width) / 2, (emptyIconHeight - height) / 2);
+      layeredIcon.setIcon(disabled ? IconLoader.getDisabledIcon(icon) : icon, 1, (emptyWidth - width) / 2, (emptyIconHeight - height) / 2);
     }
 
     return new JLabel(layeredIcon);
