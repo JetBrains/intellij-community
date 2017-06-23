@@ -36,13 +36,13 @@ class UVariableValue private constructor(
     override fun merge(other: UValue) = when (other) {
         this -> this
         value -> this
-        is UVariableValue -> {
-            if (variable != other.variable || value != other.value) UPhiValue.create(this, other)
-            else create(variable, value, dependencies + other.dependencies)
-        }
         is UDependentValue -> {
-            if (value != other.value) UPhiValue.create(this, other)
-            else create(variable, value, dependencies + other.dependencies)
+            val allDependencies = dependencies + other.dependencies
+            when {
+              other !is UVariableValue || variable != other.variable -> UPhiValue.create(this, other)
+              value != other.value -> create(variable, value.merge(other.value), allDependencies)
+              else -> create(variable, value, allDependencies)
+            }
         }
         else -> UPhiValue.create(this, other)
     }

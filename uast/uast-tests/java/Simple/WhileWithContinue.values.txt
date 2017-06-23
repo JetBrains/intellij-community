@@ -17,7 +17,7 @@ UFile (package = ) [public class WhileWithContinue {...]
                         UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
                     UBlockExpression [{...}] = Nothing(continue)
                         UBinaryExpression (operator = =) [second = 3] = 3
-                            USimpleNameReferenceExpression (identifier = second) [second] = Phi((var second = 3), (var second = 2))
+                            USimpleNameReferenceExpression (identifier = second) [second] = (var second = Phi(3, 2))
                             ULiteralExpression (value = 3) [3] = 3
                         UIfExpression [if (first > 0) continue] = Nothing(continue)
                             UBinaryExpression (operator = >) [first > 0] = true (depending on: (var first = 1))
@@ -29,7 +29,7 @@ UFile (package = ) [public class WhileWithContinue {...]
                             USimpleNameReferenceExpression (identifier = second) [second] = Undetermined
                             ULiteralExpression (value = 4) [4] = 4
                 UReturnExpression [return second] = Nothing
-                    USimpleNameReferenceExpression (identifier = second) [second] = Phi((var second = 3), (var second = 2))
+                    USimpleNameReferenceExpression (identifier = second) [second] = (var second = Phi(3, 2))
         UMethod (name = baz) [public static fun baz() : int {...}]
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var first: int = 2] = Undetermined
@@ -43,10 +43,10 @@ UFile (package = ) [public class WhileWithContinue {...]
                         UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
                     UBlockExpression [{...}] = 4
                         UBinaryExpression (operator = =) [second = 3] = 3
-                            USimpleNameReferenceExpression (identifier = second) [second] = Phi((var second = 4), (var second = 3), (var second = 2))
+                            USimpleNameReferenceExpression (identifier = second) [second] = (var second = Phi(4, 3, 2))
                             ULiteralExpression (value = 3) [3] = 3
-                        UPostfixExpression (operator = --) [first--] = Phi((var first = Undetermined), (var first = 1), (var first = 2))
-                            USimpleNameReferenceExpression (identifier = first) [first] = Phi((var first = Undetermined), (var first = 1), (var first = 2))
+                        UPostfixExpression (operator = --) [first--] = (var first = Undetermined)
+                            USimpleNameReferenceExpression (identifier = first) [first] = (var first = Undetermined)
                         UIfExpression [if (first > 0) continue] = Undetermined
                             UBinaryExpression (operator = >) [first > 0] = Undetermined (depending on: (var first = Undetermined))
                                 USimpleNameReferenceExpression (identifier = first) [first] = (var first = Undetermined)
@@ -57,4 +57,4 @@ UFile (package = ) [public class WhileWithContinue {...]
                             USimpleNameReferenceExpression (identifier = second) [second] = (var second = 3)
                             ULiteralExpression (value = 4) [4] = 4
                 UReturnExpression [return second] = Nothing
-                    USimpleNameReferenceExpression (identifier = second) [second] = Phi((var second = 4), (var second = 3), (var second = 2))
+                    USimpleNameReferenceExpression (identifier = second) [second] = (var second = Phi(4, 3, 2))
