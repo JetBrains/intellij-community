@@ -267,6 +267,12 @@ public class InvocationExprent extends Exprent {
         else if (instance != null) {
           TextBuffer res = instance.toJava(indent, tracer);
 
+          if (isUnboxingCall()) {
+            // we don't print the unboxing call - no need to bother with the instance wrapping / casting
+            buf.append(res);
+            return buf;
+          }
+
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
 
@@ -458,6 +464,24 @@ public class InvocationExprent extends Exprent {
         return "java/lang/Double";
     }
     return null;
+  }
+
+  private static final Map<String, String> UNBOXING_METHODS;
+
+  static {
+    UNBOXING_METHODS = new HashMap<>();
+    UNBOXING_METHODS.put("booleanValue", "java/lang/Boolean");
+    UNBOXING_METHODS.put("byteValue", "java/lang/Byte");
+    UNBOXING_METHODS.put("shortValue", "java/lang/Short");
+    UNBOXING_METHODS.put("intValue", "java/lang/Integer");
+    UNBOXING_METHODS.put("longValue", "java/lang/Long");
+    UNBOXING_METHODS.put("floatValue", "java/lang/Float");
+    UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
+    UNBOXING_METHODS.put("charValue", "java/lang/Character");
+  }
+
+  private boolean isUnboxingCall() {
+    return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));
   }
 
   private BitSet getAmbiguousParameters() {

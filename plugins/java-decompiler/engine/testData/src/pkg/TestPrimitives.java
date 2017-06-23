@@ -22,11 +22,25 @@ public class TestPrimitives {
     printDoubleBoxed(1.23);
     printCharBoxed('Z');
 
+    printBoolean(Boolean.valueOf("true"));
+    printByte(Byte.valueOf("123"));
+    printShort(Short.valueOf("257"));
+    printInt(Integer.valueOf("123"));
+    printLong(Long.valueOf("123"));
+    printFloat(Float.valueOf("1.23"));
+    printDouble(Double.valueOf("1.23"));
+    printChar(new Character('Z'));
+
+    printInt(getInteger());
+    printChar(getCharacter());
+
     System.out.printf("%b, %d, %d, %d, %c, %d", true, 1, 213, 40_000, 'c', 42L);
     System.out.printf("%b, %d, %d, %d", getBoolean(), getByte(), getShort(), getInt());
 
     new TestPrimitives(false, (byte) 123, (short) 257, 40_000, 123L, 3.14f, 1.618, 'A');
     new TestPrimitives('A', 1.618, 3.14f, 123L, 40_000, (short) 257, (byte) 123, false);
+    new TestPrimitives(Boolean.valueOf("false"), Byte.valueOf("123"), Short.valueOf("257"), Integer.valueOf("40000"), Long.valueOf("123"),
+                       Float.valueOf("3.14"), Double.valueOf("1.618"), new Character('A'));
   }
 
   private TestPrimitives(boolean bool, byte b, short s, int i, long l, float f, double d, char c) {
@@ -117,6 +131,14 @@ public class TestPrimitives {
 
   public int getInt() {
     return 42;
+  }
+
+  public Integer getInteger() {
+    return 40_000;
+  }
+
+  public Character getCharacter() {
+    return 'Z';
   }
 
   public void printNarrowed() {
