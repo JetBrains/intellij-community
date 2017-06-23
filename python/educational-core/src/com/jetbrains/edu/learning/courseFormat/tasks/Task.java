@@ -11,9 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import one.util.streamex.EntryStream;
 import org.jdom.Element;
@@ -177,7 +179,11 @@ public abstract class Task implements StudyItem {
     if (entry == null) {
       return null;
     }
-    return entry.getValue();
+    String taskText = StudyUtils.wrapTextToDisplayLatex(entry.getValue());
+    if (getLesson().getCourse().isAdaptive()) {
+      taskText = EduAdaptiveStepicConnector.wrapAdaptiveCourseText(this, taskText);
+    }
+    return taskText;
   }
 
   public String getTaskDescriptionName() {

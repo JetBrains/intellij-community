@@ -405,11 +405,7 @@ public class EduAdaptiveStepicConnector {
   private static void setToolWindowText(@NotNull Project project, @NotNull Task task) {
     final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
     if (window != null) {
-      String text = StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription());
-      if (task.getLesson().getCourse().isAdaptive()) {
-        text = wrapAdaptiveCourseText(task, text);
-      }
-      window.setTaskText(text, project);
+      window.setTaskText(task.getTaskDescription(), project);
     }
   }
 
@@ -692,7 +688,7 @@ public class EduAdaptiveStepicConnector {
     return Collections.emptyList();
   }
 
-  private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
+  public static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
     String finalText = text;
     if (task instanceof TheoryTask) {
       finalText += "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
