@@ -360,11 +360,7 @@ public class InvocationExprent extends Exprent {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
 
-        Exprent param = lstParameters.get(i);
-        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
-        if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
-          param = ((InvocationExprent)param).lstParameters.get(0);
-        }
+        Exprent param = unboxIfNeeded(lstParameters.get(i));
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
         ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
 
@@ -383,6 +379,14 @@ public class InvocationExprent extends Exprent {
     buf.append(")");
 
     return buf;
+  }
+
+  public static Exprent unboxIfNeeded(Exprent param) {
+    // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+    if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
+      param = ((InvocationExprent)param).lstParameters.get(0);
+    }
+    return param;
   }
 
   private boolean isVarArgCall() {

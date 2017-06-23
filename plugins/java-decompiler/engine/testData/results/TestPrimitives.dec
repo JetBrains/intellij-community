@@ -10,87 +10,133 @@ public class TestPrimitives {
       this.printFloat(1.23F);// 11
       this.printDouble(1.23D);// 12
       this.printChar('Z');// 13
-      this.printIntBoxed(40000);// 15
-      String.format("%b, %d, %d, %d, %c, %d", true, 1, 213, 40000, 'c', 42L);// 17
-      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 18
-   }// 19
+      this.printBooleanBoxed(true);// 15
+      this.printByteBoxed((byte)123);// 16
+      this.printShortBoxed((short)257);// 17
+      this.printIntBoxed(1);// 18
+      this.printIntBoxed(40000);// 19
+      this.printLongBoxed(123L);// 20
+      this.printFloatBoxed(1.23F);// 21
+      this.printDoubleBoxed(1.23D);// 22
+      this.printCharBoxed('Z');// 23
+      System.out.printf("%b, %d, %d, %d, %c, %d", true, 1, 213, 40000, 'c', 42L);// 25
+      System.out.printf("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt());// 26
+      new TestPrimitives(false, (byte)123, (short)257, 40000, 123L, 3.14F, 1.618D, 'A');// 28
+      new TestPrimitives('A', 1.618D, 3.14F, 123L, 40000, (short)257, (byte)123, false);// 29
+   }// 30
+
+   private TestPrimitives(boolean bool, byte b, short s, int i, long l, float f, double d, char c) {
+      System.out.printf("%b, %d, %d, %d, %d, %.2f, %.2f, %c", bool, b, s, i, l, f, d, c);// 33
+   }// 34
+
+   private TestPrimitives(Character c, Double d, Float f, Long l, Integer i, Short s, Byte b, Boolean bool) {
+      System.out.printf("%b, %d, %d, %d, %d, %.2f, %.2f, %c", bool, b, s, i, l, f, d, c);// 37
+   }// 38
 
    public void printBoolean(boolean b) {
-      System.out.println(String.format("%b", b));// 22
-   }// 23
+      System.out.printf("%b", b);// 41
+   }// 42
 
    public void printByte(byte b) {
-      System.out.println(String.format("%d", b));// 26
-   }// 27
+      System.out.printf("%d", b);// 45
+   }// 46
 
    public void printShort(short s) {
-      System.out.println(String.format("%d", s));// 30
-   }// 31
+      System.out.printf("%d", s);// 49
+   }// 50
 
    public void printInt(int i) {
-      System.out.println(String.format("%d", i));// 34
-   }// 35
+      System.out.printf("%d", i);// 53
+   }// 54
 
    public void printLong(long l) {
-      System.out.println(String.format("%d", l));// 38
-   }// 39
+      System.out.printf("%d", l);// 57
+   }// 58
 
    public void printFloat(float f) {
-      System.out.println(String.format("%f", f));// 42
-   }// 43
+      System.out.printf("%f", f);// 61
+   }// 62
 
    public void printDouble(double d) {
-      System.out.println(String.format("%f", d));// 46
-   }// 47
+      System.out.printf("%f", d);// 65
+   }// 66
 
    public void printChar(char c) {
-      System.out.println(String.format("%c", c));// 50
-   }// 51
+      System.out.printf("%c", c);// 69
+   }// 70
+
+   public void printBooleanBoxed(Boolean b) {
+      System.out.printf("%b", b);// 74
+   }// 75
+
+   public void printByteBoxed(Byte b) {
+      System.out.printf("%d", b);// 78
+   }// 79
+
+   public void printShortBoxed(Short s) {
+      System.out.printf("%d", s);// 82
+   }// 83
 
    public void printIntBoxed(Integer i) {
-      System.out.println(String.format("%d", i));// 55
-   }// 56
+      System.out.printf("%d", i);// 86
+   }// 87
+
+   public void printLongBoxed(Long l) {
+      System.out.printf("%d", l);// 90
+   }// 91
+
+   public void printFloatBoxed(Float f) {
+      System.out.printf("%f", f);// 94
+   }// 95
+
+   public void printDoubleBoxed(Double d) {
+      System.out.printf("%f", d);// 98
+   }// 99
+
+   public void printCharBoxed(Character c) {
+      System.out.printf("%c", c);// 102
+   }// 103
 
    public boolean getBoolean() {
-      return false;// 60
+      return false;// 107
    }
 
    public byte getByte() {
-      return -128;// 64
+      return -128;// 111
    }
 
    public short getShort() {
-      return -32768;// 68
+      return -32768;// 115
    }
 
    public int getInt() {
-      return 42;// 72
+      return 42;// 119
    }
 
    public void printNarrowed() {
-      this.printByte((byte)this.getInt());// 76
-      this.printShort((short)this.getInt());// 77
-   }// 78
+      this.printByte((byte)this.getInt());// 123
+      this.printShort((short)this.getInt());// 124
+   }// 125
 
    public void constructor() {
-      new Byte((byte)1);// 81
-   }// 82
+      new Byte((byte)1);// 128
+   }// 129
 
    private boolean compare(char c) {
-      boolean res = c > -1;// 85
-      res = c > 0;// 86
-      res = c > 1;// 87
-      res = c > '\b';// 88
-      res = c > '\t';// 89
-      res = c > '\n';// 90
-      res = c > '\f';// 91
-      res = c > '\r';// 92
-      res = c > ' ';// 93
-      res = c > 'a';// 94
-      res = c > 'Z';// 95
-      res = c > 127;// 96
-      res = c > 255;// 97
-      return res;// 98
+      boolean res = c > -1;// 132
+      res = c > 0;// 133
+      res = c > 1;// 134
+      res = c > '\b';// 135
+      res = c > '\t';// 136
+      res = c > '\n';// 137
+      res = c > '\f';// 138
+      res = c > '\r';// 139
+      res = c > ' ';// 140
+      res = c > 'a';// 141
+      res = c > 'Z';// 142
+      res = c > 127;// 143
+      res = c > 255;// 144
+      return res;// 145
    }
 }
 
@@ -113,191 +159,285 @@ class 'pkg/TestPrimitives' {
       2d      11
       2f      11
       33      12
-      38      12
+      37      12
       3b      13
-      44      13
-      45      13
-      4b      13
-      4c      13
-      52      13
-      55      13
-      5b      13
-      5d      13
-      63      13
-      65      13
-      6b      13
-      6e      13
-      72      13
-      76      14
-      79      14
-      82      14
-      85      14
-      8c      14
-      8f      14
-      96      14
-      99      14
-      a0      14
-      a3      14
-      a7      14
-      aa      14
-      ad      15
+      40      13
+      44      14
+      4a      14
+      4e      15
+      52      15
+      56      16
+      5b      16
+      5f      17
+      65      17
+      69      18
+      6e      18
+      72      19
+      78      19
+      7c      20
+      81      20
+      84      21
+      87      21
+      90      21
+      91      21
+      97      21
+      98      21
+      9e      21
+      a1      21
+      a7      21
+      a9      21
+      af      21
+      b1      21
+      b7      21
+      ba      21
+      be      21
+      c2      22
+      c5      22
+      ce      22
+      d1      22
+      d8      22
+      db      22
+      e2      22
+      e5      22
+      ec      22
+      ef      22
+      f3      22
+      fb      23
+      fc      23
+      fe      23
+      101      23
+      103      23
+      106      23
+      108      23
+      10b      23
+      115      24
+      11a      24
+      120      24
+      125      24
+      12b      24
+      130      24
+      136      24
+      13b      24
+      143      25
+   }
+
+   method '<init> (ZBSIJFDC)V' {
+      4      28
+      7      28
+      11      28
+      18      28
+      1f      28
+      27      28
+      2f      28
+      37      28
+      40      28
+      49      28
+      4d      28
+      51      29
+   }
+
+   method '<init> (Ljava/lang/Character;Ljava/lang/Double;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Integer;Ljava/lang/Short;Ljava/lang/Byte;Ljava/lang/Boolean;)V' {
+      4      32
+      7      32
+      35      32
+      39      33
    }
 
    method 'printBoolean (Z)V' {
-      0      18
-      3      18
-      c      18
-      10      18
-      13      18
-      16      19
+      0      36
+      3      36
+      c      36
+      10      36
+      14      37
    }
 
    method 'printByte (B)V' {
-      0      22
-      3      22
-      c      22
-      10      22
-      13      22
-      16      23
+      0      40
+      3      40
+      c      40
+      10      40
+      14      41
    }
 
    method 'printShort (S)V' {
-      0      26
-      3      26
-      c      26
-      10      26
-      13      26
-      16      27
+      0      44
+      3      44
+      c      44
+      10      44
+      14      45
    }
 
    method 'printInt (I)V' {
-      0      30
-      3      30
-      c      30
-      10      30
-      13      30
-      16      31
+      0      48
+      3      48
+      c      48
+      10      48
+      14      49
    }
 
    method 'printLong (J)V' {
-      0      34
-      3      34
-      c      34
-      10      34
-      13      34
-      16      35
+      0      52
+      3      52
+      c      52
+      10      52
+      14      53
    }
 
    method 'printFloat (F)V' {
-      0      38
-      3      38
-      c      38
-      10      38
-      13      38
-      16      39
+      0      56
+      3      56
+      c      56
+      10      56
+      14      57
    }
 
    method 'printDouble (D)V' {
-      0      42
-      3      42
-      c      42
-      10      42
-      13      42
-      16      43
+      0      60
+      3      60
+      c      60
+      10      60
+      14      61
    }
 
    method 'printChar (C)V' {
-      0      46
-      3      46
-      c      46
-      10      46
-      13      46
-      16      47
+      0      64
+      3      64
+      c      64
+      10      64
+      14      65
+   }
+
+   method 'printBooleanBoxed (Ljava/lang/Boolean;)V' {
+      0      68
+      3      68
+      d      68
+      11      69
+   }
+
+   method 'printByteBoxed (Ljava/lang/Byte;)V' {
+      0      72
+      3      72
+      d      72
+      11      73
+   }
+
+   method 'printShortBoxed (Ljava/lang/Short;)V' {
+      0      76
+      3      76
+      d      76
+      11      77
    }
 
    method 'printIntBoxed (Ljava/lang/Integer;)V' {
-      0      50
-      3      50
-      d      50
-      10      50
-      13      51
+      0      80
+      3      80
+      d      80
+      11      81
+   }
+
+   method 'printLongBoxed (Ljava/lang/Long;)V' {
+      0      84
+      3      84
+      d      84
+      11      85
+   }
+
+   method 'printFloatBoxed (Ljava/lang/Float;)V' {
+      0      88
+      3      88
+      d      88
+      11      89
+   }
+
+   method 'printDoubleBoxed (Ljava/lang/Double;)V' {
+      0      92
+      3      92
+      d      92
+      11      93
+   }
+
+   method 'printCharBoxed (Ljava/lang/Character;)V' {
+      0      96
+      3      96
+      d      96
+      11      97
    }
 
    method 'getBoolean ()Z' {
-      0      54
-      1      54
+      0      100
+      1      100
    }
 
    method 'getByte ()B' {
-      0      58
-      2      58
+      0      104
+      2      104
    }
 
    method 'getShort ()S' {
-      0      62
-      3      62
+      0      108
+      3      108
    }
 
    method 'getInt ()I' {
-      0      66
-      2      66
+      0      112
+      2      112
    }
 
    method 'printNarrowed ()V' {
-      2      70
-      5      70
-      6      70
-      b      71
-      e      71
-      f      71
-      12      72
+      2      116
+      5      116
+      6      116
+      b      117
+      e      117
+      f      117
+      12      118
    }
 
    method 'constructor ()V' {
-      4      75
-      9      76
+      4      121
+      9      122
    }
 
    method 'compare (C)Z' {
-      1      79
-      2      79
-      a      79
-      c      80
-      14      80
-      16      81
-      17      81
-      1f      81
-      21      82
-      23      82
-      2b      82
-      2d      83
-      2f      83
-      37      83
-      39      84
-      3b      84
-      43      84
-      45      85
-      47      85
-      4f      85
-      51      86
-      53      86
-      5b      86
-      5d      87
-      5f      87
-      67      87
-      69      88
-      6b      88
-      73      88
-      75      89
-      77      89
-      7f      89
-      81      90
-      83      90
-      8b      90
-      8d      91
-      90      91
-      98      91
-      9a      92
+      1      125
+      2      125
+      a      125
+      c      126
+      14      126
+      16      127
+      17      127
+      1f      127
+      21      128
+      23      128
+      2b      128
+      2d      129
+      2f      129
+      37      129
+      39      130
+      3b      130
+      43      130
+      45      131
+      47      131
+      4f      131
+      51      132
+      53      132
+      5b      132
+      5d      133
+      5f      133
+      67      133
+      69      134
+      6b      134
+      73      134
+      75      135
+      77      135
+      7f      135
+      81      136
+      83      136
+      8b      136
+      8d      137
+      90      137
+      98      137
+      9a      138
    }
 }
 
@@ -311,47 +451,78 @@ Lines mapping:
 12 <-> 11
 13 <-> 12
 15 <-> 13
-17 <-> 14
-18 <-> 15
-19 <-> 16
-22 <-> 19
-23 <-> 20
+16 <-> 14
+17 <-> 15
+18 <-> 16
+19 <-> 17
+20 <-> 18
+21 <-> 19
+22 <-> 20
+23 <-> 21
+25 <-> 22
 26 <-> 23
-27 <-> 24
-30 <-> 27
-31 <-> 28
-34 <-> 31
-35 <-> 32
-38 <-> 35
-39 <-> 36
-42 <-> 39
-43 <-> 40
-46 <-> 43
-47 <-> 44
-50 <-> 47
-51 <-> 48
-55 <-> 51
-56 <-> 52
-60 <-> 55
-64 <-> 59
-68 <-> 63
-72 <-> 67
-76 <-> 71
-77 <-> 72
+28 <-> 24
+29 <-> 25
+30 <-> 26
+33 <-> 29
+34 <-> 30
+37 <-> 33
+38 <-> 34
+41 <-> 37
+42 <-> 38
+45 <-> 41
+46 <-> 42
+49 <-> 45
+50 <-> 46
+53 <-> 49
+54 <-> 50
+57 <-> 53
+58 <-> 54
+61 <-> 57
+62 <-> 58
+65 <-> 61
+66 <-> 62
+69 <-> 65
+70 <-> 66
+74 <-> 69
+75 <-> 70
 78 <-> 73
-81 <-> 76
+79 <-> 74
 82 <-> 77
-85 <-> 80
+83 <-> 78
 86 <-> 81
 87 <-> 82
-88 <-> 83
-89 <-> 84
 90 <-> 85
 91 <-> 86
-92 <-> 87
-93 <-> 88
 94 <-> 89
 95 <-> 90
-96 <-> 91
-97 <-> 92
 98 <-> 93
+99 <-> 94
+102 <-> 97
+103 <-> 98
+107 <-> 101
+111 <-> 105
+115 <-> 109
+119 <-> 113
+123 <-> 117
+124 <-> 118
+125 <-> 119
+128 <-> 122
+129 <-> 123
+132 <-> 126
+133 <-> 127
+134 <-> 128
+135 <-> 129
+136 <-> 130
+137 <-> 131
+138 <-> 132
+139 <-> 133
+140 <-> 134
+141 <-> 135
+142 <-> 136
+143 <-> 137
+144 <-> 138
+145 <-> 139
+Not mapped:
+32
+36
