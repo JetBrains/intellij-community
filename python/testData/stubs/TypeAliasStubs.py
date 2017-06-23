@@ -5,6 +5,9 @@ __version__ = '0.1'
 S1_ok = "foo"
 S2_ok = "foo.bar"
 S3_ok = "foo.bar[baz]"
+too_long_string = "foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo"
+natural_text = "Foo is baz."
+glued_string = 'foo' '.bar'
 
 # Such expressions are kept as qualified expressions in PyTargetExpressionStub 
 # with initializer type of ReferenceExpression instead of custom stubs for
