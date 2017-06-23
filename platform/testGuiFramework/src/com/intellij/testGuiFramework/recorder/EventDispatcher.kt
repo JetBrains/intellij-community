@@ -42,7 +42,6 @@ object EventDispatcher {
   private val MAC_NATIVE_ACTIONS = arrayOf("ShowSettings", "EditorEscape")
 
   fun processMouseEvent(event: MouseEvent) {
-    ScriptGenerator.flushTyping()
     if (event.id != MOUSE_PRESSED) return
 
     val eventComponent: Component? = event.component
@@ -98,7 +97,7 @@ object EventDispatcher {
     } else {
       val actionManager = ActionManager.getInstance()
       val mainActions = (actionManager.getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup).getFlatIdList()
-      if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action, event)
+      if (mainActions.contains(actionManager.getId(action))) ScriptGenerator.processMainMenuActionEvent(action)
     }
   }
 

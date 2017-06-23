@@ -82,7 +82,7 @@ object GlobalActionRecorder {
       IdeEventQueue.getInstance().removeDispatcher(globalAwtProcessor)
     }
     isActive = false
-    ScriptGenerator.clearContext()
+    ContextChecker.clearContext()
   }
 
 }
