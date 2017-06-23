@@ -496,7 +496,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         //noinspection unchecked
         ChildrenProvider<Object> provider = (ChildrenProvider)model;
         List<Object> children = provider.getChildren(object);
-        //TODO: allow to cancel this command by returning null
+        if (children == null) return null; // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
       }
       else {
