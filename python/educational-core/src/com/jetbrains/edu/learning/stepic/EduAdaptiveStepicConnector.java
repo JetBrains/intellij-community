@@ -405,7 +405,11 @@ public class EduAdaptiveStepicConnector {
   private static void setToolWindowText(@NotNull Project project, @NotNull Task task) {
     final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
     if (window != null) {
-      window.setTaskText(StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription()), project);
+      String text = StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription());
+      if (task.getLesson().getCourse().isAdaptive()) {
+        text = wrapAdaptiveCourseText(task, text);
+      }
+      window.setTaskText(text, project);
     }
   }
 
@@ -686,5 +690,25 @@ public class EduAdaptiveStepicConnector {
       LOG.warn(e.getMessage());
     }
     return Collections.emptyList();
+  }
+
+  private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
+    String finalText = text;
+    if (task instanceof TheoryTask) {
+      finalText += "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
+                   "Please, read it and press \"Check\" to go further.";
+    }
+    else if (!(task instanceof ChoiceTask)) {
+      finalText += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+    }
+    finalText += getFooterWithLink(task);
+
+    return finalText;
+  }
+
+  @NotNull
+  private static String getFooterWithLink(Task task) {
+    return
+      "<div class=\"footer\">" + "<a href=" + EduStepikUtils.getAdaptiveLink(task) + ">Open on Stepik</a>" + "</div>";
   }
 }
