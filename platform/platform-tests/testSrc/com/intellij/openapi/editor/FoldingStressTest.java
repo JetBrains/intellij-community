@@ -87,7 +87,7 @@ public class FoldingStressTest extends LightPlatformTestCase {
     Editor editor = EditorFactory.getInstance().createEditor(doc);
     try {
     FoldingModelEx model = (FoldingModelEx)editor.getFoldingModel();
-    PlatformTestUtil.startPerformanceTest("restoring many fold regions", 1000, () -> model.runBatchFoldingOperation(() -> {
+    PlatformTestUtil.startPerformanceTest("restoring many fold regions", 1500, () -> model.runBatchFoldingOperation(() -> {
       for (int i = 0; i < N; i++) {
         addAndCollapseFoldRegion(model, i, i+1, "/*...*/");
       }
