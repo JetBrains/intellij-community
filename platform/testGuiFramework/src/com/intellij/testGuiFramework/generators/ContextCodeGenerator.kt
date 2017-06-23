@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.generators
 
 import java.awt.Component
-import java.awt.event.MouseEvent
 
 /**
  * @author Sergey Karashevich
@@ -24,10 +23,10 @@ import java.awt.event.MouseEvent
 interface ContextCodeGenerator<C : Component> {
 
   fun priority(): Int
-  fun buildContext(component: Component, mouseEvent: MouseEvent): Context
+  fun buildContext(component: Component): Context
 
   fun accept(cmp: Component): Boolean
-  fun generate(cmp: C, me: MouseEvent): String
+  fun generate(cmp: C): String
   fun typeSafeCast(cmp: Component): C = cmp as C
   fun closeContext() = "}"
 

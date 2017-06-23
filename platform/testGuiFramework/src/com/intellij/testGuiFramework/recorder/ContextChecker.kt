@@ -37,8 +37,8 @@ object ContextChecker {
   fun clearContext() = contextTree.clear()
 
   fun checkContext(component: Component, me: MouseEvent) {
-    val globalContext = getGlobalApplicableContext(component, me)
-    val localContextList: List<Context> = getLocalApplicableContext(component, me)
+    val globalContext = getGlobalApplicableContext(component)
+    val localContextList: List<Context> = getLocalApplicableContext(component)
     contextTree.checkAliveContexts(me)
     if (globalContext != null) contextTree.addContext(globalContext)
     if (!localContextList.isNullOrEmpty()) contextTree.addContexts(localContextList)
@@ -46,15 +46,15 @@ object ContextChecker {
 
   private fun List<*>?.isNullOrEmpty(): Boolean = this == null || this.isEmpty()
 
-  private fun getGlobalApplicableContext(component: Component, me: MouseEvent): Context? =
+  private fun getGlobalApplicableContext(component: Component): Context? =
     globalContextGenerators.filter { generator -> generator.accept(component) }.sortedByDescending(
-      ContextCodeGenerator<*>::priority).firstOrNull()?.buildContext(component, me)
+      ContextCodeGenerator<*>::priority).firstOrNull()?.buildContext(component)
 
 
-  private fun getLocalApplicableContext(component: Component, me: MouseEvent): List<Context> =
+  private fun getLocalApplicableContext(component: Component): List<Context> =
     localContextGenerators.filter { generator -> generator.accept(component) }
       .sortedBy(ContextCodeGenerator<*>::priority)
-      .map { applicableGenerator -> applicableGenerator.buildContext(component, me) }
+      .map { applicableGenerator -> applicableGenerator.buildContext(component) }
 }
 
 private class ContextTree(val writeFun: (String) -> Unit) {
