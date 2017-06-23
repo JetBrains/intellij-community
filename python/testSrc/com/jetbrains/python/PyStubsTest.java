@@ -798,6 +798,16 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-18166
+  public void testUnresolvedTypingSymbol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
   @Nullable
   private static PyTypingAliasStub getAliasStub(@NotNull PyTargetExpression targetExpression) {
     final PyTargetExpressionStub stub = targetExpression.getStub();
