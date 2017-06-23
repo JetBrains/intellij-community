@@ -633,7 +633,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   @Override
-  public String getAnnotationContent() {
+  public String getAnnotationValue() {
     return getAnnotationContentFromStubOrPsi(this);
   }
 

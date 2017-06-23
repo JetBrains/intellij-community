@@ -60,7 +60,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final String message = function.extractDeprecationMessage();
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     final String typeComment = function.getTypeCommentAnnotation();
-    final String annotationContent = function.getAnnotationContent();
+    final String annotationContent = function.getAnnotationValue();
     return new PyFunctionStubImpl(psi.getName(),
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,

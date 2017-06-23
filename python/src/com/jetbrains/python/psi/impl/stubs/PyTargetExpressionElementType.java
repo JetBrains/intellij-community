@@ -74,7 +74,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     final PyExpression assignedValue = psi.findAssignedValue();
     final String docString = DocStringUtil.getDocStringValue(psi);
     final String typeComment = psi.getTypeCommentAnnotation();
-    final String annotation = psi.getAnnotationContent();
+    final String annotation = psi.getAnnotationValue();
     
     for (CustomTargetExpressionStubType customStubType : getCustomStubTypes()) {
       CustomTargetExpressionStub customStub = customStubType.createStub(psi);

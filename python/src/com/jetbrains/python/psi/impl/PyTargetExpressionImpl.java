@@ -240,7 +240,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Nullable
   @Override
-  public String getAnnotationContent() {
+  public String getAnnotationValue() {
     return getAnnotationContentFromStubOrPsi(this);
   }
 

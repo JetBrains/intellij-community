@@ -46,7 +46,7 @@ public class PyTypeDeclarationStatementImpl extends PyElementImpl implements PyT
 
   @Nullable
   @Override
-  public String getAnnotationContent() {
+  public String getAnnotationValue() {
     return getAnnotationContentFromPsi(this);
   }
 
