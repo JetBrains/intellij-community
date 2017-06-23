@@ -47,6 +47,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
@@ -69,7 +71,6 @@ import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.createMaybeSingletonList;
-import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
@@ -99,6 +100,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private final boolean myIsAlien;
   @Nullable private final CommitResultHandler myResultHandler;
 
+  @NotNull private final Set<AbstractVcs> myAffectedVcses;
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
 
@@ -261,9 +263,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
     myShowVcsCommit = showVcsCommit;
     mySingleVcs = singleVcs;
+    myIsAlien = isAlien;
     myResultHandler = customResultHandler;
     myListComments = newHashMap();
     myDiffDetails = new MyChangeProcessor(myProject);
+
+
+    myAffectedVcses = new HashSet<>();
+    if (myIsAlien) {
+      myAffectedVcses.add(singleVcs);
+    }
+    else {
+      for (LocalChangeList list : changeLists) {
+        myAffectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), myProject));
+      }
+      if (singleVcs != null) myAffectedVcses.add(singleVcs);
+    }
 
     if (!myShowVcsCommit && isEmpty(executors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -273,10 +288,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myCommitMessageArea = new CommitMessage(project, true, true, myShowVcsCommit);
 
-    myIsAlien = isAlien;
-    if (isAlien) {
+    if (myIsAlien) {
       myCommitMessageArea.setChangeLists(newArrayList(changeLists));
-      myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true, singleVcs);
+      myBrowser = new AlienChangeListBrowser(project, changeLists, changes, initialSelection, true, true);
     } else {
       myCommitMessageArea.setChangeLists(createMaybeSingletonList(initialSelection));
       //noinspection unchecked
@@ -695,7 +709,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public String getCommitActionName() {
     String name = null;
-    for (AbstractVcs vcs : getAffectedVcses()) {
+    for (AbstractVcs vcs : myAffectedVcses) {
       CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
       if (name == null && checkinEnvironment != null) {
         name = checkinEnvironment.getCheckinOperationName();
@@ -836,7 +850,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   public Set<AbstractVcs> getAffectedVcses() {
-    return myShowVcsCommit ? myBrowser.getAffectedVcses() : emptySet();
+    return myShowVcsCommit ? myAffectedVcses : emptySet();
   }
 
   @NotNull
@@ -885,7 +899,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Override
   public boolean vcsIsAffected(String name) {
     return ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name) &&
-           exists(myBrowser.getAffectedVcses(), vcs -> Comparing.equal(vcs.getName(), name));
+           ContainerUtil.exists(myAffectedVcses, vcs -> Comparing.equal(vcs.getName(), name));
   }
 
   @Override

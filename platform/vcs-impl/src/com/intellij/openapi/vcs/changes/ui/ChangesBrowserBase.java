@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -380,11 +379,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     ActionUtil.copyFrom(myDiffAction, IdeActions.ACTION_SHOW_DIFF_COMMON);
     myDiffAction.registerCustomShortcutSet(myViewer, null);
     toolBarGroup.add(myDiffAction);
-  }
-
-  @NotNull
-  public Set<AbstractVcs> getAffectedVcses() {
-    return ChangesUtil.getAffectedVcses(getCurrentDisplayedChanges(), myProject);
   }
 
   @NotNull

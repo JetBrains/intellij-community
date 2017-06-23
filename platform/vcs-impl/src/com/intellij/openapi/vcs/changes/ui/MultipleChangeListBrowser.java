@@ -25,7 +25,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -64,7 +63,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @Nullable private final Runnable myRebuildListListener;
   @NotNull private final VcsConfiguration myVcsConfiguration;
   private final boolean myUnversionedFilesEnabled;
-  private Collection<Change> myAllChanges;
   private boolean myInRebuildList;
   private AnAction myMoveActionWithCustomShortcut;
 
@@ -123,12 +121,10 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   protected void setInitialSelection(@NotNull List<? extends ChangeList> changeLists,
                                      @NotNull List<Object> changes,
                                      @Nullable ChangeList initialListSelection) {
-    myAllChanges = ContainerUtil.newArrayList();
     mySelectedChangeList = initialListSelection;
 
     for (ChangeList list : changeLists) {
       if (list instanceof LocalChangeList) {
-        myAllChanges.addAll(list.getChanges());
         if (initialListSelection == null && ContainerUtil.intersects(list.getChanges(), changes)) {
           mySelectedChangeList = list;
         }
@@ -161,7 +157,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     try {
       myInRebuildList = true;
 
-      myAllChanges = getLocalChanges();
       updateListsInChooser();
       super.rebuildList();
       if (myRebuildListListener != null) {
@@ -170,20 +165,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     } finally {
       myInRebuildList = false;
     }
-  }
-
-  @NotNull
-  private Collection<Change> getLocalChanges() {
-    Collection<Change> result = ContainerUtil.newArrayList();
-    ChangeListManager manager = ChangeListManager.getInstance(myProject);
-
-    for (LocalChangeList list : manager.getChangeListsCopy()) {
-      for (Change change : list.getChanges()) {
-        result.add(change);
-      }
-    }
-
-    return result;
   }
 
   @Override
@@ -305,12 +286,6 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   @Override
   public List<Change> getAllChanges() {
     return myViewer.getRoot().getAllChangesUnder();
-  }
-
-  @Override
-  @NotNull
-  public Set<AbstractVcs> getAffectedVcses() {
-    return ChangesUtil.getAffectedVcses(myAllChanges, myProject);
   }
 
   @Override
