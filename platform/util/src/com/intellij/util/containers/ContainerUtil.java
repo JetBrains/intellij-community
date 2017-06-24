@@ -2405,7 +2405,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
     //noinspection deprecation
-    return new ConcurrentSoftValueIntObjectHashMap<V>();
+    return new ConcurrentIntKeySoftValueHashMap<V>();
   }
 
   @NotNull
@@ -2432,7 +2432,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
     //noinspection deprecation
-    return new ConcurrentWeakValueIntObjectHashMap<V>();
+    return new ConcurrentIntKeyWeakValueHashMap<V>();
   }
 
   @NotNull

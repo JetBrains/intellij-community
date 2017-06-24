@@ -27,7 +27,7 @@ import java.util.*;
  * Base class for concurrent key:int -> (weak/soft) value:V map
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
+abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final ConcurrentIntObjectMap<IntReference<V>> myMap = ContainerUtil.createConcurrentIntObjectMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
@@ -220,8 +220,19 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
 
   @Override
   public V putIfAbsent(int key, @NotNull V value) {
-    IntReference<V> prev = myMap.putIfAbsent(key, createReference(key, value, myQueue));
-    return prev == null ? null : prev.get();
+    IntReference<V> newRef = createReference(key, value, myQueue);
+    while (true) {
+      processQueue();
+      IntReference<V> oldRef = myMap.putIfAbsent(key, newRef);
+      if (oldRef == null) return null;
+      V oldVal = oldRef.get();
+      if (oldVal == null) {
+        if (myMap.replace(key, oldRef, newRef)) return null;
+      }
+      else {
+        return oldVal;
+      }
+    }
   }
 
   @NotNull

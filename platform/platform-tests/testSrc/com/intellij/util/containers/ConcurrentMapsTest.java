@@ -404,4 +404,80 @@ public class ConcurrentMapsTest {
     GCUtil.tryGcSoftlyReachableObjects();
     assertTrue(map.toString(), map.isEmpty());
   }
+
+  @Test
+  public void testConcurrentWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    checkPutIfAbsent(map);
+  }
+  @Test
+  public void testConcurrentSoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    Map<String, Object> map = ContainerUtil.createConcurrentSoftValueMap();
+    checkPutIfAbsent(map);
+  }
+  @Test
+  public void testConcurrentIntKeyWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectWeakValueMap();
+    checkPutIfAbsent(map);
+  }
+  @Test
+  public void testConcurrentIntKeySoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectSoftValueMap();
+    checkPutIfAbsent(map);
+  }
+
+  private static void checkPutIfAbsent(Map<String, Object> map) {
+    String key = "a";
+    map.put(key, new Object());
+    String newVal = "xxx";
+    int i;
+    int N = 1_000_000;
+    for (i = 0; i < N; i++) {
+      Object prev = map.putIfAbsent(key, newVal);
+      if (prev == null) {
+        assertSame(newVal, map.get(key));
+        break;
+      }
+      assertEquals(Object.class, prev.getClass());
+      Object actual = map.get(key);
+      assertNotNull(actual);
+      if (actual == newVal) {
+        break; // gced, replaced
+      }
+      assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
+    }
+    if (i == N) {
+      GCUtil.tryGcSoftlyReachableObjects();
+      Object prev = map.putIfAbsent(key, newVal);
+      assertNull(prev);
+      assertSame(newVal, map.get(key));
+    }
+  }
+  private static void checkPutIfAbsent(ConcurrentIntObjectMap<Object> map) {
+    int key = 4;
+    map.put(key, new Object());
+    String newVal = "xxx";
+    int i;
+    int N = 1_000_000;
+    for (i = 0; i < N; i++) {
+      Object prev = map.putIfAbsent(key, newVal);
+      if (prev == null) {
+        assertSame(newVal, map.get(key));
+        break;
+      }
+      assertEquals(Object.class, prev.getClass());
+      Object actual = map.get(key);
+      assertNotNull(actual);
+      if (actual == newVal) {
+        break; // gced, replaced
+      }
+      assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
+    }
+    if (i == N) {
+      GCUtil.tryGcSoftlyReachableObjects();
+      Object prev = map.putIfAbsent(key, newVal);
+      assertNull(prev);
+      assertSame(newVal, map.get(key));
+    }
+  }
 }
