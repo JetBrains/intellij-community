@@ -312,26 +312,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test(timeout = TIMEOUT)
-  public void testStripedLockIntObjectConcurrentHashMap() {
-    ConcurrentIntObjectMap<Object> map = new StripedLockIntObjectConcurrentHashMap<>();
-    for (int i = 0; i < 1000; i++) {
-      Object prev = map.put(i, i);
-      assertNull(prev);
-      Object ret = map.get(i);
-      assertTrue(ret instanceof Integer);
-      assertEquals(i, ret);
-
-      if (i != 0) {
-        Object remove = map.remove(i - 1);
-        assertTrue(remove instanceof Integer);
-        assertEquals(i - 1, remove);
-      }
-      assertEquals(map.size(), 1);
-    }
-    map.clear();
-    assertEquals(map.size(), 0);
-  }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
