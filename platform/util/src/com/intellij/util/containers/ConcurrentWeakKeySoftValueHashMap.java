@@ -36,7 +36,7 @@ import static com.intellij.reference.SoftReference.deref;
  * Null values are NOT allowed
  * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, gnu.trove.TObjectHashingStrategy)} instead
  */
-class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
+public class ConcurrentWeakKeySoftValueHashMap<K, V> implements ConcurrentMap<K, V> {
   private final ConcurrentMap<KeyReference<K,V>, ValueReference<K,V>> myMap;
   final ReferenceQueue<K> myKeyQueue = new ReferenceQueue<K>();
   final ReferenceQueue<V> myValueQueue = new ReferenceQueue<V>();
