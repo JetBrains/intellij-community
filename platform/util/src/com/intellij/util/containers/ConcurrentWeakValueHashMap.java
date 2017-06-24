@@ -29,7 +29,7 @@ import java.util.Map;
  * Null values are NOT allowed
  * @deprecated Use {@link ContainerUtil#createConcurrentWeakValueMap()} instead
  */
-public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
+final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   public ConcurrentWeakValueHashMap(@NotNull Map<K, V> map) {
     super(map);
   }
