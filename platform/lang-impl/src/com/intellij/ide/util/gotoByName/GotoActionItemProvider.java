@@ -213,7 +213,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    ArrayList<MatchedValue> matched = ContainerUtil.newArrayList();
+    List<MatchedValue> matched = ContainerUtil.newArrayList();
     items.transform(o -> {
       ProgressManager.checkCanceled();
       return o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern);
@@ -221,5 +221,4 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Collections.sort(matched);
     return ContainerUtil.process(matched, consumer);
   }
-
 }

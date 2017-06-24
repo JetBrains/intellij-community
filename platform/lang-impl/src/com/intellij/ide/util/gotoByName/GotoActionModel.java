@@ -197,6 +197,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Override
     public int compareTo(@NotNull MatchedValue o) {
+      if (o == this) return 0;
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
 
@@ -222,8 +223,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
       }
       
-      if (value instanceof OptionDescription && o.value instanceof BooleanOptionDescription) return 1;
-      if (o.value instanceof OptionDescription && value instanceof BooleanOptionDescription) return -1;
+      if (value instanceof BooleanOptionDescription && !(o.value instanceof BooleanOptionDescription) && o.value instanceof OptionDescription) return -1;
+      if (o.value instanceof BooleanOptionDescription && !(value instanceof BooleanOptionDescription) && value instanceof OptionDescription) return 1;
 
       if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
       if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
@@ -522,7 +523,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
       if (byTextLength != 0) return byTextLength;
-      int byGroup = Comparing.compare(myGroupName, o.getGroupName());
+      int byGroup = Comparing.compare(myGroupName, o.myGroupName);
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
