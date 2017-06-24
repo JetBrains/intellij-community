@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleInsertStateAction extends EditorAction {
   public ToggleInsertStateAction() {
@@ -29,7 +30,7 @@ public class ToggleInsertStateAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       EditorEx editorex = (EditorEx) editor;
       editorex.setInsertMode(!editorex.isInsertMode());
     }

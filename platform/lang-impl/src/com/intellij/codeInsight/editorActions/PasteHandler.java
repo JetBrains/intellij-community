@@ -69,7 +69,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'paste' operation for specific caret is not supported";
     execute(editor, dataContext, null);
   }

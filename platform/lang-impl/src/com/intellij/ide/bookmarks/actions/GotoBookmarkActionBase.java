@@ -33,7 +33,7 @@ abstract class GotoBookmarkActionBase extends EditorAction {
   protected GotoBookmarkActionBase(final boolean next) {
     super(new EditorActionHandler() {
       @Override
-      public void execute(Editor editor, DataContext dataContext) {
+      public void execute(@NotNull Editor editor, DataContext dataContext) {
         navigateToBookmark(dataContext, editor);
       }
 

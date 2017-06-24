@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class ExpandAllRegionsAction extends EditorAction {
   public ExpandAllRegionsAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
         Project project = editor.getProject();
         assert project != null;
         PsiDocumentManager.getInstance(project).commitAllDocuments();

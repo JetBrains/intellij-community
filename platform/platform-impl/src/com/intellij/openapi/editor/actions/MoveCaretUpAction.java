@@ -34,7 +34,7 @@ public class MoveCaretUpAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       int lineShift = -1;
       editor.getCaretModel().moveCaretRelatively(0, lineShift, false, false, caret == editor.getCaretModel().getPrimaryCaret());
     }

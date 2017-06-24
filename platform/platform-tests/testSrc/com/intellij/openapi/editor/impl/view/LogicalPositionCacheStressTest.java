@@ -37,12 +37,12 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
-    setSeed(mySeed = (SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE));
+    setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
 
   public void testRandomActions() {
-    System.out.println("Seed is " + mySeed);
+    LOG.debug("Seed is " + mySeed);
     int i = 0;
     try {
       initText("");
@@ -53,7 +53,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     }
     catch (Throwable t) {
       String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
-      System.out.println(message);
+      System.err.println(message);
       throw new RuntimeException(message, t);
     }
   }
@@ -62,7 +62,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     ourActions.get(myRandom.nextInt(ourActions.size())).perform(myEditor, myRandom);
   }
 
-  protected void checkConsistency(Editor editor) {
+  private static void checkConsistency(Editor editor) {
     checkLogicalPositionCache(editor);
   }
 
@@ -83,6 +83,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
     return b;
   }
   
+  @FunctionalInterface
   interface Action {
     void perform(Editor editor, Random random);
   }
@@ -128,7 +129,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
       if (textLength <= 0) return;
-      int[] offsets = new int[] {random.nextInt(textLength + 1), random.nextInt(textLength + 1), random.nextInt(textLength + 1)};
+      int[] offsets = {random.nextInt(textLength + 1), random.nextInt(textLength + 1), random.nextInt(textLength + 1)};
       Arrays.sort(offsets);
       if (offsets[0] == offsets[1] || offsets[1] == offsets[2]) return;
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {

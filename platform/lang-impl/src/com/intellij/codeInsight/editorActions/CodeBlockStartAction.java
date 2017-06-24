@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeBlockStartAction extends EditorAction {
@@ -37,7 +38,7 @@ public class CodeBlockStartAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         CodeBlockUtil.moveCaretToCodeBlockStart(project, editor, false);

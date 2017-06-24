@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class NextPrevWordHandler extends EditorActionHandler {
@@ -36,7 +37,7 @@ class NextPrevWordHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
     if (EditorUtil.isPasswordEditor(editor)) {
       int selectionStartOffset = caret.getLeadSelectionOffset();
