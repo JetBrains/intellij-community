@@ -210,7 +210,7 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, i
             if v.__class__ == frame_type:
                 value = pydevd_resolver.frameResolver.get_frame_name(v)
 
-            elif v.__class__ in (list, tuple):
+            elif v.__class__ in (list, tuple, set, frozenset, dict):
                 if len(v) > 300:
                     value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
                 else:
