@@ -76,7 +76,10 @@ public class ClassPath {
     push(urls);
   }
 
-  /** @deprecated to be removed in IDEA 15 */
+  /**
+   * @deprecated Adding additional urls to classpath at runtime could lead to hard-to-debug errors
+   */
+  @Deprecated
   void addURL(URL url) {
     push(Collections.singletonList(url));
   }

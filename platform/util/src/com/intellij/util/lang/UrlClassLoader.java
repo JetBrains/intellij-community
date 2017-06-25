@@ -195,8 +195,12 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  /** @deprecated to be removed in IDEA 15 */
+  /**
+   * @deprecated Adding additional urls to classloader at runtime could lead to hard-to-debug errors
+   * <b>Note:</b> Used via reflection because of classLoaders incompatibility
+   */
   @SuppressWarnings({"unused", "deprecation"})
+  @Deprecated
   public void addURL(URL url) {
     getClassPath().addURL(url);
     myURLs.add(url);
