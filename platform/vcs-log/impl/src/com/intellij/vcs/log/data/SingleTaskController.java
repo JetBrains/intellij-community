@@ -65,7 +65,6 @@ public abstract class SingleTaskController<Request, Result> {
       LOG.debug("Added requests: " + requests);
       if (myRunningTask != null && myCancelRunning) {
         cancelTask(myRunningTask);
-        LOG.debug("Canceled task " + myRunningTask);
       }
       if (myRunningTask == null) {
         myRunningTask = startNewBackgroundTask();
@@ -75,7 +74,10 @@ public abstract class SingleTaskController<Request, Result> {
   }
 
   private void cancelTask(@NotNull ProgressIndicator t) {
-    t.cancel();
+    if (t.isRunning()) {
+      t.cancel();
+      LOG.debug("Canceled task " + myRunningTask);
+    }
   }
 
   /**
