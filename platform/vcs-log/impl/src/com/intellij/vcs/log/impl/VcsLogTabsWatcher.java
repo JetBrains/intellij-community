@@ -46,6 +46,7 @@ public class VcsLogTabsWatcher implements Disposable {
   @NotNull private final ToolWindowManagerEx myToolWindowManager;
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
   @Nullable private ToolWindow myToolWindow;
+  private boolean myIsVisible;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher, @NotNull Disposable parentDisposable) {
     myRefresher = refresher;
@@ -80,6 +81,7 @@ public class VcsLogTabsWatcher implements Disposable {
     ToolWindow window = myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
     if (window != null) {
       myToolWindow = window;
+      myIsVisible = myToolWindow.isVisible();
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
     }
   }
@@ -170,7 +172,10 @@ public class VcsLogTabsWatcher implements Disposable {
 
     @Override
     public void stateChanged() {
-      selectionChanged();
+      if (myToolWindow != null && myIsVisible != myToolWindow.isVisible()) {
+        myIsVisible = myToolWindow.isVisible();
+        selectionChanged();
+      }
     }
 
     @Override
