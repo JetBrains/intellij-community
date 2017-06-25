@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -115,10 +114,8 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     gbc.fill = GridBagConstraints.BOTH;
     gbc.gridx = 0;
     gbc.gridy = 0;
-    if (!PlatformUtils.isCLion()) {
-      buttonPanel.add(mySkipButton, gbc);
-      gbc.gridx++;
-    }
+    buttonPanel.add(mySkipButton, gbc);
+    gbc.gridx++;
     buttonPanel.add(myBackButton, gbc);
     gbc.gridx++;
     gbc.weightx = 1;
