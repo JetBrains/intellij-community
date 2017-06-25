@@ -3,7 +3,7 @@
 
 import os
 import sys
-from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
+from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, SHOW_CYTHON_WARNING
 
 
 use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
@@ -34,6 +34,7 @@ def delete_old_compiled_extensions():
         log_error_once("warning: failed to delete old cython speedups. Please delete all *.so files from the directories "
                        "\"%s\" and \"%s\"" % (_pydevd_bundle_dir, _pydevd_frame_eval_dir))
 
+show_tracing_warning = False
 
 if use_cython == 'YES':
     # We must import the cython version if forcing cython
@@ -65,8 +66,11 @@ elif use_cython is None:
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
         from _pydev_bundle.pydev_monkey import log_error_once
 
-        log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
-            sys.executable, os.path.join(dirname, 'setup_cython.py')))
+        if SHOW_CYTHON_WARNING:
+            log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
+                sys.executable, os.path.join(dirname, 'setup_cython.py')))
+        else:
+            show_tracing_warning = True
 
 else:
     raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))

@@ -873,7 +873,7 @@ public abstract class InplaceRefactoring {
     public void beforeTemplateFinished(final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-        myInsertedName = value != null ? value.toString() : null;
+        myInsertedName = value != null ? value.toString().trim() : null;
 
         TextRange range = templateState.getCurrentVariableRange();
         final int currentOffset = myEditor.getCaretModel().getOffset();

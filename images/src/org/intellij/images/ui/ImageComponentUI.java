@@ -26,8 +26,6 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-import static com.intellij.util.ui.UIUtil.bounds;
-
 /**
  * UI for {@link ImageComponent}.
  *
@@ -120,7 +118,7 @@ public class ImageComponentUI extends ComponentUI {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         }
-        UIUtil.drawImage(g, renderer, bounds(0, 0, size.width, size.height), ic);
+        UIUtil.drawImage(g, renderer, new Rectangle(0, 0, size.width, size.height), ic);
 
         g2d.setRenderingHints(oldHints);
     }

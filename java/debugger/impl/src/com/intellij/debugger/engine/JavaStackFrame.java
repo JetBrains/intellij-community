@@ -320,7 +320,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         else {
           superBuildVariables(evaluationContext, children);
         }
-        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
+        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.computeThisObject());
         evalContextCopy.setAutoLoadClasses(false);
 
         if (sourcePosition != null) {

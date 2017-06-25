@@ -25,7 +25,7 @@ public class IpnbMarkdownCellAction extends AnAction {
     changeTypeToMarkdown(myEditor);
   }
 
-  public void changeTypeToMarkdown(@NotNull final IpnbFileEditor editor) {
+  private static void changeTypeToMarkdown(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
     if (selectedCellPanel == null) return;
@@ -34,9 +34,14 @@ public class IpnbMarkdownCellAction extends AnAction {
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
     final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(cell.getSource(), cell.getMetadata());
-    if (index >= 0) {
-      cells.set(index, markdownCell);
-    }
-    filePanel.replaceComponent(selectedCellPanel, markdownCell);
+    filePanel.executeUndoableCommand(
+      () -> {
+        if (index >= 0) {
+          cells.set(index, markdownCell);
+        }
+        filePanel.replaceComponent(selectedCellPanel, markdownCell);
+        filePanel.saveToFile(false);
+      },
+      "Change Cell Type To Markdown");
   }
 }

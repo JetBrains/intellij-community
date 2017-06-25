@@ -44,14 +44,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.*;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -386,14 +381,10 @@ class EditorPainter implements TextDrawingCallback {
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
           int lineHeight = myView.getLineHeight();
-          List<Inlay> inlays = fragment.getCurrentInlays();
-          if (inlays != null) {
-            for (Inlay inlay : inlays) {
-              EditorCustomElementRenderer renderer = inlay.getRenderer();
-              int width = inlay.getWidthInPixels();
-              renderer.paint(myEditor, g, new Rectangle((int) xStart, y - myView.getAscent(), width, lineHeight));
-              xStart += width;
-            }
+          Inlay inlay = fragment.getCurrentInlay();
+          if (inlay != null) {
+            inlay.getRenderer().paint(myEditor, g, 
+                                      new Rectangle((int) xStart, y - myView.getAscent(), inlay.getWidthInPixels(), lineHeight));
             return;
           }
           boolean allowBorder = fragment.getCurrentFoldRegion() != null;
@@ -879,7 +870,7 @@ class EditorPainter implements TextDrawingCallback {
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
                                                                                                   caret.getVisualLineStart(), 
                                                                                                   false)) {
-            if (fragment.getCurrentInlays() != null) continue;
+            if (fragment.getCurrentInlay() != null) continue;
             int startVisualColumn = fragment.getStartVisualColumn();
             int endVisualColumn = fragment.getEndVisualColumn();
             if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||

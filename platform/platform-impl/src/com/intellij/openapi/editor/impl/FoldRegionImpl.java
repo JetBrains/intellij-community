@@ -140,6 +140,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     if (isValid()) {
       alignToSurrogateBoundaries();
     }
+    myEditor.getFoldingModel().clearCachedValues();
   }
 
   @Override

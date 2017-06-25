@@ -63,14 +63,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
-  protected final int myId;
+  final int myId;
 
   static {
     //noinspection ConstantConditions
     assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
   }
 
-  public VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
+  VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
     mySegment = segment;
     myId = id;
     myParent = parent;
@@ -320,8 +320,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
     mySegment.setNameId(myId, FileNameCache.storeName(newName));
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
     parent.addChild(this);
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
@@ -334,6 +334,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   @Override

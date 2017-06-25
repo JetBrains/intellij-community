@@ -42,9 +42,9 @@ class C {
     mt = MethodType.methodType(java.util.List.class, Object[].class);
     mh = lookup.findStatic(java.util.Arrays.class, "asList", mt);
     assert(mh.isVarargsCollector());
-    x = mh.invokeGeneric("one", "two");
+    x = mh.invoke("one", "two");
 
-// invokeGeneric(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+// invoke(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
     assert(x.equals(java.util.Arrays.asList("one","two")));
 
 // mt is (Object,Object,Object)Object
@@ -68,7 +68,7 @@ class C {
 // invokeExact(Ljava/io/PrintStream;Ljava/lang/String;)V
 
     MethodHandle mh0 = lookup.findVirtual(String.class, "length", MethodType.methodType(int.class));
-    MethodHandle mh1 = MethodHandles.convertArguments(mh0, MethodType.methodType(Integer.class, String.class));
+    MethodHandle mh1 = mh0.asType(MethodType.methodType(Integer.class, String.class));
     System.out.println((Integer) mh1.invokeExact("daddy"));
   }
   

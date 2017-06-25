@@ -19,26 +19,24 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.theoryinpractice.testng.TestNGFramework;
+import com.theoryinpractice.testng.model.TestClassFilter;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.ui.actions.RerunFailedTestsAction;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings("UndeclaredTests")
 public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
-  @BeforeMethod
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -47,13 +45,11 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package org.testng.annotations; @interface BeforeGroups { String[] value() default {};}");
   }
 
-  @AfterMethod
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }
 
-  @Test
   public void testNonRelatedBeforeClassIncluded() throws Exception {
     final PsiClass configClass = myFixture.addClass("package p; public class AConfig {@org.testng.annotations.BeforeClass public void setup(){}}");
     final PsiClass testClass = myFixture.addClass("package p; public class ATest {@org.testng.annotations.Test public void testOne(){}}");
@@ -63,7 +59,6 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestPackageConfiguration(configClass, testClass);
   }
 
-  @Test
   public void testNonRelatedIncludedWhenConfigIsLocatedInSuperclassInAnotherPackage() throws Exception {
     myFixture.addClass("package a; public class AConfig {@org.testng.annotations.BeforeClass public void setup(){}}");
     final PsiClass emptyClassWithSuperConfig = myFixture.addClass("package p; import a.AConfig; public class BConfig extends AConfig {}");
@@ -71,7 +66,6 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestPackageConfiguration(emptyClassWithSuperConfig, testClass);
   }
 
-  @Test
   public void testBeforeClassIsIncludedIfRunOnlyOneMethod() throws Exception {
     final PsiClass aClass =
       myFixture.addClass("package a; public class AConfig {" +
@@ -81,7 +75,6 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestMethodConfiguration(aClass, aClass.getMethods()[1]);
   }
 
-  @Test
   public void testOneMethodWhenAnnotationIsOnBaseClassOnly() throws Exception {
     myFixture.addClass("package a; @org.testng.annotations.Test public class BaseClass {}");
     final PsiClass aClass =
@@ -91,7 +84,22 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestMethodConfiguration(aClass, aClass.getMethods());
   }
 
-  @Test
+  public void testPackagePrivateMethodWhenAnnotationIsOnClass() throws Exception {
+    PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test public class MyTestClass {void testOne(){}}");
+    assertFalse(new TestNGFramework().isTestMethod(aClass.getMethods()[0], false));
+  }
+  
+  public void testClassWithSingleParameterConstructor() {
+    PsiClass aClass = myFixture.addClass("package a; @org.testng.annotations.Test " +
+                                         "public class MyTestClass {" +
+                                         "public MyTetClass(String defaultName){}\n" +
+                                         " public void testOne(){}" +
+                                         "}");
+    Project project = getProject();
+    TestClassFilter classFilter = new TestClassFilter(GlobalSearchScope.projectScope(project), project, false, true);
+    assertTrue(classFilter.isAccepted(aClass));
+  } 
+
   public void testOneMethodWithDependencies() throws Exception {
     final PsiClass aClass =
       myFixture.addClass("package a; public class ATest {" +
@@ -103,7 +111,6 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestMethodConfiguration(aClass, aClass.getMethods());
   }
 
-  @Test
   public void testDependsOnGroupDontIncludeForeignClass() throws Exception {
     final PsiClass aClass =
       myFixture.addClass("package a; public class ATest {" +
@@ -119,7 +126,6 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestClassConfiguration(aClass);
   }
 
-  @Test
   public void testBeforeGroups() throws Exception {
     final PsiClass aClass =
        myFixture.addClass("package a; public class ATest {" +

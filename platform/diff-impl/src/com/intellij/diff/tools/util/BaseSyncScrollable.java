@@ -31,6 +31,8 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
 
   @Override
   public int transfer(@NotNull Side baseSide, int line) {
+    if (line < 0) return -1;
+
     ScrollHelper helper = new ScrollHelper(baseSide, line);
     processHelper(helper);
 
@@ -43,10 +45,7 @@ public abstract class BaseSyncScrollable implements SyncScrollSupport.SyncScroll
     if (master2 == line) return slave2;
     if (master2 < line) return (line - master2) + slave2;
 
-    assert master1 != master2;
-
-    return Math.min(slave1 + (line - master1), slave2); // old
-    //return (line - master1) * (slave2 - slave1) / (master2 - master1) + slave1; // new
+    return Math.min(slave1 + (line - master1), slave2);
   }
 
   protected static class ScrollHelper {

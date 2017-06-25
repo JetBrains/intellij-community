@@ -19,6 +19,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.*;
@@ -139,7 +140,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   }
 
   private void checkSignalBlocking() {
-    if (SystemInfo.isUnix) {
+    if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
       try {
         LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
         Memory buf = new Memory(1024);

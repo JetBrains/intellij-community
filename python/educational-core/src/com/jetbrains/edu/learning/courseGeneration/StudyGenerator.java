@@ -66,17 +66,11 @@ public class StudyGenerator {
       createTaskFile(taskDir, taskFile.getValue());
     }
     createTestFiles(taskDir, task);
-    createDescriptions(taskDir, task);
   }
 
   public static void createTaskFile(@NotNull final VirtualFile taskDir, @NotNull final TaskFile taskFile) throws IOException {
     final String name = taskFile.name;
     createChildFile(taskDir, name, taskFile.text);
-  }
-
-  private static void createDescriptions(@NotNull VirtualFile taskDir, @NotNull Task task) throws IOException {
-    final Map<String, String> texts = task.getTaskTexts();
-    createFiles(taskDir, texts);
   }
 
   private static void createTestFiles(@NotNull VirtualFile taskDir, @NotNull Task task) throws IOException {

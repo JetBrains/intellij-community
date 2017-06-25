@@ -174,6 +174,7 @@ public class VMOptions {
       return null;
     }
 
+    vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
     if (!FileUtil.isAncestor(PathManager.getHomePath(), vmOptionsFile, true)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
       return new File(vmOptionsFile);

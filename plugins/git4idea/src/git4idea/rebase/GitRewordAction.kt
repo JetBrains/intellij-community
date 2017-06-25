@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
@@ -133,19 +132,19 @@ class GitRewordAction : GitCommitEditingAction() {
     override fun createCenterPanel() =
       JBUI.Panels.simplePanel(DEFAULT_HGAP, DEFAULT_VGAP).
         addToTop(JBLabel("Edit message for commit ${commit.id.toShortString()} by ${getShortPresentation(commit.author)}")).
-        addToCenter(commitEditor.component)
+        addToCenter(commitEditor)
 
-    override fun getPreferredFocusedComponent() = commitEditor
+    override fun getPreferredFocusedComponent() = commitEditor.editorField
 
     override fun getDimensionServiceKey() = "GitRewordDialog"
 
-    fun getMessage() = commitEditor.text!!
+    fun getMessage() = commitEditor.comment
 
-    private fun createCommitEditor(): EditorTextField {
-      val editor = CommitMessage.createCommitMessageEditor(project)
-      editor.text = commit.fullMessage
-      editor.setCaretPosition(0)
-      editor.addSettingsProvider { editor ->
+    private fun createCommitEditor(): CommitMessage {
+      val editor = CommitMessage(project, false, false, true)
+      editor.setText(commit.fullMessage)
+      editor.editorField.setCaretPosition(0)
+      editor.editorField.addSettingsProvider { editor ->
         // display at least several rows for one-line messages
         val MIN_ROWS = 3
         if ((editor as EditorImpl).visibleLineCount < MIN_ROWS) {

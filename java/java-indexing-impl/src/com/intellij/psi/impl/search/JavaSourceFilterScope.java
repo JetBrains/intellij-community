@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -36,6 +37,11 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     this(delegate, false);
   }
 
+  /**
+   * By default, the scope excludes version-specific classes of multi-release .jar files
+   * (i.e. *.class files located under META-INF/versions/ directory).
+   * Setting {@code includeVersions} parameter to {@code true} allows such files to pass the filter.
+   */
   public JavaSourceFilterScope(@NotNull GlobalSearchScope delegate, boolean includeVersions) {
     super(delegate);
     Project project = getProject();
@@ -44,7 +50,7 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     if (!super.contains(file)) {
       return false;
     }
@@ -54,14 +60,24 @@ public class JavaSourceFilterScope extends DelegatingGlobalSearchScope {
     }
 
     if (JavaClassFileType.INSTANCE == file.getFileType()) {
-      return myIndex.isInLibraryClasses(file) && (myIncludeVersions || !isVersioned(file));
+      return myIndex.isInLibraryClasses(file) && (myIncludeVersions || !isVersioned(file, myIndex));
     }
 
     return myIndex.isInSourceContent(file) ||
            myBaseScope.isForceSearchingInLibrarySources() && myIndex.isInLibrarySource(file);
   }
 
-  private static boolean isVersioned(VirtualFile file) {
-    return file.getPath().contains("/META-INF/versions/");
+  private static boolean isVersioned(VirtualFile file, ProjectFileIndex index) {
+    VirtualFile root = index.getClassRootForFile(file);
+    while ((file = file.getParent()) != null && !file.equals(root)) {
+      if (Comparing.equal(file.getNameSequence(), "versions")) {
+        VirtualFile parent = file.getParent();
+        if (parent != null && Comparing.equal(parent.getNameSequence(), "META-INF")) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

@@ -574,6 +574,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myDelegate.setBackgroundColor(color);
   }
 
+  @NotNull
   @Override
   public Color getBackgroundColor() {
     return myDelegate.getBackgroundColor();

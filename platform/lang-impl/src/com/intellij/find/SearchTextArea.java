@@ -27,6 +27,7 @@ import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.InplaceActionButtonLook;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
@@ -123,6 +124,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         if (!StringUtil.isEmpty(str)) super.insertString(offs, str, a);
       }
     });
+    myTextArea.getDocument().putProperty(EditorCopyPasteHelper.TRIM_TEXT_ON_PASTE_KEY, Boolean.TRUE);
     myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -232,6 +234,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         myIconsPanel.add(myNewLineButton);
       }
       myIconsPanel.setBorder(myHelper.getIconsPanelBorder(rows));
+      myIconsPanel.revalidate();
+      myIconsPanel.repaint();
       myScrollPane.setHorizontalScrollBarPolicy(multiline ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
       myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
       myScrollPane.revalidate();

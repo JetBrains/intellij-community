@@ -40,13 +40,13 @@ public interface FoldingModel {
   FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText);
 
   /**
-   * Tries to add given region to the folding model. This method must be called
-   * from the {@code Runnable} passed to {@link #runBatchFoldingOperation(Runnable)}.
-   *
-   * @return {@code true}, if region was added successfully, {@code false} if the region cannot be added, e.g. if it
-   * intersects with another existing region
+   * Do nothing
+   * TODO to remove in IDEA 2018
    */
-  boolean addFoldRegion(@NotNull FoldRegion region);
+  @Deprecated
+  default boolean addFoldRegion(@NotNull FoldRegion region) {
+    return true;
+  }
 
   /**
    * Removes the specified fold region. This method must be called

@@ -140,10 +140,10 @@ public class BackwardReferenceIndexWriter {
       }
     }
     else {
-      String ownerName = ref.getOwnerName();
       if (isPrivate(ref)) {
         return null;
       }
+      String ownerName = ref.getOwnerName();
       final Integer ownerPrecalculatedId = ownerIdReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
         return new LightRef.JavaLightFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));

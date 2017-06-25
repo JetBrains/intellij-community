@@ -50,6 +50,9 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
  * Timings that are used in the implementation to detect double click were tuned for SearchEverywhere
  * functionality (invoked on double Shift), so if you need to change them, please make sure
  * SearchEverywhere behaviour remains intact.
+ *
+ * @author Dmitry Batrak
+ * @author Konstantin Bulenkov
  */
 public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ModifierKeyDoubleClickHandler.class);
@@ -166,7 +169,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
             resetState();
             return false;
           }
-          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 500) {
+          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 100) {
             resetState();
             return false;
           }

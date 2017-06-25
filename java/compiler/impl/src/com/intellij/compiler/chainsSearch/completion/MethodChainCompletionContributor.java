@@ -125,7 +125,13 @@ public class MethodChainCompletionContributor extends CompletionContributor {
     if (parent instanceof PsiLocalVariable) {
       return extractContextFromVariable((PsiLocalVariable)parent, parameters);
     }
-    PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
+    return extractContextFromMethodCall((PsiMethodCallExpression)parent, parameters);
+  }
+
+  @Nullable
+  private static ChainCompletionContext extractContextFromMethodCall(PsiMethodCallExpression parent,
+                                                                     CompletionParameters parameters) {
+    PsiMethod method = parent.resolveMethod();
     if (method == null) return null;
     PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
     PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpressionList.class);

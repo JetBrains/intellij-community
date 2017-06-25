@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
@@ -44,7 +45,7 @@ import java.util.Collection;
 
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
 
-public class VcsProjectLog {
+public class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
     Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
@@ -154,6 +155,11 @@ public class VcsProjectLog {
 
   public static VcsProjectLog getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, VcsProjectLog.class);
+  }
+
+  @Override
+  public void dispose() {
+    disposeLog();
   }
 
   private class LazyVcsLogManager {

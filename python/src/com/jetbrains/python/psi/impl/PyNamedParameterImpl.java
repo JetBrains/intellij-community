@@ -177,13 +177,13 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @NotNull
   @Override
   public String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
-    return new PyCallableParameterImpl(this).getPresentableText(includeDefaultValue, context);
+    return PyCallableParameterImpl.psi(this).getPresentableText(includeDefaultValue, context);
   }
 
   @Override
   @Nullable
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
-    return new PyCallableParameterImpl(this).getArgumentType(context);
+    return PyCallableParameterImpl.psi(this).getArgumentType(context);
   }
 
   @Override
@@ -253,7 +253,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<>();
           final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-          final PyCallableParameter parameter = new PyCallableParameterImpl(this);
+          final PyCallableParameter parameter = PyCallableParameterImpl.psi(this);
 
           processLocalCalls(
             func, call -> {

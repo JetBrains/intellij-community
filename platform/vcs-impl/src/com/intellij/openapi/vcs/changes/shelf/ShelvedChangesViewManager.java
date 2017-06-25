@@ -236,7 +236,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       state.applyTo(myTree);
       if (myPostUpdateRunnable != null) {
         myPostUpdateRunnable.run();
-      }      
+      }
     }
     myPostUpdateRunnable = null;
   }
@@ -302,11 +302,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
     private final static ChangelistComparator ourInstance = new ChangelistComparator();
-    
+
     public static ChangelistComparator getInstance() {
       return ourInstance;
     }
-    
+
     @Override
     public int compare(ShelvedChangeList o1, ShelvedChangeList o2) {
       return o2.DATE.compareTo(o1.DATE);
@@ -434,7 +434,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
             if (node.getUserObject() instanceof ShelvedChangeList) {
               final ShelvedChangeList list = (ShelvedChangeList)node.getUserObject();
               if (((! recycled) && (! list.isRecycled())) ||
-                (recycled && list.isRecycled())) {
+                  (recycled && list.isRecycled())) {
                 changeLists.add(list);
               }
             }
@@ -541,7 +541,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         int count = node.getChildCount();
         String numFilesText = spaceAndThinSpace() + count + " " + StringUtil.pluralize("file", count) + ",";
         append(numFilesText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        
+
         String date = DateFormatUtil.formatPrettyDateTime(changeListData.DATE);
         append(" " + date, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
@@ -789,7 +789,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (myCurrentShelvedElement != null) {
         if (keepBinarySelection(selectedBinaryChanges, myCurrentShelvedElement.getBinaryFile()) ||
             keepShelvedSelection(selectedChanges, myCurrentShelvedElement.getShelvedChange())) {
-          dropCachesIfNeededAndUpdate(myCurrentShelvedElement);  
+          dropCachesIfNeededAndUpdate(myCurrentShelvedElement);
           return;
         }
       }

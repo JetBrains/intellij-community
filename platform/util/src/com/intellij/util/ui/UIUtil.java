@@ -110,6 +110,12 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
+  public static void decorateFrame(@NotNull JRootPane pane) {
+    if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+    }
+  }
+
   private static void blockATKWrapper() {
     /*
      * The method should be called before java.awt.Toolkit.initAssistiveTechnologies()
@@ -2015,8 +2021,6 @@ public class UIUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}
    * When {@code dstBounds} is null, the image bounds are used instead.
-   *
-   * @see #bounds(int, int, int, int)
    */
   public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, ImageObserver observer) {
       drawImage(g, image, dstBounds, null, observer);
@@ -2025,8 +2029,6 @@ public class UIUtil {
   /**
    * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, int, int, int, int, ImageObserver)}
    * When {@code dstBounds} or {@code srcBounds} is null, the image bounds are used instead.
-   *
-   * @see #bounds(int, int, int, int)
    */
   public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, @Nullable Rectangle srcBounds, ImageObserver observer) {
     Image drawImage = image;
@@ -2114,16 +2116,6 @@ public class UIUtil {
       ((Graphics2D)g).drawImage(image, op, x, y);
     }
   }
-
-  /**
-   * An alias for the new rectangle call. Use as static import.
-   *
-   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
-   */
-  public static Rectangle bounds(int x, int y, int width, int height) {
-    return new Rectangle(x, y, width, height);
-  }
-
 
   public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
     paintWithXorOnRetina(size, g, true, paintRoutine);
@@ -3809,6 +3801,15 @@ public class UIUtil {
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
+  }
+
+  @Nullable
+  public static UndoManager getUndoManager(Component component) {
+    if (component instanceof JTextComponent) {
+      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
+      if (o instanceof UndoManager) return (UndoManager)o;
+    }
+    return null;
   }
 
   public static void playSoundFromResource(final String resourceName) {

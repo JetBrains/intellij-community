@@ -15,8 +15,12 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,6 +41,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -394,5 +400,36 @@ public class PsiTestUtil {
     }
     sdkModificator.commitChanges();
     return clone;
+  }
+
+  public static void checkStubsMatchText(@NotNull PsiFile file) {
+    Project project = file.getProject();
+
+    StubTree tree = getStubTree(file);
+    StubTree copyTree = getStubTree(
+      PsiFileFactory.getInstance(project).createFileFromText(file.getName(), file.getLanguage(), file.getText()));
+    if (tree == null || copyTree == null) return;
+
+    String fromText = DebugUtil.stubTreeToString(copyTree.getRoot());
+    String fromPsi = DebugUtil.stubTreeToString(tree.getRoot());
+    if (!fromText.equals(fromPsi)) {
+      Assert.assertEquals("Re-created from text:\n" + fromText, "Stubs from PSI structure:\n" + fromPsi);
+    }
+
+    Document document = file.getViewProvider().getDocument();
+    assert document != null;
+    if (!PsiDocumentManager.getInstance(project).isCommitted(document)) {
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      checkStubsMatchText(file);
+    }
+  }
+
+  @Nullable
+  private static StubTree getStubTree(PsiFile file) {
+    if (!(file instanceof PsiFileImpl)) return null;
+    if (((PsiFileImpl)file).getElementTypeForStubBuilder() == null) return null;
+
+    StubTree tree = ((PsiFileImpl)file).getStubTree();
+    return tree != null ? tree : ((PsiFileImpl)file).calcStubTree();
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainText;
@@ -59,6 +60,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     if (prev < 0 || next < 0) {
       return null;
     }
+    if (StringUtil.contains(text, prev + 1, start, endChar) || StringUtil.contains(text, endChar, next, startChar)) return null;
     if (prev + 1 < start || next > end) {
       return new TextRange(prev + 1, next);
     }

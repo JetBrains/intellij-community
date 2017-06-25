@@ -154,15 +154,6 @@ public class LambdaUtil {
            context instanceof PsiArrayInitializerExpression;
   }
 
-  public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
-    final boolean hasParams = expression.getParameterList().getParametersCount() > 0;
-    if (hasParams || !PsiType.VOID.equals(getFunctionalInterfaceReturnType(functionalInterfaceType))) {   //todo check that void lambdas without params check
-      
-      return !dependsOnTypeParams(functionalInterfaceType, functionalInterfaceType, expression);
-    }
-    return true;
-  }
-
   @Contract("null -> null")
   @Nullable
   public static MethodSignature getFunction(final PsiClass psiClass) {
@@ -346,23 +337,6 @@ public class LambdaUtil {
       }
     }
     return -1;
-  }
-
-  public static boolean dependsOnTypeParams(PsiType type,
-                                            PsiType functionalInterfaceType,
-                                            PsiElement lambdaExpression,
-                                            PsiTypeParameter... param2Check) {
-    return depends(type, new TypeParamsChecker(lambdaExpression,
-                                               PsiUtil.resolveClassInType(functionalInterfaceType)), param2Check);
-  }
-
-  public static boolean depends(PsiType type, TypeParamsChecker visitor, PsiTypeParameter... param2Check) {
-    if (!visitor.startedInference()) return false;
-    final Boolean accept = type.accept(visitor);
-    if (param2Check.length > 0) {
-      return visitor.used(param2Check);
-    }
-    return accept != null && accept.booleanValue();
   }
 
   @Nullable
@@ -886,100 +860,5 @@ public class LambdaUtil {
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(extractSingleExpressionFromBody(lambda.getBody()));
     return expression instanceof PsiReferenceExpression &&
            ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);
-  }
-
-  public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
-    private PsiMethod myMethod;
-    private final PsiClass myClass;
-    public final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<>();
-
-    public TypeParamsChecker(PsiElement expression, PsiClass aClass) {
-      myClass = aClass;
-      PsiElement parent = expression != null ? expression.getParent() : null;
-      while (parent instanceof PsiParenthesizedExpression) {
-        parent = parent.getParent();
-      }
-      if (parent instanceof PsiExpressionList) {
-        final PsiElement gParent = parent.getParent();
-        if (gParent instanceof PsiCall) {
-          final MethodCandidateInfo.CurrentCandidateProperties pair = MethodCandidateInfo.getCurrentMethod(parent);
-          myMethod = pair != null ? pair.getMethod() : null;
-          if (myMethod == null) {
-            myMethod = ((PsiCall)gParent).resolveMethod();
-          }
-          if (myMethod != null && PsiTreeUtil.isAncestor(myMethod, expression, false)) {
-            myMethod = null;
-          }
-        }
-      }
-    }
-
-    public boolean startedInference() {
-      return myMethod != null;
-    }
-
-    @Override
-    public Boolean visitClassType(PsiClassType classType) {
-      boolean used = false;
-      for (PsiType paramType : classType.getParameters()) {
-        final Boolean paramAccepted = paramType.accept(this);
-        used |= paramAccepted != null && paramAccepted.booleanValue();
-      }
-      final PsiClass resolve = classType.resolve();
-      if (resolve instanceof PsiTypeParameter) {
-        final PsiTypeParameter typeParameter = (PsiTypeParameter)resolve;
-        if (check(typeParameter)) {
-          myUsedTypeParams.add(typeParameter);
-          return true;
-        }
-      }
-      return used;
-    }
-
-    @Nullable
-    @Override
-    public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-      final PsiType bound = wildcardType.getBound();
-      if (bound != null) return bound.accept(this);
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public Boolean visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public Boolean visitArrayType(PsiArrayType arrayType) {
-      return arrayType.getComponentType().accept(this);
-    }
-
-    @Override
-    public Boolean visitType(PsiType type) {
-      return false;
-    }
-
-    private boolean check(PsiTypeParameter check) {
-      final PsiTypeParameterListOwner owner = check.getOwner();
-      if (owner == myMethod || owner == myClass) {
-        return true;
-      }
-      return false;
-    }
-
-    public boolean used(PsiTypeParameter... parameters) {
-      for (PsiTypeParameter parameter : parameters) {
-        if (myUsedTypeParams.contains(parameter)) return true;
-      }
-      return false;
-    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ public class InlayModelImpl implements InlayModel, Disposable {
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
-  boolean myStickToLargerOffsetsOnUpdate;
+
+  private List<Inlay> myInlaysToTheRightOfCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -55,8 +56,8 @@ public class InlayModelImpl implements InlayModel, Disposable {
       @NotNull
       @Override
       protected RMNode<InlayImpl> createNewNode(@NotNull InlayImpl key, int start, int end,
-                                                boolean greedyToLeft, boolean greedyToRight, int layer) {
-        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight) {
+                                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
           @Override
           protected Getter<InlayImpl> createGetter(@NotNull InlayImpl interval) {
             return interval;
@@ -81,17 +82,31 @@ public class InlayModelImpl implements InlayModel, Disposable {
       public void beforeDocumentChange(DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
-        if (event.getOldLength() == 0 &&
-            offset == myEditor.getCaretModel().getOffset() &&
-            hasInlineElementAt(offset) &&
-            myEditor.getCaretModel().getVisualPosition().equals(myEditor.offsetToVisualPosition(offset, false, false))) {
-          myStickToLargerOffsetsOnUpdate = true;
+        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+          List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+          int inlayCount = inlays.size();
+          if (inlayCount > 0) {
+            VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+            VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+            if (inlaysStartPosition.line == caretPosition.line && 
+                caretPosition.column >= inlaysStartPosition.column && caretPosition.column < inlaysStartPosition.column + inlayCount) {
+              myInlaysToTheRightOfCaret = inlays.subList(caretPosition.column - inlaysStartPosition.column, inlayCount);
+              for (Inlay inlay : myInlaysToTheRightOfCaret) {
+                ((InlayImpl)inlay).setStickingToRight(true);
+              }
+            }
+          }
         }
       }
 
       @Override
       public void documentChanged(DocumentEvent event) {
-        myStickToLargerOffsetsOnUpdate = false;
+        if (myInlaysToTheRightOfCaret != null) {
+          for (Inlay inlay : myInlaysToTheRightOfCaret) {
+            ((InlayImpl)inlay).setStickingToRight(false);
+          }
+          myInlaysToTheRightOfCaret = null;
+        }
       }
     }, this);
   }
@@ -140,9 +155,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
-    if (!hasInlineElementAt(offset)) return false;
+    int inlayCount = getInlineElementsInRange(offset, offset).size();
+    if (inlayCount == 0) return false;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    return visualPosition.equals(inlayStartPosition);
+    return visualPosition.line == inlayStartPosition.line && 
+           visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
   }
 
   @Nullable

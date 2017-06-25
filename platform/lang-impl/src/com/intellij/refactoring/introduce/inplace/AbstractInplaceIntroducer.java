@@ -43,6 +43,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -371,13 +372,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
-        LOG.assertTrue(expression.isValid(), expression.getText());
+        PsiUtilCore.ensureValid(expression);
         stringUsages.add(Pair.create(expression, new TextRange(0, expression.getTextLength())));
       }
     }  else if (getExpr() != null) {
       correctExpression();
       final E expr = getExpr();
-      LOG.assertTrue(expr.isValid(), expr.getText());
+      PsiUtilCore.ensureValid(expr);
       stringUsages.add(Pair.create(expr, new TextRange(0, expr.getTextLength())));
     }
 
@@ -451,7 +452,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
       }
       final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-      for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+      for (int i = 0; i < occurrenceMarkers.size(); i++) {
         RangeMarker marker = occurrenceMarkers.get(i);
         if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
           myOccurrences[i] = myExpr;

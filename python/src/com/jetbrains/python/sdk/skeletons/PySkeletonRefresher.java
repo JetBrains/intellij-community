@@ -292,7 +292,18 @@ public class PySkeletonRefresher {
     // get generator version and binary libs list in one go
 
     final String extraSysPath = calculateExtraSysPath(mySdk, getSkeletonsPath());
-    final PySkeletonGenerator.ListBinariesResult binaries = mySkeletonsGenerator.listBinaries(mySdk, extraSysPath);
+
+    //Split into batches of 50 to avoid command line too long error
+    final String[] split = extraSysPath.split(";");
+    PySkeletonGenerator.ListBinariesResult binaries = null;
+    for (List<String> batch : Lists.partition(Arrays.asList(split), 50)) {
+      if (binaries == null) {
+        binaries = mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch));
+      }
+      else {
+        binaries.modules.putAll(mySkeletonsGenerator.listBinaries(mySdk, Joiner.on(";").join(batch)).modules);
+      }
+    }
     myGeneratorVersion = binaries.generatorVersion;
     myPregeneratedSkeletons = findPregeneratedSkeletons();
 

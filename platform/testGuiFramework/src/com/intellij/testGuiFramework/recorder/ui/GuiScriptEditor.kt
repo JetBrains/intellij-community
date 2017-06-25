@@ -23,7 +23,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testGuiFramework.recorder.ScriptGenerator
+import com.intellij.testGuiFramework.recorder.Writer
 import com.intellij.ui.EditorTextField
 import java.lang.Boolean
 import kotlin.with
@@ -40,7 +40,7 @@ class GuiScriptEditor {
 
   init {
     val editorFactory = EditorFactory.getInstance()
-    val editorDocument = editorFactory.createDocument(ScriptGenerator.getScriptBuffer())
+    val editorDocument = editorFactory.createDocument(Writer.getScript())
     val editor = (editorFactory.createEditor(editorDocument, ProjectManager.getInstance().defaultProject) as EditorEx)
     EditorTextField.SUPPLEMENTARY_KEY.set(editor, Boolean.TRUE)
     editor.colorsScheme = EditorColorsManager.getInstance().globalScheme

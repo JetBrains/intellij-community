@@ -30,7 +30,6 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class FileAttributesReadingTest {
@@ -65,6 +64,7 @@ public abstract class FileAttributesReadingTest {
     @Override public void missingLink() { }
     @Override public void selfLink() { }
     @Override public void junction() { }
+    @Override public void permissionsCloning() { }
   }
 
   @AfterClass
@@ -401,13 +401,13 @@ public abstract class FileAttributesReadingTest {
     assertEquals(file.getPath(), target);
 
     if (SystemInfo.isWindows) {
-      String path = myTempDirectory.getPath();
+      StringBuilder path = new StringBuilder(myTempDirectory.getPath());
       int length = 250 - path.length();
       for (int i = 0; i < length / 10; i++) {
-        path += "\\x_x_x_x_x";
+        path.append("\\x_x_x_x_x");
       }
 
-      File baseDir = new File(path);
+      File baseDir = new File(path.toString());
       assertTrue(baseDir.mkdirs());
       assertTrue(getAttributes(baseDir).isDirectory());
 
@@ -452,8 +452,6 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void hardLink() throws Exception {
-    //todo[Roman Shevchenko] currently it fails on new windows agents
-    assumeFalse(SystemInfo.isWindows);
     final File target = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
     final File link = IoTestUtil.createHardLink(target.getPath(), myTempDirectory.getPath() + "/link");
 
@@ -466,6 +464,11 @@ public abstract class FileAttributesReadingTest {
     assertTrue(target.setLastModified(attributes.lastModified - 5000));
     assertTrue(target.length() > 0);
     assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
+
+    if (SystemInfo.isWindows) {
+      byte[] bytes = FileUtil.loadFileBytes(link);
+      assertEquals(myTestData.length, bytes.length);
+    }
 
     attributes = getAttributes(link, SystemInfo.areSymLinksSupported);  // ignore XP
     assertEquals(FileAttributes.Type.FILE, attributes.type);
@@ -517,6 +520,27 @@ public abstract class FileAttributesReadingTest {
     assertFalse(parentAttributes.isWritable());
   }
 
+  @Test
+  public void permissionsCloning() throws Exception {
+    assumeTrue(SystemInfo.isUnix);
+
+    File donor = IoTestUtil.createTestFile(myTempDirectory, "donor");
+    File recipient = IoTestUtil.createTestFile(myTempDirectory, "recipient");
+    assertTrue(donor.setWritable(true, true));
+    assertTrue(donor.setExecutable(true, true));
+    assertTrue(recipient.setWritable(false, false));
+    assertTrue(recipient.setExecutable(false, false));
+    assertNotEquals(donor.canWrite(), recipient.canWrite());
+    assertNotEquals(donor.canExecute(), recipient.canExecute());
+
+    assertTrue(FileSystemUtil.clonePermissionsToExecute(donor.getPath(), recipient.getPath()));
+    assertNotEquals(donor.canWrite(), recipient.canWrite());
+    assertEquals(donor.canExecute(), recipient.canExecute());
+
+    assertTrue(FileSystemUtil.clonePermissions(donor.getPath(), recipient.getPath()));
+    assertEquals(donor.canWrite(), recipient.canWrite());
+    assertEquals(donor.canExecute(), recipient.canExecute());
+  }
 
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {

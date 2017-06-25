@@ -29,14 +29,14 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Collections.emptyList(\"text\"/*_Replace with 'java.util.Arrays.asList()'*/);" +
+      "    return Collections.emptyList(\"text\"/*_Replace with 'java.util.Collections.singletonList()'*/);" +
       "  }" +
       "}",
 
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Arrays.asList(\"text\");" +
+      "    return Collections.singletonList(\"text\");" +
       "  }" +
       "}"
     );

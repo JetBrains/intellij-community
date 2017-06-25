@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.recorder.ScriptGenerator
 import com.intellij.testGuiFramework.recorder.actions.PerformScriptAction
 import java.io.File
 import java.net.URL
@@ -29,16 +28,15 @@ object KotlinCompileUtil {
 
   private val LOG by lazy { Logger.getInstance("#${KotlinCompileUtil::class.qualifiedName}") }
 
-  private val localCompiler: LocalCompiler by lazy {LocalCompiler()}
+  private val localCompiler: LocalCompiler by lazy { LocalCompiler() }
 
   fun compile(codeString: String) {
-    localCompiler.compileOnPooledThread(ScriptGenerator.ScriptWrapper.wrapScript(codeString),
-                                          getAllUrls().map { Paths.get(it.toURI()).toFile().path })
+    localCompiler.compileOnPooledThread(ScriptWrapper.wrapScript(codeString), getAllUrls().map { Paths.get(it.toURI()).toFile().path })
   }
 
   fun compileAndRun(codeString: String) {
-    localCompiler.compileAndRunOnPooledThread(ScriptGenerator.ScriptWrapper.wrapScript(codeString),
-                                                getAllUrls().map { Paths.get(it.toURI()).toFile().path })
+    localCompiler.compileAndRunOnPooledThread(ScriptWrapper.wrapScript(codeString),
+                                              getAllUrls().map { Paths.get(it.toURI()).toFile().path })
   }
 
   fun getAllUrls(): List<URL> {

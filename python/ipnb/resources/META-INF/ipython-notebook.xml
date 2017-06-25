@@ -10,12 +10,13 @@
 
     <projectConfigurable groupId="language"  instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
                          id="IpnbConfigurable" displayName="Jupyter Notebook"
-                         nonDefaultProject="true"/>
+                         provider="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurableProvider" nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
                     serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
     <lang.parserDefinition language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.psi.IpnbPyParserDefinition"/>
     <stubElementTypeHolder class="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenTypes"/>
     <referencesSearch implementation="org.jetbrains.plugins.ipnb.psi.IpnbSearchExecutor"/>
+    <configurationType implementation="org.jetbrains.plugins.ipnb.run.IpnbRunConfigurationType"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>

@@ -41,7 +41,7 @@ public class ParamHelper {
    * @param walker the walker with callbacks.
    */
   public static void walkDownParamArray(PyParameter[] params, ParamWalker walker) {
-    walkDownParameters(ContainerUtil.map(params, PyCallableParameterImpl::new), walker);
+    walkDownParameters(ContainerUtil.map(params, PyCallableParameterImpl::psi), walker);
   }
 
   public static void walkDownParameters(@NotNull List<PyCallableParameter> parameters, @NotNull ParamWalker walker) {
@@ -74,7 +74,7 @@ public class ParamHelper {
   public static String getPresentableText(@NotNull PyParameter[] parameters,
                                           boolean includeDefaultValue,
                                           @Nullable TypeEvalContext context) {
-    return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::new), includeDefaultValue, context);
+    return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::psi), includeDefaultValue, context);
   }
 
   @NotNull
@@ -100,7 +100,7 @@ public class ParamHelper {
 
         @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          visitNonPsiParameter(new PyCallableParameterImpl(param), first, last);
+          visitNonPsiParameter(PyCallableParameterImpl.psi(param), first, last);
         }
 
         @Override

@@ -26,7 +26,7 @@ public class IpnbCodeCellAction extends AnAction {
     changeTypeToCode(myEditor);
   }
 
-  public void changeTypeToCode(@NotNull final IpnbFileEditor editor) {
+  private static void changeTypeToCode(@NotNull final IpnbFileEditor editor) {
     final IpnbFilePanel filePanel = editor.getIpnbFilePanel();
     final IpnbEditablePanel selectedCellPanel = filePanel.getSelectedCellPanel();
     if (selectedCellPanel == null) return;
@@ -35,9 +35,12 @@ public class IpnbCodeCellAction extends AnAction {
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
     final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbCodeCell codeCell = new IpnbCodeCell("python", cell.getSource(), null, Lists.newArrayList(), cell.getMetadata());
-    if (index >= 0) {
-      cells.set(index, codeCell);
-    }
-    filePanel.replaceComponent(selectedCellPanel, codeCell);
+    filePanel.executeUndoableCommand(() -> {
+      if (index >= 0) {
+        cells.set(index, codeCell);
+      }
+      filePanel.replaceComponent(selectedCellPanel, codeCell);
+      filePanel.saveToFile(false);
+    }, "Change Cell Type To Code");
   }
 }

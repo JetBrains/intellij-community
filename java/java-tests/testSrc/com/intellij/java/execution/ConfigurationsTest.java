@@ -15,6 +15,7 @@
  */
 package com.intellij.java.execution;
 
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunConfigurationConfigurableAdapter;
@@ -62,7 +63,6 @@ import com.intellij.util.containers.ContainerUtilRt;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,12 +127,12 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       JUnitConfiguration configuration = createConfiguration(findTestA(module2));
       editor.getComponent(); // To get all the watchers installed.
       Configurable configurable = new RunConfigurationConfigurableAdapter(editor, configuration);
-      JComboBox comboBox = editor.getModulesComponent();
+      ModuleDescriptionsComboBox comboBox = editor.getModulesComponent();
       configurable.reset();
       assertFalse(configurable.isModified());
-      assertEquals(module2.getName(), ((Module)comboBox.getSelectedItem()).getName());
+      assertEquals(module2.getName(), comboBox.getSelectedModuleName());
       assertEquals(ModuleManager.getInstance(myProject).getModules().length + 1, comboBox.getModel().getSize()); //no module
-      comboBox.setSelectedItem(module1);
+      comboBox.setSelectedModule(module1);
       assertTrue(configurable.isModified());
       configurable.apply();
       assertFalse(configurable.isModified());

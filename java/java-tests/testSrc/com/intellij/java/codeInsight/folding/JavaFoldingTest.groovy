@@ -456,6 +456,21 @@ class Foo {
     assertEquals "Some", foldingModel.allFoldRegions[0].placeholderText
   }
 
+  public void "test custom foldings have preference"() {
+    @Language("JAVA")
+    def text = """\
+class A {
+    // region Some
+    @SuppressWarnings("")
+    // endregion
+    @Deprecated
+    void m() {}
+}
+"""
+    configure text
+    assertTrue Arrays.toString(myFixture.editor.foldingModel.allFoldRegions).contains("Some")
+  }
+
   public void "test custom foldings intersecting with comment foldings"() {
     @Language("JAVA")
     def text = """class Foo {

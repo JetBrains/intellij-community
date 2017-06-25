@@ -17,3 +17,9 @@ public class <warning descr="JUnit test case 'TestCaseWithNoTestMethods' has no 
     super.tearDown();
   }
 }
+
+abstract class AbstractTest extends junit.framework.TestCase {
+  public void testInAbstract() {}
+}
+
+class MyImplTest extends AbstractTest {}

@@ -35,6 +35,11 @@
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
     </action>
+    <action class="org.intellij.images.actions.ConvertSvgToPngAction"
+            id="Images.ConvertSvgToPng"
+            text="Convert to PNG">
+      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+    </action>
     <action class="org.intellij.images.actions.ShowThumbnailsAction"
             id="Images.ShowThumbnails" text="Show Image Thumbnails">
       <keyboard-shortcut first-keystroke="shift control T" keymap="$default"/>

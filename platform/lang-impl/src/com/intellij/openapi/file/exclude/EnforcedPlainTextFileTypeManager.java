@@ -94,7 +94,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectPlainTextFileTypeManager projectManager = ProjectPlainTextFileTypeManager.getInstance(project);
       for (VirtualFile file : files) {
-        if (projectManager.isInContent(file)) {
+        if (projectManager.isInContent(file) || projectManager.isInLibrarySource(file)) {
           ensureProjectFileSetAdded(project, projectManager);
           if (isAdded ?
               projectManager.addFile(file) :

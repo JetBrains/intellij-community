@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
@@ -53,7 +54,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
   private final JScrollPane myScrollPane;
   public static final DataKey<IpnbFileEditor> DATA_KEY = DataKey.create(IpnbFileEditor.class.getName());
-  private JComponent myRunPanel;
+  private JComponent myToolbar;
 
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
     myDocument = FileDocumentManager.getInstance().getDocument(vFile);
@@ -87,8 +88,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
     registerHeadingActions();
     registerActions();
-
-    new IpnbDeleteCellAction(this);
   }
 
   public void loaded() {
@@ -101,10 +100,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   private void registerActions() {
     new IpnbAddCellAboveAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift EQUALS")),
-                                                               myIpnbFilePanel);
-    new IpnbMoveCellDownAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift DOWN")),
-                                                               myIpnbFilePanel);
-    new IpnbMoveCellUpAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift UP")),
                                                                myIpnbFilePanel);
     new IpnbMarkdownCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift M")),
                                                              myIpnbFilePanel);
@@ -124,23 +119,16 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   private JPanel createControlPanel() {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
+    myCellTypeCombo = new ComboBox(ourCellTypes);
 
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(new IpnbSaveAction(this));
-    toolbarGroup.add(new IpnbConvertToPythonAction(this));
+    toolbarGroup.addAll(new IpnbRunCellAction(this), new IpnbInterruptKernelAction(this), new IpnbReloadKernelAction(this));
     toolbarGroup.add(new Separator());
+    toolbarGroup.addAll(new IpnbMoveCellUpAction(this), new IpnbMoveCellDownAction(this));
     toolbarGroup.add(new IpnbAddCellBelowAction(this));
-    toolbarGroup.add(new Separator());
-    toolbarGroup.addAll(new IpnbCutCellAction(this), new IpnbCopyCellAction(this), new IpnbPasteCellAction(this));
-    JComponent toolbar = createToolbar(toolbarGroup);
-    controlPanel.add(toolbar);
 
-    DefaultActionGroup runGroup = new DefaultActionGroup();
-    runGroup.addAll(new IpnbRunCellAction(this), new IpnbInterruptKernelAction(this), new IpnbReloadKernelAction(this));
-    myRunPanel = createToolbar(runGroup);
-    controlPanel.add(myRunPanel);
-
-    myCellTypeCombo = new ComboBox(ourCellTypes);
+    myToolbar = createToolbar(toolbarGroup);
+    controlPanel.add(myToolbar);
 
     myCellTypeCombo.addActionListener(new ActionListener() {
       @Override
@@ -152,11 +140,13 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
         }
       }
     });
+    controlPanel.add(myCellTypeCombo);
+
     final IpnbPanel selectedCellPanel = myIpnbFilePanel.getSelectedCellPanel();
     if (selectedCellPanel != null) {
       updateCellTypeCombo(selectedCellPanel);
     }
-    controlPanel.add(myCellTypeCombo);
+
     final MatteBorder border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.GRAY);
     controlPanel.setBorder(border);
     return controlPanel;
@@ -170,8 +160,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     return component;
   }
 
-  public JComponent getRunPanel() {
-    return myRunPanel;
+  public RelativePoint getRunButtonPlace() {
+    return RelativePoint.getNorthWestOf(myToolbar);
   }
 
   private void updateCellType(@NotNull final String selectedItem, @NotNull final IpnbEditablePanel selectedCell) {

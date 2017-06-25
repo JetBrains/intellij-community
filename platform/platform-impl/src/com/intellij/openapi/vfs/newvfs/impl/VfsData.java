@@ -304,6 +304,12 @@ public class VfsData {
       }
       myAdoptedNames.add(name);
     }
+    void addAdoptedNames(Collection<CharSequence> names, boolean caseSensitive) {
+      if (myAdoptedNames == null) {
+        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      }
+      myAdoptedNames.addAll(names);
+    }
 
     @NotNull
     Collection<CharSequence> getAdoptedNames() {

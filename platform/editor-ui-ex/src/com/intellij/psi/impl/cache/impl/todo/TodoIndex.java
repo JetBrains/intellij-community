@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
@@ -115,6 +118,10 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
       return false; // do not index TODOs in library sources
     }
 
+    if(!isInContentOfAnyProject(file)) {
+      return false;
+    }
+
     final FileType fileType = file.getFileType();
 
     if (fileType instanceof LanguageFileType) {
@@ -128,9 +135,18 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
            fileType instanceof CustomSyntaxTableFileType;
   };
 
+  private static boolean isInContentOfAnyProject(@NotNull VirtualFile file) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (ProjectFileIndex.getInstance(project).isInContent(file)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override
   public int getVersion() {
-    int version = 9;
+    int version = 10;
     FileType[] types = myFileTypeManager.getRegisteredFileTypes();
     Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 

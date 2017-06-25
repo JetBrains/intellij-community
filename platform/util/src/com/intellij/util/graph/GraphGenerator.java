@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.*;
  * @author dsl
  */
 public class GraphGenerator<Node> implements Graph<Node> {
-  @NotNull 
+  @NotNull
   public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
     return new GraphGenerator<T>(graph);
   }
@@ -47,7 +47,7 @@ public class GraphGenerator<Node> implements Graph<Node> {
       Iterator<Node> inIt = myGraph.getIn(node);
       while (inIt.hasNext()) {
         Node inNode = inIt.next();
-        final Set<Node> set = myOuts.get(inNode);
+        Set<Node> set = myOuts.get(inNode);
         if (set == null) {
           throw new AssertionError("Unexpected node " + inNode + "; nodes=" + nodes);
         }

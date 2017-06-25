@@ -202,7 +202,10 @@ public class ClassRenderer extends NodeRendererImpl{
         final StackFrameProxy frameProxy = context.getFrameProxy();
         if (frameProxy != null) {
           final Location location = frameProxy.location();
-          if (location != null && objInstance.equals(context.getThisObject()) && Comparing.equal(objInstance.referenceType(), location.declaringType()) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+          if (location != null &&
+              objInstance.equals(context.computeThisObject()) &&
+              Comparing.equal(objInstance.referenceType(), location.declaringType()) &&
+              StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
             return false;
           }
         }

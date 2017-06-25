@@ -23,6 +23,9 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_NATIVE;
+
 /**
  * @author lambdamix
  */
@@ -68,19 +71,21 @@ public final class ControlFlowGraph {
   }
 
   public static ControlFlowGraph build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
-    return jsr ? new ControlFlowBuilder(className, methodNode).buildCFG() : new LiteControlFlowBuilder(className, methodNode).buildCFG();
+    return new ControlFlowBuilder(className, methodNode, jsr).buildCFG();
   }
 }
 
-final class ControlFlowBuilder extends FramelessAnalyzer {
+final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   final String className;
   final MethodNode methodNode;
   final TIntArrayList[] transitions;
   final Set<ControlFlowGraph.Edge> errorTransitions;
+  final FramelessAnalyzer myAnalyzer;
   private final boolean[] errors;
   private int edgeCount;
 
-  ControlFlowBuilder(String className, MethodNode methodNode) {
+  ControlFlowBuilder(String className, MethodNode methodNode, boolean jsr) {
+    myAnalyzer = jsr ? new FramelessAnalyzer(this) : new LiteFramelessAnalyzer(this);
     this.className = className;
     this.methodNode = methodNode;
     transitions = new TIntArrayList[methodNode.instructions.size()];
@@ -93,7 +98,7 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
 
   final ControlFlowGraph buildCFG() throws AnalyzerException {
     if ((methodNode.access & (ACC_ABSTRACT | ACC_NATIVE)) == 0) {
-      analyze(methodNode);
+      myAnalyzer.analyze(methodNode);
     }
     int[][] resultTransitions = new int[transitions.length][];
     for (int i = 0; i < resultTransitions.length; i++) {
@@ -103,7 +108,7 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
   }
 
   @Override
-  protected final void newControlFlowEdge(int insn, int successor) {
+  public final void newControlFlowEdge(int insn, int successor) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       edgeCount++;
@@ -111,7 +116,7 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
   }
 
   @Override
-  protected final boolean newControlFlowExceptionEdge(int insn, int successor) {
+  public final boolean newControlFlowExceptionEdge(int insn, int successor) {
     if (!transitions[insn].contains(successor)) {
       transitions[insn].add(successor);
       edgeCount++;
@@ -121,54 +126,3 @@ final class ControlFlowBuilder extends FramelessAnalyzer {
     return true;
   }
 }
-
-final class LiteControlFlowBuilder extends LiteFramelessAnalyzer {
-  final String className;
-  final MethodNode methodNode;
-  final TIntArrayList[] transitions;
-  final Set<ControlFlowGraph.Edge> errorTransitions;
-  private final boolean[] errors;
-  private int edgeCount;
-
-  LiteControlFlowBuilder(String className, MethodNode methodNode) {
-    this.className = className;
-    this.methodNode = methodNode;
-    transitions = new TIntArrayList[methodNode.instructions.size()];
-    errors = new boolean[methodNode.instructions.size()];
-    for (int i = 0; i < transitions.length; i++) {
-      transitions[i] = new TIntArrayList();
-    }
-    errorTransitions = new HashSet<>();
-  }
-
-  final ControlFlowGraph buildCFG() throws AnalyzerException {
-    if ((methodNode.access & (ACC_ABSTRACT | ACC_NATIVE)) == 0) {
-      analyze(methodNode);
-    }
-    int[][] resultTransitions = new int[transitions.length][];
-    for (int i = 0; i < resultTransitions.length; i++) {
-      resultTransitions[i] = transitions[i].toNativeArray();
-    }
-    return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions);
-  }
-
-  @Override
-  protected final void newControlFlowEdge(int insn, int successor) {
-    if (!transitions[insn].contains(successor)) {
-      transitions[insn].add(successor);
-      edgeCount++;
-    }
-  }
-
-  @Override
-  protected final boolean newControlFlowExceptionEdge(int insn, int successor) {
-    if (!transitions[insn].contains(successor)) {
-      transitions[insn].add(successor);
-      edgeCount++;
-      errorTransitions.add(new Edge(insn, successor));
-      errors[successor] = true;
-    }
-    return true;
-  }
-}
-

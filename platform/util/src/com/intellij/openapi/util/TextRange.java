@@ -134,6 +134,12 @@ public class TextRange implements Segment, Serializable {
   }
 
   @NotNull
+  public TextRange shiftLeft(int delta) {
+    if (delta == 0) return this;
+    return new TextRange(myStartOffset - delta, myEndOffset - delta);
+  }
+
+  @NotNull
   public TextRange grown(int lengthDelta) {
     return from(myStartOffset, getLength() + lengthDelta);
   }

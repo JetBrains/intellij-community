@@ -155,6 +155,7 @@ public interface EditorEx extends Editor {
 
   void setFontSize(int fontSize);
 
+  @NotNull
   Color getBackgroundColor();
 
   void setBackgroundColor(Color color);

@@ -815,7 +815,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     PsiElement lastScope = tempContainer;
     while (true) {
       if (containerParent instanceof PsiFile) break;
-      if (containerParent instanceof PsiMethod) break;
+      if (containerParent instanceof PsiMethod) {
+        PsiClass containingClass = ((PsiMethod)containerParent).getContainingClass();
+        if (containingClass == null || !PsiUtil.isLocalOrAnonymousClass(containingClass)) break;
+        if (vars.stream().anyMatch(variable -> PsiTreeUtil.isAncestor(containingClass, variable, true))) {
+          break;
+        }
+      }
       if (containerParent instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
         if (Arrays.stream(parameters).anyMatch(parameter -> vars.contains(parameter))) {
@@ -833,7 +839,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         lastScope = containerParent;
       }
     }
-
     return new ExpressionOccurrenceManager(expr, lastScope, NotInSuperCallOccurrenceFilter.INSTANCE);
   }
 

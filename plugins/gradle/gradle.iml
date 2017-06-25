@@ -58,7 +58,7 @@
     <orderEntry type="module-library">
       <library name="GradleNative">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-native-3.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-4.0.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/native-platform-0.14.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libcpp-0.14.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libstdcpp-0.14.jar!/" />

@@ -50,7 +50,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected VirtualFile myRepository;
 
   private VcsRootChecker myExtension;
-  private RootModelImpl myRootModel;
+  protected RootModelImpl myRootModel;
 
   @Override
   protected void setUp() throws Exception {
@@ -111,7 +111,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
    */
   public void initProject(@NotNull VcsRootConfiguration vcsRootConfiguration)
     throws IOException {
-    createDirs(vcsRootConfiguration.getMockRoots());
+    createDirs(vcsRootConfiguration.getVcsRoots());
     Collection<String> contentRoots = vcsRootConfiguration.getContentRoots();
     createProjectStructure(myProject, contentRoots);
     if (!contentRoots.isEmpty()) {

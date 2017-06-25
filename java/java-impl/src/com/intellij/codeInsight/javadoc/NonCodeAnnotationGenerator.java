@@ -28,29 +28,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class NonCodeAnnotationGenerator {
-  private final List<PsiModifierListOwner> myAllOwners = new ArrayList<>();
+public class NonCodeAnnotationGenerator {
+  private final PsiModifierListOwner myOwner;
   private final StringBuilder myOutput;
 
-  NonCodeAnnotationGenerator(PsiModifierListOwner owner, StringBuilder output) {
+  NonCodeAnnotationGenerator(@NotNull PsiModifierListOwner owner, StringBuilder output) {
+    myOwner = owner;
     myOutput = output;
-    myAllOwners.add(owner);
-    if (owner instanceof PsiMethod) {
-      Collections.addAll(myAllOwners, ((PsiMethod)owner).getParameterList().getParameters());
-    }
   }
 
   void explainAnnotations() {
-    MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = getNonCodeAnnotations();
+    MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = getSignatureNonCodeAnnotations(myOwner);
     if (generators.isEmpty()) return;
-    
-    boolean hasExternal = generators.values().stream().anyMatch(AnnotationDocGenerator::isExternal);
-    boolean hasInferred = generators.values().stream().anyMatch(AnnotationDocGenerator::isInferred);
-    boolean hasBothKinds = hasExternal && hasInferred;
 
     myOutput.append("\n");
-    myOutput.append(
-      hasBothKinds ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>").append(" annotations available:<br>\n");
+    myOutput.append(getNonCodeHeader(generators.values())).append(":<br>\n");
     myOutput.append("<ul>\n");
 
     generators.keySet().forEach(owner -> {
@@ -70,16 +62,34 @@ class NonCodeAnnotationGenerator {
   }
 
   @NotNull
-  private MultiMap<PsiModifierListOwner, AnnotationDocGenerator> getNonCodeAnnotations() {
+  public static MultiMap<PsiModifierListOwner, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {
     MultiMap<PsiModifierListOwner, AnnotationDocGenerator> generators = MultiMap.createLinked();
-    for (PsiModifierListOwner owner : myAllOwners) {
+    for (PsiModifierListOwner each : getSignatureOwners(owner)) {
       List<AnnotationDocGenerator> nonCode =
-        ContainerUtil.filter(AnnotationDocGenerator.getAnnotationsToShow(owner), a -> a.isExternal() || a.isInferred());
+        ContainerUtil.filter(AnnotationDocGenerator.getAnnotationsToShow(each), a -> a.isExternal() || a.isInferred());
       if (!nonCode.isEmpty()) {
-        generators.putValues(owner, nonCode);
+        generators.putValues(each, nonCode);
       }
     }
     return generators;
+  }
+
+  @NotNull
+  private static List<PsiModifierListOwner> getSignatureOwners(PsiModifierListOwner owner) {
+    List<PsiModifierListOwner> allOwners = new ArrayList<>();
+    allOwners.add(owner);
+    if (owner instanceof PsiMethod) {
+      Collections.addAll(allOwners, ((PsiMethod)owner).getParameterList().getParameters());
+    }
+    return allOwners;
+  }
+
+  @NotNull
+  public static String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
+    boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
+    boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
+
+    return (hasExternal && hasInferred ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>") + " annotations available";
   }
 
   private static String getKind(PsiModifierListOwner owner) {

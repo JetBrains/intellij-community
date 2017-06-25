@@ -129,8 +129,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     popupGroup.addSeparator("Repositories");
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, new HgBranchPopupActions(repo.getProject(), repo).createActions(),
-                                    !userWantsSyncControl() || myMultiRootBranchConfig.diverged()
-                                    ? getDisplayableBranchOrBookmarkText(repo) : null))
+                                    getDisplayableBranchOrBookmarkText(repo)))
       .collect(toList());
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);

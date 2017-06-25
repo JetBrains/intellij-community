@@ -39,7 +39,6 @@ import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -52,6 +51,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -74,8 +74,8 @@ public class ArrayRenderer extends NodeRendererImpl{
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
 
   public int START_INDEX = 0;
-  public int END_INDEX   = 100;
-  public int ENTRIES_LIMIT = 101;
+  public int END_INDEX   = Integer.MAX_VALUE;
+  public int ENTRIES_LIMIT = XCompositeNode.MAX_CHILDREN_TO_SHOW;
 
   private boolean myForced = false;
 
@@ -112,15 +112,11 @@ public class ArrayRenderer extends NodeRendererImpl{
     NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-    if (!myForced) {
-      builder.initChildrenArrayRenderer(this);
-    }
-
     ArrayReference array = (ArrayReference)value;
     int arrayLength = array.length();
     if (arrayLength > 0) {
-      if (ENTRIES_LIMIT > END_INDEX - START_INDEX + 1) {
-        ENTRIES_LIMIT = END_INDEX - START_INDEX;
+      if (!myForced) {
+        builder.initChildrenArrayRenderer(this, arrayLength);
       }
 
       if (ENTRIES_LIMIT <= 0) {
@@ -129,9 +125,10 @@ public class ArrayRenderer extends NodeRendererImpl{
 
       int added = 0;
       boolean hiddenNulls = false;
-      if (arrayLength - 1 >= START_INDEX) {
-        int end = arrayLength - 1 < END_INDEX ? arrayLength - 1 : END_INDEX;
-        for (int idx = START_INDEX; idx <= end; idx++) {
+      int end = Math.min(arrayLength - 1, END_INDEX);
+      int idx = START_INDEX;
+      if (arrayLength > START_INDEX) {
+        for (; idx <= end; idx++) {
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && elementIsNull(array, idx)) {
             hiddenNulls = true;
             continue;
@@ -142,7 +139,7 @@ public class ArrayRenderer extends NodeRendererImpl{
 
           builder.addChildren(Collections.singletonList(arrayItemNode), false);
           added++;
-          if (added > ENTRIES_LIMIT) {
+          if (added >= ENTRIES_LIMIT) {
             break;
           }
         }
@@ -163,8 +160,8 @@ public class ArrayRenderer extends NodeRendererImpl{
         if (hiddenNulls) {
           builder.setMessage(DebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
-        if (!myForced && END_INDEX < arrayLength - 1) {
-          builder.tooManyChildren(arrayLength - 1 - END_INDEX);
+        if (!myForced && idx < end) {
+          builder.tooManyChildren(end - idx);
         }
       }
     }
@@ -229,11 +226,10 @@ public class ArrayRenderer extends NodeRendererImpl{
       NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
       NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-      builder.initChildrenArrayRenderer(this);
-
-      if (ENTRIES_LIMIT > END_INDEX - START_INDEX + 1) {
-        ENTRIES_LIMIT = END_INDEX - START_INDEX;
-      }
+      builder.setMessage(DebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
+                         AllIcons.General.Filter,
+                         SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                         FILTER_HYPERLINK);
 
       if (ENTRIES_LIMIT <= 0) {
         ENTRIES_LIMIT = 1;
@@ -242,6 +238,8 @@ public class ArrayRenderer extends NodeRendererImpl{
       ArrayReference array = (ArrayReference)value;
       int arrayLength = array.length();
       if (arrayLength > 0) {
+        builder.initChildrenArrayRenderer(this, arrayLength);
+
         CachedEvaluator cachedEvaluator = new CachedEvaluator() {
           @Override
           protected String getClassName() {
@@ -290,13 +288,7 @@ public class ArrayRenderer extends NodeRendererImpl{
           }
         }
 
-        builder.setMessage(DebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
-                           AllIcons.General.Filter,
-                           SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                           FILTER_HYPERLINK);
-
-        // setMessage removes the loading message
-        //builder.addChildren(Collections.emptyList(), true);
+        builder.addChildren(Collections.emptyList(), true);
 
         //if (added != 0 && END_INDEX < arrayLength - 1) {
         //  builder.setRemaining(arrayLength - 1 - END_INDEX);

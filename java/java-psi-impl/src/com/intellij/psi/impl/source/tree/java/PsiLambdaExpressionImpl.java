@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -81,7 +80,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
   @Nullable
   @Override
   public PsiType getFunctionalInterfaceType() {
-    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true), this);
+    return getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
   @Override
@@ -189,7 +188,7 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
       }
     }
 
-    leftType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(leftType, this);
+    leftType = getGroundTargetType(leftType);
     if (!isPotentiallyCompatible(leftType)) {
       return false;
     }
@@ -258,6 +257,12 @@ public class PsiLambdaExpressionImpl extends JavaStubPsiElement<FunctionalExpres
     else {
       return body instanceof PsiCodeBlock && isValueCompatible() || body instanceof PsiExpression;
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiType getGroundTargetType(PsiType functionalInterfaceType) {
+    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, this);
   }
 
   private static PsiType toArray(PsiType paramType) {

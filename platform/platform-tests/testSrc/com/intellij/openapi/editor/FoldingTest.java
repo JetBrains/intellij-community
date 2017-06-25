@@ -19,6 +19,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public class FoldingTest extends AbstractEditorTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    init("I don't know what you mean by `glory,'\" Alice said" +
+    init("I don't know what you mean by `glory,'\" Alice said. " +
       "Humpty Dumpty smiled contemptuously. \"Of course you don't -- till I tell you. I meant `there's a nice knock-down argument for you!'" +
       "But glory doesn't mean `a nice knock-down argument,'\" Alice objected." +
       "When I use a word,\" Humpty Dumpty said, in a rather scornful tone, \"it means just what I choose it to mean -- neither more nor less." +
@@ -189,6 +190,30 @@ public class FoldingTest extends AbstractEditorTest {
     assertTrue(myModel.isOffsetCollapsed(5));
   }
   
+  public void testAmongIdenticalRegionsExpandedOnesShouldBeKilledFirst() {
+    FoldRegion c = addCollapsedFoldRegion(0, 10, "...");
+    FoldRegion e = addFoldRegion(1, 10, "...");
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(0, 1));
+
+    assertFalse(e.isValid());
+    assertTrue(c.isValid());
+    FoldRegion survivor = assertOneElement(myModel.getAllFoldRegions());
+    assertSame(c, survivor);
+  }
+
+  public void testAmongIdenticalRegionsExpandedOnesShouldBeKilledFirst2() {
+    FoldRegion e = addFoldRegion(0, 10, "...");
+    FoldRegion c = addCollapsedFoldRegion(1, 10, "...");
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> myEditor.getDocument().deleteString(0, 1));
+
+    assertFalse(e.isValid());
+    assertTrue(c.isValid());
+    FoldRegion survivor = assertOneElement(myModel.getAllFoldRegions());
+    assertSame(c, survivor);
+  }
+
   public void testIdenticalRegionsAreRemoved() {
     addFoldRegion(0, 5, "...");
     addFoldRegion(0, 4, "...");
@@ -206,7 +231,6 @@ public class FoldingTest extends AbstractEditorTest {
       FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      assertTrue(myModel.addFoldRegion(region));
       region.setExpanded(false);
       regionRef.set(region);
     });
@@ -255,5 +279,22 @@ public class FoldingTest extends AbstractEditorTest {
       }
     }
     assertEquals(expectedValue, actualValue);
+  }
+
+  public void testCantCreateOverlappingRegions() {
+    FoldingModelImpl model = (FoldingModelImpl)myEditor.getFoldingModel();
+    model.runBatchFoldingOperation(
+      () -> {
+        FoldRegion f1 = model.addFoldRegion(1, 10, "...");
+        assertNotNull(f1);
+        FoldRegion f2 = model.addFoldRegion(5, 11, "...");
+        assertNull(f2);
+
+
+        FoldRegion c1 = model.createFoldRegion(2, 9, "...", null, false);
+        assertNotNull(c1);
+        FoldRegion c2 = model.createFoldRegion(4, 12, "...", null, false);
+        assertNull(c2);
+      });
   }
 }

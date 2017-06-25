@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  * @since 3/28/14
  */
-public class NotificationData {
+public class NotificationData implements Disposable {
 
   @NotNull private String myTitle;
   @NotNull private String myMessage;
@@ -182,5 +183,10 @@ public class NotificationData {
 
   public void setBalloonGroup(@Nullable String balloonGroup) {
     myBalloonGroup = balloonGroup;
+  }
+
+  @Override
+  public void dispose() {
+    myListenerMap.clear();
   }
 }

@@ -80,7 +80,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
         final PsiMethod nodeMethod = methodNode.getMethod();
         if (nodeMethod.equals(myMethod)) continue;
         final PsiParameter parameter = nodeMethod.getParameterList().getParameters()[methodNode.myParameterIdx];
-        foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod));
+        foreignMethodUsages.add(new SafeDeleteParameterCallHierarchyUsageInfo(nodeMethod, parameter, nodeMethod, parameter));
         ReferencesSearch.search(nodeMethod).forEach(reference -> {
           final PsiElement element = reference.getElement();
           if (element != null) {
@@ -191,6 +191,33 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     return null;
   }
 
+  protected PsiParameter getParameterInCaller(PsiMethod called, int paramIdx, PsiMethod caller) {
+    //do not change hierarchy
+    if (caller.findDeepestSuperMethods().length > 0) {
+      return null;
+    }
+
+    //find first method call
+    final Ref<PsiParameter> ref = new Ref<>();
+    ReferencesSearch.search(called, new LocalSearchScope(caller)).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiJavaCodeReferenceElement) {
+        final PsiElement elementParent = element.getParent();
+        if (elementParent instanceof PsiCallExpression) {
+          ref.set(isTheOnlyOneParameterUsage(elementParent, paramIdx, called));
+          return false;
+        }
+      }
+      return true;
+    });
+    return ref.get();
+  }
+
+  protected int getCallerParameterIndex(PsiMethod called, int paramIdx, PsiMethod caller) {
+    final PsiParameter parameter = getParameterInCaller(called, paramIdx, caller);
+    return parameter != null ? caller.getParameterList().getParameterIndex(parameter) : -1;
+  }
+  
   private class SafeDeleteJavaMethodNode extends JavaMethodNode {
 
     private final int myParameterIdx;
@@ -206,7 +233,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
     @Override
     protected MethodNodeBase<PsiMethod> createNode(PsiMethod caller, HashSet<PsiMethod> called) {
-      return new SafeDeleteJavaMethodNode(caller, called, myCancelCallback, getParameterIndex(caller), myProject);
+      return new SafeDeleteJavaMethodNode(caller, called, myCancelCallback, getCallerParameterIndex(myMethod, myParameterIdx, caller), myProject);
     }
 
     @Override
@@ -222,35 +249,8 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
     @Override
     protected Condition<PsiMethod> getFilter() {
-      return method -> !myMethod.equals(method) && getParameter(method) != null;
+      return method -> !myMethod.equals(method) && getParameterInCaller(myMethod, myParameterIdx, method) != null;
     }
-
-    private PsiParameter getParameter(PsiMethod caller) {
-
-      //do not change hierarchy
-      if (caller.findDeepestSuperMethods().length > 0) {
-        return null;
-      }
-
-      //find first method call
-      final Ref<PsiParameter> ref = new Ref<>();
-      ReferencesSearch.search(myMethod, new LocalSearchScope(caller)).forEach(reference -> {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          final PsiElement elementParent = element.getParent();
-          if (elementParent instanceof PsiCallExpression) {
-            ref.set(isTheOnlyOneParameterUsage(elementParent, myParameterIdx, myMethod));
-            return false;
-          }
-        }
-        return true;
-      });
-      return ref.get();
-    }
-
-    private int getParameterIndex(PsiMethod caller) {
-      final PsiParameter parameter = getParameter(caller);
-      return parameter != null ? caller.getParameterList().getParameterIndex(parameter) : -1;
-    }
+    
   }
 }

@@ -91,7 +91,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         final int s = result.size();
         XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
         return CachedValueProvider.Result
-          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag.getContainingFile());
+          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
       }
     };
   private static final Comparator<TextRange> RANGE_COMPARATOR = (range1, range2) -> range1.getStartOffset() - range2.getStartOffset();
@@ -679,7 +679,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       @Override
       public boolean execute(@NotNull PsiElement element) {
         if (element instanceof XmlTag) {
-          assert element.isValid();
+          PsiUtilCore.ensureValid(element);
           result.add((XmlTag)element);
         }
         return true;

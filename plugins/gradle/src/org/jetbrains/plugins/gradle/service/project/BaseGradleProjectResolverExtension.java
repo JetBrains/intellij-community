@@ -361,6 +361,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public void populateModuleCompileOutputSettings(@NotNull IdeaModule gradleModule,
                                                   @NotNull DataNode<ModuleData> ideModule) {
+    ModuleData moduleData = ideModule.getData();
+    File ideaOutDir = new File(moduleData.getLinkedExternalProjectPath(), "out");
+
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
       DataNode<ProjectData> projectDataNode = ideModule.getDataNode(ProjectKeys.PROJECT);
@@ -368,6 +371,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap = projectDataNode.getUserData(MODULES_OUTPUTS);
       assert moduleOutputsMap != null;
 
+      Set<String> outputDirs = ContainerUtil.newHashSet();
       processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
@@ -376,6 +380,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
             final ModuleData moduleData = dataNode.getData();
             File outputDir = sourceDirectorySet.getOutputDir();
+            outputDirs.add(outputDir.getPath());
             moduleData.setCompileOutputPath(sourceType, outputDir.getAbsolutePath());
             moduleData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
 
@@ -395,39 +400,36 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
         }
       });
-
+      if (outputDirs.stream().anyMatch(path -> FileUtil.isAncestor(ideaOutDir, new File(path), false))) {
+        excludeOutDir(ideModule, ideaOutDir);
+      }
       return;
     }
 
     IdeaCompilerOutput moduleCompilerOutput = gradleModule.getCompilerOutput();
-
-    File buildDir = null;
-    try {
-      buildDir = gradleModule.getGradleProject().getBuildDirectory();
-    }
-    catch (UnsupportedMethodException ignore) {
-      // see org.gradle.tooling.model.GradleProject.getBuildDirectory method supported only since Gradle 2.0
-      // will use com.intellij.openapi.externalSystem.model.ExternalProject.getBuildDir() instead
-    }
-
     Map<ExternalSystemSourceType, File> compileOutputPaths = ContainerUtil.newHashMap();
-
     boolean inheritOutputDirs = moduleCompilerOutput != null && moduleCompilerOutput.getInheritOutputDirs();
 
-    ModuleData moduleData = ideModule.getData();
     if (moduleCompilerOutput != null) {
-      File classesOutputDir = selectCompileOutputDir(moduleCompilerOutput.getOutputDir(), externalProject, "classes/main");
+      File outputDir = moduleCompilerOutput.getOutputDir();
+      File classesOutputDir = ObjectUtils.chooseNotNull(outputDir, new File(ideaOutDir, "production/classes"));
       compileOutputPaths.put(ExternalSystemSourceType.SOURCE, classesOutputDir);
-      File resourcesOutputDir = selectCompileOutputDir(moduleCompilerOutput.getOutputDir(), externalProject, "resources/main");
+      File resourcesOutputDir = ObjectUtils.chooseNotNull(outputDir, new File(ideaOutDir, "production/resources"));
       compileOutputPaths.put(ExternalSystemSourceType.RESOURCE, resourcesOutputDir);
-      File testClassesOuputDir = selectCompileOutputDir(moduleCompilerOutput.getTestOutputDir(), externalProject, "classes/test");
-      compileOutputPaths.put(ExternalSystemSourceType.TEST, testClassesOuputDir);
-      File testResourcesOutputDir = selectCompileOutputDir(moduleCompilerOutput.getTestOutputDir(), externalProject, "resources/test");
+
+      File testOutputDir = moduleCompilerOutput.getTestOutputDir();
+      File testClassesOutputDir = ObjectUtils.chooseNotNull(testOutputDir, new File(ideaOutDir, "test/classes"));
+      compileOutputPaths.put(ExternalSystemSourceType.TEST, testClassesOutputDir);
+      File testResourcesOutputDir = ObjectUtils.chooseNotNull(testOutputDir, new File(ideaOutDir, "test/resources"));
       compileOutputPaths.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesOutputDir);
+
+      if (!inheritOutputDirs && (outputDir == null || testOutputDir == null)) {
+        excludeOutDir(ideModule, ideaOutDir);
+      }
     }
 
     for (Map.Entry<ExternalSystemSourceType, File> sourceTypeFileEntry : compileOutputPaths.entrySet()) {
-      final File outputPath = ObjectUtils.chooseNotNull(sourceTypeFileEntry.getValue(), buildDir);
+      final File outputPath = sourceTypeFileEntry.getValue();
       if (outputPath != null) {
         moduleData.setCompileOutputPath(sourceTypeFileEntry.getKey(), outputPath.getAbsolutePath());
       }
@@ -436,11 +438,24 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs);
   }
 
-  @Nullable
-  private static File selectCompileOutputDir(@Nullable File outputDir, @Nullable ExternalProject externalProject, String path) {
-    if (outputDir != null || externalProject == null) return outputDir;
+  private void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+    ContentRootData excludedContentRootData;
+    DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
+    if (contentRootDataDataNode == null ||
+        !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
+      excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getAbsolutePath());
+    }
+    else {
+      excludedContentRootData = contentRootDataDataNode.getData();
+    }
 
-    return new File(externalProject.getBuildDir(), path);
+    excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getAbsolutePath());
+    ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
+  }
+
+  @Nullable
+  private static File selectCompileOutputDir(@Nullable File outputDir, @NotNull String projectPath, String path) {
+    return outputDir != null ? outputDir : new File(projectPath, path);
   }
 
   @Override

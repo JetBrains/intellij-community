@@ -39,7 +39,6 @@ public class TextFieldWithAutoCompletionWithBrowseButton
   }
 
   public void setAutoCompletionItems(Collection<String> items) {
-    System.out.println("names = " + items);
     getChildComponent().setVariants(items);
   }
 

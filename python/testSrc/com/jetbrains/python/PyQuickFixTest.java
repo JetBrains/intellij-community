@@ -671,6 +671,14 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
   }
 
+  public void testAddKwargsToNewMethodIncompatibleWithInit() {
+    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
+  }
+
+  public void testAddKwargsToIncompatibleOverridingMethod() {
+    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change signature of m(self, <b>**kwargs</b>)</html>", true, true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

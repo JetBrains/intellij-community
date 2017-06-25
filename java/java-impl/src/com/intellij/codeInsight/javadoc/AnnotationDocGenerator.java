@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -30,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-class AnnotationDocGenerator {
+public class AnnotationDocGenerator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.AnnotationGenerator");
   @NotNull private final PsiAnnotation myAnnotation;
   @NotNull private final PsiJavaCodeReferenceElement myNameReference;
@@ -72,6 +73,10 @@ class AnnotationDocGenerator {
 
   boolean isInferred() {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
+  }
+
+  public boolean isInferredFromSource() {
+    return isInferred() && !(PsiUtil.preferCompiledElement(myOwner) instanceof PsiCompiledElement);
   }
 
   void generateAnnotation(StringBuilder buffer, AnnotationFormat format) {
@@ -172,7 +177,7 @@ class AnnotationDocGenerator {
     buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
   }
 
-  static List<AnnotationDocGenerator> getAnnotationsToShow(PsiModifierListOwner owner) {
+  public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
     List<AnnotationDocGenerator> infos = new ArrayList<>();
 
     Set<String> shownAnnotations = ContainerUtil.newHashSet();

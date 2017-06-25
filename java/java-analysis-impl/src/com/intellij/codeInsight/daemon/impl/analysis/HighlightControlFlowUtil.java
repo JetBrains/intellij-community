@@ -220,7 +220,7 @@ public class HighlightControlFlowUtil {
    * see JLS chapter 16
    * @return true if variable assigned (maybe more than once)
    */
-  private static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+  public static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     try {
       ControlFlow controlFlow = getControlFlow(context);
       return ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow);

@@ -1,16 +1,18 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -18,6 +20,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
@@ -31,14 +34,12 @@ import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbToggleLineNumbersAction;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
@@ -59,9 +60,11 @@ import java.util.stream.Collectors;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
+  public static final Topic<EditingModeChangeListener> TOPIC = Topic.create("IPNB.EditingMode", EditingModeChangeListener.class);
   private final DocumentListener myDocumentListener;
   private final Document myDocument;
   private final MessageBusConnection myBusConnection;
+  private final EditActionsProvider myEditable;
   private IpnbFile myIpnbFile;
   private final Project myProject;
   @NotNull private final IpnbFileEditor myParent;
@@ -84,6 +87,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     myParent = parent;
     myVirtualFile = vFile;
     myListener = listener;
+    myEditable = new EditActionsProvider();
     setBackground(IpnbEditorUtil.getBackground());
     addKeyListener(new KeyStrokeAdapter() {
       @Override
@@ -124,11 +128,20 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
                               new ProjectEx.ProjectSaved() {
                                 @Override
                                 public void saved(@NotNull Project project) {
-                                  CommandProcessor.getInstance().runUndoTransparentAction(
-                                    () -> ApplicationManager.getApplication()
-                                      .runWriteAction(() -> saveToFile(false)));
+                                  executeSaveFileCommand();
                                 }
                               });
+
+    myBusConnection.subscribe(TOPIC, (wasInEditing, isEditing) -> {
+      if (wasInEditing && !isEditing) {
+        executeSaveFileCommand();
+    }
+  });
+  }
+
+  public void executeSaveFileCommand() {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+      () -> saveToFile(false)), "Save File", new Object(), UndoConfirmationPolicy.DEFAULT, false);
   }
 
   @Override
@@ -257,6 +270,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (below) {
       index += 1;
     }
+
     final IpnbEditableCell cell = panel.getCell();
     myIpnbFile.addCell(cell, index);
     myIpnbPanels.add(index, panel);
@@ -420,14 +434,18 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  private void deleteCell(@NotNull final IpnbEditablePanel cell) {
+  public void deleteCell(@NotNull final IpnbEditablePanel cell) {
     final int index = myIpnbPanels.indexOf(cell);
     if (index < 0) return;
     myIpnbPanels.remove(index);
     myIpnbFile.removeCell(index);
     remove(index);
 
-    if (!myIpnbPanels.isEmpty()) {
+    if (myIpnbPanels.isEmpty()) {
+      createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
+      setSelectedCell(myIpnbPanels.get(0), false);
+    }
+    else {
       int indexToSelect = index < myIpnbPanels.size() ? index : index - 1;
       final IpnbEditablePanel panel = myIpnbPanels.get(indexToSelect);
       setSelectedCell(panel, false);
@@ -606,31 +624,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
         selectNext(mySelectedCellPanel, false);
       }
-      else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-        if (!mySelectedCellPanel.isEditing()) {
-          IpnbDeleteCellAction.deleteCell(this);
-        }
-      }
       else if (e.getKeyCode() == KeyEvent.VK_L) {
         if (mySelectedCellPanel instanceof IpnbCodePanel && !mySelectedCellPanel.isEditing()) {
           IpnbToggleLineNumbersAction.toggleLineNumbers((IpnbCodePanel)mySelectedCellPanel);
-        }
-      }
-      else if (e.getModifiers() == Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) {
-        if (e.getKeyCode() == KeyEvent.VK_X) {
-          if (!mySelectedCellPanel.isEditing()) {
-            IpnbCutCellAction.cutCell(this);
-          }
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_C) {
-          if (!mySelectedCellPanel.isEditing()) {
-            copyCell();
-          }
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_V) {
-          if (!mySelectedCellPanel.isEditing()) {
-            IpnbPasteCellAction.pasteCell(this);
-          }
         }
       }
       else {
@@ -684,7 +680,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   private void updateCellSelection(MouseEvent e) {
-    if (e.getClickCount() > 0) {
+    if (e.getClickCount() == 1 || e.getClickCount() == 2) {
       IpnbEditablePanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
       if (ipnbPanel != null) {
         ipnbPanel.setEditing(false);
@@ -792,7 +788,89 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         if (o != null) return o;
       }
     }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)
+        || PlatformDataKeys.PASTE_PROVIDER.is(dataId)
+        || PlatformDataKeys.CUT_PROVIDER.is(dataId)
+        || PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return myEditable;
+    }
     return null;
+  }
+
+  private class EditActionsProvider implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      executeSaveFileCommand();
+      copyCell();
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+    @Override
+    public void deleteElement(@NotNull DataContext dataContext) {
+      executeUndoableCommand(
+        () -> {
+          deleteSelectedCell();
+          saveToFile(false);
+        }, "Delete Cell");
+    }
+
+    @Override
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null && !mySelectedCellPanel.isEditing();
+    }
+
+    @Override
+    public void performPaste(@NotNull DataContext dataContext) {
+      executeUndoableCommand(() -> {
+        pasteCell();
+        saveToFile(false);
+      }, "Paste Cell");
+    }
+
+    @Override
+    public boolean isPastePossible(@NotNull DataContext dataContext) {
+      return myBufferPanel != null;
+    }
+
+    @Override
+    public boolean isPasteEnabled(@NotNull DataContext dataContext) {
+      return myBufferPanel != null;
+    }
+
+    @Override
+    public void performCut(@NotNull DataContext dataContext) {
+      executeUndoableCommand(() -> {
+        cutCell();
+        saveToFile(false);
+      }, "Cut Cell");
+    }
+
+    @Override
+    public boolean isCutEnabled(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+    @Override
+    public boolean isCutVisible(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+  }
+
+  public void executeUndoableCommand(@NotNull Runnable action, @NotNull String name) {
+    executeSaveFileCommand();
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+      action), name, new Object());
   }
 
   public Project getProject() {
@@ -806,5 +884,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public Document getDocument() {
     return myDocument;
+  }
+
+  @FunctionalInterface
+  public interface EditingModeChangeListener {
+    void modeChanged(boolean wasInEditing, boolean isEditing);
   }
 }

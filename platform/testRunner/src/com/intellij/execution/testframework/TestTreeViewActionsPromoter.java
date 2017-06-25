@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +28,7 @@ public class TestTreeViewActionsPromoter implements ActionPromoter {
     if (AbstractTestProxy.DATA_KEY.getData(context) != null) {
       for (AnAction action : actions) {
         if (action instanceof TestTreeViewAction) {
-          return Arrays.asList(action);
+          return Collections.singletonList(action);
         }
       }
     }

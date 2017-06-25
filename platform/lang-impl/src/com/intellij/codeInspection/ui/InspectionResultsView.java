@@ -90,7 +90,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
-public class InspectionResultsView extends JPanel implements Disposable, DataProvider {
+public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
 
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
@@ -387,6 +387,36 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     group.add(new ContextHelpAction(HELP_ID));
 
     return createToolbar(group);
+  }
+
+  @Override
+  public boolean hasNextOccurence() {
+    return getOccurenceNavigator().hasNextOccurence();
+  }
+
+  @Override
+  public boolean hasPreviousOccurence() {
+    return getOccurenceNavigator().hasPreviousOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goNextOccurence() {
+    return getOccurenceNavigator().goNextOccurence();
+  }
+
+  @Override
+  public OccurenceInfo goPreviousOccurence() {
+    return getOccurenceNavigator().goPreviousOccurence();
+  }
+
+  @Override
+  public String getNextOccurenceActionName() {
+    return getOccurenceNavigator().getNextOccurenceActionName();
+  }
+
+  @Override
+  public String getPreviousOccurenceActionName() {
+    return getOccurenceNavigator().getPreviousOccurenceActionName();
   }
 
   private static JComponent createToolbar(final DefaultActionGroup specialGroup) {

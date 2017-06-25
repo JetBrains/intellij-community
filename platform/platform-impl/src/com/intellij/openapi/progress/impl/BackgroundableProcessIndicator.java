@@ -170,4 +170,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   public boolean isShowing() {
     return isModal() || ! isBackgrounded();
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + "; task=" + myInfo;
+  }
 }

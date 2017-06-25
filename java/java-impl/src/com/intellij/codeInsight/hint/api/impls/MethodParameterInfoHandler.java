@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -136,13 +137,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (!(element instanceof PsiMethod)) return null;
     
     PsiMethod method = (PsiMethod)element;
-    int originalNumberOfParameters = method.getParameterList().getParametersCount();
     int currentNumberOfParameters = expressionList.getExpressions().length;
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
     Document document = psiDocumentManager.getCachedDocument(context.getFile());
     if ((context.getHighlightedParameter() != null || candidates.length == 1) && 
         document != null && psiDocumentManager.isCommitted(document) && 
-        originalNumberOfParameters != currentNumberOfParameters && !(originalNumberOfParameters == 1 && currentNumberOfParameters == 0)) {
+        isIncompatibleParameterCount(method, currentNumberOfParameters)) {
       List<Inlay> hints = expressionList.getUserData(JavaMethodCallElement.COMPLETION_HINTS);
       if (hints != null) {
         for (Inlay hint : hints) {
@@ -165,6 +165,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
     }
     return (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) ? expressionList : null;
+  }
+
+  private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
+    int originalNumberOfParameters = method.getParameterList().getParametersCount();
+    return PsiImplUtil.isVarArgs(method) 
+           ? originalNumberOfParameters > 2 && numberOfParameters < originalNumberOfParameters - 1 
+           : originalNumberOfParameters != numberOfParameters && !(originalNumberOfParameters == 1 && numberOfParameters == 0);
   }
 
   @Override

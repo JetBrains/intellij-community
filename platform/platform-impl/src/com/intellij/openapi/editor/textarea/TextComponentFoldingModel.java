@@ -32,11 +32,6 @@ public class TextComponentFoldingModel implements FoldingModel {
   }
 
   @Override
-  public boolean addFoldRegion(@NotNull FoldRegion region) {
-    return false;
-  }
-
-  @Override
   public void removeFoldRegion(@NotNull FoldRegion region) {
   }
 

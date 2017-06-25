@@ -26,8 +26,6 @@ import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
-import git4idea.config.GitSharedSettings
-import git4idea.repo.GitRepository
 
 /**
  * Base class for Git action which is going to edit existing commits,
@@ -131,15 +129,6 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
            ProgressManager.getInstance().runProcessWithProgressSynchronously<List<String>, RuntimeException>({
                branchesGetter.getContainingBranchesSynchronously(root, hash)
            }, "Searching for branches containing the selected commit", true, data.project)
-  }
-
-  protected fun findProtectedRemoteBranch(repository: GitRepository, branches: Collection<String>): String? {
-    val settings = GitSharedSettings.getInstance(repository.project)
-    // protected branches hold patterns for branch names without remote names
-    return repository.branches.remoteBranches.
-        filter { settings.isBranchProtected(it.nameForRemoteOperations) }.
-        map { it.nameForLocalOperations }.
-        filter { branches.contains(it) }.firstOrNull()
   }
 
   private fun commitPushedToProtectedBranchError(protectedBranch: String)

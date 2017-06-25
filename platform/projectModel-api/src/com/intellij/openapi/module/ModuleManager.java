@@ -187,8 +187,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
 
   /**
-   * Specify list of modules which will be unloaded from the project. These modules won't be shown in UI, all of their contents will be excluded
-   * from indexing and compilation.
+   * Specify list of modules which will be unloaded from the project.
+   * @see UnloadedModuleDescription
    */
   @ApiStatus.Experimental
   public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);

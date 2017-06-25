@@ -20,11 +20,11 @@ import java.lang.annotation.*;
 /**
  * Designates a system-independent path, with <code>/</code> separators.
  * <p>
- * This annotation doesn't add any bytecode instrumentation.<p>
+ * Corresponding bytecode instrumentation is added by <code>SystemIndependentInstrumentingBuilder</code>.<p>
  *
  * @see PathUtil#toSystemIndependentName(String)
  * @see PathUtil#toSystemDependentName(String)
- * @see PathUtil#assertSystemIndependentName(String)
+ * @see PathUtil#assertArgumentIsSystemIndependent
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)

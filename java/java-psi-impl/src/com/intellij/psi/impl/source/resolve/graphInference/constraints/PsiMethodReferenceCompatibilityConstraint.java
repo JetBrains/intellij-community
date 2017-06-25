@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -48,7 +47,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return false;
     }
 
-    final PsiType groundTargetType = FunctionalInterfaceParameterizationUtil.getGroundTargetType(myT);
+    final PsiType groundTargetType = myExpression.getGroundTargetType(myT);
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(groundTargetType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     if (interfaceMethod == null) {

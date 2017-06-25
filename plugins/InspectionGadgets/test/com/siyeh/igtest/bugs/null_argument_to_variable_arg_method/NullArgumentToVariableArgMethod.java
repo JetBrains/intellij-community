@@ -33,3 +33,8 @@ class AB {
         new AB("reactor", <warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired">null</warning>);
     }
 }
+enum Inequitity {
+    A(<warning descr="Confusing argument 'null', unclear if a varargs or non-varargs call is desired">null</warning>), B;
+
+    Inequitity(String... ss) {}
+}

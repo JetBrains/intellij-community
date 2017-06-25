@@ -46,6 +46,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
     doTest(true);
   }
 
+  public void testLocalClassDecoding() throws Exception {
+    doTest();
+  }
+
   public void testQualifiedConstantExpression() throws Exception {
     doTest();
   }

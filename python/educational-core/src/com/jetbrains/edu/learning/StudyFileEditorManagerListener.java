@@ -24,8 +24,8 @@ public class StudyFileEditorManagerListener implements FileEditorManagerListener
   @Override
   public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     Task task = getTask(file);
-    setTaskText(task, StudyUtils.getTaskDir(file));
     if (task != null) {
+      setTaskText(task.getTaskDescription());
       if (task instanceof ChoiceTask) {
         final StudyChoiceVariantsPanel choicePanel = new StudyChoiceVariantsPanel((ChoiceTask)task);
         myToolWindow.setBottomComponent(choicePanel);
@@ -51,7 +51,7 @@ public class StudyFileEditorManagerListener implements FileEditorManagerListener
     VirtualFile file = event.getNewFile();
     if (file != null) {
       Task task = getTask(file);
-      setTaskText(task, StudyUtils.getTaskDir(file));
+      setTaskText(task == null ? null : task.getTaskDescription());
     }
     myToolWindow.setBottomComponent(null);
   }
@@ -61,12 +61,11 @@ public class StudyFileEditorManagerListener implements FileEditorManagerListener
     return StudyUtils.getTaskForFile(myProject, file);
   }
 
-  private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {
-    String text = StudyUtils.getTaskTextFromTask(taskDirectory, task);
+  private void setTaskText(@Nullable String text) {
     if (text == null) {
       myToolWindow.setEmptyText(myProject);
       return;
     }
-    myToolWindow.setTaskText(text, taskDirectory, myProject);
+    myToolWindow.setTaskText(text, myProject);
   }
 }

@@ -36,10 +36,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
@@ -51,6 +48,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -322,26 +320,40 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     caretModel.moveToOffset(offset - 1); // avoid caret impact on hints location
-    editor.getDocument().insertString(offset, StringUtil.repeat(", ", parametersCount - 1));
-    List<Inlay> addedHints = new ArrayList<>(parametersCount);
-    if (showHints) {
-      for (PsiParameter parameter : parameterList.getParameters()) {
-        String name = parameter.getName();
-        if (name != null) {
-          addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
-        }
-        offset += 2;
-      }
-    }
     int braceOffset = caretModel.getOffset();
-    caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(braceOffset + 1).leanForward(true));
+    int numberOfCommas = parametersCount - 1;
+    if (parametersCount > 1 && PsiImplUtil.isVarArgs(method)) numberOfCommas--;
+    String commas = StringUtil.repeat(", ", numberOfCommas);
+    editor.getDocument().insertString(offset, commas);
 
     Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
-    handler.findElementForParameterInfo(infoContext);
-    
+    if (handler.findElementForParameterInfo(infoContext) == null) {
+      editor.getDocument().deleteString(offset, offset + commas.length());
+      caretModel.moveToOffset(offset);
+      return;
+    }
+
+    List<Inlay> addedHints = new ArrayList<>(parametersCount);
+    if (showHints) {
+      for (PsiParameter parameter : parameterList.getParameters()) {
+        String name = parameter.getName();
+        if (name != null) {
+          if (parametersCount > 1 && parameter.isVarArgs()) {
+            name = ", " + name;
+            offset -= 2;
+          }
+          addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
+        }
+        offset += 2;
+      }
+    }
+    VisualPosition afterBracePosition = editor.offsetToVisualPosition(braceOffset + 1);
+    caretModel.moveToVisualPosition(new VisualPosition(afterBracePosition.line, 
+                                                       afterBracePosition.column + (showHints ? 1 : 0))); // after hint
+
     parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
     ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
                                                                  parameterOwner, handler, false, false);

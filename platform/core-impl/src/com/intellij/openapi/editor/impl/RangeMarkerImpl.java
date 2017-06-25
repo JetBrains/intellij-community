@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,13 +121,18 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public void setGreedyToLeft(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToLeft()) return;
 
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), getLayer());
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), isStickingToRight(), getLayer());
   }
 
   @Override
   public void setGreedyToRight(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToRight()) return;
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, getLayer());
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
+  }
+
+  public void setStickingToRight(boolean value) {
+    if (!isValid() || value == isStickingToRight()) return;
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
   }
 
   @Override
@@ -137,6 +145,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public boolean isGreedyToRight() {
     RangeMarkerTree.RMNode node = myNode;
     return node != null && node.isGreedyToRight();
+  }
+
+  public boolean isStickingToRight() {
+    RangeMarkerTree.RMNode node = myNode;
+    return node != null && node.isStickingToRight();
   }
 
   @Override
@@ -168,7 +181,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     if (!isValid()) return;
 
-    TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight());
+    TextRange newRange = applyChange(e, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight());
     if (newRange == null) {
       invalidate(e);
       return;
@@ -181,9 +194,10 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   protected void onReTarget(int startOffset, int endOffset, int destOffset) {}
 
   @Nullable
-  static TextRange applyChange(@NotNull DocumentEvent e, int intervalStart, int intervalEnd, boolean isGreedyToLeft, boolean isGreedyToRight) {
+  static TextRange applyChange(@NotNull DocumentEvent e, int intervalStart, int intervalEnd, 
+                               boolean isGreedyToLeft, boolean isGreedyToRight, boolean isStickingToRight) {
     if (intervalStart == intervalEnd) {
-      return processIfOnePoint(e, intervalStart, isGreedyToRight);
+      return processIfOnePoint(e, intervalStart, isGreedyToRight, isStickingToRight);
     }
 
     final int offset = e.getOffset();
@@ -234,7 +248,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Nullable
-  private static TextRange processIfOnePoint(@NotNull DocumentEvent e, int intervalStart, boolean greedyRight) {
+  private static TextRange processIfOnePoint(@NotNull DocumentEvent e, int intervalStart, boolean greedyRight, boolean stickyRight) {
     int offset = e.getOffset();
     int oldLength = e.getOldLength();
     int oldEnd = offset + oldLength;
@@ -242,8 +256,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return null;
     }
 
-    if (offset == intervalStart && oldLength == 0 && greedyRight) {
-      return new UnfairTextRange(intervalStart, intervalStart + e.getNewLength());
+    if (offset == intervalStart && oldLength == 0) {
+      if (greedyRight) {
+        return new UnfairTextRange(intervalStart, intervalStart + e.getNewLength());
+      }
+      else if (stickyRight) {
+        return new UnfairTextRange(intervalStart + e.getNewLength(), intervalStart + e.getNewLength());
+      }
     }
 
     if (intervalStart > oldEnd || intervalStart == oldEnd  && oldLength > 0) {

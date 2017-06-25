@@ -4,10 +4,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
@@ -28,15 +27,24 @@ public class IpnbAddCellBelowAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final IpnbFilePanel component = myFileEditor.getIpnbFilePanel();
-    addCell(component);
+    addCell(myFileEditor.getIpnbFilePanel());
   }
 
-  public static void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
-    CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), () -> ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        ipnbFilePanel.createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
-        ipnbFilePanel.saveToFile(false);
-      }), "Ipnb.createAndAddCell", new Object());
+  private static void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
+    ipnbFilePanel.executeUndoableCommand(() -> {
+      ipnbFilePanel.createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
+      ipnbFilePanel.saveToFile(false);
+    }, "Create cell");
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    IpnbEditablePanel panel = myFileEditor.getIpnbFilePanel().getSelectedCellPanel();
+    if (panel != null && panel.isEditing()) {
+      e.getPresentation().setEnabled(false);
+    }
+    else {
+      e.getPresentation().setEnabled(true);
+    }
   }
 }

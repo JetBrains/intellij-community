@@ -3,7 +3,7 @@ import java.util.stream.Stream;
 
 public class Test {
   public void test() {
-    /*redundant*/
+      /*redundant*/
       System.out.println(Stream.of(/*just one number*/123).count());
   }
 }

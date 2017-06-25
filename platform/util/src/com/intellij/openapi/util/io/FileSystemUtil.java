@@ -39,7 +39,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Locale;
-import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -220,6 +219,7 @@ public class FileSystemUtil {
     private final Method myLastModifiedTime;
     private final Method myIsHidden;
     private final Method myIsReadOnly;
+    private final Method myPermissions;
 
     private Nio2MediatorImpl() throws Exception {
       assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
@@ -246,9 +246,11 @@ public class FileSystemUtil {
       if (SystemInfo.isWindows) {
         myIsHidden = accessible(mySchema.getMethod("isHidden"));
         myIsReadOnly = accessible(mySchema.getMethod("isReadOnly"));
+        myPermissions = null;
       }
       else {
         myIsHidden = myIsReadOnly = null;
+        myPermissions = accessible(mySchema.getMethod("permissions"));
       }
     }
 
@@ -347,10 +349,8 @@ public class FileSystemUtil {
     }
 
     private Collection getPermissions(Object sourcePath) throws IllegalAccessException, InvocationTargetException {
-      Map attributes = (Map)myReadAttributes.invoke(null, sourcePath, "posix:permissions", myLinkOptions);
-      if (attributes == null) return null;
-      Object permissions = attributes.get("permissions");
-      return permissions instanceof Collection ? (Collection)permissions : null;
+      Object attributes = myReadAttributes.invoke(null, sourcePath, mySchema, myLinkOptions);
+      return attributes != null ? (Collection)myPermissions.invoke(attributes) : null;
     }
   }
 

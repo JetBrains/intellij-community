@@ -4,6 +4,8 @@ import java.lang.invoke.MethodHandle;
 
 public class PrimitiveArrayArgumentToVariableArgMethod
 {
+    PrimitiveArrayArgumentToVariableArgMethod(Object... os) {}
+
     public static void main(String[] arg) throws Throwable
     {
         methodVarArgObject(<warning descr="Confusing primitive array argument to varargs method">new byte[3]</warning>);
@@ -50,5 +52,13 @@ public class PrimitiveArrayArgumentToVariableArgMethod
         int[] ints = {1, 2, 3};
         bar1(<warning descr="Confusing primitive array argument to varargs method">ints</warning>); // warn here
         bar2(ints); // no warning needed here
+
+        new PrimitiveArrayArgumentToVariableArgMethod(<warning descr="Confusing primitive array argument to varargs method">ints</warning>);
+    }
+
+    enum E {
+        A(<warning descr="Confusing primitive array argument to varargs method">new int[] {}</warning>);
+
+        E(Object... os) {}
     }
 }

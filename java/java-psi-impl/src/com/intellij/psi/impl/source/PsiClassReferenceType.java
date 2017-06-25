@@ -71,7 +71,13 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @Override
   public boolean isValid() {
     PsiJavaCodeReferenceElement reference = myReference.compute();
-    return reference != null && reference.isValid();
+    if (reference != null && reference.isValid()) {
+      for (PsiAnnotation annotation : getAnnotations(false)) {
+        if (!annotation.isValid()) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -215,13 +221,6 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @NotNull
   public PsiType[] getParameters() {
     return getReference().getTypeParameters();
-  }
-
-  @NotNull
-  public PsiClassType createImmediateCopy() {
-    ClassResolveResult resolveResult = resolveGenerics();
-    PsiClass element = resolveResult.getElement();
-    return element == null ? this : new PsiImmediateClassType(element, resolveResult.getSubstitutor());
   }
 
   @NotNull

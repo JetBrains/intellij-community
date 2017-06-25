@@ -38,14 +38,6 @@ object GuiRecorderComponent : ApplicationComponent, Disposable {
 
   override fun getComponentName() = "GuiRecorderComponent"
 
-  override fun disposeComponent() {
-
-  }
-
-  override fun initComponent() {
-
-  }
-
   fun setCurrentTask(task: Future<*>) { currentTask = task }
 
   fun cancelCurrentTask() {

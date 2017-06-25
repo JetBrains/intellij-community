@@ -40,6 +40,40 @@ public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
     );
   }
 
+  public void testNullArgument() {
+    doTest(
+      "import java.util.*;" +
+      "class X {" +
+      "  List<String> f() {" +
+      "    return Collections.emptyList(null/*_Replace with 'java.util.Arrays.asList()'*/, null);" +
+      "  }" +
+      "}",
+
+      "import java.util.*;" +
+      "class X {" +
+      "  List<String> f() {" +
+      "    return Arrays.asList(null, null);" +
+      "  }" +
+      "}");
+  }
+
+  public void testNullableArgument() {
+    doTest(
+      "import java.util.*;" +
+      "class X {" +
+      "  List<String> f(@org.jetbrains.annotations.Nullable String a) {" +
+      "    return Collections.emptyList(a/*_Replace with 'java.util.Arrays.asList()'*/);" +
+      "  }" +
+      "}",
+
+      "import java.util.*;" +
+      "class X {" +
+      "  List<String> f(@org.jetbrains.annotations.Nullable String a) {" +
+      "    return Arrays.asList(a);" +
+      "  }" +
+      "}");
+  }
+
   public void testReplaceSingletonList() {
     doTest(
       "import java.util.*;" +

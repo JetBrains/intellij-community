@@ -168,7 +168,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @NotNull
   private static PyCallableParameter fieldToCallableParameter(@NotNull String name, @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
-    return new PyCallableParameterImpl(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
+    return PyCallableParameterImpl.nonPsi(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
   }
 
   public enum DefinitionLevel {

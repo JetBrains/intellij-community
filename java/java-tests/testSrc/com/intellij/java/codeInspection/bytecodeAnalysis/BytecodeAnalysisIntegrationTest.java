@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE.txt file.
 package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -46,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
@@ -153,11 +142,11 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   }
 
   public void testExternalAnnoGutter() {
-    setUpExternalUpAnnotations();
-    openDecompiledClass("java.lang.Boolean");
+    ModuleRootModificationUtil.setModuleSdk(myModule, PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17()));
+    openDecompiledClass("java.lang.String");
     checkHasGutter("<html>External and <i>inferred</i> annotations available. Full signature:<p>\n" +
-                   "@Contract(&quot;null-&gt;false&quot;)&nbsp;\n" +
-                   "private static&nbsp;boolean&nbsp;<b>toBoolean</b>(@Nullable&nbsp;String&nbsp;var0)</html>");
+                   "<i>@Contract(pure = true)</i>&nbsp;\n" +
+                   "public&nbsp;<b>String</b>(@NotNull&nbsp;String&nbsp;var1)</html>");
   }
 
   private void checkHasGutter(String expectedText) {
@@ -227,7 +216,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       String inferredNotNullMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
 
       if (!externalNotNullMethodAnnotation.equals(inferredNotNullMethodAnnotation)) {
-        myDiffs.add(methodKey + ": " + externalNotNullMethodAnnotation + " != " + inferredNotNullMethodAnnotation);
+        myDiffs.add(methodKey + ": " + externalNotNullMethodAnnotation + " != " + inferredNotNullMethodAnnotation + "\n");
       }
     }
 
@@ -237,7 +226,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       String inferredNullableMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
 
       if (!externalNullableMethodAnnotation.equals(inferredNullableMethodAnnotation)) {
-        myDiffs.add(methodKey + ": " + externalNullableMethodAnnotation + " != " + inferredNullableMethodAnnotation);
+        myDiffs.add(methodKey + ": " + externalNullableMethodAnnotation + " != " + inferredNullableMethodAnnotation + "\n");
       }
     }
 
@@ -249,7 +238,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
         String externalNotNull = findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
         String inferredNotNull = findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL) == null ? "null" : "@NotNull";
         if (!externalNotNull.equals(inferredNotNull)) {
-          myDiffs.add(parameterKey + ": " + externalNotNull + " != " + inferredNotNull);
+          myDiffs.add(parameterKey + ": " + externalNotNull + " != " + inferredNotNull + "\n");
         }
       }
 
@@ -258,7 +247,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
         String externalNullable = findExternalAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
         String inferredNullable = findInferredAnnotation(parameter, AnnotationUtil.NULLABLE) == null ? "null" : "@Nullable";
         if (!externalNullable.equals(inferredNullable)) {
-          myDiffs.add(parameterKey + ": " + externalNullable + " != " + inferredNullable);
+          myDiffs.add(parameterKey + ": " + externalNullable + " != " + inferredNullable + "\n");
         }
       }
     }
@@ -273,7 +262,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
       inferredContractAnnotation == null ? "null" : inferredContractAnnotation.getText();
 
     if (!externalContractAnnotationText.equals(inferredContractAnnotationText)) {
-      myDiffs.add(methodKey + ": " + externalContractAnnotationText + " != " + inferredContractAnnotationText);
+      myDiffs.add(methodKey + ": " + externalContractAnnotationText + " != " + inferredContractAnnotationText + "\n");
     }
   }
 

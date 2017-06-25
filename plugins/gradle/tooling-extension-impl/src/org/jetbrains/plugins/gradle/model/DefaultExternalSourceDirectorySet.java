@@ -104,9 +104,6 @@ public class DefaultExternalSourceDirectorySet implements ExternalSourceDirector
 
   public void setGradleOutputDir(@NotNull File outputDir) {
     myGradleOutputDir = outputDir;
-    if (myOutputDir == null) {
-      myOutputDir = outputDir;
-    }
   }
 
   @Override

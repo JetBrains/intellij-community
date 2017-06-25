@@ -21,12 +21,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.log.HgRefManager;
-import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.repo.HgRepositoryManager;
 
-public class HgBranchManager extends DvcsBranchManager<HgRepository> {
-  public HgBranchManager(@NotNull HgRepositoryManager repositoryManager, @NotNull HgProjectSettings settings) {
-    super(repositoryManager, settings.getFavoriteBranchSettings(), HgBranchType.values());
+public class HgBranchManager extends DvcsBranchManager {
+  public HgBranchManager(@NotNull HgProjectSettings settings) {
+    super(settings.getFavoriteBranchSettings(), HgBranchType.values());
   }
 
   @Nullable

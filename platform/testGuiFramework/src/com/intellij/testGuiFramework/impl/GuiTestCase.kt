@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
@@ -26,6 +27,7 @@ import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
@@ -34,6 +36,8 @@ import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.*
 import org.fest.swing.image.ScreenshotTaker
+import org.fest.swing.timing.Condition
+import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.fest.swing.timing.Timeout.timeout
 import java.awt.Component
@@ -83,6 +87,11 @@ open class GuiTestCase : GuiTestBase() {
   var pathToSaveScreenshots = getTestScreenshotDirPath()
   var defaultTimeout = 120L //timeout in seconds
 
+  val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
+  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val slash: String = File.separator
+
+
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
@@ -109,7 +118,9 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   fun dialog(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
-    func(dialog(title, timeout))
+    val dialog = dialog(title, timeout)
+    func(dialog)
+    dialog.waitTillGone()
   }
 
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
@@ -139,6 +150,12 @@ open class GuiTestCase : GuiTestBase() {
     target() as Container, name, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JButton component named by \"${name}\" with ${target().toString()} as a Container")
+
+  fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(comboboxClass: Class<out ComponentWithBrowseButton<out JComponent>>,
+                                                                          timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture
+    = if (target() is Container) componentWithBrowseButton(target() as Container, comboboxClass, timeout)
+  else throw UnsupportedOperationException(
+    "Sorry, unable to find ComponentWithBrowseButton component with ${target().toString()} as a Container")
 
   fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String, /*timeout in seconds*/
                                                          timeout: Long = defaultTimeout): JComboBoxFixture = if (target() is Container) combobox(
@@ -278,6 +295,15 @@ open class GuiTestCase : GuiTestBase() {
     return JButtonFixture(myRobot, jButton)
   }
 
+  private fun componentWithBrowseButton(container: Container,
+                                        foo: Class<out ComponentWithBrowseButton<out JComponent>>,
+                                        timeout: Long): ComponentWithBrowseButtonFixture {
+    val component = waitUntilFound(container, ComponentWithBrowseButton::class.java, timeout) {
+      component -> component.isShowing && foo.isInstance(component)
+    }
+    return ComponentWithBrowseButtonFixture(component, myRobot)
+  }
+
   private fun combobox(container: Container, labelText: String, timeout: Long): JComboBoxFixture {
     //wait until label has appeared
     waitUntilFound(container, JLabel::class.java, timeout) { jLabel -> jLabel.isShowing && jLabel.text == labelText }
@@ -382,6 +408,11 @@ open class GuiTestCase : GuiTestBase() {
     this.item(itemName).doubleClick()
   }
 
+  fun JButtonFixture.waitEnabled(): JButtonFixture {
+    pause { this.isEnabled }
+    return this
+  }
+
   //necessary only for Windows
   fun getScaleSuffix(): String? {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(
@@ -398,6 +429,12 @@ open class GuiTestCase : GuiTestBase() {
     return GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
       override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
     }, timeout.toFestTimeout())
+  }
+
+  fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
+    Pause.pause(object: Condition(condition) {
+      override fun test() = testFunction()
+    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS) )
   }
 
 

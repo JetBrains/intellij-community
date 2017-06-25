@@ -22,10 +22,11 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestFileType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 public class CompositeFoldingBuilderTest extends AbstractEditorTest {
@@ -44,10 +45,11 @@ public class CompositeFoldingBuilderTest extends AbstractEditorTest {
     LanguageFolding.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, second);
 
     try {
-      FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(getFile(), getEditor().getDocument(), false);
-      Collection<FoldingUpdate.RegionInfo> regionInfos = foldingMap.get(getFile());
+      PsiFile file = getFile();
+      List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, getEditor().getDocument(), false);
+      int regionCount = ContainerUtil.count(regionInfos, i -> file.equals(i.element));
 
-      assert regionInfos.size() == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
+      assert regionCount == 1: "Only one descriptor allowed for the same text range. Descriptors: " + regionInfos;
     }
     finally {
       LanguageFolding.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, first);

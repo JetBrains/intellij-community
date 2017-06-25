@@ -631,13 +631,15 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
                         @NotNull MavenServerProgressIndicator indicator,
-                        boolean alwaysUpdateSnapshots) {
+                        boolean alwaysUpdateSnapshots,
+                        @Nullable Properties userProperties) {
     try {
       ((CustomArtifactFactory)getComponent(ArtifactFactory.class)).customize();
       ((CustomArtifactFactory)getComponent(ProjectArtifactFactory.class)).customize();
       ((CustomArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       ((CustomRepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       ((CustomWagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
+      myImpl.setUserProperties(userProperties);
 
       setConsoleAndIndicator(console, indicator);
     }

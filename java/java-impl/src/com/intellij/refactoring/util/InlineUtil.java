@@ -43,7 +43,15 @@ public class InlineUtil {
   private InlineUtil() {}
 
   @NotNull
-  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref)
+  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
+    return inlineVariable(variable, initializer, ref, null);
+  }
+
+  @NotNull
+  public static PsiExpression inlineVariable(PsiVariable variable,
+                                             PsiExpression initializer,
+                                             PsiJavaCodeReferenceElement ref,
+                                             PsiExpression thisAccessExpr)
     throws IncorrectOperationException {
     PsiManager manager = initializer.getManager();
 
@@ -68,7 +76,9 @@ public class InlineUtil {
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
 
-    PsiThisExpression thisAccessExpr = createThisExpression(manager, thisClass, refParent);
+    if (thisAccessExpr == null) {
+      thisAccessExpr = createThisExpression(manager, thisClass, refParent);
+    }
 
     expr = (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
     PsiType exprType = RefactoringUtil.getTypeByExpression(expr);

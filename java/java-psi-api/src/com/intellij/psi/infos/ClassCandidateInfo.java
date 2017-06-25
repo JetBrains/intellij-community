@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,21 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassCandidateInfo extends CandidateInfo{
-  public ClassCandidateInfo(@NotNull PsiElement candidate, @NotNull PsiSubstitutor substitutor, boolean accessProblem, PsiElement currFileContext){
+public class ClassCandidateInfo extends CandidateInfo {
+  public ClassCandidateInfo(@NotNull PsiElement candidate,
+                            @NotNull PsiSubstitutor substitutor,
+                            boolean accessProblem,
+                            PsiElement currFileContext) {
     super(candidate, substitutor, accessProblem, false, currFileContext);
   }
 
-  public ClassCandidateInfo(@NotNull PsiElement candidate, @NotNull PsiSubstitutor substitutor){
+  public ClassCandidateInfo(@NotNull PsiElement candidate, @NotNull PsiSubstitutor substitutor) {
     super(candidate, substitutor, false, false);
   }
 
   @NotNull
   @Override
-  public PsiClass getElement(){
+  public PsiClass getElement() {
     return (PsiClass)super.getElement();
   }
 }

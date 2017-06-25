@@ -88,16 +88,18 @@ public abstract class ArrayAction extends DebuggerAction {
   public static ArrayRenderer getArrayRenderer(XValue value) {
     if (value instanceof JavaValue) {
       ValueDescriptorImpl descriptor = ((JavaValue)value).getDescriptor();
-      final Renderer lastRenderer = descriptor.getLastRenderer();
+      Renderer lastRenderer = descriptor.getLastRenderer();
+      if (lastRenderer instanceof CompoundNodeRenderer) {
+        ChildrenRenderer childrenRenderer = ((CompoundNodeRenderer)lastRenderer).getChildrenRenderer();
+        if (childrenRenderer instanceof ExpressionChildrenRenderer) {
+          lastRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
+          if (lastRenderer == null) {
+            lastRenderer = ((ExpressionChildrenRenderer)childrenRenderer).getPredictedRenderer();
+          }
+        }
+      }
       if (lastRenderer instanceof ArrayRenderer) {
         return (ArrayRenderer)lastRenderer;
-      }
-      if (lastRenderer instanceof CompoundNodeRenderer &&
-          ((CompoundNodeRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer) {
-        final NodeRenderer lastChildrenRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
-        if (lastChildrenRenderer instanceof ArrayRenderer) {
-          return (ArrayRenderer)lastChildrenRenderer;
-        }
       }
     }
     return null;
@@ -169,7 +171,7 @@ public abstract class ArrayAction extends DebuggerAction {
     }
   }
 
-  private static class AdjustArrayRangeAction extends ArrayAction {
+  public static class AdjustArrayRangeAction extends ArrayAction {
     @NotNull
     @Override
     protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
@@ -185,14 +187,14 @@ public abstract class ArrayAction extends DebuggerAction {
     }
   }
 
-  private static class FilterArrayAction extends ArrayAction {
+  public static class FilterArrayAction extends ArrayAction {
     @NotNull
     @Override
     protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
                                                        ArrayRenderer original,
                                                        @NotNull DebuggerContextImpl debuggerContext,
                                                        String title) {
-      ArrayFilterInplaceEditor.edit(node);
+      ArrayFilterInplaceEditor.editParent(node);
       return Promises.rejectedPromise();
     }
   }

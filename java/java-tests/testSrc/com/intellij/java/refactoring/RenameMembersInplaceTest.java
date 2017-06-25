@@ -112,7 +112,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Throwable {
-        finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "newDoSomething");
+        finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "newDoSomething ");
       }
     }.execute().throwException();
 

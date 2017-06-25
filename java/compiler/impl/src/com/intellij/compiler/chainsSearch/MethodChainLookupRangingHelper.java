@@ -105,7 +105,7 @@ public class MethodChainLookupRangingHelper {
     if (method.hasModifierProperty(PsiModifier.STATIC)) return null;
     PsiNamedElement element = context.getQualifiers(qualifierClass).findFirst().orElse(null);
     if (element == null) {
-      return new ChainCompletionNewVariableLookupElement(qualifierClass);
+      return new ChainCompletionNewVariableLookupElement(qualifierClass, context);
     } else {
       if (element instanceof PsiVariable) {
         return new VariableLookupItem((PsiVariable)element);

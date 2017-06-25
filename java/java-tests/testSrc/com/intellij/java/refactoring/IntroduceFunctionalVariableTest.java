@@ -78,7 +78,9 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
       assertEquals("Cannot perform refactoring.\n" +
-                   "Extract Functional Variable is not supported in current context", e.getMessage());
+                   "There are multiple output values for the selected code fragment:\n" +
+                   "    x : int,\n" +
+                   "    y : int.", e.getMessage());
     }
   }
 
@@ -93,6 +95,10 @@ public class IntroduceFunctionalVariableTest extends LightRefactoringTestCase  {
   }
 
   public void testPostfixExpressionUnusedAfterAssignment() throws Exception {
+    doTest();
+  }
+
+  public void testFieldFromSuperClassPreserveContext() throws Exception {
     doTest();
   }
 

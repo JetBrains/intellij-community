@@ -61,6 +61,11 @@ final class BreadcrumbsConfigurable implements Configurable {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "reference.settings.editor.general.breadcrumbs";
+  }
+
+  @Override
   public JComponent createComponent() {
     if (component == null) {
       for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {

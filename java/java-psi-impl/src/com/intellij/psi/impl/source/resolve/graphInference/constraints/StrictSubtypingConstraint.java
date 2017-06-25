@@ -150,18 +150,19 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
         if (SClass == null) return false;
 
+        if (((PsiClassType)myT).isRaw()) {
+          return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
+        }
+
         PsiSubstitutor substitutor = SResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : SClass.getTypeParameters()) {
           substitutor = substitutor.put(typeParameter, substitutor.substituteWithBoundsPromotion(typeParameter));
         }
 
-        if (((PsiClassType)myT).isRaw()) {
-          return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
-        }
         final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(CClass, SClass, substitutor);
         if (sSubstitutor != null) {
-          for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(CClass)) {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
             final PsiType sSubstituted = sSubstitutor.substitute(parameter);
             if (tSubstituted == null ^ sSubstituted == null) {

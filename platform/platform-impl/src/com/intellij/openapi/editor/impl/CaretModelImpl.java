@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -487,6 +487,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         if (caretState != null && caretState.getCaretPosition() != null && !caretAdded) {
           caret.moveToLogicalPosition(caretState.getCaretPosition());
         }
+        if (caretState != null && caretState.getCaretPosition() != null && caretState.getVisualColumnAdjustment() != 0) {
+          caret.myVisualColumnAdjustment = caretState.getVisualColumnAdjustment();
+          caret.updateVisualPosition();
+        } 
         if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
           caret.setSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()),
                              myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
@@ -514,6 +518,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       List<CaretState> states = new ArrayList<>(myCarets.size());
       for (CaretImpl caret : myCarets) {
         states.add(new CaretState(caret.getLogicalPosition(),
+                                  caret.myVisualColumnAdjustment,
                                   caret.getSelectionStartLogicalPosition(),
                                   caret.getSelectionEndLogicalPosition()));
       }
@@ -559,7 +564,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onRemoved(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
-    doWithCaretMerging(this::updateVisualPosition);
+    doWithCaretMerging(() -> {
+      for (CaretImpl caret : myCarets) {
+        caret.onInlayRemoved(inlay.getOffset(), ((InlayImpl)inlay).getOrder());
+      }
+    });
   }
 
   @Override

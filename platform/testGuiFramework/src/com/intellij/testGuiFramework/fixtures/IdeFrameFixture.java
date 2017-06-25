@@ -401,7 +401,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
     // We wait until all "Run Configurations" are populated in the toolbar combo-box. Until then the "Project Sync" button is not in its
     // final position, and FEST will click the wrong button.
-    Pause.pause(new Condition("Waiting for 'Run Configurations' to be populated") {
+    pause(new Condition("Waiting for 'Run Configurations' to be populated") {
       @Override
       public boolean test() {
         RunConfigurationComboBoxFixture runConfigurationComboBox = RunConfigurationComboBoxFixture.find(IdeFrameFixture.this);

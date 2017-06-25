@@ -73,6 +73,10 @@ public interface TestFramework {
    * should be checked for abstract method error
    */
   boolean isTestMethod(PsiElement element);
+  
+  default boolean isTestMethod(PsiElement element, boolean checkAbstract) {
+    return isTestMethod(element);
+  }
 
   @NotNull
   Language getLanguage();

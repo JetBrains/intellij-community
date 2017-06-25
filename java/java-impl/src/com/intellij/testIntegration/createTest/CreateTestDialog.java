@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -547,8 +548,9 @@ public class CreateTestDialog extends DialogWrapper {
   @Nullable
   private PsiDirectory chooseDefaultDirectory(PsiDirectory[] directories, List<VirtualFile> roots) {
     List<PsiDirectory> dirs = new ArrayList<>();
+    PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
-      final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
+      final PsiDirectory dir = psiManager.findDirectory(file);
       if (dir != null) {
         dirs.add(dir);
       }
@@ -565,14 +567,17 @@ public class CreateTestDialog extends DialogWrapper {
       final VirtualFile file = dir.getVirtualFile();
       for (VirtualFile root : roots) {
         if (VfsUtilCore.isAncestor(root, file, false)) {
-          final PsiDirectory rootDir = PsiManager.getInstance(myProject).findDirectory(root);
+          final PsiDirectory rootDir = psiManager.findDirectory(root);
           if (rootDir != null) {
             return rootDir;
           }
         }
       }
     }
-    return null;
+    return ModuleManager.getInstance(myProject)
+      .getModuleDependentModules(myTargetModule)
+      .stream().flatMap(module -> ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).stream())
+      .map(root -> psiManager.findDirectory(root)).findFirst().orElse(null);
   }
 
   private String getPackageName() {

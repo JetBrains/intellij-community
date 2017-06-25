@@ -33,6 +33,10 @@ public class CreateSubclassTest extends MultiFileTestCase {
     doTest();
   }
 
+  public void testImports() throws Exception {
+    doTest();
+  }
+
   public void testInnerClassImplement() throws Exception {
     doTestInner();
   }

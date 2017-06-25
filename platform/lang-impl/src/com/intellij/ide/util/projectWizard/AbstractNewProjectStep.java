@@ -179,7 +179,7 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
   public static Project doGenerateProject(@Nullable final Project projectToClose,
                                           @NotNull final String locationString,
                                           @Nullable final DirectoryProjectGenerator generator,
-                                          @Nullable Object settings) {
+                                          @NotNull Object settings) {
     final File location = new File(FileUtil.toSystemDependentName(locationString));
     if (!location.exists() && !location.mkdirs()) {
       String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.getAbsolutePath());

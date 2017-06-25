@@ -148,7 +148,7 @@ public class ControlFlowUtil {
     return result;
   }
 
-  private static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
+  public static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
     InstructionClientVisitor<Boolean> visitor = new InstructionClientVisitor<Boolean>() {
       final boolean[] neededBelow = new boolean[flow.getSize() + 1];
 

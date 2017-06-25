@@ -113,6 +113,11 @@ public class ChainCompletionContext {
     return false;
   }
 
+  @NotNull
+  public PsiElement getContextPsi() {
+    return myContext;
+  }
+
   public PsiFile getContextFile() {
     return myContext.getContainingFile();
   }

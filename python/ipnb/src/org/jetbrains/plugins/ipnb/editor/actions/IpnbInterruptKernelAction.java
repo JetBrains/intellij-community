@@ -29,8 +29,15 @@ public class IpnbInterruptKernelAction extends AnAction {
     interruptKernel(myFileEditor);
   }
 
-  public static void interruptKernel(@NotNull final IpnbFileEditor editor) {
+  private static void interruptKernel(@NotNull final IpnbFileEditor editor) {
     final Project project = editor.getIpnbFilePanel().getProject();
     IpnbConnectionManager.getInstance(project).interruptKernel(editor.getVirtualFile().getPath());
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final Project project = myFileEditor.getIpnbFilePanel().getProject();
+    boolean hasConnection = IpnbConnectionManager.getInstance(project).hasConnection(myFileEditor.getVirtualFile().getPath());
+    e.getPresentation().setEnabled(hasConnection);
   }
 }

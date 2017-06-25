@@ -46,4 +46,14 @@ public interface PsiFunctionalExpression extends PsiExpression, Iconable, Naviga
    *  If the member is a variable arity method with arity n, etc
    */
   boolean isPotentiallyCompatible(PsiType left);
+
+  /**
+   * JLS 9.9. Function Types:
+   * 
+   * When a generic functional interface is parameterized by wildcards, there are many different instantiations that could satisfy the wildcard
+   * and produce different function types. Sometimes, it is possible to known from the context, such as the parameter types of a lambda expression, 
+   * which function type is intended (15.27.3). Other times, it is necessary to pick one; in these circumstances, the bounds are used. 
+   */
+  @Nullable
+  PsiType getGroundTargetType(PsiType functionalInterfaceType);
 }

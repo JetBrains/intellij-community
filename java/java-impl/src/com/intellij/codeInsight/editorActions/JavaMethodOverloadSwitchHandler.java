@@ -75,7 +75,9 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement exprList = getExpressionList(editor, caret.getOffset(), project);
-    if (!(exprList instanceof PsiExpressionList) || !(exprList.getParent() instanceof PsiCall)) return;
+    if (!(exprList instanceof PsiExpressionList)) return;
+    PsiElement call = exprList.getParent();
+    if (!(call instanceof PsiCall)) return;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
     ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(editor, lbraceOffset);
@@ -145,7 +147,8 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     });
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    CompletionMemory.registerChosenMethod(targetMethod, (PsiCall)exprList.getParent());
+    CompletionMemory.registerChosenMethod(targetMethod, (PsiCall)call);
+    controller.resetHighlighted();
     controller.updateComponent(); // update popup immediately (otherwise, it will be updated only after delay)
   }
 

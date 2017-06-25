@@ -33,6 +33,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.awt.RelativePoint;
@@ -1530,7 +1531,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     void layout(@NotNull Rectangle bounds);
   }
 
-  public class ActionButton extends NonOpaquePanel {
+  public class ActionButton extends NonOpaquePanel implements IdeGlassPane.TopComponent {
     private final Icon myIcon;
     private final Icon myHoverIcon;
     private final Consumer<MouseEvent> myListener;
@@ -1570,6 +1571,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
       icon.paintIcon(this, g, 0, 0);
+    }
+
+    @Override
+    public boolean canBePreprocessed(MouseEvent e) {
+      return false;
     }
   }
 

@@ -282,7 +282,7 @@ public class ParameterInfoController implements Disposable {
         int caretOffset = myEditor.getCaretModel().getOffset();
         TextRange ownerTextRange = owner.getTextRange();
         if (ownerTextRange != null) {
-          if (caretOffset > ownerTextRange.getStartOffset() && caretOffset < ownerTextRange.getEndOffset()) {
+          if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
             removeHints = false;
           }
           else {
@@ -334,7 +334,10 @@ public class ParameterInfoController implements Disposable {
       }
     }
     else {
-      context.removeHint();
+      myHint.hide();
+      if (!myKeepOnHintHidden) {
+        Disposer.dispose(this);
+      }
     }
   }
 
@@ -410,13 +413,15 @@ public class ParameterInfoController implements Disposable {
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
     if (areParametersHintsEnabledOnCompletion()) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
+      if (offset >= argList.getTextRange().getEndOffset()) currentParameterIndex = isNext ? -1 : parameters.length;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
       if (prevOrNextParameterIndex < 0 || prevOrNextParameterIndex >= parameters.length) {
         PsiElement parameterOwner = myComponent.getParameterOwner();
         return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
       }
       else {
-        return parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
+        int startOffset = parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
+        return CharArrayUtil.shiftForward(myEditor.getDocument().getImmutableCharSequence(), startOffset, " \t");
       }
     }
     else {
@@ -452,6 +457,10 @@ public class ParameterInfoController implements Disposable {
 
   public Object getHighlighted() {
     return myComponent.getHighlighted();
+  }
+
+  public void resetHighlighted() {
+    myComponent.setHighlightedParameter(null);
   }
 
   @TestOnly

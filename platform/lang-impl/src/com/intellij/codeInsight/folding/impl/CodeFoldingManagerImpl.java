@@ -213,7 +213,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
 
 
-    final FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(file, document, true);
+    final List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, document, true);
 
     return editor -> {
       ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
@@ -223,7 +223,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
-      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap,
+      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
                                                                                              UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                              false, false));
       initFolding(editor);
@@ -257,10 +257,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
       editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
     });
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override

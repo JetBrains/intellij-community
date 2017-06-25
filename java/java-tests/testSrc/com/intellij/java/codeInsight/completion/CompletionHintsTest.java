@@ -26,6 +26,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ui.UIUtil;
@@ -58,72 +59,74 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   public void testBasicScenarioWithHintsDisabledForMethod() throws Exception {
     // check hints appearance on completion
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
 
     // check that hints don't disappear after daemon highlighting passes
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
 
     // test Tab/Shift+Tab navigation
-    myFixture.checkResult("class C { void m() { System.setProperty(<caret>, ) } }");
+    checkResult("class C { void m() { System.setProperty(<caret>, ) } }");
     assertTrue(myFixture.getEditor().getCaretModel().getLogicalPosition().leansForward);
-    myFixture.performEditorAction("NextParameter");
-    myFixture.checkResult("class C { void m() { System.setProperty(, <caret>) } }");
+    next();
+    checkResult("class C { void m() { System.setProperty(, <caret>) } }");
     assertTrue(myFixture.getEditor().getCaretModel().getLogicalPosition().leansForward);
-    myFixture.performEditorAction("PrevParameter");
-    myFixture.checkResult("class C { void m() { System.setProperty(<caret>, ) } }");
+    prev();
+    checkResult("class C { void m() { System.setProperty(<caret>, ) } }");
     assertTrue(myFixture.getEditor().getCaretModel().getLogicalPosition().leansForward);
 
     // test hints remain shown while entering parameter values
     myFixture.type("\"a");
-    myFixture.performEditorAction("NextParameter");
+    next();
     myFixture.type("\"b");
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") } }");
 
     // test hints disappearance when caret moves out of parameter list
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    right();
+    right();
+    right();
 
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") } }");
   }
 
   public void testBasicScenarioWithHintsEnabledForMethod() throws Exception {
     // check hints appearance on completion
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+    configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
 
     // check that hints don't disappear after daemon highlighting passes
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
 
     // test Tab/Shift+Tab navigation
-    myFixture.checkResult("class C { void m() { Character.forDigit(<caret>, ) } }");
+    checkResult("class C { void m() { Character.forDigit(<caret>, ) } }");
     assertTrue(myFixture.getEditor().getCaretModel().getLogicalPosition().leansForward);
-    myFixture.performEditorAction("NextParameter");
-    myFixture.checkResult("class C { void m() { Character.forDigit(, <caret>) } }");
+    next();
+    checkResult("class C { void m() { Character.forDigit(, <caret>) } }");
     assertTrue(myFixture.getEditor().getCaretModel().getLogicalPosition().leansForward);
-    myFixture.performEditorAction("PrevParameter");
-    myFixture.checkResult("class C { void m() { Character.forDigit(<caret>, ) } }");
+    prev();
+    checkResult("class C { void m() { Character.forDigit(<caret>, ) } }");
     assertTrue(myFixture.getEditor().getCaretModel().getLogicalPosition().leansForward);
 
     // test hints remain shown while entering parameter values
     myFixture.type("1");
-    myFixture.performEditorAction("NextParameter");
+    next();
     myFixture.type("2");
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
 
     // test hints don't disappear when caret moves out of parameter list
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    right();
+    right();
+    right();
 
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
   }
 
   public void testWithHintsEnabledForNonLiterals() throws Exception {
@@ -132,12 +135,12 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     try {
       option.set(true);
 
-      myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+      configureJava("class C { void m() { Character.for<caret> } }");
       complete("forDigit");
-      myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
 
       waitForAllAsyncStuff();
-      myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
     }
     finally {
       option.set(savedValue);
@@ -145,122 +148,148 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSwitchingOverloads() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.to<caret> } }");
+    configureJava("class C { void m() { Character.to<caret> } }");
     complete("toChars(int codePoint)");
-    myFixture.checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>) } }");
     showParameterInfo();
     myFixture.performEditorAction("MethodOverloadSwitchDown");
-    myFixture.checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>, <hint text=\"dst:\"/>, <hint text=\"dstIndex:\"/>) } }");
+    checkResultWithInlays(
+      "class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>, <hint text=\"dst:\"/>, <hint text=\"dstIndex:\"/>) } }");
   }
 
   public void testSwitchingOverloadsWithParameterFilled() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.to<caret> } }");
+    configureJava("class C { void m() { Character.to<caret> } }");
     complete("toChars(int codePoint)");
     type("123");
-    myFixture.checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>123) } }");
+    checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>123) } }");
     showParameterInfo();
     myFixture.performEditorAction("MethodOverloadSwitchDown");
-    myFixture.checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>123, <hint text=\"dst:\"/>, <hint text=\"dstIndex:\"/>) } }");
-    myFixture.checkResult("class C { void m() { Character.toChars(123, <caret>, ) } }");
+    checkResultWithInlays(
+      "class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>123, <hint text=\"dst:\"/>, <hint text=\"dstIndex:\"/>) } }");
+    checkResult("class C { void m() { Character.toChars(123, <caret>, ) } }");
+  }
+
+  public void testSwitchingOverloadsForMethodWithDisabledHints() throws Exception {
+    configureJava("class C {\n" +
+                  "  int some(int from, int to) { return 0; }\n" +
+                  "  int some(int from, int to, int other) { return 0; }\n" +
+                  "  void m() { s<caret> }\n" +
+                  "}");
+    complete("some(int from, int to, int other)");
+    checkResultWithInlays("class C {\n" +
+                          "  int some(int from, int to) { return 0; }\n" +
+                          "  int some(int from, int to, int other) { return 0; }\n" +
+                          "  void m() { some(<hint text=\"from:\"/>, <hint text=\"to:\"/>, <hint text=\"other:\"/>) }\n" +
+                          "}");
+    showParameterInfo();
+    myFixture.performEditorAction("MethodOverloadSwitchDown");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C {\n" +
+                          "  int some(int from, int to) { return 0; }\n" +
+                          "  int some(int from, int to, int other) { return 0; }\n" +
+                          "  void m() { some(<hint text=\"from:\"/>, <hint text=\"to:\"/>) }\n" +
+                          "}");
   }
 
   public void testNoHintsForMethodReference() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+    configureJava("class C {\n" +
                                                      "  interface I { void i(int p); }\n" +
                                                      "  void referenced(int a) {}\n" +
                                                      "  void m(I lambda) {}\n" +
                                                      "  void m2() { m(this::<caret>) }\n" +
                                                      "}");
     complete("referenced");
-    myFixture.checkResultWithInlays("class C {\n" +
-                                    "  interface I { void i(int p); }\n" +
-                                    "  void referenced(int a) {}\n" +
-                                    "  void m(I lambda) {}\n" +
-                                    "  void m2() { m(this::referenced) }\n" +
-                                    "}");
+    checkResultWithInlays("class C {\n" +
+                          "  interface I { void i(int p); }\n" +
+                          "  void referenced(int a) {}\n" +
+                          "  void m(I lambda) {}\n" +
+                          "  void m2() { m(this::referenced) }\n" +
+                          "}");
   }
 
   public void testNestedCompletion() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
-    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
+    checkResultWithInlays(
+      "class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
   }
 
   public void testTabWithNestedCompletion() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
-    myFixture.performEditorAction("NextParameter");
-    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, <caret>), ) } }");
-    myFixture.performEditorAction("NextParameter");
-    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, )<caret>, ) } }");
-    myFixture.performEditorAction("NextParameter");
-    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), <caret>) } }");
-    myFixture.performEditorAction("NextParameter");
-    myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, ), )<caret> } }");
+    checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
+    next();
+    checkResult("class C { void m() { System.setProperty(System.getProperty(, <caret>), ) } }");
+    next();
+    checkResult("class C { void m() { System.setProperty(System.getProperty(, )<caret>, ) } }");
+    next();
+    checkResult("class C { void m() { System.setProperty(System.getProperty(, ), <caret>) } }");
+    next();
+    checkResult("class C { void m() { System.setProperty(System.getProperty(, ), )<caret> } }");
   }
 
   public void testNoHintsForMethodWithOneParameterFromBlackList() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }");
+    configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
-    myFixture.checkResultWithInlays("class C { void m() { System.getProperty() } }");
+    checkResult("class C { void m() { System.getProperty(<caret>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty() } }");
   }
 
   public void testHintsDisappearWhenNumberOfParametersIsChangedDirectly() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }");
+    configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
-    myFixture.checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { System.getProperty( ) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty( ) } }");
   }
 
   public void testHintsDisappearWhenNumberOfParametersIsChangedDirectlyWithNoOverloads() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+    configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit( ) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit( ) } }");
   }
 
   public void testCaretIsToTheRightOfHintAfterSmartInnerCompletion() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
+    configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     type("new String().trim");
     myFixture.complete(CompletionType.SMART);
-    myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>new String().trim(), <hint text=\"value:\"/>) } }");
-    myFixture.checkResult("class C { void m() { System.setProperty(new String().trim(), <caret>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>new String().trim(), <hint text=\"value:\"/>) } }");
+    checkResult("class C { void m() { System.setProperty(new String().trim(), <caret>) } }");
     assertEquals(getEditor().offsetToVisualPosition(getEditor().getCaretModel().getOffset(), true, false), 
                  getEditor().getCaretModel().getVisualPosition());
   }
 
   public void testNoHintsDuplicationWhenTypingToTheLeftOfHint() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+    configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
     waitForAllAsyncStuff();
     type("1");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    right();
     type("2");
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,2 <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,2 <hint text=\"radix:\"/>) } }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     waitForAllAsyncStuff();
-    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }");
   }
 
   public void testIntroduceVariableIntention() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+    configureJava("class C {\n" +
                                                      "    void m() {\n" +
                                                      "        Character.for<caret>\n" +
                                                      "    }\n" +
@@ -270,16 +299,16 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult("class C {\n" +
-                          "    void m() {\n" +
-                          "        int i = ;\n" +
-                          "        Character.forDigit(i<caret>, )\n" +
-                          "    }\n" +
-                          "}");
+    checkResult("class C {\n" +
+                "    void m() {\n" +
+                "        int i = ;\n" +
+                "        Character.forDigit(i<caret>, )\n" +
+                "    }\n" +
+                "}");
   }
 
   public void testIntroduceVariableIntentionInIfWithoutBraces() throws Exception {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+    configureJava("class C {\n" +
                                                      "    void m() {\n" +
                                                      "        if (true) Character.for<caret>\n" +
                                                      "    }\n" +
@@ -289,14 +318,129 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult("class C {\n" +
-                          "    void m() {\n" +
-                          "        if (true) {\n" +
-                          "            int i = ;\n" +
-                          "            Character.forDigit(i<caret>, )\n" +
-                          "        }\n" +
-                          "    }\n" +
-                          "}");
+    checkResult("class C {\n" +
+                "    void m() {\n" +
+                "        if (true) {\n" +
+                "            int i = ;\n" +
+                "            Character.forDigit(i<caret>, )\n" +
+                "        }\n" +
+                "    }\n" +
+                "}");
+  }
+
+  public void testPrevParameterFromOutside() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    next();
+    next();
+    prev();
+    checkResult("class C { void m() { System.getProperty(, <caret>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
+    assertFalse(getEditor().getInlayModel().hasInlineElementAt(getEditor().getCaretModel().getVisualPosition()));
+  }
+
+  public void testPrevParameterFromOutsideWhenParametersAreNotEmpty() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    type("\"a");
+    next();
+    type("\"b");
+    next();
+    waitForAllAsyncStuff();
+    prev();
+    checkResult("class C { void m() { System.getProperty(\"a\", <caret>\"b\") } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>\"a\", <hint text=\"def:\"/>\"b\") } }");
+  }
+
+  public void testVararg() throws Exception {
+    configureJava("class C { void m() { String.for<caret> } }");
+    complete();
+    checkResult("class C { void m() { String.format(<caret>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/><hint text=\", args:\"/>) } }");
+    assertCaretAfterInlay();
+    type("\"a");
+    next();
+    checkResult("class C { void m() { String.format(\"a\", <caret>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\", <hint text=\"args:\"/>) } }");
+    assertCaretAfterInlay();
+    next();
+    checkResult("class C { void m() { String.format(\"a\")<caret> } }");
+    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\"<hint text=\", args:\"/>) } }");
+    prev();
+    checkResult("class C { void m() { String.format(\"a\", <caret>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\", <hint text=\"args:\"/>) } }");
+    assertCaretAfterInlay();
+    prev();
+    checkResult("class C { void m() { String.format(\"a\"<caret>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\"<hint text=\", args:\"/>) } }");
+    assertCaretBeforeInlay();
+  }
+
+  public void testVarargWithNoMandatoryArguments() throws Exception {
+    configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
+    complete();
+    checkResult("class C { int vararg(int... args){ return 0; } void m() { vararg(<caret>) } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>) } }");
+    assertCaretAfterInlay();
+    type("1");
+    next();
+    checkResult("class C { int vararg(int... args){ return 0; } void m() { vararg(1, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, ) } }");
+    next();
+    checkResult("class C { int vararg(int... args){ return 0; } void m() { vararg(1)<caret> } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1) } }");
+    prev();
+    checkResult("class C { int vararg(int... args){ return 0; } void m() { vararg(1, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, ) } }");
+    prev();
+    checkResult("class C { int vararg(int... args){ return 0; } void m() { vararg(1<caret>) } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1) } }");
+  }
+
+  public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+    myFixture.getEditor().getCaretModel().moveToOffset(0);
+    type(' ');
+    waitForAllAsyncStuff();
+    checkResultWithInlays(" class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
+  }
+
+  private void assertCaretBeforeInlay() {
+    VisualPosition posFromOffset = myFixture.getEditor().offsetToVisualPosition(myFixture.getEditor().getCaretModel().getOffset());
+    assertEquals(posFromOffset, myFixture.getEditor().getCaretModel().getVisualPosition());
+  }
+
+  private void assertCaretAfterInlay() {
+    VisualPosition posFromOffset = myFixture.getEditor().offsetToVisualPosition(myFixture.getEditor().getCaretModel().getOffset());
+    assertEquals(new VisualPosition(posFromOffset.line, posFromOffset.column + 1), 
+                 myFixture.getEditor().getCaretModel().getVisualPosition());
+  }
+
+  private void checkResult(String text) {
+    myFixture.checkResult(text);
+  }
+
+  private void checkResultWithInlays(String text) {
+    myFixture.checkResultWithInlays(text);
+  }
+
+  private void prev() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PREV_PARAMETER);
+  }
+
+  private void next() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_NEXT_PARAMETER);
+  }
+
+  private void right() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+  }
+
+  private void configureJava(String text) {
+    myFixture.configureByText(JavaFileType.INSTANCE, text);
   }
 
   private void waitForParameterInfoUpdate() throws TimeoutException {

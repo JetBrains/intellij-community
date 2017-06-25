@@ -57,7 +57,8 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.ifs"),"if ('_Condition) {\n  '_ThenStatement*;\n} else {\n  '_ElseStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"),"switch('_Condition) {\n  '_Statement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}", OPERATOR_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"[!within( \"if('_a) { 'st*; }\" )]LOG.debug('_Argument*);",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( \"statement in if\" )]LOG.debug('_Argument*);", OPERATOR_TYPE),
+      createSearchTemplateInfo("statement in if", "if('_condition) { 'statement*; }", OPERATOR_TYPE),
 
       // Class based
       createSearchTemplateInfo(

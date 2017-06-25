@@ -15,24 +15,31 @@
  */
 package com.siyeh.ipp.collections;
 
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
+public class ReplaceWithArraysAsListIntention extends Intention implements HighPriorityAction {
 
   private String replacementText = null;
 
+  @NotNull
   @Override
-  protected String getTextForElement(PsiElement element) {
+  public String getText() {
     return IntentionPowerPackBundle.message("replace.with.arrays.as.list.intention.name", replacementText);
   }
 
@@ -57,7 +64,7 @@ public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
         return false;
       }
       final String name = method.getName();
-      return (replacementText = getReplacementMethodText(name, e)) != null;
+      return (replacementText = getReplacementMethodText(name, methodCallExpression)) != null;
     };
   }
 
@@ -68,19 +75,24 @@ public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
     PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + argumentList.getText());
   }
 
-  private static String getReplacementMethodText(String methodName, PsiElement context) {
-    if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
-      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
-        return "java.util.List.of";
-      }
-      else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
-        return "com.google.common.collect.ImmutableList.of";
-      }
-      else {
-        return "java.util.Arrays.asList";
-      }
+  private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {
+    final PsiExpression[] arguments = context.getArgumentList().getExpressions();
+    if (methodName.equals("emptyList") && arguments.length == 1 &&
+        !PsiUtil.isLanguageLevel9OrHigher(context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
+      return "java.util.Collections.singletonList";
     }
-    else if (methodName.equals("emptySet") || methodName.equals("singleton")) {
+    if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
+      if (Arrays.stream(arguments).noneMatch(e -> isPossiblyNull(e))) {
+        if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+          return "java.util.List.of";
+        }
+        else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
+          return "com.google.common.collect.ImmutableList.of";
+        }
+      }
+      return "java.util.Arrays.asList";
+    }
+    if (methodName.equals("emptySet") || methodName.equals("singleton")) {
       if (PsiUtil.isLanguageLevel9OrHigher(context)) {
         return "java.util.Set.of";
       }
@@ -97,5 +109,25 @@ public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
       }
     }
     return null;
+  }
+
+  private static boolean isPossiblyNull(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiModifierListOwner) {
+        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+        return NullableNotNullManager.getInstance(expression.getProject()).isNullable(modifierListOwner, false);
+      }
+    }
+    else if (ExpressionUtils.isNullLiteral(expression)) {
+      return true;
+    }
+    else if (expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+      return isPossiblyNull(conditionalExpression.getThenExpression()) || isPossiblyNull(conditionalExpression.getElseExpression());
+    }
+    return false;
   }
 }

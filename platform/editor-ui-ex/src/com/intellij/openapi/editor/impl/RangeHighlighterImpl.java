@@ -341,7 +341,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return result;
   }
 
-  public MarkupModel getMarkupModel() {
+  private MarkupModel getMarkupModel() {
     return myModel;
   }
 

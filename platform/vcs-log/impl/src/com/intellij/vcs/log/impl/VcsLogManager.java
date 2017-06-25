@@ -179,26 +179,6 @@ public class VcsLogManager implements Disposable {
     Disposer.dispose(myLogData);
   }
 
-  /*
-   * Use VcsLogProjectManager to get main log.
-   * Left here for upsource plugin.
-   * */
-  @Nullable
-  @Deprecated
-  public static VcsLogManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsProjectLog.class).getLogManager();
-  }
-
-  /*
-   * Use VcsLogProjectManager.getMainLogUi to get main log ui.
-   * Left here for upsource plugin.
-   * */
-  @Nullable
-  @Deprecated
-  public VcsLogUiImpl getMainLogUi() {
-    return ServiceManager.getService(myProject, VcsProjectLog.class).getMainLogUi();
-  }
-
   @Override
   public void dispose() {
     disposeLog();

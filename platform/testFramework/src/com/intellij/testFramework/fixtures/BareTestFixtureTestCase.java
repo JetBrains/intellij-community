@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
@@ -33,6 +34,7 @@ import static com.intellij.testFramework.PlatformTestUtil.SKIP_SLOW;
 import static org.junit.Assume.assumeFalse;
 
 public abstract class BareTestFixtureTestCase {
+  public static final Logger LOG = Logger.getInstance(BareTestFixtureTestCase.class);
   @Rule public final TestName myNameRule = new TestName();
 
   private BareTestFixture myFixture;

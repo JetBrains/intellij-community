@@ -19,7 +19,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.UserBinaryFileType;
 import com.intellij.openapi.fileTypes.UserFileType;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
@@ -52,7 +51,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   }
 
   public boolean isImage(VirtualFile file) {
-    return file.getFileType() instanceof ImageFileType;
+    return file.getFileType() instanceof ImageFileType || file.getFileType() instanceof SvgFileType;
   }
 
   public FileType getImageFileType() {
@@ -62,6 +61,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
   public static final class ImageFileType extends UserBinaryFileType {
   }
+
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
@@ -73,8 +73,8 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     }
 
     processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
-    if (Registry.is("ide.svg.viewer")) processed.add(IfsUtil.SVG_FORMAT.toLowerCase());
 
     consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+    consumer.consume(SvgFileType.INSTANCE, "svg");
   }
 }

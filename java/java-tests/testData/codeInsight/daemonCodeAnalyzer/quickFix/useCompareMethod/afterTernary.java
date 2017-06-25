@@ -3,9 +3,9 @@ public class Test {
   public void test(String s1, String s2) {
     System.out.println(Integer.compare(s1.length(), s2.length()));
     System.out.println(Integer.compare(s2.length(), s1.length()));
-    /*greater!*/
-    /*less!*/
-    /*equal!*/
+      /*greater!*/
+      /*less!*/
+      /*equal!*/
       System.out.println(Integer.compare(s1.length(), s2.length()));
     System.out.println(Integer.compare(s2.length(), s1.length()));
     System.out.println(Integer.compare(s2.length(), s1.length()));

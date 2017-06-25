@@ -40,6 +40,10 @@ public class ModuleRootModificationUtil {
     updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }
 
+  public static void addContentRoot(@NotNull Module module, @NotNull VirtualFile path) {
+    updateModel(module, model -> model.addContentEntry(path));
+  }
+
   public static void addModuleLibrary(@NotNull Module module,
                                       @Nullable String libName,
                                       @NotNull List<String> classesRoots,
@@ -95,6 +99,9 @@ public class ModuleRootModificationUtil {
   }
 
   public static void addModuleLibrary(@NotNull Module module, @NotNull String classesRootUrl) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && classesRootUrl.endsWith(".jar")) {
+      assert false : "jar file is expected, local file is used";
+    }
     addModuleLibrary(module, null, Collections.singletonList(classesRootUrl), Collections.emptyList());
   }
 

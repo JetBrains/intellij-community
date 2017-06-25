@@ -97,7 +97,7 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
                             }
       )
       if (!server.isConnected())
-        runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation())
+        runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass))
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }
@@ -116,12 +116,6 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       server.removeAllHandlers()
       eachNotifier.fireTestFinished()
     }
-  }
-
-  private fun getIdeFromAnnotation(): Ide {
-    val annotation = testClass.getAnnotation(RunWithIde::class.java)
-    val ideType = annotation?.value ?: IdeType.IDEA_COMMUNITY //ide community by default
-    return Ide(ideType, 0, 0)
   }
 
   private fun runOnClientSide(method: FrameworkMethod, notifier: RunNotifier) {
@@ -164,6 +158,12 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.framework.GuiTestRunner")
+
+    fun getIdeFromAnnotation(clazz: Class<*>): Ide {
+      val annotation = clazz.getAnnotation(RunWithIde::class.java)
+      val ideType = annotation?.value ?: IdeType.IDEA_COMMUNITY //ide community by default
+      return Ide(ideType, 0, 0)
+    }
   }
 
 

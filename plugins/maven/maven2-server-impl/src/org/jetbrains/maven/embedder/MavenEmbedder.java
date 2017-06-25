@@ -58,6 +58,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcher;
 import org.sonatype.plexus.components.sec.dispatcher.SecDispatcherException;
 
@@ -76,6 +77,7 @@ public class MavenEmbedder {
   private final Logger myLogger;
   private final MavenEmbedderSettings myEmbedderSettings;
   private final ArtifactRepository myLocalRepository;
+  private Properties myUserProperties = new Properties();
 
   private MavenEmbedder(@NotNull DefaultPlexusContainer container,
                         @NotNull Settings settings,
@@ -418,7 +420,7 @@ public class MavenEmbedder {
     MavenExecutionRequest result = new DefaultMavenExecutionRequest(myLocalRepository, mySettings, dispatcher, goals, file.getParent(),
                                                                     createProfileManager(activeProfiles, inactiveProfiles,
                                                                                          executionProperties), executionProperties,
-                                                                    new Properties(), true) {
+                                                                    myUserProperties, true) {
       private boolean myIsRecursive;
 
       @Override
@@ -594,6 +596,10 @@ public class MavenEmbedder {
   public static <T> void setImplementation(PlexusContainer container, Class<T> componentClass, Class<? extends T> implementationClass) {
     ComponentDescriptor d = container.getComponentDescriptor(componentClass.getName());
     d.setImplementation(implementationClass.getName());
+  }
+
+  public void setUserProperties(@Nullable Properties userProperties) {
+    myUserProperties = userProperties == null ? new Properties() : userProperties;
   }
 }
 

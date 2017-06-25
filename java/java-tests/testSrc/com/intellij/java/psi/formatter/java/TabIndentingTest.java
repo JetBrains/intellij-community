@@ -128,6 +128,10 @@ public class TabIndentingTest extends LightIdeaTestCase {
     doTest("SCR6197.java", "SCR6197_after.java");
   }
 
+  public void testMoreTabsInComments() throws Exception {
+    doTest("moreTabsInComments.java", "moreTabsInComments_after.java");
+  }
+
   private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
     String text = loadFile(fileNameBefore);
     final PsiFile file = createFile(fileNameBefore, text);

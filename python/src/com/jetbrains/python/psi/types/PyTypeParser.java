@@ -266,10 +266,10 @@ public class PyTypeParser {
               final ParseResult first = firstPair.getFirst();
               final List<ParseResult> second = firstPair.getSecond();
               result = first;
-              parameters.add(new PyCallableParameterImpl(null, first.getType()));
+              parameters.add(PyCallableParameterImpl.nonPsi(first.getType()));
               for (ParseResult r : second) {
                 result = result.merge(r);
-                parameters.add(new PyCallableParameterImpl(null, r.getType()));
+                parameters.add(PyCallableParameterImpl.nonPsi(r.getType()));
               }
               result = result.merge(returnResult);
             }
@@ -500,7 +500,7 @@ public class PyTypeParser {
       else if (PyNames.NONE.equals(name)) {
         return new ParseResult(PyNoneType.INSTANCE, range);
       }
-      else if ("integer".equals(name) || "long".equals(name)) {
+      else if ("integer".equals(name) || PyNames.TYPE_LONG.equals(name)) {
         final PyClassType type = builtinCache.getIntType();
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
@@ -516,7 +516,7 @@ public class PyTypeParser {
         final PyClassType type = builtinCache.getBytesType(LanguageLevel.forElement(myAnchor));
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
-      else if ("unicode".equals(name)) {
+      else if (PyNames.TYPE_UNICODE.equals(name)) {
         final PyClassType type = builtinCache.getUnicodeType(LanguageLevel.forElement(myAnchor));
         return type != null ? new ParseResult(type, range) : EMPTY_RESULT;
       }
