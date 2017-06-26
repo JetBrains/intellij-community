@@ -76,6 +76,19 @@ public class AddExplicitTypeArgumentsIntentionTest extends JavaCodeInsightFixtur
            "}");
   }
 
+  public void testNotAvailableWhenRawTypeInferred() throws Exception {
+    myFixture.configureByText("a.java", "import java.util.List;\n" +
+                                        "class Foo {\n" +
+                                        "    <T> List<T> getList() {return null;}\n" +
+                                        "    {\n" +
+                                        "        List l;\n" +
+                                        "        l = get<caret>List();\n" +
+                                        "    }\n" +
+                                        "}");
+    final IntentionAction intentionAction = myFixture.getAvailableIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
+    assertNull(intentionAction);
+  }
+
   private void doTest(String beforeText, String afterText) {
     myFixture.configureByText("a.java", beforeText);
     final IntentionAction intentionAction = myFixture.findSingleIntention(CodeInsightBundle.message("intention.add.explicit.type.arguments.family"));
