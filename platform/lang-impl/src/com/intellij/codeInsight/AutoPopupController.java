@@ -183,11 +183,11 @@ public class AutoPopupController implements Disposable {
         if (file == null) return;
       }
 
-      final PsiFile file1 = file;
       Runnable request = () -> {
         if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && editor.getComponent().isShowing()) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
+            PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
             ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
