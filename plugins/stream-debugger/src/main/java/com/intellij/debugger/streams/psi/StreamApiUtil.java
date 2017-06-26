@@ -48,7 +48,7 @@ public class StreamApiUtil {
                                          boolean mustParentBeStream,
                                          boolean mustResultBeStream) {
     final PsiMethod method = expression.resolveMethod();
-    if (method != null && mustResultBeStream == isStreamType(method.getReturnType())) {
+    if (method != null && mustResultBeStream == isStreamType(expression.getType())) {
       final PsiElement methodClass = method.getParent();
       if (methodClass instanceof PsiClass) {
         return mustParentBeStream == isStreamType((PsiClass)methodClass);
