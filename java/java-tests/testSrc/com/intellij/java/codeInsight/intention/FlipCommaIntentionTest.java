@@ -23,19 +23,25 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class FlipCommaIntentionTest extends IPPTestCase {
 
-  public void test() throws Exception {
+  public void testMultipleFieldsSingleDeclaration() {
     doTest("class C {\n" +
-           "    int a,/*_Flip ','*/ b;" +
+           "    int a,/*_Flip ','*/ b;\n" +
            "}",
+
            "class C {\n" +
            "    int b, a;\n" +
            "}");
   }
 
-  public void testUnavailableForDangling() throws Exception {
-    myFixture.configureByText("a.java", "class C {\n" +
-                                        "    int a[] = new int[]{1,2,<caret>};" +
-                                        "}");
-    assertEmpty(myFixture.filterAvailableIntentions("Flip"));
+  public void testUnavailableForDangling() {
+    doTestIntentionNotAvailable("class C {\n" +
+                                "    int a[] = new int[]{1,2,/*_Flip ','*/};" +
+                                "}");
+  }
+
+  public void testLeftAndRightIdentical() {
+    doTestIntentionNotAvailable("class C {" +
+                                "  int[] ones = {1/*_Flip ','*/,1,1};" +
+                                "}");
   }
 }
