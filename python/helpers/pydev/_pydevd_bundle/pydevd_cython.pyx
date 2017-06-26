@@ -9,7 +9,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 5
+version = 6
 
 if not hasattr(sys, '_current_frames'):
 
@@ -140,7 +140,7 @@ from _pydevd_bundle.pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETUR
 from _pydevd_bundle.pydevd_constants import STATE_SUSPEND, dict_contains, get_thread_id, STATE_RUN, dict_iter_values, IS_PY3K, \
     dict_keys, RETURN_VALUES_DICT
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE, PYDEV_FILE
-from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised
+from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame, just_raised, remove_exception_from_frame
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame
 
@@ -180,7 +180,6 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
         if not py_db.suspend_on_breakpoint_exception:
             return False
         else:
-            stop = True
             try:
                 # add exception_type and stacktrace into thread additional info
                 etype, value, tb = sys.exc_info()
@@ -196,6 +195,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
                     etype, value, tb = None, None, None
             except:
                 traceback.print_exc()
+            return True
 
 
 def handle_breakpoint_expression(breakpoint, info, new_frame):
@@ -294,6 +294,12 @@ cdef class PyDBFrame:
                     exception, main_debugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
+                    add_exception_to_frame(frame, (exception, value, trace))
+                    if exception_breakpoint.condition is not None:
+                        eval_result = handle_breakpoint_condition(main_debugger, info, exception_breakpoint, frame)
+                        if not eval_result:
+                            return False, frame
+
                     if exception_breakpoint.ignore_libraries:
                         if exception_breakpoint.notify_on_first_raise_only:
                             if main_debugger.first_appearance_in_scope(trace):
@@ -324,6 +330,12 @@ cdef class PyDBFrame:
                                 flag, frame = result
                     except:
                         flag = False
+
+                if flag:
+                    if exception_breakpoint.expression is not None:
+                        handle_breakpoint_expression(exception_breakpoint, info, frame)
+                else:
+                    remove_exception_from_frame(frame)
 
         return flag, frame
 
