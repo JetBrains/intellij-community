@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.openapi.application.WriteAction;
@@ -83,17 +84,16 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     for (final PsiMethod oMethod : OverridingMethodsSearch.search(psiMethod)) {
       replaceReturnStatements(oMethod);
     }
-    
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(project,
                                                                       psiMethod,
                                                                       false, null, psiMethod.getName(),
                                                                       PsiType.VOID,
                                                                       ParameterInfoImpl.fromMethod(psiMethod));
-
     csp.run();
   }
 
   private static void replaceReturnStatements(@NotNull final PsiMethod method) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(method)) return;
     final PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
     if (statements.length > 0) {
       WriteAction.run(() -> {
