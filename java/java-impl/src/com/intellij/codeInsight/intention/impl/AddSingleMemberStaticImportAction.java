@@ -104,6 +104,9 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                     else return null;
                   }
                 }
+                else if (method == null && call.getMethodExpression().multiResolve(false).length > 0) {
+                  return null;
+                }
               }
               else {
                 final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)refExpr.copy();
