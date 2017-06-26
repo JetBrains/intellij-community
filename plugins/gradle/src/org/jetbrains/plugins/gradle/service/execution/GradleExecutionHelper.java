@@ -162,7 +162,8 @@ public class GradleExecutionHelper {
       operation.setJavaHome(new File(javaHome));
     }
 
-    GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id);
+    String buildRootDir = buildEnvironment == null ? null : buildEnvironment.getBuildIdentifier().getRootDir().getPath();
+    GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)gradleProgressListener);
     operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
     operation.setStandardOutput(standardOutput);

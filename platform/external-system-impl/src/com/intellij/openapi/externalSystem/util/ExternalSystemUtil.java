@@ -18,8 +18,8 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
-import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.*;
+import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.execution.*;
@@ -559,8 +559,10 @@ public class ExternalSystemUtil {
     String displayName = progressEvent.getDescriptor().getDisplayName();
     long eventTime = progressEvent.getDescriptor().getEventTime();
     Object parentEventId = ObjectUtils.chooseNotNull(progressEvent.getParentEventId(), taskExecutionEvent.getId());
+
+    AbstractBuildEvent buildEvent;
     if (progressEvent instanceof ExternalSystemStartEvent) {
-      return new StartEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
+      buildEvent = new StartEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName);
     }
     else if (progressEvent instanceof ExternalSystemFinishEvent) {
       final EventResult eventResult;
@@ -577,16 +579,20 @@ public class ExternalSystemUtil {
       else {
         eventResult = new SuccessResultImpl();
       }
-      return new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName, eventResult);
+      buildEvent = new FinishEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName, eventResult);
     }
     else if (progressEvent instanceof ExternalSystemStatusEvent) {
       ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
-      return new ProgressBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName,
-                                        statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
+      buildEvent = new ProgressBuildEventImpl(progressEvent.getEventId(), parentEventId, eventTime, displayName,
+                                              statusEvent.getTotal(), statusEvent.getProgress(), statusEvent.getUnit());
     }
     else {
-      return new OutputBuildEventImpl(progressEvent.getEventId(), parentEventId, displayName, true);
+      buildEvent = new OutputBuildEventImpl(progressEvent.getEventId(), parentEventId, displayName, true);
     }
+
+    String hint = progressEvent.getDescriptor().getHint();
+    buildEvent.setHint(hint);
+    return buildEvent;
   }
 
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,

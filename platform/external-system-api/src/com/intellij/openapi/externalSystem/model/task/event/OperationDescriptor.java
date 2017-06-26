@@ -25,4 +25,6 @@ public interface OperationDescriptor extends Serializable {
   long getEventTime();
 
   String getDisplayName();
+
+  String getHint();
 }

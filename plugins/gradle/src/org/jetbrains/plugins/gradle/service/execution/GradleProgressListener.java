@@ -19,11 +19,13 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -38,18 +40,21 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private final ExternalSystemTaskNotificationListener myListener;
   private final ExternalSystemTaskId myTaskId;
   private final Map<String, Long> myStatusEventIds = new HashMap<>();
-  private final String myOperationId;
+  private final String myBuildRootDir;
+  private final int myOperationId;
 
-  public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener, @NotNull ExternalSystemTaskId taskId) {
-    this(listener, taskId, UUID.randomUUID().toString() + "_");
+  public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
+                                @NotNull ExternalSystemTaskId taskId) {
+    this(listener, taskId, null);
   }
 
   public GradleProgressListener(@NotNull ExternalSystemTaskNotificationListener listener,
                                 @NotNull ExternalSystemTaskId taskId,
-                                @NotNull String operationId) {
+                                @Nullable String buildRootDir) {
     myListener = listener;
     myTaskId = taskId;
-    myOperationId = operationId;
+    myBuildRootDir = buildRootDir;
+    myOperationId = FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
   }
 
   @Override
@@ -63,26 +68,36 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
 
   @Override
   public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
-    ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId);
+    ExternalSystemTaskNotificationEvent notificationEvent = GradleProgressEventConverter.convert(myTaskId, event, myOperationId + "_");
+    if (notificationEvent instanceof ExternalSystemTaskExecutionEvent) {
+      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
+      if (progressEvent.getParentEventId() == null && "Run build".equals(event.getDescriptor().getName())) {
+        OperationDescriptor operationDescriptor = progressEvent.getDescriptor();
+        if (operationDescriptor instanceof OperationDescriptorImpl) {
+          ((OperationDescriptorImpl)operationDescriptor).setHint(myBuildRootDir);
+        }
+      }
+    }
+
     myListener.onStatusChange(notificationEvent);
     if (notificationEvent instanceof ExternalSystemTaskExecutionEvent) {
-      if (((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent() instanceof ExternalSystemStatusEvent) {
-        ExternalSystemStatusEvent progressEvent =
-          (ExternalSystemStatusEvent)((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
-        if ("bytes".equals(progressEvent.getUnit())) {
-          Long oldProgress = myStatusEventIds.get(progressEvent.getEventId());
+      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
+      if (progressEvent instanceof ExternalSystemStatusEvent) {
+        ExternalSystemStatusEvent statusEvent = (ExternalSystemStatusEvent)progressEvent;
+        if ("bytes".equals(statusEvent.getUnit())) {
+          Long oldProgress = myStatusEventIds.get(statusEvent.getEventId());
           if (oldProgress == null) {
-            String totalSizeInfo = progressEvent.getTotal() > 0 ? (" (" + formatFileSize(progressEvent.getTotal()) + ")") : "";
-            myListener.onTaskOutput(myTaskId, progressEvent.getDisplayName() + totalSizeInfo + "\n", true);
-            myStatusEventIds.put(progressEvent.getEventId(), 0L);
+            String totalSizeInfo = statusEvent.getTotal() > 0 ? (" (" + formatFileSize(statusEvent.getTotal()) + ")") : "";
+            myListener.onTaskOutput(myTaskId, statusEvent.getDisplayName() + totalSizeInfo + "\n", true);
+            myStatusEventIds.put(statusEvent.getEventId(), 0L);
           }
           else {
-            double fraction = (double)progressEvent.getProgress() / progressEvent.getTotal();
+            double fraction = (double)statusEvent.getProgress() / statusEvent.getTotal();
             int progressBarSize = 14;
             int progress = (int)(fraction * progressBarSize + 0.5);
             if (oldProgress != progress) {
-              myStatusEventIds.put(progressEvent.getEventId(), (long)progress);
-              if (progressEvent.getTotal() > 0) {
+              myStatusEventIds.put(statusEvent.getEventId(), (long)progress);
+              if (statusEvent.getTotal() > 0) {
                 int remaining = progressBarSize - progress;
                 remaining = remaining < 0 ? 0 : remaining;
                 int offset = 3 - ((int)Math.log10(fraction * 100) + 1);
@@ -91,25 +106,24 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
                   myTaskId,
                   "\r[" + StringUtil.repeat(" ", offset) + (int)(fraction * 100) + "%" + ']' + " " +
                   "[ " + StringUtil.repeat("=", progress * 4 - 3) + ">" + StringUtil.repeat(" ", remaining * 4) + " ] " +
-                  formatFileSize(progressEvent.getProgress()), true);
+                  formatFileSize(statusEvent.getProgress()), true);
               }
               else {
-                myListener.onTaskOutput(myTaskId, formatFileSize(progressEvent.getProgress()) + "\n", true);
+                myListener.onTaskOutput(myTaskId, formatFileSize(statusEvent.getProgress()) + "\n", true);
               }
             }
           }
         }
       }
       else {
-        if (((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent() instanceof ExternalSystemFinishEvent) {
-          ExternalSystemFinishEvent progressEvent =
-            (ExternalSystemFinishEvent)((ExternalSystemTaskExecutionEvent)notificationEvent).getProgressEvent();
-          if (myStatusEventIds.containsKey(progressEvent.getEventId())) {
-            OperationResult operationResult = progressEvent.getOperationResult();
+        if (progressEvent instanceof ExternalSystemFinishEvent) {
+          ExternalSystemFinishEvent finishEvent = (ExternalSystemFinishEvent)progressEvent;
+          if (myStatusEventIds.containsKey(finishEvent.getEventId())) {
+            OperationResult operationResult = finishEvent.getOperationResult();
             String duration = StringUtil.formatDuration(operationResult.getEndTime() - operationResult.getStartTime());
-            myListener.onTaskOutput(myTaskId, "\n" + progressEvent.getDisplayName() + " succeeded, took " + duration + "\n", true);
+            myListener.onTaskOutput(myTaskId, "\n" + finishEvent.getDisplayName() + " succeeded, took " + duration + "\n", true);
             myListener.onTaskOutput(myTaskId, "Unzipping ...\n\n", true);
-            myStatusEventIds.remove(progressEvent.getEventId());
+            myStatusEventIds.remove(finishEvent.getEventId());
           }
         }
       }
