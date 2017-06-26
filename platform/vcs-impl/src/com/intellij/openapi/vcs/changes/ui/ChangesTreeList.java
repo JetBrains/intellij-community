@@ -83,27 +83,32 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
-  @Nullable private final Runnable myInclusionListener;
+  @Nullable private Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
   @NotNull private final CopyProvider myTreeCopyProvider;
   private TreeState myNonFlatTreeState;
 
   public ChangesTreeList(@NotNull Project project,
                          @NotNull Collection<T> initiallyIncluded,
-                         final boolean showCheckboxes,
-                         final boolean highlightProblems,
-                         @Nullable final Runnable inclusionListener,
-                         @Nullable final ChangeNodeDecorator decorator) {
+                         boolean showCheckboxes,
+                         boolean highlightProblems,
+                         @Nullable Runnable inclusionListener,
+                         @Nullable ChangeNodeDecorator decorator) {
+    this(project, showCheckboxes, highlightProblems);
+    myIncludedChanges.addAll(initiallyIncluded);
+    myInclusionListener = inclusionListener;
+    myChangeDecorator = decorator;
+  }
+
+  public ChangesTreeList(@NotNull Project project,
+                         boolean showCheckboxes,
+                         boolean highlightProblems) {
     super(ChangesBrowserNode.createRoot(project));
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
-    myInclusionListener = inclusionListener;
-    myChangeDecorator = decorator;
     myAlwaysExpandList = true;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
-
-    myIncludedChanges.addAll(initiallyIncluded);
 
     setHorizontalAutoScrollingEnabled(false);
     setRootVisible(false);
@@ -192,13 +197,17 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     getEmptyText().setText(emptyText);
   }
 
-  public void addSelectionListener(final Runnable runnable) {
+  public void addSelectionListener(@NotNull Runnable runnable) {
     addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         runnable.run();
       }
     });
+  }
+
+  public void setInclusionListener(@Nullable Runnable runnable) {
+    myInclusionListener = runnable;
   }
 
   public void setChangeDecorator(@Nullable ChangeNodeDecorator changeDecorator) {
@@ -219,6 +228,10 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   public boolean isShowFlatten() {
     return myShowFlatten;
+  }
+
+  public boolean isShowCheckboxes() {
+    return myShowCheckboxes;
   }
 
   /**
