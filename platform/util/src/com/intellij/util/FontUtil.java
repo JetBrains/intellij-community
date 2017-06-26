@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,12 @@ public class FontUtil {
 
   @NotNull
   public static String spaceAndThinSpace() {
-    return " " + canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
+    return " " + thinSpace();
+  }
+  
+  @NotNull
+  public static String thinSpace() {
+    return canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
   }
 
   @NotNull
