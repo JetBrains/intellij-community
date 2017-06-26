@@ -142,10 +142,12 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     final PsiClass psiClass = field.getContainingClass();
     if (psiClass == null) return;
     final PsiClassInitializer[] classInitializers = psiClass.getInitializers();
-    if (classInitializers.length == 0) return;
-
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    final PsiMethod[] constructors = !isStatic ? psiClass.getConstructors() : PsiMethod.EMPTY_ARRAY;
     final boolean fieldHasInitializer = field.hasInitializer();
+    final int maxPossibleWritesCount = classInitializers.length + (constructors.length != 0 ? 1 : 0) + (fieldHasInitializer ? 1 : 0);
+    if (maxPossibleWritesCount <= 1) return;
+
     final PsiClassInitializer initializerBeforeField = PsiTreeUtil.getPrevSiblingOfType(field, PsiClassInitializer.class);
     final List<FieldWrite> fieldWrites = new ArrayList<>(); // class initializers and field initializer in the program order
 
@@ -166,7 +168,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
     Collections.reverse(fieldWrites);
 
-    boolean wasDefinitelyAssigned = false;
+    boolean wasDefinitelyAssigned = isAssignedInAllConstructors(field, constructors);
     for (final FieldWrite fieldWrite : fieldWrites) {
       if (wasDefinitelyAssigned) {
         if (fieldWrite.isInitializer()) {
@@ -184,10 +186,23 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
   }
 
+  private static boolean isAssignedInAllConstructors(@NotNull PsiField field, @NotNull PsiMethod[] constructors) {
+    if (constructors.length == 0 || field.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    for (PsiMethod constructor : constructors) {
+      final PsiCodeBlock body = constructor.getBody();
+      if (body == null || !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @NotNull
   private static List<PsiAssignmentExpression> collectAssignments(@NotNull PsiField field, @NotNull PsiClassInitializer classInitializer) {
     final List<PsiAssignmentExpression> assignmentExpressions = new ArrayList<>();
-    classInitializer.accept(new JavaRecursiveElementVisitor() {
+    classInitializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         final PsiExpression lExpression = expression.getLExpression();

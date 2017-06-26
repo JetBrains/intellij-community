@@ -42,6 +42,35 @@ class C {
     }
     { s = "d"; }
   }
+  static class C10 {
+    String s = <warning descr="Variable 's' initializer '\"a\"' is redundant">"a"</warning>;
+    C10() { s = "b"; }
+  }
+  static class C11 {
+    String s = "a";
+    C11() { s = "b"; }
+    C11(int i) { }
+  }
+  static class C12 {
+    String s = "a";
+    C12() { s = "b"; }
+    C12(int i) { if (i == 0) s = "c"; }
+  }
+  static class C13 {
+    String s = <warning descr="Variable 's' initializer '\"a\"' is redundant">"a"</warning>;
+    C13() { s = "b"; }
+    C13(int i) { if (i == 0) s = "c"; else s = "d"; }
+  }
+  static class C14 {
+    String s = <warning descr="Variable 's' initializer '\"a\"' is redundant">"a"</warning>;
+    { <warning descr="The value \"b\" assigned to 's' is never used">s</warning> = "b"; }
+    C14() { s = "c"; }
+  }
+  static class C15 {
+    C15() { s = "c"; }
+    { if (b) <warning descr="The value \"b\" assigned to 's' is never used">s</warning> = "b"; }
+    String s = <warning descr="Variable 's' initializer '\"a\"' is redundant">"a"</warning>;
+  }
 
   static class S1 {
     static { <warning descr="The value \"a\" assigned to 's' is never used">s</warning> = "a"; }
@@ -87,5 +116,9 @@ class C {
   static class S10 {
     static String s = "a";
     { s = "b"; }
+  }
+  static class S11 {
+    static String s = "a";
+    S11() { s = "b"; }
   }
 }
