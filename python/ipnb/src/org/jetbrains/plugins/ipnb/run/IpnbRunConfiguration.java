@@ -19,6 +19,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remote.RemoteSdkCredentialsHolder;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
@@ -91,6 +92,9 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     }
     final Sdk sdk = getSdk();
     assert sdk != null;
+    if (RemoteSdkCredentialsHolder.isRemoteSdk(sdk.getHomePath())) {
+      throw new RuntimeConfigurationError("Please select local python interpreter");
+    }
     final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
     final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
     final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
