@@ -8,57 +8,59 @@ import com.intellij.notification.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
-import klogging.*
 import org.jetbrains.ktor.application.*
 import org.jetbrains.ktor.host.*
 import org.jetbrains.ktor.http.*
 import org.jetbrains.ktor.jetty.*
 import org.jetbrains.ktor.response.*
 import org.jetbrains.ktor.routing.*
+import runtime.net.*
 import runtime.reactive.*
+import java.awt.*
+import java.net.*
 import java.util.concurrent.*
-
-private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 
 class CircletConnectionComponent(val project: Project) :
     AbstractProjectComponent(project),
     ILifetimedComponent by LifetimedComponent(project) {
 
+    //    val endpoint = "http://latest.n.circlet.labs.intellij.net"
+    val endpoint = "http://localhost:8000"
+
     val loginDataComponent = component<CircletLoginComponent>()
-    val refreshLifetimes = SequentialLifetimes(componentLifetime)
+
+    val loginModel = LoginModel(IdeaPersistence, endpoint) {
+        authCheckFailedNotification()
+    }
 
     init {
         loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
-            loginDataComponent.token.view(enabledLt) { tokenLt, tk ->
-                val refreshLt = refreshLifetimes.next()
-                tokenLt.add { refreshLt.terminate() }
-
-                JobScheduler.getScheduler().schedule(
-                    {
-                        if (!refreshLt.isTerminated) {
-                            async {
-                                if (IdeaPersistence.get("token") ?: "" == "") {
-                                    authCheckFailedNotification()
-                                }
-                                else {
-                                    try {
-                                        KCircletClient.start(loginDataComponent.loginModel, loginDataComponent.endpoint, false)
-                                        KCircletClient.connection.status.forEach(refreshLt) { status ->
-                                            when (status) {
-                                                ConnectionStatus.CONNECTED -> notifyConnected()
-                                                ConnectionStatus.AUTH_FAILED -> authCheckFailedNotification()
-                                            }
+            JobScheduler.getScheduler().schedule(
+                {
+                    async {
+                        if (IdeaPersistence.get("token") ?: "" == "") {
+                            authCheckFailedNotification()
+                        }
+                        else {
+                            try {
+                                KCircletClient.start(loginModel, endpoint, true)
+                                KCircletClient.connection.status.view(enabledLt) { stateLt, state ->
+                                    when (state) {
+                                        ConnectionStatus.CONNECTED -> {
+                                            notifyConnected()
                                         }
-                                    }
-                                    catch (th: Throwable) {
-                                        refreshLt.terminate()
-                                        authCheckFailedNotification()
+                                        ConnectionStatus.CONNECTING -> {
+                                            notifyReconnect(stateLt)
+                                        }
                                     }
                                 }
                             }
+                            catch (th: Throwable) {
+                                authCheckFailedNotification()
+                            }
                         }
-                    }, 100, TimeUnit.MILLISECONDS)
-            }
+                    }
+                }, 100, TimeUnit.MILLISECONDS)
         }
 
 
@@ -112,28 +114,31 @@ class CircletConnectionComponent(val project: Project) :
             "Circlet",
             XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"update\">Sign in with JBA</a>"),
             NotificationType.INFORMATION,
-            { a, b ->
-                authenticate()
-            })
+            { a, b -> authenticate() })
             .notify(project)
     }
 
+    val seq = SequentialLifetimes(componentLifetime)
+
     fun authenticate() {
-        val lt = Lifetime()
+        val lt = seq.next()
         val ser = embeddedServer(Jetty, 8080) {
             routing {
-                get("") {
-                    val token = call.parameters["token"]!!
-                    loginDataComponent.setToken(token)
-                    lt.terminate()
+                get("auth") {
+                    val jwt = call.parameters["jwt"]!!
+                    loginModel.signIn(jwt)
                     call.respondText("Hello, world!", ContentType.Text.Html)
+                    lt.terminate()
                 }
             }
-        }.start(wait = true)
+        }.start(wait = false)
+
         lt.add {
             ser.stop(100, 5000, TimeUnit.MILLISECONDS)
         }
+        Desktop.getDesktop().browse(URI("http://intdevsrv.labs.intellij.net:8081/profile/jwt-auth/circlet?auth_url=${urlEncode("http://localhost:8080/auth")}"))
 
+        // TODO:
     }
 }
 

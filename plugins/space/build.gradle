@@ -29,6 +29,8 @@ dependencies {
 
     compile "org.jetbrains.ktor:ktor-core:$ktorVersion"
     compile "org.jetbrains.ktor:ktor-jetty:$ktorVersion"
+    compile 'org.slf4j:jul-to-slf4j:1.7.12'
+    compile 'ch.qos.logback:logback-classic:1.2.1'
 
     compile 'org.glassfish.jersey.core:jersey-common:2.23'
     compile 'org.glassfish.jersey.core:jersey-client:2.23'
