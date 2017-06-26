@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,18 +72,13 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       getTree().markNodesObsolete();
     }
 
+    if (event == SessionEvent.BEFORE_RESUME) {
+      return;
+    }
+
     XStackFrame stackFrame = session.getCurrentStackFrame();
     DebuggerUIUtil.invokeLater(() -> {
-      XDebuggerTree tree = getTree();
-
-      if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
-        saveCurrentTreeState(stackFrame);
-        if (event == SessionEvent.BEFORE_RESUME) {
-          return;
-        }
-      }
-
-      tree.markNodesObsolete();
+      getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
         buildTreeAndRestoreState(stackFrame);
