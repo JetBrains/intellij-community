@@ -28,6 +28,7 @@ import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -497,10 +498,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
   private class MyDiffLocalAction extends DumbAwareAction {
     public MyDiffLocalAction() {
-      super(VcsBundle.message("show.diff.with.local.action.text"),
-            VcsBundle.message("show.diff.with.local.action.description"),
-            AllIcons.Actions.DiffWithCurrent);
-      setShortcutSet(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal").getShortcutSet());
+      ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 
     public void update(final AnActionEvent e) {
