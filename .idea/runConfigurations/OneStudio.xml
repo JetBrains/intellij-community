@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="OneStudio" type="Application" factoryName="Application">
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+    <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
+    <option name="VM_PARAMETERS" value="-ea -Xbootclasspath/p:../out/classes/production/boot -Xms2048m -Xmx4096m -Didea.is.internal=true -Didea.platform.prefix=AndroidStudio -Dandroid.extra_templates.path=../../../sdk/templates -Dapple.laf.useScreenMenuBar=true -Dcom.apple.mrj.application.apple.menu.about.name=AndroidStudio -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine -XX:ReservedCodeCacheSize=1024M -Ddisable.android.first.run=true -Dcaches.indexerThreadsCount=16 -Dstudio.projectview=true -Didea.classpath.index.enabled=false -Dandroid.sdk.custom.url=file:///google/data/ro/teams/android-sdk-g3-releng/android_sdk/aswb.xml" />
+    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <option name="ENABLE_SWING_INSPECTOR" value="false" />
+    <option name="ENV_VARIABLES" />
+    <option name="PASS_PARENT_ENVS" value="true" />
+    <module name="blaze-aswb-google3" />
+    <envs />
+    <method>
+      <option name="BuildArtifacts" enabled="true" />
+    </method>
+  </configuration>
+</component>
