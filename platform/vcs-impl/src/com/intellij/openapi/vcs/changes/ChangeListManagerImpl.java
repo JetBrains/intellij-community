@@ -904,13 +904,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void setDefaultChangeList(@NotNull final LocalChangeList list) {
+  public void setDefaultChangeList(@NotNull String name) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
-        myModifier.setDefault(list.getName());
+        myModifier.setDefault(name);
       }
     });
     myChangesViewManager.scheduleRefresh();
+  }
+
+  @Override
+  public void setDefaultChangeList(@NotNull final LocalChangeList list) {
+    setDefaultChangeList(list.getName());
   }
 
   @NotNull
