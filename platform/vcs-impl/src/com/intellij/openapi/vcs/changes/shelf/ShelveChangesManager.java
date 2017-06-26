@@ -793,11 +793,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   private LocalChangeList getChangeListUnshelveTo(@NotNull ShelvedChangeList list) {
     String changeListName = list.DESCRIPTION;
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
-    LocalChangeList localChangeList = manager.findChangeList(changeListName);
-    if (localChangeList != null) return localChangeList;
-    if (list.isMarkedToDelete()) {
-      localChangeList = getPredefinedChangeList(changeListName, manager);
-    }
+    LocalChangeList localChangeList = getPredefinedChangeList(changeListName, manager);
     return localChangeList != null ? localChangeList : manager.addChangeList(changeListName, "");
   }
 

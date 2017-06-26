@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.google.common.primitives.Ints;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.vcs.VcsBundle
 
-import java.util.Collections;
-import java.util.List;
+object ChangeListUtil {
 
-public class ChangeListUtil {
+  private val CHANGELIST_NAME_PATTERN = "\\s\\[([\\s\\S]*)\\]"
+  private val STASH_MESSAGE_PATTERN = VcsBundle.message("stash.changes.message", "[\\s\\S]*")
+  private val SYSTEM_CHANGELIST_REGEX = (STASH_MESSAGE_PATTERN + CHANGELIST_NAME_PATTERN).toRegex()
 
-  @Nullable
-  public static LocalChangeList getPredefinedChangeList(@NotNull String defaultName, @NotNull ChangeListManager changeListManager) {
-    final LocalChangeList sameNamedList = changeListManager.findChangeList(defaultName);
-    if (sameNamedList != null) return sameNamedList;
-    return tryToMatchWithExistingChangelist(changeListManager, defaultName);
+  @JvmStatic fun createSystemShelvedChangeListName(systemPrefix: String, changelistName: String): String {
+    return "$systemPrefix [$changelistName]"
   }
 
-  @Nullable
-  private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
-                                                                  @NotNull final String defaultName) {
-    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(),
-                                                          list -> defaultName.contains(list.getName().trim()));
+  private fun getOriginalName(shelvedName: String): String {
+    return SYSTEM_CHANGELIST_REGEX.matchEntire(shelvedName)?.groups?.get(1)?.value ?: shelvedName
+  }
 
-    return matched.isEmpty() ? null : Collections.max(matched,
-                                                      (o1, o2) -> Ints.compare(o1.getName().trim().length(), o2.getName().trim().length()));
+  @JvmStatic fun getPredefinedChangeList(defaultName: String, changeListManager: ChangeListManager): LocalChangeList? {
+    val sameNamedList = changeListManager.findChangeList(defaultName)
+    return sameNamedList ?: changeListManager.findChangeList(getOriginalName(defaultName))
   }
 }

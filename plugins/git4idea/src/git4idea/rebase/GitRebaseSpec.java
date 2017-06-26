@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitLocalBranch;
@@ -156,7 +157,7 @@ public class GitRebaseSpec {
   @NotNull
   private static GitStashChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     Git git = Git.getInstance();
-    return new GitStashChangesSaver(project, git, indicator, "Uncommitted changes before rebase");
+    return new GitStashChangesSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"));
   }
 
   @NotNull

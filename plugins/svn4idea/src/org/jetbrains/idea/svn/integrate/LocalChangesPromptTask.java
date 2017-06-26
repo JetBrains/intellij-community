@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.FilePathByPathComparator;
@@ -39,6 +40,7 @@ import java.util.Set;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Conditions.alwaysTrue;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.stream.Collectors.toSet;
@@ -108,7 +110,8 @@ public class LocalChangesPromptTask extends BaseMergeTask {
       ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
       for (Map.Entry<String, List<Change>> entry : intersection.getChangesByLists().entrySet()) {
-        String shelfName = intersection.getComment(entry.getKey()) + " (auto shelve before merge)";
+        String shelfName = ChangeListUtil
+          .createSystemShelvedChangeListName(message("stash.changes.message", "merge"), intersection.getComment(entry.getKey()));
 
         shelveManager.shelveChanges(entry.getValue(), shelfName, true, true);
       }
