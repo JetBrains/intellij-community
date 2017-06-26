@@ -145,10 +145,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     }
 
     Rectangle rect = (comboBox.getComponentOrientation().isLeftToRight()) ?
-      new Rectangle(i.left, i.top,
+      new Rectangle(i.left, i.top - JBUI.scale(1),
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom)) :
-      new Rectangle(i.left + buttonWidth, i.top,
+      new Rectangle(i.left + buttonWidth, i.top - JBUI.scale(1),
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom));
 
@@ -608,8 +608,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         };
       }
 
+      @SuppressWarnings("unchecked")
       private void wrapRenderer() {
-        ListCellRenderer<Object> renderer = list.getCellRenderer();
+        ListCellRenderer renderer = list.getCellRenderer();
         if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
           list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
         }
