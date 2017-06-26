@@ -440,6 +440,7 @@ public class AllIcons {
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png"); // 32x32
     public static final Icon Configure = IconLoader.getIcon("/general/Configure.png"); // 32x32
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.png"); // 16x16
+    public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.png"); // 16x16
     public static final Icon CreateNewProject = IconLoader.getIcon("/general/createNewProject.png"); // 32x32
     public static final Icon CreateNewProjectfromExistingFiles = IconLoader.getIcon("/general/CreateNewProjectfromExistingFiles.png"); // 32x32
     public static final Icon Debug = IconLoader.getIcon("/general/debug.png"); // 16x16
