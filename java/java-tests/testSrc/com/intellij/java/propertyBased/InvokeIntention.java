@@ -29,7 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import slowCheck.DataStructure;
-import slowCheck.GenNumber;
+import slowCheck.Generator;
 
 import java.util.List;
 
@@ -47,8 +47,8 @@ class InvokeIntention extends ActionOnRange {
   @NotNull
   static InvokeIntention generate(@NotNull PsiFile psiFile, @NotNull DataStructure data) {
     return new InvokeIntention(psiFile,
-                               GenNumber.integers(0, psiFile.getTextLength()).generateValue(data),
-                               GenNumber.integers(0, 100).generateValue(data));
+                               Generator.integers(0, psiFile.getTextLength()).generateValue(data),
+                               Generator.integers(0, 100).generateValue(data));
   }
 
   @Override

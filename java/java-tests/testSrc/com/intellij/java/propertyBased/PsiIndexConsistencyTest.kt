@@ -30,7 +30,9 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
-import slowCheck.*
+import slowCheck.CheckerSettings
+import slowCheck.Generator
+import slowCheck.PropertyChecker
 
 /**
  * @author peter
@@ -40,24 +42,24 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
   fun testFuzzActions() {
     val genAction: Generator<Action> = Generator.frequency(mapOf(
       1 to Generator.constant(Gc),
-      50 to Generator.anyValue(Commit,
-                               AddImport,
-                               AddEnum,
-                               ForceReloadPsi,
-                               Reformat,
-                               InvisiblePsiChange,
-                               PostponedFormatting,
-                               RenamePsiFile,
-                               RenameVirtualFile,
-                               Save),
-      10 to Generator.anyValue(*RefKind.values()).map { LoadRef(it) },
-      10 to Generator.anyValue(*RefKind.values()).map { ClearRef(it) },
-      5 to GenBoolean.bool().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
-      5 to Generator.from { data -> TextChange(GenString.asciiIdentifier().generateValue(data),
-                                                      GenBoolean.bool().generateValue(data),
-                                                      GenBoolean.bool().generateValue(data)) }
+      50 to Generator.sampledFrom(Commit,
+                                  AddImport,
+                                  AddEnum,
+                                  ForceReloadPsi,
+                                  Reformat,
+                                  InvisiblePsiChange,
+                                  PostponedFormatting,
+                                  RenamePsiFile,
+                                  RenameVirtualFile,
+                                  Save),
+      10 to Generator.sampledFrom(*RefKind.values()).map { LoadRef(it) },
+      10 to Generator.sampledFrom(*RefKind.values()).map { ClearRef(it) },
+      5 to Generator.booleans().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
+      5 to Generator.from { data -> TextChange(Generator.asciiIdentifiers().generateValue(data),
+                                               Generator.booleans().generateValue(data),
+                                               Generator.booleans().generateValue(data)) }
     ))
-    PropertyChecker.forAll(CheckerSettings.DEFAULT_SETTINGS.withIterationCount(20), GenCollection.listOf (genAction)) { actions ->
+    PropertyChecker.forAll(CheckerSettings.DEFAULT_SETTINGS.withIterationCount(20), Generator.listsOf(genAction)) { actions ->
       runActions(*actions.toTypedArray())
       true
     }

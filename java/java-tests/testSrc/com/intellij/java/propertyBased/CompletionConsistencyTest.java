@@ -79,10 +79,10 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
       Generator<CompletionInvocation> genInvocation = Generator.from(data -> {
         int offset = data.drawInt(IntDistribution.uniform(0, textLength));
         int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
-        char c = Generator.anyValue('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
+        char c = Generator.sampledFrom('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
         return new CompletionInvocation(document, offset, itemIndex, c);
       });
-      PropertyChecker.forAll(settings.withIterationCount(10), GenCollection.listOf(genInvocation), list -> {
+      PropertyChecker.forAll(settings.withIterationCount(10), Generator.listsOf(genInvocation), list -> {
         changeAndRevert(() -> restrictChangesToDocument(document, () -> {
           for (int i = 0; i < list.size(); i++) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();

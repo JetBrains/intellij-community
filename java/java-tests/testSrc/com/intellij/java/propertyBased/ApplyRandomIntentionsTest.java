@@ -96,7 +96,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
       if (psiFile == null) return false;
 
       Generator<InvokeIntention> genInvocation = Generator.from(data -> InvokeIntention.generate(psiFile, data)).noShrink();
-      PropertyChecker.forAll(settings.withIterationCount(20), GenCollection.nonEmptyListOf(genInvocation), list -> {
+      PropertyChecker.forAll(settings.withIterationCount(20), Generator.nonEmptyLists(genInvocation), list -> {
         PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
         changeAndRevert(() -> {
           if (mutation != null) {
@@ -135,7 +135,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     Generator<InvokeIntention> genIntention =
       Generator.from(data -> InvokeIntention.generate(psiManager.findFile(javaFiles().generateValue(data)), data));
     
-    PropertyChecker.forAll(settings, GenCollection.listOf(genIntention.noShrink()), list -> {
+    PropertyChecker.forAll(settings, Generator.listsOf(genIntention.noShrink()), list -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
         checkCompiles(myCompilerTester.rebuild());

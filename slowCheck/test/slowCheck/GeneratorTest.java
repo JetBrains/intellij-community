@@ -9,14 +9,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static slowCheck.GenBoolean.bool;
-import static slowCheck.GenChar.asciiLetter;
-import static slowCheck.GenChar.asciiPrintable;
-import static slowCheck.GenCollection.listOf;
-import static slowCheck.GenCollection.nonEmptyListOf;
-import static slowCheck.GenNumber.doubles;
-import static slowCheck.GenNumber.integers;
-import static slowCheck.GenString.stringOf;
+import static slowCheck.Generator.*;
 
 /**
  * @author peter
@@ -31,43 +24,43 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testListSumMod() {
-    checkFalsified(nonEmptyListOf(integers()),
+    checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
                    7);
   }
 
   public void testListContainsDivisible() {
-    checkFalsified(nonEmptyListOf(integers()),
+    checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().allMatch(i -> i % 10 != 0),
                    9);
   }
 
   public void testStringContains() {
-    checkFalsified(stringOf(asciiPrintable()),
+    checkFalsified(stringsOf(asciiPrintableChars()),
                    s -> !s.contains("a"),
                    10);
   }
 
   public void testLetterStringContains() {
-    checkFalsified(stringOf(asciiLetter()),
+    checkFalsified(stringsOf(asciiLetters()),
                    s -> !s.contains("a"),
                    5);
   }
   
   public void testIsSorted() {
-    PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyListOf(integers()),
+    PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
                                                             69);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   public void testSuccess() {
-    PropertyChecker.forAll(listOf(integers(-1, 1)),
+    PropertyChecker.forAll(listsOf(integers(-1, 1)),
                            l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
   }
 
   public void testSortedDoublesNonDescending() {
-    PropertyFailure<List<Double>> failure = checkFalsified(listOf(doubles()),
+    PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
                                                            141);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
@@ -102,51 +95,51 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testStringOfStringChecksAllChars() {
-    checkFalsified(stringOf("abc "),
+    checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),
                    3);
   }
 
   public void testLongListsHappen() {
-    PropertyFailure<List<Integer>> failure = checkFalsified(listOf(integers()),
+    PropertyFailure<List<Integer>> failure = checkFalsified(listsOf(integers()),
                                                             l -> l.size() < 200,
                                                             631);
     assertEquals(200, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   public void testNonEmptyList() {
-    PropertyChecker.forAll(nonEmptyListOf(integers()), l -> !l.isEmpty());
+    PropertyChecker.forAll(nonEmptyLists(integers()), l -> !l.isEmpty());
   }
 
   public void testNoDuplicateData() {
     Set<List<Integer>> visited = new HashSet<>();
-    PropertyChecker.forAll(listOf(integers()), l -> visited.add(l));
+    PropertyChecker.forAll(listsOf(integers()), l -> visited.add(l));
   }
 
   public void testOneOf() {
     List<Integer> values = new ArrayList<>();
-    PropertyChecker.forAll(Generator.oneOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
+    PropertyChecker.forAll(anyOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
     assertTrue(values.stream().anyMatch(i -> i < 2));
     assertTrue(values.stream().anyMatch(i -> i > 5));
   }
 
   public void testAsciiIdentifier() {
-    PropertyChecker.forAll(GenString.asciiIdentifier(),
+    PropertyChecker.forAll(asciiIdentifiers(),
                            s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
-    checkFalsified(GenString.asciiIdentifier(),
+    checkFalsified(asciiIdentifiers(),
                    s -> !s.contains("_"),
                    1);
   }
 
   public void testBoolean() {
-    PropertyFailure<List<Boolean>> failure = checkFalsified(listOf(bool()),
+    PropertyFailure<List<Boolean>> failure = checkFalsified(listsOf(booleans()),
                                                             l -> !l.contains(true) || !l.contains(false),
                                                             4);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   public void testShrinkingNonEmptyList() {
-    PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyListOf(integers(0, 100)),
+    PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers(0, 100)),
                                                             l -> !l.contains(42),
                                                             10);
     assertEquals(1, failure.getMinimalCounterexample().getExampleValue().size());
