@@ -53,7 +53,6 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
         if not py_db.suspend_on_breakpoint_exception:
             return False
         else:
-            stop = True
             try:
                 # add exception_type and stacktrace into thread additional info
                 etype, value, tb = sys.exc_info()
@@ -69,6 +68,7 @@ def handle_breakpoint_condition(py_db, info, breakpoint, new_frame):
                     etype, value, tb = None, None, None
             except:
                 traceback.print_exc()
+            return True
 
 
 def handle_breakpoint_expression(breakpoint, info, new_frame):
