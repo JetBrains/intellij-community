@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb;
 import com.github.rjeschke.txtmark.Configuration;
 import com.github.rjeschke.txtmark.Processor;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,10 +12,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.webkit.Accessor;
 import com.sun.webkit.WebPage;
 import com.sun.webkit.graphics.WCSize;
-import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -67,8 +68,12 @@ public class IpnbJfxUtils {
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width, boolean repaint) {
 
+  private static void runFX(@NotNull Runnable r) {
+    IdeEventQueue.unsafeNonblockingExecute(r);
+  }
+
+  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
     final JFXPanel javafxPanel = new JFXPanel() {
       @Override
       protected void processMouseWheelEvent(MouseWheelEvent e) {
@@ -77,7 +82,7 @@ public class IpnbJfxUtils {
         parent.dispatchEvent(parentEvent);
       }
     };
-    Platform.runLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.runLater(() -> {
       final WebView webView = new WebView();
       webView.setContextMenuEnabled(false);
       webView.setOnDragDetected(event -> {
@@ -90,14 +95,14 @@ public class IpnbJfxUtils {
         engine.setOnStatusChanged(event -> {
           final String data = event.getData();
           if (data != null && data.isEmpty()) {
-            adjustHeight(webView, javafxPanel, source, repaint);
+            adjustHeight(webView, javafxPanel, source);
           }
         });
       }
       else {
         engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
           if (newValue == Worker.State.SUCCEEDED) {
-            adjustHeight(webView, javafxPanel, source, repaint);
+            adjustHeight(webView, javafxPanel, source);
           }
         });
       }
@@ -117,7 +122,7 @@ public class IpnbJfxUtils {
       javafxPanel.setScene(scene);
       updateLaf(LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo,
                 engine, javafxPanel);
-    });
+    })));
 
     return javafxPanel;
   }
@@ -233,7 +238,7 @@ public class IpnbJfxUtils {
     }
   }
 
-  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source, boolean repaintCallback) {
+  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source) {
     final WebEngine engine = webView.getEngine();
     final Document document = engine.getDocument();
     if (document != null) {
@@ -275,10 +280,11 @@ public class IpnbJfxUtils {
         final Dimension size = new Dimension(
           width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
 
-        ApplicationManager.getApplication().invokeLater(()-> javafxPanel.setPreferredSize(size));
-        if (repaintCallback) {
-          ApplicationManager.getApplication().invokeLater(()->javafxPanel.repaint());
-        }
+        ApplicationManager.getApplication().invokeLater(()->{
+          javafxPanel.setPreferredSize(size);
+          javafxPanel.revalidate();
+          javafxPanel.repaint();
+        });
       }
     }
   }
@@ -290,11 +296,11 @@ public class IpnbJfxUtils {
   }
 
   private static void updateLafDarcula(WebEngine engine, JFXPanel jfxPanel) {
-    Platform.runLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.runLater(() -> {
       ourStyleUrl = IpnbFileType.class.getResource("/style/javaFXBrowserDarcula.css");
       engine.setUserStyleSheetLocation(ourStyleUrl.toExternalForm());
       jfxPanel.getScene().getStylesheets().add(ourStyleUrl.toExternalForm());
       engine.reload();
-    });
+    })));
   }
 }
