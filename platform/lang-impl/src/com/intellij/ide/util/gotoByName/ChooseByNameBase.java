@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.Matcher;
@@ -391,11 +392,19 @@ public abstract class ChooseByNameBase {
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox.setText(checkBoxName != null ? checkBoxName +
-                                              (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
-                                               ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")"
-                                               : "")
-                                            : "");
+    Color fg = UIUtil.getLabelDisabledForeground();
+    Color color = UIUtil.isUnderDarcula() ? ColorUtil.shift(fg, 1.2) : ColorUtil.shift(fg, 0.7);
+    String text = checkBoxName == null
+                  ? ""
+                  : "<html>" + checkBoxName +
+                    (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
+                     ? FontUtil.spaceAndThinSpace() +
+                       "<b color='" + ColorUtil.toHex(color) + "'>" +
+                       KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) +
+                       "</b>"
+                     : "") +
+                    "</html>";
+    myCheckBox.setText(text);
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
 
     if (!SystemInfo.isMac) {
