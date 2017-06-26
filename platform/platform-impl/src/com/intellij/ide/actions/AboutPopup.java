@@ -32,18 +32,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -286,10 +282,10 @@ public class AboutPopup {
 
       Font labelFont = JBUI.Fonts.label();
       if (SystemInfo.isWindows) {
-        labelFont = JBUI.Fonts.create("Tahoma", 12);
+        labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
-      int startFontSize = Registry.is("ide.new.about") ? 14 : 10;
+      int startFontSize = 14;
       for (int labelSize = JBUI.scale(startFontSize); labelSize != JBUI.scale(6); labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(myColor);
@@ -301,7 +297,7 @@ public class AboutPopup {
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {
-          renderer.render(30, 0, myLines);
+          renderer.render(0, 0, myLines);
           break;
         }
         catch (TextRenderer.OverflowException ignore) { }
@@ -319,19 +315,16 @@ public class AboutPopup {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
-          g2.setFont(JBUI.Fonts.create("Tahoma", 10));
+          g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
         }
       } else {
         g2.setColor(JBColor.BLACK);
       }
 
-      if (Registry.is("ide.new.about")) {
-        g2.setColor(Gray.x33);
-        g2.setFont(JBUI.Fonts.label(12));
-      }
-      final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
-      final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
-      g2.drawString(getCopyrightText(), copyrightX, copyrightY);
+      g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
+
+      JBPoint copyrightCoord = getCopyrightCoord();
+      g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
       if (myShowDebugInfo) {
         g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
         for (Link link : myLinks) {
@@ -341,17 +334,22 @@ public class AboutPopup {
     }
 
     @NotNull
-    private String getCopyrightText() {
-      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    protected String getCopyrightText() {
       return "\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.";
     }
 
     @NotNull
     private TextRenderer createTextRenderer(Graphics2D g) {
-      if (Registry.is("ide.new.about")) {
-        return new TextRenderer(18, 200, 500, 220, g);
-      }
-      return new TextRenderer(0, 165, 398, 120, g);
+      Rectangle r = getTextRendererRect();
+      return new TextRenderer(r.x, r.y, r.width, r.height, g);
+    }
+
+    protected JBRectangle getTextRendererRect() {
+      return new JBRectangle(115, 156, 500, 220);
+    }
+
+    protected JBPoint getCopyrightCoord() {
+      return new JBPoint(115, 395);
     }
 
     public String getText() {
@@ -375,10 +373,10 @@ public class AboutPopup {
       public class OverflowException extends Exception { }
 
       public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
-        this.xBase = JBUI.scale(xBase);
-        this.yBase = JBUI.scale(yBase);
-        this.w = JBUI.scale(w);
-        this.h = JBUI.scale(h);
+        this.xBase = xBase;
+        this.yBase = yBase;
+        this.w = w;
+        this.h = h;
         this.g2 = g2;
 
         if (SystemInfo.isWindows) {
@@ -400,7 +398,7 @@ public class AboutPopup {
             myLinks.add(new Link(new Rectangle(xBase + x, yBase + y - fontAscent, metrics.stringWidth(s + " "), fontHeight), line.getUrl()));
           }
           else {
-            g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());
+            g2.setColor(appInfo.getAboutForeground());
           }
           renderString(s, indentX);
           if (showCopyButton) {
@@ -429,24 +427,16 @@ public class AboutPopup {
           if (x + wordWidth >= w) {
             lineFeed(indentX, word);
           }
-          else {
-            char c = ' ';
-            final int cW = fontmetrics.charWidth(c);
-            if (x + cW < w) {
-              g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
-              x += cW;
-            }
-          }
           renderWord(word, indentX);
         }
       }
 
       private void renderWord(final String s, final int indentX) throws OverflowException {
-        for (int j = 0; j != s.length(); ++j) {
-          final char c = s.charAt(j);
-          Font f = null;
-          FontMetrics fm = null;
-          try {
+        FontMetrics fm = null;
+        Font f = null;
+        try {
+          for (int j = 0; j != s.length(); ++j) {
+            final char c = s.charAt(j);
             if (!g2.getFont().canDisplay(c)) {
               f = g2.getFont();
               fm = fontmetrics;
@@ -459,13 +449,16 @@ public class AboutPopup {
             }
             g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
             x += cW;
-          } finally {
-            if (f != null) {
-              g2.setFont(f);
-              fontmetrics = fm;
-            }
+          }
+          x += fontmetrics.charWidth(' ');
+        }
+        finally {
+          if (f != null) {
+            g2.setFont(f);
+            fontmetrics = fm;
           }
         }
+
       }
 
       private void lineFeed(int indent, final String s) throws OverflowException {
