@@ -147,7 +147,10 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
         int delta;
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
-          if (isParameterizedReference(expression)) return;
+          if (isParameterizedReference(expression)) {
+            super.visitElement(expression);
+            return;
+          }
           PsiElement qualifierExpression = expression.getQualifier();
           if (qualifierExpression instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifierExpression).isReferenceTo(aClass)) {
             try {
