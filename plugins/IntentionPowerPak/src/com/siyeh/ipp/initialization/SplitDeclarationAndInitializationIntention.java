@@ -94,7 +94,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     final PsiCodeBlock body = classInitializer.getBody();
     @NonNls final String initializationStatementText = field.getName() + " = " + initializerText + ';';
     final PsiExpressionStatement statement = (PsiExpressionStatement)elementFactory.createStatementFromText(initializationStatementText, body);
-    final PsiElement addedElement = body.add(statement);
+    final PsiElement addedElement = body.addAfter(statement, null);
     if (fieldIsStatic) {
       final PsiModifierList modifierList = classInitializer.getModifierList();
       if (modifierList != null) {
