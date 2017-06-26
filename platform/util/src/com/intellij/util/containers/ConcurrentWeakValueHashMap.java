@@ -27,7 +27,7 @@ import java.util.Map;
  * Concurrent strong key:K -> weak value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentWeakValueMap()} instead
+ * Use {@link ContainerUtil#createConcurrentWeakValueMap()} to create this
  */
 final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
   public ConcurrentWeakValueHashMap(@NotNull Map<K, V> map) {

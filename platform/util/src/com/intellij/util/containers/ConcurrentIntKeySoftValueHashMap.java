@@ -26,7 +26,7 @@ import java.lang.ref.SoftReference;
 /**
  * Concurrent key:int -> soft value:V map
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentIntObjectSoftValueMap()} instead
+ * Use {@link ContainerUtil#createConcurrentIntObjectSoftValueMap()} to create this
  */
 class ConcurrentIntKeySoftValueHashMap<V> extends ConcurrentIntKeyRefValueHashMap<V> {
   private static class MyRef<V> extends SoftReference<V> implements IntReference<V> {

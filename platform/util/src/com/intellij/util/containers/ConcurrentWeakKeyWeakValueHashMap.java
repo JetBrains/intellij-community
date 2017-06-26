@@ -26,7 +26,7 @@ import java.lang.ref.WeakReference;
  * Concurrent map with weak keys and weak values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeyWeakValueMap()} instead
+ * Use {@link ContainerUtil#createConcurrentWeakKeyWeakValueMap()} to create this
  */
 class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValueHashMap<K,V> {
   ConcurrentWeakKeyWeakValueHashMap(int initialCapacity,
