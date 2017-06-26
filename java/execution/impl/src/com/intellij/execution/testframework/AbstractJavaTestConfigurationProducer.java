@@ -266,8 +266,11 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       for (Location<?> location : locations) {
         final PsiElement psiElement = location.getPsiElement();
         if (psiElement instanceof PsiNamedElement) {
-          classes.add(getQName(psiElement, location));
-          elements.add(psiElement);
+          String qName = getQName(psiElement, location);
+          if (qName != null) {
+            classes.add(qName);
+            elements.add(psiElement);
+          }
         }
       }
       return elements.toArray(new PsiElement[elements.size()]);
@@ -295,7 +298,6 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     else if (psiMember instanceof PsiPackage) {
       return ((PsiPackage)psiMember).getQualifiedName() + ".*";
     }
-    assert false;
     return null;
   }
 
