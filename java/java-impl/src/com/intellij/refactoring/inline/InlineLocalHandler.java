@@ -84,7 +84,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
     final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class);
+    final PsiElement containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class, PsiLambdaExpression.class);
     final Query<PsiReference> query = ReferencesSearch.search(local);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       if (query.findFirst() == null){
