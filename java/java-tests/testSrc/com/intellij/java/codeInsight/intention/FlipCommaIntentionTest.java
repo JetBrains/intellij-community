@@ -33,6 +33,36 @@ public class FlipCommaIntentionTest extends IPPTestCase {
            "}");
   }
 
+  public void testMultipleFieldsSingleDeclaration2() {
+    doTest("class C {\n" +
+           "  int a, b,/*_Flip ','*/ c;\n" +
+           "}",
+
+           "class C {\n" +
+           "  int a, c, b;\n" +
+           "}");
+  }
+
+  public void testMultipleFieldsSingleDeclaration3() {
+     doTest("class C {\n" +
+            "  String one = \"one\",/*_Flip ','*/ two =\"two\", three;\n" +
+            "}",
+
+            "class C {\n" +
+            "  String two =\"two\", one = \"one\", three;\n" +
+            "}");
+  }
+
+  public void testIncomplete() {
+    doTest("class C {\n" +
+           "  int a,/*_Flip ','*/ b =;\n" +
+           "}",
+
+           "class C {\n" +
+           "  int b =, a;\n" +
+           "}");
+  }
+
   public void testUnavailableForDangling() {
     doTestIntentionNotAvailable("class C {\n" +
                                 "    int a[] = new int[]{1,2,/*_Flip ','*/};" +
