@@ -5,7 +5,7 @@
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="000000" progressColor="ef5468" progressX="117" progressY="280" progressHeight="3" />
-  <about url="/idea_community_about.png" foreground="000000" copyrightForeground="7A858F" linkColor="9b5121" logoX="540" logoY="300" logoW="100" logoH="100"/>
+  <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
