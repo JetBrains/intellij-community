@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
@@ -39,7 +40,10 @@ import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBPoint;
+import com.intellij.util.ui.JBRectangle;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +64,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class AboutPopup {
-  private static final String COPY_URL = "copy://";
   private static JBPopup ourPopup;
 
   public static void show(@Nullable Window window, boolean showDebugInfo) {
@@ -196,18 +199,18 @@ public class AboutPopup {
         public void mouseClicked(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
-            if (COPY_URL.equals(myActiveLink.myUrl)) {
+            BrowserUtil.browse(myActiveLink.myUrl);
+          }
+
+          if (getCopyIconArea().contains(event.getPoint())) {
               copyInfoToClipboard(getText());
               if (ourPopup != null) {
                 ourPopup.cancel();
               }
-              return;
-            }
-            BrowserUtil.browse(myActiveLink.myUrl);
           }
         }
 
-        final static double maxAlpha = 0.5;
+        final static double maxAlpha = 1.0;
         final static double fadeStep = 0.05;
         final static int animationDelay = 15;
 
@@ -220,7 +223,7 @@ public class AboutPopup {
               @Override
               public void run() {
                 if (myShowCopyAlpha < maxAlpha) {
-                  myShowCopyAlpha += fadeStep;
+                  myShowCopyAlpha = (float)Math.min(myShowCopyAlpha + fadeStep, maxAlpha);
                   repaint();
                   myAlarm.addRequest(this, animationDelay);
                 }
@@ -251,17 +254,24 @@ public class AboutPopup {
       addMouseMotionListener(new MouseMotionAdapter() {
         @Override
         public void mouseMoved(MouseEvent event) {
-          boolean hadLink = (myActiveLink != null);
+          boolean hadLink = (myActiveLink != null) || getCursor() == Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
           myActiveLink = null;
+          Point point = event.getPoint();
           for (Link link : myLinks) {
-            if (link.myRectangle.contains(event.getPoint())) {
+            if (link.myRectangle.contains(point)) {
               myActiveLink = link;
               if (!hadLink) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
               }
-              break;
+              return;
             }
           }
+
+          if (getCopyIconArea().contains(point)) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            return;
+          }
+
           if (hadLink && myActiveLink == null) {
             setCursor(Cursor.getDefaultCursor());
           }
@@ -269,15 +279,20 @@ public class AboutPopup {
       });
     }
 
+    private Rectangle getCopyIconArea() {
+      return new Rectangle(getCopyIconCoord(), JBUI.size(16));
+    }
+
     private void appendLast() {
       myInfo.append(myLines.get(myLines.size() - 1).getText()).append("\n");
     }
 
     @Override
-    protected void paintChildren(Graphics g) {
-      super.paintChildren(g);
+    public void paint(Graphics g) {
+      super.paint(g);
 
       Graphics2D g2 = (Graphics2D)g;
+      GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
       Font labelFont = JBUI.Fonts.label();
@@ -331,6 +346,14 @@ public class AboutPopup {
           g2.drawRect(link.myRectangle.x, link.myRectangle.y, link.myRectangle.width, link.myRectangle.height);
         }
       }
+
+      config.restore();
+      if (myShowCopy) {
+        JBPoint coord = getCopyIconCoord();
+        config = new GraphicsConfig(g).paintWithAlpha(myShowCopyAlpha);
+        AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
+        config.restore();
+      }
     }
 
     @NotNull
@@ -350,6 +373,10 @@ public class AboutPopup {
 
     protected JBPoint getCopyrightCoord() {
       return new JBPoint(115, 395);
+    }
+
+    protected JBPoint getCopyIconCoord() {
+      return new JBPoint(66, 156);
     }
 
     public String getText() {
@@ -388,7 +415,6 @@ public class AboutPopup {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        boolean showCopyButton = myShowCopy || myShowCopyAlpha > 0;
         for (AboutBoxLine line : lines) {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
@@ -401,19 +427,6 @@ public class AboutPopup {
             g2.setColor(appInfo.getAboutForeground());
           }
           renderString(s, indentX);
-          if (showCopyButton) {
-            final FontMetrics metrics = g2.getFontMetrics(myFont);
-            String copyString = "Copy to Clipboard";
-            final int width = metrics.stringWidth(copyString);
-            g2.setFont(myFont);
-            g2.setColor(myLinkColor);
-            final int xOffset = myImage.getIconWidth() - width - 10;
-            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, Math.max(0, Math.min(1, myShowCopyAlpha)));
-            g2.drawString(copyString, xOffset, yBase + y);
-            config.restore();
-            myLinks.add(new Link(new Rectangle(xOffset, yBase + y - fontAscent, width, fontHeight), COPY_URL));
-            showCopyButton = false;
-          }
           if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {
             lineFeed(indentX, s);
           }
