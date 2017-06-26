@@ -47,6 +47,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -412,7 +413,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       PsiElement ws = node.getPsi().getPrevSibling();
       if (isWhiteSpaceWithoutLineFeeds(ws)) {
         PsiElement beforeWs = ws.getPrevSibling();
-        if (beforeWs instanceof PsiJavaToken && ((PsiJavaToken)beforeWs).getTokenType() == JavaTokenType.LBRACE) {
+        if (PsiUtil.isJavaToken(beforeWs, JavaTokenType.LBRACE)) {
           return true;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,11 +173,11 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     final PsiElement first = codeBlockChildren[0];
     int resultStart = 0;
-    if (first instanceof PsiJavaToken && ((PsiJavaToken)first).getTokenType() == JavaTokenType.LBRACE) {
+    if (PsiUtil.isJavaToken(first, JavaTokenType.LBRACE)) {
       resultStart++;
     }
     final PsiElement last = codeBlockChildren[codeBlockChildren.length - 1];
-    if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RBRACE) {
+    if (PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)) {
       resultLast--;
     }
     final ArrayList<PsiElement> result = new ArrayList<>();

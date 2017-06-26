@@ -1969,7 +1969,7 @@ public class HighlightUtil extends HighlightUtilBase {
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       lastChild = lastChild.getPrevSibling();
     }
-    if (!(lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.COLON)) {
+    if (!(PsiUtil.isJavaToken(lastChild, JavaTokenType.COLON))) {
       int start = statement.getTextRange().getEndOffset();
       int end = statement.getTextRange().getEndOffset() + 1;
       String description = JavaErrorMessages.message("switch.colon.expected.after.case.label");

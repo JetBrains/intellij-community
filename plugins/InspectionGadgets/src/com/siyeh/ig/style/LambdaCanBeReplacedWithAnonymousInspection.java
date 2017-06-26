@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
       if (isConvertibleLambdaExpression(lambdaExpression)) {
         PsiParameterList parameterList = lambdaExpression.getParameterList();
         PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(parameterList, PsiWhiteSpace.class, PsiComment.class);
-        if (nextElement instanceof PsiJavaToken && ((PsiJavaToken)nextElement).getTokenType() == JavaTokenType.ARROW) {
+        if (PsiUtil.isJavaToken(nextElement, JavaTokenType.ARROW)) {
           registerErrorAtRange(parameterList, nextElement);
         }
         else {

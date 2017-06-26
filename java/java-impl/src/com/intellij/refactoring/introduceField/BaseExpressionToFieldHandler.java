@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,7 +260,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     while (child != null) {
       PsiElement prev = child.getPrevSibling();
       if (RefactoringUtil.isExpressionAnchorElement(prev)) break;
-      if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
+      if (PsiUtil.isJavaToken(prev, JavaTokenType.LBRACE)) break;
       child = prev;
     }
 

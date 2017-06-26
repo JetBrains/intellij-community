@@ -1131,7 +1131,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     while (child != null) {
       PsiElement prev = child.getPrevSibling();
       if (prev instanceof PsiStatement) break;
-      if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
+      if (PsiUtil.isJavaToken(prev, JavaTokenType.LBRACE)) break;
       child = prev;
     }
 
