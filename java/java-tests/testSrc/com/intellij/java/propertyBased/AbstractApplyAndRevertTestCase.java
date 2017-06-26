@@ -16,7 +16,10 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.history.Label;
+import com.intellij.history.LocalHistory;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
@@ -26,6 +29,9 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -37,6 +43,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.CompilerTester;
@@ -66,20 +73,47 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return Generator.anyValue(allFiles);
   }
 
-  protected void changeDocumentAndRevert(Document document, Runnable r) {
-    CharSequence initialText = document.getImmutableCharSequence();
+  protected static void restrictChangesToDocument(Document document, Runnable r) {
+    Disposable disposable = Disposer.newDisposable();
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent event) {
+        Document changed = event.getDocument();
+        if (changed != document) {
+          VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
+          if (file != null && file.isInLocalFileSystem()) {
+            throw new AssertionError("Unexpected document change: " + changed);
+          }
+        }
+      }
+    }, disposable);
+    try {
+      r.run();
+    } finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  protected void changeAndRevert(Runnable r) {
+    Label label = LocalHistory.getInstance().putUserLabel(myProject, "changeAndRevert");
     try {
       r.run();
     }
     finally {
       WriteAction.run(() -> {
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
-        document.setText(initialText);
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        FileDocumentManager.getInstance().saveAllDocuments();
+        try {
+          PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
+          FileDocumentManager.getInstance().saveAllDocuments();
+          label.revert(myProject, myProject.getBaseDir());
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          assertEmpty(PsiDocumentManager.getInstance(myProject).getUncommittedDocuments());
+          assertEmpty(FileDocumentManager.getInstance().getUnsavedDocuments());
+        }
+        catch (Throwable e) {
+          e.printStackTrace();
+        }
       });
     }
-
   }
 
   @Override
@@ -115,7 +149,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
   protected void initCompiler() {
     try {
       myCompilerTester = new CompilerTester(myProject, ContainerUtil.list(ModuleManager.getInstance(myProject).getModules()[0]));
-      checkCompiles(myCompilerTester.rebuild());
     }
     catch (Throwable e) {
       fail(e.getMessage());
