@@ -74,11 +74,6 @@ class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTe
     myFixture.checkHighlighting()
   }
 
-
-  private fun moduleInfo(@Language("JAVA") moduleInfoText: String, descriptor: ModuleDescriptor) {
-    addFile("module-info.java", moduleInfoText, descriptor)
-  }
-
   private fun javaClass(packageName: String, className: String, descriptor: ModuleDescriptor, modifier: String = "public") {
     addFile("${packageName.replace('.', '/')}/$className.java", "package $packageName; $modifier class $className {}", descriptor)
   }

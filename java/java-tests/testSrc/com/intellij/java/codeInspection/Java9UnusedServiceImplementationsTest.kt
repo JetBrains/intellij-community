@@ -16,7 +16,6 @@
 package com.intellij.java.codeInspection
 
 import com.intellij.ToolExtensionPoints
-import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.reference.EntryPoint
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -28,8 +27,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.InspectionTestCase
-import com.intellij.testFramework.InspectionTestUtil
-import com.intellij.testFramework.createGlobalContextForTool
 import org.intellij.lang.annotations.Language
 
 /**
@@ -74,14 +71,14 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
 
   fun testUnusedExternalProvider() = doTest(false, sameModule = false)
 
-  fun testUnusedImplementationWithEntryPoint() = doTest(false, moduleEntryPoints = true)
+  fun testUnusedImplementationWithEntryPoint() = doTest(false, withModuleEntryPoints = true)
 
-  fun testUnusedConstructorWithEntryPoint() = doTest(false, moduleEntryPoints = true)
+  fun testUnusedConstructorWithEntryPoint() = doTest(false, withModuleEntryPoints = true)
 
-  fun testUnusedProviderWithEntryPoint() = doTest(false, moduleEntryPoints = true)
+  fun testUnusedProviderWithEntryPoint() = doTest(false, withModuleEntryPoints = true)
 
 
-  private fun doTest(withUsage: Boolean = true, sameModule: Boolean = true, moduleEntryPoints: Boolean = false) {
+  private fun doTest(withUsage: Boolean = true, sameModule: Boolean = true, withModuleEntryPoints: Boolean = false) {
     @Language("JAVA")
     val usageText = """
     import my.api.MyService;
@@ -106,7 +103,7 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
       moduleInfo("module EXT { requires API; provides my.api.MyService with my.ext.MyServiceExt; }", M4)
     }
 
-    val testPath = testDataPath + "/" + getTestName(true)
+    val testPath = testDataPath + getTestName(true)
     val sourceFile = FileUtil.findFirstThatExist("$testPath/MyService${if (sameModule) "Impl" else "Ext"}.java")
     assertNotNull("Test data: $testPath", sourceFile)
     val implText = String(FileUtil.loadFileText(sourceFile!!))
@@ -115,17 +112,16 @@ class Java9UnusedServiceImplementationsTest : LightJava9ModulesCodeInsightFixtur
     else
       addFile("my/ext/MyServiceExt.java", implText, M4)
 
-    val point = Extensions.getRootArea().getExtensionPoint<EntryPoint>(ToolExtensionPoints.DEAD_CODE_TOOL)
-    point.extensions.find { it is Java9ModuleEntryPoint }?.let { it.isSelected = moduleEntryPoints }
+    val extensionPoint = Extensions.getRootArea().getExtensionPoint<EntryPoint>(ToolExtensionPoints.DEAD_CODE_TOOL)
+    val moduleEntryPoint = extensionPoint.extensions.find { it is Java9ModuleEntryPoint }
+    val wasSelected = moduleEntryPoint?.isSelected ?: true
 
-    val toolWrapper = InspectionTestCase.getUnusedDeclarationWrapper()
-    val scope = AnalysisScope(project)
-    val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
-    InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
-    InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testPath)
-  }
-
-  private fun moduleInfo(@Language("JAVA") moduleInfoText: String, descriptor: ModuleDescriptor) {
-    addFile("module-info.java", moduleInfoText, descriptor)
+    try {
+      moduleEntryPoint?.isSelected = withModuleEntryPoints
+      doGlobalInspectionTest(testPath, InspectionTestCase.getUnusedDeclarationWrapper())
+    }
+    finally {
+      moduleEntryPoint?.isSelected = wasSelected
+    }
   }
 }
