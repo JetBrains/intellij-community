@@ -320,11 +320,12 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     final Project project = statement.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
-    PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{}", statement);
-    codeBlock = (PsiCodeBlock)codeStyle.reformat(codeBlock);
-    codeBlock.add(statement);
-    codeBlock = (PsiCodeBlock)statement.replace(codeBlock);
-    return codeBlock.getStatements()[0];
+    PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText("if (true) {}", statement);
+    ifStatement = (PsiIfStatement)codeStyle.reformat(ifStatement);
+    PsiStatement thenBranch = ifStatement.getThenBranch();
+    ((PsiBlockStatement)thenBranch).getCodeBlock().add(statement);
+    PsiCodeBlock stmt = ((PsiBlockStatement)statement.replace(thenBranch)).getCodeBlock();
+    return stmt.getStatements()[0];
   }
 
   private static PsiIfStatement addAfterWithinCodeBlock(@NotNull PsiIfStatement ifStatement, @NotNull PsiStatement branch) {
