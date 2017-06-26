@@ -37,6 +37,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.task.ExecuteRunConfigurationTask;
@@ -129,6 +130,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       }
       if (sourceSetName == null) return null;
 
+      String workingDir = applicationConfiguration.getWorkingDirectory();
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
                           "  rootProject.allprojects {\n" +
@@ -140,6 +142,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "        main = '" + mainClass.getQualifiedName() + "'\n" +
                           parametersString.toString() +
                           vmParametersString.toString() +
+                          (StringUtil.isNotEmpty(workingDir) ?
+                           "        workingDir = '" + workingDir + "'\n" : "") +
                           "      }\n" +
                           "    }\n" +
                           "  }\n" +
