@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -62,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DragSource;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
@@ -463,6 +461,24 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     @Override
     public String getTooltipText() {
       return myBookmark.getBookmarkTooltip();
+    }
+
+    @Nullable
+    @Override
+    public GutterDraggableObject getDraggableObject() {
+      return new GutterDraggableObject() {
+        @Override
+        public boolean copy(int line, VirtualFile file) {
+          myBookmark.myTarget = new OpenFileDescriptor(myBookmark.myProject, file, line, -1, true);
+          myBookmark.updateHighlighter();
+          return true;
+        }
+
+        @Override
+        public Cursor getCursor(int line) {
+          return DragSource.DefaultMoveDrop;
+        }
+      };
     }
 
     @Override
