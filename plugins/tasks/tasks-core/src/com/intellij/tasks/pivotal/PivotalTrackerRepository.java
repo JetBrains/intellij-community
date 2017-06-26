@@ -179,7 +179,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Icon getIcon() {
-        return IconLoader.getIcon(getCustomIcon(), LocalTask.class);
+        return IconLoader.getIcon(getCustomIcon(), PivotalTrackerRepository.class);
       }
 
       @NotNull
