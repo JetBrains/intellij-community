@@ -20,7 +20,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -343,5 +346,93 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.appendData("AAA", out -> out.writeUTF("BAR"));
       fail();
     } catch (IncorrectOperationException ignore) {}
+  }
+
+  public void testFailedReadWriteSetsCorruptedFlag() throws IOException {
+    EnumeratorStringDescriptor throwingException = new EnumeratorStringDescriptor() {
+      @Override
+      public void save(@NotNull DataOutput storage, @NotNull String value) throws IOException {
+        throw new IOException("test");
+      }
+
+      @Override
+      public String read(@NotNull DataInput storage) throws IOException {
+        throw new IOException("test");
+      }
+    };
+
+    PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenKeyDescriptor =
+      (file) -> IOUtil.openCleanOrResetBroken(
+        () -> new PersistentHashMap<>(file, throwingException, EnumeratorStringDescriptor.INSTANCE), file);
+
+    PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenValueDescriptor =
+      (file) -> IOUtil.openCleanOrResetBroken(
+        () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, throwingException), file);
+
+    runIteration(mapConstructorWithBrokenKeyDescriptor);
+    runIteration(mapConstructorWithBrokenValueDescriptor);
+  }
+
+  private void runIteration(PersistentMapPerformanceTest.MapConstructor<String, String> brokenMapDescritor) throws IOException {
+    String key = "AAA";
+    String value = "AAA_VALUE";
+
+    PersistentMapPerformanceTest.MapConstructor<String, String> defaultMapConstructor =
+      (file) -> IOUtil.openCleanOrResetBroken(
+        () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE), file);
+
+    createInitializedMap(key, value, defaultMapConstructor);
+
+    myMap = brokenMapDescritor.createMap(myFile);
+
+    try {
+      myMap.get(key);
+      fail();
+    } catch (IOException ignore) {
+      assertTrue(myMap.isCorrupted());
+    }
+
+    createInitializedMap(key, value, defaultMapConstructor);
+
+    myMap = brokenMapDescritor.createMap(myFile);
+
+    try {
+      myMap.put(key, value + value);
+      fail();
+    } catch (IOException ignore) {
+      assertTrue(myMap.isCorrupted());
+    }
+
+    createInitializedMap(key, value, defaultMapConstructor);
+
+    myMap = brokenMapDescritor.createMap(myFile);
+
+    try {
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        @Override
+        public void append(DataOutput out) throws IOException {
+          throw new IOException();
+        }
+      });
+      fail();
+    } catch (IOException ignore) {
+      assertTrue(myMap.isCorrupted());
+    }
+  }
+
+  private void closeMapSilently() throws IOException {
+    try {
+      myMap.close();
+    } catch (IOException ignore) {}
+  }
+
+  private void createInitializedMap(String key,
+                                    String value,
+                                    PersistentMapPerformanceTest.MapConstructor<String, String> defaultMapConstructor)
+    throws IOException {
+    closeMapSilently();
+    myMap = defaultMapConstructor.createMap(myFile);
+    myMap.put(key, value);
+    closeMapSilently();
   }
 }

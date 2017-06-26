@@ -27,6 +27,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -150,38 +151,8 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     if (typeParameters.length == 0) return false;
 
     final Set<PsiTypeParameter> set = new THashSet<>(Arrays.asList(typeParameters));
-    final PsiTypeVisitor<Boolean> typeParamSearcher = new PsiTypeVisitor<Boolean>() {
-      @Override
-      public Boolean visitType(final PsiType type) {
-        return true;
-      }
-
-      @Override
-      public Boolean visitArrayType(final PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this);
-      }
-
-      @Override
-      public Boolean visitClassType(final PsiClassType classType) {
-        final PsiClass aClass = classType.resolve();
-        if (aClass instanceof PsiTypeParameter && set.contains(aClass)) return false;
-
-        final PsiType[] types = classType.getParameters();
-        for (final PsiType psiType : types) {
-          if (!psiType.accept(this).booleanValue()) return false;
-        }
-        return true;
-      }
-
-      @Override
-      public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
-        final PsiType bound = wildcardType.getBound();
-        return bound == null || bound.accept(this).booleanValue();
-      }
-    };
-
     for (final PsiParameter parameter : method.getParameterList().getParameters()) {
-      if (!parameter.getType().accept(typeParamSearcher).booleanValue()) return false;
+      if (PsiPolyExpressionUtil.mentionsTypeParameters(parameter.getType(), set)) return false;
     }
 
     PsiSubstitutor substitutor = calculateMethodReturnTypeSubstitutor(method, expectedType);

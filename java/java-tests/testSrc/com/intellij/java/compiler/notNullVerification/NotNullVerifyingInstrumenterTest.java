@@ -190,6 +190,11 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     test.getMethod("foo3", List.class).invoke(instance, (List)null);
   }
 
+  public void testTypeUseInEnumConstructor() throws Exception {
+    Class<?> test = prepareTest(false, "TypeUseNotNull");
+    assertSize(1, test.getEnumConstants());
+  }
+
   public void testTypeUseAndMemberAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno");
     Object instance = test.newInstance();

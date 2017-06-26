@@ -65,14 +65,17 @@ public class IpnbCommandLineState extends PythonCommandLineState {
       parameters.addParameter("--port");
       parameters.addParameter(myConfiguration.getPort());
     }
+    if (myConfiguration.getPort() != null) {
+      parameters.addParameter("--port-retries=0");
+    }
     final String additionalOptions = myConfiguration.getAdditionalOptions();
     if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
       parameters.addParameters(StringUtil.split(additionalOptions, " "));
     }
 
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
-      commandLine.setWorkDirectory(myConfiguration.getWorkingDirectory());
-    }
+    final String workingDirectory = myConfiguration.getWorkingDirectory();
+    commandLine.setWorkDirectory(!StringUtil.isEmptyOrSpaces(workingDirectory) ?
+                                 workingDirectory : myConfiguration.getProject().getBasePath());
   }
 
   @Override

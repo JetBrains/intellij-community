@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator.actions.stepik;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -39,7 +38,12 @@ public class CCPushTask extends DumbAwareAction {
       return;
     }
     if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
-    PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    final PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0 || directories.length > 1) {
+      return;
+    }
+    final PsiDirectory taskDir = directories[0];
+
     if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
       return;
     }
@@ -66,7 +70,13 @@ public class CCPushTask extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    PsiDirectory taskDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    final PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0 || directories.length > 1) {
+      return;
+    }
+
+    final PsiDirectory taskDir = directories[0];
+
     if (taskDir == null || !taskDir.getName().contains(EduNames.TASK)) {
       return;
     }

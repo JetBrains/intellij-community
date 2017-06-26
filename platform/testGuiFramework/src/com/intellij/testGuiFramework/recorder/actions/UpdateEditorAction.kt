@@ -4,7 +4,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testGuiFramework.recorder.ScriptGenerator
+import com.intellij.testGuiFramework.recorder.Writer
 import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
@@ -19,6 +19,6 @@ class UpdateEditorAction : AnAction(null, "Update GUI Script Editor (get recorde
     Notifier.updateStatus("GUI script updated")
   }
 
-  fun getGuiScriptBuffer() = ScriptGenerator.getScriptBuffer()
+  fun getGuiScriptBuffer() = Writer.getScript()
 
 }

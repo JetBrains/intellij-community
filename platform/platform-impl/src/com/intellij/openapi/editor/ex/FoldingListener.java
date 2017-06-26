@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public interface FoldingListener {
 
   /**
-   * Informs that <code>'collapsed'</code> state of given fold region is just changed.
+   * Informs that {@code 'collapsed'} state of given fold region is just changed.
    * <p/>
    * <b>Note:</b> listener should delay fold region state processing until {@link #onFoldProcessingEnd()} is called.
    * I.e. folding model may return inconsistent data between current moment and {@link #onFoldProcessingEnd()}.

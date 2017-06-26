@@ -136,6 +136,8 @@ public class StringUtilTest {
     assertEquals("process", StringUtil.unpluralize("process"));
     assertEquals("PROPERTY", StringUtil.unpluralize("PROPERTIES"));
     assertEquals("THIS", StringUtil.unpluralize("THESE"));
+    assertEquals("database", StringUtil.unpluralize("databases"));
+    assertEquals("basis", StringUtil.unpluralize("bases"));
   }
 
   @Test
@@ -158,6 +160,9 @@ public class StringUtilTest {
     assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
     assertEquals("PROPERTIES", StringUtil.pluralize("PROPERTY"));
     assertEquals("THESE", StringUtil.pluralize("THIS"));
+    assertEquals("databases", StringUtil.pluralize("database"));
+    assertEquals("bases", StringUtil.pluralize("base"));
+    assertEquals("bases", StringUtil.pluralize("basis"));
   }
 
   @Test

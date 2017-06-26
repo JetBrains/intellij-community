@@ -45,6 +45,7 @@ import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
@@ -183,7 +184,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
             return loadFileHistory(filePath);
           }
           else {
-            return GitHistoryUtils.history(myProject, filePath, null, currentRevision);
+            return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
           }
         }
         catch (VcsException e) {

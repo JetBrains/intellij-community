@@ -303,14 +303,14 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
 class WelcomeFrameGenerator : GlobalContextCodeGenerator<FlatWelcomeFrame>() {
   override fun priority() = 1
   override fun accept(cmp: Component) = (cmp as JComponent).rootPane.parent is FlatWelcomeFrame
-  override fun generate(cmp: FlatWelcomeFrame, me: MouseEvent, cp: Point): String {
+  override fun generate(cmp: FlatWelcomeFrame): String {
     return "welcomeFrame {"
   }
 }
 
 class JDialogGenerator : GlobalContextCodeGenerator<JDialog>() {
   override fun accept(cmp: Component) = (cmp as JComponent).rootPane.parent is JDialog
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point) = "dialog(\"${cmp.title}\") {"
+  override fun generate(cmp: JDialog) = "dialog(\"${cmp.title}\") {"
 }
 
 class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
@@ -319,7 +319,7 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
     return (parent is JFrame) && parent.title != "GUI Script Editor"
   }
 
-  override fun generate(cmp: JFrame, me: MouseEvent, cp: Point) = "ideFrame {"
+  override fun generate(cmp: JFrame) = "ideFrame {"
 }
 
 //**********LOCAL CONTEXT GENERATORS**********
@@ -328,7 +328,7 @@ class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
 
   override fun priority() = 2
   override fun acceptor(): (Component) -> Boolean = { component -> component.javaClass.name.endsWith("ProjectViewImpl\$MyPanel") }
-  override fun generate(cmp: JPanel, me: MouseEvent, cp: Point) = "projectView {"
+  override fun generate(cmp: JPanel) = "projectView {"
 
 }
 
@@ -364,7 +364,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
     val tw = getToolWindow(component.centerOnScreen()); tw != null && component == tw.component
   }
 
-  override fun generate(cmp: Component, me: MouseEvent, cp: Point): String {
+  override fun generate(cmp: Component): String {
     val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
     return "toolwindow(id = \"${toolWindow.id}\") {"
   }
@@ -410,7 +410,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
     val tw = getToolWindow(component.centerOnScreen()); tw != null && tw.contentManager.selectedContent!!.component == component
   }
 
-  override fun generate(cmp: Component, me: MouseEvent, cp: Point): String {
+  override fun generate(cmp: Component): String {
     val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
     val tabName = toolWindow.contentManager.selectedContent?.tabName
     return if (tabName != null) "content(tabName = \"${tabName}\") {"
@@ -419,7 +419,7 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
 
 }
 
-class MacMessageGenerator : LocalContextCodeGenerator<JDialog>() {
+class MacMessageGenerator : LocalContextCodeGenerator<JButton>() {
 
   override fun priority() = 2
 
@@ -440,7 +440,7 @@ class MacMessageGenerator : LocalContextCodeGenerator<JDialog>() {
 
   override fun acceptor(): (Component) -> Boolean = { component -> acceptMacSheetPanel(component) }
 
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
+  override fun generate(cmp: JButton): String {
     val panel = cmp.rootPane.contentPane as JPanel
     val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
     return "message(\"$title\") {"
@@ -455,7 +455,7 @@ class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
     cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
   }
 
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
+  override fun generate(cmp: JDialog): String {
     return "message(\"${cmp.title}\") {"
   }
 }
@@ -463,7 +463,7 @@ class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
 class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
 
   override fun acceptor(): (Component) -> Boolean = { component -> component is EditorComponentImpl }
-  override fun generate(cmp: EditorComponentImpl, me: MouseEvent, cp: Point) = "editor {"
+  override fun generate(cmp: EditorComponentImpl) = "editor {"
 
 }
 
@@ -630,7 +630,7 @@ object Utils {
   private fun findBoundedLabel(component: Component, componentParent: Component): JLabel? {
     return withRobot { robot ->
       var resultLabel: JLabel?
-      if (component is LabeledComponent<*>) resultLabel = component.label
+      if (componentParent is LabeledComponent<*>) resultLabel = componentParent.label
       else {
         try {
           resultLabel = robot.finder().find(componentParent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {

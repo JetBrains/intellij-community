@@ -216,7 +216,6 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         }
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
         if (functionalInterfaceType != null &&
-            LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) &&
             LambdaUtil.isFunctionalType(functionalInterfaceType)) {
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
           if (interfaceMethod != null) {

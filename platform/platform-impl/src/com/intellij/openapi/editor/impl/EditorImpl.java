@@ -142,8 +142,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
-  static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
-  public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
+  public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
+  public static final Key<Boolean> SOFT_WRAPS_EXIST = Key.create("soft.wraps.exist");
+  private static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION = Key.create("editor.disable.caret.shift.on.whitespace.insertion");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
@@ -1277,7 +1278,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   // optimization: do not do column calculations here since we are interested in line number only
-  public int offsetToVisualLine(int offset) {
+  int offsetToVisualLine(int offset) {
     return myView.offsetToVisualLine(offset, false);
   }
   
@@ -4108,6 +4109,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       reinitFontsAndSettings();
     }
 
+    @NotNull
     @Override
     public Font getFont(EditorFontType key) {
       if (myFontsMap != null) {
@@ -4307,8 +4309,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public boolean importData(TransferSupport support) {
       Component comp = support.getComponent();
-      if (!(comp instanceof JComponent)) return false;
-      return handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
+      return comp instanceof JComponent && handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
     }
     
     @Override
@@ -4470,7 +4471,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @TestOnly
-  public void validateState() {
+  void validateState() {
     myView.validateState();
     mySoftWrapModel.validateState();
     myFoldingModel.validateState();
@@ -4624,7 +4625,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static class NullEditorHighlighter extends EmptyEditorHighlighter {
     private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   
-    public NullEditorHighlighter() {
+    NullEditorHighlighter() {
       super(NULL_ATTRIBUTES);
     }
   

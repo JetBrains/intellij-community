@@ -1778,6 +1778,9 @@ public class BuildManager implements Disposable {
     }
 
     void dropChanges() {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Project build state cleared: " + getThreadTrace(Thread.currentThread(), 20));
+      }
       myNeedRescan = true;
       myNextEventOrdinal = 0L;
       myChanged.clear();

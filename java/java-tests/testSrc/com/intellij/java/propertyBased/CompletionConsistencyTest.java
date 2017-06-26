@@ -78,7 +78,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
       Generator<CompletionInvocation> genInvocation = Generator.from(data -> {
         int offset = data.drawInt(IntDistribution.uniform(0, textLength));
         int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
-        char c = Generator.oneOf('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
+        char c = Generator.anyValue('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
         return new CompletionInvocation(document, offset, itemIndex, c);
       });
       PropertyChecker.forAll(settings.withIterationCount(10), GenCollection.listOf(genInvocation), list -> {

@@ -59,7 +59,6 @@ public class ProjectGroup {
   }
 
   public void addProject(@SystemIndependent String path) {
-    PathUtil.assertSystemIndependentName(path);
     final List<String> projects = getProjects();
     projects.add(path);
     save(projects);
@@ -74,7 +73,6 @@ public class ProjectGroup {
   }
 
   public void removeProject(@SystemIndependent String path) {
-    PathUtil.assertSystemIndependentName(path);
     final List<String> projects = getProjects();
     projects.remove(path);
     save(projects);

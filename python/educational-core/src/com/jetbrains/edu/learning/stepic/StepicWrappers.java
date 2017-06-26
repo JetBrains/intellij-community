@@ -62,7 +62,7 @@ public class StepicWrappers {
       final StepOptions source = new StepOptions();
       source.lastSubtaskIndex = task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getLastSubtaskIndex() : 0;
       setTests(task, source, project);
-      setTaskTexts(task, source, project);
+      setTaskTexts(task, source);
       source.files = new ArrayList<>();
       source.title = task.getName();
       for (final Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
@@ -81,17 +81,10 @@ public class StepicWrappers {
       return source;
     }
 
-    private static void setTaskTexts(@NotNull Task task, @NotNull StepOptions stepOptions, @NotNull Project project) {
+    private static void setTaskTexts(@NotNull Task task, @NotNull StepOptions stepOptions) {
       stepOptions.text = new ArrayList<>();
-      VirtualFile taskDir = task.getTaskDir(project);
-      if (taskDir == null) {
-        return;
-      }
-      List<VirtualFile> taskDescriptionFiles = Arrays.stream(taskDir.getChildren())
-        .filter(virtualFile -> StudyUtils.isTaskDescriptionFile(virtualFile.getName()))
-        .collect(Collectors.toList());
-      for (VirtualFile taskDescriptionFile : taskDescriptionFiles) {
-        addFileWrapper(taskDescriptionFile, stepOptions.text);
+      for (Map.Entry<String, String> entry : task.getTaskTexts().entrySet()) {
+        stepOptions.text.add(new FileWrapper(entry.getKey(), entry.getValue()));
       }
     }
 

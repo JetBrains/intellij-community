@@ -16,29 +16,26 @@
 package com.intellij.junit4;
 
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.PatternConfigurationProducer;
+import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import jetbrains.buildServer.messages.serviceMessages.BaseTestMessage;
 import jetbrains.buildServer.messages.serviceMessages.TestFailed;
+import jetbrains.buildServer.messages.serviceMessages.TestIgnored;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,18 +47,11 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
   }
 
   public void testRunPackage() throws Exception {
-    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage("junit");
-    assertNotNull(aPackage);
-    RunConfiguration configuration = createConfiguration(aPackage);
-    assertInstanceOf(configuration, JUnitConfiguration.class);
-    List<String> sys = new ArrayList<>();
-    List<String> out = new ArrayList<>();
-    List<String> err = new ArrayList<>();
-    List<ServiceMessage> messages = new ArrayList<>();
-    doStartTestsProcess(configuration, out, err, sys, messages);
-    assertEmpty(out);
-    assertEmpty(err);
-    assertSize(2, messages.stream().filter(message -> message instanceof TestFailed).collect(Collectors.toList()));
+    RunConfiguration configuration = createRunPackageConfiguration("mixed");
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(2, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
   }
 
   public void testSelectedMethods() throws Exception {
@@ -70,8 +60,8 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
       GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
       PsiElement[] elements = new PsiElement[]{
-        psiFacade.findClass("junit.v4.MyTest4", scope).getMethods()[0],
-        psiFacade.findClass("junit.v5.MyTest5", scope).getMethods()[0]
+        psiFacade.findClass("mixed.v4.MyTest4", scope).getMethods()[0],
+        psiFacade.findClass("mixed.v5.MyTest5", scope).getMethods()[0]
       };
       testApplication.setDataProvider(new TestDataProvider(myProject) {
         @Override
@@ -82,28 +72,22 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
           return super.getData(dataId);
         }
       });
-      RunConfigurationProducer producer = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class);
       MapDataContext dataContext = new MapDataContext();
-      
+
       dataContext.put(LangDataKeys.PSI_ELEMENT_ARRAY, elements);
       dataContext.put(CommonDataKeys.PROJECT, myProject);
-      ConfigurationFromContext fromContext = producer.createConfigurationFromContext(ConfigurationContext.getFromContext(dataContext));
+      ConfigurationContext fromContext = ConfigurationContext.getFromContext(dataContext);
       assertNotNull(fromContext);
 
-      RunConfiguration configuration = fromContext.getConfiguration();
+      RunConfiguration configuration = fromContext.getConfiguration().getConfiguration();
       assertNotNull(configuration);
 
-      ArrayList<String> out = new ArrayList<>();
-      ArrayList<String> err = new ArrayList<>();
-      ArrayList<String> sys = new ArrayList<>();
-      ArrayList<ServiceMessage> messages = new ArrayList<>();
+      ProcessOutput processOutput = doStartTestsProcess(configuration);
 
-      doStartTestsProcess(configuration, out, err, sys, messages);
-
-      assertTrue(sys.toString().contains("-junit5"));
-      assertEmpty(out);
-
-      assertSize(2, messages.stream().filter(message -> message instanceof TestFailed).collect(Collectors.toList()));
+      assertTrue(processOutput.sys.toString().contains("-junit5"));
+      //assertEmpty(err); // commented due unavoidable messages from JUnit engine: WARNING: Method 'public void mixed.v4.MyTest4.singleMethodTest()' could not be resolved
+      assertEmpty(processOutput.out);
+      assertSize(2, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
     }
     finally {
       testApplication.setDataProvider(null);
@@ -111,24 +95,115 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
   }
 
   public void testJUnit4MethodRunWithJUnit4Runner() throws Exception {
-    PsiClass testClass = JavaPsiFacade.getInstance(myProject).findClass("junit.v4.MyTest4", GlobalSearchScope.projectScope(myProject));
+    PsiClass testClass = JavaPsiFacade.getInstance(myProject).findClass("mixed.v4.MyTest4", GlobalSearchScope.projectScope(myProject));
     assertNotNull(testClass);
     RunConfiguration configuration = createConfiguration(testClass.getMethods()[0]);
     assertInstanceOf(configuration, JUnitConfiguration.class);
-    List<String> sys = new ArrayList<>();
-    List<String> out = new ArrayList<>();
-    List<String> err = new ArrayList<>();
-    List<ServiceMessage> messages = new ArrayList<>();
-    doStartTestsProcess(configuration, out, err, sys, messages);
-    String systemOutput = sys.toString(); //command line
-    
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
     //check running with junit 4
     assertTrue(systemOutput.contains("-junit4"));
     assertFalse(systemOutput.contains("-junit5"));
-    
-    assertEmpty(out);
-    assertEmpty(err);
-    assertSize(1, messages.stream().filter(message -> message instanceof TestFailed).collect(Collectors.toList()));
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(1, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+  }
+
+
+  public void testRunClass() throws Exception {
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("mixed.v5.MyTest5", GlobalSearchScope.projectScope(myProject));
+    RunConfiguration configuration = createConfiguration(aClass);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(1, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertTrue(systemOutput.contains("-junit5"));
+  }
+
+  public void testIgnoreDisabledTestClass() throws Exception {
+    RunConfiguration configuration = createRunPackageConfiguration("disabled");
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    List<TestIgnored> ignoredTests = processOutput.messages.stream()
+      .filter(TestIgnored.class::isInstance)
+      .map(TestIgnored.class::cast)
+      .filter(test -> test.getIgnoreComment().equals("Class disabled"))
+      .collect(Collectors.toList());
+    assertSize(2, ignoredTests); // each method from class reported
+  }
+
+  @Bombed(year = 2017, month = Calendar.JUNE, day = 23, user = "Timur Yuldashev", description = "IDEA-174534")
+  public void testRunSpecificDisabledTestClass() throws Exception {
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("disabled.DisabledClass", GlobalSearchScope.projectScope(myProject));
+    RunConfiguration configuration = createConfiguration(aClass);
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    // not disabled method should be executed, assuming only start/finish events
+    assertSize(2, processOutput.messages.stream()
+      .filter(BaseTestMessage.class::isInstance)
+      .map(BaseTestMessage.class::cast)
+      .filter(message -> message.getTestName().equals("testShouldBeExecuted()"))
+      .collect(Collectors.toList()));
+    // disabled test method should be Ignored
+    List<TestIgnored> ignoredTests = processOutput.messages.stream()
+      .filter(TestIgnored.class::isInstance)
+      .map(TestIgnored.class::cast)
+      .collect(Collectors.toList());
+    assertSize(1, ignoredTests);
+    assertEquals("testDisabledMethod()", ignoredTests.get(0).getTestName());
+  }
+
+  public void testIgnoreDisabledTestMethod() throws Exception {
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("disabled.DisabledMethod", GlobalSearchScope.projectScope(myProject));
+    RunConfiguration configuration = createConfiguration(aClass);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    List<TestIgnored> ignoredTests = processOutput.messages.stream()
+      .filter(TestIgnored.class::isInstance)
+      .map(TestIgnored.class::cast)
+      .collect(Collectors.toList());
+    assertSize(1, ignoredTests);
+    assertEquals("testDisabledMethod()", ignoredTests.get(0).getTestName());
+    assertEquals("Method disabled", ignoredTests.get(0).getIgnoreComment());
+  }
+
+  public void testRunSpecificDisabledMethod() throws Exception {
+    PsiMethod aMethod = JavaPsiFacade.getInstance(myProject)
+      .findClass("disabled.DisabledMethod", GlobalSearchScope.projectScope(myProject))
+      .findMethodsByName("testDisabledMethod", false)[0];
+    RunConfiguration configuration = createConfiguration(aMethod);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(0, processOutput.messages.stream().filter(TestIgnored.class::isInstance).map(TestIgnored.class::cast)
+      .collect(Collectors.toList()));
+
+    //assuming only suiteTreeNode/start/finish events
+    assertSize(3, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()"))
+      .collect(Collectors.toList()));
+  }
+
+  @NotNull
+  public RunConfiguration createRunPackageConfiguration(final String packageName) {
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+    assertNotNull(aPackage);
+    RunConfiguration configuration = createConfiguration(aPackage);
+    assertInstanceOf(configuration, JUnitConfiguration.class);
+    return configuration;
   }
 
   @Override

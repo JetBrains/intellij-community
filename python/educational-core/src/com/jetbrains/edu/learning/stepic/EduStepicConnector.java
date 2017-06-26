@@ -335,7 +335,7 @@ public class EduStepicConnector {
         task.addTaskText(wrapper.name, wrapper.text);
       }
     } else {
-      task.addTaskText(EduNames.TASK_HTML, block.text);
+      task.addTaskText(EduNames.TASK, block.text);
     }
 
     task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore

@@ -206,8 +206,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       return;
     }
 
-    PathUtil.assertSystemIndependentName(path);
-
     synchronized (myStateLock) {
       removePathFrom(myState.recentPaths, path);
       myState.names.remove(path);
@@ -219,7 +217,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public boolean hasPath(@SystemIndependent String path) {
-    PathUtil.assertSystemIndependentName(path);
     final State state = getState();
     return state != null && state.recentPaths.contains(path);
   }
@@ -236,7 +233,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation) {
-    PathUtil.assertSystemIndependentName(lastProjectLocation);
     String location = StringUtil.nullize(lastProjectLocation, true);
     myState.lastProjectLocation = PathUtil.toSystemIndependentName(location);
   }
@@ -274,8 +270,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  public static Icon getProjectIcon(String path, boolean isDark) {
-    PathUtil.assertSystemIndependentName(path);
+  public static Icon getProjectIcon(@SystemIndependent String path, boolean isDark) {
     final MyIcon icon = ourProjectIcons.get(path);
     if (icon != null) {
       return icon.getIcon();
@@ -286,8 +281,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  protected static Icon calculateIcon(String path, boolean isDark) {
-    PathUtil.assertSystemIndependentName(path);
+  protected static Icon calculateIcon(@SystemIndependent String path, boolean isDark) {
     File file = new File(path + (isDark ? "/.idea/icon_dark.png" : "/.idea/icon.png"));
     if (file.exists()) {
       final long timestamp = file.lastModified();
@@ -505,8 +499,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return actions.toArray(new AnAction[actions.size()]);
   }
 
-  private AnAction createOpenAction(String path, Set<String> duplicates) {
-    PathUtil.assertSystemIndependentName(path);
+  private AnAction createOpenAction(@SystemIndependent String path, Set<String> duplicates) {
     String projectName = getProjectName(path);
     String displayName;
     synchronized (myStateLock) {
@@ -526,7 +519,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private void markPathRecent(@SystemIndependent String path) {
-    PathUtil.assertSystemIndependentName(path);
     synchronized (myStateLock) {
       if (path.endsWith(File.separator)) {
         path = path.substring(0, path.length() - File.separator.length());
@@ -546,7 +538,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  private ProjectGroup getProjectGroup(String path) {
+  private ProjectGroup getProjectGroup(@SystemIndependent String path) {
     if (path == null) return null;
     for (ProjectGroup group : myState.groups) {
       if (group.getProjects().contains(path)) {

@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator.handlers;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -42,7 +41,13 @@ public class CCLessonMoveHandlerDelegate extends MoveHandlerDelegate {
     if (view == null) {
       return false;
     }
-    PsiDirectory sourceDirectory = DirectoryChooserUtil.getOrChooseDirectory(view);
+
+    final PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0 || directories.length > 1) {
+      return false;
+    }
+
+    final PsiDirectory sourceDirectory = directories[0];
     return CCUtils.isLessonDir(sourceDirectory);
   }
 

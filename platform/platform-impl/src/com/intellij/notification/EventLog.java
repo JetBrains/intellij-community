@@ -500,10 +500,6 @@ public class EventLog {
     }
 
     @Override
-    public void projectOpened() {
-    }
-
-    @Override
     public void projectClosed() {
       getApplicationComponent().myModel.setStatusMessage(null, 0);
       StatusBar.Info.set("", null, LOG_REQUESTOR);

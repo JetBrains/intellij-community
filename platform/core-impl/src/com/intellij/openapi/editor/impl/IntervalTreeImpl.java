@@ -1296,15 +1296,6 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     collectGced(root.getRight(), gced);
   }
 
-
-  private void printSorted() { printSorted(getRoot());}
-  private void printSorted(@Nullable IntervalNode<T> root) {
-    if (root == null) return;
-    printSorted(root.getLeft());
-    System.out.println(root);
-    printSorted(root.getRight());
-  }
-
   void fireBeforeRemoved(@NotNull T markerEx, @NotNull @NonNls Object reason) {
   }
 

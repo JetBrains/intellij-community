@@ -270,17 +270,19 @@ public class IDEATestNGRemoteListener {
     if (parameters.length > 0) {
       if (config) {
         Object parameter = parameters[0];
-        Class<?> parameterClass = parameter.getClass();
-        if (ITestResult.class.isAssignableFrom(parameterClass) || ITestContext.class.isAssignableFrom(parameterClass)) {
-          try {
-            paramString = "[" + parameterClass.getMethod("getName").invoke(parameter) + "]";
+        if (parameter != null) {
+          Class<?> parameterClass = parameter.getClass();
+          if (ITestResult.class.isAssignableFrom(parameterClass) || ITestContext.class.isAssignableFrom(parameterClass)) {
+            try {
+              paramString = "[" + parameterClass.getMethod("getName").invoke(parameter) + "]";
+            }
+            catch (Throwable e) {
+              paramString = "";
+            }
           }
-          catch (Throwable e) {
-            paramString = "";
+          else {
+            paramString = parameter.toString();
           }
-        }
-        else {
-          paramString = parameter.toString();
         }
       }
       else {

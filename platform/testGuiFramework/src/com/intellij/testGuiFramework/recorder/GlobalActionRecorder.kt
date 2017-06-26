@@ -34,27 +34,28 @@ import java.awt.event.MouseEvent
 
 object GlobalActionRecorder {
 
-  private val LOG by lazy { Logger.getInstance("#${GlobalActionRecorder::class.qualifiedName}") }
+  private val LOG = Logger.getInstance("#${GlobalActionRecorder::class.qualifiedName}")
 
-  private var active = false
-
-  fun isActive() = active
-
+  var isActive = false
+    get
+    private set
 
   private val globalActionListener = object : AnActionListener {
-    override fun beforeActionPerformed(anActionToBePerformed: AnAction?, p1: DataContext?, anActionEvent: AnActionEvent?) {
-      if (anActionEvent?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
-      EventDispatcher.processActionEvent(anActionToBePerformed!!, anActionEvent)
-      LOG.info("IDEA is going to perform action ${anActionToBePerformed.templatePresentation.text}")
+    override fun beforeActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
+      if (event?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
+      if(action == null) return
+      EventDispatcher.processActionEvent(action, event)
+      LOG.info("IDEA is going to perform action ${action.templatePresentation.text}")
     }
 
-    override fun beforeEditorTyping(p0: Char, p1: DataContext?) {
-      LOG.info("IDEA typing detected: ${p0!!}")
+    override fun beforeEditorTyping(c: Char, dataContext: DataContext?) {
+      LOG.info("IDEA typing detected: ${c}")
     }
 
-    override fun afterActionPerformed(p0: AnAction?, p1: DataContext?, p2: AnActionEvent?) {
-      if (p2?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
-      LOG.info("IDEA action performed ${p0!!.templatePresentation.text}")
+    override fun afterActionPerformed(action: AnAction?, dataContext: DataContext?, event: AnActionEvent?) {
+      if (event?.place == GuiScriptEditorPanel.GUI_SCRIPT_EDITOR_PLACE) return //avoid GUI Script Editor Actions
+      if (action == null) return
+      LOG.info("IDEA action performed ${action.templatePresentation.text}")
     }
   }
 
@@ -67,22 +68,21 @@ object GlobalActionRecorder {
   }
 
   fun activate() {
-    if (active) return
+    if (isActive) return
     LOG.info("Global action recorder is active")
     ActionManager.getInstance().addAnActionListener(globalActionListener)
     IdeEventQueue.getInstance().addDispatcher(globalAwtProcessor, GuiRecorderComponent) //todo: add disposal dependency on component
-    active = true
+    isActive = true
   }
 
   fun deactivate() {
-    if (active) {
+    if (isActive) {
       LOG.info("Global action recorder is non active")
       ActionManager.getInstance().removeAnActionListener(globalActionListener)
       IdeEventQueue.getInstance().removeDispatcher(globalAwtProcessor)
-
     }
-    active = false
-    ScriptGenerator.clearContext()
+    isActive = false
+    ContextChecker.clearContext()
   }
 
 }

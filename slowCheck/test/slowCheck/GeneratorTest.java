@@ -2,14 +2,21 @@ package slowCheck;
 
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static slowCheck.GenChar.*;
-import static slowCheck.GenCollection.*;
-import static slowCheck.GenNumber.*;
-import static slowCheck.GenString.*;
+import static slowCheck.GenBoolean.bool;
+import static slowCheck.GenChar.asciiLetter;
+import static slowCheck.GenChar.asciiPrintable;
+import static slowCheck.GenCollection.listOf;
+import static slowCheck.GenCollection.nonEmptyListOf;
+import static slowCheck.GenNumber.doubles;
+import static slowCheck.GenNumber.integers;
+import static slowCheck.GenString.stringOf;
 
 /**
  * @author peter
@@ -26,13 +33,13 @@ public class GeneratorTest extends TestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   163);
+                   6);
   }
 
   public void testListContainsDivisible() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   11);
+                   8);
   }
 
   public void testStringContains() {
@@ -44,13 +51,13 @@ public class GeneratorTest extends TestCase {
   public void testLetterStringContains() {
     checkFalsified(stringOf(asciiLetter()), 
                    s -> !s.contains("a"),
-                   8);
+                   5);
   }
   
   public void testIsSorted() {
     checkFalsified(nonEmptyListOf(integers()), 
                    l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   101);
+                   95);
   }
 
   public void testSuccess() {
@@ -61,7 +68,7 @@ public class GeneratorTest extends TestCase {
   public void testSortedDoublesNonDescending() {
     checkFalsified(listOf(doubles()), 
                    l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   113);
+                   141);
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -80,7 +87,7 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuchThat() {
-    PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
+    PropertyChecker.forAll(integers().suchThat(i -> i < 0), i -> i < 0);
   }
 
   public void testUnsatisfiableSuchThat() {
@@ -95,17 +102,43 @@ public class GeneratorTest extends TestCase {
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringOf("abc "), 
                    s -> !s.contains(" "),
-                   6);
+                   3);
   }
 
   public void testLongListsHappen() {
     checkFalsified(listOf(integers()),
                    l -> l.size() < 200,
-                   781);
+                   631);
   }
 
   public void testNonEmptyList() {
     PropertyChecker.forAll(nonEmptyListOf(integers()), l -> !l.isEmpty());
+  }
+
+  public void testNoDuplicateData() {
+    Set<List<Integer>> visited = new HashSet<>();
+    PropertyChecker.forAll(listOf(integers()), l -> visited.add(l));
+  }
+
+  public void testOneOf() {
+    List<Integer> values = new ArrayList<>(); 
+    PropertyChecker.forAll(Generator.oneOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
+    assertTrue(values.stream().anyMatch(i -> i < 2));
+    assertTrue(values.stream().anyMatch(i -> i > 5));
+  }
+
+  public void testAsciiIdentifier() {
+    PropertyChecker.forAll(GenString.asciiIdentifier(), 
+                           s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
+    checkFalsified(GenString.asciiIdentifier(), 
+                   s -> !s.contains("_"), 
+                   1);
+  }
+
+  public void testBoolean() {
+    checkFalsified(listOf(bool()), 
+                   l -> !l.contains(true) || !l.contains(false), 
+                   4);
   }
 
   private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {

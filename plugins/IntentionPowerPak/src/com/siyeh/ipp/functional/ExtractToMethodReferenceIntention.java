@@ -69,8 +69,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       //is a valid lambda
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType == null ||
-          LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType) == null ||
-          !LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType)) {
+          LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType) == null) {
         return false;
       }
 

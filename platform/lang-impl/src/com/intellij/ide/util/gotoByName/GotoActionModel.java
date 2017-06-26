@@ -35,7 +35,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -130,7 +129,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable
   @Override
   public String getCheckBoxName() {
-    return null;
+    return IdeBundle.message("checkbox.disabled.included");
   }
 
   @Override
@@ -150,7 +149,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public boolean loadInitialCheckBoxState() {
-    return true;
+    return false;
   }
 
   @Override
@@ -198,6 +197,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Override
     public int compareTo(@NotNull MatchedValue o) {
+      if (o == this) return 0;
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
 
@@ -223,8 +223,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
       }
       
-      if (value instanceof OptionDescription && o.value instanceof BooleanOptionDescription) return 1;
-      if (o.value instanceof OptionDescription && value instanceof BooleanOptionDescription) return -1;
+      if (value instanceof BooleanOptionDescription && !(o.value instanceof BooleanOptionDescription) && o.value instanceof OptionDescription) return -1;
+      if (o.value instanceof BooleanOptionDescription && !(value instanceof BooleanOptionDescription) && value instanceof OptionDescription) return 1;
 
       if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
       if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
@@ -250,12 +250,19 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  private static JLabel createIconLabel(@Nullable Icon icon) {
+  private static JLabel createIconLabel(@Nullable Icon icon, boolean disabled) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon
-        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
+    if (icon == null) return new JLabel(layeredIcon);
+    
+    int width = icon.getIconWidth();
+    int height = icon.getIconHeight();
+    int emptyIconWidth = EMPTY_ICON.getIconWidth();
+    int emptyIconHeight = EMPTY_ICON.getIconHeight();
+    if (width <= emptyIconWidth && height <= emptyIconHeight) {
+      layeredIcon.setIcon(disabled ? IconLoader.getDisabledIcon(icon) : icon, 1, 
+                          (emptyIconWidth - width) / 2, 
+                          (emptyIconHeight - height) / 2);
     }
 
     return new JLabel(layeredIcon);
@@ -407,14 +414,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements) {
+  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements, boolean includeDisabled) {
     List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
     if (!toUpdate.isEmpty()) {
       updateActions(toUpdate);
     }
 
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
-    if (Registry.is("goto.action.skip.disabled")) {
+    if (!includeDisabled) {
       for (Object o : elements) {
         if (o instanceof MatchedValue) {
           Comparable v = ((MatchedValue)o).value;
@@ -516,7 +523,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
       if (byTextLength != 0) return byTextLength;
-      int byGroup = Comparing.compare(myGroupName, o.getGroupName());
+      int byGroup = Comparing.compare(myGroupName, o.myGroupName);
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
@@ -615,7 +622,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         }
         
         if (showIcon) {
-          panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
+          Icon icon = presentation.getIcon();
+          panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
         }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
         panel.setToolTipText(presentation.getDescription());

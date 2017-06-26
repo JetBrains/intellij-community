@@ -58,7 +58,7 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(labelPanel, BorderLayout.WEST);
     parentPanel.add(wrapper, BorderLayout.NORTH);
-    myCommitMessage = new CommitMessage(myProject, false, true);
+    myCommitMessage = new CommitMessage(myProject, false, true, true);
     myCommitMessage.setText(myOldText);
     parentPanel.add(myCommitMessage, BorderLayout.CENTER);
     return parentPanel;

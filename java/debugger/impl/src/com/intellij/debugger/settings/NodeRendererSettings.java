@@ -134,7 +134,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     try {
-      element.addContent(writeRenderer(myArrayRenderer));
       element.addContent(writeRenderer(myToStringRenderer));
       element.addContent(writeRenderer(myClassRenderer));
       element.addContent(writeRenderer(myPrimitiveRenderer));
@@ -169,10 +168,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         continue;
       }
       try {
-        if (ArrayRenderer.UNIQUE_ID.equals(id)) {
-          myArrayRenderer.readExternal(elem);
-        }
-        else if (ToStringRenderer.UNIQUE_ID.equals(id)) {
+        if (ToStringRenderer.UNIQUE_ID.equals(id)) {
           myToStringRenderer.readExternal(elem);
         }
         else if (ClassRenderer.UNIQUE_ID.equals(id)) {

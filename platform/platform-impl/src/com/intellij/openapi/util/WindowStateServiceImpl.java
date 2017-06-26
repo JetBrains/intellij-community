@@ -223,22 +223,30 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     GraphicsDevice screen = getScreen(object);
     float scale = getSysScale(screen);
 
-    Function<String, T> getState = (myKey) -> {
-      WindowState state = myStateMap.get(myKey);
+    Function<String, T> getState = (_key) -> {
+      WindowState state = myStateMap.get(_key);
       if (state == null) return null;
       state = state.copy().scaleDown(scale);
       if (isVisible(state)) {
         if (type == WindowState.class) {
-          return (T)state;
+          @SuppressWarnings("unchecked")
+          T value = (T)state;
+          return value;
         }
         if (type == Point.class) {
-          return (T)state.getLocation();
+          @SuppressWarnings("unchecked")
+          T value = (T)state.getLocation();
+          return value;
         }
         if (type == Dimension.class) {
-          return (T)state.getSize();
+          @SuppressWarnings("unchecked")
+          T value = (T)state.getSize();
+          return value;
         }
         if (type == Rectangle.class) {
-          return (T)state.getBounds();
+          @SuppressWarnings("unchecked")
+          T value = (T)state.getBounds();
+          return value;
         }
       }
       return null;
@@ -266,32 +274,32 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       GraphicsDevice screen = getScreen(object);
       float scale = getSysScale(screen);
 
-      BiFunction<String, String, Void> putState = (myNewKey, myOldKey) -> {
+      BiFunction<String, String, Void> putState = (newKey, oldKey) -> {
         // remove & migrate the old key state
-        WindowState oldState = myOldKey != null ? myStateMap.remove(myOldKey) : null;
+        WindowState oldState = oldKey != null ? myStateMap.remove(oldKey) : null;
         if (oldState != null) {
           oldState.scaleDown(scale);
-          WindowState newState = myStateMap.get(myNewKey);
+          WindowState newState = myStateMap.get(newKey);
           if (newState != null) {
             newState.merge(oldState);
           } else {
-            myStateMap.put(myNewKey, oldState);
+            myStateMap.put(newKey, oldState);
           }
         }
         // put the new key state
-        WindowState state = myStateMap.get(myNewKey);
+        WindowState state = myStateMap.get(newKey);
         if (state != null) {
           if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
             state.scaleUp(scale);
           } else {
-            myStateMap.remove(myNewKey);
+            myStateMap.remove(newKey);
           }
         }
         else {
           state = new WindowState();
           if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
             state.scaleUp(scale);
-            myStateMap.put(myNewKey, state);
+            myStateMap.put(newKey, state);
           }
         }
         return null;

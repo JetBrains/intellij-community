@@ -126,6 +126,8 @@ class JavaValuesTest : AbstractJavaValuesTest() {
 
     @Test fun testWhileWithReturn() = doTest("Simple/WhileWithReturn.java")
 
+    @Test fun testPerformanceLoopWithReassignment() = doTest("Performance/LoopWithReassignment.java")
+
     @Test fun testEvaluatorExtension() = doTest("Simple/EvaluatorExtension.java", object : SimpleEvaluatorExtension() {
         override fun evaluateMethodCall(target: PsiMethod, argumentValues: List<UValue>): Any? {
             if (target.name == "getTestName") {

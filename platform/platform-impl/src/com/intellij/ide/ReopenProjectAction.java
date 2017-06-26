@@ -39,8 +39,6 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   private boolean myIsRemoved = false;
 
   public ReopenProjectAction(final @SystemIndependent String projectPath, final String projectName, final String displayName) {
-    PathUtil.assertSystemIndependentName(projectPath);
-
     myProjectPath = projectPath;
     myProjectName = projectName;
 

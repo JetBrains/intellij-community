@@ -25,13 +25,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiComment)) {
-      return false;
-    }
-    if (element instanceof PsiDocComment) {
-      return false;
-    }
-    if (element.getTextOffset() == 0) {
+    if (!(element instanceof PsiComment) || element instanceof PsiDocComment || element.getTextOffset() == 0) {
       return false;
     }
     final PsiComment comment = (PsiComment)element;
@@ -46,18 +40,14 @@ class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
     if (prevSibling == null || prevSibling.getTextLength() == 0) {
       return false;
     }
-    if (!(prevSibling instanceof PsiWhiteSpace)) {
-      return true;
-    }
-    final String prevSiblingText = prevSibling.getText();
-    if (prevSiblingText.indexOf('\n') < 0 && prevSiblingText.indexOf('\r') < 0) {
+    if (!isLineBreakWhiteSpace(prevSibling)) {
       return true;
     }
     final PsiElement nextSibling = PsiTreeUtil.nextLeaf(element);
-    if (!(nextSibling instanceof PsiWhiteSpace)) {
-      return true;
-    }
-    final String nextSiblingText = nextSibling.getText();
-    return nextSiblingText.indexOf('\n') < 0 && nextSiblingText.indexOf('\r') < 0;
+    return !isLineBreakWhiteSpace(nextSibling);
+  }
+
+  static boolean isLineBreakWhiteSpace(PsiElement element) {
+    return element instanceof PsiWhiteSpace && element.getText().indexOf('\n') >= 0;
   }
 }

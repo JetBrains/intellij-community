@@ -34,13 +34,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -72,15 +72,15 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
                                 boolean everywhere,
                                 @NotNull ProgressIndicator cancelled,
                                 @NotNull final Processor<Object> consumer) {
-    return filterElements(pattern, everywhere, consumer::process);
+    return filterElements(pattern, consumer::process);
   }
 
-  public boolean filterElements(String pattern, boolean everywhere, Processor<MatchedValue> consumer) {
+  public boolean filterElements(String pattern, Processor<MatchedValue> consumer) {
     DataContext dataContext = DataManager.getInstance().getDataContext(myModel.getContextComponent());
 
     if (!processAbbreviations(pattern, consumer, dataContext)) return false;
     if (!processIntentions(pattern, consumer, dataContext)) return false;
-    if (!processActions(pattern, everywhere, consumer, dataContext)) return false;
+    if (!processActions(pattern, consumer, dataContext)) return false;
     if (Registry.is("goto.action.skip.tophits.and.options")) return true;
     if (!processTopHits(pattern, consumer, dataContext)) return false;
     if (!processOptions(pattern, consumer, dataContext)) return false;
@@ -96,7 +96,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       .transform(action -> {
         ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context);
         return new MatchedValue(wrapper, pattern) {
-          @Nullable
+          @NotNull
           @Override
           public String getValueText() {
             return pattern;
@@ -181,17 +181,17 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, JBIterable.from(options), consumer);
   }
 
-  private boolean processActions(String pattern, boolean everywhere, Processor<MatchedValue> consumer, DataContext dataContext) {
-    JBIterable<AnAction> actions;
-    if (everywhere) {
-      Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-      actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
-    }
-    else {
-      actions = JBIterable.from(myModel.myActionGroups.keySet());
-    }
+  private boolean processActions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+    Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
+    JBIterable<AnAction> actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    JBIterable<ActionWrapper> actionWrappers = actions.transform(action -> {
+
+    QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
+    if (provider != null) {
+      actions = actions.append(provider.getActions(true));
+    }
+
+    JBIterable<ActionWrapper> actionWrappers = actions.unique().transform(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext);
@@ -213,7 +213,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    ArrayList<MatchedValue> matched = ContainerUtil.newArrayList();
+    List<MatchedValue> matched = ContainerUtil.newArrayList();
     items.transform(o -> {
       ProgressManager.checkCanceled();
       return o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern);
@@ -221,5 +221,4 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     Collections.sort(matched);
     return ContainerUtil.process(matched, consumer);
   }
-
 }

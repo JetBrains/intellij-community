@@ -22,6 +22,43 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCase {
 
+  public void testNullArgument() {
+    doTestIntentionNotAvailable("class X {" +
+                                "  void a(String... ss) {}" +
+                                "  void b() {" +
+                                "    a(/*_Wrap vararg arguments with explicit array creation*/null);" +
+                                "  }" +
+                                "}");
+  }
+
+  public void testEnumConstants() {
+    doTest("enum X {" +
+           "  A(/*_Wrap vararg arguments with explicit array creation*/1), B(1,2), C(1,2,3);" +
+           "  X(int... is) {}" +
+           "}",
+
+           "enum X {" +
+           "  A(new int[]{1}), B(1,2), C(1,2,3);" +
+           "  X(int... is) {}" +
+           "}");
+  }
+
+  public void testConstructorCall() {
+    doTest("class A {" +
+           "  A(int... is) {}" +
+           "  void a() {" +
+           "    new A(1,2,3/*_Wrap vararg arguments with explicit array creation*/);" +
+           "  }" +
+           "}",
+
+           "class A {" +
+           "  A(int... is) {}" +
+           "  void a() {" +
+           "    new A(new int[]{1, 2, 3});" +
+           "  }" +
+           "}");
+  }
+
   public void testCapturedWildcard1() {
     doTest(
       "class X {\n" +

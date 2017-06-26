@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testGuiFramework.recorder.ScriptGenerator
 import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 import com.intellij.util.download.DownloadableFileService
@@ -100,7 +99,7 @@ class LocalCompiler {
       "Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.newInstance()
     val setUpMethod = currentTest.getMethod("setUp")
-    val testMethod = currentTest.getMethod(ScriptGenerator.ScriptWrapper.TEST_METHOD_NAME)
+    val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
     GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
     try {
       setUpMethod.invoke(testCase)
@@ -133,7 +132,7 @@ class LocalCompiler {
       "Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.newInstance()
     val setUpMethod = currentTest.getMethod("setUp")
-    val testMethod = currentTest.getMethod(ScriptGenerator.ScriptWrapper.TEST_METHOD_NAME)
+    val testMethod = currentTest.getMethod(ScriptWrapper.TEST_METHOD_NAME)
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Script running...")
     GuiRecorderComponent.setState(GuiRecorderComponent.States.RUNNING)
     try {

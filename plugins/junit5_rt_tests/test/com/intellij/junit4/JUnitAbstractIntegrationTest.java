@@ -50,17 +50,13 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.io.File;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTestCase {
-  public static void doStartTestsProcess(RunConfiguration configuration,
-                                         List<String> out,
-                                         List<String> err,
-                                         List<String> sys,
-                                         List<ServiceMessage> messages)
-    throws ExecutionException {
+  public static ProcessOutput doStartTestsProcess(RunConfiguration configuration) throws ExecutionException {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     Project project = configuration.getProject();
     RunnerAndConfigurationSettingsImpl
@@ -83,6 +79,7 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
                                                                         "", false, project, null);
     }
 
+    ProcessOutput processOutput = new ProcessOutput();
     process.addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(ProcessEvent event) {
@@ -99,19 +96,19 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
           if (outputType == ProcessOutputTypes.STDOUT) {
             ServiceMessage serviceMessage = ServiceMessage.parse(text.trim());
             if (serviceMessage == null) {
-              out.add(text);
+              processOutput.out.add(text);
             }
             else {
-              messages.add(serviceMessage);
+              processOutput.messages.add(serviceMessage);
             }
           }
 
           if (outputType == ProcessOutputTypes.SYSTEM) {
-            sys.add(text);
+            processOutput.sys.add(text);
           }
 
           if (outputType == ProcessOutputTypes.STDERR) {
-            err.add(text);
+            processOutput.err.add(text);
           }
         }
         catch (ParseException e) {
@@ -122,6 +119,8 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
     process.startNotify();
     process.waitFor();
     process.destroyProcess();
+
+    return processOutput;
   }
 
   protected void addLibs(Module module,
@@ -146,5 +145,12 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
       Collections.singletonList(ArtifactRepositoryManager.createRemoteRepository("maven", "http://maven.labs.intellij.net/repo1")),
       ProgressConsumer.DEAF
     );
+  }
+
+  static class ProcessOutput {
+    List<String> out = new ArrayList<>();
+    List<String> err = new ArrayList<>();
+    List<String> sys = new ArrayList<>();
+    List<ServiceMessage> messages = new ArrayList<>();
   }
 }

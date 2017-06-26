@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.checker.TaskWithSubtasksChecker;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
@@ -19,6 +20,11 @@ public class TaskWithSubtasks extends PyCharmTask {
 
   public TaskWithSubtasks(@NotNull final String name) {
     super(name);
+  }
+
+  @Override
+  public String getTaskDescriptionName() {
+    return super.getTaskDescriptionName() + EduNames.SUBTASK_MARKER + myActiveSubtaskIndex;
   }
 
   public TaskWithSubtasks(Task task) {
@@ -47,9 +53,14 @@ public class TaskWithSubtasks extends PyCharmTask {
         placeholder.setStatus(status);
       }
     }
-    if (status == StudyStatus.Solved && activeSubtaskNotLast()) {
-      if (myStatus == StudyStatus.Failed) {
-        myStatus = StudyStatus.Unchecked;
+    if (status == StudyStatus.Solved) {
+      if (activeSubtaskNotLast()) {
+        if (myStatus == StudyStatus.Failed) {
+          myStatus = StudyStatus.Unchecked;
+        }
+      }
+      else {
+        myStatus = StudyStatus.Solved;
       }
     }
   }

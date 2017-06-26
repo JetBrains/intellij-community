@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.run;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -9,6 +10,9 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
@@ -18,6 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.DebugAwareConfiguration;
 import org.jdom.Element;
@@ -90,13 +96,27 @@ public class IpnbRunConfiguration extends AbstractPythonRunConfiguration<IpnbRun
     final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
     if (ipythonPackage == null && jupyterPackage == null) {
       throw new RuntimeConfigurationError("Install Jupyter Notebook to the interpreter of the current project.",
-                                          () -> {
-                                            try {
-                                              PyPackageManager.getInstance(sdk).install("jupyter");
+                                          () -> ProgressManager.getInstance().run(new Task.Backgroundable(getProject(),
+                                                                                                          "Installing Jupyter", false) {
+                                            @Override
+                                            public void run(@NotNull ProgressIndicator indicator) {
+                                              try {
+                                                final String version = sdk.getVersionString();
+                                                if (version != null) {
+                                                  final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
+                                                  if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+                                                    PyPackageManager.getInstance(sdk).install("jupyter");
+                                                  }
+                                                  else {
+                                                    PyPackageManager.getInstance(sdk).install(Lists.newArrayList(
+                                                      PyRequirement.fromLine("ipython==5"), PyRequirement.fromLine("jupyter")),
+                                                                                              Lists.newArrayList());
+                                                  }
+                                                }
+                                              }
+                                              catch (ExecutionException ignored) { }
                                             }
-                                            catch (ExecutionException ignored) {
-                                            }
-                                          });
+                                          }));
     }
   }
 
