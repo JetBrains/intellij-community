@@ -15,7 +15,9 @@
  */
 package com.intellij.util;
 
-import java.util.LinkedHashSet;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -23,17 +25,18 @@ import java.util.Set;
  *         Date: Sep 27, 2004
  */
 public class Chunk<Node> {
+  @NotNull
   private final Set<Node> myNodes;
 
   public Chunk(Node node) {
-    this(new LinkedHashSet<Node>());
-    myNodes.add(node);
+    this(Collections.singleton(node));
   }
-  
-  public Chunk(Set<Node> nodes) {
+
+  public Chunk(@NotNull Set<Node> nodes) {
     myNodes = nodes;
   }
 
+  @NotNull
   public Set<Node> getNodes() {
     return myNodes;
   }
