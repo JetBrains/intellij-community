@@ -97,8 +97,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     });
   }
 
-  private void applyNameHintsSettings() {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+  private void setParameterNameHintsSettings(EditorSettingsExternalizable settings) {
     settings.setShowParameterNameHints(myShowParameterNameHints.isSelected());
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
   }
@@ -157,6 +156,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     editorSettings.setTrailingWhitespacesShown(myTrailingWhitespacesCheckBox.isSelected());
     editorSettings.setIndentGuidesShown(myShowVerticalIndentGuidesCheckBox.isSelected());
     editorSettings.setShowIntentionBulb(myCbShowIntentionBulbCheckBox.isSelected());
+    setParameterNameHintsSettings(editorSettings);
 
     EditorOptionsPanel.reinitAllEditors();
 
@@ -189,7 +189,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     }
     EditorOptionsPanel.restartDaemons();
 
-    applyNameHintsSettings();
     super.apply();
   }
 
