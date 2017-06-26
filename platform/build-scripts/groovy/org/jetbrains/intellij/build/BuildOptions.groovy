@@ -28,7 +28,16 @@ class BuildOptions {
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
    */
   public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
+
+  /**
+   * Pass 'true' to this system property when building to default project output. This case may be useful when classpath building by JpsModel
+   * needed to be same on a developer's machine and remote (e.g. on TeamCity)
+   */
+  public static final String BUILD_TO_PROJECT_OUTPUT_DIRECTORY = "intellij.build.use.project.out.dir"
+
+
   boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, false)
+  boolean useProjectOutputDirToBuild = SystemProperties.getBooleanProperty(BUILD_TO_PROJECT_OUTPUT_DIRECTORY, false)
 
   /**
    * Specifies for which operating systems distributions should be built.

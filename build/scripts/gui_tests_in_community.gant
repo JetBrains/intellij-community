@@ -33,7 +33,7 @@ import java.util.function.BiFunction
  */
 target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)
-  String outputDir = "$home/out/tests"
+  String outputDir = "$home/out"
 
   def compilationOptions = new BuildOptions()
 //  compilationOptions.useCompiledClassesFromProjectOutput = true
