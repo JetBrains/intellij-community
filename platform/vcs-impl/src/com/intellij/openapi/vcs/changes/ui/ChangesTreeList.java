@@ -185,7 +185,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     }.installOn(this);
     SmartExpander.installOn(this);
 
-    setShowFlatten(PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY));
+    myShowFlatten = PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
