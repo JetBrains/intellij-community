@@ -1,8 +1,6 @@
 package slowCheck;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
@@ -13,7 +11,7 @@ public class GenCollection {
   }
 
   public static <T> Generator<List<T>> nonEmptyListOf(Generator<T> itemGenerator) {
-    return Generator.from(data -> generateList(itemGenerator, data, data.suggestCollectionSize() + 1));
+    return listOf(itemGenerator).suchThat(l -> !l.isEmpty());
   }
 
   public static <T> Generator<List<T>> listOf(IntDistribution length, Generator<T> itemGenerator) {

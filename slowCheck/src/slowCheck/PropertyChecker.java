@@ -3,7 +3,11 @@ package slowCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -54,16 +58,21 @@ public class PropertyChecker<T> {
     for (int i = 1; i <= iterationCount; i++) {
       if (System.currentTimeMillis() - lastPrint > 5_000) {
         lastPrint = System.currentTimeMillis();
-        System.out.println("Iteration " + i + " of " + iterationCount + "...");
+        System.out.println(formatCurrentTime() + ": iteration " + i + " of " + iterationCount + "...");
       }
 
       CounterExampleImpl<T> example = findCounterExample(i);
       if (example != null) {
-        System.err.println("Failed on iteration " + i + ", shrinking...");
+        System.err.println(formatCurrentTime() + ": failed on iteration " + i + ", shrinking...");
         PropertyFailureImpl failure = new PropertyFailureImpl(example, i);
         throw new PropertyFalsified(seed, failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, failure.sizeHint));
       }
     }
+  }
+
+  @NotNull
+  private static String formatCurrentTime() {
+    return LocalTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).withLocale(Locale.getDefault()));
   }
 
   @Nullable
