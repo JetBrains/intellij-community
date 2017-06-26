@@ -60,7 +60,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     if (prev < 0 || next < 0) {
       return null;
     }
-    if (StringUtil.contains(text, prev + 1, start, endChar) || StringUtil.contains(text, endChar, next, startChar)) return null;
+    if (StringUtil.contains(text, prev + 1, start, endChar) || StringUtil.contains(text, end, next, startChar)) return null;
     if (prev + 1 < start || next > end) {
       return new TextRange(prev + 1, next);
     }

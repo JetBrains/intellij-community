@@ -50,7 +50,7 @@ public class JavaVarArgNextParameterHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     int offset = caret != null ? caret.getOffset() : editor.getCaretModel().getOffset();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {

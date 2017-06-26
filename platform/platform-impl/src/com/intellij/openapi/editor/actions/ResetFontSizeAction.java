@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -36,7 +37,7 @@ public class ResetFontSizeAction extends EditorAction {
   
   private static class MyHandler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       if (!(editor instanceof EditorEx)) {
         return;
       }

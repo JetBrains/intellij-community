@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,29 +95,24 @@ abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStrea
     }
 
     int maxLength = Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE;
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    final StringBuilder buffer = new StringBuilder();
     try {
-      try {
-        build(buffer, maxLength);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      String s = buffer.toString();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Resulting text: \n" + s);
-      }
-      try {
-        myDelegate = new ByteArrayInputStream(s.getBytes(getCharset()));
-      }
-      catch (UnsupportedEncodingException e) {
-        throw new RuntimeException(e);
-      }
-      return myDelegate;
+      build(buffer, maxLength);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    catch (Exception e) {
+      LOG.error(e);
     }
+    String s = buffer.toString();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Resulting text: \n" + s);
+    }
+    try {
+      myDelegate = new ByteArrayInputStream(s.getBytes(getCharset()));
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+    return myDelegate;
   }
   
   protected abstract void build(@NotNull StringBuilder holder, int maxLength);

@@ -26,6 +26,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class EscapeHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -35,7 +36,7 @@ public class EscapeHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext) {
+  public void execute(@NotNull Editor editor, DataContext dataContext) {
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {
       SelectionModel selectionModel = editor.getSelectionModel();

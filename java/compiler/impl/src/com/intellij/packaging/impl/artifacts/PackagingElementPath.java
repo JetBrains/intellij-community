@@ -15,14 +15,12 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.CompositePackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,20 +59,8 @@ public class PackagingElementPath {
 
   @NotNull
   public String getPathStringFrom(String separator, @Nullable CompositePackagingElement<?> ancestor) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
-      for (int i = parents.size() - 1; i >= 0; i--) {
-        builder.append(parents.get(i).getName());
-        if (i > 0) {
-          builder.append(separator);
-        }
-      }
-      return builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
+    return StringUtil.join(ContainerUtil.reverse(parents), RenameablePackagingElement::getName, separator);
   }
   
   public List<CompositePackagingElement<?>> getParents() {

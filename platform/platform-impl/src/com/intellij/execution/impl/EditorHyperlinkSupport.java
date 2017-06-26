@@ -377,7 +377,8 @@ public class EditorHyperlinkSupport {
     return getLineSequence(document, lineNumber, includeEol).toString();
   }
 
-  static CharSequence getLineSequence(@NotNull Document document, int lineNumber, boolean includeEol) {
+  @NotNull
+  private static CharSequence getLineSequence(@NotNull Document document, int lineNumber, boolean includeEol) {
     int endOffset = document.getLineEndOffset(lineNumber);
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;
@@ -395,7 +396,7 @@ public class EditorHyperlinkSupport {
     }
 
     @NotNull
-    public HyperlinkInfo getHyperlinkInfo() {
+    HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
     }
 

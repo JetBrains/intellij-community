@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CopyAction extends TextComponentEditorAction {
@@ -34,7 +35,7 @@ public class CopyAction extends TextComponentEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getSelectionModel().hasSelection(true)) {
         if (Registry.is(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;

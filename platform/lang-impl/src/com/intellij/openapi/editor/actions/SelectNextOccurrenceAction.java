@@ -38,7 +38,7 @@ public class SelectNextOccurrenceAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, @Nullable Caret c, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
       TextRange wordSelectionRange = getSelectionRange(editor, caret);
       boolean notFoundPreviously = getAndResetNotFoundStatus(editor);

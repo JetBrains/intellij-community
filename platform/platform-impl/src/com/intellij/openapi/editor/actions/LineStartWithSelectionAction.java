@@ -41,7 +41,7 @@ public class LineStartWithSelectionAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineStart(editor, true);
     }
   }

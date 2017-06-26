@@ -34,7 +34,7 @@ public class MoveCaretDownAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       editor.getCaretModel().moveCaretRelatively(0, 1, false, false, caret == editor.getCaretModel().getPrimaryCaret());
     }
 

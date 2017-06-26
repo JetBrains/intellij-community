@@ -33,6 +33,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 import slowCheck.*;
 
 import java.util.List;
@@ -82,7 +83,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
         return new CompletionInvocation(document, offset, itemIndex, c);
       });
       PropertyChecker.forAll(settings.withIterationCount(10), GenCollection.listOf(genInvocation), list -> {
-        changeDocumentAndRevert(document, () -> {
+        changeAndRevert(() -> restrictChangesToDocument(document, () -> {
           for (int i = 0; i < list.size(); i++) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             CompletionInvocation invocation = list.get(i);
@@ -102,14 +103,14 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
               UIUtil.dispatchAllInvocationEvents();
             }
           }
-        });
+        }));
         return true;
       });
       return true;
     });
   }
 
-  private void performCompletion(Editor editor, boolean onValidCode, CompletionInvocation invocation, PsiElement leaf) {
+  private void performCompletion(Editor editor, boolean onValidCode, CompletionInvocation invocation, @Nullable PsiElement leaf) {
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(myProject, editor);
 
     boolean canExpectMismatch = !onValidCode ||
@@ -126,7 +127,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
     }
 
     List<LookupElement> items = lookup.getItems();
-    LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(leaf.getText()));
+    LookupElement sameItem = leaf == null ? null : ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(leaf.getText()));
     if (sameItem == null && !canExpectMismatch) {
       fail("No variant " + leaf.getText() + " among " + items);
     }

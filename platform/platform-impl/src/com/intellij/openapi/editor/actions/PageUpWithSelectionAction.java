@@ -22,12 +22,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PageUpWithSelectionAction extends EditorAction {
   public static class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getCaretModel().supportsMultipleCarets()) {
         EditorActionUtil.moveCaretPageUp(editor, true);
         return;

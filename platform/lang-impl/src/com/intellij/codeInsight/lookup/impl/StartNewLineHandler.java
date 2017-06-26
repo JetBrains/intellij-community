@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +34,7 @@ public class StartNewLineHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     Runnable callOriginal = () -> {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, caret, dataContext);

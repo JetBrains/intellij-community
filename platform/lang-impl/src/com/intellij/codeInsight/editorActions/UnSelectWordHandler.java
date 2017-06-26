@@ -32,6 +32,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnSelectWordHandler extends EditorActionHandler {
@@ -43,7 +44,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
       return;

@@ -91,7 +91,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testBytecodeModification() {
     unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36"));
   }

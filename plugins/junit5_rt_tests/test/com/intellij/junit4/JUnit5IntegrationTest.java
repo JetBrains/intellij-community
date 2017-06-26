@@ -139,7 +139,7 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
     assertSize(2, ignoredTests); // each method from class reported
   }
 
-  @Bombed(year = 2017, month = Calendar.JUNE, day = 23, user = "Timur Yuldashev", description = "IDEA-174534")
+  @Bombed(month = Calendar.AUGUST, day = 31, user = "Timur Yuldashev", description = "IDEA-174534")
   public void testRunSpecificDisabledTestClass() throws Exception {
     PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("disabled.DisabledClass", GlobalSearchScope.projectScope(myProject));
     RunConfiguration configuration = createConfiguration(aClass);

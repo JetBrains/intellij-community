@@ -874,7 +874,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     final ScrollingModelEx scrollingModel = myEditor.getScrollingModel();
     int yScrollOffset = scrollingModel.getVerticalScrollOffset();
     int anchorOffset = myLastTopLeftCornerOffset;
-    if (anchorOffset >= 0) {
+    if (myVisibleAreaWidth != QUICK_DUMMY_WRAPPING) { // don't scroll after soft-wrap recalculation if it's the first time editor is showing
       softWrapsBefore = getNumberOfSoftWrapsBefore(anchorOffset);
     }
 

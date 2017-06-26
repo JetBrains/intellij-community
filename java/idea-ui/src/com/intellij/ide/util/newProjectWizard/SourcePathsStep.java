@@ -40,7 +40,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -180,19 +179,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final JPanel panel = new JPanel(new GridBagLayout());
     mySourcePathsChooser = new ElementsChooser<JavaModuleSourceRoot>(true) {
       public String getItemText(@NotNull JavaModuleSourceRoot sourceRoot) {
-        StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          builder.append(sourceRoot.getDirectory().getAbsolutePath());
-          final String packagePrefix = sourceRoot.getPackagePrefix();
-          if (!packagePrefix.isEmpty()) {
-            builder.append(" (").append(packagePrefix).append(")");
-          }
-          builder.append(" [").append(sourceRoot.getRootTypeName()).append("]");
-          return builder.toString();
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        String packagePrefix = sourceRoot.getPackagePrefix();
+        return sourceRoot.getDirectory().getAbsolutePath() +
+               (packagePrefix.isEmpty() ? "" : " (" + packagePrefix + ")") +
+               " [" + sourceRoot.getRootTypeName() + "]";
       }
     };
     final String text = IdeBundle.message("label.java.source.files.have.been.found");

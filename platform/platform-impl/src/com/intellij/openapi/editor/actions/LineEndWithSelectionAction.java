@@ -42,7 +42,7 @@ public class LineEndWithSelectionAction extends TextComponentEditorAction {
     }
 
     @Override
-    protected void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineEnd(editor, true, !(editor instanceof TextComponentEditor));
     }
   }

@@ -68,7 +68,7 @@ public class CloneCaretActionHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret targetCaret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret targetCaret, DataContext dataContext) {
     if (ModifierKeyDoubleClickHandler.getInstance().isRunningAction() && !isRepeatedActionInvocation()) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.add.carets.using.double.ctrl");
     }
