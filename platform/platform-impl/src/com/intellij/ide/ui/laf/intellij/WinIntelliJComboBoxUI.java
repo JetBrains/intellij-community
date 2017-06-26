@@ -25,6 +25,8 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -32,11 +34,13 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Path2D;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -571,15 +575,67 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
 
   @Override protected ComboPopup createPopup() {
-    ComboPopup popup = super.createPopup();
-    if (popup instanceof JPopupMenu) {
-      ((JPopupMenu)popup).addPopupMenuListener(new PopupMenuListenerAdapter() {
-        @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-          comboBox.repaint();
+    return new BasicComboPopup(comboBox) {
+      @Override
+      protected void configurePopup() {
+        super.configurePopup();
+        addPopupMenuListener(new PopupMenuListenerAdapter() {
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            comboBox.repaint();
+          }
+        });
+        setBorder(UIManager.getBorder("PopupMenu.border"));
+      }
+
+      @Override
+      protected void configureList() {
+        super.configureList();
+        list.setBackground(UIManager.getColor("TextField.background"));
+        wrapRenderer();
+      }
+
+      protected PropertyChangeListener createPropertyChangeListener() {
+        PropertyChangeListener listener = super.createPropertyChangeListener();
+        return new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            listener.propertyChange(evt);
+            if ("renderer".equals(evt.getPropertyName())) {
+              wrapRenderer();
+            }
+          }
+        };
+      }
+
+      private void wrapRenderer() {
+        ListCellRenderer<Object> renderer = list.getCellRenderer();
+        if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
+          list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
         }
-      });
+      }
+
+      @Override
+      public void show(Component invoker, int x, int y) {
+        super.show(invoker, x, y - JBUI.scale(1)); // Move one pixel up to align with combobox border
+      }
+    };
+  }
+
+  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
+    private final ListCellRenderer<Object> myRenderer;
+
+    public ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+      myRenderer = renderer;
     }
 
-    return popup;
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 4, 0, 1));
+      panel.setBackground(c.getBackground());
+      return panel;
+    }
   }
+
 }
