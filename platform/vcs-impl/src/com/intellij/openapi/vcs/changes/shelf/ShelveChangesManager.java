@@ -78,6 +78,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
@@ -791,10 +792,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @NotNull
   private LocalChangeList getChangeListUnshelveTo(@NotNull ShelvedChangeList list) {
-    String changeListName = list.DESCRIPTION;
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
-    LocalChangeList localChangeList = getPredefinedChangeList(changeListName, manager);
-    return localChangeList != null ? localChangeList : manager.addChangeList(changeListName, "");
+    LocalChangeList localChangeList = getPredefinedChangeList(list, manager);
+    return localChangeList != null ? localChangeList : manager.addChangeList(getChangeListNameForUnshelve(list), "");
   }
 
   private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 
 object ChangeListUtil {
 
@@ -27,12 +28,18 @@ object ChangeListUtil {
     return "$systemPrefix [$changelistName]"
   }
 
-  private fun getOriginalName(shelvedName: String): String {
+  fun getOriginalName(shelvedName: String): String {
     return SYSTEM_CHANGELIST_REGEX.matchEntire(shelvedName)?.groups?.get(1)?.value ?: shelvedName
   }
 
-  @JvmStatic fun getPredefinedChangeList(defaultName: String, changeListManager: ChangeListManager): LocalChangeList? {
-    val sameNamedList = changeListManager.findChangeList(defaultName)
-    return sameNamedList ?: changeListManager.findChangeList(getOriginalName(defaultName))
+  @JvmStatic fun getPredefinedChangeList(shelvedList: ShelvedChangeList, changeListManager: ChangeListManager): LocalChangeList? {
+    val defaultName = shelvedList.DESCRIPTION
+    return changeListManager.findChangeList(defaultName) ?:
+           if (shelvedList.isMarkedToDelete) changeListManager.findChangeList(getOriginalName(defaultName)) else null
+  }
+
+  @JvmStatic fun getChangeListNameForUnshelve(shelvedList: ShelvedChangeList): String {
+    val defaultName = shelvedList.DESCRIPTION
+    return if (shelvedList.isMarkedToDelete) getOriginalName(defaultName) else defaultName
   }
 }
