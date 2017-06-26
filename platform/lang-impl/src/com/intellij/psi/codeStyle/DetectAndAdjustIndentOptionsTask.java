@@ -138,7 +138,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private void logTooLongComputation() {
     PsiFile file = getFile();
     String fileName = file != null ? file.getName() : "";
-    LOG.warn("Indent detection is too long for: " + fileName);
+    LOG.debug("Indent detection is too long for: " + fileName);
   }
 
   private boolean isComputingForTooLong() {
