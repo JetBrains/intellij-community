@@ -78,7 +78,7 @@ class GitRewordOperation(private val repository: GitRepository,
       is UndoPossibility.HeadMoved -> notifier.notifyError(errorTitle, "Repository has already been changed")
       is UndoPossibility.PushedToProtectedBranch ->
         notifier.notifyError(errorTitle, "Commit has already been pushed to ${possibility.branch}")
-      is Error -> notifier.notifyError(errorTitle, "")
+      is UndoPossibility.Error -> notifier.notifyError(errorTitle, "")
       else -> doUndo()
     }
   }
