@@ -30,6 +30,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -79,7 +80,7 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     final DebugProcessImpl localProcess = suspendContext.getDebugProcess();
     invokeRatherLater(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         flushDescriptors();
         localProcess.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
       }
