@@ -373,7 +373,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (methodName == null || !OPTIONAL_METHOD_NAMES.contains(methodName)) return Collections.emptyList();
     PsiMethod method = call.resolveMethod();
     if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
-    List<DfaMemoryState> closures = runner.getStackTopClosures();
     DfaCallArguments arguments = popCall(instruction, runner, memState, false);
     DfaValue[] argValues = arguments.myArguments;
     DfaValue result = null;
@@ -416,9 +415,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       case "transform": {
         DfaOptionalValue optional = factory.getOptionalFactory().getOptional(!methodName.startsWith("or"));
         DfaValue relation = factory.createCondition(arguments.myQualifier, RelationType.IS, optional);
-        for (DfaMemoryState closure : closures) {
-          closure.applyCondition(relation);
-        }
+        runner.updateStackTopClosures(state -> state.applyCondition(relation));
         break;
       }
       default:
