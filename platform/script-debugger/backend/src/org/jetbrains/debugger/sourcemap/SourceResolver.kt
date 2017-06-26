@@ -180,6 +180,7 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     return Urls.newLocalFileUrl(path)
   }
   else {
-    return UrlImpl(baseUrl.scheme, baseUrl.authority, path, null)
+    val split = path.split('?', limit = 2)
+    return UrlImpl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
   }
 }
