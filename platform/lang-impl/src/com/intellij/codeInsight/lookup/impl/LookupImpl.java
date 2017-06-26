@@ -1099,6 +1099,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myOffsets.disposeMarkers();
     myDisposed = true;
     disposeTrace = DebugUtil.currentStackTrace() + "\n============";
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Disposing lookup:\n" + disposeTrace);
+    }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     staticDisposeTrace = disposeTrace;
   }
