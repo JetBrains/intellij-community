@@ -393,7 +393,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .getHintProviders()
       .stream()
       .map((langWithImplementation) -> langWithImplementation.getFirst())
-      .sorted(Comparator.comparingInt(l -> l.getDisplayName().length()))
+      .sorted(Comparator.comparing(l -> l.getDisplayName()))
       .collect(Collectors.toList());
   }
   
