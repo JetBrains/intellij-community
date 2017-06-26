@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -138,7 +139,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
         view.paint(g, textRect);
       } else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
-        final int mnemonicIndex = UIManager.getBoolean("Button.showMnemonics") ? b.getDisplayedMnemonicIndex() : -1;
+        final int mnemonicIndex = SystemInfo.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
         SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
                                                   mnemonicIndex,
                                                   textRect.x,
