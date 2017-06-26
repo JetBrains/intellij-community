@@ -15,6 +15,7 @@
  */
 package git4idea.rebase
 
+import com.intellij.openapi.util.text.StringUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertLatestHistory
 import git4idea.test.file
@@ -89,5 +90,17 @@ class GitRewordTest : GitSingleRepoTest() {
       "First commit"
     )
     assertErrorNotification("Can't Undo Reword", "Commit has already been pushed to origin/master")
+  }
+
+  // IDEA-175002
+  fun `test reword with trailing spaces`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
+    GitRewordOperation(myRepo, commit, newMessage).execute()
+
+    val actualMessage = git("log HEAD --no-walk --pretty=%B")
+    assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
+               StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
   }
 }
