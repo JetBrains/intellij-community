@@ -354,14 +354,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static String getShortcut() {
-    String shortcutText;
-    final Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
-      shortcutText = "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
-    } else {
-      shortcutText = KeymapUtil.getShortcutsText(shortcuts);
+      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift");
     }
-    return shortcutText;
+    return KeymapUtil.getShortcutsText(shortcuts);
   }
 
   private void initSearchField(final MySearchTextField search) {
@@ -704,7 +701,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }.installOn(settings);
     controls.add(settings, BorderLayout.EAST);
     myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
-    myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")  ");
+    myNonProjectCheckBox.setText("<html>Include non-project items <b>" + getShortcut() + "</b>  </html>");
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
       controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
