@@ -69,7 +69,11 @@ def _modify_new_lines(code_to_modify, all_inserted_code):
 
 def _unpack_opargs(code, inserted_code_list, current_index):
     """
-    Modified version of `_unpack_opargs` function from module `dis`
+    Modified version of `_unpack_opargs` function from module `dis`.
+    We have to use it, because sometimes code can be in an inconsistent state: if EXTENDED_ARG
+    operator was introduced into the code, but it hasn't been inserted into `code_list` yet.
+    In this case we can't use standard `_unpack_opargs` and we should check whether there are
+    some new operators in `inserted_code_list`.
     """
     extended_arg = 0
     for i in range(0, len(code), 2):
