@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
@@ -28,7 +29,6 @@ import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * @author yole
@@ -76,15 +76,24 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
 
     try {
-      final String content = myContentRevision.getContent();
-      if (content == null) {
+      byte[] bytes = null;
+      if (myContentRevision instanceof ByteBackedContentRevision) {
+        bytes = ((ByteBackedContentRevision)myContentRevision).getContentAsBytes();
+      }
+      else {
+        final String content = myContentRevision.getContent();
+        bytes = content != null ? content.getBytes(getCharset()) : null;
+      }
+
+      if (bytes == null) {
         throw new VcsException("Could not load content");
       }
       fireBeforeContentsChange();
 
+      myContent = bytes;
+
       myModificationStamp++;
       setRevision(myContentRevision.getRevisionNumber().asString());
-      myContent = content.getBytes(getCharset());
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           vcsFileSystem.fireContentsChanged(this, ContentRevisionVirtualFile.this, 0);
