@@ -9,6 +9,12 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
 import klogging.*
+import org.jetbrains.ktor.application.*
+import org.jetbrains.ktor.host.*
+import org.jetbrains.ktor.http.*
+import org.jetbrains.ktor.jetty.*
+import org.jetbrains.ktor.response.*
+import org.jetbrains.ktor.routing.*
 import runtime.reactive.*
 import java.util.concurrent.*
 
@@ -22,31 +28,36 @@ class CircletConnectionComponent(val project: Project) :
     val refreshLifetimes = SequentialLifetimes(componentLifetime)
 
     init {
-        loginDataComponent.token.view(componentLifetime) { tklt, tk ->
-            loginDataComponent.enabled.whenTrue(tklt) { enabledLt ->
-                loginDataComponent.url.view(enabledLt) { urllt, url ->
-                    loginDataComponent.orgName.view(urllt) { orgLt, orgName ->
-                        val refreshLt = refreshLifetimes.next()
-                        JobScheduler.getScheduler().schedule({
-                            if (!refreshLt.isTerminated) {
-                                async {
+        loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
+            loginDataComponent.token.view(enabledLt) { tokenLt, tk ->
+                val refreshLt = refreshLifetimes.next()
+                tokenLt.add { refreshLt.terminate() }
+
+                JobScheduler.getScheduler().schedule(
+                    {
+                        if (!refreshLt.isTerminated) {
+                            async {
+                                if (IdeaPersistence.get("token") ?: "" == "") {
+                                    authCheckFailedNotification()
+                                }
+                                else {
                                     try {
-                                        KCircletClient.start(loginDataComponent.loginModel, "http://localhost:8083", false)
+                                        KCircletClient.start(loginDataComponent.loginModel, loginDataComponent.endpoint, false)
                                         KCircletClient.connection.status.forEach(refreshLt) { status ->
-                                            when(status) {
+                                            when (status) {
                                                 ConnectionStatus.CONNECTED -> notifyConnected()
-                                                ConnectionStatus.AUTH_FAILED -> notifyReconnect(refreshLt)
+                                                ConnectionStatus.AUTH_FAILED -> authCheckFailedNotification()
                                             }
                                         }
-                                    } catch (th: Throwable) {
+                                    }
+                                    catch (th: Throwable) {
                                         refreshLt.terminate()
                                         authCheckFailedNotification()
                                     }
                                 }
                             }
-                        }, 100, TimeUnit.MILLISECONDS)
-                    }
-                }
+                        }
+                    }, 100, TimeUnit.MILLISECONDS)
             }
         }
 
@@ -89,7 +100,7 @@ class CircletConnectionComponent(val project: Project) :
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Logged in to ${loginDataComponent.orgName.value}"),
+            XmlStringUtil.wrapInHtml("Signed in"),
             NotificationType.INFORMATION,
             { a, b -> enable() })
         notification.notify(project)
@@ -99,13 +110,30 @@ class CircletConnectionComponent(val project: Project) :
         Notification(
             "IdePLuginClient.authCheckFailedNotification",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Authorization failed.<br> <a href=\"update\">Re-enter credentials</a>"),
+            XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"update\">Sign in with JBA</a>"),
             NotificationType.INFORMATION,
-            { a, b ->  })
+            { a, b ->
+                authenticate()
+            })
             .notify(project)
     }
 
-    fun askPassword() {
+    fun authenticate() {
+        val lt = Lifetime()
+        val ser = embeddedServer(Jetty, 8080) {
+            routing {
+                get("") {
+                    val token = call.parameters["token"]!!
+                    loginDataComponent.setToken(token)
+                    lt.terminate()
+                    call.respondText("Hello, world!", ContentType.Text.Html)
+                }
+            }
+        }.start(wait = true)
+        lt.add {
+            ser.stop(100, 5000, TimeUnit.MILLISECONDS)
+        }
+
     }
 }
 

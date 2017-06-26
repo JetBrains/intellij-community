@@ -4,42 +4,39 @@ import circlet.client.*
 import circlet.utils.*
 import com.intellij.openapi.components.*
 import klogging.*
+import runtime.async.*
 import runtime.reactive.*
 
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 
 data class IdePLuginClientData(
-    var enabled: Boolean? = null,
-    var orgName : String? = null,
-    var login : String? = null,
-    var url : String? = null
+    var enabled: Boolean? = null
 )
 
-@State(
-    name = "CircletLoginComponent",
-    storages = arrayOf(Storage(
-        value = "CircletClient.xml",
-        roamingType = RoamingType.DISABLED)))
-class CircletLoginComponent() :
+@State(name = "CircletLoginComponent",
+       storages = arrayOf(Storage(value = "CircletClient.xml", roamingType = RoamingType.DISABLED)))
+class CircletLoginComponent :
     ILifetimedApplicationComponent by LifetimedApplicationComponent(),
     PersistentStateComponent<IdePLuginClientData> {
 
-    val loginModel = LoginModel(IdeaPersistence, "http://localhost:8083/auth")
+    val endpoint = "http://latest.n.circlet.labs.intellij.net"
+    val loginModel = LoginModel(IdeaPersistence, "localhost:8080")
 
     val enabled = Property.createMutable(false)
-    val orgName = Property.createMutable("")
-    val url = Property.createMutable("")
-    val token = mutableProperty<String>("")
-    val login = Property.createMutable("")
+    val token = mutableProperty<Int>(0)
 
     override fun loadState(state: IdePLuginClientData) {
         enabled.value = state.enabled ?: false
-        orgName.value = state.orgName ?: ""
-        login.value = state.login ?: ""
-        url.value = state.url ?: "http://circlet-api.labs.intellij.net"
+    }
+
+    fun setToken(tk : String) {
+        async {
+            IdeaPersistence.put("token", tk)
+            token.value++
+        }
     }
 
     override fun getState(): IdePLuginClientData =
-        IdePLuginClientData(enabled = enabled.value, orgName = orgName.value, login = login.value, url = url.value)
+        IdePLuginClientData(enabled = enabled.value)
 
 }

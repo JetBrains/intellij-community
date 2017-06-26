@@ -21,7 +21,6 @@ class ReEnterCredentials : AnAction() {
         val project = e.project
         project ?: return
 
-        project.component<CircletConnectionComponent>().askPassword()
-
+        project.component<CircletConnectionComponent>().authenticate()
     }
 }

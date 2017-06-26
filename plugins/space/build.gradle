@@ -27,6 +27,9 @@ dependencies {
     compile project(':kclient-jvm')
     compile project(':client-api')
 
+    compile "org.jetbrains.ktor:ktor-core:$ktorVersion"
+    compile "org.jetbrains.ktor:ktor-jetty:$ktorVersion"
+
     compile 'org.glassfish.jersey.core:jersey-common:2.23'
     compile 'org.glassfish.jersey.core:jersey-client:2.23'
 
