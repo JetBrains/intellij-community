@@ -133,9 +133,11 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         PsiElement toHighlight = currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL ? ((PsiNameIdentifierOwner)member).getNameIdentifier() :
                                  ContainerUtil.find(memberModifierList.getChildren(),
           element -> element instanceof PsiKeyword && element.getText().equals(PsiUtil.getAccessModifier(currentLevel)));
-        assert toHighlight != null : "Member:"+member.getText() +"; Identifier:" + ((PsiNameIdentifierOwner)member).getNameIdentifier() + "; modifierList:"+ memberModifierList.getText()+"; currentLevel:"+currentLevel+";";
-        String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
-        myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+        // can be null in some strange cases of malbuilt PSI, like in EA-95877
+        if (toHighlight != null) {
+          String suggestedModifier = PsiUtil.getAccessModifier(suggestedLevel);
+          myHolder.registerProblem(toHighlight, "Access can be " + VisibilityUtil.toPresentableText(suggestedModifier), new ChangeModifierFix(suggestedModifier));
+        }
       }
     }
 
