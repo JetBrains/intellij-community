@@ -47,6 +47,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSunJvm = isSunJvm();
   public static final boolean isIbmJvm = isIbmJvm();
   public static final boolean isJetbrainsJvm = isJetbrainsJvm();
+  public static final boolean IS_AT_LEAST_JAVA9 = isJavaVersionAtLeast("9");
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
