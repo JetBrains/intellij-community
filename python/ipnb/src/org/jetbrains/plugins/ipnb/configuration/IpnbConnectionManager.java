@@ -251,18 +251,17 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       myKernels.put(path, connection);
     }
     catch (URISyntaxException e) {
-      showMessage(codePanel.getFileEditor(),
-                  "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                  new IpnbSettingsAdapter(), MessageType.WARNING);
+      showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook. <a href=\"\">Run Jupyter Notebook</a>",
+                  new IpnbRunAdapter(), MessageType.WARNING);
       LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
       return false;
     }
     catch (UnsupportedOperationException e) {
-      showMessage(codePanel.getFileEditor(), e.getMessage(), new IpnbSettingsAdapter(), MessageType.WARNING);
+      showMessage(codePanel.getFileEditor(), e.getMessage(), null, MessageType.WARNING);
     }
     catch (UnknownHostException e) {
-      showMessage(codePanel.getFileEditor(), "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                  new IpnbSettingsAdapter(), MessageType.WARNING);
+      showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook. <a href=\"\">Run Jupyter Notebook</a>",
+                  new IpnbRunAdapter(), MessageType.WARNING);
     }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
