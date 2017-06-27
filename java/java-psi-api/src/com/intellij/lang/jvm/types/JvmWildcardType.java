@@ -34,7 +34,7 @@ public interface JvmWildcardType extends JvmType {
    * </ul>
    * <p>
    *
-   * @return a upper bound
+   * @return an upper bound
    */
   @NotNull
   JvmType getUpperBound();
@@ -48,7 +48,7 @@ public interface JvmWildcardType extends JvmType {
    * <li> for {@code ?}: null type
    * </ul>
    *
-   * @return lower bound
+   * @return a lower bound
    */
   @NotNull
   JvmType getLowerBound();

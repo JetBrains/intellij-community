@@ -20,8 +20,14 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a method or a constructor.
+ *
+ * @see java.lang.reflect.Executable
  */
 public interface JvmExecutableMember extends JvmMember, JvmTypeParametersOwner {
+
+  @NotNull
+  @Override
+  String getName();
 
   @NotNull
   Iterable<JvmParameter> getParameters();

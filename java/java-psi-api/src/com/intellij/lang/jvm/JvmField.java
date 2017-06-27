@@ -18,7 +18,10 @@ package com.intellij.lang.jvm;
 import com.intellij.lang.jvm.types.JvmType;
 import org.jetbrains.annotations.NotNull;
 
-public interface JvmField extends JvmNamedMember {
+/**
+ * @see java.lang.reflect.Field
+ */
+public interface JvmField extends JvmMember {
 
   @NotNull
   @Override

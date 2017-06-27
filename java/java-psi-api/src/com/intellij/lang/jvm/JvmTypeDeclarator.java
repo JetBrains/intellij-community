@@ -15,5 +15,5 @@
  */
 package com.intellij.lang.jvm;
 
-public interface JvmTypeDeclarator extends JvmElement {
+public interface JvmTypeDeclarator extends JvmNamedElement, JvmAnnotatedElement {
 }

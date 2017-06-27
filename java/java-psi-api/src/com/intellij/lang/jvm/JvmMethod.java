@@ -18,11 +18,10 @@ package com.intellij.lang.jvm;
 import com.intellij.lang.jvm.types.JvmType;
 import org.jetbrains.annotations.NotNull;
 
-public interface JvmMethod extends JvmNamedMember, JvmExecutableMember {
-
-  @NotNull
-  @Override
-  String getName();
+/**
+ * @see java.lang.reflect.Method
+ */
+public interface JvmMethod extends JvmExecutableMember {
 
   @NotNull
   JvmType getReturnType();

@@ -15,16 +15,16 @@
  */
 package com.intellij.lang.jvm;
 
-import com.intellij.lang.jvm.types.JvmType;
+import com.intellij.lang.jvm.types.JvmClassType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @see java.lang.reflect.TypeVariable
  */
-public interface JvmTypeParameter extends JvmNamedElement, JvmAnnotatedElement, JvmTypeDeclarator {
+public interface JvmTypeParameter extends JvmTypeDeclarator {
 
   @NotNull
-  Iterable<JvmType> getBounds();
+  Iterable<JvmClassType> getBounds();
 
   @NotNull
   JvmTypeParametersOwner getOwner();

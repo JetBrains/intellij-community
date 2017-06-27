@@ -15,5 +15,8 @@
  */
 package com.intellij.lang.jvm;
 
+/**
+ * @see java.lang.reflect.Constructor
+ */
 public interface JvmConstructor extends JvmExecutableMember {
 }

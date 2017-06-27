@@ -15,19 +15,15 @@
  */
 package com.intellij.lang.jvm;
 
-import com.intellij.lang.jvm.types.JvmType;
+import com.intellij.lang.jvm.types.JvmClassType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface JvmClass extends JvmNamedMember, JvmTypeDeclarator, JvmTypeParametersOwner {
-
-  JvmClass[] EMPTY_ARRAY = new JvmClass[0];
+public interface JvmClass extends JvmMember, JvmTypeParametersOwner, JvmTypeDeclarator {
 
   /**
-   * Returns the fully qualified name of the class.
-   *
-   * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
+   * @return the qualified name of the class, or null for anonymous and local classes
    */
   @Nullable
   @NonNls
@@ -48,12 +44,9 @@ public interface JvmClass extends JvmNamedMember, JvmTypeDeclarator, JvmTypePara
   @NotNull
   Iterable<JvmClass> getInnerClasses();
 
-  @NotNull
-  Iterable<JvmTypeParameter> getTypeParameters();
-
   @Nullable
-  JvmType getSuperClassType();
+  JvmClassType getSuperClassType();
 
   @NotNull
-  Iterable<JvmType> getInterfaceTypes();
+  Iterable<JvmClassType> getInterfaceTypes();
 }

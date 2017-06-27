@@ -16,16 +16,32 @@
 package com.intellij.lang.jvm.types;
 
 import com.intellij.lang.jvm.JvmClass;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.ParameterizedType;
+
 /**
- * Represents a type which could be resolved into a class.
- *
- * @see JvmParameterizedType
+ * Represents a type which could be resolved into a class and optionally has type arguments.
  */
 public interface JvmClassType extends JvmReferenceType {
 
+  /**
+   * Resolves the class reference and returns the resulting class.
+   *
+   * @return the class instance, or null if the reference resolve failed.
+   * @see ParameterizedType#getRawType
+   */
   @Nullable
   @Override
   JvmClass resolve();
+
+  /**
+   * @return type arguments
+   * @see ParameterizedType#getActualTypeArguments
+   */
+  @NotNull
+  Iterable<JvmType> getTypeArguments();
+
+  boolean hasTypeArguments();
 }

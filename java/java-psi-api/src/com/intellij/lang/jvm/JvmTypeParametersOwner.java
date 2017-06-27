@@ -17,6 +17,9 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see java.lang.reflect.GenericDeclaration
+ */
 public interface JvmTypeParametersOwner extends JvmAnnotatedElement {
 
   @NotNull

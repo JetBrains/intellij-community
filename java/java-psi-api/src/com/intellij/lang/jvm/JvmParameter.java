@@ -18,6 +18,9 @@ package com.intellij.lang.jvm;
 import com.intellij.lang.jvm.types.JvmType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents method parameter.
+ */
 public interface JvmParameter extends JvmNamedElement, JvmModifiersOwner {
 
   @NotNull

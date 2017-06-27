@@ -17,7 +17,10 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.Nullable;
 
-public interface JvmMember extends JvmModifiersOwner {
+/**
+ * @see java.lang.reflect.Member
+ */
+public interface JvmMember extends JvmModifiersOwner, JvmNamedElement {
 
   @Nullable
   JvmClass getContainingClass();
