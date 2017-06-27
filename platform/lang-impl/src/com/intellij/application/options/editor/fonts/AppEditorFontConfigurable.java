@@ -103,4 +103,10 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
       Disposer.dispose(getFontPanel());
     }
   }
+
+  @Nullable
+  @Override
+  public String getHelpTopic() {
+    return "reference.settingsdialog.IDE.editor.colors";
+  }
 }
