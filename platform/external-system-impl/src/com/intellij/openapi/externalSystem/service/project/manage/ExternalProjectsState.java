@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,10 +31,8 @@ import java.util.Map;
  * @since 10/23/2014
  */
 public class ExternalProjectsState {
-
-
   private final Map<String, State> myExternalSystemsState = new NullSafeMap<String, State>() {
-    @Nullable
+    @NotNull
     @Override
     protected State create(String key) {
       return new State();
@@ -51,13 +50,15 @@ public class ExternalProjectsState {
   public void setExternalSystemsState(Map<String, State> externalSystemsState) {
   }
 
+  @Attribute
+  public boolean storeExternally;
 
   @Tag("state")
   public static class State {
     private ExternalProjectsViewState projectsViewState = new ExternalProjectsViewState();
 
     private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = new NullSafeMap<String, TaskActivationState>() {
-      @Nullable
+      @NotNull
       @Override
       protected TaskActivationState create(String key) {
         return new TaskActivationState();

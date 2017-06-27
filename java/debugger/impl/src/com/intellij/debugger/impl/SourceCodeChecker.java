@@ -48,6 +48,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -76,7 +77,7 @@ public class SourceCodeChecker {
       }
 
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         try {
           StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
           if (frameProxy == null) {

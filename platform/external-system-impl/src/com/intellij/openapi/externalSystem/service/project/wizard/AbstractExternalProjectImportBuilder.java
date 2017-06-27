@@ -183,7 +183,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     systemSettings.setLinkedProjectsSettings(projects);
 
     if (externalProjectNode != null) {
-      if(!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      if (systemSettings.showSelectiveImportDialogOnInitialImport() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ExternalProjectDataSelectorDialog dialog = new ExternalProjectDataSelectorDialog(
           project, new InternalExternalProjectInfo(myExternalSystemId, projectSettings.getExternalProjectPath(), externalProjectNode));
         if (dialog.hasMultipleDataToSelect()) {

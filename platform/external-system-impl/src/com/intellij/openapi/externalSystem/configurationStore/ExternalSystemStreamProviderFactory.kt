@@ -18,7 +18,6 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.configurationStore.isExternalStorageEnabled
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -27,6 +26,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.util.Function
 import org.jdom.Element
@@ -73,7 +73,9 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    if (!isExternalStorageEnabled) {
+    val project = componentManager as? Project ?: (componentManager as Module).project
+    // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
+    if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {
       return null
     }
 

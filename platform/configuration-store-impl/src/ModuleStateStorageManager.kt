@@ -22,6 +22,7 @@ import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.LineSeparator
 import com.intellij.util.io.systemIndependentPath
@@ -79,6 +80,9 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
     // need be last for compat reasons
     element.setAttribute(ProjectStateStorageManager.VERSION_OPTION, "4")
   }
+
+  override val isExternalSystemStorageEnabled: Boolean
+    get() = (componentManager as Module).project.isExternalStorageEnabled
 
   override fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
     = ModuleFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)

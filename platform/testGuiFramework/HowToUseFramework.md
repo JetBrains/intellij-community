@@ -194,7 +194,7 @@ class SomeGuiTest: GuiTestCase() {
 
   @org.junit.Test           // test function should be annotated with @Test annotation
   fun testSome() {
-    welcomeFrame {          // here is a function with a lambda receiver. Code inside brackets is used under a context of WelcomeFrameFixture.
+    welcomeFrame {          // here is a lambda function with receiver. Code inside brackets is used under a context of WelcomeFrameFixture.
                             // All fixtures has a waiting time to be found. To change this time use var GuiTestCase.defaultTimeout in seconds.
 
       checkoutFrom()        // Use WelcomeFrameFixture methods from here like this.

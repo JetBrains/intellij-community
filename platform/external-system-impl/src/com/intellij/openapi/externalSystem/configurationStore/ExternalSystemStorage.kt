@@ -22,6 +22,7 @@ import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
@@ -35,11 +36,16 @@ internal class ExternalModuleStorage(private val module: Module, storageManager:
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalModuleStorage>(states, this) {
     override fun saveLocally(element: Element?) {
       // our customizeStorageSpecs on write will not return our storage for not applicable module, so, we don't need to check it here
+      var name = module.name
+      if (ExternalSystemModulePropertyManager.getInstance(module).isMavenized()) {
+        // to distinguish because one project can contain modules from different external systems
+        name += "@maven"
+      }
       if (element == null) {
-        manager.moduleStorage.remove(module.name)
+        manager.moduleStorage.remove(name)
       }
       else {
-        manager.moduleStorage.write(module.name, element)
+        manager.moduleStorage.write(name, element)
       }
     }
   }

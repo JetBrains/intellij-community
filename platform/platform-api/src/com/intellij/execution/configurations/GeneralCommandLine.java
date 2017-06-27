@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
-  private ProcessBuilder.Redirect myInputRedirect;
+  private File myInputFile;
   private Map<Object, Object> myUserData;
 
   public GeneralCommandLine() { }
@@ -282,14 +282,9 @@ public class GeneralCommandLine implements UserDataHolder {
     withRedirectErrorStream(redirectErrorStream);
   }
 
-  @Nullable
-  public ProcessBuilder.Redirect getInputRedirect() {
-    return myInputRedirect;
-  }
-
   @NotNull
-  public GeneralCommandLine withInputRedirect(@Nullable ProcessBuilder.Redirect inputRedirect) {
-    myInputRedirect = inputRedirect;
+  public GeneralCommandLine withInput(@Nullable File file) {
+    myInputFile = file;
     return this;
   }
 
@@ -414,8 +409,8 @@ public class GeneralCommandLine implements UserDataHolder {
     setupEnvironment(builder.environment());
     builder.directory(myWorkDirectory);
     builder.redirectErrorStream(myRedirectErrorStream);
-    if (myInputRedirect != null) {
-      builder.redirectInput(myInputRedirect);
+    if (myInputFile != null) {
+      builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
     }
     return builder.start();
   }

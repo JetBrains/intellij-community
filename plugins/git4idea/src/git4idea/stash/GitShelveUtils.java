@@ -124,7 +124,7 @@ public class GitShelveUtils {
                                                 final List<VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
     try {
       ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback, markToBeDeleted);
-      project.getMessageBus().syncPublisher(ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(GitStashUtils.class));
+      project.getMessageBus().syncPublisher(ShelveChangesManager.SHELF_TOPIC).stateChanged(new ChangeEvent(GitShelveUtils.class));
       return shelve;
     }
     catch (IOException e) {

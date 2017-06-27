@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair
 import org.jdom.Element
 
 @State(name = "libraryTable", storages = arrayOf(Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter::class)))
-open class ProjectLibraryTable : LibraryTableBase() {
+open class ProjectLibraryTable(val project: Project) : LibraryTableBase() {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): LibraryTable = project.service<ProjectLibraryTable>()
@@ -39,7 +39,7 @@ open class ProjectLibraryTable : LibraryTableBase() {
   override fun getPresentation() = PROJECT_LIBRARY_TABLE_PRESENTATION
 
   class LibraryStateSplitter : StateSplitterEx() {
-    override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR, true)
+    override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
   }
 }
 

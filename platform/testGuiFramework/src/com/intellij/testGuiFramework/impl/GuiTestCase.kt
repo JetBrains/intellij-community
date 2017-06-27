@@ -51,7 +51,27 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 
 /**
- * @author Sergey Karashevich
+ * The main base class that should be extended for writing GUI tests.
+ *
+ * GuiTestCase contains methods of TestCase class like setUp() and tearDown() but also has a set of methods allows to use Kotlin DSL for
+ * writing GUI tests (starts from comment KOTLIN DSL FOR GUI TESTING). The main concept of this DSL is using contexts of the current
+ * component. Kotlin language gives us an opportunity to omit fixture instances to perform their methods, therefore code looks simpler and
+ * more clear. Just use contexts functions to find appropriate fixtures and to operate with them:
+ *
+ * {@code <code>
+ * welcomeFrame {     // <- context of WelcomeFrameFixture
+ *   createNewProject()
+ *   dialog("New Project Wizard") {
+ *   // context of DialogFixture of dialog with title "New Project Wizard"
+ *   }
+ * }
+ * </code>}
+ *
+ * All fixtures (or DSL methods for theese fixtures) has a timeout to find component on screen and equals to #defaultTimeout. To check existence
+ * of specific component by its fixture use exists lambda function with receiver.
+ *
+ * The more descriptive documentation about entire framework could be found in the root of testGuiFramework (HowToUseFramework.md)
+ *
  */
 open class GuiTestCase : GuiTestBase() {
 
@@ -83,9 +103,14 @@ open class GuiTestCase : GuiTestBase() {
 
   }
 
+  /**
+   * default timeout to find target component for fixture. Using seconds as time unit.
+   */
+  var defaultTimeout = 120L
+
   val screenshotTaker = ScreenshotTaker()
   var pathToSaveScreenshots = getTestScreenshotDirPath()
-  var defaultTimeout = 120L //timeout in seconds
+
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
   val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
@@ -108,140 +133,298 @@ open class GuiTestCase : GuiTestBase() {
     val IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
   }
 
-  //*********CONTEXT FUNCTIONS ON LAMBDA RECEIVERS
+
+  //********************KOTLIN DSL FOR GUI TESTING*************************
+  //*********CONTEXT LAMBDA FUNCTIONS WITH RECEIVERS***********************
+  /**
+   * Context function: finds welcome frame and creates WelcomeFrameFixture instance as receiver object. Code block after it call methods on
+   * the receiver object (WelcomeFrameFixture instance).
+   */
   open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
     func(findWelcomeFrame())
   }
 
+  /**
+   * Context function: finds IDE frame and creates IdeFrameFixture instance as receiver object. Code block after it call methods on the
+   * receiver object (IdeFrameFixture instance).
+   */
   fun ideFrame(func: IdeFrameFixture.() -> Unit) {
     func(findIdeFrame())
   }
 
+  /**
+   * Context function: finds dialog with specified title and creates JDialogFixture instance as receiver object. Code block after it call
+   * methods on the receiver object (JDialogFixture instance).
+   *
+   * @title title of searching dialog window. If dialog should be only one title could be omitted or set to null.
+   * @timeout time in seconds to find dialog in GUI hierarchy.
+   */
   fun dialog(title: String? = null, timeout: Long = defaultTimeout, func: JDialogFixture.() -> Unit) {
     val dialog = dialog(title, timeout)
     func(dialog)
     dialog.waitTillGone()
   }
 
+  /**
+   * Context function: imports a simple project to skip steps of creation, creates IdeFrameFixture instance as receiver object when project
+   * is loaded. Code block after it call methods on the receiver object (IdeFrameFixture instance).
+   */
   fun simpleProject(func: IdeFrameFixture.() -> Unit) {
     func(importSimpleProject())
   }
 
+  /**
+   * Context function: finds dialog "New Project Wizard" and creates NewProjectWizardFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (NewProjectWizardFixture instance).
+   */
   fun projectWizard(func: NewProjectWizardFixture.() -> Unit) {
     func(findNewProjectWizard())
   }
 
+  /**
+   * Context function for IdeFrame: activates project view in IDE and creates ProjectViewFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (ProjectViewFixture instance).
+   */
   fun IdeFrameFixture.projectView(func: ProjectViewFixture.() -> Unit) {
     func(this.projectView)
   }
 
+  /**
+   * Context function for IdeFrame: activates toolwindow view in IDE and creates CustomToolWindowFixture instance as receiver object. Code
+   * block after it call methods on the receiver object (CustomToolWindowFixture instance).
+   *
+   * @id - a toolwindow id.
+   */
   fun IdeFrameFixture.toolwindow(id: String, func: CustomToolWindowFixture.() -> Unit) {
     func(CustomToolWindowFixture(id, this))
   }
 
   //*********FIXTURES METHODS WITHOUT ROBOT and TARGET; KOTLIN ONLY
-  fun <S, C : Component> ComponentFixture<S, C>.jList(containingItem: String? = null, /*timeout in seconds*/
+  /**
+   * Finds a JList component in hierarchy of context component with a containingItem and returns JListFixture.
+   *
+   * @timeout in seconds to find JList component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.jList(containingItem: String? = null,
                                                       timeout: Long = defaultTimeout): JListFixture = if (target() is Container) jList(
     target() as Container, containingItem, timeout)
   else throw UnsupportedOperationException("Sorry, unable to find JList component with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.button(name: String, /*timeout in seconds*/
+  /**
+   * Finds a JButton component in hierarchy of context component with a name and returns JButtonFixture.
+   *
+   * @timeout in seconds to find JButton component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.button(name: String,
                                                        timeout: Long = defaultTimeout): JButtonFixture = if (target() is Container) button(
     target() as Container, name, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JButton component named by \"${name}\" with ${target().toString()} as a Container")
 
+  /**
+   * Finds a ComponentWithBrowseButton component in hierarchy of context component with a name and returns ComponentWithBrowseButtonFixture.
+   *
+   * @timeout in seconds to find ComponentWithBrowseButton component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
   fun <S, C : Component> ComponentFixture<S, C>.componentWithBrowseButton(comboboxClass: Class<out ComponentWithBrowseButton<out JComponent>>,
                                                                           timeout: Long = defaultTimeout): ComponentWithBrowseButtonFixture
     = if (target() is Container) componentWithBrowseButton(target() as Container, comboboxClass, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ComponentWithBrowseButton component with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String, /*timeout in seconds*/
+
+  /**
+   * Finds a JComboBox component in hierarchy of context component by text of label and returns JComboBoxFixture.
+   *
+   * @timeout in seconds to find JComboBox component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.combobox(labelText: String,
                                                          timeout: Long = defaultTimeout): JComboBoxFixture = if (target() is Container) combobox(
     target() as Container, labelText, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JComboBox component near label by \"${labelText}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.checkbox(labelText: String, /*timeout in seconds*/
+
+  /**
+   * Finds a JCheckBox component in hierarchy of context component by text of label and returns CheckBoxFixture.
+   *
+   * @timeout in seconds to find JCheckBox component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.checkbox(labelText: String,
                                                          timeout: Long = defaultTimeout): CheckBoxFixture = if (target() is Container) checkbox(
     target() as Container, labelText, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JCheckBox component near label by \"${labelText}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String, /*timeout in seconds*/
+  /**
+   * Finds a ActionLink component in hierarchy of context component by name and returns ActionLinkFixture.
+   *
+   * @timeout in seconds to find ActionLink component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.actionLink(name: String,
                                                            timeout: Long = defaultTimeout): ActionLinkFixture = if (target() is Container) actionLink(
     target() as Container, name, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionLink component by name \"${name}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.actionButton(actionName: String, /*timeout in seconds*/
+  /**
+   * Finds a ActionButton component in hierarchy of context component by action name and returns ActionButtonFixture.
+   *
+   * @actionName text or action id of an action button (@see com.intellij.openapi.actionSystem.ActionManager#getId())
+   * @timeout in seconds to find ActionButton component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.actionButton(actionName: String,
                                                              timeout: Long = defaultTimeout): ActionButtonFixture = if (target() is Container) actionButton(
     target() as Container, actionName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionButton component by action name \"${actionName}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.actionButtonByClass(actionClassName: String, /*timeout in seconds*/
+  /**
+   * Finds a ActionButton component in hierarchy of context component by action class name and returns ActionButtonFixture.
+   *
+   * @actionClassName qualified name of class for action
+   * @timeout in seconds to find ActionButton component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.actionButtonByClass(actionClassName: String,
                                                              timeout: Long = defaultTimeout): ActionButtonFixture = if (target() is Container) actionButtonByClass(
     target() as Container, actionClassName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionButton component by action class name \"${actionClassName}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String, /*timeout in seconds*/
+  /**
+   * Finds a JRadioButton component in hierarchy of context component by label text and returns JRadioButtonFixture.
+   *
+   * @timeout in seconds to find JRadioButton component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String,
                                                             timeout: Long = defaultTimeout): JRadioButtonFixture = if (target() is Container) radioButton(
     target() as Container, textLabel, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find RadioButton component by label \"${textLabel}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, /*timeout in seconds*/
+  /**
+   * Finds a JTextComponent component (JTextField) in hierarchy of context component by text of label and returns JTextComponentFixture.
+   *
+   * @textLabel could be a null if label is absent
+   * @timeout in seconds to find JTextComponent component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?,
                                                           timeout: Long = defaultTimeout): JTextComponentFixture = if (target() is Container) textfield(
     target() as Container, textLabel, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find JTextComponent (JTextField) component by label \"${textLabel}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, /*timeout in seconds*/
+  /**
+   * Finds a JTree component in hierarchy of context component by a path and returns ExtendedTreeFixture.
+   *
+   * @pathStrings comma separated array of Strings, representing path items: jTree("myPoject", "src", "Main.java")
+   * @timeout in seconds to find JTree component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String,
                                                       timeout: Long = defaultTimeout): ExtendedTreeFixture = if (target() is Container) jTreePath(
     target() as Container, timeout, *pathStrings)
   else throw UnsupportedOperationException(
-    "Sorry, unable to find JTree component \"${if (pathStrings != null) "by path ${pathStrings}" else ""}\" with ${target().toString()} as a Container")
+    "Sorry, unable to find JTree component \"${if (pathStrings.isNotEmpty()) "by path ${pathStrings}" else ""}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String, /*timeout in seconds*/
+  /**
+   * Finds popup on screen with item (itemName) and clicks on it item
+   *
+   * @timeout timeout in seconds to find JTextComponent component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String,
                                                            timeout: Long = defaultTimeout) = if (target() is Container) popupClick(
     target() as Container, itemName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find Popup component with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.linkLabel(itemName: String, /*timeout in seconds*/
+  /**
+   * Finds a LinkLabel component in hierarchy of context component by a link name and returns fixture for it.
+   *
+   * @timeout in seconds to find LinkLabel component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.linkLabel(linkName: String, /*timeout in seconds*/
                                                           timeout: Long = defaultTimeout) = if (target() is Container) linkLabel(
-    target() as Container, itemName, timeout)
+    target() as Container, linkName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find LinkLabel component with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.pluginTable(/*timeout in seconds*/ timeout: Long = defaultTimeout) = if (target() is Container) pluginTable(
-    target() as Container, timeout)
+  /**
+   * Finds a table of plugins component in hierarchy of context component by a link name and returns fixture for it.
+   *
+   * @timeout in seconds to find table of plugins component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.pluginTable(timeout: Long = defaultTimeout)
+    = if (target() is Container) pluginTable(target() as Container, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.message(title: String, /*timeout in seconds*/
-                                                        timeout: Long = defaultTimeout) = if (target() is Container) message(
-    target() as Container, title, timeout)
+  /**
+   * Finds a Message component in hierarchy of context component by a title MessageFixture.
+   *
+   * @timeout in seconds to find component for Message
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.message(title: String, timeout: Long = defaultTimeout)
+    = if (target() is Container) message(target() as Container, title, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
-  //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET; KOTLIN ONLY
-  fun IdeFrameFixture.editor(/*timeout in seconds*/ timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
+  //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET
+
+  /**
+   * Context function for IdeFrame: get current editor and creates EditorFixture instance as receiver object. Code block after
+   * it call methods on the receiver object (EditorFixture instance).
+   *
+   * @timeout in seconds to find get EditorFixture
+   */
+  fun IdeFrameFixture.editor(timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
     func(this.editor)
   }
 
-  fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
+  /**
+   * Extension function for IDE to iterate through the menu.
+   *
+   * @path items like: popup("New", "File")
+   */
+  fun IdeFrameFixture.popup(vararg path: String)
+    = this.invokeMenuPath(*path)
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
+  /**
+   * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
+   */
   fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
 
+  /**
+   * @param keyStroke should follow {@link KeyStrokeAdapter#getKeyStroke(String)} instructions and be generated by {@link KeyStrokeAdapter#toString(KeyStroke)} preferably
+   *
+   * examples: shortcut("meta comma"), shortcut("ctrl alt s"), shortcut("alt f11")
+   * modifiers order: shift | ctrl | control | meta | alt | altGr | altGraph
+   */
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
 
-  fun invokeAction(actionName: String) = GuiTestUtil.invokeAction(myRobot, actionName)
+  /**
+   * Invoke action by actionId through its keystroke
+   */
+  fun invokeAction(actionId: String) = GuiTestUtil.invokeAction(myRobot, actionId)
 
+  /**
+   * Take a screenshot for a specific component. Screenshot remain scaling and represent it in name of file.
+   */
   fun screenshot(component: Component, screenshotName: String): Unit {
 
     val extension = "${getScaleSuffix()}.png"
@@ -259,8 +442,10 @@ open class GuiTestCase : GuiTestBase() {
 
   }
 
-  private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
+  /**
+   * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
+   */
   fun dialog(title: String? = null, timeout: Long): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { jDialog -> true }
@@ -271,9 +456,12 @@ open class GuiTestCase : GuiTestBase() {
     }
   }
 
-  private fun message(container: Container, title: String, timeout: Long): MessagesFixture = MessagesFixture.findByTitle(myRobot, container,
-                                                                                                                         title,
-                                                                                                                         timeout.toFestTimeout())
+  //*********PRIVATE WRAPPER FUNCTIONS FOR FIXTURES
+
+  private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
+
+  private fun message(container: Container, title: String, timeout: Long): MessagesFixture
+    = MessagesFixture.findByTitle(myRobot, container, title, timeout.toFestTimeout())
 
   private fun jList(container: Container, containingItem: String? = null, timeout: Long): JListFixture {
 

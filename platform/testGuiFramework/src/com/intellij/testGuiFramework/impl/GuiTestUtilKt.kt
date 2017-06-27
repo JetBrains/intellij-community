@@ -15,6 +15,9 @@
  */
 package com.intellij.testGuiFramework.impl
 
+import org.fest.swing.edt.GuiActionRunner
+import org.fest.swing.edt.GuiQuery
+import org.fest.swing.edt.GuiTask
 import java.util.*
 
 /**
@@ -67,10 +70,6 @@ object GuiTestUtilKt {
       throw Exception("Unable to build a tree from given data. Check indents and ")
     }
   }
-
-//  fun ProjectViewFixture.containsTree(tree: ImmutableTree<String>): Boolean {
-//
-//  }
 
   private infix fun String.hasDiffIndentFrom(s: String): Boolean {
     return this.getIndent() != s.getIndent()
@@ -132,6 +131,34 @@ object GuiTestUtilKt {
 
     fun isLeaf() = (children.count() == 0)
 
+  }
+
+  fun runOnEdt(task: () -> Unit) {
+    GuiActionRunner.execute(object : GuiTask() {
+      override fun executeInEDT() {
+        task()
+      }
+    })
+  }
+
+  fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?
+    = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
+    override fun executeInEDT(): ReturnType = query()
+  })
+
+  fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
+    val result = GuiActionRunner.execute(object : GuiQuery<Pair<ReturnType?, Throwable?>>() {
+      override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
+        try {
+          return Pair(query(), null)
+        }
+        catch (e: Exception) {
+          return Pair(null, e)
+        }
+      }
+    })
+    if (result?.second != null) throw result!!.second!!
+    return result!!.first
   }
 
 }

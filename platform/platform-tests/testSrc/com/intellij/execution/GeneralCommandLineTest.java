@@ -367,8 +367,7 @@ public class GeneralCommandLineTest {
                                    "@echo off\n" + "findstr \"^\"\n",
                                    "#!/bin/sh\n" + "cat\n");
     try {
-      GeneralCommandLine commandLine = createCommandLine(script.getPath());
-      commandLine.withInputRedirect(ProcessBuilder.Redirect.from(input));
+      GeneralCommandLine commandLine = createCommandLine(script.getPath()).withInput(input);
       String output = execAndGetOutput(commandLine);
       assertEquals(content, StringUtil.convertLineSeparators(output));
     }
