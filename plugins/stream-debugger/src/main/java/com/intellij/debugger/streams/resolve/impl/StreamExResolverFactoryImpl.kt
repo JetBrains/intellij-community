@@ -44,6 +44,9 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "flatArray", "flatCollection" -> FlatMapResolver()
       "intervalMap" -> IntervalMapResolver()
       "collapse", "collapseKeys", "runLengths", "groupRuns" -> CollapseResolver()
+      "parallel", "skipOrdered" -> FilterResolver()
+      "zipWith" -> MapResolver()
+      "chain", "prefix", "prefixKeys", "prefixValues", "headTail" -> null
       else -> null
     }
   }
