@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
-  private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
+  protected final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
 
   public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);

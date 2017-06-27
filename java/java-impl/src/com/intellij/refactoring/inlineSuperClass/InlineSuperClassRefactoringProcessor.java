@@ -40,7 +40,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -63,16 +62,20 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     myCurrentInheritor = currentInheritor;
     mySuperClass = superClass;
     myPolicy = policy;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
-      public boolean includeMember(PsiMember element) {
-        return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(mySuperClass, element, true);
-      }
-    });
-    List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySuperClass);
+    List<MemberInfo> members = getClassMembersToPush(mySuperClass);
     for (MemberInfo member : members) {
       member.setChecked(true);
     }
     myMemberInfos = members.toArray(new MemberInfo[members.size()]);
+  }
+
+  public static List<MemberInfo> getClassMembersToPush(PsiClass superClass) {
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(superClass, new MemberInfo.Filter<PsiMember>() {
+      public boolean includeMember(PsiMember element) {
+        return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(superClass, element, true);
+      }
+    });
+    return memberInfoStorage.getClassMemberInfos(superClass);
   }
 
   @NotNull

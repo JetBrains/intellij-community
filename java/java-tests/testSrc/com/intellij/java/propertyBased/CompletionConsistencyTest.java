@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -41,8 +42,9 @@ import java.util.List;
 /**
  * @author peter
  */
+@SkipSlowTestLocally
 public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
-  
+
   static class CompletionInvocation extends ActionOnRange {
     final int itemIndexRaw;
     LookupElement selectedItem;
@@ -91,7 +93,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
             if (offset < 0) continue;
 
             editor.getCaretModel().moveToOffset(offset);
-            
+
             PsiElement leaf = psiFile.findElementAt(offset);
 
             try {
@@ -138,8 +140,8 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
 
   private static boolean isInnermostReferenceQualifier(PsiElement leaf) {
     PsiElement parent = leaf.getParent();
-    return parent instanceof PsiJavaCodeReferenceElement && 
-           !((PsiJavaCodeReferenceElement)parent).isQualified() && 
+    return parent instanceof PsiJavaCodeReferenceElement &&
+           !((PsiJavaCodeReferenceElement)parent).isQualified() &&
            parent.getParent() instanceof PsiJavaCodeReferenceElement;
   }
 

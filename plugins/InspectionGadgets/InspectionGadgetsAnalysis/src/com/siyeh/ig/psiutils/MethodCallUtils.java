@@ -168,8 +168,8 @@ public class MethodCallUtils {
 
   public static boolean isCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @NonNls @Nullable String methodName, @Nullable PsiType... parameterTypes) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     if (methodName != null) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String referenceName = methodExpression.getReferenceName();
       if (!methodName.equals(referenceName)) {
         return false;

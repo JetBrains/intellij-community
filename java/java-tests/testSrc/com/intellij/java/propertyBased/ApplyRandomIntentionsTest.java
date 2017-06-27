@@ -19,6 +19,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 import slowCheck.*;
@@ -27,6 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+@SkipSlowTestLocally
 public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
 
   @Override
@@ -134,7 +136,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS.withIterationCount(30);
     Generator<InvokeIntention> genIntention =
       Generator.from(data -> InvokeIntention.generate(psiManager.findFile(javaFiles().generateValue(data)), data));
-    
+
     PropertyChecker.forAll(settings, Generator.listsOf(genIntention.noShrink()), list -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
