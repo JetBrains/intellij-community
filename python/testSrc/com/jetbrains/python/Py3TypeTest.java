@@ -595,6 +595,19 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-24445
+  public void testIsSubclassInsideListComprehension() {
+    doTest("List[Type[A]]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if issubclass(e, A)]");
+  }
+
+  public void testIsInstanceInsideListComprehension() {
+    doTest("List[A]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if isinstance(e, A)]");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

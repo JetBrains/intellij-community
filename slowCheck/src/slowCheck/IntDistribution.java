@@ -1,5 +1,6 @@
 package slowCheck;
 
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -23,10 +24,10 @@ public interface IntDistribution {
   }
 
   /**
-   * Geometric distribution with a given mean
+   * Geometric distribution ("number of failures until first success") with a given mean
    */
   static IntDistribution geometric(int mean) {
-    double p = 1.0 / mean;
+    double p = 1.0 / (mean + 1);
     return new IntDistribution() {
       @Override
       public int generateInt(Random random) {
@@ -41,10 +42,17 @@ public interface IntDistribution {
     };
   }
 
-  /**
-   * This distribution returns 0 or 1, where 1 will be returned with the given probability
-   */
-  static IntDistribution biasedCoin(double probabilityOfOne) {
-    return new BoundedIntDistribution(0, 1, r -> r.nextDouble() < probabilityOfOne ? 1 : 0);
+  static IntDistribution frequencyDistribution(List<Integer> weights) {
+    if (weights.isEmpty()) throw new IllegalArgumentException("No alternatives to choose from");
+    
+    int sum = weights.stream().reduce(0, (a, b) -> a + b);
+    return new BoundedIntDistribution(0, weights.size() - 1, r -> {
+      int value = r.nextInt(sum);
+      for (int i = 0; i < weights.size(); i++) {
+        value -= weights.get(i);
+        if (value <= 0) return i;
+      }
+      throw new IllegalArgumentException();
+    });
   }
 }

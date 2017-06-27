@@ -83,8 +83,18 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
   private static class NullArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
+    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      super.visitEnumConstant(enumConstant);
+      visitCall(enumConstant);
+    }
+
+    @Override
     public void visitCallExpression(PsiCallExpression call) {
       super.visitCallExpression(call);
+      visitCall(call);
+    }
+
+    private void visitCall(PsiCall call) {
       final PsiExpressionList argumentList = call.getArgumentList();
       if (argumentList == null) {
         return;

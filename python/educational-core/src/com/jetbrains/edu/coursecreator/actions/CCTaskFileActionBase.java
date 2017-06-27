@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -12,6 +13,8 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class CCTaskFileActionBase extends AnAction {
   public CCTaskFileActionBase(@Nullable String text) {
@@ -24,20 +27,32 @@ public abstract class CCTaskFileActionBase extends AnAction {
     if (project == null) {
       return;
     }
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (file == null) {
+    final VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    if (virtualFiles == null) {
       return;
     }
-    VirtualFile taskVF = StudyUtils.getTaskDir(file);
-    if (taskVF == null) {
-      return;
+
+    for (VirtualFile file : virtualFiles) {
+      if (!isAvailable(project, file)) continue;
+      VirtualFile taskVF = StudyUtils.getTaskDir(file);
+      if (taskVF == null) {
+        return;
+      }
+      Task task = StudyUtils.getTask(project, taskVF);
+      if (task == null) {
+        return;
+      }
+      Course course = StudyTaskManager.getInstance(project).getCourse();
+      if (file.isDirectory()) {
+        final List<VirtualFile> children = VfsUtil.collectChildrenRecursively(file);
+        for (VirtualFile child : children) {
+          performAction(child, task, course, project);
+        }
+      }
+      else {
+        performAction(file, task, course, project);
+      }
     }
-    Task task = StudyUtils.getTask(project, taskVF);
-    if (task == null) {
-      return;
-    }
-    Course course = StudyTaskManager.getInstance(project).getCourse();
-    performAction(file, task, course, project);
   }
 
   protected abstract void performAction(VirtualFile file, Task task, Course course, Project project);
@@ -51,8 +66,8 @@ public abstract class CCTaskFileActionBase extends AnAction {
       presentation.setEnabledAndVisible(false);
       return;
     }
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (file == null || file.isDirectory() || !isAvailable(project, file)) {
+    final VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    if (virtualFiles == null || virtualFiles.length == 0) {
       presentation.setEnabledAndVisible(false);
     }
   }

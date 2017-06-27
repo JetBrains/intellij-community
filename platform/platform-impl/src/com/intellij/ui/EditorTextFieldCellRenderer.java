@@ -399,7 +399,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
                                     boolean greedyToLeft,
                                     boolean greedyToRight,
                                     int layer) {
-      myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+      myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, false, layer);
     }
 
     @Override

@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +33,9 @@ import java.util.Collection;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
-
-
-/**
- * @author Nadya Zabrodina
- */
+import static com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class VcsRootDetectorTest extends VcsRootBaseTest {
 
@@ -46,19 +44,19 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   }
 
   public void testProjectUnderSingleMockRoot() throws IOException {
-    doTest(new VcsRootConfiguration().mock("."), myProjectRoot, ".");
+    doTest(new VcsRootConfiguration().vcsRoots("."), myProjectRoot, ".");
   }
 
   public void testProjectWithMockRootUnderIt() throws IOException {
     cd(myProjectRoot);
     mkdir("src");
     mkdir(".idea");
-    doTest(new VcsRootConfiguration().mock("community"), myProjectRoot, "community");
+    doTest(new VcsRootConfiguration().vcsRoots("community"), myProjectRoot, "community");
   }
 
   public void testProjectWithAllSubdirsUnderMockRootShouldStillBeNotFullyControlled() throws IOException {
     String[] dirNames = {".idea", "src", "community"};
-    doTest(new VcsRootConfiguration().mock(dirNames), myProjectRoot, dirNames);
+    doTest(new VcsRootConfiguration().vcsRoots(dirNames), myProjectRoot, dirNames);
   }
 
   public void testProjectUnderVcsAboveIt() throws IOException {
@@ -66,28 +64,28 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     cd(myRepository);
     mkdir(subdir);
     VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(new VcsRootConfiguration().mock(myRepository.getName()), vfile, myRepository.getName()
+    doTest(new VcsRootConfiguration().vcsRoots(myRepository.getName()), vfile, myRepository.getName()
     );
   }
 
   public void testIDEAProject() throws IOException {
     String[] names = {"community", "contrib", "."};
-    doTest(new VcsRootConfiguration().mock(names), myProjectRoot, names);
+    doTest(new VcsRootConfiguration().vcsRoots(names), myProjectRoot, names);
   }
 
   public void testOneAboveAndOneUnder() throws IOException {
     String[] names = {myRepository.getName() + "/community", "."};
-    doTest(new VcsRootConfiguration().mock(names), myRepository, names);
+    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);
   }
 
   public void testOneAboveAndOneForProjectShouldShowOnlyProjectRoot() throws IOException {
     String[] names = {myRepository.getName(), "."};
-    doTest(new VcsRootConfiguration().mock(names), myRepository, myRepository.getName());
+    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, myRepository.getName());
   }
 
   public void testOneAboveAndSeveralUnderProject() throws IOException {
     String[] names = {".", myRepository.getName() + "/community", myRepository.getName() + "/contrib"};
-    doTest(new VcsRootConfiguration().mock(names), myRepository, names);
+    doTest(new VcsRootConfiguration().vcsRoots(names), myRepository, names);
   }
 
   public void testMultipleAboveShouldBeDetectedAsOneAbove() throws IOException {
@@ -95,24 +93,23 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     cd(myRepository);
     mkdir(subdir);
     VirtualFile vfile = myRepository.findChild(subdir);
-    doTest(new VcsRootConfiguration().mock(".", myRepository.getName()), vfile, myRepository.getName());
+    doTest(new VcsRootConfiguration().vcsRoots(".", myRepository.getName()), vfile, myRepository.getName());
   }
 
   public void testUnrelatedRootShouldNotBeDetected() throws IOException {
-    doTest(new VcsRootConfiguration().mock("another"), myRepository);
+    doTest(new VcsRootConfiguration().vcsRoots("another"), myRepository);
   }
-
 
   public void testLinkedSourceRootAloneShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock("linked_root")
+      new VcsRootConfiguration().vcsRoots("linked_root")
         .contentRoots("linked_root");
     doTest(vcsRootConfiguration, myRepository, "linked_root");
   }
 
   public void testLinkedSourceRootAndProjectRootShouldBeDetected() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock(".", "linked_root")
+      new VcsRootConfiguration().vcsRoots(".", "linked_root")
         .contentRoots("linked_root");
     doTest(vcsRootConfiguration, myProjectRoot, ".", "linked_root");
   }
@@ -120,21 +117,39 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   public void testLinkedSourceBelowMockRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
       new VcsRootConfiguration().contentRoots("linked_root/src")
-        .mock(".", "linked_root");
+        .vcsRoots(".", "linked_root");
     doTest(vcsRootConfiguration, myProjectRoot, ".", "linked_root");
   }
 
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
     VcsRootConfiguration vcsRootConfiguration =
-      new VcsRootConfiguration().mock("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
+      new VcsRootConfiguration().vcsRoots("community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3")
         .contentRoots("content_root");
     doTest(vcsRootConfiguration,
            myProjectRoot, "community", "content_root/lev1/lev2");
   }
 
-  void assertRoots(@NotNull Collection<String> expectedRelativePaths, @NotNull Collection<String> actual) {
-    VcsTestUtil.assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
+  public void testDontScanExcludedDirs() throws IOException {
+    VcsRootConfiguration vcsRootConfiguration = new VcsRootConfiguration()
+        .contentRoots("community", "excluded")
+        .vcsRoots("community", "excluded/lev1");
+    setUp(vcsRootConfiguration, myProjectRoot);
+
+    VirtualFile excludedFolder = myProjectRoot.findChild("excluded");
+    assertNotNull(excludedFolder);
+    markAsExcluded(excludedFolder);
+
+    Collection<VcsRoot> vcsRoots = detect(myProjectRoot);
+    assertRoots(singletonList("community"), getPaths(vcsRoots));
+  }
+
+  private void assertRoots(@NotNull Collection<String> expectedRelativePaths, @NotNull Collection<String> actual) {
+    assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
+  }
+
+  private void markAsExcluded(@NotNull VirtualFile dir) {
+    ModuleRootModificationUtil.updateExcludedFolders(myRootModel.getModule(), dir, emptyList(), singletonList(dir.getUrl()));
   }
 
   @NotNull
@@ -167,12 +182,8 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
 
   public void doTest(@NotNull VcsRootConfiguration vcsRootConfiguration,
                      @Nullable VirtualFile startDir,
-                     @NotNull String... expectedPaths)
-    throws IOException {
-    initProject(vcsRootConfiguration);
-    if (startDir != null) {
-      startDir.refresh(false, true);
-    }
+                     @NotNull String... expectedPaths) throws IOException {
+    setUp(vcsRootConfiguration, startDir);
     Collection<VcsRoot> vcsRoots = detect(startDir);
     assertRoots(Arrays.asList(expectedPaths), getPaths(
       ContainerUtil.filter(vcsRoots, root -> {
@@ -180,5 +191,12 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
         return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
       })
     ));
+  }
+
+  private void setUp(@NotNull VcsRootConfiguration vcsRootConfiguration, @Nullable VirtualFile startDir) throws IOException {
+    initProject(vcsRootConfiguration);
+    if (startDir != null) {
+      startDir.refresh(false, true);
+    }
   }
 }

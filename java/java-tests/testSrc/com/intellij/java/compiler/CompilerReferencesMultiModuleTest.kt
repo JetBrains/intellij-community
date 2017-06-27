@@ -34,6 +34,12 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
     installCompiler()
   }
 
+  override fun tearDown() {
+    moduleA = null
+    moduleB = null
+    super.tearDown()
+  }
+
   fun testNoChanges() {
     myFixture.addFileToProject("BaseClass.java", "public interface BaseClass{}")
     myFixture.addFileToProject("A/ClassA.java", "public class ClassA implements BaseClass{}")

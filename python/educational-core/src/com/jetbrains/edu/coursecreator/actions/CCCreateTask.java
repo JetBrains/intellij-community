@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -116,6 +117,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
       return null;
     }
     task.setLesson(((Lesson)parentItem));
+    task.addTaskText(task.getTaskDescriptionName(), CCUtils.TASK_DESCRIPTION_TEXT);
     return task;
   }
 }

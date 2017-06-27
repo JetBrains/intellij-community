@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="junit" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="aether-dependency-resolver" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-openapi" scope="TEST" />
   </component>
 </module>

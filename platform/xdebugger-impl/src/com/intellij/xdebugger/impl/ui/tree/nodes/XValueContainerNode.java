@@ -43,6 +43,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
   private List<MessageTreeNode> myTemporaryMessageChildren;
+  private MessageTreeNode myTemporaryEditorNode;
   private List<XValueGroupNodeImpl> myTopGroups;
   private List<XValueGroupNodeImpl> myBottomGroups;
   private List<TreeNode> myCachedAllChildren;
@@ -159,6 +160,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myCachedAllChildren = null;
     myMessageChildren = null;
     myTemporaryMessageChildren = null;
+    myTemporaryEditorNode = null;
     myValueChildren = null;
     myTopGroups = null;
     myBottomGroups = null;
@@ -193,18 +195,15 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
   private void setMessageNodes(final List<MessageTreeNode> messages, boolean temporary) {
     myCachedAllChildren = null;
-    List<MessageTreeNode> allMessageChildren = ContainerUtil.concat(myMessageChildren != null ? myMessageChildren : Collections.emptyList(),
-                                                                    myTemporaryMessageChildren != null ? myTemporaryMessageChildren : Collections.emptyList());
-    final int[] indices = getNodesIndices(allMessageChildren);
-    final TreeNode[] nodes = allMessageChildren.toArray(new TreeNode[allMessageChildren.size()]);
-    fireNodesRemoved(indices, nodes);
-    if (!temporary) {
-      myMessageChildren = messages;
-      myTemporaryMessageChildren = null;
+    List<MessageTreeNode> toDelete = temporary ? myTemporaryMessageChildren : myMessageChildren;
+    if (toDelete != null) {
+      fireNodesRemoved(getNodesIndices(toDelete), toDelete.toArray(new TreeNode[toDelete.size()]));
+    }
+    if (temporary) {
+      myTemporaryMessageChildren = messages;
     }
     else {
-      myTemporaryMessageChildren = messages;
-      myMessageChildren = null;
+      myMessageChildren = messages;
     }
     myCachedAllChildren = null;
     fireNodesInserted(messages);
@@ -221,18 +220,18 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     if (!StringUtil.isEmpty(text)) {
       node.getText().append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    if (myMessageChildren == null) {
-      myMessageChildren = ContainerUtil.newSmartList();
-    }
-    myMessageChildren.add(0, node);
+    myTemporaryEditorNode = node;
     myCachedAllChildren = null;
     fireNodesInserted(Collections.singleton(node));
     return node;
   }
 
   public void removeTemporaryEditorNode(XDebuggerTreeNode node) {
-    if (myMessageChildren != null) {
-      removeChildNode(myMessageChildren, node);
+    if (myTemporaryEditorNode != null) {
+      int index = getIndex(myTemporaryEditorNode);
+      myTemporaryEditorNode = null;
+      myCachedAllChildren = null;
+      fireNodesRemoved(new int[]{index}, new TreeNode[]{node});
     }
   }
 
@@ -253,6 +252,9 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
 
     if (myCachedAllChildren == null) {
       myCachedAllChildren = new ArrayList<>();
+      if (myTemporaryEditorNode != null) {
+        myCachedAllChildren.add(myTemporaryEditorNode);
+      }
       if (myMessageChildren != null) {
         myCachedAllChildren.addAll(myMessageChildren);
       }

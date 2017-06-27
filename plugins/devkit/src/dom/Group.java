@@ -76,7 +76,7 @@ public interface Group extends Actions, ActionOrGroup {
 	@NotNull
 	@Attribute ("class")
         @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
-            instantiatable = true, allowAbstract = false, allowInterface = false)
+		allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
 	GenericAttributeValue<PsiClass> getClazz();
 
@@ -89,13 +89,6 @@ public interface Group extends Actions, ActionOrGroup {
 	@NotNull
 	GenericAttributeValue<String> getText();
 
-  	///**
-	// * Returns the value of the overrides child.
-	// * Attribute overrides
-	// * @return the value of the overrides child.
-	// */
-	//@NotNull
-	//GenericAttributeValue<Boolean> getOverrides();
 
 	/**
 	 * Returns the value of the separator child.

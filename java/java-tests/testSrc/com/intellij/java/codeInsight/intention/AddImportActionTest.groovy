@@ -425,7 +425,7 @@ class Test {
 }
 '''
     myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection())
-    myFixture.launchAction(myFixture.findSingleIntention("Remove qualification"))
+    myFixture.launchAction(myFixture.findSingleIntention("Remove unnecessary qualification"))
     myFixture.checkResult '''
 class Test {
 
@@ -509,7 +509,7 @@ class Tq {
 
   private def reimportClass() {
     myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection())
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with import"))
+    myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with import"))
   }
 
   void "test disprefer deprecated classes"() {

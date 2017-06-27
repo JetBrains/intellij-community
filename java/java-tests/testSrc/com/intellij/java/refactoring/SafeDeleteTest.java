@@ -91,6 +91,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testDeepDeleteParameterOtherTypeInBinaryExpression() throws Exception {
     doSingleFileTest();
   }
+  
+  public void testDeepDeleteFieldAndAssignedParameter() throws Exception {
+    doSingleFileTest();
+  }
 
   public void testImpossibleToDeepDeleteParameter() throws Exception {
     doSingleFileTest();
@@ -131,7 +135,6 @@ public class SafeDeleteTest extends MultiFileTestCase {
   public void testParameterInHierarchy() throws Exception {
     doTest("C2");
   }
-
 
   public void testTopLevelDocComment() throws Exception {
     doTest("foo.C1");

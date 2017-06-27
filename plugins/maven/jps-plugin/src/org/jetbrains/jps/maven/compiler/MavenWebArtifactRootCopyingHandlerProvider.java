@@ -16,6 +16,7 @@
 package org.jetbrains.jps.maven.compiler;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +52,6 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
                                                 @NotNull JpsPackagingElement contextElement,
                                                 @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {
-    if (contextElement instanceof JpsModuleOutputPackagingElement) return null;
-
     MavenProjectConfiguration projectConfiguration = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(buildDataPaths);
     if (projectConfiguration == null) return null;
 
@@ -63,6 +62,12 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     if (moduleResourceConfiguration == null) {
       LOG.debug("Maven resource configuration not found for module " + artifactResourceConfiguration.moduleName);
       return null;
+    }
+
+    if (contextElement instanceof JpsModuleOutputPackagingElement) {
+      if (!FileUtil.namesEqual("classes", root.getName())) return null;
+
+      return new MavenClassesCopyingHandler(root.getParentFile(), artifactResourceConfiguration, moduleResourceConfiguration);
     }
 
     ResourceRootConfiguration rootConfiguration = artifactResourceConfiguration.getRootConfiguration(root);
@@ -77,20 +82,27 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     private final ResourceRootConfiguration myWarRootConfig;
     private final MavenModuleResourceConfiguration myModuleResourceConfig;
 
-    public MavenWebArtifactCopyingHandler(MavenWebArtifactConfiguration artifactConfig,
-                                          MavenModuleResourceConfiguration moduleResourceConfig) {
+    public MavenWebArtifactCopyingHandler(@NotNull MavenWebArtifactConfiguration artifactConfig,
+                                          @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
       this(getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig);
     }
 
-    private MavenWebArtifactCopyingHandler(ResourceRootConfiguration warRootConfig,
-                                           MavenModuleResourceConfiguration moduleResourceConfig) {
-      super(new MavenResourceFileFilter(new File(toSystemDependentName(warRootConfig.directory)), warRootConfig));
+    private MavenWebArtifactCopyingHandler(@NotNull ResourceRootConfiguration warRootConfig,
+                                           @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
+      this(new MavenResourceFileFilter(new File(toSystemDependentName(warRootConfig.directory)), warRootConfig),
+           warRootConfig, moduleResourceConfig);
+    }
+
+    protected MavenWebArtifactCopyingHandler(@NotNull FileFilter filter,
+                                             @NotNull ResourceRootConfiguration warRootConfig,
+                                             @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
+      super(filter);
       myWarRootConfig = warRootConfig;
       myModuleResourceConfig = moduleResourceConfig;
     }
 
-    private static ResourceRootConfiguration getWarRootConfig(MavenWebArtifactConfiguration artifactConfig,
-                                                              MavenModuleResourceConfiguration moduleResourceConfig) {
+    private static ResourceRootConfiguration getWarRootConfig(@NotNull MavenWebArtifactConfiguration artifactConfig,
+                                                              @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
       ResourceRootConfiguration rootConfig = new ResourceRootConfiguration();
       rootConfig.directory = artifactConfig.warSourceDirectory;
       rootConfig.targetPath = moduleResourceConfig.outputDirectory;
@@ -112,6 +124,43 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       hash = 31 * hash + myWarRootConfig.computeConfigurationHash();
       hash = 31 * hash + myModuleResourceConfig.computeModuleConfigurationHash();
       return hash;
+    }
+  }
+
+  private static class MavenClassesCopyingHandler extends MavenWebArtifactCopyingHandler {
+
+    private final File myTargetDir;
+
+    public MavenClassesCopyingHandler(@NotNull File targetDir,
+                                      @NotNull MavenWebArtifactConfiguration artifactConfig,
+                                      @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
+      this(targetDir, MavenWebArtifactCopyingHandler.getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig);
+    }
+
+    protected MavenClassesCopyingHandler(@NotNull File targetDir,
+                                         @NotNull ResourceRootConfiguration warRootConfig,
+                                         @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
+      super(new ClassesFilter(targetDir, warRootConfig), warRootConfig, moduleResourceConfig);
+      myTargetDir = targetDir;
+    }
+
+    protected int configurationHash() {
+      return FileUtil.fileHashCode(myTargetDir) + super.configurationHash() * 31;
+    }
+
+    private static class ClassesFilter extends MavenResourceFileFilter {
+      private final File myTargetDir;
+
+      public ClassesFilter(@NotNull File targetDir, @NotNull ResourceRootConfiguration warRootConfig) {
+        super(targetDir, warRootConfig);
+        myTargetDir = targetDir;
+      }
+
+      @Override
+      public boolean accept(@NotNull File file) {
+        String relPath = FileUtil.getRelativePath(myTargetDir, file);
+        return relPath != null && super.accept(new File(myTargetDir, "WEB-INF" + File.separator + relPath));
+      }
     }
   }
 

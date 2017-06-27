@@ -23,11 +23,11 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.rt.compiler.JavacResourcesReader;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,19 +143,8 @@ public class JavacOutputParser extends OutputParser {
 
           if (colNum >= 0){
             messages = convertMessages(messages);
-            final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-            try {
-              for (final String m : messages) {
-                if (buf.length() > 0) {
-                  buf.append("\n");
-                }
-                buf.append(m);
-              }
-              addMessage(callback, category, buf.toString(), VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum + 1);
-            }
-            finally {
-              StringBuilderSpinAllocator.dispose(buf);
-            }
+            String text = StringUtil.join(messages, "\n");
+            addMessage(callback, category, text, VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, filePath), lineNum, colNum + 1);
             return true;
           }
         }

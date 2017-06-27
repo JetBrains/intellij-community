@@ -34,6 +34,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -152,7 +153,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       ModuleData moduleData = node.getData();
       Module module = modelsProvider.findIdeModule(moduleData);
       if (module == null) {
-        result.add(node);
+        UnloadedModuleDescription unloadedModuleDescription = modelsProvider.getUnloadedModuleDescription(moduleData);
+        if (unloadedModuleDescription == null) {
+          result.add(node);
+        }
       }
       else {
         node.putUserData(MODULE_KEY, module);

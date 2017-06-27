@@ -125,6 +125,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     }
   }
 
+  @NotNull
   public String getModuleName() {
     return StringUtil.notNullize(myModuleName);
   }

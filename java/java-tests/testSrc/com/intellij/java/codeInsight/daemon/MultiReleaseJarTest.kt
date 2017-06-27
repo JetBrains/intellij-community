@@ -33,6 +33,11 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     scope = ProjectScope.getLibrariesScope(project)
   }
 
+  override fun tearDown() {
+    scope = GlobalSearchScope.EMPTY_SCOPE
+    super.tearDown()
+  }
+
   fun testResolve() {
     myFixture.configureByText("a.java", "import com.example.*;\nclass a { <caret>MultiReleaseClass f; }")
     assertUnversioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element })

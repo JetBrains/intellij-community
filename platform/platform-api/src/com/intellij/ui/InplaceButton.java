@@ -39,6 +39,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private BaseButtonBehavior myBehavior;
   private ActionListener myListener;
 
+  private Icon myIcon;
   private CenteredIcon myRegular;
   private CenteredIcon myHovered;
   private CenteredIcon myInactive;
@@ -130,6 +131,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
     setPreferredSize(new Dimension(width, height));
 
+    myIcon = regular;
     myRegular = new CenteredIcon(regular, width, height);
     myHovered = new CenteredIcon(hovered, width, height);
     myInactive = new CenteredIcon(inactive, width, height);
@@ -156,6 +158,10 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   public void setIcon(final Icon icon) {
     setIcons(icon, icon, icon);
+  }
+
+  public Icon getIcon() {
+    return myIcon;
   }
 
   @Override

@@ -91,9 +91,11 @@ open class UDependentValue protected constructor(
     override fun merge(other: UValue) = when (other) {
         this -> this
         value -> this
+        is UVariableValue -> other.merge(this)
         is UDependentValue -> {
-            if (value != other.value) UPhiValue.create(this, other)
-            else UDependentValue(value, dependencies + other.dependencies)
+            val allDependencies = dependencies + other.dependencies
+            if (value != other.value) UDependentValue(value.merge(other.value), allDependencies)
+            else UDependentValue(value, allDependencies)
         }
         else -> UPhiValue.create(this, other)
     }

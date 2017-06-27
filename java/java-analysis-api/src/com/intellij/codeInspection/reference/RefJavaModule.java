@@ -15,21 +15,28 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiJavaModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Pavel.Dolgov
  */
 public interface RefJavaModule extends RefElement {
+  Key<RefJavaModule> JAVA_MODULE = Key.create("JAVA_MODULE");
+
   @Override
   PsiJavaModule getElement();
 
   @NotNull
   Map<String, List<String>> getExportedPackageNames();
+
+  @NotNull
+  Set<RefClass> getServiceImplementations();
 
   @NotNull
   List<RequiredModule> getRequiredModules();

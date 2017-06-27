@@ -30,6 +30,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTr
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeRenderer;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
@@ -101,6 +102,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     myInspectionsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myInspectionsTable.getTree().getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     myInspectionsTable.getTree().addTreeSelectionListener(e -> updateDetailsPanel());
+    myInspectionsTable.setBorder(IdeBorderFactory.createBorder());
 
     JBSplitter splitter = new JBSplitter("CommitMessageInspectionsPanelSplitter", 0.5f);
     splitter.setShowDividerIcon(false);

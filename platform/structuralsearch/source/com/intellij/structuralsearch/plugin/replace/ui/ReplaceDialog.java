@@ -217,8 +217,8 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   @Override
-  protected void addOrReplaceSelection(final String selection) {
-    super.addOrReplaceSelection(selection);
-    addOrReplaceSelectionForEditor(selection, replaceCriteriaEdit);
+  protected void setText(final String text) {
+    super.setText(text);
+    setTextForEditor(text, replaceCriteriaEdit);
   }
 }

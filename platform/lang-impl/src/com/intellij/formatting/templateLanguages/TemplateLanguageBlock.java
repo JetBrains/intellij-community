@@ -114,11 +114,23 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
    * Invoked when the current base language block is located inside a template data language block to determine the spacing after the current block.
    * @param rightNeighbor the block to the right of the current one
    * @param parent the parent block
-   * @param thisBlockIndex the index of the current block in the parent block subblocks
+   * @param thisBlockIndex the index of the current block in the parent block sub-blocks
    * @return the spacing between the current block and its right neighbor
    */
   @Nullable
   public Spacing getRightNeighborSpacing(@NotNull Block rightNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
+    return null;
+  }
+
+  /**
+   * Invoked when the current base language block is located inside a template data language block to determine the spacing before the current block.
+   * @param leftNeighbor the block to the left of the current one, or null if the current block is first child
+   * @param parent the parent block
+   * @param thisBlockIndex the index of the current block in the parent block sub-blocks
+   * @return the spacing between the current block and its left neighbor
+   */
+  @Nullable
+  public Spacing getLeftNeighborSpacing(@Nullable Block leftNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
     return null;
   }
 

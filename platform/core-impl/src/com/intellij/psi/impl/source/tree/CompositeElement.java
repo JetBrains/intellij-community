@@ -30,7 +30,6 @@ import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.*;
@@ -120,7 +119,6 @@ public class CompositeElement extends TreeElement {
   private String getThreadingDiagnostics() {
     FileElement fileElement;PsiFile psiFile;
     return " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
-           "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
            "; wrapper: " + myWrapper +
            "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
            "; fileElement: " + (fileElement = TreeUtil.getFileElement(this)) +

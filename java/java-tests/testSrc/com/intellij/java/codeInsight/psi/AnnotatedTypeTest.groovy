@@ -25,6 +25,7 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
   private PsiElementFactory factory
   private PsiElement context
 
+  @Override
   void setUp() {
     super.setUp()
 
@@ -41,6 +42,13 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
 
       @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E1 extends Exception { }
       @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E2 extends Exception { }""".stripIndent())
+  }
+
+  @Override
+  void tearDown() {
+    factory = null
+    context = null
+    super.tearDown()
   }
 
   void testPrimitiveArrayType() {

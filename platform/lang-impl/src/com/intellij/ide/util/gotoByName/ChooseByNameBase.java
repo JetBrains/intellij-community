@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -388,19 +387,21 @@ public abstract class ChooseByNameBase {
 
     caption2Tools.add(hBox, BorderLayout.EAST);
 
-    myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
-
-    final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox.setText(checkBoxName != null ? checkBoxName +
-                                              (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
-                                               ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")"
-                                               : "")
-                                            : "");
+    String checkBoxName = myModel.getCheckBoxName();
+    Color fg = UIUtil.getLabelDisabledForeground();
+    Color color = UIUtil.isUnderDarcula() ? ColorUtil.shift(fg, 1.2) : ColorUtil.shift(fg, 0.7);
+    String text = checkBoxName == null
+                  ? ""
+                  : "<html>" + checkBoxName +
+                    (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
+                     ? " <b color='" + ColorUtil.toHex(color) + "'>" +
+                       KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) +
+                       "</b>"
+                     : "") +
+                    "</html>";
+    myCheckBox.setText(text);
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
-
-    if (!SystemInfo.isMac) {
-      myCheckBox.setBorder(null);
-    }
+    myCheckBox.setBorder(null);
 
     myCheckBox.setSelected(myModel.loadInitialCheckBoxState());
 
@@ -421,7 +422,6 @@ public abstract class ChooseByNameBase {
     if (isCheckboxVisible()) {
       hBox.add(myCardContainer);
     }
-
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowFindUsagesAction() {
@@ -448,6 +448,9 @@ public abstract class ChooseByNameBase {
 
     if (myToolArea == null) {
       myToolArea = new JLabel(JBUI.scale(EmptyIcon.create(1, 24)));
+    }
+    else {
+      myToolArea.setBorder(IdeBorderFactory.createEmptyBorder(0, 6, 0, 0)); // space between checkbox and filter/show all in view buttons
     }
     hBox.add(myToolArea);
     hBox.add(toolbarComponent);

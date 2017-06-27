@@ -368,6 +368,11 @@
       <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.concatenation.ReplaceFormatStringWithConcatenationIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.strings</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.concatenation.CopyConcatenatedStringToClipboardIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.strings</categoryKey>

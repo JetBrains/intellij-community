@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
@@ -175,11 +173,11 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     final PsiElement first = codeBlockChildren[0];
     int resultStart = 0;
-    if (first instanceof PsiJavaToken && ((PsiJavaToken)first).getTokenType() == JavaTokenType.LBRACE) {
+    if (PsiUtil.isJavaToken(first, JavaTokenType.LBRACE)) {
       resultStart++;
     }
     final PsiElement last = codeBlockChildren[codeBlockChildren.length - 1];
-    if (last instanceof PsiJavaToken && ((PsiJavaToken)last).getTokenType() == JavaTokenType.RBRACE) {
+    if (PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)) {
       resultLast--;
     }
     final ArrayList<PsiElement> result = new ArrayList<>();
@@ -1442,8 +1440,119 @@ public class ExtractMethodProcessor implements MatchProvider {
         PsiModifierList parmModifierList = parm.getModifierList();
         LOG.assertTrue(parmModifierList != null);
         GenerateMembersUtil.copyAnnotations(modifierList, parmModifierList, SuppressWarnings.class.getName());
+
+        final NullableNotNullManager nullabilityManager = NullableNotNullManager.getInstance(myProject);
+        if (AnnotationUtil.isAnnotated(variable, nullabilityManager.getNullables()) ||
+            AnnotationUtil.isAnnotated(variable, nullabilityManager.getNotNulls()) ||
+            PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
+          final Nullness definitelyNotNull = getDefinitelyNotNull((PsiParameter)variable);
+          final String toAdd;
+          final List<String> toKeep;
+          final List<String> toRemove;
+          switch (definitelyNotNull) {
+            case NOT_NULL:
+              toAdd = nullabilityManager.getDefaultNotNull();
+              toKeep = nullabilityManager.getNotNulls();
+              toRemove = nullabilityManager.getNullables();
+              break;
+            case NULLABLE:
+              toAdd = nullabilityManager.getDefaultNullable();
+              toKeep = nullabilityManager.getNullables();
+              toRemove = nullabilityManager.getNotNulls();
+              break;
+            default:
+              return;
+          }
+          AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+          if (!AnnotationUtil.isAnnotated(parm, toKeep)) {
+            final PsiAnnotation added = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parmModifierList);
+            JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(added);
+          }
+        }
       }
     }
+  }
+
+  @NotNull
+  private Nullness getDefinitelyNotNull(@NotNull PsiParameter variable) {
+    if (variable.getType() instanceof PsiPrimitiveType) {
+      return Nullness.UNKNOWN;
+    }
+
+    PsiElement parent = variable.getParent();
+    if (parent instanceof PsiParameterList) {
+      final PsiElement grandParent = parent.getParent();
+      String originalMethodText = null;
+      int extractedCodeRelativeOffset = 0;
+
+      // DFA doesn't work with a part of method body or with lambda body when checking a method/lambda parameter
+      // we have to copy the whole method or convert the whole lambda to a method
+      if (grandParent instanceof PsiMethod) {
+        originalMethodText = grandParent.getText();
+        final int methodOffset = grandParent.getTextRange().getStartOffset();
+        final int extractOffset = myElements[0].getTextRange().getStartOffset();
+        extractedCodeRelativeOffset = extractOffset - methodOffset;
+      }
+      else if (grandParent instanceof PsiLambdaExpression) {
+        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)grandParent;
+        if (lambdaExpression.hasFormalParameterTypes()) {
+          final PsiElement lambdaBody = lambdaExpression.getBody();
+          if (lambdaBody instanceof PsiCodeBlock) {
+            final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(grandParent);
+            if (interfaceMethod != null) {
+              PsiType returnType = interfaceMethod.getReturnType();
+              if (returnType != null) {
+                final PsiParameterList parameterList = lambdaExpression.getParameterList();
+                final String dummyMethodHeader = returnType.getCanonicalText() + " " + interfaceMethod.getName() + parameterList.getText();
+                originalMethodText = dummyMethodHeader + lambdaBody.getText();
+
+                final int bodyOffset = lambdaBody.getTextRange().getStartOffset();
+                final int extractOffset = myElements[0].getTextRange().getStartOffset();
+                extractedCodeRelativeOffset = extractOffset - bodyOffset + dummyMethodHeader.length();
+              }
+            }
+          }
+        }
+      }
+      if (originalMethodText != null) {
+        // insert a dummy usage of the variable before the extracted fragment, where we're going to check the nullness of the variable
+        final String dummyMethodText = originalMethodText.substring(0, extractedCodeRelativeOffset) +
+                                       "Object _Dummy_ = " + variable.getName() + ";" +
+                                       originalMethodText.substring(extractedCodeRelativeOffset);
+
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+        final PsiMethod dummyMethod;
+        try {
+          dummyMethod = factory.createMethodFromText(dummyMethodText, grandParent.getParent());
+        }
+        catch (IncorrectOperationException e) {
+          LOG.debug("Failed to parse dummy method", dummyMethodText); // probably incomplete code
+          return Nullness.UNKNOWN;
+        }
+        PsiElement atOffset = dummyMethod.findElementAt(extractedCodeRelativeOffset);
+        while (atOffset != null && atOffset.getStartOffsetInParent() == 0) {
+          atOffset = atOffset.getParent();
+        }
+        if (atOffset instanceof PsiDeclarationStatement) {
+          final PsiElement[] declaredElements = ((PsiDeclarationStatement)atOffset).getDeclaredElements();
+          if (declaredElements.length == 1) {
+            final PsiElement declaredElement = declaredElements[0];
+            if (declaredElement instanceof PsiLocalVariable) {
+              final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
+              if (initializer instanceof PsiReferenceExpression) {
+                final int parameterIndex = ((PsiParameterList)parent).getParameterIndex(variable);
+                final PsiParameter dummyParameter = dummyMethod.getParameterList().getParameters()[parameterIndex];
+                if (((PsiReferenceExpression)initializer).isReferenceTo(dummyParameter)) {
+                  final Nullness nullness = DfaUtil.checkNullness(dummyParameter, initializer);
+                  return nullness == Nullness.NOT_NULL ? Nullness.NOT_NULL : Nullness.NULLABLE; // 'unknown' counts as 'nullable'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return Nullness.UNKNOWN;
   }
 
   @NotNull

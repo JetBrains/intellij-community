@@ -54,6 +54,8 @@ public interface PyCallableParameter {
 
   boolean isKeywordContainer();
 
+  boolean isSelf();
+
   /**
    * @param includeDefaultValue if true, include the default value after an "=".
    * @return canonical representation of parameter.

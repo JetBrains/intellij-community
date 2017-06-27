@@ -312,26 +312,6 @@ public class ConcurrentMapsTest {
     assertTrue(map.isEmpty());
   }
 
-  @Test(timeout = TIMEOUT)
-  public void testStripedLockIntObjectConcurrentHashMap() {
-    ConcurrentIntObjectMap<Object> map = new StripedLockIntObjectConcurrentHashMap<>();
-    for (int i = 0; i < 1000; i++) {
-      Object prev = map.put(i, i);
-      assertNull(prev);
-      Object ret = map.get(i);
-      assertTrue(ret instanceof Integer);
-      assertEquals(i, ret);
-
-      if (i != 0) {
-        Object remove = map.remove(i - 1);
-        assertTrue(remove instanceof Integer);
-        assertEquals(i - 1, remove);
-      }
-      assertEquals(map.size(), 1);
-    }
-    map.clear();
-    assertEquals(map.size(), 0);
-  }
 
   @Test(timeout = TIMEOUT)
   public void testConcurrentIntObjectHashMap() {
@@ -389,19 +369,95 @@ public class ConcurrentMapsTest {
     while (!map.isEmpty());
   }
 
+  private volatile Object strong;
   @Test
   public void testConcurrentWeakValueSize() {
     Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
-    Object o = new Object();
-    map.put("a", o);
+    strong = new Object();
+    map.put("a", strong);
     map.put("b", new Object());
 
     GCUtil.tryGcSoftlyReachableObjects();
     assertEquals(1, map.size());
 
-    o = null;
+    strong = null;
     GCUtil.tryGcSoftlyReachableObjects();
-    assertTrue(map.isEmpty());
+    assertTrue(map.toString(), map.isEmpty());
   }
 
+  @Test
+  public void testConcurrentWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    Map<String, Object> map = ContainerUtil.createConcurrentWeakValueMap();
+    checkPutIfAbsent(map);
+  }
+  @Test
+  public void testConcurrentSoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    Map<String, Object> map = ContainerUtil.createConcurrentSoftValueMap();
+    checkPutIfAbsent(map);
+  }
+  @Test
+  public void testConcurrentIntKeyWeakValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectWeakValueMap();
+    checkPutIfAbsent(map);
+  }
+  @Test
+  public void testConcurrentIntKeySoftValuePutIfAbsentMustActuallyPutNewValueIfTheOldWasGced() {
+    ConcurrentIntObjectMap<Object> map = ContainerUtil.createConcurrentIntObjectSoftValueMap();
+    checkPutIfAbsent(map);
+  }
+
+  private static void checkPutIfAbsent(Map<String, Object> map) {
+    String key = "a";
+    map.put(key, new Object());
+    String newVal = "xxx";
+    int i;
+    int N = 1_000_000;
+    for (i = 0; i < N; i++) {
+      Object prev = map.putIfAbsent(key, newVal);
+      if (prev == null) {
+        assertSame(newVal, map.get(key));
+        break;
+      }
+      assertEquals(Object.class, prev.getClass());
+      Object actual = map.get(key);
+      assertNotNull(actual);
+      if (actual == newVal) {
+        break; // gced, replaced
+      }
+      assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
+    }
+    if (i == N) {
+      GCUtil.tryGcSoftlyReachableObjects();
+      Object prev = map.putIfAbsent(key, newVal);
+      assertNull(prev);
+      assertSame(newVal, map.get(key));
+    }
+  }
+  private static void checkPutIfAbsent(ConcurrentIntObjectMap<Object> map) {
+    int key = 4;
+    map.put(key, new Object());
+    String newVal = "xxx";
+    int i;
+    int N = 1_000_000;
+    for (i = 0; i < N; i++) {
+      Object prev = map.putIfAbsent(key, newVal);
+      if (prev == null) {
+        assertSame(newVal, map.get(key));
+        break;
+      }
+      assertEquals(Object.class, prev.getClass());
+      Object actual = map.get(key);
+      assertNotNull(actual);
+      if (actual == newVal) {
+        break; // gced, replaced
+      }
+      assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
+    }
+    if (i == N) {
+      GCUtil.tryGcSoftlyReachableObjects();
+      Object prev = map.putIfAbsent(key, newVal);
+      assertNull(prev);
+      assertSame(newVal, map.get(key));
+    }
+  }
 }

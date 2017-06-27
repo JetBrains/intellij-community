@@ -23,10 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -88,29 +85,50 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     ASTNode leafElement = findElementAt(offset);
 
     if (leafElement != null) {
+      PsiFile hostFile = myASTNode.getPsi().getContainingFile();
+      PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, offset);
+
+      TextRange effectiveRange = injectedElement != null ? rangeInInjectedDocument(textRange, injectedElement) : null;
+      if (effectiveRange == null) {
+        effectiveRange = textRange;
+      }
+
       if (leafElement.getPsi() instanceof PsiFile) {
         return null;
       } else {
-        if (!leafElement.getPsi().isValid()) {
-          String message = "Invalid element found in '\n" +
-                           myASTNode.getText() +
-                           "\n' at " +
-                           offset +
-                           "(" +
-                           myASTNode.getText().substring(offset, Math.min(offset + 10, myASTNode.getTextLength()));
-          LOG.error(message);
-        }
-        return replaceWithPsiInLeaf(textRange, whiteSpace, leafElement);
+        LOG.assertTrue(leafElement.getPsi().isValid());
+        return replaceWithPsiInLeaf(effectiveRange, whiteSpace, leafElement);
       }
-    } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
-
+    }
+    else if (textRange.getEndOffset() == myASTNode.getTextLength()){
       CodeStyleManager.getInstance(myProject).performActionWithFormatterDisabled(
-        (Runnable)() -> FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange));
-
+        (Runnable)() -> FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange)
+      );
       return whiteSpace;
-    } else {
+    }
+    else {
       return null;
     }
+  }
+
+  private static TextRange rangeInInjectedDocument(TextRange textRange, PsiElement injectedElement) {
+    PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(injectedElement);
+    if (host == null) return null;
+
+    ElementManipulator<PsiLanguageInjectionHost> manipulator = ElementManipulators.getManipulator(host);
+    if (manipulator == null) return null;
+
+    final TextRange injectionRangeInHost = manipulator.getRangeInElement(host);
+    final int hostStartOffset = host.getTextRange().getStartOffset();
+
+    final int injectedDocumentStartOffset = hostStartOffset + injectionRangeInHost.getStartOffset();
+    final int injectedDocumentEndOffset = hostStartOffset + injectionRangeInHost.getEndOffset();
+
+    if (textRange.getEndOffset() < injectedDocumentStartOffset || textRange.getStartOffset() > injectedDocumentEndOffset) {
+      return null;
+    }
+
+    return textRange.shiftLeft(injectedDocumentStartOffset);
   }
 
   @Nullable
@@ -129,12 +147,17 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   protected ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
     Project project = containingFile.getProject();
+
     assert !PsiDocumentManager.getInstance(project).isUncommited(myDocumentModel.getDocument());
     // TODO:default project can not be used for injections, because latter might wants (unavailable) indices
+
     PsiElement psiElement = project.isDefault() ? null : InjectedLanguageUtil.findInjectedElementNoCommit(containingFile, offset);
-    if (psiElement == null) psiElement = containingFile.findElementAt(offset);
-    if (psiElement == null) return null;
-    return psiElement.getNode();
+    if (psiElement != null) {
+      return psiElement.getNode();
+    }
+
+    psiElement = containingFile.findElementAt(offset);
+    return psiElement != null ? psiElement.getNode() : null;
   }
 
   @Override

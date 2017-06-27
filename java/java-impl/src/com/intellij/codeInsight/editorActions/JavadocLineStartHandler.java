@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavadocLineStartHandler extends EditorActionHandler {
@@ -40,7 +41,7 @@ public class JavadocLineStartHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
     Project project = editor.getProject();
     if (project != null && EditorSettingsExternalizable.getInstance().isSmartHome()) {

@@ -27,6 +27,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -695,35 +697,36 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /** Inserts, removes or replaces the given text at the given offset */
   private void editDocumentSafely(final int offset, final int length, @Nullable final String text) {
-    final Project project = myEditor.getProject();
-    final Document document = myEditor.getDocument();
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-      return;
-    }
-    CommandProcessor.getInstance().executeCommand(project,
-                                                  () -> ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, project) {
-                                                    @Override
-                                                    public void run() {
-                                                      document.startGuardedBlockChecking();
-                                                      try {
-                                                        if (text == null) {
-                                                          // remove
-                                                          document.deleteString(offset, offset + length);
-                                                        } else if (length == 0) {
-                                                          // insert
-                                                          document.insertString(offset, text);
-                                                        } else {
-                                                          document.replaceString(offset, offset + length, text);
-                                                        }
-                                                      }
-                                                      catch (ReadOnlyFragmentModificationException e) {
-                                                        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
-                                                      }
-                                                      finally {
-                                                        document.stopGuardedBlockChecking();
-                                                      }
-                                                    }
-                                                  }), "", document, UndoConfirmationPolicy.DEFAULT, document);
+    TransactionGuard.submitTransaction(myEditor.getDisposable(), () -> {
+      Project project = myEditor.getProject();
+      Document document = myEditor.getDocument();
+      if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+        return;
+      }
+
+      CommandProcessor.getInstance().executeCommand(project, () -> WriteAction.run(() -> {
+        document.startGuardedBlockChecking();
+        try {
+          if (text == null) {
+            // remove
+            document.deleteString(offset, offset + length);
+          }
+          else if (length == 0) {
+            // insert
+            document.insertString(offset, text);
+          }
+          else {
+            document.replaceString(offset, offset + length, text);
+          }
+        }
+        catch (ReadOnlyFragmentModificationException e) {
+          EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
+        }
+        finally {
+          document.stopGuardedBlockChecking();
+        }
+      }), "", document, UndoConfirmationPolicy.DEFAULT, document);
+    });
   }
 
   /** {@linkplain DefaultCaret} does a lot of work we don't want (listening

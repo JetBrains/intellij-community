@@ -3388,5 +3388,20 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testFormatCStyleCommentWithAsterisks() {
+    doMethodTest(
+      "        for (Object o : new Object[]{}) {\n" +
+      "/*\n" +
+      "        *\n" +
+      " \t\t\t\t\t            */\n" +
+      "        }\n",
+      "for (Object o : new Object[]{}) {\n" +
+      "    /*\n" +
+      "     *\n" +
+      "     */\n" +
+      "}\n"
+    );
+  }
   
 }

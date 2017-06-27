@@ -1,8 +1,8 @@
 import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutOutputCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
@@ -10,8 +10,13 @@ import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 import org.junit.Assume;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URISyntaxException;
 import java.util.List;
+
+import static org.jetbrains.plugins.ipnb.run.IpnbCommandLineState.getHostPortFromUrl;
 
 /**
  * * Message Spec
@@ -26,7 +31,7 @@ public class WebSocketConnectionTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     //WebSocketImpl.DEBUG = true;
-    Assume.assumeTrue(IpnbConnectionManager.pingHost(getTestServerURI()));
+    Assume.assumeTrue(pingHost(getTestServerURI()));
   }
 
   public void testStartAndShutdownKernel() throws URISyntaxException, IOException, InterruptedException {
@@ -105,5 +110,22 @@ public class WebSocketConnectionTest extends TestCase {
   @NotNull
   public static String getTestServerURI() {
     return "http://127.0.0.1:8888";
+  }
+
+  public static boolean pingHost(@NotNull final String url) {
+    final Pair<String, String> hostPort = getHostPortFromUrl(url);
+    if (hostPort == null) return false;
+    final String host = hostPort.getFirst();
+    final String port = hostPort.getSecond();
+    try (Socket socket = new Socket()) {
+      if (port == null) {
+        return InetAddress.getByName(host).isReachable(1000);
+      }
+      socket.connect(new InetSocketAddress(host, Integer.parseInt(port)), 1000);
+      return true;
+    }
+    catch (IOException | IllegalArgumentException e) {
+      return false;
+    }
   }
 }

@@ -32,7 +32,8 @@ import javax.swing.*;
  */
 public interface SearchableConfigurable extends Configurable {
   @NotNull
-  @NonNls String getId();
+  @NonNls
+  String getId();
 
   /**
    * @param option setting search query

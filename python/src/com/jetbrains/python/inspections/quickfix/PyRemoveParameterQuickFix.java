@@ -53,7 +53,7 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PyParameter psi = PyUtil.as(descriptor.getPsiElement(), PyParameter.class);
     assert psi != null;
-    final PyCallableParameter parameter = new PyCallableParameterImpl(psi);
+    final PyCallableParameter parameter = PyCallableParameterImpl.psi(psi);
 
     final PyFunction function = PsiTreeUtil.getParentOfType(psi, PyFunction.class);
     if (function != null) {

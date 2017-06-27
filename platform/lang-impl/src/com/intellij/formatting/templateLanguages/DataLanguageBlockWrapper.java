@@ -78,19 +78,33 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
   }
 
   private void initSpacings() {
-    for (int i = 1; i < myBlocks.size(); i++) {
-      Block block1 = myBlocks.get(i - 1);
+    for (int i = 0; i < myBlocks.size(); i++) {
+      Block block1 = i == 0 ? null : myBlocks.get(i - 1);
       Block block2 = myBlocks.get(i);
-      if (block1 instanceof TemplateLanguageBlock) {
-        Spacing spacing = ((TemplateLanguageBlock)block1).getRightNeighborSpacing(block2, this, i - 1);
-        if (spacing != null) {
-          if (myChildDataBorderSpacings == null) {
-            myChildDataBorderSpacings = ContainerUtil.newTroveMap();
-          }
-          myChildDataBorderSpacings.put(Pair.create(block1, block2), spacing);
-        }
+      Spacing spacing = calcChildSpacing(i, block1, block2);
+      if (spacing != null) {
+        registerChildSpacing(block1, block2, spacing);
       }
     }
+  }
+
+  @Nullable
+  private Spacing calcChildSpacing(int index2, @Nullable Block block1, @NotNull Block block2) {
+    if (block1 instanceof TemplateLanguageBlock) {
+      Spacing spacing = ((TemplateLanguageBlock)block1).getRightNeighborSpacing(block2, this, index2 - 1);
+      if (spacing != null) return spacing;
+    }
+    if (block2 instanceof TemplateLanguageBlock) {
+      return ((TemplateLanguageBlock)block2).getLeftNeighborSpacing(block1, this, index2);
+    }
+    return null;
+  }
+
+  private void registerChildSpacing(@Nullable Block block1, @NotNull Block block2, Spacing spacing) {
+    if (myChildDataBorderSpacings == null) {
+      myChildDataBorderSpacings = ContainerUtil.newTroveMap();
+    }
+    myChildDataBorderSpacings.put(Pair.create(block1, block2), spacing);
   }
 
   @Nullable
@@ -152,10 +166,10 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
       return myOriginal.getSpacing(((DataLanguageBlockWrapper)child1).myOriginal, ((DataLanguageBlockWrapper)child2).myOriginal);
     }
-    if (child1 instanceof TemplateLanguageBlock && myChildDataBorderSpacings != null) {
+    if ((child1 instanceof TemplateLanguageBlock || child2 instanceof TemplateLanguageBlock) && myChildDataBorderSpacings != null) {
       return myChildDataBorderSpacings.get(Pair.create(child1, child2));
     }
-    return null;
+   return null;
   }
 
   @Override

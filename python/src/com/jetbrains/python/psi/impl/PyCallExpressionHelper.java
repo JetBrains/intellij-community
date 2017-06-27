@@ -130,13 +130,12 @@ public class PyCallExpressionHelper {
     final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
-      final ClarifiedResolveResult clarifiedResolveResult = clarifyResolveResult(resolveResult, resolveContext);
-      if (clarifiedResolveResult == null) continue;
+      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
+        final PyCallExpression.PyRatedMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
+        if (markedCallee == null) continue;
 
-      final PyCallExpression.PyRatedMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
-      if (markedCallee == null) continue;
-
-      ratedMarkedCallees.add(markedCallee);
+        ratedMarkedCallees.add(markedCallee);
+      }
     }
 
     return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement, context)
@@ -187,14 +186,14 @@ public class PyCallExpressionHelper {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static ClarifiedResolveResult clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
-                                                             @NotNull PyResolveContext resolveContext) {
+  @NotNull
+  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
+                                                                   @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PyClass) {
-      final PyFunction clarifiedResolved = ((PyClass)resolved).findInitOrNew(true, resolveContext.getTypeEvalContext());
-      return clarifiedResolved == null ? null : new ClarifiedResolveResult(resolveResult, clarifiedResolved, null, true);
+      return ContainerUtil.map(((PyClass)resolved).multiFindInitOrNew(true, resolveContext.getTypeEvalContext()),
+                               function -> new ClarifiedResolveResult(resolveResult, function, null, true));
     }
     else if (resolved instanceof PyCallExpression) { // foo = classmethod(foo)
       final Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall((PyCallExpression)resolved);
@@ -206,7 +205,8 @@ public class PyCallExpressionHelper {
                                                       ? PyFunction.Modifier.STATICMETHOD
                                                       : null;
 
-        return new ClarifiedResolveResult(resolveResult, wrapperInfo.getSecond(), wrappedModifier, false);
+        final ClarifiedResolveResult result = new ClarifiedResolveResult(resolveResult, wrapperInfo.getSecond(), wrappedModifier, false);
+        return Collections.singletonList(result);
       }
     }
     else if (resolved instanceof PyFunction) {
@@ -217,12 +217,14 @@ public class PyCallExpressionHelper {
         final PyType type = context.getReturnType(function);
 
         return type instanceof PyFunctionType
-               ? new ClarifiedResolveResult(resolveResult, ((PyFunctionType)type).getCallable(), null, false)
-               : null;
+               ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, ((PyFunctionType)type).getCallable(), null, false))
+               : Collections.emptyList();
       }
     }
 
-    return resolved == null ? null : new ClarifiedResolveResult(resolveResult, resolved, null, false);
+    return resolved != null
+           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, false))
+           : Collections.emptyList();
   }
 
   @Nullable
@@ -361,8 +363,9 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  private static boolean isQualifiedByInstance(@Nullable PyCallable resolved, @NotNull PyExpression qualifier,
-                                               @NotNull TypeEvalContext context) {
+  public static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
+                                              @NotNull PyExpression qualifier,
+                                              @NotNull TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
       return false;
     }
@@ -1098,7 +1101,7 @@ public class PyCallExpressionHelper {
           final PyExpression arg = argumentComponents[i];
           if (arg != null) {
             if (param instanceof PyNamedParameter) {
-              mappedParameters.put(arg, new PyCallableParameterImpl(param));
+              mappedParameters.put(arg, PyCallableParameterImpl.psi(param));
             }
             else if (param instanceof PyTupleParameter) {
               final TupleMappingResults nestedResults = mapComponentsOfTupleParameter(arg, (PyTupleParameter)param);
@@ -1111,11 +1114,11 @@ public class PyCallExpressionHelper {
             }
           }
           else {
-            unmappedParameters.add(new PyCallableParameterImpl(param));
+            unmappedParameters.add(PyCallableParameterImpl.psi(param));
           }
         }
         else {
-          unmappedParameters.add(new PyCallableParameterImpl(param));
+          unmappedParameters.add(PyCallableParameterImpl.psi(param));
         }
       }
       if (argumentComponents.length > parameterComponents.length) {

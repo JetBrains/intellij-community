@@ -14,6 +14,12 @@ public interface DataStructure {
   }
   
   int drawInt(@NotNull IntDistribution distribution);
+  
+  int getSizeHint();
+  
+  default int suggestCollectionSize() {
+    return drawInt(IntDistribution.geometric(getSizeHint()));
+  }
 
   @NotNull
   DataStructure subStructure();

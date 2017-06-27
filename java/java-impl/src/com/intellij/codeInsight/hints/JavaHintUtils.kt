@@ -218,7 +218,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     }
 
     return regularArgs
-      .filter { duplicated.contains(it.parameter.typeText()) }
+      .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
       .mapNotNull { inlayInfo(it) }
   }
 

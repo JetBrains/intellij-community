@@ -27,7 +27,7 @@ import java.util.Map;
  * Concurrent soft key:K -> strong value:V map
  * Null keys are allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentSoftMap()} instead
+ * Use {@link ContainerUtil#createConcurrentSoftMap()} to create this
  */
 final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class SoftKey<K, V> extends SoftReference<K> implements KeyReference<K, V> {

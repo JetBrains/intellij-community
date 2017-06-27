@@ -196,6 +196,12 @@ aaa  bbb  ccc
       "0123456789 ")
   }
 
+
+  @Test
+  fun `test first spacing object is used`() {
+    doReformatTest("[]0 [s_min5_max5]([s_min10_max10]1)", "0     1")
+  }
+
   @Test 
   fun `test no wrap object no text wrap`() {
     doReformatTest("[]aaa []bbb []ccc []ddd []eee []f|ff", "aaa bbb ccc ddd eee fff")

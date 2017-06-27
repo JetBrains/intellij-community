@@ -31,13 +31,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingListener, Dumpable {
-
   private static final Logger LOG = Logger.getInstance(CachingSoftWrapDataMapper.class);
-  
-  private final List<SoftWrapImpl>             myAffectedByUpdateSoftWraps           = new ArrayList<>();
 
-  private final EditorEx                           myEditor;
-  private final SoftWrapsStorage                   myStorage;
+  private final List<SoftWrapImpl> myAffectedByUpdateSoftWraps = new ArrayList<>();
+  private final EditorEx myEditor;
+  private final SoftWrapsStorage myStorage;
 
   public CachingSoftWrapDataMapper(@NotNull EditorEx editor, @NotNull SoftWrapsStorage storage)
   {
@@ -92,8 +90,6 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
 
   /**
    * Determines which soft wraps were not affected by recalculation, and shifts them to their new offsets.
-   *
-   * @return Change in soft wraps count after recalculation
    */
   private void advanceSoftWrapOffsets(@NotNull IncrementalCacheUpdateEvent event) {
     int lengthDiff = event.getLengthDiff();

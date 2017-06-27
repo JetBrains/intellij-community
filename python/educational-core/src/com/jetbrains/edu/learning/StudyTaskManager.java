@@ -44,7 +44,7 @@ import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.REMOTE_COUR
 @State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
-  public static final int CURRENT_VERSION = 5;
+  public static final int CURRENT_VERSION = 6;
   private Course myCourse;
   public int VERSION = CURRENT_VERSION;
 
@@ -173,8 +173,10 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
         case 4:
           state = StudySerializationUtils.Xml.convertToFifthVersion(state);
           updateTestHelper();
+        case 5:
+          state = StudySerializationUtils.Xml.convertToSixthVersion(state, myProject);
         //uncomment for future versions
-        //case 5:
+        //case 6:
         //  state = StudySerializationUtils.Xml.convertToSixthVersion(state, myProject);
       }
       deserialize(state);

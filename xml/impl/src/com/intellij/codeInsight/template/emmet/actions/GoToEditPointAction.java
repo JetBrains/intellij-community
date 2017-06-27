@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -52,7 +53,7 @@ public abstract class GoToEditPointAction extends EditorAction implements DumbAw
     public Forward() {
       super(new EditorActionHandler(true) {
         @Override
-        protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+        protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
           EmmetEditPointUtil.moveForward(editor, getFile(dataContext));
         }
       });
@@ -63,7 +64,7 @@ public abstract class GoToEditPointAction extends EditorAction implements DumbAw
     public Backward() {
       super(new EditorActionHandler(true) {
         @Override
-        protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+        protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
           EmmetEditPointUtil.moveBackward(editor, getFile(dataContext));
         }
       });

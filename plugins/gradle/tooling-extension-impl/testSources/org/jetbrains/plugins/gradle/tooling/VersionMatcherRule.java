@@ -36,8 +36,8 @@ public class VersionMatcherRule extends TestWatcher {
   private CustomMatcher myMatcher;
 
   @NotNull
-  public Matcher getMatcher() {
-    return myMatcher != null ? myMatcher : CoreMatchers.anything();
+  public Matcher<String> getMatcher() {
+    return myMatcher != null ? myMatcher : CoreMatchers.any(String.class);
   }
 
   @Override

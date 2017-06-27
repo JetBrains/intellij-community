@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveCaretUpWithSelectionAction extends EditorAction {
@@ -29,7 +30,7 @@ public class MoveCaretUpWithSelectionAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (!editor.getCaretModel().supportsMultipleCarets()) {
         editor.getCaretModel().moveCaretRelatively(0, -1, true, editor.isColumnMode(), true);
         return;

@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
-import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.checker.PyStudyTaskChecker;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -72,9 +71,6 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
                                                @NotNull PsiDirectory taskDirectory) {
     StudyUtils.createFromTemplate(project, taskDirectory, "task.py", view, false);
     StudyUtils.createFromTemplate(project, taskDirectory, TESTS_PY, view, false);
-    StudyUtils.createFromTemplate(project, taskDirectory,
-                                  StudyUtils.getTaskDescriptionFileName(CCSettings.getInstance().useHtmlAsDefaultTaskFormat()), view,
-                                  false);
   }
 
   @Override

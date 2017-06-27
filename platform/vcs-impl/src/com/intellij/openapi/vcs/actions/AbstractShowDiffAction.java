@@ -16,7 +16,13 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -94,12 +100,16 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
       VirtualFile file = vcsContext.getSelectedFiles()[0];
       AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(file, project));
       DiffProvider provider = assertNotNull(vcs.getDiffProvider());
+      Editor editor = vcsContext.getEditor();
 
-      getExecutor(provider, file, project).showDiff();
+      getExecutor(provider, file, project, editor).showDiff();
     }
   }
 
-  protected DiffActionExecutor getExecutor(DiffProvider diffProvider, VirtualFile selectedFile, Project project) {
-    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, getKey());
+  protected DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                           @NotNull VirtualFile selectedFile,
+                                           @NotNull Project project,
+                                           @Nullable Editor editor) {
+    return new DiffActionExecutor.CompareToCurrentExecutor(diffProvider, selectedFile, project, editor, getKey());
   }
 }

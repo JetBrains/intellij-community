@@ -24,6 +24,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -159,6 +160,9 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
     PsiClass[] classes = file.getClasses();
     if (classes.length < 1) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, project));
+    }
+    if (template.isLiveTemplateEnabled()) {
+      CreateFromTemplateActionBase.startLiveTemplate(file);
     }
     return classes[0];
   }

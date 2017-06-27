@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
   @NotNull
   @Override
-  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    return new RHNode(this, key, start, end, greedyToLeft, greedyToRight,layer);
+  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, 
+                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    return new RHNode(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
   static class RHNode extends RMNode<RangeHighlighterEx> {
@@ -55,8 +56,9 @@ class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
            int end,
            boolean greedyToLeft,
            boolean greedyToRight,
+           boolean stickingToRight,
            int layer) {
-      super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight);
+      super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
     }
 

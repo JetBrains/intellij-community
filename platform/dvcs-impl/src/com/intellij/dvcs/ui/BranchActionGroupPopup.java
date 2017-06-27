@@ -194,10 +194,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   @NotNull
-  public static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    DefaultActionGroup speedSearchActions = new DefaultActionGroup();
-    createSpeedSearchActions(actionGroup, speedSearchActions, true);
-    return speedSearchActions;
+  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+    return new DefaultActionGroup(null, createSpeedSearchActions(actionGroup, true), false);
   }
 
   @Override
@@ -216,16 +214,15 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     trackDimensions(myKey);
   }
 
-  private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                               @NotNull DefaultActionGroup speedSearchActions,
-                                               boolean isFirstLevel) {
+  private static List<AnAction> createSpeedSearchActions(@NotNull ActionGroup parentActionGroup, boolean isFirstLevel) {
     // add per repository branches into the model as Speed Search elements and show them only if regular items were not found by mask;
-    if (!isFirstLevel) speedSearchActions.addSeparator(actionGroup.getTemplatePresentation().getText());
-    for (AnAction child : actionGroup.getChildren(null)) {
+    @NotNull List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
+    if (!isFirstLevel) speedSearchActions.add(new Separator(parentActionGroup.getTemplatePresentation().getText()));
+    for (AnAction child : parentActionGroup.getChildren(null)) {
       if (child instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)child;
         if (isFirstLevel) {
-          createSpeedSearchActions(childGroup, speedSearchActions, false);
+          speedSearchActions.addAll(createSpeedSearchActions(childGroup, false));
         }
         else if (childGroup instanceof BranchActionGroup) {
           speedSearchActions.add(createSpeedSearchActionGroupWrapper(childGroup));
@@ -235,6 +232,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         }
       }
     }
+    return speedSearchActions;
   }
 
   @Override

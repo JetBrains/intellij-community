@@ -16,7 +16,6 @@
 
 package com.intellij.facet;
 
-import com.google.common.base.Predicates;
 import com.intellij.facet.impl.FacetLoadingErrorDescription;
 import com.intellij.facet.impl.FacetModelBase;
 import com.intellij.facet.impl.FacetModelImpl;
@@ -308,7 +307,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       //we can store imported facets in a separate component only if that component will be stored separately, otherwise we will get modified *.iml files
       return facet -> facet.getExternalSource() != null;
     }
-    return Predicates.alwaysFalse();
+    return facet -> false;
   }
 
   @NotNull

@@ -19,10 +19,12 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,12 +36,10 @@ import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIntHashSet;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
@@ -665,170 +665,235 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private void processEvent(@NotNull VFileEvent event) {
-    processEvents(Collections.singletonList(event));
-  }
+    // optimisation: skip all groupings
+    if (event.isValid()) {
+      BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
+      List<VFileEvent> events = Collections.singletonList(event);
+      publisher.before(events);
 
-  private static class EventWrapper {
-    private final VFileDeleteEvent event;
-    private final int id;
+      applyEvent(event);
 
-    private EventWrapper(final VFileDeleteEvent event, final int id) {
-      this.event = event;
-      this.id = id;
+      publisher.after(events);
     }
   }
 
-  @NotNull private static final Comparator<EventWrapper> DEPTH_COMPARATOR = Comparator.comparingInt(o -> o.event.getFileDepth());
-
-  @NotNull
-  private static List<VFileEvent> validateEvents(@NotNull List<VFileEvent> events) {
-    final List<EventWrapper> deletionEvents = new ArrayList<>();
-    for (int i = 0, size = events.size(); i < size; i++) {
-      final VFileEvent event = events.get(i);
-      if (event instanceof VFileDeleteEvent && event.isValid()) {
-        deletionEvents.add(new EventWrapper((VFileDeleteEvent)event, i));
-      }
-    }
-
-    final TIntHashSet invalidIDs;
-    if (deletionEvents.isEmpty()) {
-      invalidIDs = EmptyIntHashSet.INSTANCE;
-    }
-    else {
-      ContainerUtil.quickSort(deletionEvents, DEPTH_COMPARATOR);
-
-      invalidIDs = new TIntHashSet(deletionEvents.size());
-      final Set<VirtualFile> dirsToBeDeleted = new THashSet<>(deletionEvents.size());
-      nextEvent:
-      for (EventWrapper wrapper : deletionEvents) {
-        final VirtualFile candidate = wrapper.event.getFile();
-        VirtualFile parent = candidate;
-        while (parent != null) {
-          if (dirsToBeDeleted.contains(parent)) {
-            invalidIDs.add(wrapper.id);
-            continue nextEvent;
-          }
-          parent = parent.getParent();
+  // group events by type and containing directory and validate
+  // "outApplyEvents" will contain handlers applying the grouped events
+  // e.g. for [delete(d/x), delete(d2/z), delete(d/y), create(d/x), create(d/z), change(d/x)]
+  //   the outApplyEvents will contain:
+  //   [applyDeletions("d/x, d/y", "d2/z"), applyCreations(d/x, d/z), applyEvent(d/x)]
+  // returns all validated events
+  private List<VFileEvent> groupAndValidate(@NotNull List<VFileEvent> events, @NotNull List<Runnable> outApplyEvents) {
+    int groupStart=0;
+    List<VFileEvent> validated = new ArrayList<>(events.size());
+    VFileEvent eventFromGroup = events.get(0);
+    for (int i = 1; i <= events.size(); i++) {
+      VFileEvent event = i==events.size() ? null : events.get(i);
+      if (i==events.size() || !eventFromGroup.getClass().equals(event.getClass())) {
+        if (eventFromGroup instanceof VFileCreateEvent) {
+          groupCreations(events, groupStart, i, validated, outApplyEvents);
         }
-
-        if (candidate.isDirectory()) {
-          dirsToBeDeleted.add(candidate);
+        else if (eventFromGroup instanceof VFileDeleteEvent) {
+          groupDeletions(events, groupStart, i, validated, outApplyEvents);
         }
+        else {
+          groupOthers(events, groupStart, i, validated, outApplyEvents);
+        }
+        groupStart = i;
       }
+      eventFromGroup = event;
+    }
+    return validated;
+  }
+
+  // events[start..end) are all VFileCreateEvent
+  // group them by parent directory, validate in bulk for each directory, and return "applyCreations()" runnable
+  private void groupCreations(@NotNull List<VFileEvent> events,
+                              int start,
+                              int end,
+                              @NotNull List<VFileEvent> outValidated,
+                              @NotNull List<Runnable> outApplyEvents) {
+    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = MultiMap.createSmart();
+
+    for (int i = start; i < end; i++) {
+      VFileCreateEvent event = (VFileCreateEvent)events.get(i);
+      VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
+      grouped.putValue(parent, event);
     }
 
-    final List<VFileEvent> filtered = new ArrayList<>(events.size() - invalidIDs.size());
-    for (int i = 0, size = events.size(); i < size; i++) {
-      final VFileEvent event = events.get(i);
-      if (event.isValid() && !(event instanceof VFileDeleteEvent && invalidIDs.contains(i))) {
-        filtered.add(event);
+    // since the VCreateEvent.isValid() is extremely expensive, combine all creation events for the directory together
+    // and use VirtualDirectoryImpl.validateChildrenToCreate() optimised for bulk validation
+    boolean hasValidEvents = false;
+    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : grouped.entrySet()) {
+      VirtualDirectoryImpl directory = entry.getKey();
+      List<VFileCreateEvent> createEvents = (List<VFileCreateEvent>)entry.getValue();
+      directory.validateChildrenToCreate(createEvents);
+      hasValidEvents |= !createEvents.isEmpty();
+      outValidated.addAll(createEvents);
+    }
+
+    if (hasValidEvents) {
+      outApplyEvents.add(()->{
+        applyCreations(grouped);
+        incStructuralModificationCount();
+      });
+    }
+  }
+  
+  // events[start..end) are all VFileDeleteEvent
+  // group them by parent directory (can be null), filter out files which parent dir is to be deleted too, and return "applyDeletions()" runnable
+  private void groupDeletions(@NotNull List<VFileEvent> events,
+                              int start,
+                              int end,
+                              @NotNull List<VFileEvent> outValidated,
+                              @NotNull List<Runnable> outApplyEvents) {
+    List<Pair<VFileDeleteEvent, String>> deletionsWithPath = new ArrayList<>(end-start);
+
+    for (int i = start; i < end; i++) {
+      VFileEvent event = events.get(i);
+      if (!event.isValid()) continue;
+      deletionsWithPath.add(Pair.create((VFileDeleteEvent)event, event.getPath()));
+    }
+
+    if (!deletionsWithPath.isEmpty()) {
+      filterOutInvalidDeletions(deletionsWithPath);
+
+      MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = MultiMap.create(); // can be nulls
+      boolean hasValidEvents = false;
+      for (Pair<VFileDeleteEvent, String> pair : deletionsWithPath) {
+        if (pair == null) continue; // filtered out
+        VFileDeleteEvent event = pair.getFirst();
+        @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getFile().getParent();
+        grouped.putValue(parent, event);
+        outValidated.add(event);
+        hasValidEvents = true;
+      }
+
+      if (hasValidEvents) {
+        outApplyEvents.add(() -> {
+          clearIdCache();
+          applyDeletions(grouped);
+          incStructuralModificationCount();
+        });
       }
     }
-    return filtered;
+  }
+
+  // events[start..end) are neither VFileCreateEvent nor VFileDeleteEvent
+  // validate and return "applyEvent()" runnable for each event because it's assumed there won't be too many of them
+  private void groupOthers(@NotNull List<VFileEvent> events,
+                           int start,
+                           int end,
+                           @NotNull List<VFileEvent> outValidated,
+                           @NotNull List<Runnable> outApplyEvents) {
+    for (int i = start; i < end; i++) {
+      VFileEvent event = events.get(i);
+      if (!event.isValid()) continue;
+      outValidated.add(event);
+      outApplyEvents.add(() -> applyEvent(event));
+    }
+  }
+
+  // filter out files which parent dir is to be deleted too. nullize redundant events in the list.
+  private static void filterOutInvalidDeletions(@NotNull List<Pair<VFileDeleteEvent, String>> deletionsWithPath) {
+    boolean caseSensitive = deletionsWithPath.get(0).getFirst().getFile().getFileSystem().isCaseSensitive();
+    deletionsWithPath.sort((o1, o2) -> StringUtil.compare(o1.getSecond(), o2.getSecond(), !caseSensitive));
+
+    // loop over sorted paths and if there are "/dir1" and "/dir1/file2" neighbors filter out the latter.
+    String prevPath = deletionsWithPath.get(0).getSecond();
+    for (int i = 1; i < deletionsWithPath.size(); i++) {
+      String path = deletionsWithPath.get(i).getSecond();
+      int prefixLength = StringUtil.commonPrefixLength(prevPath, path, !caseSensitive);
+      if (prefixLength == prevPath.length() && prefixLength < path.length() && path.charAt(prefixLength) == '/') {
+        deletionsWithPath.set(i, null);
+        // continue to compare with the prevPath
+      }
+      else {
+        prevPath = path;
+      }
+    }
   }
 
   @Override
   public void processEvents(@NotNull List<VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    List<VFileEvent> validated = validateEvents(events);
+    List<Runnable> applyEvents = new ArrayList<>();
+    List<VFileEvent> validated = groupAndValidate(events, applyEvents);
 
-    BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-    publisher.before(validated);
+    if (!validated.isEmpty()) {
+      BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
+      publisher.before(validated);
 
-    THashMap<VirtualFile, List<VFileEvent>> parentToChildrenEventsChanges = null;
-    for (VFileEvent event : validated) {
-      VirtualFile changedParent = null;
-      if (event instanceof VFileCreateEvent) {
-        changedParent = ((VFileCreateEvent)event).getParent();
-        ((VFileCreateEvent)event).resetCache();
-      }
-      else if (event instanceof VFileDeleteEvent) {
-        changedParent = ((VFileDeleteEvent)event).getFile().getParent();
-      }
+      applyEvents.forEach(Runnable::run);
 
-      if (changedParent != null) {
-        if (parentToChildrenEventsChanges == null) parentToChildrenEventsChanges = new THashMap<>();
-        List<VFileEvent> parentChildrenChanges = parentToChildrenEventsChanges.computeIfAbsent(changedParent, k -> new SmartList<>());
-        parentChildrenChanges.add(event);
-      }
-      else {
-        applyEvent(event);
-      }
+      publisher.after(validated);
     }
-
-    if (parentToChildrenEventsChanges != null) {
-      parentToChildrenEventsChanges.forEachEntry((parent, childrenEvents) -> {
-        applyChildrenChangeEvents(parent, childrenEvents);
-        return true;
-      });
-      parentToChildrenEventsChanges.clear();
-    }
-
-    publisher.after(validated);
   }
 
-  private void applyChildrenChangeEvents(@NotNull VirtualFile parent, @NotNull List<VFileEvent> events) {
-    final NewVirtualFileSystem delegate = getDelegate(parent);
+  // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals
+  private void applyDeletions(@NotNull MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> deletions) {
+    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> entry : deletions.entrySet()) {
+      VirtualDirectoryImpl parent = entry.getKey();
+      Collection<VFileDeleteEvent> deleteEvents = entry.getValue();
+      if (parent == null) {
+        deleteEvents.forEach(this::applyEvent);
+        return;
+      }
 
-    final int parentId = getFileId(parent);
-    assert parentId != 0;
-    int[] oldIds = FSRecords.list(parentId);
-    TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(events.size(), oldIds.length));
-    parentChildrenIds.addAll(oldIds);
-    boolean hasRemovedChildren = false;
+      int parentId = parent.getId();
+      int[] oldIds = FSRecords.list(parentId);
+      TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(deleteEvents.size(), oldIds.length));
+      parentChildrenIds.addAll(oldIds);
 
-    List<FSRecords.NameId> childrenAdded = new SmartList<>();
-    List<VirtualFile> childrenDeleted = new SmartList<>();
-    List<CharSequence> childrenNamesDeleted = new SmartList<>();
-    TIntHashSet childrenIdsDeleted = new TIntHashSet(Math.max(events.size(), oldIds.length));
-    for (VFileEvent event : events) {
-      if (event instanceof VFileCreateEvent) {
-        String name = ((VFileCreateEvent)event).getChildName();
+      List<CharSequence> childrenNamesDeleted = new ArrayList<>(deleteEvents.size());
+      TIntHashSet childrenIdsDeleted = new TIntHashSet(deleteEvents.size());
+
+      for (VFileDeleteEvent event : deleteEvents) {
+        VirtualFile file = event.getFile();
+        int id = getFileId(file);
+        childrenNamesDeleted.add(file.getNameSequence());
+        childrenIdsDeleted.add(id);
+        FSRecords.deleteRecordRecursively(id);
+        invalidateSubtree(file);
+        parentChildrenIds.remove(id);
+      }
+      parent.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
+      FSRecords.updateList(parentId, parentChildrenIds.toArray());
+    }
+  }
+
+  // add children to specified directories using VirtualDirectoryImpl.createAndAddChildren() optimised for bulk additions
+  private void applyCreations(@NotNull MultiMap<VirtualDirectoryImpl, VFileCreateEvent> creations) {
+    for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : creations.entrySet()) {
+      VirtualDirectoryImpl parent = entry.getKey();
+      Collection<VFileCreateEvent> createEvents = entry.getValue();
+      int parentId = parent.getId();
+      int[] oldIds = FSRecords.list(parentId);
+      TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(createEvents.size(), oldIds.length));
+      parentChildrenIds.addAll(oldIds);
+
+      List<FSRecords.NameId> childrenAdded = new ArrayList<>(createEvents.size());
+      final NewVirtualFileSystem delegate = replaceWithNativeFS(getDelegate(parent));
+      delegate.list(parent); // cache children getAttributes
+      for (VFileCreateEvent createEvent : createEvents) {
+        createEvent.resetCache();
+        String name = createEvent.getChildName();
         final VirtualFile fake = new FakeVirtualFile(parent, name);
         final FileAttributes attributes = delegate.getAttributes(fake);
 
         if (attributes != null) {
           final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
-          assert parent instanceof VirtualDirectoryImpl : parent;
-
           childrenAdded.add(new FSRecords.NameId(childId, -1, name));
           parentChildrenIds.add(childId);
         }
       }
-      else if (event instanceof VFileDeleteEvent) {
-        VirtualFile file = ((VFileDeleteEvent)event).getFile();
-        if (!file.exists()) {
-          LOG.error("Deleting a file, which does not exist: " + file.getPath());
-          continue;
-        }
-
-        hasRemovedChildren = true;
-        int id = getFileId(file);
-
-        childrenDeleted.add(file);
-        childrenNamesDeleted.add(file.getNameSequence());
-        childrenIdsDeleted.add(id);
-        parentChildrenIds.remove(id);
+      parent.createAndAddChildren(childrenAdded);
+      if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+        long count = Arrays.stream(parentChildrenIds.toArray()).mapToObj(this::findFileById).map(VirtualFile::getName).distinct().count();
+        assert count == parentChildrenIds.size();
       }
-    }
-
-    FSRecords.updateList(parentId, parentChildrenIds.toArray());
-
-    if (hasRemovedChildren) clearIdCache();
-    VirtualDirectoryImpl parentImpl = (VirtualDirectoryImpl)parent;
-
-    if (!childrenDeleted.isEmpty()) {
-      for (final VirtualFile childFile : childrenDeleted) {
-        FSRecords.deleteRecordRecursively(getFileId(childFile));
-        invalidateSubtree(childFile);
-      }
-      parentImpl.removeChildren(childrenIdsDeleted, childrenNamesDeleted);
-      incStructuralModificationCount();
-    }
-    if (!childrenAdded.isEmpty()) {
-      parentImpl.createAndAddChildren(childrenAdded);
-      incStructuralModificationCount();
+      FSRecords.updateList(parentId, parentChildrenIds.toArray());
     }
   }
 

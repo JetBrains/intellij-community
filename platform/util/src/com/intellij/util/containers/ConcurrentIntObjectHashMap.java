@@ -27,7 +27,7 @@ import java.util.concurrent.locks.LockSupport;
  * Adapted from java.util.concurrent.ConcurrentHashMap to int keys
  * @author Doug Lea
  * @param <V> the type of mapped values
- * @deprecated Use {@link ContainerUtil#createConcurrentIntObjectMap()} instead
+ * Use {@link ContainerUtil#createConcurrentIntObjectMap()} to create this
  */
 // added hashing strategy argument
 // added cacheOrGet convenience method

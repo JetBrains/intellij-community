@@ -371,4 +371,15 @@ class OptionalWithoutIsPresent {
     }
     String res = Optional.<String>empty().<warning descr="The call to 'orElseThrow' always fails, according to its method contracts">orElseThrow</warning>(RuntimeException::new);
   }
+
+  void testOrElseGet() {
+    final Optional<String> a = Optional.ofNullable(Math.random() > 0.5 ? null:"");
+    final Optional<String> b = Optional.ofNullable(Math.random() > 0.5 ? null:"");
+    if (a.isPresent() || b.isPresent()) {
+      String result = a.orElseGet(() -> b.get()); // no warning
+      System.out.println(result);
+    }
+    String result = a.orElseGet(() -> b.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+    System.out.println(result);
+  }
 }

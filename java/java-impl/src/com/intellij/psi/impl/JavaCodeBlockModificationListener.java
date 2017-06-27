@@ -20,9 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -78,19 +77,19 @@ public class JavaCodeBlockModificationListener extends PsiTreeChangePreprocessor
     }
   }
 
-  private static boolean isWhiteSpaceOrComment(PsiElement e) {
+  private static boolean isWhiteSpaceOrComment(@NotNull PsiElement e) {
     return e instanceof PsiWhiteSpace || PsiTreeUtil.getParentOfType(e, PsiComment.class, false) != null;
   }
 
   private static Set<PsiElement> getChangedChildren(@NotNull PsiTreeChangeEventImpl event) {
     PsiEventType code = event.getCode();
     if (code == PsiEventType.CHILD_ADDED || code == PsiEventType.CHILD_REMOVED || code == PsiEventType.CHILD_REPLACED) {
-      return ContainerUtil.newHashSet(event.getOldChild(), event.getChild());
+      return StreamEx.of(event.getOldChild(), event.getChild(), event.getNewChild()).nonNull().toSet();
     }
     return Collections.emptySet();
   }
 
-  private static boolean hasClassesInside(@Nullable PsiElement element) {
+  private static boolean hasClassesInside(@NotNull PsiElement element) {
     return !SyntaxTraverser.psiTraverser(element).traverse()
       .filter(Conditions.instanceOf(PsiClass.class, PsiLambdaExpression.class)).isEmpty();
   }

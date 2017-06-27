@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ public interface PsiResolveHelper {
   RecursionGuard ourGraphGuard = RecursionManager.createGuard("graphTypeArgInference");
 
   class SERVICE {
-    private SERVICE() {
-    }
-
+    private SERVICE() { }
     public static PsiResolveHelper getInstance(Project project) {
       return ServiceManager.getService(project, PsiResolveHelper.class);
     }
@@ -126,15 +124,16 @@ public interface PsiResolveHelper {
   @Nullable
   PsiVariable resolveAccessibleReferencedVariable(@NotNull String referenceText, PsiElement context);
 
-  boolean isAccessible(@NotNull PsiMember member, @Nullable PsiModifierList modifierList,
-                       @NotNull PsiElement place, @Nullable PsiClass accessObjectClass, @Nullable PsiElement currentFileResolveScope);
+  boolean isAccessible(@NotNull PsiMember member,
+                       @Nullable PsiModifierList modifierList,
+                       @NotNull PsiElement place,
+                       @Nullable PsiClass accessObjectClass,
+                       @Nullable PsiElement currentFileResolveScope);
 
   boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass);
 
   /**
-   * @return {@link PsiType#NULL} iff no type could be inferred
-   *         null         iff the type inferred is raw
-   *         inferred type otherwise
+   * @return {@link PsiType#NULL} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise
    */
   PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
                                           @NotNull PsiParameter[] parameters,
@@ -173,5 +172,4 @@ public interface PsiResolveHelper {
 
   @NotNull
   LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile);
-
 }

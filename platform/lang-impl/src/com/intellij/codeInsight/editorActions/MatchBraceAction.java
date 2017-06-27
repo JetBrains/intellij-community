@@ -45,7 +45,7 @@ public class MatchBraceAction extends EditorAction {
       super(true);
     }
 
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file == null) return;
 

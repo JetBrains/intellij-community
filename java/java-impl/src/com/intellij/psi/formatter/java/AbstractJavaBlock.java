@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
+import com.intellij.formatting.blocks.CStyleCommentBlock;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -204,6 +205,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return new CommentWithInjectionBlock(child, wrap, alignment, indent, settings, javaSettings);
     }
     if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
+      if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
+        return new CStyleCommentBlock(child, indent);
+      }
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
       return block;
@@ -355,7 +359,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @Nullable
   @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
-    return JavaSpacePropertyProcessor.getSpacing(getTreeNode(child2), mySettings, myJavaSettings);
+    return JavaSpacePropertyProcessor.getSpacing(child2, mySettings, myJavaSettings);
   }
 
   @Override
@@ -1126,12 +1130,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
-  protected static ASTNode getTreeNode(final Block child2) {
-    if (child2 instanceof JavaBlock) {
-      return ((JavaBlock)child2).getFirstTreeNode();
+  protected static ASTNode getTreeNode(final Block block) {
+    if (block instanceof JavaBlock) {
+      return ((JavaBlock)block).getFirstTreeNode();
     }
-    if (child2 instanceof LeafBlock) {
-      return ((LeafBlock)child2).getTreeNode();
+    if (block instanceof LeafBlock) {
+      return ((LeafBlock)block).getTreeNode();
+    }
+    if (block instanceof CStyleCommentBlock) {
+      return ((CStyleCommentBlock)block).getNode();
     }
     return null;
   }

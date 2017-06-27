@@ -30,9 +30,9 @@ public abstract class NamedRunnable implements Runnable {
     myName = name;
   }
 
-  protected void debug(Object message) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(myName + ": " + message);
+  protected void trace(Object message) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(myName + ": " + message);
     }
   }
 

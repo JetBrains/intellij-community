@@ -83,7 +83,7 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
         }
       }
     }
-    val returnValue = if (negated) targetContract.returnValue.negate()
+    val returnValue = if (negated && targetContract.returnValue.canBeNegated()) targetContract.returnValue.negate()
     else targetContract.returnValue
     return answer?.let { StandardMethodContract(it, returnValue) }
   }

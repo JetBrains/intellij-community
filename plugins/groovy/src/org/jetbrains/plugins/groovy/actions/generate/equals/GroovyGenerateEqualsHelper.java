@@ -25,7 +25,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -298,72 +297,67 @@ public class GroovyGenerateEqualsHelper {
   @SuppressWarnings("HardCodedStringLiteral")
   private PsiMethod createHashCode() throws IncorrectOperationException {
 
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    StringBuilder buffer = new StringBuilder();
 
-    try {
-      buffer.append("int hashCode() {\n");
-      if (!mySuperHasHashCode && myHashCodeFields.length == 1) {
-        PsiField field = myHashCodeFields[0];
-        final String tempName = addTempForOneField(field, buffer);
-        buffer.append("return ");
+    buffer.append("int hashCode() {\n");
+    if (!mySuperHasHashCode && myHashCodeFields.length == 1) {
+      PsiField field = myHashCodeFields[0];
+      final String tempName = addTempForOneField(field, buffer);
+      buffer.append("return ");
+      if (field.getType() instanceof PsiPrimitiveType) {
+        addPrimitiveFieldHashCode(buffer, field, tempName);
+      } else {
+        addFieldHashCode(buffer, field);
+      }
+      buffer.append("\n}");
+    } else if (myHashCodeFields.length > 0) {
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
+
+      buffer.append("int ");
+      buffer.append(resultName);
+
+      boolean resultAssigned = false;
+      if (mySuperHasHashCode) {
+        buffer.append(" = ");
+        addSuperHashCode(buffer);
+        resultAssigned = true;
+      }
+      buffer.append("\n");
+      String tempName = addTempDeclaration(buffer);
+      for (PsiField field : myHashCodeFields) {
+        addTempAssignment(field, buffer, tempName);
+        buffer.append(resultName);
+        buffer.append(" = ");
+        if (resultAssigned) {
+          buffer.append("31 * ");
+          buffer.append(resultName);
+          buffer.append(" + ");
+        }
         if (field.getType() instanceof PsiPrimitiveType) {
           addPrimitiveFieldHashCode(buffer, field, tempName);
         } else {
           addFieldHashCode(buffer, field);
         }
-        buffer.append("\n}");
-      } else if (myHashCodeFields.length > 0) {
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
-        final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
-
-        buffer.append("int ");
-        buffer.append(resultName);
-
-        boolean resultAssigned = false;
-        if (mySuperHasHashCode) {
-          buffer.append(" = ");
-          addSuperHashCode(buffer);
-          resultAssigned = true;
-        }
-        buffer.append("\n");
-        String tempName = addTempDeclaration(buffer);
-        for (PsiField field : myHashCodeFields) {
-          addTempAssignment(field, buffer, tempName);
-          buffer.append(resultName);
-          buffer.append(" = ");
-          if (resultAssigned) {
-            buffer.append("31 * ");
-            buffer.append(resultName);
-            buffer.append(" + ");
-          }
-          if (field.getType() instanceof PsiPrimitiveType) {
-            addPrimitiveFieldHashCode(buffer, field, tempName);
-          } else {
-            addFieldHashCode(buffer, field);
-          }
-          buffer.append('\n');
-          resultAssigned = true;
-        }
-        buffer.append("return ");
-        buffer.append(resultName);
-        buffer.append("\n}");
-      } else {
-        buffer.append("return 0\n}");
+        buffer.append('\n');
+        resultAssigned = true;
       }
-      PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString());
-
-      try {
-        hashCode = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(hashCode));
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-
-//      reformatCode(hashCode);
-      return hashCode;
+      buffer.append("return ");
+      buffer.append(resultName);
+      buffer.append("\n}");
+    } else {
+      buffer.append("return 0\n}");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    PsiMethod hashCode = myFactory.createMethodFromText(buffer.toString());
+
+    try {
+      hashCode = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(hashCode));
+    } catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
+
+    //      reformatCode(hashCode);
+    return hashCode;
   }
 
   private static void addTempAssignment(PsiField field, StringBuilder buffer, String tempName) {

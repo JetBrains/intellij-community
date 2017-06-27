@@ -92,11 +92,16 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public void setTextFieldPreferredWidth(final int charCount) {
-    final Comp comp = getChildComponent();
+    JComponent comp = getChildComponent();
     Dimension size = GuiUtils.getSizeByChars(charCount, comp);
     comp.setPreferredSize(size);
-    final Dimension preferredSize = myBrowseButton.getPreferredSize();
-    setPreferredSize(new Dimension(size.width + preferredSize.width + 2, UIUtil.isUnderAquaLookAndFeel() ? preferredSize.height : preferredSize.height + 2));
+    Dimension preferredSize = myBrowseButton.getPreferredSize();
+
+    boolean keepHeight = UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderWin10LookAndFeel();
+    preferredSize.setSize(size.width + preferredSize.width + 2,
+                          keepHeight ? preferredSize.height : preferredSize.height + 2);
+
+    setPreferredSize(preferredSize);
   }
 
   @Override
@@ -303,9 +308,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   @Override
   public final void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+      IdeFocusManager.getGlobalInstance().requestFocus(myComponent, true));
   }
 
   @SuppressWarnings("deprecation")

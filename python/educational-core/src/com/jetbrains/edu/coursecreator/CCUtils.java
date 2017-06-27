@@ -42,6 +42,7 @@ import java.util.Map;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
+  public static final String TASK_DESCRIPTION_TEXT = "Write task description here using markdown or html";
   private static final Logger LOG = Logger.getInstance(CCUtils.class);
   public static final String GENERATED_FILES_FOLDER = ".coursecreator";
   public static final String COURSE_MODE = "Course Creator";
@@ -49,8 +50,7 @@ public class CCUtils {
   public static int getSubtaskIndex(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();
     String name = FileUtil.getNameWithoutExtension(fileName);
-    boolean canBeSubtaskFile = isTestsFile(project, file) || StudyUtils.isTaskDescriptionFile(fileName);
-    if (!canBeSubtaskFile) {
+    if (!isTestsFile(project, file)) {
       return -1;
     }
     if (!name.contains(EduNames.SUBTASK_MARKER)) {
@@ -279,7 +279,7 @@ public class CCUtils {
         }
         if (file.isDirectory()) return true;
 
-        if (StudyUtils.isTaskDescriptionFile(name) || StudyUtils.isTestsFile(project, name)) return true;
+        if (StudyUtils.isTestsFile(project, name)) return true;
 
         if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(file.getPath()))) {
           return false;

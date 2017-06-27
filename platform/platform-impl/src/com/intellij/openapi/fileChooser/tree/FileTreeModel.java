@@ -209,6 +209,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
     return false;
   }
 
+  @NotNull
   @Override
   public Invoker getInvoker() {
     return invoker;

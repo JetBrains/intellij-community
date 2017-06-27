@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import org.jetbrains.annotations.NotNull;
 
 public class PageBottomAction extends EditorAction {
   public PageBottomAction() {
@@ -32,7 +33,7 @@ public class PageBottomAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretPageBottom(editor, false);
     }
   }

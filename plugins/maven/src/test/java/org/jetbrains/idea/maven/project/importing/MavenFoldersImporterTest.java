@@ -262,6 +262,39 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     assertGeneratedSources("project", "target/generated-sources/xxx");
   }
 
+  public void testCustomPomFileName() throws Exception {
+    createProjectSubFile("m1/customName.xml", createPomXml(
+                  "<artifactId>m1</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>project</artifactId>" +
+                  "  <version>1</version>" +
+                  "</parent>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>sources</sourceDirectory>" +
+                  "  <testSourceDirectory>tests</testSourceDirectory>" +
+                  "</build>"));
+
+    new File(myProjectRoot.getPath(), "m1/sources").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/tests").mkdirs();
+    new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1/customName.xml</module>" +
+                  "</modules>");
+
+    assertContentRoots("m1", getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
+    assertGeneratedSources("project", "target/generated-sources/xxx");
+  }
+
   private void updateProjectFolders() {
     MavenFoldersImporter.updateProjectFolders(myProject, false);
   }

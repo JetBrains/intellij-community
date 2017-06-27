@@ -700,7 +700,7 @@ GuiTestUtil {
         else if (allFound.size() > 1) {
           // Only allow a single component to be found, otherwise you can get some really confusing
           // test failures; the matcher should pick a specific enough instance
-          fail("Found more than one " + matcher.supportedType().getSimpleName() + " which matches the criteria: " + allFound);
+          throw new ComponentLookupException("Found more than one " + matcher.supportedType().getSimpleName() + " which matches the criteria: " + allFound);
         }
         return found;
       }

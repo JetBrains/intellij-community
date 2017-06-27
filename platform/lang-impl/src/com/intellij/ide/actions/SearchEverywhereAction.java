@@ -149,7 +149,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_SYMBOLS = 6;
   private static final int MAX_SETTINGS = 5;
   private static final int MAX_ACTIONS = 5;
-  private static final int MAX_STRUCTURE = 10;
   private static final int MAX_RECENT_FILES = 10;
   private static final int DEFAULT_MORE_STEP_COUNT = 15;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
@@ -181,7 +180,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
 
-  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<JBPopup>("SearchEverywherePopup");
+  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
@@ -302,9 +301,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final int i = myList.locationToIndex(e.getPoint());
         if (i != -1) {
           mySkipFocusGain = true;
-          getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            getGlobalInstance().requestFocus(getField(), true);
-          });
+          getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             myList.setSelectedIndex(i);
@@ -354,14 +351,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static String getShortcut() {
-    String shortcutText;
-    final Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
-      shortcutText = "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
-    } else {
-      shortcutText = KeymapUtil.getShortcutsText(shortcuts);
+      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift");
     }
-    return shortcutText;
+    return KeymapUtil.getShortcutsText(shortcuts);
   }
 
   private void initSearchField(final MySearchTextField search) {
@@ -413,9 +407,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         if (myNonProjectCheckBox == e.getOppositeComponent()) {
           mySkipFocusGain = true;
-          getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            getGlobalInstance().requestFocus(editor, true);
-          });
+          getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(editor, true));
           return;
         }
         onFocusLost();
@@ -510,9 +502,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       option.setOptionState(!option.isOptionEnabled());
       myList.revalidate();
       myList.repaint();
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(getField(), true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
       return;
     }
 
@@ -704,7 +694,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }.installOn(settings);
     controls.add(settings, BorderLayout.EAST);
     myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
-    myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")  ");
+    myNonProjectCheckBox.setText("<html>Include non-project items <b>" + getShortcut() + "</b>  </html>");
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
       controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
@@ -855,9 +845,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     Executor executor = ourShiftIsPressed.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
-    if (executor == null || runConf == null) {
-      return null;
-    }
+    if (executor == null) return null;
     ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
     if (runner == null) {
       executor = runExecutor == executor ? debugExecutor : runExecutor;
@@ -1080,7 +1068,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       if (cmp == null) {
-        cmp = tryFileRenderer(matcher, list, value, index, isSelected, cellHasFocus);
+        cmp = tryFileRenderer(matcher, list, value, index, isSelected);
       }
 
       if (cmp == null) {
@@ -1140,7 +1128,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Nullable
-    private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+    private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected) {
       if (myProject != null && value instanceof VirtualFile) {
         PsiManager psiManager = PsiManager.getInstance(myProject);
         VirtualFile virtualFile = (VirtualFile)value;
@@ -1385,6 +1373,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           updatePopup();
           check();
 
+          checkModelsUpToDate();
           runReadAction(() -> buildRunConfigurations(pattern), true);
           runReadAction(() -> buildClasses(pattern), true);
           runReadAction(() -> buildFiles(pattern), false);
@@ -1469,7 +1458,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myActionProvider = createActionProvider();
       }
 
-      myActionProvider.filterElements(pattern, true, matched -> {
+      myActionProvider.filterElements(pattern, matched -> {
         check();
         Object object = matched.value;
         if (myListModel.contains(object)) return true;
@@ -2242,12 +2231,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
         sz = new Dimension(Math.min(getPopupMaxWidth(), Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(getPopupMaxWidth(), sz.height + extraHeight));
         sz.width += 20;
-        sz.height+=2;
       } else {
-        sz.width+=2;
-        sz.height+=2;
+        sz.width += 2;
       }
     }
+    sz.height += 2;
     sz.width = Math.max(sz.width, myPopup.getSize().width);
     myPopup.setSize(sz);
     if (myActionEvent != null && myActionEvent.getInputEvent() == null) {

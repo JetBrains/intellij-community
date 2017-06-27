@@ -38,6 +38,7 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testUnclosedImport1() { doParserTest("import java.awt.*"); }
   public void testUnclosedImport2() { doParserTest("import java.awt."); }
   public void testUnclosedImport3() { doParserTest("import static a"); }
+  public void testImportBrokenFromBeginning() { doParserTest("xx import a;"); }
 
   public void testExtraSemicolons() {
     doParserTest(

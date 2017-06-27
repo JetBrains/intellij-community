@@ -44,8 +44,8 @@ if [ -d "/Volumes/$VOLNAME" ]; then
   do
     echo "/Volumes/$VOLNAME - the image is already mounted. This build will wait for unmount for 1 min (up to 5 times)."
     sleep 60;
+    let "attempt += 1"
     if [ -d "/Volumes/$VOLNAME" ]; then
-      let "attempt += 1"
       if [ $attempt -eq $limit ]; then
         echo "/Volumes/$VOLNAME - the image is still mounted. By the reason the build will be stopped."
         rm -rf ${EXPLODED}

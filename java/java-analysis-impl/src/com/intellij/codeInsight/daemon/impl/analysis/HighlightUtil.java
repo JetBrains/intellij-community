@@ -40,10 +40,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -70,8 +67,10 @@ import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
-import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -232,6 +231,7 @@ public class HighlightUtil extends HighlightUtilBase {
       Project project = refElement.getProject();
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       PsiModifierList modifierListCopy = facade.getElementFactory().createFieldFromText("int a;", null).getModifierList();
+      assert modifierListCopy != null;
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
       String minModifier = PsiModifier.PACKAGE_LOCAL;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
@@ -498,7 +498,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!(element instanceof PsiVariable)) return;
 
     registerChangeVariableTypeFixes((PsiVariable)element, type, lExpr, highlightInfo);
-    
+
     if (lExpr instanceof PsiMethodCallExpression && lExpr.getParent() instanceof PsiAssignmentExpression) {
       final PsiElement parent = lExpr.getParent();
       if (parent.getParent() instanceof PsiStatement) {
@@ -623,9 +623,8 @@ public class HighlightUtil extends HighlightUtilBase {
         PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
         if (isMethodVoid) {
           description = JavaErrorMessages.message("return.from.void.method");
-          errorResult =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
-          if (valueType != null) {
+          errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
+          if (valueType != null && method != null) {
             QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, valueType, true));
           }
         }
@@ -647,12 +646,11 @@ public class HighlightUtil extends HighlightUtilBase {
           }
         }
       }
-      else {
-        if (!isMethodVoid) {
-          description = JavaErrorMessages.message("missing.return.value");
-          errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).navigationShift(PsiKeyword.RETURN.length()).create();
-          QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true));
-        }
+      else if (!isMethodVoid) {
+        description = JavaErrorMessages.message("missing.return.value");
+        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description)
+          .navigationShift(PsiKeyword.RETURN.length()).create();
+        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true));
       }
     }
     return errorResult;
@@ -1412,16 +1410,14 @@ public class HighlightUtil extends HighlightUtilBase {
     if (!PsiUtil.isStatement(statement) && !PsiUtilCore.hasErrorElementChild(statement)) {
       boolean isDeclarationNotAllowed = false;
       if (statement instanceof PsiDeclarationStatement) {
-        final PsiElement parent = statement.getParent();
+        PsiElement parent = statement.getParent();
         isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
       }
-      
       String description = JavaErrorMessages.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
       HighlightInfo error =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
       if (statement instanceof PsiExpressionStatement) {
-        QuickFixAction
-          .registerQuickFixAction(error, QuickFixFactory.getInstance().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
+        QuickFixAction.registerQuickFixAction(error, QuickFixFactory.getInstance().createDeleteSideEffectAwareFix((PsiExpressionStatement)statement));
       }
       return error;
     }
@@ -1500,6 +1496,7 @@ public class HighlightUtil extends HighlightUtilBase {
       PsiType rType = operand.getType();
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false)) {
         PsiJavaToken token = expression.getTokenBeforeOperand(operand);
+        assert token != null : expression;
         String message = JavaErrorMessages.message("binary.operator.not.applicable", token.getText(),
                                                    JavaHighlightUtil.formatType(lType),
                                                    JavaHighlightUtil.formatType(rType));
@@ -1565,7 +1562,6 @@ public class HighlightUtil extends HighlightUtilBase {
       if (!resolvesToImmediateSuperInterface(expr, qualifier, aClass, languageLevel)) {
         return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
       }
-      
       if (expr instanceof PsiSuperExpression) {
         final PsiElement resolved = ((PsiReferenceExpression)expr.getParent()).resolve();
         //15.11.2
@@ -1973,7 +1969,7 @@ public class HighlightUtil extends HighlightUtilBase {
     while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
       lastChild = lastChild.getPrevSibling();
     }
-    if (!(lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.COLON)) {
+    if (!(PsiUtil.isJavaToken(lastChild, JavaTokenType.COLON))) {
       int start = statement.getTextRange().getEndOffset();
       int end = statement.getTextRange().getEndOffset() + 1;
       String description = JavaErrorMessages.message("switch.colon.expected.after.case.label");
@@ -2104,7 +2100,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                                     PsiElement resolved,
                                                                     @NotNull PsiFile containingFile) {
     PsiClass referencedClass;
-    @NonNls String resolvedName;
+    String resolvedName;
     PsiType type;
     if (expression instanceof PsiJavaCodeReferenceElement) {
       // redirected ctr
@@ -2282,7 +2278,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  private static HighlightInfo createMemberReferencedError(@NonNls final String resolvedName, @NotNull TextRange textRange) {
+  private static HighlightInfo createMemberReferencedError(final String resolvedName, @NotNull TextRange textRange) {
     String description = JavaErrorMessages.message("member.referenced.before.constructor.called", resolvedName);
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
   }
@@ -2541,7 +2537,6 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-
   @Nullable
   static HighlightInfo checkConditionalExpressionBranchTypesMatch(@NotNull final PsiExpression expression, PsiType type) {
     PsiElement parent = expression.getParent();
@@ -2566,71 +2561,69 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  @SuppressWarnings("StringContatenationInLoop")
-  static HighlightInfo createIncompatibleTypeHighlightInfo(final PsiType lType,
-                                                           final PsiType rType,
-                                                           @NotNull final TextRange textRange,
-                                                           int navigationShift) {
-    PsiType lType1 = lType;
-    PsiType rType1 = rType;
-    PsiTypeParameter[] lTypeParams = PsiTypeParameter.EMPTY_ARRAY;
-    PsiSubstitutor lTypeSubstitutor = PsiSubstitutor.EMPTY;
-    if (lType1 instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)lType1).resolveGenerics();
-      lTypeSubstitutor = resolveResult.getSubstitutor();
-      PsiClass psiClass = resolveResult.getElement();
-      if (psiClass instanceof PsiAnonymousClass) {
-        lType1 = ((PsiAnonymousClass)psiClass).getBaseClassType();
-        resolveResult = ((PsiClassType)lType1).resolveGenerics();
-        lTypeSubstitutor = resolveResult.getSubstitutor();
-        psiClass = resolveResult.getElement();
-      }
-      lTypeParams = psiClass == null ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
-    }
-    PsiTypeParameter[] rTypeParams = PsiTypeParameter.EMPTY_ARRAY;
-    PsiSubstitutor rTypeSubstitutor = PsiSubstitutor.EMPTY;
-    if (rType1 instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)rType1).resolveGenerics();
-      rTypeSubstitutor = resolveResult.getSubstitutor();
-      PsiClass psiClass = resolveResult.getElement();
-      if (psiClass instanceof PsiAnonymousClass) {
-        rType1 = ((PsiAnonymousClass)psiClass).getBaseClassType();
-        resolveResult = ((PsiClassType)rType1).resolveGenerics();
-        rTypeSubstitutor = resolveResult.getSubstitutor();
-        psiClass = resolveResult.getElement();
-      }
-      rTypeParams = psiClass == null ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
-    }
+  static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType, PsiType rType, @NotNull TextRange textRange, int navigationShift) {
+    Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
+    Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
+    lType = lTypeData.first;
+    rType = rTypeData.first;
+    PsiTypeParameter[] lTypeParams = lTypeData.second;
+    PsiTypeParameter[] rTypeParams = rTypeData.second;
 
     int typeParamColumns = Math.max(lTypeParams.length, rTypeParams.length);
-    @Language("HTML") @NonNls String requiredRow = "";
-    @Language("HTML") @NonNls String foundRow = "";
+    StringBuilder requiredRow = new StringBuilder();
+    StringBuilder foundRow = new StringBuilder();
     for (int i = 0; i < typeParamColumns; i++) {
       PsiTypeParameter lTypeParameter = i >= lTypeParams.length ? null : lTypeParams[i];
       PsiTypeParameter rTypeParameter = i >= rTypeParams.length ? null : rTypeParams[i];
-      PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeSubstitutor.substitute(lTypeParameter);
-      PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeSubstitutor.substitute(rTypeParameter);
+      PsiType lSubstitutedType = lTypeParameter == null ? null : lTypeData.third.substitute(lTypeParameter);
+      PsiType rSubstitutedType = rTypeParameter == null ? null : rTypeData.third.substitute(rTypeParameter);
       boolean matches = Comparing.equal(lSubstitutedType, rSubstitutedType);
-      @NonNls String openBrace = i == 0 ? "&lt;" : "";
-      @NonNls String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
-      requiredRow += "<td>" + (lTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(lSubstitutedType, matches) +
-                     (i < lTypeParams.length ? closeBrace : "") + "</td>";
-      foundRow += "<td>" + (rTypeParams.length == 0 ? "" : openBrace) + redIfNotMatch(rSubstitutedType, matches) +
-                  (i < rTypeParams.length ? closeBrace : "") + "</td>";
+      String openBrace = i == 0 ? "&lt;" : "";
+      String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
+      requiredRow.append("<td>").append(lTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(lSubstitutedType, matches))
+        .append(i < lTypeParams.length ? closeBrace : "").append("</td>");
+      foundRow.append("<td>").append(rTypeParams.length == 0 ? "" : openBrace).append(redIfNotMatch(rSubstitutedType, matches))
+        .append(i < rTypeParams.length ? closeBrace : "").append("</td>");
     }
-    PsiType lRawType = lType1 instanceof PsiClassType ? ((PsiClassType)lType1).rawType() : lType1;
-    PsiType rRawType = rType1 instanceof PsiClassType ? ((PsiClassType)rType1).rawType() : rType1;
+    PsiType lRawType = lType instanceof PsiClassType ? ((PsiClassType)lType).rawType() : lType;
+    PsiType rRawType = rType instanceof PsiClassType ? ((PsiClassType)rType).rawType() : rType;
     boolean assignable = lRawType == null || rRawType == null || TypeConversionUtil.isAssignable(lRawType, rRawType);
-
-    String toolTip = JavaErrorMessages.message("incompatible.types.html.tooltip",
-                                               redIfNotMatch(lRawType, assignable), requiredRow,
-                                               redIfNotMatch(rRawType, assignable), foundRow);
-
-    String description = JavaErrorMessages.message("incompatible.types", JavaHighlightUtil.formatType(lType1), JavaHighlightUtil
-      .formatType(rType1));
-
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip).navigationShift(navigationShift).create();
+    String toolTip = JavaErrorMessages.message(
+      "incompatible.types.html.tooltip", redIfNotMatch(lRawType, assignable), requiredRow, redIfNotMatch(rRawType, assignable), foundRow);
+    String description = JavaErrorMessages.message(
+      "incompatible.types", JavaHighlightUtil.formatType(lType), JavaHighlightUtil.formatType(rType));
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip)
+      .navigationShift(navigationShift).create();
   }
+
+  private static Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> typeData(PsiType type) {
+    PsiTypeParameter[] parameters = PsiTypeParameter.EMPTY_ARRAY;
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    if (type instanceof PsiClassType) {
+      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      substitutor = resolveResult.getSubstitutor();
+      PsiClass psiClass = resolveResult.getElement();
+      if (psiClass instanceof PsiAnonymousClass) {
+        type = ((PsiAnonymousClass)psiClass).getBaseClassType();
+        resolveResult = ((PsiClassType)type).resolveGenerics();
+        substitutor = resolveResult.getSubstitutor();
+        psiClass = resolveResult.getElement();
+      }
+      parameters = psiClass == null ? PsiTypeParameter.EMPTY_ARRAY : psiClass.getTypeParameters();
+    }
+    return Trinity.create(type, parameters, substitutor);
+  }
+
+  private static String redIfNotMatch(PsiType type, boolean matches) {
+    if (matches) return getFQName(type, false);
+    String color = UIUtil.isUnderDarcula() ? "FF6B68" : "red";
+    return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
+  }
+
+  private static String getFQName(PsiType type, boolean longName) {
+    return type != null ? XmlStringUtil.escapeString(longName ? type.getInternalCanonicalText() : type.getPresentableText()) : "";
+  }
+
 
   @Nullable
   static HighlightInfo checkSingleImportClassConflict(@NotNull PsiImportStatement statement,
@@ -2649,19 +2642,6 @@ public class HighlightUtil extends HighlightUtilBase {
       importedClasses.put(name, Pair.create(null, (PsiClass)element));
     }
     return null;
-  }
-
-
-  @NonNls
-  private static String redIfNotMatch(PsiType type, boolean matches) {
-    if (matches) return getFQName(type, false);
-    String color = UIUtil.isUnderDarcula() ? "FF6B68" : "red";
-    return "<font color='" + color +"'><b>" + getFQName(type, true) + "</b></font>";
-  }
-
-  private static String getFQName(@Nullable PsiType type, boolean longName) {
-    if (type == null) return "";
-    return XmlStringUtil.escapeString(longName ? type.getInternalCanonicalText() : type.getPresentableText());
   }
 
 

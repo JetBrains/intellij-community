@@ -347,14 +347,14 @@ public class PyTypeChecker {
     final String superName = expected.getName();
     final String subName = actual.getName();
     final boolean subIsBool = "bool".equals(subName);
-    final boolean subIsInt = "int".equals(subName);
-    final boolean subIsLong = "long".equals(subName);
+    final boolean subIsInt = PyNames.TYPE_INT.equals(subName);
+    final boolean subIsLong = PyNames.TYPE_LONG.equals(subName);
     final boolean subIsFloat = "float".equals(subName);
     final boolean subIsComplex = "complex".equals(subName);
     if (superName == null || subName == null ||
         superName.equals(subName) ||
-        ("int".equals(superName) && subIsBool) ||
-        (("long".equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
+        (PyNames.TYPE_INT.equals(superName) && subIsBool) ||
+        ((PyNames.TYPE_LONG.equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
         (("float".equals(superName) || PyNames.ABC_REAL.equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
         (("complex".equals(superName) || PyNames.ABC_COMPLEX.equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
         (PyNames.ABC_NUMBER.equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
@@ -515,9 +515,10 @@ public class PyTypeChecker {
           substParams = new ArrayList<>();
           for (PyCallableParameter parameter : parameters) {
             final PyType substType = substitute(parameter.getType(context), substitutions, context);
-            final PyCallableParameter subst = parameter.getParameter() != null ?
-                                              new PyCallableParameterImpl(parameter.getParameter()) :
-                                              new PyCallableParameterImpl(parameter.getName(), substType);
+            final PyParameter psi = parameter.getParameter();
+            final PyCallableParameter subst = psi != null ?
+                                              PyCallableParameterImpl.psi(psi, substType) :
+                                              PyCallableParameterImpl.nonPsi(parameter.getName(), substType, parameter.getDefaultValue());
             substParams.add(subst);
           }
         }

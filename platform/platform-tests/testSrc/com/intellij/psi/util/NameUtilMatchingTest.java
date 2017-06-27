@@ -631,9 +631,9 @@ public class NameUtilMatchingTest extends UsefulTestCase {
  public void testSpeedSearchComparator() {
    final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
 
-   assertTrue(c.matchingFragments("a", "Ant") != null);
-   assertTrue(c.matchingFragments("an", "Changes") != null);
-   assertTrue(c.matchingFragments("a", "Changes") != null);
+   assertNotNull(c.matchingFragments("a", "Ant"));
+   assertNotNull(c.matchingFragments("an", "Changes"));
+   assertNotNull(c.matchingFragments("a", "Changes"));
  }
 
   public void testFilePatterns() {
@@ -669,8 +669,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matching", 4500, () -> {
-      for (int i = 0; i < 100000; i++) {
+    PlatformTestUtil.startPerformanceTest("Matching", 5000, () -> {
+      for (int i = 0; i < 100_000; i++) {
         for (MinusculeMatcher matcher : matching) {
           Assert.assertTrue(matcher.toString(), matcher.matches(longName));
           matcher.matchingDegree(longName);
@@ -679,24 +679,24 @@ public class NameUtilMatchingTest extends UsefulTestCase {
           Assert.assertFalse(matcher.toString(), matcher.matches(longName));
         }
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   public void testOnlyUnderscoresPerformance() {
     PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
-      String small = StringUtil.repeat("_", 50);
+      String small = StringUtil.repeat("_", 50000);
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
       assertDoesntMatch("*" + big, small);
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   public void testRepeatedLetterPerformance() {
     PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
-      String big = StringUtil.repeat("Aaaaaa", 50);
+      String big = StringUtil.repeat("Aaaaaa", 50000);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   public void testMatchingAllOccurrences() {

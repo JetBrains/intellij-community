@@ -18,6 +18,8 @@ package com.intellij.compiler.notNullVerification;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
+import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -30,8 +32,6 @@ import java.util.Set;
  * @author ven
  */
 public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
-  private static final String SYNTHETIC_CLASS_NAME = "java/lang/Synthetic";
-  private static final String SYNTHETIC_TYPE = "L" + SYNTHETIC_CLASS_NAME + ";";
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
   private static final String ISE_CLASS_NAME = "java/lang/IllegalStateException";
 
@@ -145,18 +145,21 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   }
 
   @Override
-  public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
+  public MethodVisitor visitMethod(final int access, final String name, final String desc, String signature, String[] exceptions) {
     if ((access & Opcodes.ACC_BRIDGE) != 0) {
       return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, desc, signature, exceptions));
     }
 
     final Type[] args = Type.getArgumentTypes(desc);
+
+    // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
+    final int syntheticCount = signature == null ? 0 : Math.max(0, args.length - getSignatureParameterCount(signature));
+
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
     final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
     return new FailSafeMethodVisitor(Opcodes.API_VERSION, v) {
       private final Map<Integer, NotNullState> myNotNullParams = new LinkedHashMap<Integer, NotNullState>();
-      private int mySyntheticCount = 0;
       private NotNullState myMethodNotNull;
       private Label myStartGeneratedCodeLabel;
 
@@ -175,16 +178,30 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         };
       }
 
+      @Override
+      public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+        AnnotationVisitor av = mv.visitTypeAnnotation(typeRef, null, desc, visible);
+        if (typePath != null) return av;
+
+        TypeReference ref = new TypeReference(typeRef);
+        if (ref.getSort() == TypeReference.METHOD_RETURN) {
+          return checkNotNullMethod(desc, av);
+        }
+        if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER) {
+          return checkNotNullParameter(ref.getFormalParameterIndex() + syntheticCount, desc, av);
+        }
+        return av;
+      }
+
       public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
-        AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
+        return checkNotNullParameter(parameter, anno, mv.visitParameterAnnotation(parameter, anno, visible));
+      }
+
+      private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {
         if (isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
           NotNullState state = new NotNullState(anno, IAE_CLASS_NAME);
-          myNotNullParams.put(new Integer(parameter), state);
-          av = collectNotNullArgs(av, state);
-        }
-        else if (anno.equals(SYNTHETIC_TYPE)) {
-          // see http://forge.ow2.org/tracker/?aid=307392&group_id=23&atid=100023&func=detail
-          mySyntheticCount++;
+          myNotNullParams.put(parameter, state);
+          return collectNotNullArgs(av, state);
         }
 
         return av;
@@ -192,12 +209,14 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       @Override
       public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
-        AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
+        return checkNotNullMethod(anno, mv.visitAnnotation(anno, isRuntime));
+      }
+
+      private AnnotationVisitor checkNotNullMethod(String anno, AnnotationVisitor av) {
         if (isReferenceType(returnType) && myNotNullAnnos.contains(anno)) {
           myMethodNotNull = new NotNullState(anno, ISE_CLASS_NAME);
-          av = collectNotNullArgs(av, myMethodNotNull);
+          return collectNotNullArgs(av, myMethodNotNull);
         }
-
         return av;
       }
 
@@ -223,7 +242,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           String descrPattern = state.getNullParamMessage(paramName);
           String[] args = state.message != null
                           ? EMPTY_STRING_ARRAY 
-                          : new String[]{paramName != null ? paramName : String.valueOf(param - mySyntheticCount), myClassName, name};
+                          : new String[]{paramName != null ? paramName : String.valueOf(param - syntheticCount), myClassName, name};
           reportError(state.exceptionType, end, descrPattern, args);
         }
       }
@@ -272,6 +291,18 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
         }
       }
     };
+  }
+
+  private static int getSignatureParameterCount(String signature) {
+    final int[] count = {0};
+    new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.ASM6) {
+      @Override
+      public SignatureVisitor visitParameterType() {
+        count[0]++;
+        return super.visitParameterType();
+      }
+    });
+    return count[0];
   }
 
   private static boolean isReferenceType(final Type type) {

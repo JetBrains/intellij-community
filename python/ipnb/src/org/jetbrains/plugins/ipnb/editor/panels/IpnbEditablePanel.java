@@ -38,6 +38,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected JPanel myViewPrompt;
   private JPanel myEditablePrompt;
   protected JLabel myPromptLabel;
+  protected Runnable myOnFinish;
 
   public IpnbEditablePanel(@NotNull K cell) {
     super(cell);
@@ -134,6 +135,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   protected String getRawCellText() { return ""; }
 
+  public void onFinishExecutionAction(Runnable onFinish) {
+    myOnFinish = onFinish;
+  }
+
   public void runCell(boolean selectNext) {
     if (mySplitter != null) {
       updateCellSource();
@@ -147,6 +152,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
         if (selectNext) {
           ((IpnbFilePanel)parent).selectNext(this, true);
         }
+      }
+      if (myOnFinish != null) {
+        myOnFinish.run();
+        myOnFinish = null;
       }
     }
   }

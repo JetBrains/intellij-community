@@ -15,6 +15,8 @@
  */
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.CommonBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
@@ -23,12 +25,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -53,6 +58,7 @@ public class ExistingTemplatesComponent {
   private final JComponent historyPanel;
   private DialogWrapper owner;
   private final Project project;
+  private final SmartList<Runnable> queuedActions = new SmartList<>();
 
   private ExistingTemplatesComponent(Project project) {
     this.project = project;
@@ -83,10 +89,8 @@ public class ExistingTemplatesComponent {
       parent.add(node);
     }
 
-    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
     userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category"));
     root.add(userTemplatesNode);
-    setUserTemplates(configurationManager);
 
     for (final DefaultMutableTreeNode nodeToExpand : nodesToExpand) {
       patternTree.expandPath(new TreePath(new Object[]{root, nodeToExpand}));
@@ -110,12 +114,34 @@ public class ExistingTemplatesComponent {
           if (configuration.isPredefined()) {
             return;
           }
+          final String configurationName = configuration.getName();
+          for (Configuration configuration1 : ConfigurationManager.getInstance(project).getConfigurations()) {
+            final MatchVariableConstraint constraint =
+              configuration1.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+            if (constraint == null) {
+              continue;
+            }
+            final String within = constraint.getWithinConstraint();
+            if (configurationName.equals(within)) {
+              if (Messages.CANCEL == Messages.showOkCancelDialog(
+                project,
+                SSRBundle.message("template.in.use.message", configurationName, configuration1.getName()),
+                SSRBundle.message("template.in.use.title", configurationName),
+                CommonBundle.message("button.remove"),
+                Messages.CANCEL_BUTTON,
+                AllIcons.General.WarningDialog
+              )) {
+                return;
+              }
+              break;
+            }
+          }
           final int[] rows = patternTree.getSelectionRows();
           if (rows != null && rows.length > 0) {
             patternTree.addSelectionRow(rows[0] - 1);
           }
           patternTreeModel.removeNodeFromParent(node);
-          configurationManager.removeConfiguration(configuration);
+          queuedActions.add(() -> ConfigurationManager.getInstance(project).removeConfiguration(configuration));
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
@@ -140,14 +166,13 @@ public class ExistingTemplatesComponent {
 
     configureSelectTemplateAction(patternTree);
 
-    historyModel = new CollectionListModel<>(configurationManager.getHistoryConfigurations());
+    historyModel = new CollectionListModel<>();
     historyPanel = new JPanel(new BorderLayout());
     historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
 
     historyList = new JBList<>(historyModel);
     historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    historyList.setSelectedIndex(0);
 
     ListSpeedSearch<Configuration> speedSearch = new ListSpeedSearch<>(historyList, (Function<Configuration, String>)Configuration::getName);
     historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
@@ -171,7 +196,8 @@ public class ExistingTemplatesComponent {
     }
   }
 
-  public void setUserTemplates(ConfigurationManager configurationManager) {
+  private void initialize() {
+    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
     userTemplatesNode.removeAllChildren();
     for (final Configuration config : configurationManager.getConfigurations()) {
       userTemplatesNode.add(new DefaultMutableTreeNode(config));
@@ -179,6 +205,8 @@ public class ExistingTemplatesComponent {
     patternTreeModel.reload(userTemplatesNode);
 
     patternTree.expandPath(new TreePath(new Object[]{patternTreeModel.getRoot(), userTemplatesNode}));
+    historyModel.replaceAll(configurationManager.getHistoryConfigurations());
+    historyList.setSelectedIndex(0);
   }
 
   private void configureSelectTemplateAction(JComponent component) {
@@ -232,7 +260,9 @@ public class ExistingTemplatesComponent {
   }
 
   public static ExistingTemplatesComponent getInstance(Project project) {
-    return ServiceManager.getService(project, ExistingTemplatesComponent.class);
+    final ExistingTemplatesComponent existingTemplatesComponent = ServiceManager.getService(project, ExistingTemplatesComponent.class);
+    existingTemplatesComponent.initialize();
+    return existingTemplatesComponent;
   }
 
   private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer<Configuration> {
@@ -297,21 +327,7 @@ public class ExistingTemplatesComponent {
     }
   }
 
-  void addConfigurationToHistory(Configuration configuration) {
-    historyModel.remove(configuration);
-    historyModel.add(0, configuration);
-    final ConfigurationManager configurationManager = ConfigurationManager.getInstance(project);
-    configurationManager.addHistoryConfigurationToFront(configuration);
-    historyList.setSelectedIndex(0);
-
-    if (historyModel.getSize() > 25) {
-      configurationManager.removeHistoryConfiguration(historyModel.getElementAt(25));
-      // we add by one!
-      historyModel.remove(25);
-    }
-  }
-
-  public JList getHistoryList() {
+  public JList<Configuration> getHistoryList() {
     return historyList;
   }
 
@@ -321,5 +337,12 @@ public class ExistingTemplatesComponent {
 
   public void setOwner(DialogWrapper owner) {
     this.owner = owner;
+  }
+
+  public void finish(boolean performQueuedActions) {
+    if (performQueuedActions) {
+      queuedActions.forEach(a -> a.run());
+    }
+    queuedActions.clear();
   }
 }

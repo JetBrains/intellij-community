@@ -163,7 +163,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                                                 @NotNull Collection<String> trackingBranches,
                                                                 @NotNull Collection<GitRepository> repositories) {
     String title = "Delete Remote Branch";
-    String message = "Delete remote branch " + branchName;
+    String message = "Delete remote branch " + branchName + "?";
 
     if (trackingBranches.isEmpty()) {
       return YES == DialogManager.showOkCancelDialog(myProject, message, title, "Delete", "Cancel", getQuestionIcon()) ? DELETE : CANCEL;

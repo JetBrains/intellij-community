@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -39,6 +40,7 @@ import com.sun.jdi.ClassType;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,7 +51,8 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
     super(editor, expression, context, indicator);
   }
 
-  public void threadAction() {
+  @Override
+  public void threadAction(@NotNull SuspendContextImpl suspendContext) {
     PsiType type = null;
     try {
       type = evaluate();
@@ -109,13 +112,7 @@ public abstract class RuntimeTypeEvaluator extends EditorEvaluationCommand<PsiTy
   }
 
   private static PsiType findPsiType(Project project, Type type) {
-    AccessToken token = ReadAction.start();
-    try {
-      return DebuggerUtils.getType(type.name().replace('$', '.'), project);
-    }
-    finally {
-      token.finish();
-    }
+    return ReadAction.compute(() -> DebuggerUtils.getType(type.name().replace('$', '.'), project));
   }
 
   public static boolean isSubtypeable(PsiExpression expr) {

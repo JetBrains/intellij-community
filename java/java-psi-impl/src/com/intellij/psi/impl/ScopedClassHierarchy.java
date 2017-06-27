@@ -22,10 +22,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -161,9 +158,10 @@ class ScopedClassHierarchy {
 
   @NotNull
   private List<PsiClassType.ClassResolveResult> calcImmediateSupersWithCapturing() {
-    List<PsiClassType.ClassResolveResult> list;
-    list = ContainerUtil.newArrayList();
+    PsiUtilCore.ensureValid(myPlaceClass);
+    List<PsiClassType.ClassResolveResult> list = ContainerUtil.newArrayList();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
+      PsiUtil.ensureValidType(type);
       PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
       if (corrected == null) continue;
 

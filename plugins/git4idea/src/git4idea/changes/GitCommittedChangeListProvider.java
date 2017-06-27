@@ -39,7 +39,9 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
+import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
+import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -187,7 +189,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     VirtualFile root = repository.getRoot();
 
     String[] hashParameters = GitHistoryUtils.formHashParameters(repository.getVcs(), Collections.singleton(number.asString()));
-    List<GitCommit> gitCommits = GitHistoryUtils.collectFullDetails(myProject, root, hashParameters);
+    List<GitCommit> gitCommits = GitLogUtil.collectFullDetails(myProject, root, hashParameters);
     if (gitCommits.size() != 1) {
       return null;
     }
@@ -209,7 +211,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       }
     }
     String afterTime = "--after=" + GitUtil.gitTime(new Date(gitCommit.getCommitTime()));
-    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, (VirtualFile)null, afterTime);
+    List<VcsFileRevision> history = GitFileHistory.collectHistory(myProject, filePath, afterTime);
     if (history.isEmpty()) {
       return Pair.create(commit, filePath);
     }

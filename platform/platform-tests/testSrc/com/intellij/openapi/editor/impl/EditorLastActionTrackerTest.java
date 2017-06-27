@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -72,7 +73,7 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
 
   private class MyActionHandler extends EditorActionHandler {
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assertNull(myTracker.getLastActionId());
     }
   }

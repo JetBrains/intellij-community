@@ -23,7 +23,6 @@ import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Compani
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
-import com.intellij.util.containers.HashSet
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
@@ -35,6 +34,7 @@ import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
 import java.nio.file.Paths
+import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.jar.JarInputStream
@@ -231,13 +231,11 @@ object GuiTestLocalLauncher {
    */
   private fun getExtendedClasspath(moduleName: String): MutableSet<File> {
     val modules = getModulesList()
-    val resultSet = HashSet<File>()
-    val module = modules.module(moduleName)
-    assert(module != null)
-    resultSet.addAll(module!!.getClasspath())
-    val testGuiFrameworkModule = modules.module("testGuiFramework")
-    assert(testGuiFrameworkModule != null)
-    resultSet.addAll(testGuiFrameworkModule!!.getClasspath())
+    val resultSet = LinkedHashSet<File>()
+    val module = modules.module(moduleName)!!
+    resultSet.addAll(module.getClasspath())
+    val testGuiFrameworkModule = modules.module("testGuiFramework")!!
+    resultSet.addAll(testGuiFrameworkModule.getClasspath())
     return resultSet
   }
 

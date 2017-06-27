@@ -6,14 +6,18 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import one.util.streamex.EntryStream;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +72,12 @@ public abstract class Task implements StudyItem {
     for (TaskFile taskFile : getTaskFiles().values()) {
       taskFile.initTaskFile(this, isRestarted);
     }
+  }
+
+  @SuppressWarnings("unused")
+  //used for deserialization
+  public void setTaskTexts(Map<String, String> taskTexts) {
+    this.taskTexts = taskTexts;
   }
 
   @Override
@@ -161,11 +171,34 @@ public abstract class Task implements StudyItem {
     return null;
   }
 
-  public String getTaskDescription() {
-    if (!taskTexts.isEmpty()) {
-      return taskTexts.get(EduNames.TASK_HTML);
+  /**
+   * @param wrap if true, text will be wrapped with ancillary information (e.g. to display latex)
+   */
+  public String getTaskDescription(boolean wrap) {
+    String fileName = getTaskDescriptionName();
+    //TODO: replace this with simple get after implementing migration for taskTexts
+    Map.Entry<String, String> entry =
+      EntryStream.of(taskTexts).findFirst(e -> FileUtil.getNameWithoutExtension(e.getKey()).equals(fileName)).orElse(null);
+    if (entry == null) {
+      return null;
     }
-    return null;
+    String taskText = entry.getValue();
+    if (!wrap) {
+      return taskText;
+    }
+    taskText = StudyUtils.wrapTextToDisplayLatex(StudyUtils.convertToHtml(taskText));
+    if (getLesson().getCourse().isAdaptive()) {
+      taskText = EduAdaptiveStepicConnector.wrapAdaptiveCourseText(this, taskText);
+    }
+    return taskText;
+  }
+
+  public String getTaskDescription() {
+    return getTaskDescription(true);
+  }
+
+  public String getTaskDescriptionName() {
+    return EduNames.TASK;
   }
 
   @NotNull
@@ -278,5 +311,9 @@ public abstract class Task implements StudyItem {
   public int getPosition() {
     final Lesson lesson = getLesson();
     return lesson.getTaskList().indexOf(this) + 1;
+  }
+
+  public void saveTaskText(String text) {
+    taskTexts.put(getTaskDescriptionName(), text);
   }
 }

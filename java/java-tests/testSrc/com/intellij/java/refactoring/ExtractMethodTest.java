@@ -922,6 +922,38 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNotNullArgument0() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument1() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument2() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument3() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument4() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument5() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument6() throws Exception {
+    doTest();
+  }
+
+  public void testNotNullArgument7() throws Exception {
+    doTest();
+  }
+
   public void testQualifyWhenConflictingNamePresent() throws Exception {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;

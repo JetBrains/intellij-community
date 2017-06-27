@@ -4,8 +4,8 @@ import java.util.function.Function;
 
 public class Test {
   public static void main(String[] args) {
-    /* bar */
-    /* who-hoo */
+      /* bar */
+      /* who-hoo */
       String s = "foo";
   }
 }

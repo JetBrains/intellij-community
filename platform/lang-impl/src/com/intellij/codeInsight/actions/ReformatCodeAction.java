@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
 public class ReformatCodeAction extends AnAction implements DumbAware {
@@ -251,13 +252,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   }
 
   public static PsiFile[] convertToPsiFiles(final VirtualFile[] files,Project project) {
-    final PsiManager manager = PsiManager.getInstance(project);
-    final ArrayList<PsiFile> result = new ArrayList<>();
-    for (VirtualFile virtualFile : files) {
-      final PsiFile psiFile = manager.findFile(virtualFile);
-      if (psiFile != null) result.add(psiFile);
-    }
-    return PsiUtilCore.toPsiFileArray(result);
+    PsiManager psiManager = PsiManager.getInstance(project);
+    List<PsiFile> list = PsiUtilCore.toPsiFiles(psiManager, Arrays.asList(files));
+    return PsiUtilCore.toPsiFileArray(list);
   }
 
 

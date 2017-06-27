@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,24 +96,19 @@ public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader i
     }
 
     int maxLength = Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE;
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    final StringBuilder buffer = new StringBuilder();
     try {
-      try {
-        build(buffer, maxLength);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      String s = buffer.toString();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Resulting text: \n" + s);
-      }
-      myDelegate = new StringReader(s);
-      return myDelegate;
+      build(buffer, maxLength);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    catch (Exception e) {
+      LOG.error(e);
     }
+    String s = buffer.toString();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Resulting text: \n" + s);
+    }
+    myDelegate = new StringReader(s);
+    return myDelegate;
   }
 
   protected abstract void build(@NotNull StringBuilder holder, int maxLength);

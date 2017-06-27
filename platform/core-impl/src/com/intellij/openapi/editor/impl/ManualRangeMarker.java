@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class ManualRangeMarker implements Segment {
       }
     }
 
-    TextRange range = RangeMarkerImpl.applyChange(event, myStart, myEnd, myGreedyLeft, myGreedyRight);
+    TextRange range = RangeMarkerImpl.applyChange(event, myStart, myEnd, myGreedyLeft, myGreedyRight, false);
     return range == null ? null : new ManualRangeMarker(range.getStartOffset(), range.getEndOffset(), myGreedyLeft, myGreedyRight, mySurviveOnExternalChange, null);
   }
 

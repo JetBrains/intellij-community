@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.PowerSaveMode;
@@ -242,16 +243,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
 
       private void rebuildAllIndices() {
-        waitUntilIndicesAreInitialized();
-        IndexingStamp.flushCaches();
-        for (ID<?, ?> indexId : getState().getIndexIDs()) {
-          try {
-            clearIndex(indexId);
-          }
-          catch (StorageException e) {
-            LOG.info(e);
-          }
-        }
+        doClearIndices();
         scheduleIndexRebuild("File type change");
       }
     });
@@ -279,6 +271,20 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     myConnection = connection;
 
     myConnection.subscribe(VirtualFileManager.VFS_CHANGES, myChangedFilesCollector);
+  }
+
+  @VisibleForTesting
+  void doClearIndices() {
+    waitUntilIndicesAreInitialized();
+    IndexingStamp.flushCaches();
+    for (ID<?, ?> indexId : getState().getIndexIDs()) {
+      try {
+        clearIndex(indexId);
+      }
+      catch (StorageException e) {
+        LOG.info(e);
+      }
+    }
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {

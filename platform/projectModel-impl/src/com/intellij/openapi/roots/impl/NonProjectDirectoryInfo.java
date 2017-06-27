@@ -109,6 +109,11 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
     return isExcluded();
   }
 
+  @Override
+  public boolean isInModuleSource(@NotNull VirtualFile file) {
+    return false;
+  }
+
   public Module getModule() {
     return null;
   }

@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,19 +70,9 @@ public abstract class EditorActionHandler {
         hostEditor = editor;
       }
       final boolean[] result = new boolean[1];
-      final CaretTask check = new CaretTask() {
-        @Override
-        public void perform(@NotNull Caret caret, @Nullable DataContext dataContext) {
-          result[0] = true;
-        }
-      };
+      final CaretTask check = (___, __) -> result[0] = true;
       if (myRunForEachCaret) {
-        hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
-          @Override
-          public void perform(Caret caret) {
-            doIfEnabled(caret, dataContext, check);
-          }
-        });
+        hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext, check));
       }
       else {
         doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext, check);
@@ -128,8 +117,8 @@ public abstract class EditorActionHandler {
   }
 
   /**
-   * If <code>caret</code> is <code>null</code>, checks whether handler is enabled in general (i.e. enabled for at least one caret in editor),
-   * if <code>caret</code> is not <code>null</code>, checks whether it's enabled for specified caret.
+   * If {@code caret} is {@code null}, checks whether handler is enabled in general (i.e. enabled for at least one caret in editor),
+   * if {@code caret} is not {@code null}, checks whether it's enabled for specified caret.
    */
   public final boolean isEnabled(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     //noinspection deprecation
@@ -141,7 +130,7 @@ public abstract class EditorActionHandler {
    * to invoke the handler, call
    * {@link #execute(Editor, Caret, DataContext)}.
    */
-  public void execute(Editor editor, DataContext dataContext) {
+  public void execute(@NotNull Editor editor, @Nullable DataContext dataContext) {
     if (inExecution) {
       return;
     }
@@ -158,11 +147,11 @@ public abstract class EditorActionHandler {
    * Executes the action in the context of given caret. Subclasses should override this method.
    *
    * @param editor      the editor in which the action is invoked.
-   * @param caret       the caret for which the action is performed at the moment, or <code>null</code> if it's a 'one-off' action executed
+   * @param caret       the caret for which the action is performed at the moment, or {@code null} if it's a 'one-off' action executed
    *                    without current context
    * @param dataContext the data context for the action.
    */
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (inExecution) {
       return;
     }
@@ -176,7 +165,7 @@ public abstract class EditorActionHandler {
     }
   }
 
-  public boolean executeInCommand(Editor editor, DataContext dataContext) {
+  public boolean executeInCommand(@NotNull Editor editor, DataContext dataContext) {
     return true;
   }
 
@@ -185,7 +174,7 @@ public abstract class EditorActionHandler {
   }
 
   /**
-   * Executes the action in the context of given caret. If the caret is <code>null</code>, and the handler is a 'per-caret' handler,
+   * Executes the action in the context of given caret. If the caret is {@code null}, and the handler is a 'per-caret' handler,
    * it's executed for all carets.
    *
    * @param editor      the editor in which the action is invoked.
@@ -197,26 +186,13 @@ public abstract class EditorActionHandler {
       hostEditor = editor;
     }
     if (contextCaret == null && runForAllCarets()) {
-      hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          doIfEnabled(caret, dataContext, new CaretTask() {
-            @Override
-            public void perform(@NotNull Caret caret, @Nullable DataContext dataContext) {
-              doExecute(caret.getEditor(), caret, dataContext);
-            }
-          });
-        }
-      });
+      hostEditor.getCaretModel().runForEachCaret(caret -> doIfEnabled(caret, dataContext,
+                                                                      (caret1, dc) -> doExecute(caret1.getEditor(), caret1, dc)));
     }
     else {
       if (contextCaret == null) {
-        doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext, new CaretTask() {
-          @Override
-          public void perform(@NotNull Caret caret, @Nullable DataContext dataContext) {
-            doExecute(caret.getEditor(), null, dataContext);
-          }
-        });
+        doIfEnabled(hostEditor.getCaretModel().getCurrentCaret(), dataContext,
+                    (caret, dc) -> doExecute(caret.getEditor(), null, dc));
       }
       else {
         doExecute(editor, contextCaret, dataContext);
@@ -228,11 +204,12 @@ public abstract class EditorActionHandler {
     myWorksInInjected = worksInInjected;
   }
 
-  public DocCommandGroupId getCommandGroupId(Editor editor) {
+  public DocCommandGroupId getCommandGroupId(@NotNull Editor editor) {
     // by default avoid merging two consequential commands, and, in the same time, pass along the Document
     return DocCommandGroupId.noneGroupId(editor.getDocument());
   }
 
+  @FunctionalInterface
   private interface CaretTask {
     void perform(@NotNull Caret caret, @Nullable DataContext dataContext);
   }

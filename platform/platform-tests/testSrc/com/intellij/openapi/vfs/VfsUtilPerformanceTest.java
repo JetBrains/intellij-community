@@ -19,22 +19,17 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.impl.VfsData;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.JITSensitive;
@@ -46,12 +41,8 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import gnu.trove.TIntHashSet;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -83,7 +74,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 10_000; i++) {
           String name = i + ".txt";
           vDir.createChildData(vDir, name);
         }
@@ -94,13 +85,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     assertNotNull(theChild);
     UIUtil.pump(); // wait for all event handlers to calm down
 
-    System.out.println("Start searching...");
-    PlatformTestUtil.startPerformanceTest("finding child", 1000, () -> {
-      for (int i = 0; i < 1000000; i++) {
+    LOG.debug("Start searching...");
+    PlatformTestUtil.startPerformanceTest("finding child", 1500, () -> {
+      for (int i = 0; i < 1_000_000; i++) {
         VirtualFile child = vDir.findChild("5111.txt");
         assertEquals(theChild, child);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
 
     new WriteCommandAction.Simple(null) {
       @Override
@@ -121,18 +112,17 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     JarFileSystem fs = JarFileSystem.getInstance();
     String path = jar.getPath() + "!/";
     NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
-    PlatformTestUtil.startPerformanceTest(
-      "finding root", 5000,
-      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+    PlatformTestUtil.startPerformanceTest("finding root", 10_000,
+        () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
         Collections.nCopies(500, null), null, false, false,
-        o -> {
-          for (int i = 0; i < 20000; i++) {
+        __ -> {
+          for (int i = 0; i < 20_000; i++) {
             NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
             assertNotNull(rootJar);
             assertSame(root, rootJar);
           }
           return true;
-        })).useLegacyScaling().assertTiming();
+        })).assertTiming();
   }
 
   @Test
@@ -163,7 +153,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
           @Override
           public void run() throws Throwable {
-            for (int i = 0; i < 5000000; i++) {
+            for (int i = 0; i < 5_000_000; i++) {
               checkRootsEqual();
             }
           }
@@ -173,13 +163,13 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           }
         };
         int time = 1200;
-        PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).useLegacyScaling().assertTiming();
+        PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
         VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
         VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
         for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
           dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
         }
-        PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).useLegacyScaling().assertTiming();
+        PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).assertTiming();
       }
     }.execute();
   }
@@ -204,11 +194,11 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
                     "fff.txt";
       VirtualFile file = fixture.findOrCreateDir(path);
 
-      PlatformTestUtil.startPerformanceTest("VF.getPath()", 4000, () -> {
-        for (int i = 0; i < 1000000; ++i) {
+      PlatformTestUtil.startPerformanceTest("VF.getPath()", 10_000, () -> {
+        for (int i = 0; i < 1_000_000; ++i) {
           file.getPath();
         }
-      }).useLegacyScaling().assertTiming();
+      }).assertTiming();
     });
   }
 
@@ -289,154 +279,68 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void addingManyChildrenToTheSameDirectoryMustNotBeQuadratic() throws Exception {
-    int N = 1_000_000;
-    // measures create N children inside one directory.
-    // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
-    // then call PersistentFS.getInstance().processEvents(events); directly instead of agonizingly slow refresh.
-    UIUtil.invokeAndWaitIfNeeded((Runnable)()-> PlatformTestUtil.startPerformanceTest("adding many children", 15000, () -> {
-      VirtualFile validVTemp = new MyFakeDirectory("vtemp");
-      List<VFileEvent> events = IntStream.range(0, N)
-        .mapToObj(i -> new VFileCreateEvent(this, validVTemp, i + ".txt", false, false))
-        .collect(Collectors.toList());
-
-      WriteCommandAction.runWriteCommandAction(null, () -> {
-        PersistentFS.getInstance().processEvents(events);
-      });
-
-      assertEquals(N, validVTemp.getChildren().length);
-    }).assertTiming());
-  }
-
-  @Test
-  public void deleteManyChildrenFromTheSameDirectoryMustNotBeQuadratic() throws IOException {
-    int N = 1_000_000;
-    // measures delete N children inside one directory.
-    // to avoid slow local file system try to use MyFakeVirtualFile which doesn't actually query disk
-    // then call PersistentFS.getInstance().processEvents(events); directly instead of agonizingly slow refresh.
-    UIUtil.invokeAndWaitIfNeeded((Runnable)()->{
-      final VirtualDirectoryImpl[] validVTemp = new VirtualDirectoryImpl[1];
-      List<VFileEvent> deleteEvents = new ArrayList<>();
-      PlatformTestUtil.startPerformanceTest("deleting many children", 45000, () -> {
-        assertEquals(N, deleteEvents.size());
-        WriteCommandAction.runWriteCommandAction(null, () -> {
-          PersistentFS.getInstance().processEvents(deleteEvents);
-        });
-
-        assertEquals(0, validVTemp[0].getChildren().length);
-      }).setup(()-> {
-        // prepare fake dir with N fake children
-        ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
-        GCUtil.tryForceGC();
-
-        validVTemp[0] = new MyFakeDirectory("vtemp");
-        validVTemp[0].getChildren();
-
-        List<VFileEvent> createEvents = IntStream.range(0, N)
-          .mapToObj(i -> new VFileCreateEvent(this, validVTemp[0], i + ".txt", false, false))
-          .collect(Collectors.toList());
-
-        WriteCommandAction.runWriteCommandAction(null, () -> {
-          PersistentFS.getInstance().processEvents(createEvents);
-        });
-        assertEquals(N, validVTemp[0].getChildren().length);
-
-        deleteEvents.clear();
-        deleteEvents.addAll(Arrays.stream(validVTemp[0].getChildren())
-          .map(v -> new VFileDeleteEvent(this, new MyFakeFile(v.getName(), ((VirtualFileWithId)v).getId(), validVTemp[0]), false))
-          .collect(Collectors.toList()));
-
-      }).assertTiming();
-    });
-  }
-
-  private static class MyFakeFile extends VirtualFileImpl {
-    private static final VfsData.Segment SEGMENT = new VfsData.Segment();
-    private final String name;
-
-    MyFakeFile(String name, int id, VirtualDirectoryImpl parent) {
-      super(id, SEGMENT, parent);
-
-      this.name = name;
-    }
-
-    @NotNull
-    @Override
-    public CharSequence getNameSequence() {
-      return name;
-    }
-
-    @NotNull
-    @Override
-    public String getUrl() {
-      return getName();
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
-      return getName();
-    }
-
-    UserDataHolder data;
-    @Override
-    public synchronized <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      if (data == null) data = new UserDataHolderBase();
-      data.putUserData(key, value);
-    }
-
-    @Override
-    public synchronized <T> T getUserData(@NotNull Key<T> key) {
-      try {
-        return data.getUserData(key);
-      }
-      finally {
-        data.putUserData(key, null);
-        if (((UserDataHolderBase)data).isUserDataEmpty()) data = null;
-      }
-    }
-
-    @Override
-    public boolean isValid() {
-      return true;
-    }
-  }
-
-  private static class MyFakeDirectory extends VirtualDirectoryImpl {
-    private final String name;
-
-    MyFakeDirectory(String name) {
-      super(FSRecords.createRecord(), new VfsData.Segment(), new VfsData.DirectoryData(), null, new TempFileSystem(){
-        @Override
-        public FileAttributes getAttributes(@NotNull VirtualFile file) {
-          return new FileAttributes(false, false, false, false, 0, 1, true);
+  public void PersistentFS_performance_ofManyFilesCreateDelete() throws Exception {
+    int N = 100_000;
+    List<VFileEvent> events = new ArrayList<>(N);
+    VirtualDirectoryImpl temp = (VirtualDirectoryImpl)PlatformTestUtil.notNull(LocalFileSystem.getInstance().findFileByIoFile(myTempDir.newFolder()));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      PlatformTestUtil.startPerformanceTest("many files creations", 10000, () -> {
+        assertEquals(N, events.size());
+        assertTrue(!temp.allChildrenLoaded());
+        processEvents(events);
+        assertEquals(N, temp.getCachedChildren().size());
+      })
+      .setup(() -> {
+        eventsForDeleting(events, temp);
+        if (!events.isEmpty()) {
+          processEvents(events);
         }
-      });
-      this.name = name;
-    }
+        eventsForCreating(events, N, temp);
+        assertEquals(N, new File(temp.getPath()).listFiles().length); // do not call getChildren which caches everything
+      })
+      .assertTiming();
 
-    @Nullable
-    @Override
-    public VirtualFileSystemEntry findChild(@NotNull String name) {
-      return null; // hack for VCreateEvent.isValid()
-    }
-
-    @NotNull
-    @Override
-    public String getPath() {
-      return getName();
-    }
-
-    @NotNull
-    @Override
-    public CharSequence getNameSequence() {
-      return name;
-    }
-
-    @NotNull
-    @Override
-    public String getUrl() {
-      return getPath();
-    }
+      PlatformTestUtil.startPerformanceTest("many files deletions", 10000, () -> {
+        assertEquals(N, events.size());
+        processEvents(events);
+        assertEquals(0, temp.getCachedChildren().size());
+      })
+      .setup(() -> {
+        if (temp.getCachedChildren().size() != N) {
+          eventsForDeleting(events, temp);
+          if (!events.isEmpty()) {
+            processEvents(events);
+          }
+          eventsForCreating(events, N, temp);
+          processEvents(events);
+        }
+        eventsForDeleting(events, temp);
+        assertEquals(N, new File(temp.getPath()).listFiles().length); // do not call getChildren which caches everything
+      })
+      .assertTiming();
+      }
+    );
   }
+
+  private static void processEvents(List<VFileEvent> events) {
+    WriteCommandAction.runWriteCommandAction(null, () -> PersistentFS.getInstance().processEvents(events));
+  }
+
+  private void eventsForCreating(List<VFileEvent> events, int N, VirtualDirectoryImpl temp) {
+    events.clear();
+    IntStream.range(0, N)
+      .mapToObj(i -> new VFileCreateEvent(this, temp, i + ".txt", false, false))
+      .peek(event -> FileUtil.createIfDoesntExist(new File(event.getPath())))
+      .forEach(events::add);
+    List<CharSequence> names = events.stream().map(e -> ((VFileCreateEvent)e).getChildName()).collect(Collectors.toList());
+    temp.removeChildren(new TIntHashSet(), names);
+  }
+
+  private void eventsForDeleting(List<VFileEvent> events, VirtualDirectoryImpl temp) {
+    events.clear();
+    temp.getCachedChildren().stream()
+      .map(v->new VFileDeleteEvent(this, v, false))
+      .forEach(events::add);
+  }
+
 }

@@ -102,7 +102,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   private Set<PsiFile> getPsiFiles() {
-    return myFilesToMove.keySet().stream().map(myManager::findFile).collect(Collectors.toSet());
+    return myFilesToMove.keySet().stream().map(myManager::findFile).filter(Objects::nonNull).collect(Collectors.toSet());
   }
 
   protected String getTargetName() {
@@ -124,6 +124,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (VirtualFile vFile : myFilesToMove.keySet()) {
       PsiFile file = myManager.findFile(vFile);
+      if (file == null) continue;
       try {
         myFilesToMove.get(vFile).checkMove(file);
       }
@@ -163,6 +164,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
       for (VirtualFile virtualFile : myFilesToMove.keySet()) {
         PsiFile file = myManager.findFile(virtualFile);
+        if (file == null) continue;
         for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
           helper.beforeMove(file);
         }

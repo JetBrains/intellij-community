@@ -261,9 +261,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        final boolean caseSensitively,
                                                        @Nullable String containerName,
                                                        @NotNull ProgressIndicator progress) {
-    if (Thread.holdsLock(PsiLock.LOCK)) {
-      throw new AssertionError("You must not run search from within updating PSI activity. Please consider invokeLatering it instead.");
-    }
     progress.pushState();
     boolean result;
     try {

@@ -54,7 +54,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     int offset = caret != null ? caret.getOffset() : editor.getCaretModel().getOffset();
     PsiElement exprList = getExpressionList(editor, offset, dataContext);
     if (exprList != null) {

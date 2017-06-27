@@ -82,7 +82,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   private TableView<VirtualFile> myTable;
   private JBLabel myDescriptionLabel;
   private final MergeProvider myProvider;
-  private final MergeSession myMergeSession;
+  @Nullable private final MergeSession myMergeSession;
   private final List<VirtualFile> myFiles;
   private final ListTableModel<VirtualFile> myModel;
   @Nullable
@@ -274,7 +274,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
   }
 
   private void acceptFileRevision(@NotNull VirtualFile file, boolean isCurrent) throws Exception {
-    if (myProvider instanceof MergeProvider2 && !myMergeSession.canMerge(file)) return;
+    if (myMergeSession != null && !myMergeSession.canMerge(file)) return;
 
     if (!DiffUtil.makeWritable(myProject, file)) {
       throw new IOException("File is read-only: " + file.getPresentableName());
@@ -305,7 +305,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
   private void markFileProcessed(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) {
     myFiles.remove(file);
-    if (myProvider instanceof MergeProvider2) {
+    if (myMergeSession != null) {
       myMergeSession.conflictResolvedForFile(file, resolution);
     }
     else {

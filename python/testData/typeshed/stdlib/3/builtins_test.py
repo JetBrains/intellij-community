@@ -179,6 +179,44 @@ def test_staticmethod():
                                                  '__dict__', '__doc__'}
 
 
+def test_str_init_new():
+    class A:
+        def __str__(self):
+            return "A"
+
+    assert str.__new__(str) is not None
+    assert str.__new__(str, A()) is not None
+    assert str.__new__(str, b"foo") is not None
+    assert str.__new__(str, b"foo", "utf-8") is not None
+    assert str.__new__(str, b"foo", "utf-8", "strict") is not None
+
+    assert str() is not None
+    assert str(A()) is not None
+    assert str(b"foo") is not None
+    assert str(b"foo", "utf-8") is not None
+    assert str(b"foo", "utf-8", "strict") is not None
+
+
+def test_int_init_new():
+    class A:
+        def __int__(self):
+            return 5
+
+    assert int.__new__(int) is not None
+    assert int.__new__(int, A()) is not None
+    assert int.__new__(int, u"100") is not None
+    assert int.__new__(int, b"100") is not None
+    assert int.__new__(int, u"100", 2) is not None
+    assert int.__new__(int, b"100", 2) is not None
+
+    assert int() is not None
+    assert int(A()) is not None
+    assert int(u"100") is not None
+    assert int(b"100") is not None
+    assert int(u"100", 2) is not None
+    assert int(b"100", 2) is not None
+
+
 def test_dict_update():
     d = {}
     d.update({"k1": 1, "v1": 1})

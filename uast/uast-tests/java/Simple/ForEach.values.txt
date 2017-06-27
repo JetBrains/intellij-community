@@ -8,11 +8,11 @@ UFile (package = ) [public class For {...]
                         ULiteralExpression (value = 0) [0] = 0
                 UForEachExpression [for (number : numbers) {...}] = Undetermined
                     USimpleNameReferenceExpression (identifier = numbers) [numbers] = Undetermined
-                    UBlockExpression [{...}] = Undetermined
-                        UBinaryExpression (operator = =) [result = result + number] = Undetermined
-                            USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0))
-                            UBinaryExpression (operator = +) [result + number] = Undetermined
-                                USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0))
+                    UBlockExpression [{...}] = Undetermined (depending on: (var result = Undetermined))
+                        UBinaryExpression (operator = =) [result = result + number] = Undetermined (depending on: (var result = Undetermined))
+                            USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
+                            UBinaryExpression (operator = +) [result + number] = Undetermined (depending on: (var result = Undetermined))
+                                USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                 USimpleNameReferenceExpression (identifier = number) [number] = Undetermined
                 UReturnExpression [return result] = Nothing
-                    USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0))
+                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)

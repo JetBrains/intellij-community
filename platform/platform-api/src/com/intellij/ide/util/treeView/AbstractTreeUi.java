@@ -1531,7 +1531,7 @@ public class AbstractTreeUi {
 
         final Object element = getElementFor(node);
         if (element == null) {
-          debug("null element for node " + node);
+          trace("null element for node " + node);
           result.set(new Pair<>(true, null));
           return;
         }

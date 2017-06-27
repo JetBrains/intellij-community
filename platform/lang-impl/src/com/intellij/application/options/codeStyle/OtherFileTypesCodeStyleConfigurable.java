@@ -15,55 +15,22 @@
  */
 package com.intellij.application.options.codeStyle;
 
+import com.intellij.application.options.CodeStyleAbstractConfigurable;
+import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class OtherFileTypesCodeStyleConfigurable implements CodeStyleConfigurable {
-  private CodeStyleSettings myModelSettings;
+public class OtherFileTypesCodeStyleConfigurable extends CodeStyleAbstractConfigurable {
   private OtherFileTypesCodeStyleOptionsForm myOptionsForm;
 
-  public OtherFileTypesCodeStyleConfigurable(CodeStyleSettings modelSettings) {
-    myModelSettings = modelSettings;
+  public OtherFileTypesCodeStyleConfigurable(CodeStyleSettings currSettings, CodeStyleSettings modelSettings) {
+    super(currSettings, modelSettings, ApplicationBundle.message("code.style.other.file.types"));
     myOptionsForm = new OtherFileTypesCodeStyleOptionsForm(modelSettings);
   }
 
   @Override
-  public void reset(@NotNull CodeStyleSettings settings) {
-    myOptionsForm.reset(settings);
-  }
-
-  @Override
-  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
-    myOptionsForm.apply(settings);
-  }
-
-  @Nls
-  @Override
-  public String getDisplayName() {
-    return ApplicationBundle.message("code.style.other.file.types");
-  }
-
-  @Nullable
-  @Override
-  public JComponent createComponent() {
-    return myOptionsForm.getPanel();
-  }
-
-  @Override
-  public boolean isModified() {
-    return myOptionsForm.isModified(myModelSettings);
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    apply(myModelSettings);
+  protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+    return myOptionsForm;
   }
 
   @Override

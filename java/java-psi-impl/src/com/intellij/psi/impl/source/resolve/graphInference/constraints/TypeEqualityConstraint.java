@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.List;
 
@@ -98,7 +99,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       if (tClass != null && tClass.getManager().areElementsEquivalent(tClass, sResult.getElement())) {
         final PsiSubstitutor tSubstitutor = tResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = sResult.getSubstitutor();
-        for (PsiTypeParameter typeParameter : tClass.getTypeParameters()) {
+        for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(tClass)) {
           final PsiType tSubstituted = tSubstitutor.substitute(typeParameter);
           final PsiType sSubstituted = sSubstitutor.substitute(typeParameter);
           if (tSubstituted != null && sSubstituted != null) {

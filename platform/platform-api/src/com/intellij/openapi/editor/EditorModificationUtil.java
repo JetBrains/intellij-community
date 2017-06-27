@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,17 +100,6 @@ public class EditorModificationUtil {
   }
 
   private static int insertStringAtCaretNoScrolling(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      VisualPosition startPosition = selectionModel.getSelectionStartPosition();
-      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && startPosition != null) {
-        editor.getCaretModel().moveToVisualPosition(startPosition);
-      }
-      else {
-        editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
-      }
-    }
-
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
     // space, hence, we need to give editor a chance to react accordingly.
     editor.getSoftWrapModel().beforeDocumentChangeAtCaret();
@@ -122,6 +111,7 @@ public class EditorModificationUtil {
     }
 
     Document document = editor.getDocument();
+    SelectionModel selectionModel = editor.getSelectionModel();
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
         oldOffset = selectionModel.getSelectionStart();

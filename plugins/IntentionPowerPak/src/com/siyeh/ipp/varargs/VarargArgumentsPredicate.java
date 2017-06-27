@@ -30,41 +30,27 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiExpressionList argumentList = (PsiExpressionList)element;
-    final PsiElement grandParent = argumentList.getParent();
-    if (!(grandParent instanceof PsiMethodCallExpression)) {
+    final PsiElement parent = argumentList.getParent();
+    if (!(parent instanceof PsiCall)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-    final PsiMethod method = methodCallExpression.resolveMethod();
+    final PsiCall call = (PsiCall)parent;
+    final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    if (!resolveResult.isValidResult()) {
+      return false;
+    }
+    final PsiMethod method = (PsiMethod)resolveResult.getElement();
     if (method == null || !method.isVarArgs()) {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();
-    final int parametersCount = parameterList.getParametersCount();
+    final PsiParameter[] parameters = parameterList.getParameters();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length < parametersCount) {
+    if (arguments.length < parameters.length) {
       return false;
     }
-
-    // after invoking the (false positive) quick fix for
-    // "Unnecessarily qualified static usage" inspection
-    // the psi gets into a bad state, this guards against that.
-    // http://www.jetbrains.net/jira/browse/IDEADEV-40124
-    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier == null) {
-      final PsiReferenceParameterList typeParameterList = methodExpression.getParameterList();
-      if (typeParameterList != null) {
-        final PsiTypeElement[] typeParameterElements = typeParameterList.getTypeParameterElements();
-        if (typeParameterElements.length > 0) {
-          return false;
-        }
-      }
-    }
-
-    final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    PsiType lastParameterType = PsiTypesUtil.getParameterType(parameterList.getParameters(), parametersCount - 1, true);
+    final PsiType lastParameterType = PsiTypesUtil.getParameterType(parameters, parameters.length - 1, true);
     final PsiType substitutedType = substitutor.substitute(lastParameterType);
     if (substitutedType instanceof PsiCapturedWildcardType) {
       final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitutedType;
@@ -77,7 +63,7 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     if (!JavaGenericsUtil.isReifiableType(substitutedType)) {
       return false;
     }
-    if (arguments.length != parametersCount) {
+    if (arguments.length != parameters.length) {
       return true;
     }
     final PsiExpression lastExpression = arguments[arguments.length - 1];

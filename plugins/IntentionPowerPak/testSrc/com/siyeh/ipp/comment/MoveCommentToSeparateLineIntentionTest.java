@@ -22,9 +22,9 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class MoveCommentToSeparateLineIntentionTest extends IPPTestCase {
 
-  public void testSimple() {
-    doTest();
-  }
+  public void testSimple() { doTest(); }
+  public void testBigWhitespace() { doTest(); }
+  public void testStartOfFile2() { doTest(); }
 
   public void testStartOfFile() {
     assertIntentionNotAvailable();

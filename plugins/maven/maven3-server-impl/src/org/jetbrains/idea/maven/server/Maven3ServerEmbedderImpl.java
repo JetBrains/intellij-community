@@ -136,6 +136,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private boolean myAlwaysUpdateSnapshots;
 
+  @Nullable private Properties myUserProperties;
+
   public Maven3ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
 
@@ -523,7 +525,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                         boolean failOnUnresolvedDependency,
                         @NotNull MavenServerConsole console,
                         @NotNull MavenServerProgressIndicator indicator,
-                        boolean alwaysUpdateSnapshots) throws RemoteException {
+                        boolean alwaysUpdateSnapshots,
+                        @Nullable Properties userProperties) throws RemoteException {
 
     try {
       customizeComponents();
@@ -540,6 +543,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
 
       setConsoleAndIndicator(console, new MavenServerProgressIndicatorWrapper(indicator));
+
+      myUserProperties = userProperties;
     }
     catch (Exception e) {
       throw rethrowException(e);
@@ -877,6 +882,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
+      result.setUserProperties(myUserProperties);
 
       if (activeProfiles != null) {
         result.setActiveProfiles(activeProfiles);

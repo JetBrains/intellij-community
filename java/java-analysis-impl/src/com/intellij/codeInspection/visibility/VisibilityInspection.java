@@ -43,10 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.visibility.VisibilityInspection");
@@ -183,7 +181,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     //ignore anonymous classes. They do not have access modifiers.
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
-      if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
+      if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass() || isExported(refClass)) {
+        return null;
+      }
     }
 
 
@@ -213,6 +213,32 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       return createDescriptions(refElement, access, manager, globalContext);
     }
     return null;
+  }
+
+  private static boolean isExported(RefClass refClass) {
+    RefModule refModule = refClass.getModule();
+    if (refModule != null) {
+      RefJavaModule refJavaModule = RefJavaModule.JAVA_MODULE.get(refModule);
+      if (refJavaModule != null) {
+        Set<RefClass> serviceImplementations = refJavaModule.getServiceImplementations();
+        if (serviceImplementations.contains(refClass)) {
+          return true;
+        }
+
+        RefEntity refOwner = refClass;
+        while (refOwner instanceof RefClass) {
+          String modifier = ((RefClass)refOwner).getAccessModifier();
+          refOwner = PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ? refOwner.getOwner() : null;
+        }
+        if (refOwner instanceof RefPackage) {
+          Map<String, List<String>> exportedPackageNames = refJavaModule.getExportedPackageNames();
+          if (exportedPackageNames.containsKey(refOwner.getQualifiedName())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull

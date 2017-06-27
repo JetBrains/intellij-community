@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,28 +376,13 @@ public class EditorTestUtil {
    */
   public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
     CaretModel caretModel = editor.getCaretModel();
-    if (caretModel.supportsMultipleCarets()) {
-      List<CaretState> states = new ArrayList<>(caretsState.carets.size());
-      for (CaretInfo caret : caretsState.carets) {
-        states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
-                                  caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
-                                  caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
-      }
-      caretModel.setCaretsAndSelections(states);
+    List<CaretState> states = new ArrayList<>(caretsState.carets.size());
+    for (CaretInfo caret : caretsState.carets) {
+      states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
+                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
+                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
     }
-    else {
-      assertEquals("Multiple carets are not supported by the model", 1, caretsState.carets.size());
-      CaretInfo caret = caretsState.carets.get(0);
-      if (caret.position != null) {
-        caretModel.moveToOffset(caret.getCaretOffset(editor.getDocument()));
-      }
-      if (caret.selection != null) {
-        editor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
-      }
-      else {
-        editor.getSelectionModel().removeSelection();
-      }
-    }
+    caretModel.setCaretsAndSelections(states);
     if (caretsState.blockSelection != null) {
       editor.getSelectionModel().setBlockSelection(editor.offsetToLogicalPosition(caretsState.blockSelection.getStartOffset()),
                                                    editor.offsetToLogicalPosition(caretsState.blockSelection.getEndOffset()));

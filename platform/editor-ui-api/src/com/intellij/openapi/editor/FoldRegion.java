@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
  * Represents a region of text in the editor which can be folded.
  *
  * @see FoldingModel#addFoldRegion(int, int, String)
- * @see FoldingModel#addFoldRegion(FoldRegion)
  * @see FoldingModel#getAllFoldRegions()
  */
 public interface FoldRegion extends RangeMarker {

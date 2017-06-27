@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -31,7 +32,6 @@ import java.util.*;
 
 public class VcsRootDetectorImpl implements VcsRootDetector {
   private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
-  private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
@@ -98,12 +98,11 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
     LOG.debug("Scanning inside [" + dir + "], depth = " + depth);
     final Set<VcsRoot> roots = new HashSet<>();
-    if (depth > MAXIMUM_SCAN_DEPTH) {
-      // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
+    if (depthLimitExceeded(depth)) {
       return roots;
     }
 
-    if (myProject.isDisposed() || !dir.isDirectory()) {
+    if (myProject.isDisposed() || !dir.isDirectory() || myProjectManager.getFileIndex().isExcluded(dir)) {
       return roots;
     }
     List<AbstractVcs> vcsList = getVcsListFor(dir);
@@ -115,6 +114,11 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       roots.addAll(scanForRootsInsideDir(child, depth + 1));
     }
     return roots;
+  }
+
+  private static boolean depthLimitExceeded(int depth) {
+    int maxDepth = Registry.intValue("vcs.root.detector.folder.depth");
+    return maxDepth >= 0 && maxDepth < depth;
   }
 
   @NotNull

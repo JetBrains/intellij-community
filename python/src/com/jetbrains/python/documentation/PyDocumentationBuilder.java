@@ -87,7 +87,7 @@ public class PyDocumentationBuilder {
     final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
     final PsiElement outerElement = myOriginalElement != null ? myOriginalElement.getParent() : null;
 
-    final PsiElement elementDefinition = resolveToDocStringOwner();
+    final PsiElement elementDefinition = resolveToDocStringOwner(context);
     final boolean isProperty = buildFromProperty(elementDefinition, outerElement, context);
 
     if (myProlog.isEmpty() && !isProperty && !isAttribute()) {
@@ -311,14 +311,14 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private PsiElement resolveToDocStringOwner() {
+  private PsiElement resolveToDocStringOwner(@NotNull TypeEvalContext context) {
     // here the ^Q target is already resolved; the resolved element may point to intermediate assignments
     if (myElement instanceof PyTargetExpression) {
       final String targetName = myElement.getText();
       myReassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", targetName)).addItem(BR));
       final PyExpression assignedValue = ((PyTargetExpression)myElement).findAssignedValue();
       if (assignedValue instanceof PyReferenceExpression) {
-        final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)assignedValue);
+        final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)assignedValue, context);
         if (resolved != null) {
           return resolved;
         }
@@ -327,7 +327,7 @@ public class PyDocumentationBuilder {
     }
     if (myElement instanceof PyReferenceExpression) {
       myReassignmentChain.addWith(TagSmall, $(PyBundle.message("QDOC.assigned.to.$0", myElement.getText())).addItem(BR));
-      return resolveWithoutImplicits((PyReferenceExpression)myElement);
+      return resolveWithoutImplicits((PyReferenceExpression)myElement, context);
     }
     // it may be a call to a standard wrapper
     if (myElement instanceof PyCallExpression) {
@@ -343,8 +343,10 @@ public class PyDocumentationBuilder {
     return myElement;
   }
 
-  private static PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element) {
-    final QualifiedResolveResult resolveResult = element.followAssignmentsChain(PyResolveContext.noImplicits());
+  @Nullable
+  private static PsiElement resolveWithoutImplicits(@NotNull PyReferenceExpression element, @NotNull TypeEvalContext context) {
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final QualifiedResolveResult resolveResult = element.followAssignmentsChain(resolveContext);
     return resolveResult.isImplicit() ? null : resolveResult.getElement();
   }
 

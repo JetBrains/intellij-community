@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
@@ -80,8 +82,10 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     final Project project = manager.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (classInitializer == null) {
-      classInitializer = elementFactory.createClassInitializer();
-      classInitializer = (PsiClassInitializer)containingClass.addAfter(classInitializer, field);
+      if (PsiUtil.isJavaToken(PsiTreeUtil.skipSiblingsForward(field, PsiWhiteSpace.class), JavaTokenType.COMMA)) {
+        field.normalizeDeclaration();
+      }
+      classInitializer = (PsiClassInitializer)containingClass.addAfter(elementFactory.createClassInitializer(), field);
 
       // add some whitespace between the field and the class initializer
       final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
@@ -90,7 +94,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
     final PsiCodeBlock body = classInitializer.getBody();
     @NonNls final String initializationStatementText = field.getName() + " = " + initializerText + ';';
     final PsiExpressionStatement statement = (PsiExpressionStatement)elementFactory.createStatementFromText(initializationStatementText, body);
-    final PsiElement addedElement = body.add(statement);
+    final PsiElement addedElement = body.addAfter(statement, null);
     if (fieldIsStatic) {
       final PsiModifierList modifierList = classInitializer.getModifierList();
       if (modifierList != null) {

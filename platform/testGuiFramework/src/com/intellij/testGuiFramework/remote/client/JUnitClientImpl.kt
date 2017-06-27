@@ -17,7 +17,6 @@ package com.intellij.testGuiFramework.remote.client
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
-import java.io.EOFException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.Socket
@@ -102,8 +101,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
             .forEach { it.handle(obj) }
         }
       } catch (e: Exception) {
-        LOG.info("Transport receiving message exception: $e")
-        e.printStackTrace()
+        LOG.info("Transport receiving message exception", e)
       } finally {
         objectInputStream.close()
       }

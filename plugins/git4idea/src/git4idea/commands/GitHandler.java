@@ -91,7 +91,7 @@ public abstract class GitHandler {
   // the flag indicating that environment has been cleaned up, by default is true because there is nothing to clean
   private boolean myEnvironmentCleanedUp = true;
   private UUID myHttpHandler;
-  private Processor<OutputStream> myInputProcessor; // The processor for stdin
+  @Nullable private Processor<OutputStream> myInputProcessor; // The processor for stdin
 
   // if true process might be cancelled
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
@@ -795,4 +795,13 @@ public abstract class GitHandler {
   public String toString() {
     return myCommandLine.toString();
   }
+
+  /**
+     * Set processor for standard input. This is a place where input to the git application could be generated.
+     *
+     * @param inputProcessor the processor
+     */
+    public void setInputProcessor(@Nullable Processor<OutputStream> inputProcessor) {
+      myInputProcessor = inputProcessor;
+    }
 }
