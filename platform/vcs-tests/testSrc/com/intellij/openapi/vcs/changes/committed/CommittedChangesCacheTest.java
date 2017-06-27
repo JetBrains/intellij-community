@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -33,15 +32,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 /**
  * @author yole
@@ -71,7 +71,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     myVcs.setDiffProvider(myDiffProvider);
 
     myVcsManager.registerVcs(myVcs);
-    myVcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", myVcs.getName())));
+    myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping("", myVcs.getName())));
 
     myCache = CommittedChangesCache.getInstance(getProject());
 
@@ -83,20 +83,15 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myConnection != null) {
-      myConnection.disconnect();
-      myConnection = null;
-    }
-    myVcsManager.unregisterVcs(myVcs);
-    myVcsManager = null;
-    myVcs = null;
-    myProvider = null;
-    myDiffProvider = null;
-    myCache.clearCaches(EmptyRunnable.INSTANCE);
-    myCache = null;
-    myContentRoot = null;
-    myListener = null;
-    super.tearDown();
+    new RunAll(
+      () -> {
+        if (myConnection != null) myConnection.disconnect();
+      },
+      () -> myVcsManager.unregisterVcs(myVcs),
+      () -> myCache.clearCaches(EmptyRunnable.INSTANCE),
+      () -> clearFields(this),
+      () -> super.tearDown()
+    ).run();
   }
 
   public void testEmpty() throws Exception {
@@ -357,7 +352,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     return MockCommittedChangesProvider.createMockChange(new File(myTempDir, path).toString(), revision);
   }
 
-  private static class MockListener implements CommittedChangesListener {
+  private static class MockListener extends CommittedChangesAdapter {
     private final List<CommittedChangeList> myLoadedChanges = new ArrayList<>();
     private final List<List<CommittedChangeList>> myIncomingChangesUpdates = new ArrayList<>();
 
@@ -367,20 +362,8 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     }
 
     @Override
-    public void changesCleared() {
-    }
-
-    @Override
-    public void presentationChanged() {
-    }
-
-    @Override
     public void incomingChangesUpdated(final List<CommittedChangeList> receivedChanges) {
       myIncomingChangesUpdates.add(receivedChanges);
-    }
-
-    @Override
-    public void refreshErrorStatusChanged(@Nullable VcsException lastError) {
     }
 
     public int getIncomingChangesUpdateCount() {
