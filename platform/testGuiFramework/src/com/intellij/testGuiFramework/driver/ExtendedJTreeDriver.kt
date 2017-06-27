@@ -16,6 +16,9 @@
 package com.intellij.testGuiFramework.driver
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdtWithTry
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.ui.LoadingNode
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
@@ -26,9 +29,6 @@ import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeDriver
 import org.fest.swing.driver.JTreeLocation
-import org.fest.swing.edt.GuiActionRunner
-import org.fest.swing.edt.GuiQuery
-import org.fest.swing.edt.GuiTask
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
@@ -45,7 +45,6 @@ import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.plaf.basic.BasicTreeUI
 import javax.swing.tree.TreePath
-
 
 /**
  * To avoid confusions of parsing path from one String let's accept only splitted path into array of strings
@@ -395,35 +394,6 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     if (!info.second) robot.click(tree, where)
     return where
   }
-
-  private fun runOnEdt(task: () -> Unit) {
-    GuiActionRunner.execute(object : GuiTask() {
-      override fun executeInEDT() {
-        task()
-      }
-    })
-  }
-
-  private fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?
-    = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
-    override fun executeInEDT(): ReturnType = query()
-  })
-
-  private fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
-    val result = GuiActionRunner.execute(object : GuiQuery<kotlin.Pair<ReturnType?, Throwable?>>() {
-      override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
-        try {
-          return Pair(query(), null)
-        }
-        catch (e: Exception) {
-          return Pair(null, e)
-        }
-      }
-    })
-    if (result?.second != null) throw result!!.second!!
-    return result!!.first
-  }
-
 
   private fun pause(timeout: Long, condition: () -> Boolean) {
     Pause.pause(object: Condition("ExtendedJTreeDriver wait condition:") {
