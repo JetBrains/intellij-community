@@ -245,7 +245,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           final PsiResolveHelper helper = JavaPsiFacade.getInstance(methodReferenceExpression.getProject()).getResolveHelper();
           final PsiType[] paramTypes =
             member instanceof PsiMethod ? ((PsiMethod)member).getSignature(PsiSubstitutor.EMPTY).getParameterTypes() : PsiType.EMPTY_ARRAY;
-          LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length, "expr: " + methodReferenceExpression + "; " +
+          LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length || 
+                         member instanceof PsiMethod && ((PsiMethod)member).isVarArgs(), "expr: " + methodReferenceExpression + "; " +
                                                                                     paramTypes.length + "; " +
                                                                                     Arrays.toString(signature.getParameterTypes()));
           if (Arrays.deepEquals(signature.getParameterTypes(), paramTypes)) {
