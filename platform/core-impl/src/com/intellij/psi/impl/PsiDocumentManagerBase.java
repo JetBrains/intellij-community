@@ -357,6 +357,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   protected boolean finishCommitInWriteAction(@NotNull final Document document,
                                               @NotNull final List<Processor<Document>> finishProcessors,
                                               final boolean synchronously) {
+    return finishCommitInWriteAction(document, finishProcessors, synchronously, false);
+  }
+
+  protected boolean finishCommitInWriteAction(@NotNull final Document document,
+                                              @NotNull final List<Processor<Document>> finishProcessors,
+                                              final boolean synchronously,
+                                              boolean forceNoPsiCommit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return false;
     assert !(document instanceof DocumentWindow);
@@ -366,7 +373,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       getSmartPointerManager().fastenBelts(virtualFile);
     }
 
-    FileViewProvider viewProvider = getCachedViewProvider(document);
+    FileViewProvider viewProvider = forceNoPsiCommit ? null : getCachedViewProvider(document);
 
     myIsCommitInProgress = true;
     boolean success = true;

@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 //todo listen & notifyListeners readonly events?
@@ -124,7 +125,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       if (PomModelImpl.isAllowPsiModification()
           // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
           && ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        commitAllDocuments();
+        // commit document to avoid OOME
+        for (Document document : myUncommittedDocuments) {
+          if (document != event.getDocument()) {
+            finishCommitInWriteAction(document, Collections.emptyList(), true, true);
+            break;
+          }
+        }
       }
     }
   }
@@ -139,11 +146,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<Processor<Document>> finishProcessors,
-                                              boolean synchronously) {
+                                              boolean synchronously, 
+                                              boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
       EditorWindowImpl.disposeInvalidEditors();
     }
-    return super.finishCommitInWriteAction(document, finishProcessors, synchronously);
+    return super.finishCommitInWriteAction(document, finishProcessors, synchronously, forceNoPsiCommit);
   }
 
   @Override
