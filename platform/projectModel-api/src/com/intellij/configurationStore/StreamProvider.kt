@@ -17,15 +17,11 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
 @set:TestOnly
 var IS_EXTERNAL_STORAGE_ENABLED = false
-
-val isExternalStorageEnabled: Boolean
-  get() = Registry.`is`("store.imported.project.elements.separately", false) || IS_EXTERNAL_STORAGE_ENABLED
 
 interface StreamProvider {
   val enabled: Boolean

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -22,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import javax.swing.*;
@@ -38,7 +39,10 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   private final JTextField myEmbedderVMOptions;
   private final ExternalSystemJdkComboBox myEmbedderJdk;
 
-  public MavenImportingConfigurable(Project project) {
+  private final Project myProject;
+
+  public MavenImportingConfigurable(@NotNull Project project) {
+    myProject = project;
     myImportingSettings = MavenProjectsManager.getInstance(project).getImportingSettings();
 
     myAdditionalConfigurables = new ArrayList<>();
@@ -108,11 +112,12 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
       return true;
     }
 
-    return mySettingsForm.isModified(myImportingSettings);
+    return mySettingsForm.isModified(myImportingSettings, myProject);
   }
 
   public void apply() throws ConfigurationException {
     mySettingsForm.getData(myImportingSettings);
+    ExternalProjectsManagerImpl.getInstance(myProject).setStoreExternally(mySettingsForm.isStoreExternally());
 
     MavenServerManager.getInstance().setMavenEmbedderVMOptions(myEmbedderVMOptions.getText());
     String jdk = myEmbedderJdk.getSelectedValue();
@@ -126,7 +131,7 @@ public class MavenImportingConfigurable implements SearchableConfigurable {
   }
 
   public void reset() {
-    mySettingsForm.setData(myImportingSettings);
+    mySettingsForm.setData(myImportingSettings, myProject);
 
     myEmbedderVMOptions.setText(MavenServerManager.getInstance().getMavenEmbedderVMOptions());
     myEmbedderJdk.refreshData(MavenServerManager.getInstance().getEmbedderJdk());

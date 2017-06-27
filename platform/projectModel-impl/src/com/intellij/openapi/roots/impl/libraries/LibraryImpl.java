@@ -20,12 +20,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,6 +75,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private LibraryProperties myProperties;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
+  @Nullable
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
@@ -134,7 +136,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   // primary
-  private LibraryImpl(LibraryTable table, ModifiableRootModel rootModel, LibraryImpl newSource, String name,
+  private LibraryImpl(LibraryTable table, @Nullable ModifiableRootModel rootModel, LibraryImpl newSource, String name,
                       @Nullable final PersistentLibraryKind<?> kind, @Nullable ProjectModelExternalSource externalSource) {
     super(true);
     myLibraryTable = table;
@@ -372,9 +374,19 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
     }
 
-    if (myExternalSource != null && Registry.is("store.imported.project.elements.separately")) {
-      //we can add this attribute only if the library configuration will be stored separately, otherwise we will get modified files in .idea/libraries.
-      element.setAttribute(EXTERNAL_SYSTEM_ID_ATTRIBUTE, myExternalSource.getId());
+    if (myExternalSource != null) {
+      Module module = getModule();
+      Project project;
+      if (module == null) {
+        project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
+      }
+      else {
+        project = module.getProject();
+      }
+      if (ProjectUtilCore.isExternalStorageEnabled(project)) {
+        //we can add this attribute only if the library configuration will be stored separately, otherwise we will get modified files in .idea/libraries.
+        element.setAttribute(EXTERNAL_SYSTEM_ID_ATTRIBUTE, myExternalSource.getId());
+      }
     }
 
     ArrayList<OrderRootType> storableRootTypes = new ArrayList<>();

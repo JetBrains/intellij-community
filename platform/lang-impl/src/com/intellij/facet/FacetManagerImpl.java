@@ -33,12 +33,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -255,7 +256,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     }
 
     F facet = null;
-    if (!facetsOfThisType.isEmpty() && Registry.is("store.imported.project.elements.separately")) {
+    if (!facetsOfThisType.isEmpty() && ProjectUtilCore.isExternalStorageEnabled(myModule.getProject())) {
       facet = facetsOfThisType.stream().filter(f -> f.getName().equals(state.getName())).findFirst().orElse(null);
       if (facet != null) {
         Element newConfiguration = state.getConfiguration();
@@ -299,12 +300,12 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   @Override
   @NotNull
   public FacetManagerState getState() {
-    return saveState(getImportedFacetPredicate().negate());
+    return saveState(getImportedFacetPredicate(myModule.getProject()).negate());
   }
 
   @NotNull
-  static Predicate<Facet> getImportedFacetPredicate() {
-    if (Registry.is("store.imported.project.elements.separately")) {
+  static Predicate<Facet> getImportedFacetPredicate(@NotNull Project project) {
+    if (ProjectUtilCore.isExternalStorageEnabled(project)) {
       //we can store imported facets in a separate component only if that component will be stored separately, otherwise we will get modified *.iml files
       return facet -> facet.getExternalSource() != null;
     }
@@ -324,7 +325,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       if (!filter.test(facet)) continue;
       final Facet underlyingFacet = facet.getUnderlyingFacet();
 
-      FacetState facetState = createFacetState(facet);
+      FacetState facetState = createFacetState(facet, myModule.getProject());
       if (!(facet instanceof InvalidFacet)) {
         final Element config;
         try {
@@ -341,7 +342,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         facetState.setConfiguration(config);
       }
 
-      getOrCreateTargetFacetList(underlyingFacet, states).add(facetState);
+      getOrCreateTargetFacetList(underlyingFacet, states, myModule.getProject()).add(facetState);
       states.put(facet, facetState.getSubFacets());
     }
     return managerState;
@@ -351,25 +352,25 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
    * Configuration of some facet may be stored in one file, but configuration of its underlying facet may be stored in another file. For such
    * sub-facets we create parent elements which don't store configuration but only name and type.
    */
-  private static List<FacetState> getOrCreateTargetFacetList(Facet underlyingFacet, Map<Facet, List<FacetState>> states) {
+  private static List<FacetState> getOrCreateTargetFacetList(Facet underlyingFacet, Map<Facet, List<FacetState>> states, @NotNull Project project) {
     List<FacetState> facetStateList = states.get(underlyingFacet);
     if (facetStateList == null) {
-      FacetState state = createFacetState(underlyingFacet);
-      getOrCreateTargetFacetList(underlyingFacet.getUnderlyingFacet(), states).add(state);
+      FacetState state = createFacetState(underlyingFacet, project);
+      getOrCreateTargetFacetList(underlyingFacet.getUnderlyingFacet(), states, project).add(state);
       facetStateList = state.getSubFacets();
       states.put(underlyingFacet, facetStateList);
     }
     return facetStateList;
   }
 
-  private static FacetState createFacetState(Facet facet) {
+  private static FacetState createFacetState(@NotNull Facet facet, @NotNull Project project) {
     if (facet instanceof InvalidFacet) {
       return ((InvalidFacet)facet).getConfiguration().getFacetState();
     }
     else {
       FacetState facetState = new FacetState();
       ProjectModelExternalSource externalSource = facet.getExternalSource();
-      if (externalSource != null && Registry.is("store.imported.project.elements.separately")) {
+      if (externalSource != null && ProjectUtilCore.isExternalStorageEnabled(project)) {
         //set this attribute only if such facets will be stored separately, otherwise we will get modified *.iml files
         facetState.setExternalSystemId(externalSource.getId());
       }

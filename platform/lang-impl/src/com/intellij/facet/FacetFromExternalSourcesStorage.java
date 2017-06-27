@@ -46,7 +46,7 @@ public class FacetFromExternalSourcesStorage implements PersistentStateComponent
   @Override
   @NotNull
   public FacetManagerState getState() {
-    myState = ((FacetManagerImpl)FacetManager.getInstance(myModule)).saveState(FacetManagerImpl.getImportedFacetPredicate());
+    myState = ((FacetManagerImpl)FacetManager.getInstance(myModule)).saveState(FacetManagerImpl.getImportedFacetPredicate(myModule.getProject()));
     return myState;
   }
 
