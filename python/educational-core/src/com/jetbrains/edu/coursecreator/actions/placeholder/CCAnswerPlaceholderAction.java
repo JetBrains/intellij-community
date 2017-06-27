@@ -63,7 +63,7 @@ abstract public class CCAnswerPlaceholderAction extends DumbAwareAction {
 
   protected abstract void performAnswerPlaceholderAction(@NotNull final CCState state);
 
-  protected static class CCState {
+  public static class CCState {
     private TaskFile myTaskFile;
     private AnswerPlaceholder myAnswerPlaceholder;
     private PsiFile myFile;
