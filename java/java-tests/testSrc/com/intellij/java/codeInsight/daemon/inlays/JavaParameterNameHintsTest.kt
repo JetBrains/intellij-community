@@ -880,6 +880,21 @@ class Test {
     assert(inlays.size == 1 && inlays.first() == "qas:", { "Real inlays ${inlays.size}" })
   }
 
+
+  fun `test params with same type`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    check("""
+class Test {
+  void test() {
+    String parent, child, element;
+    check(<hint text="a:"/>10, parent, child);
+    check(<hint text="a:"/>10, <hint text="parent:">element, child);
+  }
+  void check(int a, String parent, String child) {}
+}
+""")
+  }
+
   
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
