@@ -383,15 +383,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       int width = isEmpty ? JBUI.scale(10) + getArrowIcon(isEnabled()).getIconWidth() : super.getPreferredSize().width;
-      if (isSmallVariant() && !UIUtil.isUnderDefaultMacTheme()) {
+      if (isSmallVariant() && !((SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()))) {
         width += JBUI.scale(4);
         if (UIUtil.isUnderWin10LookAndFeel()) {
           width += JBUI.scale(8);
         }
       }
-
-      int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(22) : JBUI.scale(19);
-      return new Dimension(width, isSmallVariant() ? height : super.getPreferredSize().height);
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(19) : super.getPreferredSize().height);
     }
 
     @Override
@@ -405,7 +403,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public void paintComponent(Graphics g) {
+    public void paint(Graphics g) {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       final Dimension size = getSize();
 

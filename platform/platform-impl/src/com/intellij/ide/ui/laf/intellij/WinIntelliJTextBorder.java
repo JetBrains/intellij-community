@@ -20,8 +20,10 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +31,6 @@ import java.awt.geom.Path2D;
 
 import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
-import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWrapperRect;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,7 +55,9 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
     try {
       Rectangle r = new Rectangle(x, y, width, height);
 
-      adjustInWrapperRect(r, c);
+      if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+        JBInsets.removeFrom(r, JBUI.insets(2, 0));
+      }
 
       JBInsets.removeFrom(r, JBUI.insets(1));
 
