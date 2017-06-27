@@ -53,6 +53,8 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
   private CachedEvaluator myChildrenExpandable = createCachedEvaluator();
   private CachedEvaluator myChildrenExpression = createCachedEvaluator();
 
+  private NodeRenderer myPredictedRenderer;
+
   public String getUniqueId() {
     return UNIQUE_ID;
   }
@@ -204,4 +206,11 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
     myChildrenExpandable.clear();
   }
 
+  public NodeRenderer getPredictedRenderer() {
+    return myPredictedRenderer;
+  }
+
+  public void setPredictedRenderer(NodeRenderer predictedRenderer) {
+    myPredictedRenderer = predictedRenderer;
+  }
 }

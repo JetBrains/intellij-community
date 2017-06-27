@@ -365,11 +365,20 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
     CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
-    CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(lang);
-    CommonCodeStyleSettings targetSettings = getSettings().getCommonSettings(getDefaultLanguage());
-    if (sourceSettings == null || targetSettings == null) return;
-    if (!(targetSettings instanceof CodeStyleSettings)) {
-      CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);
+    CodeStyleSettings targetSettings = getSettings();
+    if (rootSettings.getCommonSettings(lang) == null || targetSettings.getCommonSettings(getDefaultLanguage()) == null) 
+      return;
+
+    applyLanguageSettings(lang, rootSettings, targetSettings);
+    reset(targetSettings);
+    onSomethingChanged();
+  }
+
+  protected void applyLanguageSettings(Language lang, CodeStyleSettings rootSettings, CodeStyleSettings targetSettings) {
+    CommonCodeStyleSettings sourceCommonSettings = rootSettings.getCommonSettings(lang);
+    CommonCodeStyleSettings targetCommonSettings = targetSettings.getCommonSettings(getDefaultLanguage());
+    if (!(targetCommonSettings instanceof CodeStyleSettings)) {
+      CommonCodeStyleSettingsManager.copy(sourceCommonSettings, targetCommonSettings);
     }
     else {
       Language targetLang = getDefaultLanguage();
@@ -378,8 +387,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
                 " its own code style settings in LanguageCodeStyleSettingsProvider.getDefaultSettings()." +
                 " The operation can not be applied in this case.");
     }
-    reset(getSettings());
-    onSomethingChanged();
   }
 
   private void applyPredefinedStyle(String styleName) {

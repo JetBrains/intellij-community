@@ -145,7 +145,7 @@ class UpdateFoldRegionsOperation implements Runnable {
 
       PsiElement psi = descriptor.getElement().getPsi();
 
-      if (psi == null || !psi.isValid() || !foldingModel.addFoldRegion(region) || !myFile.isValid()) {
+      if (psi == null || !psi.isValid() || !myFile.isValid()) {
         region.dispose();
         continue;
       }

@@ -20,12 +20,11 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
-import org.jdom.Element
 
 class BlackListMethodIntentionTest : LightCodeInsightFixtureTestCase() {
 
   private var isParamHintsEnabledBefore = false
-  private lateinit var stateBefore: Element
+  private val default = ParameterNameHintsSettings()
   
   override fun setUp() {
     super.setUp()
@@ -33,13 +32,11 @@ class BlackListMethodIntentionTest : LightCodeInsightFixtureTestCase() {
     val settings = EditorSettingsExternalizable.getInstance()
     isParamHintsEnabledBefore = settings.isShowParameterNameHints
     settings.isShowParameterNameHints = true
-
-    stateBefore = ParameterNameHintsSettings.Companion.getInstance().state
   }
 
   override fun tearDown() {
     EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
-    ParameterNameHintsSettings.Companion.getInstance().loadState(stateBefore)
+    ParameterNameHintsSettings.Companion.getInstance().loadState(default.state)
 
     super.tearDown()
   }

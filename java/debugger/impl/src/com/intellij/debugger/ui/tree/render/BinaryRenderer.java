@@ -38,21 +38,32 @@ public class BinaryRenderer extends NodeRendererImpl {
 
     StringBuilder buf = new StringBuilder("0b");
     int prefixLength = buf.length();
+    String valueStr = "";
     if (value instanceof ByteValue) {
-      buf.append(Integer.toBinaryString(0xff & ((ByteValue)value).byteValue()));
+      valueStr = Integer.toBinaryString(0xff & ((ByteValue)value).byteValue());
     }
     else if (value instanceof ShortValue) {
-      buf.append(Integer.toBinaryString(0xffff & ((ShortValue)value).shortValue()));
+      valueStr = Integer.toBinaryString(0xffff & ((ShortValue)value).shortValue());
     }
     else if (value instanceof IntegerValue) {
-      buf.append(Integer.toBinaryString(((PrimitiveValue)value).intValue()));
+      valueStr = Integer.toBinaryString(((PrimitiveValue)value).intValue());
     }
     else if (value instanceof LongValue) {
-      buf.append(Long.toBinaryString(((LongValue)value).longValue()));
+      valueStr = Long.toBinaryString(((LongValue)value).longValue());
     }
     else {
       LOG.error("Unsupported value " + value);
     }
+
+    // add leading zeros
+    int remainder = valueStr.length() % 8;
+    if (remainder != 0) {
+      for (int i = 0; i < 8 - remainder; i++) {
+        buf.append('0');
+      }
+    }
+
+    buf.append(valueStr);
 
     // group by 8
     for (int i = buf.length() - 8; i > prefixLength; i -= 8) {

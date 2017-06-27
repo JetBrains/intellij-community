@@ -78,17 +78,23 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (declaredElements.length == 1) {
       PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
       if (var.getInitializer() == null) return false;
+      PsiElement parent = decl.getParent();
+      if (parent instanceof PsiForStatement) {
+        String varName = var.getName();
+        if (varName == null || 
+            JavaPsiFacade.getInstance(decl.getProject()).getResolveHelper().resolveReferencedVariable(varName, parent.getParent()) != null) {
+          return false;
+        }
+      }
       setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
       return true;
     }
-    else if (declaredElements.length > 1) {
+    else {
       if (decl.getParent() instanceof PsiForStatement) return false;
 
       setText(CodeInsightBundle.message("intention.split.declaration.text"));
       return true;
     }
-
-    return false;
   }
 
   @Override

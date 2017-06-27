@@ -38,6 +38,7 @@ public class PyNames {
    * int type
    */
   public static final String TYPE_INT = "int";
+  public static final String TYPE_LONG = "long";
   /**
    * unicode string type (see {@link #TYPE_STRING_TYPES}
    */
@@ -112,6 +113,7 @@ public class PyNames {
   public static final String ISINSTANCE = "isinstance";
   public static final String ASSERT_IS_INSTANCE = "assertIsInstance";
   public static final String HAS_ATTR = "hasattr";
+  public static final String ISSUBCLASS = "issubclass";
 
   public static final String DOC = "__doc__";
   public static final String DOCFORMAT = "__docformat__";

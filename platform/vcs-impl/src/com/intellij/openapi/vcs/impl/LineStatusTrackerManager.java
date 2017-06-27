@@ -144,10 +144,6 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
   @NonNls
   @NotNull
   public String getComponentName() {

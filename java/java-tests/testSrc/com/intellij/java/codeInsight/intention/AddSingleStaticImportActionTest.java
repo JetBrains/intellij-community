@@ -131,6 +131,13 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     }
   }
 
+  public void testConflictingNamesInScope() throws Exception {
+    myFixture.addClass("package foo; public class Assert {public static void assertTrue(boolean b) {}}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.getAvailableIntention("Add static import for 'foo.Assert.assertTrue'");
+    assertNull(intention);
+  }
+
   public void testProhibitWhenMethodWithIdenticalSignatureAlreadyImportedFromAnotherClass() throws Exception {
     myFixture.addClass("package foo; class Foo {public static void foo(int i){}}");
     myFixture.addClass("package foo; class Bar {public static void foo(int i){}}");

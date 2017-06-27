@@ -1,6 +1,24 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.TooltipEvent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,10 +29,14 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -24,7 +46,7 @@ public class EmmetAbbreviationBalloon {
   private final String myAbbreviationsHistoryKey;
   private final String myLastAbbreviationKey;
   private final Callback myCallback;
-  private final String myTitle;
+  @NotNull private final String myDocumentation;
 
   @Nullable
   private static String ourTestingAbbreviation;
@@ -33,11 +55,11 @@ public class EmmetAbbreviationBalloon {
   public EmmetAbbreviationBalloon(@NotNull String abbreviationsHistoryKey,
                                   @NotNull String lastAbbreviationKey,
                                   @NotNull Callback callback,
-                                  @NotNull String title) {
+                                  @NotNull String documentation) {
     myAbbreviationsHistoryKey = abbreviationsHistoryKey;
     myLastAbbreviationKey = lastAbbreviationKey;
     myCallback = callback;
-    myTitle = title;
+    myDocumentation = documentation;
   }
 
 
@@ -62,17 +84,26 @@ public class EmmetAbbreviationBalloon {
       return;
     }
 
+    JPanel panel = new JPanel(new BorderLayout());
     final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(myAbbreviationsHistoryKey);
     final Dimension fieldPreferredSize = field.getPreferredSize();
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
+
+    JBLabel label = new JBLabel(AllIcons.General.ContextHelp);
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 0, 1));
+    IdeTooltipManager.getInstance().setCustomTooltip(label, new ContextHelpTooltip(label, myDocumentation));
+
+    panel.add(field, BorderLayout.CENTER);
+    panel.add(label, BorderLayout.EAST);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, myTitle)
+    final BalloonImpl balloon = (BalloonImpl)popupFactory.createBalloonBuilder(panel)
       .setCloseButtonEnabled(false)
       .setBlockClicksThroughBalloon(true)
       .setAnimationCycle(0)
       .setHideOnKeyOutside(true)
       .setHideOnClickOutside(true)
+      .setFillColor(panel.getBackground())
       .createBalloon();
 
     final DocumentAdapter documentListener = new DocumentAdapter() {
@@ -155,5 +186,34 @@ public class EmmetAbbreviationBalloon {
 
   public interface Callback {
     void onEnter(@NotNull String abbreviation);
+  }
+
+  private static class ContextHelpTooltip extends TooltipWithClickableLinks.ForBrowser {
+    public ContextHelpTooltip(@NotNull JComponent component, @NotNull String text) {
+      super(component, text);
+
+      JBInsets insets = JBUI.insets(11, 10, 11, 17);
+      setBorderInsets(insets);
+      setPreferredPosition(Balloon.Position.below);
+      setCalloutShift(insets.top);
+      setBorderColor(new JBColor(Gray._161, new Color(91, 92, 94)));
+      setTextBackground(new JBColor(Gray._247, new Color(70, 72, 74)));
+      setTextForeground(new JBColor(Gray._33, Gray._191));
+    }
+
+    @Override
+    protected boolean canAutohideOn(TooltipEvent event) {
+      return event.getInputEvent() != null && super.canAutohideOn(event);
+    }
+
+    @Override
+    public int getShowDelay() {
+      return 0;
+    }
+
+    @Override
+    public boolean canBeDismissedOnTimeout() {
+      return true;
+    }
   }
 }

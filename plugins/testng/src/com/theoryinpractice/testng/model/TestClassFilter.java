@@ -20,8 +20,10 @@ import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -74,11 +76,11 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope
             if (constructors.length > 0) {
               boolean canBeInstantiated = false;
               for (PsiMethod constructor : constructors) {
-                if (constructor.getParameterList().getParametersCount() == 0) {
-                  canBeInstantiated = true;
-                  break;
-                }
-                if (AnnotationUtil.isAnnotated(constructor, Arrays.asList(GUICE_INJECTION, FACTORY_INJECTION), true)) {
+                PsiParameter[] parameters = constructor.getParameterList().getParameters();
+                if (parameters.length == 0 ||
+                    AnnotationUtil.isAnnotated(constructor, Arrays.asList(GUICE_INJECTION, FACTORY_INJECTION), true) ||
+                    parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)
+                  ) {
                   canBeInstantiated = true;
                   break;
                 }

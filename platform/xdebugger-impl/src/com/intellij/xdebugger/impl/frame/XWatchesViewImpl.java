@@ -243,10 +243,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
+  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
     myRootNode = node;
-    getTree().setRoot(node, false);
     return node;
   }
 

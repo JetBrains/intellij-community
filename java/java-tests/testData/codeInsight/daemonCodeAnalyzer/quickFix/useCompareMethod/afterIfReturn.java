@@ -2,7 +2,7 @@
 class Test {
   public int test(String s1, String s2) {
       return Integer.compare(s1.length(), s2.length());
-    /*otherwise bigger*/
+      /*otherwise bigger*/
   }
 
   public int test2(String s1, String s2) {

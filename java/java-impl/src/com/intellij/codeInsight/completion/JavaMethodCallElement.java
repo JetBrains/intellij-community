@@ -351,7 +351,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
     VisualPosition afterBracePosition = editor.offsetToVisualPosition(braceOffset + 1);
-    caretModel.moveToVisualPosition(new VisualPosition(afterBracePosition.line, afterBracePosition.column + 1)); // after hint
+    caretModel.moveToVisualPosition(new VisualPosition(afterBracePosition.line, 
+                                                       afterBracePosition.column + (showHints ? 1 : 0))); // after hint
 
     parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
     ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,

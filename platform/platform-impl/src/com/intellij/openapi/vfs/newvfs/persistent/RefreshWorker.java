@@ -97,7 +97,7 @@ public class RefreshWorker {
       processQueue(fs, PersistentFS.getInstance());
     }
     catch (RefreshCancelledException e) {
-      LOG.debug("refresh cancelled");
+      LOG.trace("refresh cancelled");
     }
   }
 
@@ -108,7 +108,9 @@ public class RefreshWorker {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("file=" + file + " dirty=" + fileDirty);
+      }
       if (!fileDirty) continue;
 
       checkCancelled(file);
@@ -149,8 +151,8 @@ public class RefreshWorker {
 
       boolean currentWritable = persistence.isWritable(file);
       boolean upToDateWritable = attributes.isWritable();
-      if (LOG_ATTRIBUTES.isDebugEnabled()) {
-        LOG_ATTRIBUTES.debug("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
+      if (LOG_ATTRIBUTES.isTraceEnabled()) {
+        LOG_ATTRIBUTES.trace("file=" + file + " writable vfs=" + file.isWritable() + " persistence=" + currentWritable + " real=" + upToDateWritable);
       }
       if (currentWritable != upToDateWritable) {
         scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
@@ -224,7 +226,9 @@ public class RefreshWorker {
       token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-          if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("retry: " + dir);
+          }
           continue;
         }
 
@@ -307,7 +311,9 @@ public class RefreshWorker {
       token = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          if (LOG.isDebugEnabled()) LOG.debug("retry: " + dir);
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("retry: " + dir);
+          }
           continue;
         }
 

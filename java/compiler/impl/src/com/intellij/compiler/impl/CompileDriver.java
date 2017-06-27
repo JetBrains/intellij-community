@@ -55,7 +55,6 @@ import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -731,19 +730,7 @@ public class CompileDriver {
   }
 
   private static String getModulesString(Collection<Module> modulesInChunk) {
-    final StringBuilder moduleNames = StringBuilderSpinAllocator.alloc();
-    try {
-      for (Module module : modulesInChunk) {
-        if (moduleNames.length() > 0) {
-          moduleNames.append("\n");
-        }
-        moduleNames.append("\"").append(module.getName()).append("\"");
-      }
-      return moduleNames.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(moduleNames);
-    }
+    return StringUtil.join(modulesInChunk, module->"\""+module.getName()+"\"", "\n");
   }
 
   private static boolean hasSources(Module module, final JavaSourceRootType rootType) {
@@ -753,29 +740,23 @@ public class CompileDriver {
   private void showNotSpecifiedError(@NonNls final String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
                                      String editorNameToSelect) {
     String nameToSelect = null;
-    final StringBuilder names = StringBuilderSpinAllocator.alloc();
-    final String message;
-    try {
-      final int maxModulesToShow = 10;
-      for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
-        if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
-          nameToSelect = name;
-        }
-        if (names.length() > 0) {
-          names.append(",\n");
-        }
-        names.append("\"");
-        names.append(name);
-        names.append("\"");
+    final StringBuilder names = new StringBuilder();
+    final int maxModulesToShow = 10;
+    for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
+      if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
+        nameToSelect = name;
       }
-      if (modules.size() > maxModulesToShow) {
-        names.append(",\n...");
+      if (names.length() > 0) {
+        names.append(",\n");
       }
-      message = CompilerBundle.message(resourceId, modules.size(), names.toString());
+      names.append("\"");
+      names.append(name);
+      names.append("\"");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(names);
+    if (modules.size() > maxModulesToShow) {
+      names.append(",\n...");
     }
+    final String message = CompilerBundle.message(resourceId, modules.size(), names.toString());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);

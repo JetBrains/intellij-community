@@ -320,7 +320,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         @Override
         protected EditorEx createEditor() {
           EditorEx editor = super.createEditor();
-          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP_NO_ADS, Boolean.TRUE);
+          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP, Boolean.TRUE);
+          editor.putUserData(AutoPopupController.NO_ADS, Boolean.TRUE);
+          editor.putUserData(AutoPopupController.AUTO_POPUP_ON_FOCUS_GAINED, Boolean.TRUE);
           return editor;
         }
       };
@@ -865,7 +867,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
           } else {
             merged = false;
           }
-          recentUsageRef.set(usage);
+          if (!merged) {
+            recentUsageRef.set(usage);
+          }
 
 
           ApplicationManager.getApplication().invokeLater(() -> {

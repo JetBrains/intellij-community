@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Map;
 import java.util.Properties;
 
 public abstract class DelegateColorScheme implements EditorColorsScheme {
@@ -121,6 +120,7 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setEditorFontName(fontName);
   }
 
+  @NotNull
   @Override
   public Font getFont(EditorFontType key) {
     return myDelegate.getFont(key);

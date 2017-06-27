@@ -57,11 +57,17 @@ public class AutoPopupController implements Disposable {
    */
   public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
   /**
-   * If editor has Boolean.TRUE by this key completion popup would be shown every time when editor gets focus
-   * and the popup wouldn't have advertising text in bottom.
-   * For example this key can be used for TextFieldWithAutoCompletion. (It looks like usual JTextField and completion shortcut is not obvious to be active.)
+   * If editor has Boolean.TRUE by this key completion popup would be shown without advertising text at the bottom.
    */
-  public static final Key<Boolean> ALWAYS_AUTO_POPUP_NO_ADS = Key.create("Always Show Completion Auto-Popup");
+  public static final Key<Boolean> NO_ADS = Key.create("Show Completion Auto-Popup without Ads");
+
+  /**
+   * If editor has Boolean.TRUE by this key completion popup would be shown every time when editor gets focus.
+   * For example this key can be used for TextFieldWithAutoCompletion.
+   * (TextFieldWithAutoCompletion looks like standard JTextField and completion shortcut is not obvious to be active)
+   */
+  public static final Key<Boolean> AUTO_POPUP_ON_FOCUS_GAINED = Key.create("Show Completion Auto-Popup On Focus Gained");
+
 
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
@@ -109,7 +115,7 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
-    boolean alwaysAutoPopup = editor != null && (Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP)) || Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP_NO_ADS)));
+    boolean alwaysAutoPopup = editor != null && Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;
     }
@@ -177,11 +183,11 @@ public class AutoPopupController implements Disposable {
         if (file == null) return;
       }
 
-      final PsiFile file1 = file;
       Runnable request = () -> {
         if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && editor.getComponent().isShowing()) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
+            PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
             ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm

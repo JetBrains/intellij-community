@@ -197,6 +197,7 @@ public class UseCompareMethodInspection extends BaseJavaBatchLocalInspectionTool
       }
     }
     PsiClassType boxedType = ((PsiPrimitiveType)leftType).getBoxedType(expression);
+    if (boxedType == null) return null;
     return new CompareInfo(template, expression, canonicalPair.getFirst(), canonicalPair.getSecond(), boxedType);
   }
 
@@ -295,17 +296,17 @@ public class UseCompareMethodInspection extends BaseJavaBatchLocalInspectionTool
   }
 
   static class CompareInfo {
-    final PsiElement myTemplate;
-    final PsiExpression myToReplace;
-    final PsiExpression myLeft;
-    final PsiExpression myRight;
-    final PsiClassType myClass;
+    final @NotNull PsiElement myTemplate;
+    final @NotNull PsiExpression myToReplace;
+    final @NotNull PsiExpression myLeft;
+    final @NotNull PsiExpression myRight;
+    final @NotNull PsiClassType myClass;
 
-    CompareInfo(PsiElement template,
-                PsiExpression toReplace,
-                PsiExpression left,
-                PsiExpression right,
-                PsiClassType aClass) {
+    CompareInfo(@NotNull PsiElement template,
+                @NotNull PsiExpression toReplace,
+                @NotNull PsiExpression left,
+                @NotNull PsiExpression right,
+                @NotNull PsiClassType aClass) {
       myTemplate = template;
       myToReplace = toReplace;
       myLeft = left;

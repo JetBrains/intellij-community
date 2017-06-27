@@ -72,7 +72,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
 
-    EvaluationContextImpl autoLoadContext = ((EvaluationContextImpl)evaluationContext).createEvaluationContext(evaluationContext.getThisObject());
+    EvaluationContextImpl autoLoadContext = ((EvaluationContextImpl)evaluationContext).createEvaluationContext(evaluationContext.computeThisObject());
     autoLoadContext.setAutoLoadClasses(true);
 
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);

@@ -18,8 +18,10 @@ package com.intellij.vcs.log.impl;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -76,6 +78,7 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
+    if (StringUtil.isEmptyOrSpaces(reference)) return new FutureResult<>(false);
     SettableFuture<Boolean> future = SettableFuture.create();
     VcsLogRefs refs = myUi.getDataPack().getRefs();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {

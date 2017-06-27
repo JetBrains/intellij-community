@@ -634,7 +634,8 @@ public class GenericsHighlightUtil {
     }
     else if (superMethod.isConstructor()) return null;
 
-    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(aClass, JavaSdkVersion.JDK_1_7);
+    JavaVersionService javaVersionService = JavaVersionService.getInstance();
+    final boolean atLeast17 = javaVersionService.isAtLeast(aClass, JavaSdkVersion.JDK_1_7);
     if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
       return null;
     }
@@ -676,7 +677,10 @@ public class GenericsHighlightUtil {
     if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
       return null;
     }
-    if (superContainingClass != null && !superContainingClass.isInterface() && checkContainingClass.isInterface() && !aClass.equals(superContainingClass)) return null;
+    if (!javaVersionService.isAtLeast(aClass, JavaSdkVersion.JDK_1_8)) {
+      //javac <= 1.7 didn't check transitive overriding rules for interfaces
+      if (superContainingClass != null && !superContainingClass.isInterface() && checkContainingClass.isInterface() && !aClass.equals(superContainingClass)) return null;
+    }
     if (aClass.equals(checkContainingClass)) {
       boolean sameClass = aClass.equals(superContainingClass);
       return getSameErasureMessage(sameClass, checkMethod, superMethod, HighlightNamesUtil.getMethodDeclarationTextRange(checkMethod));

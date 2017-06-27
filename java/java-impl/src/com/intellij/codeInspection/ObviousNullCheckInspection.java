@@ -48,16 +48,20 @@ public class ObviousNullCheckInspection extends BaseJavaBatchLocalInspectionTool
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
-        Integer nullIndex = getNullParameterIndex(call);
-        if (nullIndex == null) return;
+        NullCheckParameter nullCheckParameter = NullCheckParameter.fromCall(call);
+        if (nullCheckParameter == null) return;
         if (!(call.getParent() instanceof PsiExpressionStatement) && !REQUIRE_NON_NULL_METHOD.test(call)) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        if (args.length <= nullIndex) return;
-        PsiExpression nullArg = PsiUtil.skipParenthesizedExprDown(args[nullIndex]);
+        if (args.length <= nullCheckParameter.myIndex) return;
+        PsiExpression nullArg = PsiUtil.skipParenthesizedExprDown(args[nullCheckParameter.myIndex]);
         String explanation = getObviouslyNonNullExplanation(nullArg);
         if (explanation == null) return;
-        holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.message", explanation),
-                               new RemoveNullCheckFix());
+        if(nullCheckParameter.myNull) {
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.always.fail.message", explanation));
+        } else {
+          holder.registerProblem(nullArg, InspectionsBundle.message("inspection.useless.null.check.message", explanation),
+                                 new RemoveNullCheckFix());
+        }
       }
     };
   }
@@ -74,28 +78,40 @@ public class ObviousNullCheckInspection extends BaseJavaBatchLocalInspectionTool
     return null;
   }
 
-  @Nullable
-  private static Integer getNullParameterIndex(PsiMethodCallExpression call) {
-    PsiMethod method = call.resolveMethod();
-    if (method == null) return null;
-    if (!ControlFlowAnalyzer.isPure(method)) return null;
-    List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
-    if (contracts.size() != 1) return null;
-    StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
-    if (contract == null || contract.getReturnValue() != MethodContract.ValueConstraint.THROW_EXCEPTION) return null;
-    MethodContract.ValueConstraint[] arguments = contract.arguments;
-    Integer nullIndex = null;
-    for (int i = 0; i < arguments.length; i++) {
-      MethodContract.ValueConstraint argument = arguments[i];
-      if (argument == MethodContract.ValueConstraint.NULL_VALUE) {
-        if (nullIndex != null) return null;
-        nullIndex = i;
-      }
-      else if (argument != MethodContract.ValueConstraint.ANY_VALUE) {
-        return null;
-      }
+  static class NullCheckParameter {
+    int myIndex;
+    boolean myNull;
+
+    public NullCheckParameter(int index, boolean aNull) {
+      myIndex = index;
+      myNull = aNull;
     }
-    return nullIndex;
+
+    @Nullable
+    static NullCheckParameter fromCall(PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return null;
+      if (!ControlFlowAnalyzer.isPure(method)) return null;
+      List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
+      if (contracts.size() != 1) return null;
+      StandardMethodContract contract = ObjectUtils.tryCast(contracts.get(0), StandardMethodContract.class);
+      if (contract == null || contract.getReturnValue() != MethodContract.ValueConstraint.THROW_EXCEPTION) return null;
+      MethodContract.ValueConstraint[] arguments = contract.arguments;
+      Integer nullIndex = null;
+      boolean isNull = false;
+      for (int i = 0; i < arguments.length; i++) {
+        MethodContract.ValueConstraint argument = arguments[i];
+        if (argument == MethodContract.ValueConstraint.NULL_VALUE || argument == MethodContract.ValueConstraint.NOT_NULL_VALUE) {
+          if (nullIndex != null) return null;
+          nullIndex = i;
+          isNull = argument == MethodContract.ValueConstraint.NOT_NULL_VALUE;
+        }
+        else if (argument != MethodContract.ValueConstraint.ANY_VALUE) {
+          return null;
+        }
+      }
+      return nullIndex == null ? null : new NullCheckParameter(nullIndex, isNull);
+    }
   }
 
   public static class RemoveNullCheckFix implements LocalQuickFix {

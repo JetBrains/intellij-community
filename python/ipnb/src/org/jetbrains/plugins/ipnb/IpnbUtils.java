@@ -23,8 +23,8 @@ public class IpnbUtils {
   private static final Logger LOG  = Logger.getInstance(IpnbUtils.class);
   private static int hasFx = 0;
 
-  public static JComponent createLatexPane(@NotNull final String source, int width, boolean repaint) {
-    final JComponent panel = createHtmlPanel(source, width, repaint);
+  public static JComponent createLatexPane(@NotNull final String source, int width) {
+    final JComponent panel = createHtmlPanel(source, width);
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -52,9 +52,9 @@ public class IpnbUtils {
     return hasFx == 1;
   }
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width, boolean repaint) {
+  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
     if (hasFx()) {
-      return IpnbJfxUtils.createHtmlPanel(source, width, repaint);
+      return IpnbJfxUtils.createHtmlPanel(source, width);
     }
     return createNonJfxPanel(source);
   }

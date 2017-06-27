@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServerEmbedder> {
   private Customization myCustomization;
@@ -50,7 +51,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
   }
 
   public void customizeForResolve(MavenConsole console, MavenProgressIndicator indicator) {
-    setCustomization(console, indicator, null, false, false);
+    setCustomization(console, indicator, null, false, false, null);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
@@ -61,7 +62,12 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
   }
 
   public void customizeForResolve(MavenWorkspaceMap workspaceMap, MavenConsole console, MavenProgressIndicator indicator, boolean alwaysUpdateSnapshot) {
-    setCustomization(console, indicator, workspaceMap, false, alwaysUpdateSnapshot);
+    customizeForResolve(workspaceMap, console, indicator, alwaysUpdateSnapshot, null);
+  }
+
+  public void customizeForResolve(MavenWorkspaceMap workspaceMap, MavenConsole console, MavenProgressIndicator indicator,
+                                  boolean alwaysUpdateSnapshot, @Nullable Properties userProperties) {
+    setCustomization(console, indicator, workspaceMap, false, alwaysUpdateSnapshot, userProperties);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
@@ -74,7 +80,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
   public void customizeForStrictResolve(MavenWorkspaceMap workspaceMap,
                                         MavenConsole console,
                                         MavenProgressIndicator indicator) {
-    setCustomization(console, indicator, workspaceMap, true, false);
+    setCustomization(console, indicator, workspaceMap, true, false, null);
     perform(new Retriable<Object>() {
       @Override
       public Object execute() throws RemoteException {
@@ -103,7 +109,8 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
                                    myCustomization.failOnUnresolvedDependency,
                                    myCustomization.console,
                                    myCustomization.indicator,
-                                   myCustomization.alwaysUpdateSnapshot);
+                                   myCustomization.alwaysUpdateSnapshot,
+                                   myCustomization.userProperties);
   }
 
   public MavenServerExecutionResult resolveProject(@NotNull final VirtualFile file,
@@ -294,13 +301,15 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
                                              MavenProgressIndicator indicator,
                                              MavenWorkspaceMap workspaceMap,
                                              boolean failOnUnresolvedDependency,
-                                             boolean alwaysUpdateSnapshot) {
+                                             boolean alwaysUpdateSnapshot,
+                                             @Nullable Properties userProperties) {
     resetCustomization();
     myCustomization = new Customization(MavenServerManager.wrapAndExport(console),
                                         MavenServerManager.wrapAndExport(indicator),
                                         workspaceMap,
                                         failOnUnresolvedDependency,
-                                        alwaysUpdateSnapshot);
+                                        alwaysUpdateSnapshot,
+                                        userProperties);
   }
 
   private synchronized void resetCustomization() {
@@ -329,17 +338,20 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
     private final MavenWorkspaceMap workspaceMap;
     private final boolean failOnUnresolvedDependency;
     private final boolean alwaysUpdateSnapshot;
+    private final Properties userProperties;
 
     private Customization(MavenServerConsole console,
                           MavenServerProgressIndicator indicator,
                           MavenWorkspaceMap workspaceMap,
                           boolean failOnUnresolvedDependency,
-                          boolean alwaysUpdateSnapshot) {
+                          boolean alwaysUpdateSnapshot,
+                          @Nullable Properties userProperties) {
       this.console = console;
       this.indicator = indicator;
       this.workspaceMap = workspaceMap;
       this.failOnUnresolvedDependency = failOnUnresolvedDependency;
       this.alwaysUpdateSnapshot = alwaysUpdateSnapshot;
+      this.userProperties = userProperties;
     }
   }
 }

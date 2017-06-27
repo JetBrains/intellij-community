@@ -42,13 +42,7 @@ public class TabIndentingTest extends LightIdeaTestCase {
     settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
 
-    try{
-      doTest("Test.java", "SmartTab4_after.java");
-    }
-    finally{
-      settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = false;
-      settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = false;
-    }
+    doTest("Test.java", "SmartTab4_after.java");
   }
 
   public void testSmartTab2() throws Exception {
@@ -57,57 +51,31 @@ public class TabIndentingTest extends LightIdeaTestCase {
     settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
     settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 2;
 
-    try{
-      doTest("Test.java", "SmartTab2_after.java");
-    }
-    finally{
-      settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = false;
-      settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = false;
-      settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 4;
-    }
+    doTest("Test.java", "SmartTab2_after.java");
   }
 
-  //does not work correctly at the moment
-  /*
   public void testSmartTab8() throws Exception {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    editorSettings.setUseTabCharacter(true);
-    //editorSettings.setTabSize(8);
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
+    settings.getIndentOptions(StdFileTypes.JAVA).SMART_TABS = true;
+    settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 8;
 
-    try{
-      doTest("Test.java", "SmartTab8_after.java");
-    }
-    finally{
-      editorSettings.setUseTabCharacter(false);
-      //editorSettings.setTabSize(8);
-    }
+    doTest("Test.java", "SmartTab8_after.java");
   }
-  */
 
   public void testTab2() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 2;
 
-    try{
-      doTest("Test.java", "Tab2_after.java");
-    }
-    finally{
-      settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = false;
-      settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 4;
-    }
+    doTest("Test.java", "Tab2_after.java");
   }
 
   public void testTab4() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
 
-    try{
-      doTest("Test.java", "Tab4_after.java");
-    }
-    finally{
-      settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = false;
-    }
+    doTest("Test.java", "Tab4_after.java");
   }
 
   public void testTab8() throws Exception {
@@ -115,17 +83,15 @@ public class TabIndentingTest extends LightIdeaTestCase {
     settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = true;
     settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 8;
 
-    try{
-      doTest("Test.java", "Tab8_after.java");
-    }
-    finally{
-      settings.getIndentOptions(StdFileTypes.JAVA).USE_TAB_CHARACTER = false;
-      settings.getIndentOptions(StdFileTypes.JAVA).TAB_SIZE = 4;
-    }
+    doTest("Test.java", "Tab8_after.java");
   }
 
   public void testSCR6197() throws Exception {
     doTest("SCR6197.java", "SCR6197_after.java");
+  }
+
+  public void testMoreTabsInComments() throws Exception {
+    doTest("moreTabsInComments.java", "moreTabsInComments_after.java");
   }
 
   private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {

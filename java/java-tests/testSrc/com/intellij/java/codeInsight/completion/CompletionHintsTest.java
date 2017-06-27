@@ -241,6 +241,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testNoHintsForMethodWithOneParameterFromBlackList() {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
+    checkResult("class C { void m() { System.getProperty(<caret>) } }");
     checkResultWithInlays("class C { void m() { System.getProperty() } }");
   }
 

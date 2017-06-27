@@ -30,7 +30,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
-  private final boolean myInModuleSource;
+  protected final boolean myInModuleSource;
   protected final boolean myInLibrarySource;
   protected final boolean myExcluded;
   private final byte mySourceRootTypeId;
@@ -71,7 +71,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   public String toString() {
     return "DirectoryInfo{" +
            "module=" + getModule() +
-           ", isInModuleSource=" + isInModuleSource() +
+           ", isInModuleSource=" + myInModuleSource +
            ", rootTypeId=" + getSourceRootTypeId() +
            ", isInLibrarySource=" + isInLibrarySource() +
            ", isExcludedFromModule=" + myExcluded +
@@ -127,6 +127,11 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
     return myExcluded;
+  }
+
+  @Override
+  public boolean isInModuleSource(@NotNull VirtualFile file) {
+    return myInModuleSource;
   }
 
   public Module getModule() {

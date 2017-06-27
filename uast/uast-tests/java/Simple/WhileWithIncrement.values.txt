@@ -8,8 +8,8 @@ UFile (package = ) [public class WhileWithIncrement {...]
                 UWhileExpression [while (true) {...}] = Undetermined
                     ULiteralExpression (value = true) [true] = true
                     UBlockExpression [{...}] = Undetermined
-                        UPostfixExpression (operator = ++) [i++] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
-                            USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                        UPostfixExpression (operator = ++) [i++] = (var i = Undetermined)
+                            USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
                         UIfExpression [if (i % 42 === 0) break] = Undetermined
                             UBinaryExpression (operator = ===) [i % 42 === 0] = Undetermined (depending on: (var i = Undetermined))
                                 UBinaryExpression (operator = %) [i % 42] = Undetermined (depending on: (var i = Undetermined))
@@ -19,4 +19,4 @@ UFile (package = ) [public class WhileWithIncrement {...]
                             UBreakExpression (label = null) [break] = Nothing(break)
                             UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
                 UReturnExpression [return i] = Nothing
-                    USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = 0))
+                    USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)

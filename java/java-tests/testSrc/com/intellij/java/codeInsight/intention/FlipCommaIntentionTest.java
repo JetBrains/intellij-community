@@ -23,19 +23,55 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class FlipCommaIntentionTest extends IPPTestCase {
 
-  public void test() throws Exception {
+  public void testMultipleFieldsSingleDeclaration() {
     doTest("class C {\n" +
-           "    int a,/*_Flip ','*/ b;" +
+           "    int a,/*_Flip ','*/ b;\n" +
            "}",
+
            "class C {\n" +
            "    int b, a;\n" +
            "}");
   }
 
-  public void testUnavailableForDangling() throws Exception {
-    myFixture.configureByText("a.java", "class C {\n" +
-                                        "    int a[] = new int[]{1,2,<caret>};" +
-                                        "}");
-    assertEmpty(myFixture.filterAvailableIntentions("Flip"));
+  public void testMultipleFieldsSingleDeclaration2() {
+    doTest("class C {\n" +
+           "  int a, b,/*_Flip ','*/ c;\n" +
+           "}",
+
+           "class C {\n" +
+           "  int a, c, b;\n" +
+           "}");
+  }
+
+  public void testMultipleFieldsSingleDeclaration3() {
+     doTest("class C {\n" +
+            "  String one = \"one\",/*_Flip ','*/ two =\"two\", three;\n" +
+            "}",
+
+            "class C {\n" +
+            "  String two =\"two\", one = \"one\", three;\n" +
+            "}");
+  }
+
+  public void testIncomplete() {
+    doTest("class C {\n" +
+           "  int a,/*_Flip ','*/ b =;\n" +
+           "}",
+
+           "class C {\n" +
+           "  int b =, a;\n" +
+           "}");
+  }
+
+  public void testUnavailableForDangling() {
+    doTestIntentionNotAvailable("class C {\n" +
+                                "    int a[] = new int[]{1,2,/*_Flip ','*/};" +
+                                "}");
+  }
+
+  public void testLeftAndRightIdentical() {
+    doTestIntentionNotAvailable("class C {" +
+                                "  int[] ones = {1/*_Flip ','*/,1,1};" +
+                                "}");
   }
 }

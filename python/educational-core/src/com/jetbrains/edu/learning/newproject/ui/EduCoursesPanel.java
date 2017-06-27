@@ -258,13 +258,12 @@ public class EduCoursesPanel extends JPanel {
       return;
     }
     LabeledComponent<JComponent> component = generator.getLanguageSettingsComponent(selectedCourse);
-    if (component == null) {
-      return;
-    }
     myAdvancedSettings.removeAll();
     myAdvancedSettings.add(myLocationField, BorderLayout.NORTH);
-    myAdvancedSettings.add(component, BorderLayout.SOUTH);
-    UIUtil.mergeComponentsWithAnchor(myLocationField, component);
+    if (component != null) {
+      myAdvancedSettings.add(component, BorderLayout.SOUTH);
+      UIUtil.mergeComponentsWithAnchor(myLocationField, component);
+    }
     myAdvancedSettings.revalidate();
     myAdvancedSettings.repaint();
   }

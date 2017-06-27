@@ -36,7 +36,6 @@ import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
-import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
 import git4idea.rebase.GitRebaseEntry.Action.pick
 import git4idea.rebase.GitRebaseEntry.Action.reword
@@ -86,6 +85,7 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun doUndo() {
     val res = Git.getInstance().reset(repository, GitResetMode.KEEP, initialHeadPosition)
+    repository.update()
     if (!res.success()) {
       notifier.notifyError("Undo Reword Failed", res.errorOutputAsHtmlString)
     }

@@ -17,7 +17,6 @@ package com.intellij.java.openapi.projectRoots;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -25,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 public class JavaSdkVersionTest {
   @Test
   public void sdkVersionFromLanguageLevel() {
-    Assert.assertEquals(JavaSdkVersion.JDK_1_3, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_1_3));
+    assertEquals(JavaSdkVersion.JDK_1_3, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_1_3));
     assertEquals(JavaSdkVersion.JDK_1_6, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_1_6));
     assertEquals(JavaSdkVersion.JDK_1_8, JavaSdkVersion.fromLanguageLevel(LanguageLevel.JDK_1_8));
   }

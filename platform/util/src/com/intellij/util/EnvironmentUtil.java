@@ -153,6 +153,7 @@ public class EnvironmentUtil {
   }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+  private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
   private static Map<String, String> getShellEnv() throws Exception {
     return new ShellEnvReader().readShellEnv();
@@ -219,6 +220,7 @@ public class EnvironmentUtil {
       }
       if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
@@ -255,7 +257,7 @@ public class EnvironmentUtil {
 
   @NotNull
   private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 

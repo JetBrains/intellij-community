@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
@@ -77,6 +78,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.MalformedURLException;
@@ -267,7 +269,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myEditorPane.getCaret().setVisible(true);
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit(false));
+    HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit(false);
+    String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
+    editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
+    editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    myEditorPane.setEditorKit(editorKit);
     myScrollPane = new JBScrollPane(myEditorPane) {
       @Override
       protected void processMouseWheelEvent(MouseWheelEvent e) {

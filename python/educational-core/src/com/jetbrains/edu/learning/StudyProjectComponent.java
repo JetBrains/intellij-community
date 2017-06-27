@@ -20,7 +20,6 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
@@ -77,31 +76,36 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    Course course = StudyTaskManager.getInstance(myProject).getCourse();
     // Check if user has javafx lib in his JDK. Now bundled JDK doesn't have this lib inside.
     if (StudyUtils.hasJavaFx()) {
       Platform.setImplicitExit(false);
     }
 
-    if (course != null && !course.isAdaptive() && !course.isUpToDate()) {
-      updateAvailable(course);
-    }
-
-    if (course != null) {
-      addStepicWidget();
-    }
-
-    StudyUtils.registerStudyToolWindow(course, myProject);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(
-      (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
-        if (course != null) {
-          UISettings instance = UISettings.getInstance();
-          instance.setHideToolStripes(false);
-          instance.fireUISettingsChanged();
-          registerShortcuts();
-          EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+      () -> {
+        Course course = StudyTaskManager.getInstance(myProject).getCourse();
+        if (course == null) {
+          LOG.warn("Opened project is with null course");
+          return;
         }
-      })));
+
+        if (!course.isAdaptive() && !course.isUpToDate()) {
+          updateAvailable(course);
+        }
+
+        StudyUtils.registerStudyToolWindow(course, myProject);
+        addStepicWidget();
+        selectStep(course);
+
+        ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+            UISettings instance = UISettings.getInstance();
+            instance.setHideToolStripes(false);
+            instance.fireUISettingsChanged();
+            registerShortcuts();
+            EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
+          }));
+      }
+    );
 
     myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myBusConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
@@ -113,8 +117,6 @@ public class StudyProjectComponent implements ProjectComponent {
         }
       }
     });
-
-    selectStep();
   }
 
   private void addStepicWidget() {
@@ -128,19 +130,11 @@ public class StudyProjectComponent implements ProjectComponent {
     }
   }
 
-  private void selectStep() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-      int stepId = PropertiesComponent.getInstance().getInt(STEP_ID, 0);
-
-      if (stepId != 0) {
-        StudyTaskManager taskManager = StudyTaskManager.getInstance(myProject);
-        Course course = taskManager.getCourse();
-        if (course != null) {
-
-          navigateToStep(myProject, course, stepId);
-        }
-      }
-    });
+  private void selectStep(@NotNull Course course) {
+    int stepId = PropertiesComponent.getInstance().getInt(STEP_ID, 0);
+    if (stepId != 0) {
+      navigateToStep(myProject, course, stepId);
+    }
   }
 
   private void updateAvailable(Course course) {

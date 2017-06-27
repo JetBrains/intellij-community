@@ -16,17 +16,17 @@ UFile (package = ) [import java.util...]
                         ULocalVariable (name = i) [var i: int = a++]
                             UPostfixExpression (operator = ++) [a++] = (var a = 0)
                                 USimpleNameReferenceExpression (identifier = a) [a] = (var a = 0)
-                    UBinaryExpression (operator = <) [i < size] = Undetermined
-                        USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0)))
+                    UBinaryExpression (operator = <) [i < size] = Undetermined (depending on: (var i = Undetermined))
+                        USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
                         USimpleNameReferenceExpression (identifier = size) [size] = Undetermined
-                    UPostfixExpression (operator = ++) [i++] = Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0)))
-                        USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0)))
-                    UBlockExpression [{...}] = external add(i)(Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0))))
-                        UQualifiedReferenceExpression [result.add(i)] = external add(i)(Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0))))
+                    UPostfixExpression (operator = ++) [i++] = (var i = Undetermined)
+                        USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
+                    UBlockExpression [{...}] = external add(i)((var i = Undetermined))
+                        UQualifiedReferenceExpression [result.add(i)] = external add(i)((var i = Undetermined))
                             USimpleNameReferenceExpression (identifier = result) [result] = (var result = external LinkedList()())
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [add(i)] = external add(i)(Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0))))
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [add(i)] = external add(i)((var i = Undetermined))
                                 UIdentifier (Identifier (add)) [UIdentifier (Identifier (add))]
-                                USimpleNameReferenceExpression (identifier = i) [i] = Phi((var i = Undetermined), (var i = 1), (var i = (var a = 0)))
+                                USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
                 UQualifiedReferenceExpression [result.add(a)] = external add(a)((var a = 1))
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = external LinkedList()())
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [add(a)] = external add(a)((var a = 1))
@@ -48,13 +48,13 @@ UFile (package = ) [import java.util...]
                         UIdentifier (Identifier (getList)) [UIdentifier (Identifier (getList))]
                         UPrefixExpression (operator = ++) [++size] = 4 (depending on: (var size = 3))
                             USimpleNameReferenceExpression (identifier = size) [size] = (var size = 3)
-                    UBlockExpression [{...}] = Undetermined
-                        UBinaryExpression (operator = =) [result = result + number] = Undetermined
-                            USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0))
-                            UBinaryExpression (operator = +) [result + number] = Undetermined
-                                USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0))
+                    UBlockExpression [{...}] = Undetermined (depending on: (var result = Undetermined))
+                        UBinaryExpression (operator = =) [result = result + number] = Undetermined (depending on: (var result = Undetermined))
+                            USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
+                            UBinaryExpression (operator = +) [result + number] = Undetermined (depending on: (var result = Undetermined))
+                                USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                 USimpleNameReferenceExpression (identifier = number) [number] = Undetermined
                 UReturnExpression [return result + size] = Nothing
-                    UBinaryExpression (operator = +) [result + size] = Undetermined (depending on: (var size = 4))
-                        USimpleNameReferenceExpression (identifier = result) [result] = Phi((var result = Undetermined), (var result = 0))
+                    UBinaryExpression (operator = +) [result + size] = Undetermined (depending on: (var result = Undetermined), (var size = 4))
+                        USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                         USimpleNameReferenceExpression (identifier = size) [size] = (var size = 4)

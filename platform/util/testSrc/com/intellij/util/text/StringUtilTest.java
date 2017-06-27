@@ -24,8 +24,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import slowCheck.GenCollection;
-import slowCheck.GenString;
+import slowCheck.Generator;
 import slowCheck.PropertyChecker;
 
 import java.nio.CharBuffer;
@@ -136,6 +135,8 @@ public class StringUtilTest {
     assertEquals("process", StringUtil.unpluralize("process"));
     assertEquals("PROPERTY", StringUtil.unpluralize("PROPERTIES"));
     assertEquals("THIS", StringUtil.unpluralize("THESE"));
+    assertEquals("database", StringUtil.unpluralize("databases"));
+    assertEquals("basis", StringUtil.unpluralize("bases"));
   }
 
   @Test
@@ -158,6 +159,9 @@ public class StringUtilTest {
     assertEquals("schemas", StringUtil.pluralize("schema")); // anglicized version
     assertEquals("PROPERTIES", StringUtil.pluralize("PROPERTY"));
     assertEquals("THESE", StringUtil.pluralize("THIS"));
+    assertEquals("databases", StringUtil.pluralize("database"));
+    assertEquals("bases", StringUtil.pluralize("base"));
+    assertEquals("bases", StringUtil.pluralize("basis"));
   }
 
   @Test
@@ -182,7 +186,7 @@ public class StringUtilTest {
 
   @Test
   public void testNaturalCompareTransitivityProperty() {
-    PropertyChecker.forAll(GenCollection.listOf(GenString.stringOf("ab01()_# ")), l -> {
+    PropertyChecker.forAll(Generator.listsOf(Generator.stringsOf("ab01()_# ")), l -> {
       List<String> sorted = ContainerUtil.sorted(l, StringUtil::naturalCompare);
       for (int i = 0; i < sorted.size(); i++) {
         for (int j = i + 1; j < sorted.size(); j++) {

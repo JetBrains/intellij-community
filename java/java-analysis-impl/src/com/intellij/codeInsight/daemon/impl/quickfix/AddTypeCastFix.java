@@ -43,7 +43,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("add.typecast.text", myType.getCanonicalText());
+    return QuickFixBundle.message("add.typecast.text", myType.isValid() ? myType.getCanonicalText() : "");
   }
 
   @Override

@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @author peter
+ * A utility class used to query the language for PSI from {@link LanguageSubstitutor} extensions.
  */
 public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
   public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
@@ -48,6 +48,10 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     super("com.intellij.lang.substitutor");
   }
 
+  /**
+   * Queries all applicable language substitutors and returns the substituted language, or {@code lang} argument if
+   * no substitutor has returned anything.
+   */
   @NotNull
   public Language substituteLanguage(@NotNull Language lang, @NotNull VirtualFile file, @NotNull Project project) {
     for (LanguageSubstitutor substitutor : forKey(lang)) {

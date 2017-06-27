@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 public class SelectAllAction extends TextComponentEditorAction implements DumbAware {
   public SelectAllAction() {
@@ -33,7 +34,7 @@ public class SelectAllAction extends TextComponentEditorAction implements DumbAw
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(final Editor editor, DataContext dataContext) {
+    public void execute(@NotNull final Editor editor, DataContext dataContext) {
       CommandProcessor processor = CommandProcessor.getInstance();
       processor.executeCommand(CommonDataKeys.PROJECT.getData(dataContext),
                                () -> editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength()), IdeBundle.message("command.select.all"), null);

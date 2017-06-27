@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -303,7 +304,7 @@ class DeclarationMover extends LineMover {
     // trying to move up inside enum constant list, move outside of enum class instead
     if (!isDown
         && sibling.getParent() instanceof PsiClass
-        && (sibling instanceof PsiJavaToken && ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.SEMICOLON || sibling instanceof PsiErrorElement)
+        && (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON) || sibling instanceof PsiErrorElement)
         && firstNonWhiteElement(sibling.getPrevSibling(), false) instanceof PsiEnumConstant) {
       PsiClass aClass = (PsiClass)sibling.getParent();
       if (!areWeMovingClass && !(aClass.getParent() instanceof PsiClass)) throw new IllegalMoveException();
@@ -341,7 +342,7 @@ class DeclarationMover extends LineMover {
       PsiField field = fields[i];
       if (field instanceof PsiEnumConstant) {
         PsiElement anchor = firstNonWhiteElement(field.getNextSibling(), true);
-        if (!(anchor instanceof PsiJavaToken && ((PsiJavaToken)anchor).getTokenType() == JavaTokenType.SEMICOLON)) {
+        if (!(PsiUtil.isJavaToken(anchor, JavaTokenType.SEMICOLON))) {
           anchor = field;
           myEnumToInsertSemicolonAfter = (PsiEnumConstant)field;
         }

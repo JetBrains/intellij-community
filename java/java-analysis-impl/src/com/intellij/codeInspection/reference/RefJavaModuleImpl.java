@@ -20,13 +20,11 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Pavel.Dolgov
@@ -35,11 +33,13 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   private final RefModule myRefModule;
 
   private Map<String, List<String>> myExportedPackageNames;
+  private Set<RefClass> myServiceImplementations;
   private List<RequiredModule> myRequiredModules;
 
   RefJavaModuleImpl(@NotNull PsiJavaModule javaModule, @NotNull RefManagerImpl manager) {
     super(javaModule.getName(), javaModule, manager);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(javaModule));
+    JAVA_MODULE.set(myRefModule, this);
   }
 
   @Override
@@ -73,6 +73,12 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   @Override
   public Map<String, List<String>> getExportedPackageNames() {
     return myExportedPackageNames != null ? myExportedPackageNames : Collections.emptyMap();
+  }
+
+  @NotNull
+  @Override
+  public Set<RefClass> getServiceImplementations() {
+    return myServiceImplementations != null ? myServiceImplementations : Collections.emptySet();
   }
 
   @Override
@@ -134,6 +140,9 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
                   if (targetElement == null) {
                     final RefElement refClass = getRefManager().getReference(implementationClass);
                     if (refClass instanceof RefClassImpl) {
+                      if (myServiceImplementations == null) myServiceImplementations = new THashSet<>();
+                      myServiceImplementations.add((RefClass)refClass);
+
                       final RefMethod refConstructor = ((RefClassImpl)refClass).getDefaultConstructor();
                       if (refConstructor != null) {
                         final PsiModifierListOwner constructorElement = refConstructor.getElement();

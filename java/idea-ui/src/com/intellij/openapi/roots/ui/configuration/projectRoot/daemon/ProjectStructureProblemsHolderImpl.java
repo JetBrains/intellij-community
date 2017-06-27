@@ -1,7 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.util.SmartList;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,26 +32,21 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   }
 
   public String composeTooltipMessage() {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append("<html><body>");
-      if (myProblemDescriptions != null) {
-        int problems = 0;
-        for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-          buf.append(XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false))).append("<br>");
-          problems++;
-          if (problems >= 10 && myProblemDescriptions.size() > 12) {
-            buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");
-            break;
-          }
+    final StringBuilder buf = new StringBuilder();
+    buf.append("<html><body>");
+    if (myProblemDescriptions != null) {
+      int problems = 0;
+      for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
+        buf.append(XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false))).append("<br>");
+        problems++;
+        if (problems >= 10 && myProblemDescriptions.size() > 12) {
+          buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");
+          break;
         }
       }
-      buf.append("</body></html>");
-      return buf.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    buf.append("</body></html>");
+    return buf.toString();
   }
 
   public boolean containsProblems() {

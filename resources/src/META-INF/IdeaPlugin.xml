@@ -1992,6 +1992,8 @@
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
     <codeInsight.intention.jvmCommonIntentionActionsFactory language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
+
+    <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

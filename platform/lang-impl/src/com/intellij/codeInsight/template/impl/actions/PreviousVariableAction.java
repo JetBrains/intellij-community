@@ -37,7 +37,7 @@ public class PreviousVariableAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
 
     @Override
-    protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       assert templateState != null;
       CommandProcessor.getInstance().setCurrentCommandName(CodeInsightBundle.message("template.previous.variable.command"));

@@ -2,14 +2,14 @@ package slowCheck;
 
 import junit.framework.TestCase;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static slowCheck.GenChar.*;
-import static slowCheck.GenCollection.*;
-import static slowCheck.GenNumber.*;
-import static slowCheck.GenString.*;
+import static slowCheck.Generator.*;
 
 /**
  * @author peter
@@ -18,50 +18,52 @@ public class GeneratorTest extends TestCase {
   private static final CheckerSettings ourTestSettings = CheckerSettings.DEFAULT_SETTINGS.withSeed(0);
   
   public void testMod() {
-    checkFalsified(integers(), 
+    checkFalsified(integers(),
                    i -> i % 12 != 0,
                    1);
   }
 
   public void testListSumMod() {
-    checkFalsified(nonEmptyListOf(integers()), 
+    checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   163);
+                   7);
   }
 
   public void testListContainsDivisible() {
-    checkFalsified(nonEmptyListOf(integers()), 
+    checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   11);
+                   9);
   }
 
   public void testStringContains() {
-    checkFalsified(stringOf(asciiPrintable()), 
+    checkFalsified(stringsOf(asciiPrintableChars()),
                    s -> !s.contains("a"),
                    10);
   }
 
   public void testLetterStringContains() {
-    checkFalsified(stringOf(asciiLetter()), 
+    checkFalsified(stringsOf(asciiLetters()),
                    s -> !s.contains("a"),
-                   8);
+                   5);
   }
   
   public void testIsSorted() {
-    checkFalsified(nonEmptyListOf(integers()), 
-                   l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                   101);
+    PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
+                                                            l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
+                                                            69);
+    assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   public void testSuccess() {
-    PropertyChecker.forAll(listOf(integers(-1, 1)), 
-                   l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
+    PropertyChecker.forAll(listsOf(integers(-1, 1)),
+                           l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
   }
 
   public void testSortedDoublesNonDescending() {
-    checkFalsified(listOf(doubles()), 
-                   l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                   113);
+    PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
+                                                           l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
+                                                           141);
+    assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   private static boolean isSorted(List<Double> list) {
@@ -80,7 +82,7 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testSuchThat() {
-    PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i == 0), i -> i == 0);
+    PropertyChecker.forAll(integers().suchThat(i -> i < 0), i -> i < 0);
   }
 
   public void testUnsatisfiableSuchThat() {
@@ -93,32 +95,72 @@ public class GeneratorTest extends TestCase {
   }
 
   public void testStringOfStringChecksAllChars() {
-    checkFalsified(stringOf("abc "), 
+    checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),
-                   6);
+                   3);
   }
 
   public void testLongListsHappen() {
-    checkFalsified(listOf(integers()),
-                   l -> l.size() < 200,
-                   781);
+    PropertyFailure<List<Integer>> failure = checkFalsified(listsOf(integers()),
+                                                            l -> l.size() < 200,
+                                                            631);
+    assertEquals(200, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   public void testNonEmptyList() {
-    PropertyChecker.forAll(nonEmptyListOf(integers()), l -> !l.isEmpty());
+    PropertyChecker.forAll(nonEmptyLists(integers()), l -> !l.isEmpty());
   }
 
-  private <T> void checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
+  public void testNoDuplicateData() {
+    Set<List<Integer>> visited = new HashSet<>();
+    PropertyChecker.forAll(listsOf(integers()), l -> visited.add(l));
+  }
+
+  public void testOneOf() {
+    List<Integer> values = new ArrayList<>();
+    PropertyChecker.forAll(anyOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
+    assertTrue(values.stream().anyMatch(i -> i < 2));
+    assertTrue(values.stream().anyMatch(i -> i > 5));
+  }
+
+  public void testAsciiIdentifier() {
+    PropertyChecker.forAll(asciiIdentifiers(),
+                           s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
+    checkFalsified(asciiIdentifiers(),
+                   s -> !s.contains("_"),
+                   1);
+  }
+
+  public void testBoolean() {
+    PropertyFailure<List<Boolean>> failure = checkFalsified(listsOf(booleans()),
+                                                            l -> !l.contains(true) || !l.contains(false),
+                                                            4);
+    assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
+  }
+
+  public void testShrinkingNonEmptyList() {
+    PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers(0, 100)),
+                                                            l -> !l.contains(42),
+                                                            10);
+    assertEquals(1, failure.getMinimalCounterexample().getExampleValue().size());
+  }
+
+  private <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
     try {
       PropertyChecker.forAll(ourTestSettings, generator, predicate);
-      fail("Can't falsify " + getName());
+      throw new AssertionError("Can't falsify " + getName());
     }
     catch (PropertyFalsified e) {
+      //noinspection unchecked
+      PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
+
       System.out.println(" " + getName());
       System.out.println("Value: " + e.getBreakingValue());
       System.out.println("Data: " + e.getData());
-      assertEquals(minimizationSteps, e.getFailure().getTotalMinimizationStepCount());
+      assertEquals(minimizationSteps, failure.getTotalMinimizationStepCount());
       assertEquals(e.getBreakingValue(), generator.generateUnstructured(e.getData()));
+
+      return failure;
     }
   }
 }

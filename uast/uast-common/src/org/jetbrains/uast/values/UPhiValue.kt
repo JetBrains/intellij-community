@@ -26,10 +26,15 @@ class UPhiValue private constructor(val values: Set<UValue>): UValueBase() {
     override fun toString() = values.joinToString(prefix = "Phi(", postfix = ")", separator = ", ")
 
     companion object {
-        fun create(values: Iterable<UValue>): UPhiValue {
+        private val PHI_LIMIT = 4
+
+        fun create(values: Iterable<UValue>): UValue {
             val flattenedValues = values.flatMapTo(linkedSetOf<UValue>()) { (it as? UPhiValue)?.values ?: listOf(it) }
             if (flattenedValues.size <= 1) {
                 throw AssertionError("UPhiValue should contain two or more values: $flattenedValues")
+            }
+            if (flattenedValues.size > PHI_LIMIT || UUndeterminedValue in flattenedValues) {
+                return UUndeterminedValue
             }
             return UPhiValue(flattenedValues)
         }

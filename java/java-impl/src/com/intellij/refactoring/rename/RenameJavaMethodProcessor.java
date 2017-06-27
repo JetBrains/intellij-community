@@ -274,25 +274,36 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void prepareRenaming(PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
-    OverridingMethodsSearch.search(method, scope, true).forEach(overrider -> {
-      if (overrider instanceof PsiMirrorElement) {
-        final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
-        if (prototype instanceof PsiMethod) {
-          overrider = (PsiMethod)prototype;
+    PsiMethod[] siblings = method.getUserData(SuperMethodWarningUtil.SIBLINGS);
+    if (siblings == null) {
+      siblings = new PsiMethod[] {method};
+    }
+    for (PsiMethod sibling : siblings) {
+      //append all super methods
+      if (sibling != method) {
+        allRenames.put(sibling, newName);
+      }
+
+      OverridingMethodsSearch.search(sibling, scope, true).forEach(overrider -> {
+        if (overrider instanceof PsiMirrorElement) {
+          final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
+          if (prototype instanceof PsiMethod) {
+            overrider = (PsiMethod)prototype;
+          }
         }
-      }
 
-      if (overrider instanceof SyntheticElement) return true;
+        if (overrider instanceof SyntheticElement) return true;
 
-      final String overriderName = overrider.getName();
-      final String baseName = method.getName();
-      final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
-      if (newOverriderName != null) {
-        RenameProcessor.assertNonCompileElement(overrider);
-        allRenames.put(overrider, newOverriderName);
-      }
-      return true;
-    });
+        final String overriderName = overrider.getName();
+        final String baseName = sibling.getName();
+        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
+        if (newOverriderName != null) {
+          RenameProcessor.assertNonCompileElement(overrider);
+          allRenames.put(overrider, newOverriderName);
+        }
+        return true;
+      });
+    }
   }
 
   @NonNls

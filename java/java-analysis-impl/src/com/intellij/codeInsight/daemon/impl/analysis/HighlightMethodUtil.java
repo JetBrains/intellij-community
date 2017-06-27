@@ -1558,7 +1558,7 @@ public class HighlightMethodUtil {
     int end = range.getEndOffset();
 
     PsiElement nextSibling = element.getNextSibling();
-    if (nextSibling instanceof PsiJavaToken && ((PsiJavaToken)nextSibling).getTokenType() == JavaTokenType.SEMICOLON) {
+    if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
       return new TextRange(start, end + 1);
     }
     return range;

@@ -18,12 +18,11 @@ package com.intellij.ui.tree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.LoadingNode;
-import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.util.concurrency.Command;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +35,19 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
@@ -49,9 +55,8 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
  */
 public final class AsyncTreeModel extends AbstractTreeModel implements Disposable, Identifiable, Searchable, Navigatable {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
-  private final AtomicReference<AsyncPromise<Entry<Object>>> rootLoader = new AtomicReference<>();
   private final Command.Processor processor;
-  private final MapBasedTree<Object, Object> tree = new MapBasedTree<>(true, object -> object);
+  private final Tree tree = new Tree();
   private final TreeModel model;
   private final boolean showLoadingNode;
   private final TreeModelListener listener = new TreeModelAdapter() {
@@ -63,14 +68,18 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         return;
       }
       Object object = path.getLastPathComponent();
+      if (object == null) {
+        LOG.warn("unsupported path: " + path);
+        return;
+      }
       if (path.getParentPath() == null && type == EventType.StructureChanged) {
         // set a new root object according to the specification
         processor.process(new CmdGetRoot("Update root", object));
         return;
       }
       processor.foreground.invokeLaterIfNeeded(() -> {
-        Entry<Object> entry = tree.findEntry(object);
-        if (entry == null || entry.isLoadingRequired()) {
+        Node node = tree.map.get(object);
+        if (node == null || node.isLoadingRequired()) {
           LOG.debug("ignore updating of nonexistent node: ", object);
         }
         else if (type == EventType.NodesChanged) {
@@ -78,13 +87,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
           AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), event.getChildIndices(), event.getChildren());
         }
         else if (type == EventType.NodesInserted) {
-          processor.process(new CmdGetChildren("Insert children", entry, false));
+          processor.process(new CmdGetChildren("Insert children", node, false));
         }
         else if (type == EventType.NodesRemoved) {
-          processor.process(new CmdGetChildren("Remove children", entry, false));
+          processor.process(new CmdGetChildren("Remove children", node, false));
         }
         else {
-          processor.process(new CmdGetChildren("Update children", entry, true));
+          processor.process(new CmdGetChildren("Update children", node, true));
         }
       });
     }
@@ -141,18 +150,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   @NotNull
   public Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    processor.foreground.invokeLaterIfNeeded(() -> resolve(async, path, entry -> async.setResult(entry)));
+    processor.foreground.invokeLaterIfNeeded(() -> resolve(async, path, entry -> async.setResult(path)));
     return async;
   }
 
   private Promise<TreePath> resolve(Promise<TreePath> promise) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
     promise.rejected(error -> processor.foreground.invokeLaterIfNeeded(() -> async.setError(error)));
-    promise.done(result -> processor.foreground.invokeLaterIfNeeded(() -> resolve(async, result, entry -> async.setResult(entry))));
+    promise.done(path -> processor.foreground.invokeLaterIfNeeded(() -> resolve(async, path, entry -> async.setResult(path))));
     return async;
   }
 
-  private void resolve(AsyncPromise<TreePath> async, TreePath path, Consumer<Entry<Object>> consumer) {
+  private void resolve(AsyncPromise<TreePath> async, TreePath path, Consumer<Node> consumer) {
+    LOG.debug("resolve path: ", path);
     if (path == null) {
       async.setError("path is null");
       return;
@@ -162,43 +172,26 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       async.setError("path is wrong");
       return;
     }
-    if (!consume(consumer, tree.findEntry(object))) {
+    if (!resolved(path, consumer)) {
       TreePath parent = path.getParentPath();
       if (parent == null) {
-        promiseRootEntry().done(entry -> {
-          if (entry == null) {
-            async.setError("root is null");
-          }
-          else if (object != entry.getNode()) {
-            async.setError("root is wrong");
-          }
-          else {
-            consumer.accept(entry);
-          }
+        promiseRootEntry().rejected(async::setError).done(node -> {
+          if (!resolved(path, consumer)) async.setError("root not found");
         });
       }
       else {
-        resolve(async, parent, entry -> processor.process(new Command<List<Pair<Object, Boolean>>>() {
-          private CmdGetChildren command = new CmdGetChildren("Sync children", entry, false);
-
-          @Override
-          public List<Pair<Object, Boolean>> get() {
-            return command.get();
-          }
-
-          @Override
-          public void accept(List<Pair<Object, Boolean>> children) {
-            command.accept(children);
-            if (!consume(consumer, tree.findEntry(object))) async.setError("path not found");
-          }
+        resolve(async, parent, resolved -> promiseChildren(resolved).rejected(async::setError).done(node -> {
+          if (!resolved(path, consumer)) async.setError("path not found");
         }));
       }
     }
   }
 
-  private static boolean consume(Consumer<Entry<Object>> consumer, Entry<Object> entry) {
-    if (entry == null) return false;
-    consumer.accept(entry);
+  private boolean resolved(@NotNull TreePath path, @NotNull Consumer<Node> consumer) {
+    Node node = tree.map.get(path.getLastPathComponent());
+    if (node == null || !node.paths.contains(path)) return false;
+    LOG.debug("path resolved: ", path);
+    consumer.accept(node);
     return true;
   }
 
@@ -206,26 +199,25 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   public Object getRoot() {
     if (!isValidThread()) return null;
     promiseRootEntry();
-    Entry<Object> entry = tree.getRootEntry();
-    return entry == null ? null : entry.getNode();
+    Node node = tree.root;
+    return node == null ? null : node.object;
   }
 
   @Override
   public Object getChild(Object object, int index) {
-    Entry<Object> entry = getEntry(object, true);
-    return entry == null ? null : entry.getChild(index);
+    List<Node> children = getEntryChildren(object);
+    return 0 <= index && index < children.size() ? children.get(index).object : null;
   }
 
   @Override
   public int getChildCount(Object object) {
-    Entry<Object> entry = getEntry(object, true);
-    return entry == null ? 0 : entry.getChildCount();
+    return getEntryChildren(object).size();
   }
 
   @Override
   public boolean isLeaf(Object object) {
-    Entry<Object> entry = getEntry(object, false);
-    return entry == null || entry.isLeaf();
+    Node node = getEntry(object);
+    return node == null || node.leaf;
   }
 
   @Override
@@ -235,8 +227,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
   @Override
   public int getIndexOfChild(Object object, Object child) {
-    Entry<Object> entry = getEntry(object, true);
-    return entry == null ? -1 : entry.getIndexOf(child);
+    if (child != null) {
+      List<Node> children = getEntryChildren(object);
+      for (int i = 0; i < children.size(); i++) {
+        if (child.equals(children.get(i).object)) return i;
+      }
+    }
+    return -1;
   }
 
   private boolean isValidThread() {
@@ -245,148 +242,512 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return false;
   }
 
-  private static <T> AsyncPromise<T> create(AtomicReference<AsyncPromise<T>> reference) {
-    AsyncPromise<T> newPromise = new AsyncPromise<>();
-    AsyncPromise<T> oldPromise = reference.getAndSet(newPromise);
-    if (oldPromise != null && Promise.State.PENDING == oldPromise.getState()) newPromise.notify(oldPromise);
-    return newPromise;
-  }
-
-  private Promise<Entry<Object>> promiseRootEntry() {
-    AsyncPromise<Entry<Object>> promise = rootLoader.get();
-    if (promise != null) return promise;
-    CmdGetRoot command = new CmdGetRoot("Load root", null);
-    processor.process(command);
+  @NotNull
+  private Promise<Node> promiseRootEntry() {
+    CmdGetRoot command = tree.reference.get();
+    if (command == null) {
+      command = new CmdGetRoot("Load root", null);
+      processor.process(command);
+    }
     return command.promise;
   }
 
-  private Entry<Object> getEntry(Object object, boolean loadChildren) {
-    Entry<Object> entry = object == null || !isValidThread() ? null : tree.findEntry(object);
-    if (entry != null && loadChildren && entry.isLoadingRequired()) loadChildren(entry, true);
-    return entry;
+  @NotNull
+  private Promise<Node> promiseChildren(@NotNull Node node) {
+    CmdGetChildren command = node.reference.get();
+    if (command == null) {
+      node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), true));
+      command = new CmdGetChildren("Load children", node, false);
+      processor.process(command);
+    }
+    return command.promise;
   }
 
-  private void loadChildren(Entry<Object> entry, boolean insertLoadingNode) {
-    String name = insertLoadingNode ? "Load children" : "Reload children";
-    if (insertLoadingNode && showLoadingNode) entry.setLoadingChildren(new LoadingNode());
-    processor.process(new CmdGetChildren(name, entry, true));
+  private Node getEntry(Object object) {
+    return object == null || !isValidThread() ? null : tree.map.get(object);
   }
 
-  private final class CmdGetRoot implements Obsolescent, Command<Pair<Object, Boolean>> {
-    private final AsyncPromise<Entry<Object>> promise = create(rootLoader);
+  @NotNull
+  private List<Node> getEntryChildren(Object object) {
+    Node node = getEntry(object);
+    if (node == null) return emptyList();
+    promiseChildren(node);
+    return node.getChildren();
+  }
+
+  private TreeModelEvent createEvent(TreePath path, LinkedHashMap<Object, Integer> map) {
+    if (map == null || map.isEmpty()) return new TreeModelEvent(this, path, null, null);
+    int i = 0;
+    int size = map.size();
+    int[] indices = new int[size];
+    Object[] children = new Object[size];
+    for (Entry<Object, Integer> entry : map.entrySet()) {
+      indices[i] = entry.getValue();
+      children[i] = entry.getKey();
+      i++;
+    }
+    return new TreeModelEvent(this, path, indices, children);
+  }
+
+  private void treeNodesChanged(Node node, LinkedHashMap<Object, Integer> map) {
+    if (!listeners.isEmpty()) {
+      for (TreePath path : node.paths) {
+        listeners.treeNodesChanged(createEvent(path, map));
+      }
+    }
+  }
+
+  private void treeNodesInserted(Node node, LinkedHashMap<Object, Integer> map) {
+    if (!listeners.isEmpty()) {
+      for (TreePath path : node.paths) {
+        listeners.treeNodesInserted(createEvent(path, map));
+      }
+    }
+  }
+
+  private void treeNodesRemoved(Node node, LinkedHashMap<Object, Integer> map) {
+    if (!listeners.isEmpty()) {
+      for (TreePath path : node.paths) {
+        listeners.treeNodesRemoved(createEvent(path, map));
+      }
+    }
+  }
+
+  @NotNull
+  private static LinkedHashMap<Object, Integer> getIndices(@NotNull List<Node> children, ToIntFunction<Node> function) {
+    LinkedHashMap<Object, Integer> map = new LinkedHashMap<>();
+    for (int i = 0; i < children.size(); i++) {
+      Node child = children.get(i);
+      if (map.containsKey(child.object)) {
+        LOG.warn("ignore duplicated " + (function == null ? "old" : "new") + " child at " + i);
+      }
+      else {
+        map.put(child.object, function == null ? i : function.applyAsInt(child));
+      }
+    }
+    return map;
+  }
+
+  private static int getIntersectionCount(LinkedHashMap<Object, Integer> indices, Iterable<Object> objects) {
+    int count = 0;
+    int last = -1;
+    for (Object object : objects) {
+      Integer index = indices.get(object);
+      if (index != null && last < index.intValue()) {
+        last = index;
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private static List<Object> getIntersection(LinkedHashMap<Object, Integer> indices, Iterable<Object> objects) {
+    List<Object> list = new ArrayList<>(indices.size());
+    int last = -1;
+    for (Object object : objects) {
+      Integer index = indices.get(object);
+      if (index != null && last < index.intValue()) {
+        last = index;
+        list.add(object);
+      }
+    }
+    return list;
+  }
+
+  private static List<Object> getIntersection(LinkedHashMap<Object, Integer> removed, LinkedHashMap<Object, Integer> inserted) {
+    if (removed.isEmpty() || inserted.isEmpty()) return emptyList();
+    int countOne = getIntersectionCount(removed, inserted.keySet());
+    int countTwo = getIntersectionCount(inserted, removed.keySet());
+    if (countOne > countTwo) return getIntersection(removed, inserted.keySet());
+    if (countTwo > 0) return getIntersection(inserted, removed.keySet());
+    return emptyList();
+  }
+
+  private static <T extends ObsolescentCommand> T setCommandToProcess(AtomicReference<T> reference, T command) {
+    T old = reference.getAndSet(command);
+    if (old == null || Promise.State.PENDING != old.promise.getState()) return null;
+    if (command != null) command.promise.notify(old.promise);
+    return old;
+  }
+
+  private static <T extends ObsolescentCommand> void resetCommand(AtomicReference<T> reference) {
+    T old = setCommandToProcess(reference, null);
+    if (old != null) old.promise.setError("loading cancelled");
+  }
+
+  private static void resetCommand(@NotNull Node node, String prefix) {
+    resetCommand(node.reference);
+    if (prefix != null) LOG.warn(prefix + node.object);
+  }
+
+  private static abstract class ObsolescentCommand implements Obsolescent, Command<Node>, Function<Object, Node> {
+    final AsyncPromise<Node> promise = new AsyncPromise<>();
     private final String name;
-    private final Object root;
+    private final Object object;
 
-    public CmdGetRoot(String name, Object root) {
+    ObsolescentCommand(String name, Object object) {
       this.name = name;
-      this.root = root;
+      this.object = object;
+      LOG.debug("create command: ", this);
     }
 
     @Override
     public String toString() {
-      return root == null ? name : name + ": " + root;
+      return object == null ? name : name + ": " + object;
+    }
+
+    @Override
+    public Node get() {
+      LOG.debug("background command: ", this);
+      return isObsolete() ? null : apply(object);
+    }
+  }
+
+  private final class CmdGetRoot extends ObsolescentCommand {
+    private CmdGetRoot(String name, Object object) {
+      super(name, object);
+      setCommandToProcess(tree.reference, this);
     }
 
     @Override
     public boolean isObsolete() {
-      return promise != rootLoader.get();
+      return this != tree.reference.get();
     }
 
     @Override
-    public Pair<Object, Boolean> get() {
-      if (isObsolete()) return null;
-      Object object = root != null ? root : model.getRoot();
-      if (isObsolete()) return null;
-      return Pair.create(object, model.isLeaf(object));
+    public Node apply(Object object) {
+      if (object == null) object = model.getRoot();
+      if (object == null || isObsolete()) return null;
+      return new Node(object, model.isLeaf(object));
     }
 
     @Override
-    public void accept(Pair<Object, Boolean> root) {
-      if (isObsolete()) return;
-      boolean updated = tree.updateRoot(root);
-      Entry<Object> entry = tree.getRootEntry();
-      if (updated) treeStructureChanged(entry, null, null);
-      if (entry != null) loadChildren(entry, entry.isLoadingRequired());
-      promise.setResult(entry);
+    public void accept(Node loaded) {
+      if (isObsolete()) {
+        LOG.debug("obsolete command: ", this);
+        return;
+      }
+      LOG.debug("foreground command: ", this);
+
+      Node root = tree.root;
+      if (root == null && loaded == null) {
+        LOG.debug("no root");
+        promise.setResult(null);
+        return;
+      }
+
+      if (root != null && loaded != null && root.object.equals(loaded.object)) {
+        LOG.debug("same root: ", root.object);
+        promise.setResult(root);
+        if (root.isLoadingRequired()) return;
+        processor.process(new CmdGetChildren("Update root children", root, true));
+        return;
+      }
+
+      if (root != null) {
+        tree.removeMapping(null, root);
+      }
+      if (!tree.map.isEmpty()) {
+        tree.map.values().forEach(value -> resetCommand(value, "remove staled node: "));
+        tree.map.clear();
+      }
+
+      tree.root = loaded;
+      if (loaded != null) {
+        tree.map.put(loaded.object, loaded);
+        TreePath path = new TreePath(loaded.object);
+        loaded.insertPath(path);
+        treeStructureChanged(path, null, null);
+        LOG.debug("new root: ", loaded.object);
+        promise.setResult(loaded);
+      }
+      else {
+        treeStructureChanged(null, null, null);
+        LOG.debug("root removed");
+        promise.setResult(null);
+      }
     }
   }
 
-  private final class CmdGetChildren implements Command<List<Pair<Object, Boolean>>> {
-    private final String name;
-    private final Entry<Object> entry;
+  private final class CmdGetChildren extends ObsolescentCommand {
+    private final Node node;
     private final boolean deep;
 
-    public CmdGetChildren(String name, Entry<Object> entry, boolean deep) {
-      this.name = name;
-      this.entry = entry;
-      this.deep = deep;
+    public CmdGetChildren(String name, Node node, boolean deep) {
+      super(name, node.object);
+      CmdGetChildren old = setCommandToProcess(node.reference, this);
+      this.node = node;
+      this.deep = deep || old != null && old.deep;
     }
 
     @Override
-    public String toString() {
-      return name + ": " + entry.getNode();
+    public boolean isObsolete() {
+      if (this == node.reference.get()) return false;
+      LOG.debug("obsolete command: ", this);
+      return true;
     }
 
     @Override
-    public List<Pair<Object, Boolean>> get() {
-      Object object = entry.getNode();
-      if (model.isLeaf(object)) return null;
+    public Node apply(Object object) {
+      Node loaded = new Node(object, model.isLeaf(object));
+      if (loaded.leaf) return loaded;
 
       if (model instanceof ChildrenProvider) {
         //noinspection unchecked
         ChildrenProvider<Object> provider = (ChildrenProvider)model;
-        ArrayList<Pair<Object, Boolean>> children = new ArrayList<>();
-        provider.getChildren(object).forEach(child -> add(children, child));
-        return unmodifiableList(children);
+        List<Object> children = provider.getChildren(object);
+        if (children == null) return null; // cancel this command
+        loaded.children = load(children.size(), index -> children.get(index));
       }
-
-      int count = model.getChildCount(object);
-      if (count <= 0) return emptyList();
-
-      ArrayList<Pair<Object, Boolean>> children = new ArrayList<>(count);
-      for (int i = 0; i < count; i++) add(children, model.getChild(object, i));
-      return unmodifiableList(children);
+      else {
+        loaded.children = load(model.getChildCount(object), index -> model.getChild(object, index));
+      }
+      return loaded;
     }
 
-    private void add(List<Pair<Object, Boolean>> children, Object child) {
-      if (child != null) children.add(Pair.create(child, model.isLeaf(child)));
+    private List<Node> load(int count, IntFunction function) {
+      if (count < 0) LOG.warn("illegal child count: " + count);
+      if (count <= 0) return emptyList();
+
+      SmartHashSet<Object> set = new SmartHashSet<>(count);
+      List<Node> children = new ArrayList<>(count);
+      for (int i = 0; i < count; i++) {
+        if (isObsolete()) return null;
+        Object child = function.apply(i);
+        if (child == null) {
+          LOG.warn("ignore null child at " + i);
+        }
+        else if (!set.add(child)) {
+          LOG.warn("ignore duplicated child at " + i);
+        }
+        else {
+          if (isObsolete()) return null;
+          children.add(new Node(child, model.isLeaf(child)));
+        }
+      }
+      return children;
     }
 
     @Override
-    public void accept(List<Pair<Object, Boolean>> children) {
-      Object object = entry.getNode();
-      if (entry != tree.findEntry(object)) {
-        LOG.debug("ignore updating of changed node: ", object);
+    public void accept(Node loaded) {
+      if (isObsolete()) {
+        LOG.debug("obsolete command: ", this);
         return;
       }
-      MapBasedTree.UpdateResult<Object> update = tree.update(entry, children);
+      if (loaded == null || loaded.isLoadingRequired()) {
+        LOG.debug("cancelled command: ", this);
+        return;
+      }
+      if (node != tree.map.get(loaded.object)) {
+        resetCommand(node, "ignore removed node: ");
+        return;
+      }
+      LOG.debug("foreground command: ", this);
 
-      boolean removed = !update.getRemoved().isEmpty();
-      boolean inserted = !update.getInserted().isEmpty();
-      boolean contained = !update.getContained().isEmpty();
-      if (!removed && !inserted && !contained) return;
+      List<Node> oldChildren = node.getChildren();
+      List<Node> newChildren = loaded.getChildren();
+      if (oldChildren.isEmpty() && newChildren.isEmpty()) {
+        node.setLeaf(loaded.leaf);
+        treeNodesChanged(node, null);
+        LOG.debug("no children: ", node.object);
+        promise.setResult(node);
+        return;
+      }
 
-      if (!deep || !contained) {
-        if (!removed && inserted) {
-          if (listeners.isEmpty()) return;
-          listeners.treeNodesInserted(update.getEvent(AsyncTreeModel.this, entry, update.getInserted()));
-          return;
+      LinkedHashMap<Object, Integer> removed = getIndices(oldChildren, null);
+      if (newChildren.isEmpty()) {
+        for (Node child : oldChildren) tree.removeMapping(node, child);
+        node.setLeaf(loaded.leaf);
+        treeNodesRemoved(node, removed);
+        LOG.debug("children removed: ", node.object);
+        promise.setResult(node);
+        return;
+      }
+
+      // remove duplicated nodes during indices calculation
+      ArrayList<Node> list = new ArrayList<>(newChildren.size());
+      SmartHashSet<Object> reload = new SmartHashSet<>();
+      LinkedHashMap<Object, Integer> inserted = getIndices(newChildren, child -> {
+        Node found = tree.map.get(child.object);
+        if (found == null) {
+          tree.map.put(child.object, child);
+          list.add(child);
         }
-        if (!inserted && removed) {
-          if (listeners.isEmpty()) return;
-          listeners.treeNodesRemoved(update.getEvent(AsyncTreeModel.this, entry, update.getRemoved()));
-          return;
+        else {
+          list.add(found);
+          if (!found.isLoadingRequired() && !removed.containsKey(found.object)) {
+            reload.add(found.object); // reload reused children if they are inserted
+          }
+        }
+        return list.size() - 1;
+      });
+      newChildren = list;
+
+      if (oldChildren.isEmpty()) {
+        for (Node child : newChildren) child.insertPaths(node);
+        node.setChildren(newChildren);
+        treeNodesInserted(node, inserted);
+        LOG.debug("children inserted: ", node.object);
+        promise.setResult(node);
+        return;
+      }
+
+      LinkedHashMap<Object, Integer> contained = new LinkedHashMap<>();
+      for (Object object : getIntersection(removed, inserted)) {
+        Integer oldIndex = removed.remove(object);
+        if (oldIndex == null) {
+          LOG.warn("intersection failed");
+        }
+        Integer newIndex = inserted.remove(object);
+        if (newIndex == null) {
+          LOG.warn("intersection failed");
+        }
+        else if (!deep) {
+          contained.put(object, newIndex);
+        }
+        else {
+          reload.add(object);
         }
       }
-      if (!listeners.isEmpty()) {
-        if (removed) listeners.treeNodesRemoved(update.getEvent(AsyncTreeModel.this, entry, update.getRemoved()));
-        if (inserted) listeners.treeNodesInserted(update.getEvent(AsyncTreeModel.this, entry, update.getInserted()));
-        if (contained) listeners.treeNodesChanged(update.getEvent(AsyncTreeModel.this, entry, update.getContained()));
-      }
-      for (Entry<Object> entry : update.getContained()) {
-        if (!entry.isLoadingRequired()) {
-          loadChildren(entry, false);
+
+      for (Node child : oldChildren) {
+        if (removed.containsKey(child.object) && !inserted.containsKey(child.object)) {
+          tree.removeMapping(node, child);
         }
+      }
+
+      for (Node child : newChildren) {
+        if (!removed.containsKey(child.object) && inserted.containsKey(child.object)) {
+          child.insertPaths(node);
+        }
+      }
+
+      node.setChildren(newChildren);
+      if (!removed.isEmpty()) treeNodesRemoved(node, removed);
+      if (!inserted.isEmpty()) treeNodesInserted(node, inserted);
+      if (!contained.isEmpty()) treeNodesChanged(node, contained);
+      LOG.debug("children changed: ", node.object);
+      promise.setResult(node);
+
+      if (!reload.isEmpty()) {
+        for (Node child : newChildren) {
+          if (!child.isLoadingRequired() && reload.contains(child.object)) {
+            processor.process(new CmdGetChildren("Update children recursively", child, true));
+          }
+        }
+      }
+    }
+  }
+
+  private static final class Tree {
+    private final AtomicReference<CmdGetRoot> reference = new AtomicReference<>();
+    private final HashMap<Object, Node> map = new HashMap<>();
+    private volatile Node root;
+
+    private void removeMapping(Node parent, Node child) {
+      if (parent != null && parent.loading == child) {
+        parent.loading = null;
+      }
+      else {
+        for (Node node : child.getChildren()) {
+          //TODO: remove only parent paths
+          removeMapping(child, node);
+        }
+        child.removePaths(parent);
+        if (child.paths.isEmpty()) {
+          resetCommand(child.reference);
+          Node node = map.remove(child.object);
+          if (node != child) {
+            LOG.warn("invalid node: " + child.object);
+            if (node != null) map.put(node.object, node);
+          }
+        }
+      }
+    }
+  }
+
+  private static final class Node {
+    private final AtomicReference<CmdGetChildren> reference = new AtomicReference<>();
+    private final SmartHashSet<TreePath> paths = new SmartHashSet<>();
+    private final Object object;
+    private volatile boolean leaf;
+    private volatile List<Node> children;
+    private volatile Node loading;
+
+    private Node(@NotNull Object object, boolean leaf) {
+      this.object = object;
+      this.leaf = leaf;
+    }
+
+    private void setLeaf(boolean leaf) {
+      this.leaf = leaf;
+      this.children = leaf ? null : emptyList();
+      this.loading = null;
+    }
+
+    private void setChildren(List<Node> children) {
+      this.leaf = children == null;
+      this.children = children;
+      this.loading = null;
+    }
+
+    private void setLoading(Node loading) {
+      this.leaf = false;
+      this.children = loading != null ? singletonList(loading) : emptyList();
+      this.loading = loading;
+    }
+
+    private boolean isLoadingRequired() {
+      return !leaf && children == null;
+    }
+
+    @NotNull
+    private List<Node> getChildren() {
+      List<Node> list = children;
+      return list != null ? list : emptyList();
+    }
+
+    private void insertPath(TreePath path) {
+      if (!paths.add(path)) {
+        LOG.warn("node is already attached to " + path);
+      }
+    }
+
+    private void insertPaths(Stream<TreePath> stream) {
+      stream.forEach(path -> insertPath(path.pathByAddingChild(object)));
+    }
+
+    private void insertPaths(Node parent) {
+      if (parent == null) {
+        insertPath(new TreePath(object));
+      }
+      else if (parent.paths.isEmpty()) {
+        LOG.warn("insert to invalid parent");
+      }
+      else {
+        insertPaths(parent.paths.stream());
+      }
+    }
+
+    private void removePath(TreePath path) {
+      if (!paths.remove(path)) {
+        LOG.warn("node is not attached to " + path);
+      }
+    }
+
+    private void removePaths(Stream<TreePath> stream) {
+      stream.forEach(path -> removePath(path.pathByAddingChild(object)));
+    }
+
+    private void removePaths(Node parent) {
+      if (parent == null) {
+        removePath(new TreePath(object));
+      }
+      else if (parent.paths.isEmpty()) {
+        LOG.warn("remove from invalid parent");
+      }
+      else {
+        removePaths(parent.paths.stream());
       }
     }
   }

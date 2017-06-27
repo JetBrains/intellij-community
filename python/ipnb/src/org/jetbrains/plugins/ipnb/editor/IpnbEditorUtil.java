@@ -69,6 +69,7 @@ public class IpnbEditorUtil {
     editor.setBackgroundColor(getEditablePanelBackground());
     noScrolling(editor);
     editor.getScrollPane().setBorder(null);
+    editor.setContextMenuGroupId(null);
     final EditorSettings editorSettings = editor.getSettings();
     editorSettings.setLineMarkerAreaShown(false);
     editorSettings.setIndentGuidesShown(false);

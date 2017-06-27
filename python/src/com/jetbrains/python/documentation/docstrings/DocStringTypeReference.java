@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -72,6 +71,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     return null;
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
@@ -125,9 +125,9 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
   @NotNull
   public List<Object> collectTypeVariants() {
     final PsiFile file = myElement.getContainingFile();
-    final ArrayList<Object>
-      variants = Lists.newArrayList("str", "int", "basestring", "bool", "buffer", "bytearray", "complex", "dict",
-                                    "tuple", "enumerate", "file", "float", "frozenset", "list", "long", "set", "object");
+    final List<Object> variants =
+      Lists.newArrayList(PyNames.TYPE_STR, PyNames.TYPE_INT, "basestring", "bool", "buffer", "bytearray", "complex", "dict",
+                         "tuple", "enumerate", "file", "float", "frozenset", "list", PyNames.TYPE_LONG, "set", "object");
     if (file instanceof PyFile) {
       variants.addAll(((PyFile)file).getTopLevelClasses());
       final List<PyFromImportStatement> fromImports = ((PyFile)file).getFromImports();

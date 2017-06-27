@@ -99,6 +99,9 @@ public class ModuleRootModificationUtil {
   }
 
   public static void addModuleLibrary(@NotNull Module module, @NotNull String classesRootUrl) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && classesRootUrl.endsWith(".jar")) {
+      assert false : "jar file is expected, local file is used";
+    }
     addModuleLibrary(module, null, Collections.singletonList(classesRootUrl), Collections.emptyList());
   }
 

@@ -16,14 +16,12 @@
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +115,7 @@ public class EditSourceOnDoubleClickHandler {
       TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath == null || !clickPath.equals(selectionPath)) return false;
       Object last = selectionPath.getLastPathComponent();
-      if (myTree.getModel().isLeaf(last) || !expandOnDoubleClick(last)) {
+      if (myTree.getModel().isLeaf(last) || myTree.getToggleClickCount() != e.getClickCount()) {
         //Node expansion for non-leafs has a higher priority
         processDoubleClick(e, dataContext, selectionPath);
         return true;
@@ -129,11 +127,6 @@ public class EditSourceOnDoubleClickHandler {
     protected void processDoubleClick(@NotNull MouseEvent e, @NotNull DataContext dataContext, @NotNull TreePath treePath) {
       OpenSourceUtil.openSourcesFrom(dataContext, true);
       if (myWhenPerformed != null) myWhenPerformed.run();
-    }
-
-    private static boolean expandOnDoubleClick(Object treeNode) {
-      Object object = TreeUtil.getUserObject(treeNode);
-      return !(object instanceof NodeDescriptor && !((NodeDescriptor)object).expandOnDoubleClick());
     }
 
   }

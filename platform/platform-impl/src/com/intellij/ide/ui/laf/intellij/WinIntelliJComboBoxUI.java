@@ -20,20 +20,27 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Path2D;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -55,13 +62,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private KeyListener   editorKeyListener;
   private FocusListener editorFocusListener;
 
-  public WinIntelliJComboBoxUI(JComboBox comboBox) {
-    super(comboBox);
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new WinIntelliJComboBoxUI((JComboBox)c);
+    return new WinIntelliJComboBoxUI();
   }
 
   @Override protected void installListeners() {
@@ -142,10 +145,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     }
 
     Rectangle rect = (comboBox.getComponentOrientation().isLeftToRight()) ?
-      new Rectangle(i.left, i.top,
+      new Rectangle(i.left, i.top - JBUI.scale(1),
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom)) :
-      new Rectangle(i.left + buttonWidth, i.top,
+      new Rectangle(i.left + buttonWidth, i.top - JBUI.scale(1),
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom));
 
@@ -198,7 +201,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       } else if (!comboBox.isEnabled()) {
         return opaque ? UIManager.getColor("Button.background.opaque") : UIManager.getColor("Button.background");
       } else if (!comboBox.isEditable()) {
-        if (isPressed()) {
+        if (isPressed() || popup.isVisible()) {
           return UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
         } else if (isHover()) {
           return UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
@@ -225,7 +228,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
           // paint background
           if (comboBox.isEditable() && comboBox.isEnabled()) {
-            if (isPressed()) {
+            if (isPressed() || popup.isVisible()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBackgroundColor"));
             } else if (comboBox.hasFocus() || isHover()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.focusedBackgroundColor"));
@@ -243,7 +246,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             border.append(outerRect, false);
             border.append(innerRect, false);
 
-            if (getModel().isPressed()) {
+            if (getModel().isPressed() || popup.isVisible()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBorderColor"));
               g2.fill(border);
             } else if (comboBox.hasFocus() || isHover()) {
@@ -443,7 +446,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             g2.setColor(UIManager.getColor(isEditorHover() ? "TextField.hoverBorderColor" : "TextField.borderColor"));
           }
         } else {
-          if (isPressed()) {
+          if (isPressed() || popup.isVisible()) {
             g2.setColor(UIManager.getColor("Button.intellij.native.pressedBorderColor"));
           } else if (isHover() || hasFocus) {
             g2.setColor(UIManager.getColor("Button.intellij.native.focusedBorderColor"));
@@ -569,4 +572,71 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       comboBox.repaint();
     }
   }
+
+
+  @Override protected ComboPopup createPopup() {
+    return new BasicComboPopup(comboBox) {
+      @Override
+      protected void configurePopup() {
+        super.configurePopup();
+        addPopupMenuListener(new PopupMenuListenerAdapter() {
+          @Override
+          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            comboBox.repaint();
+          }
+        });
+        setBorder(UIManager.getBorder("PopupMenu.border"));
+      }
+
+      @Override
+      protected void configureList() {
+        super.configureList();
+        list.setBackground(UIManager.getColor("TextField.background"));
+        wrapRenderer();
+      }
+
+      protected PropertyChangeListener createPropertyChangeListener() {
+        PropertyChangeListener listener = super.createPropertyChangeListener();
+        return new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            listener.propertyChange(evt);
+            if ("renderer".equals(evt.getPropertyName())) {
+              wrapRenderer();
+            }
+          }
+        };
+      }
+
+      @SuppressWarnings("unchecked")
+      private void wrapRenderer() {
+        ListCellRenderer renderer = list.getCellRenderer();
+        if (!(renderer instanceof ComboBoxRendererWrapper) && renderer != null) {
+          list.setCellRenderer(new ComboBoxRendererWrapper(renderer));
+        }
+      }
+
+      @Override
+      public void show(Component invoker, int x, int y) {
+        super.show(invoker, x, y - JBUI.scale(1)); // Move one pixel up to align with combobox border
+      }
+    };
+  }
+
+  private static class ComboBoxRendererWrapper implements ListCellRenderer<Object> {
+    private final ListCellRenderer<Object> myRenderer;
+
+    public ComboBoxRendererWrapper(@NotNull ListCellRenderer<Object> renderer) {
+      myRenderer = renderer;
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 4, 0, 1));
+      panel.setBackground(c.getBackground());
+      return panel;
+    }
+  }
+
 }

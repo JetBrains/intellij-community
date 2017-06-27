@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowRunner");
@@ -42,7 +43,7 @@ public class DataFlowRunner {
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
   // Closures which were registered for previous instruction and can be queried by visitor
   // to adjust them somehow
-  private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
+  private final Map<DfaMemoryState, PsiElement> myStackTopClosures = new HashMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
@@ -82,8 +83,12 @@ public class DataFlowRunner {
     return Collections.singletonList(createMemoryState());
   }
 
-  List<DfaMemoryState> getStackTopClosures() {
-    return new ArrayList<>(myStackTopClosures);
+  void updateStackTopClosures(Predicate<DfaMemoryState> updater) {
+    myStackTopClosures.forEach((state, element) -> {
+      if(!updater.test(state)) {
+        myNestedClosures.remove(element, state);
+      }
+    });
   }
 
   @NotNull
@@ -293,14 +298,14 @@ public class DataFlowRunner {
     for (PsiMethod method : nestedClass.getMethods()) {
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        myNestedClosures.putValue(body, createClosureState(state));
+        createClosureState(body, state);
       }
     }
     for (PsiClassInitializer initializer : nestedClass.getInitializers()) {
-      myNestedClosures.putValue(initializer.getBody(), createClosureState(state));
+      createClosureState(initializer.getBody(), state);
     }
     for (PsiField field : nestedClass.getFields()) {
-      myNestedClosures.putValue(field, createClosureState(state));
+      createClosureState(field, state);
     }
   }
   
@@ -308,15 +313,14 @@ public class DataFlowRunner {
     DfaMemoryState state = instructionState.getMemoryState();
     PsiElement body = expr.getBody();
     if (body != null) {
-      myNestedClosures.putValue(body, createClosureState(state));
+      createClosureState(body, state);
     }
   }
 
-  @NotNull
-  private DfaMemoryState createClosureState(DfaMemoryState state) {
+  private void createClosureState(PsiElement anchor, DfaMemoryState state) {
     DfaMemoryState closureState = state.createClosureState();
-    myStackTopClosures.add(closureState);
-    return closureState;
+    myStackTopClosures.put(closureState, anchor);
+    myNestedClosures.putValue(anchor, closureState);
   }
 
   @NotNull

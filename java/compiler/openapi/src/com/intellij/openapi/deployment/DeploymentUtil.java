@@ -19,7 +19,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,21 +103,16 @@ public abstract class DeploymentUtil {
     if (len == 0) {
       return null;
     }
-    final StringBuilder relativePath = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i=len; i < basePath.length(); i++) {
-        if (basePath.charAt(i) == File.separatorChar) {
-          relativePath.append("..");
-          relativePath.append(File.separatorChar);
-        }
+    final StringBuilder relativePath = new StringBuilder();
+    for (int i=len; i < basePath.length(); i++) {
+      if (basePath.charAt(i) == File.separatorChar) {
+        relativePath.append("..");
+        relativePath.append(File.separatorChar);
       }
-      relativePath.append(filePath.substring(lastSeparatorIndex + 1));
+    }
+    relativePath.append(filePath.substring(lastSeparatorIndex + 1));
 
-      return relativePath.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(relativePath);
-    }
+    return relativePath.toString();
   }
 
   @Deprecated

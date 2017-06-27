@@ -1485,9 +1485,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     InlayModelImpl inlayModel = myEditor.getInlayModel();
     int startOffset = marker.getStartOffset();
     int endOffset = marker.getEndOffset();
-    if (!myEditor.offsetToVisualPosition(startOffset, true, false).equals(myRangeMarkerStartPosition) &&
+    if ((myRangeMarkerStartPosition == null || 
+         !myEditor.offsetToVisualPosition(startOffset, true, false).equals(myRangeMarkerStartPosition)) &&
         model.getSoftWrap(startOffset) == null && !inlayModel.hasInlineElementAt(startOffset) ||
-        !myEditor.offsetToVisualPosition(endOffset, false, true).equals(myRangeMarkerEndPosition)
+        (myRangeMarkerEndPosition == null || 
+         !myEditor.offsetToVisualPosition(endOffset, false, true).equals(myRangeMarkerEndPosition))
         && model.getSoftWrap(endOffset) == null && !inlayModel.hasInlineElementAt(endOffset)) {
       myRangeMarkerStartPosition = null;
       myRangeMarkerEndPosition = null;

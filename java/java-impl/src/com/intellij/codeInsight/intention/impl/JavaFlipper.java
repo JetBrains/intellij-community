@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.openapi.editor.actions.FlipCommaIntention;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiVariable;
+import com.intellij.psi.util.PsiUtil;
 
 /**
  * @author Bas Leijdekkers
@@ -28,33 +30,20 @@ public class JavaFlipper implements FlipCommaIntention.Flipper {
   @Override
   public boolean flip(PsiElement left, PsiElement right) {
     if (left instanceof PsiVariable && right instanceof PsiVariable) {
-      final PsiElement first = left.getFirstChild();
-      if (!(first instanceof PsiModifierList)) {
-        return false;
-      }
-      final PsiElement child = PsiTreeUtil.skipSiblingsForward(first, PsiWhiteSpace.class);
-      if (!(child instanceof PsiTypeElement)) {
-        return false;
-      }
-      final PsiElement last = child.getNextSibling();
-      if (!(last instanceof PsiWhiteSpace)) {
-        return false;
-      }
-      final PsiElement anchor = right.getFirstChild();
-      if (!(anchor instanceof PsiIdentifier)) {
-        return false;
-      }
-      final PsiElement semiColon = right.getLastChild();
-      if (!(semiColon instanceof PsiJavaToken)) {
-        return false;
-      }
-      right.addRangeBefore(first, last, anchor);
-      left.deleteChildRange(first, last);
-      left.add(semiColon);
-      semiColon.delete();
-      final PsiElement copy = left.copy();
-      left.replace(right);
-      right.replace(copy);
+      final PsiVariable leftVariable = (PsiVariable)left;
+      final PsiVariable rightVariable = (PsiVariable)right;
+      final PsiIdentifier leftIdentifier = leftVariable.getNameIdentifier();
+      assert leftIdentifier != null;
+      final PsiIdentifier rightIdentifier = rightVariable.getNameIdentifier();
+      assert rightIdentifier != null;
+      PsiElement leftLast = leftVariable.getLastChild();
+      leftLast = PsiUtil.isJavaToken(leftLast, JavaTokenType.SEMICOLON) ? leftLast.getPrevSibling() : leftLast;
+      PsiElement rightLast = rightVariable.getLastChild();
+      rightLast = PsiUtil.isJavaToken(rightLast, JavaTokenType.SEMICOLON) ? rightLast.getPrevSibling() : rightLast;
+      left.addRangeBefore(rightIdentifier, rightLast, leftIdentifier);
+      right.addRangeBefore(leftIdentifier, leftLast, rightIdentifier);
+      left.deleteChildRange(leftIdentifier, leftLast);
+      right.deleteChildRange(rightIdentifier, rightLast);
       return true;
     }
     return false;

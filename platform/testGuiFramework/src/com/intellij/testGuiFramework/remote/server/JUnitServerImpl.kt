@@ -127,9 +127,13 @@ class JUnitServerImpl: JUnitServer {
 
   override fun stopServer() {
     serverSendThread.objectOutputStream.close()
+    LOG.info("Object output stream closed")
     serverSendThread.join()
+    LOG.info("Server Send Thread joined")
     serverReceiveThread.objectInputStream.close()
+    LOG.info("Object input stream closed")
     serverReceiveThread.join()
+    LOG.info("Server Receive Thread joined")
     connection.close()
   }
 

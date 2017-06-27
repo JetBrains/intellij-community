@@ -164,7 +164,7 @@ public class EduAdaptiveStepicConnector {
     final Task task = new TheoryTask(lessonName);
     task.setStepId(stepId);
 
-    task.addTaskText(EduNames.TASK_HTML, block.text);
+    task.addTaskText(EduNames.TASK, block.text);
 
     createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
     return task;
@@ -176,7 +176,7 @@ public class EduAdaptiveStepicConnector {
                                             int stepId, int userId) {
     final ChoiceTask task = new ChoiceTask(lessonName);
     task.setStepId(stepId);
-    task.addTaskText(EduNames.TASK_HTML, block.text);
+    task.addTaskText(EduNames.TASK, block.text);
 
     final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(stepId, userId);
     if (attempt != null) {
@@ -405,7 +405,7 @@ public class EduAdaptiveStepicConnector {
   private static void setToolWindowText(@NotNull Project project, @NotNull Task task) {
     final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
     if (window != null) {
-      window.setTaskText(StudyUtils.wrapTextToDisplayLatex(task.getTaskDescription()), task.getTaskDir(project), project);
+      window.setTaskText(task.getTaskDescription(), project);
     }
   }
 
@@ -437,7 +437,7 @@ public class EduAdaptiveStepicConnector {
       taskDescription.append("<br>").append("<b>Memory limit</b>: ").append(step.options.executionMemoryLimit).append(" Mb").append("<br>")
         .append("<b>Time limit</b>: ").append(step.options.executionTimeLimit).append("s").append("<br><br>");
     }
-    task.addTaskText(EduNames.TASK_HTML, taskDescription.toString());
+    task.addTaskText(EduNames.TASK, taskDescription.toString());
 
     if (step.options.test != null) {
       for (StepicWrappers.FileWrapper wrapper : step.options.test) {
@@ -686,5 +686,25 @@ public class EduAdaptiveStepicConnector {
       LOG.warn(e.getMessage());
     }
     return Collections.emptyList();
+  }
+
+  public static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
+    String finalText = text;
+    if (task instanceof TheoryTask) {
+      finalText += "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
+                   "Please, read it and press \"Check\" to go further.";
+    }
+    else if (!(task instanceof ChoiceTask)) {
+      finalText += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+    }
+    finalText += getFooterWithLink(task);
+
+    return finalText;
+  }
+
+  @NotNull
+  private static String getFooterWithLink(Task task) {
+    return
+      "<div class=\"footer\">" + "<a href=" + EduStepikUtils.getAdaptiveLink(task) + ">Open on Stepik</a>" + "</div>";
   }
 }

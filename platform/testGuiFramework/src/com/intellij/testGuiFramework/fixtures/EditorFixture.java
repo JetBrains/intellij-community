@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -527,6 +528,35 @@ public class EditorFixture {
 
     return this;
   }
+
+  /**
+   * Returns a list of pairs for selection ranges. If there is only one selection than return
+   * list with one pair. And empty list if there is no selected range in editor.
+   *
+   * @throws EditorNotFoundException if no selected editor has been found
+   */
+  public List<Pair<Integer, Integer>> getSelection() {
+    return execute(new GuiQuery<List<Pair<Integer, Integer>>>() {
+      @Override
+      protected List<Pair<Integer, Integer>> executeInEDT() throws Throwable {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
+          int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
+          assert (starts.length == ends.length);
+          List<Pair<Integer, Integer>> result = new ArrayList<>(starts.length);
+          for (int i = 0; i < starts.length; i++) {
+            result.add(new Pair<>(starts[i], ends[i]));
+          }
+          return result;
+        }
+
+        throw new EditorNotFoundException("Unable to find selected editor to get selection");
+      }
+    });
+  }
+
 
   /**
    * Finds the next position (or if {@code searchFromTop} is true, from the beginning) of
@@ -1150,4 +1180,12 @@ public class EditorFixture {
    * tab should be opened
    */
   public enum Tab { EDITOR, DESIGN, DEFAULT }
+
+  public static class EditorNotFoundException extends Exception {
+
+    public EditorNotFoundException(String message) {
+      super(message);
+    }
+
+  }
 }

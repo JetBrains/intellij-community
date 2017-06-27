@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,12 @@ public class FlipCommaIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement comma = currentCommaElement(editor, file);
-    return comma != null && smartAdvance(comma, true) != null && smartAdvance(comma, false) != null;
+    if (comma == null) {
+      return false;
+    }
+    final PsiElement left = smartAdvance(comma, false);
+    final PsiElement right = smartAdvance(comma, true);
+    return left != null && right != null && !left.getText().equals(right.getText());
   }
 
   @Override

@@ -7,12 +7,6 @@
   <depends>com.intellij.modules.vcs</depends>
   <vendor>JetBrains</vendor>
   <resource-bundle>org.jetbrains.idea.svn.SvnBundle</resource-bundle>
-  <project-components>
-    <component>
-      <implementation-class>org.jetbrains.idea.svn.SvnFileUrlMappingImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </project-components>
 
   <actions>
 
@@ -121,6 +115,8 @@
     <applicationService serviceInterface="org.jetbrains.idea.svn.SvnApplicationSettings"
                         serviceImplementation="org.jetbrains.idea.svn.SvnApplicationSettings"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.SvnConfiguration"/>
+    <projectService serviceInterface="org.jetbrains.idea.svn.SvnFileUrlMapping"
+                    serviceImplementation="org.jetbrains.idea.svn.SvnFileUrlMappingImpl"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"
                     serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
     <projectService serviceInterface="org.jetbrains.idea.svn.history.LoadedRevisionsCache"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -66,7 +67,7 @@ public class DeleteMultiCatchFix implements IntentionAction {
     final PsiElement first;
     final PsiElement last;
     final PsiElement right = PsiTreeUtil.skipSiblingsForward(myTypeElement, PsiWhiteSpace.class, PsiComment.class);
-    if (right instanceof PsiJavaToken && ((PsiJavaToken)right).getTokenType() == JavaTokenType.OR) {
+    if (PsiUtil.isJavaToken(right, JavaTokenType.OR)) {
       first = myTypeElement;
       last = right;
     }

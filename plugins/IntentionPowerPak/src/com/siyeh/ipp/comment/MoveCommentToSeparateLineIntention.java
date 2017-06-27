@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.siyeh.ipp.comment;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -30,47 +34,48 @@ public class MoveCommentToSeparateLineIntention extends Intention {
     return new CommentOnLineWithSourcePredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiComment selectedComment = (PsiComment)element;
-    PsiElement elementToCheck = selectedComment;
-    final PsiWhiteSpace whiteSpace;
+  public void processIntention(@NotNull PsiElement element) {
+    final PsiComment comment = (PsiComment)element;
+    final PsiWhiteSpace whitespace;
     while (true) {
-      elementToCheck = PsiTreeUtil.prevLeaf(elementToCheck);
-      if (elementToCheck == null) {
-        return;
-      }
-      if (isLineBreakWhiteSpace(elementToCheck)) {
-        whiteSpace = (PsiWhiteSpace)elementToCheck;
+      final PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element);
+      if (prevLeaf == null || CommentOnLineWithSourcePredicate.isLineBreakWhiteSpace(prevLeaf)) {
+        whitespace = (PsiWhiteSpace)prevLeaf;
         break;
       }
+      element = prevLeaf;
     }
-    final PsiElement copyWhiteSpace = whiteSpace.copy();
-    final PsiElement parent = whiteSpace.getParent();
-    assert parent != null;
-    final PsiManager manager = selectedComment.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final String commentText = selectedComment.getText();
-    final PsiComment newComment =
-      factory.createCommentFromText(commentText, parent);
-    final PsiElement insertedComment = parent
-      .addBefore(newComment, whiteSpace);
-    parent.addBefore(copyWhiteSpace, insertedComment);
+    final PsiElement anchor = element;
 
-    selectedComment.delete();
-    final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-    codeStyleManager.reformat(insertedComment);
+    final Project project = comment.getProject();
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(comment.getContainingFile());
+    if (document == null) {
+      return;
+    }
+    final String newline;
+    if (whitespace == null) {
+      newline = "\n";
+    }
+    else {
+      final String text = whitespace.getText();
+      newline = text.substring(text.lastIndexOf('\n'));
+    }
+    final PsiElement prev = PsiTreeUtil.prevLeaf(comment);
+    final int deleteOffset = prev instanceof PsiWhiteSpace ? prev.getTextOffset() : comment.getTextOffset();
+    document.deleteString(deleteOffset, comment.getTextOffset() + comment.getTextLength());
+
+    final int offset = anchor.getTextOffset();
+    document.insertString(offset, newline);
+    document.insertString(offset, comment.getText());
+    scrollToVisible(project, offset);
   }
 
-  private static boolean isLineBreakWhiteSpace(PsiElement element) {
-    if (!(element instanceof PsiWhiteSpace)) {
-      return false;
+  private static void scrollToVisible(Project project, int offset) {
+    final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor == null) {
+      return;
     }
-    final String text = element.getText();
-    return containsLineBreak(text);
-  }
-
-  private static boolean containsLineBreak(String text) {
-    return text.indexOf((int)'\n') >= 0 || text.indexOf((int)'\r') >= 0;
+    final LogicalPosition position = editor.offsetToLogicalPosition(offset);
+    editor.getScrollingModel().scrollTo(position, ScrollType.MAKE_VISIBLE);
   }
 }

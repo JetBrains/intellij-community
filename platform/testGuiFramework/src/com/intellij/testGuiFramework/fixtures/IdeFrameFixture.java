@@ -98,7 +98,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       }
     };
 
-    Pause.pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
+    pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
       @Override
       public boolean test() {
         Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);

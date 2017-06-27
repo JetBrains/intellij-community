@@ -35,6 +35,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -922,7 +923,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private String wrappedText(MavenProjectProblem each) {
-      String text = StringUtil.replace(each.getDescription(), new String[]{"<", ">"}, new String[]{"&lt;", "&gt;"});
+      String description = ObjectUtils.chooseNotNull(each.getDescription(), each.getPath());
+      if (description == null) return "";
+
+      String text = StringUtil.replace(description, new String[]{"<", ">"}, new String[]{"&lt;", "&gt;"});
       StringBuilder result = new StringBuilder();
       int count = 0;
       for (int i = 0; i < text.length(); i++) {

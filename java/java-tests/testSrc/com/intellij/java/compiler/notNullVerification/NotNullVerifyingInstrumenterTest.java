@@ -182,6 +182,26 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("@BarAnno method MultipleAnnotations.foo2 must not return null", instance, test.getMethod("foo2"));
   }
 
+  public void testTypeUseOnlyAnnotations() throws Exception {
+    Class<?> test = prepareTest(false, "FooAnno");
+    Object instance = test.newInstance();
+    verifyCallThrowsException("@FooAnno method TypeUseOnlyAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
+    verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseOnlyAnnotations.foo2 must not be null", instance, test.getMethod("foo2", String.class), (String)null);
+    test.getMethod("foo3", List.class).invoke(instance, (List)null);
+  }
+
+  public void testTypeUseInEnumConstructor() throws Exception {
+    Class<?> test = prepareTest(false, "TypeUseNotNull");
+    assertSize(1, test.getEnumConstants());
+  }
+
+  public void testTypeUseAndMemberAnnotations() throws Exception {
+    Class<?> test = prepareTest(false, "FooAnno");
+    Object instance = test.newInstance();
+    verifyCallThrowsException("@FooAnno method TypeUseAndMemberAnnotations.foo1 must not return null", instance, test.getMethod("foo1"));
+    verifyCallThrowsException("Argument 0 for @FooAnno parameter of TypeUseAndMemberAnnotations.foo2 must not be null", instance, test.getMethod("foo2", String.class), (String)null);
+  }
+
   public void testMalformedBytecode() throws Exception {
     Class<?> testClass = prepareTest(false, AnnotationUtil.NOT_NULL);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));
@@ -246,7 +266,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
           mainClass = aClass;
         }
       }
-      assertTrue(modified);
+      assertTrue("Class file not instrumented!", modified);
       assertNotNull("Class " + baseClassName + " not found!", mainClass);
       return mainClass;
     }

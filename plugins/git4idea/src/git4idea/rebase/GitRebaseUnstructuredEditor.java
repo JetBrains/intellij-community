@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +34,7 @@ import javax.swing.*;
  */
 class GitRebaseUnstructuredEditor extends DialogWrapper {
   @NotNull private final JBLabel myRootLabel;
-  @NotNull private final EditorTextField myTextEditor;
+  @NotNull private final CommitMessage myTextEditor;
 
   GitRebaseUnstructuredEditor(@NotNull Project project, @NotNull VirtualFile root, @NotNull String initialText) {
     super(project, true);
@@ -44,9 +43,9 @@ class GitRebaseUnstructuredEditor extends DialogWrapper {
 
     myRootLabel = new JBLabel("Git Root: " + root.getPresentableUrl());
 
-    myTextEditor = CommitMessage.createCommitMessageEditor(project);
+    myTextEditor = new CommitMessage(project, false, false, false);
     myTextEditor.setText(initialText);
-    myTextEditor.setCaretPosition(0);
+    myTextEditor.getEditorField().setCaretPosition(0);
     init();
   }
 
@@ -54,7 +53,7 @@ class GitRebaseUnstructuredEditor extends DialogWrapper {
   protected JComponent createCenterPanel() {
     BorderLayoutPanel rootPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
     rootPanel.addToTop(myRootLabel);
-    rootPanel.addToCenter(myTextEditor.getComponent());
+    rootPanel.addToCenter(myTextEditor);
     return rootPanel;
   }
 
@@ -65,11 +64,11 @@ class GitRebaseUnstructuredEditor extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myTextEditor.getFocusTarget();
+    return myTextEditor.getEditorField().getFocusTarget();
   }
 
   @NotNull
   String getText() {
-    return myTextEditor.getText();
+    return myTextEditor.getComment();
   }
 }

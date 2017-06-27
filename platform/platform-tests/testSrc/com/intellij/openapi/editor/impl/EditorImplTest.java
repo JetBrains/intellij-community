@@ -471,11 +471,23 @@ public class EditorImplTest extends AbstractEditorTest {
       FoldRegion region = model.createFoldRegion(0, 3, "...", null, true);
       assertNotNull(region);
       assertTrue(region.isValid());
-      assertTrue(model.addFoldRegion(region));
       region.setExpanded(false);
       regionRef.set(region);
     });
     runFoldingOperation(() -> model.removeFoldRegion(regionRef.get()));
     assertEquals(new VisualPosition(1, 1), myEditor.offsetToVisualPosition(3));
+  }
+  
+  public void testPasteWithStickySelection() throws Exception {
+    initText("<selection>abc<caret></selection>\ndef");
+    copy();
+    down();
+    home();
+    ((EditorEx)myEditor).setStickySelection(true);
+    right();
+    right();
+    right();
+    paste();
+    checkResultByText("abc\nabc<caret>");
   }
 }

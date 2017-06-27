@@ -23,9 +23,11 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.List;
 import java.util.Set;
@@ -63,6 +65,10 @@ public abstract class DirectoryIndexTestCase extends IdeaTestCase {
     assertTrue(info.toString(), info.isExcluded(file));
     assertNull(info.toString(), info.getUnloadedModuleName());
     assertEquals(module, info.getModule());
+    assertFalse(myFileIndex.isInSource(file));
+    assertFalse(myFileIndex.isInSourceContent(file));
+    assertFalse(myFileIndex.isInTestSourceContent(file));
+    assertFalse(myFileIndex.isUnderSourceRootOfType(file, ContainerUtil.set(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE)));
   }
 
   protected void assertInLibrarySources(VirtualFile file, Module module) {

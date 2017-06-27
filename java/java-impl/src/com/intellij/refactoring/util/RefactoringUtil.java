@@ -79,31 +79,9 @@ public class RefactoringUtil {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
+  @Deprecated
   public static boolean isResolvableType(PsiType type) {
-    return type.accept(new PsiTypeVisitor<Boolean>() {
-      public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
-        return Boolean.TRUE;
-      }
-
-      public Boolean visitArrayType(PsiArrayType arrayType) {
-        return arrayType.getComponentType().accept(this);
-      }
-
-      public Boolean visitClassType(PsiClassType classType) {
-        if (classType.resolve() == null) return Boolean.FALSE;
-        PsiType[] parameters = classType.getParameters();
-        for (PsiType parameter : parameters) {
-          if (parameter != null && !parameter.accept(this).booleanValue()) return Boolean.FALSE;
-        }
-
-        return Boolean.TRUE;
-      }
-
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
-        if (wildcardType.getBound() != null) return wildcardType.getBound().accept(this);
-        return Boolean.TRUE;
-      }
-    }).booleanValue();
+    return !PsiTypesUtil.hasUnresolvedComponents(type);
   }
 
   public static PsiElement replaceOccurenceWithFieldRef(PsiExpression occurrence, PsiField newField, PsiClass destinationClass)
@@ -1390,46 +1368,13 @@ public class RefactoringUtil {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         if (type != null) {
-          final TypeParameterSearcher searcher = new TypeParameterSearcher();
+          final PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
           type.accept(searcher);
-          for (PsiTypeParameter typeParam : searcher.myTypeParams) {
+          for (PsiTypeParameter typeParam : searcher.getTypeParameters()) {
             if (PsiTreeUtil.isAncestor(typeParam.getOwner(), element, false) && filter.value(typeParam)){
               used.add(typeParam);
             }
           }
-        }
-      }
-
-      class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
-        private final Set<PsiTypeParameter> myTypeParams = new java.util.HashSet<>();
-
-        public Boolean visitType(final PsiType type) {
-          return false;
-        }
-
-        public Boolean visitArrayType(final PsiArrayType arrayType) {
-          return arrayType.getComponentType().accept(this);
-        }
-
-        public Boolean visitClassType(final PsiClassType classType) {
-          final PsiClass aClass = classType.resolve();
-          if (aClass instanceof PsiTypeParameter) {
-            myTypeParams.add((PsiTypeParameter)aClass);
-          }
-
-          final PsiType[] types = classType.getParameters();
-          for (final PsiType psiType : types) {
-            psiType.accept(this);
-          }
-          return false;
-        }
-
-        public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
-          final PsiType bound = wildcardType.getBound();
-          if (bound != null) {
-            bound.accept(this);
-          }
-          return false;
         }
       }
     });

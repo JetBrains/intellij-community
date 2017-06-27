@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -262,8 +263,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           last = next;
           next = next.getNextSibling();
         }
-        while (first != last && (last instanceof PsiWhiteSpace ||
-                                 last instanceof PsiJavaToken && ((PsiJavaToken) last).getTokenType() == JavaTokenType.RBRACE))
+        while (first != last && (last instanceof PsiWhiteSpace || PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)))
           last = last.getPrevSibling();
 
 
@@ -320,11 +320,12 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     final Project project = statement.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
-    PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{}", statement);
-    codeBlock = (PsiCodeBlock)codeStyle.reformat(codeBlock);
-    codeBlock.add(statement);
-    codeBlock = (PsiCodeBlock)statement.replace(codeBlock);
-    return codeBlock.getStatements()[0];
+    PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText("if (true) {}", statement);
+    ifStatement = (PsiIfStatement)codeStyle.reformat(ifStatement);
+    PsiStatement thenBranch = ifStatement.getThenBranch();
+    ((PsiBlockStatement)thenBranch).getCodeBlock().add(statement);
+    PsiCodeBlock stmt = ((PsiBlockStatement)statement.replace(thenBranch)).getCodeBlock();
+    return stmt.getStatements()[0];
   }
 
   private static PsiIfStatement addAfterWithinCodeBlock(@NotNull PsiIfStatement ifStatement, @NotNull PsiStatement branch) {

@@ -27,6 +27,10 @@ public class SplitDeclarationAndInitializationIntentionTest extends IPPTestCase 
   public void testArrayInitializer() { doTest(); }
   public void testArray() { doTest(); }
   public void testFieldUsedBeforeInitializer() { doTest(); }
+  public void testFieldUsedBeforeInitializer1() { doTest(); }
+  public void testMultipleFieldsSingleDeclaration() { doTest(); }
+  public void testMultipleFieldsSingleDeclaration2() { doTest(); }
+  public void testMultipleFieldsSingleDeclaration3() { doTest(); }
 
   @Override
   protected String getRelativePath() {

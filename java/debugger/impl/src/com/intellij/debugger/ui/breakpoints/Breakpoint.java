@@ -33,8 +33,8 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.OverheadTimings;
+import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -241,7 +241,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
           return false;
         }
 
-        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(context, frameProxy, getThisObject(context, event));
+        EvaluationContextImpl evaluationContext = new EvaluationContextImpl(context, frameProxy, () -> getThisObject(context, event));
 
         if (!evaluateCondition(evaluationContext, event)) {
           return false;
@@ -325,7 +325,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       debugProcess.getVirtualMachineProxy().resume();
     }
     if (isInstanceFiltersEnabled()) {
-      Value value = context.getThisObject();
+      Value value = context.computeThisObject();
       if (value != null) {  // non-static
         ObjectReference reference = (ObjectReference)value;
         if (!hasObjectID(reference.uniqueID())) {

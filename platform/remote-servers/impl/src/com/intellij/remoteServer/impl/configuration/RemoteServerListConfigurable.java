@@ -18,6 +18,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -25,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author nik
@@ -39,17 +37,21 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   public static final String ID = "RemoteServers";
 
   private final RemoteServersManager myServersManager;
-  @Nullable private final ServerType<?> myServerType;
   private RemoteServer<?> myLastSelectedServer;
   private String myInitialSelectedName;
+  private final List<ServerType<?>> myDisplayedServerTypes;
 
-  public RemoteServerListConfigurable(@NotNull RemoteServersManager manager) {
-    this(manager, null, null);
+  private RemoteServerListConfigurable(@NotNull RemoteServersManager manager,
+                                       @NotNull ServerType<?> type,
+                                       @Nullable String initialSelectedName) {
+    this(manager, Collections.singletonList(type), initialSelectedName);
   }
 
-  private RemoteServerListConfigurable(@NotNull RemoteServersManager manager, @Nullable ServerType<?> type, @Nullable String initialSelectedName) {
+  protected RemoteServerListConfigurable(@NotNull RemoteServersManager manager,
+                                         @NotNull List<ServerType<?>> displayedServerTypes,
+                                         @Nullable String initialSelectedName) {
     myServersManager = manager;
-    myServerType = type;
+    myDisplayedServerTypes = displayedServerTypes;
     initTree();
     myToReInitWholePanel = true;
     myInitialSelectedName = initialSelectedName;
@@ -58,17 +60,21 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   @Nullable
   private ServerType<?> getSingleServerType() {
-    if (myServerType != null) {
-      return myServerType;
-    }
-    ServerType[] serverTypes = ServerType.EP_NAME.getExtensions();
-    return serverTypes.length == 1 ? serverTypes[0] : null;
+    List<ServerType<?>> serverTypes = getDisplayedServerTypes();
+    return serverTypes.size() == 1 ? serverTypes.get(0) : null;
+  }
+
+  @NotNull
+  public List<ServerType<?>> getDisplayedServerTypes() {
+    // `myDisplayedServerTypes` might be `null` here because overridden `reInitWholePanelIfNeeded()`
+    // is executed from `super()` before `myDisplayedServerTypes` is initialized
+    return myDisplayedServerTypes != null ? myDisplayedServerTypes : Collections.emptyList();
   }
 
   @Nullable
   @Override
   protected String getEmptySelectionString() {
-    final String typeNames = StringUtil.join(ServerType.EP_NAME.getExtensions(),
+    final String typeNames = StringUtil.join(getDisplayedServerTypes(),
                                              type -> type.getPresentableName(), ", ");
 
     if (typeNames.length() > 0) {
@@ -104,13 +110,9 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
   }
 
+  @NotNull
   private List<? extends RemoteServer<?>> getServers() {
-    if (myServerType == null) {
-      return myServersManager.getServers();
-    }
-    else {
-      return myServersManager.getServers(myServerType);
-    }
+    return ContainerUtil.filter(myServersManager.getServers(), s -> myDisplayedServerTypes.contains(s.getType()));
   }
 
   private MyNode addServerNode(RemoteServer<?> server, boolean isNew) {
@@ -230,10 +232,10 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     @NotNull
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
-      ServerType[] serverTypes = ServerType.EP_NAME.getExtensions();
-      AnAction[] actions = new AnAction[serverTypes.length];
-      for (int i = 0; i < serverTypes.length; i++) {
-        actions[i] = new AddRemoteServerAction(serverTypes[i], serverTypes[i].getIcon());
+      List<ServerType<?>> serverTypes = getDisplayedServerTypes();
+      AnAction[] actions = new AnAction[serverTypes.size()];
+      for (int i = 0; i < serverTypes.size(); i++) {
+        actions[i] = new AddRemoteServerAction(serverTypes.get(i), serverTypes.get(i).getIcon());
       }
       return actions;
     }

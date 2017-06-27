@@ -82,7 +82,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() && myModule.equals(info.getModule());
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule());
   }
 
   @Override
@@ -99,14 +99,14 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() && myModule.equals(info.getModule())
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule())
            && JavaModuleSourceRootTypes.isTestSourceOrResource(myDirectoryIndex.getSourceRootType(info));
   }
 
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
+    return info.isInModuleSource(fileOrDir) && myModule.equals(info.getModule()) && rootTypes.contains(myDirectoryIndex.getSourceRootType(info));
   }
 
   @Override

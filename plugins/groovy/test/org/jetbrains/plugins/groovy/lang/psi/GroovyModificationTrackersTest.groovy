@@ -58,7 +58,7 @@ class A {
   }
 
   void 'test script variable'() {
-    doTest 'def a<caret>= 1', true
+    doTest 'def a<caret>= 1', false, true
   }
 
   void doTest(String text, boolean structureShouldChange, boolean oocbShouldChange = structureShouldChange) {

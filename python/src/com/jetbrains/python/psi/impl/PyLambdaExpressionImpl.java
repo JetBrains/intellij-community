@@ -74,7 +74,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
       .filter(PyCallableType.class::isInstance)
       .map(PyCallableType.class::cast)
       .map(callableType -> callableType.getParameters(context))
-      .orElseGet(() -> ContainerUtil.map(getParameterList().getParameters(), PyCallableParameterImpl::new));
+      .orElseGet(() -> ContainerUtil.map(getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }
 
   @Nullable

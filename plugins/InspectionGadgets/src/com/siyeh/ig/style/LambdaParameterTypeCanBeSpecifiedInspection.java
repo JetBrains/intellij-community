@@ -67,8 +67,7 @@ public class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspection 
       }
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null &&
-          LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null &&
-          LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType)) {
+          LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null) {
         final String inferredTypesText = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression,
                                                                                                         true);
         if (inferredTypesText != null) {

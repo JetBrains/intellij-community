@@ -15,15 +15,20 @@
  */
 package com.siyeh.ipp.collections;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author Bas Leijdekkers
@@ -71,20 +76,21 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
   }
 
   private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {
-    if (methodName.equals("emptyList") && context.getArgumentList().getExpressions().length == 1 &&
-      !PsiUtil.isLanguageLevel9OrHigher(context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
+    final PsiExpression[] arguments = context.getArgumentList().getExpressions();
+    if (methodName.equals("emptyList") && arguments.length == 1 &&
+        !PsiUtil.isLanguageLevel9OrHigher(context) && ClassUtils.findClass("com.google.common.collect.ImmutableList", context) == null) {
       return "java.util.Collections.singletonList";
     }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
-      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
-        return "java.util.List.of";
+      if (Arrays.stream(arguments).noneMatch(e -> isPossiblyNull(e))) {
+        if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+          return "java.util.List.of";
+        }
+        else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
+          return "com.google.common.collect.ImmutableList.of";
+        }
       }
-      else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
-        return "com.google.common.collect.ImmutableList.of";
-      }
-      else {
-        return "java.util.Arrays.asList";
-      }
+      return "java.util.Arrays.asList";
     }
     if (methodName.equals("emptySet") || methodName.equals("singleton")) {
       if (PsiUtil.isLanguageLevel9OrHigher(context)) {
@@ -103,5 +109,25 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
       }
     }
     return null;
+  }
+
+  private static boolean isPossiblyNull(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression instanceof PsiReferenceExpression) {
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiModifierListOwner) {
+        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
+        return NullableNotNullManager.getInstance(expression.getProject()).isNullable(modifierListOwner, false);
+      }
+    }
+    else if (ExpressionUtils.isNullLiteral(expression)) {
+      return true;
+    }
+    else if (expression instanceof PsiConditionalExpression) {
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
+      return isPossiblyNull(conditionalExpression.getThenExpression()) || isPossiblyNull(conditionalExpression.getElseExpression());
+    }
+    return false;
   }
 }

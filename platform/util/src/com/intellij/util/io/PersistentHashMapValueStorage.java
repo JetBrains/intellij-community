@@ -52,6 +52,11 @@ public class PersistentHashMapValueStorage {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<Boolean>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<Boolean>();
+    
+    public static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>();
+    static {
+      DO_COMPRESSION.set(COMPRESSION_ENABLED);
+    }
   }
 
   public interface ExceptionalIOCancellationCallback {
@@ -111,7 +116,7 @@ public class PersistentHashMapValueStorage {
     myPath = path;
     myFile = new File(path);
 
-    myCompressedAppendableFile = COMPRESSION_ENABLED ? new MyCompressedAppendableFile() : null;
+    myCompressedAppendableFile = CreationTimeOptions.DO_COMPRESSION.get() != Boolean.FALSE ? new MyCompressedAppendableFile() : null;
     if (myCompressedAppendableFile != null) {
       mySize = myCompressedAppendableFile.length();  // volatile write
     } else {

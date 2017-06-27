@@ -45,33 +45,31 @@ import java.awt.geom.Path2D;
  */
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
-  private final JComboBox myComboBox;
 
   // Cached the size that the display needs to render the largest item
   private Dimension myDisplaySizeCache = JBUI.emptySize();
   private Insets myPadding;
 
-  public DarculaComboBoxUI(JComboBox comboBox) {
-    super();
-    myComboBox = comboBox;
-    myComboBox.setBorder(this);
-  }
+  public DarculaComboBoxUI() {}
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @SuppressWarnings("unused")
+  public DarculaComboBoxUI(JComboBox ignored) {}
+
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
-    return new DarculaComboBoxUI(((JComboBox)c));
+    return new DarculaComboBoxUI();
   }
 
   @Override
   protected void installDefaults() {
     super.installDefaults();
+    comboBox.setBorder(this);
     myPadding = UIManager.getInsets("ComboBox.padding");
   }
 
-
   protected JButton createArrowButton() {
-    final Color bg = myComboBox.getBackground();
-    final Color fg = myComboBox.getForeground();
+    Color bg = comboBox.getBackground();
+    Color fg = comboBox.getForeground();
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
 
       @Override
@@ -81,7 +79,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
         final int w = getWidth();
         final int h = getHeight();
-        if (!isTableCellEditor(myComboBox)) {
+        if (!isTableCellEditor(comboBox)) {
           g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
           g.fillRect(0, 0, w, h);
         }
@@ -104,7 +102,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         path.closePath();
         g.fill(path);
         g.translate(-JBUI.scale(2), -JBUI.scale(1));
-        if (!isTableCellEditor(myComboBox)) {
+        if (!isTableCellEditor(comboBox)) {
           g.setColor(getArrowButtonFillColor(getBorderColor()));
           g.drawLine(0, -1, 0, h);
         }
@@ -124,7 +122,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   protected Color getArrowButtonFillColor(Color defaultColor) {
-    Color color = UIManager.getColor(myComboBox.hasFocus() ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
+    Color color = UIManager.getColor(comboBox.hasFocus() ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
     return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? new JBColor(getBorderColor(), UIUtil.getControlColor()) : color;
   }
 
@@ -416,7 +414,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   private Color getBorderColor() {
-    if (comboBox != null && myComboBox.isEnabled()) {
+    if (comboBox != null && comboBox.isEnabled()) {
       return new JBColor(Gray._150, Gray._100);
     }
     return new JBColor(Gray._150, Gray._88);

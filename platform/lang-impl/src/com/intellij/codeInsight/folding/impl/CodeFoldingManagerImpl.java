@@ -260,10 +260,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
   @Nullable
   public FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);

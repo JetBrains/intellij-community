@@ -137,7 +137,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myCurrentEditor = myConsoleEditor;
     Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
-    myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject());
+    myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject(), EditorKind.CONSOLE);
     myHistoryViewer.getDocument().addDocumentListener(myDocumentAdapter);
 
     myScrollBar.setOpaque(false);

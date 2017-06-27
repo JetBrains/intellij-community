@@ -65,7 +65,7 @@ public class TestUtils {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
     final TestFramework framework = TestFrameworks.detectFramework(containingClass);
-    return framework != null && framework.getName().startsWith("JUnit") && framework.isTestMethod(method);
+    return framework != null && framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false);
   }
 
   public static boolean isRunnable(PsiMethod method) {

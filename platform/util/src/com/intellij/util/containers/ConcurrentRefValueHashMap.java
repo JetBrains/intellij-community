@@ -101,7 +101,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
       processQueue();
       ValueReference<K, V> oldRef = myMap.putIfAbsent(key, newRef);
       if (oldRef == null) return null;
-      final V oldVal = oldRef.get();
+      V oldVal = oldRef.get();
       if (oldVal == null) {
         if (myMap.replace(key, oldRef, newRef)) return null;
       }

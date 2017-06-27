@@ -19,47 +19,46 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 @FunctionalInterface
 public interface SweepProcessor<T> {
   boolean process(int offset, @NotNull T interval, boolean atStart, @NotNull Collection<T> overlappingIntervals);
 
+  /**
+   * Process all intervals from generator in their "start offset - then end offset" order.
+   * For each interval call sweepProcessor and pass this interval with its current endpoint (start or end) and current overlapping intervals which this endpoint stabs.
+   * E.g. for (0,4), (2,5) intervals call sweepProcessor with (0, empty), (2, 0-4), (4, 2-5), (5, empty)
+   */
   static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
-    final List<T> starts = new ArrayList<>();
+    Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
     if (!generator.generateInStartOffsetOrder(marker -> {
       // decide whether previous marker ends here or new marker begins
       int start = marker.getStartOffset();
-      while (true) {
-        assert ends.size() == starts.size();
+      while (!ends.isEmpty()) {
         T previous = ends.peek();
-        if (previous != null) {
-          int prevEnd = previous.getEndOffset();
-          if (prevEnd <= start) {
-            if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-            ends.remove();
-            boolean removed = starts.remove(previous);
-            assert removed;
-            continue;
-          }
+        int prevEnd = previous.getEndOffset();
+        if (prevEnd <= start) {
+          if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
+          ends.remove();
         }
-        break;
+        else {
+          break;
+        }
       }
       if (!sweepProcessor.process(start, marker, true, ends)) return false;
-      starts.add(marker);
       ends.offer(marker);
 
       return true;
     })) return false;
 
     while (!ends.isEmpty()) {
-      assert ends.size() == starts.size();
       T previous = ends.remove();
       int prevEnd = previous.getEndOffset();
       if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-      boolean removed = starts.remove(previous);
-      assert removed;
     }
 
     return true;

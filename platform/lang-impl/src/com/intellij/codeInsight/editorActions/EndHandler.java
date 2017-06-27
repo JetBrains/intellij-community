@@ -30,6 +30,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class EndHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -40,7 +41,7 @@ public class EndHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(final Editor editor, Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull final Editor editor, Caret caret, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
       if (myOriginalHandler != null) {

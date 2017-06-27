@@ -25,6 +25,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -37,6 +38,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.task.ExecuteRunConfigurationTask;
@@ -129,18 +131,20 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       }
       if (sourceSetName == null) return null;
 
+      String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
-                          "  rootProject.allprojects {\n" +
-                          "    if(project.path == '" + gradlePath + "' && project.sourceSets) {\n" +
-                          "      project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
+                          "  def project = rootProject.findProject('" + gradlePath + "')\n" +
+                          "  if(project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
+                          "    project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
                           (javaExePath != null ?
-                           "        executable = '" + javaExePath + "'\n" : "") +
-                          "        classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
-                          "        main = '" + mainClass.getQualifiedName() + "'\n" +
+                          "      executable = '" + javaExePath + "'\n" : "") +
+                          "      classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
+                          "      main = '" + mainClass.getQualifiedName() + "'\n" +
                           parametersString.toString() +
                           vmParametersString.toString() +
-                          "      }\n" +
+                          (StringUtil.isNotEmpty(workingDir) ?
+                          "      workingDir = '" + workingDir + "'\n" : "") +
                           "    }\n" +
                           "  }\n" +
                           "}\n";

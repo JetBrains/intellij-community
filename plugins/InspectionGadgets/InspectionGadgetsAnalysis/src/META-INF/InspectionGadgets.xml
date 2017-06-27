@@ -812,8 +812,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.dataflow.ReuseOfLocalVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TooBroadScope" bundle="com.siyeh.InspectionGadgetsBundle" key="too.broad.scope.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.dataflow.TooBroadScopeInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.dataflow.TooBroadScopeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLocalVariable" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="redundant.local.variable.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"

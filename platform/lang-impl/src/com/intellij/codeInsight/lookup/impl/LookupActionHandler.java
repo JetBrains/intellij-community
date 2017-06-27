@@ -46,12 +46,12 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public boolean executeInCommand(Editor editor, DataContext dataContext) {
+  public boolean executeInCommand(@NotNull Editor editor, DataContext dataContext) {
     return LookupManager.getActiveLookup(editor) == null;
   }
 
   @Override
-  public void doExecute(Editor editor, Caret caret, DataContext dataContext){
+  public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser()) {
       Project project = editor.getProject();

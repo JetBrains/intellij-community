@@ -19,6 +19,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class LineStartAction extends TextComponentEditorAction {
   public LineStartAction() {
@@ -31,7 +32,7 @@ public class LineStartAction extends TextComponentEditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       EditorActionUtil.moveCaretToLineStart(editor, false);
     }
   }

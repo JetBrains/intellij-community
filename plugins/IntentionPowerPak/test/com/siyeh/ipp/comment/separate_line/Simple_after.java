@@ -1,7 +1,7 @@
 class X {
 
   void m() {
-      // covfafa
-      System.out.println();
+    // covfafa
+    System.out.println();
   }
 }

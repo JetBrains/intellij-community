@@ -22,6 +22,7 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,13 +50,17 @@ public class JBListPopupFixture extends JComponentFixture<JBListPopupFixture, JB
 
   public static JBListPopupFixture findListPopup(Robot robot) {
 
-    pause(new Condition("Find JBList popup") {
-      @Override
-      public boolean test() {
-        final JBList jblist = getList(robot);
-        return jblist != null;
-      }
-    }, SHORT_TIMEOUT);
+    try {
+      pause(new Condition("Find JBList popup") {
+        @Override
+        public boolean test() {
+          final JBList jblist = getList(robot);
+          return jblist != null;
+        }
+      }, SHORT_TIMEOUT);
+    } catch (WaitTimedOutError e) {
+      throw new ComponentLookupException("Cannot find JBList popup");
+    }
 
     final JBList jblist = getList(robot);
     Assert.assertNotNull(jblist);

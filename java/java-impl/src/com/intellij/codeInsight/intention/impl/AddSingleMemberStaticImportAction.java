@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -103,6 +104,9 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                     else return null;
                   }
                 }
+                else if (method == null && call.getMethodExpression().multiResolve(false).length > 0) {
+                  return null;
+                }
               }
               else {
                 final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)refExpr.copy();
@@ -171,8 +175,16 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
       if (availability.resolved instanceof PsiClass) {
         setText(CodeInsightBundle.message("intention.add.single.member.import.text", availability.qName));
       } else {
-        if (!(element.getContainingFile() instanceof PsiJavaFile)) return false;
-        setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", availability.qName));
+        PsiFile file = element.getContainingFile();
+        if (!(file instanceof PsiJavaFile)) return false;
+        PsiImportStatementBase existingImport =
+          findExistingImport(file, availability.resolved.getContainingClass(), StringUtil.getShortName(availability.qName));
+        if (existingImport != null && !existingImport.isOnDemand()) {
+          setText(CodeInsightBundle.message("intention.use.single.member.static.import.text" , availability.qName));
+        }
+        else {
+          setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", availability.qName));
+        }
       }
     }
     return availability != null;
