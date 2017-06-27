@@ -171,7 +171,7 @@ public class HighlightMethodUtil {
                                                          @NotNull LanguageLevel languageLevel) {
     if (superReturnType == null) return null;
     final PsiClass superContainingClass = superMethod.getContainingClass();
-    if (superContainingClass != null && 
+    if (superContainingClass != null &&
         CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
         !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
       final PsiClass containingClass = method.getContainingClass();
@@ -195,8 +195,8 @@ public class HighlightMethodUtil {
 
     if (returnType.equals(substitutedSuperReturnType)) return null;
     if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
-      if (isJdk15 && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(), 
-                                                                      methodSignature.getSubstitutor(), 
+      if (isJdk15 && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(),
+                                                                      methodSignature.getSubstitutor(),
                                                                       () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
         return null;
       }
@@ -554,7 +554,7 @@ public class HighlightMethodUtil {
         methodCallTypeByArgs = JavaPsiFacade.getElementFactory(method.getProject())
           .createRawSubstitutor(method).substitute(methodCallTypeByArgs);
         if (methodCallTypeByArgs != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, 
+          QuickFixAction.registerQuickFixAction(highlightInfo,
                                                 getFixRange(methodCall),
                                                 QUICK_FIX_FACTORY.createMethodReturnFix(containerMethod, methodCallTypeByArgs, true));
         }
@@ -721,7 +721,7 @@ public class HighlightMethodUtil {
                                                          final PsiElement element,
                                                          @NotNull JavaResolveResult resolveResult,
                                                          @NotNull PsiMethodCallExpression methodCall,
-                                                         @NotNull PsiResolveHelper resolveHelper, 
+                                                         @NotNull PsiResolveHelper resolveHelper,
                                                          @NotNull PsiElement elementToHighlight) {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
@@ -928,7 +928,7 @@ public class HighlightMethodUtil {
   }
 
   private static String createShortMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
-                                                                  @Nullable MethodCandidateInfo info, 
+                                                                  @Nullable MethodCandidateInfo info,
                                                                   PsiParameter[] parameters,
                                                                   String methodName,
                                                                   PsiSubstitutor substitutor,
@@ -978,7 +978,7 @@ public class HighlightMethodUtil {
   }
 
   private static String createMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
-                                                             MethodCandidateInfo info, 
+                                                             MethodCandidateInfo info,
                                                              PsiParameter[] parameters,
                                                              String methodName,
                                                              PsiSubstitutor substitutor,
@@ -991,7 +991,7 @@ public class HighlightMethodUtil {
   @SuppressWarnings("StringContatenationInLoop")
   @Language("HTML")
   private static String createLongMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
-                                                                 @Nullable MethodCandidateInfo info, 
+                                                                 @Nullable MethodCandidateInfo info,
                                                                  PsiParameter[] parameters,
                                                                  String methodName,
                                                                  PsiSubstitutor substitutor,
@@ -1053,7 +1053,7 @@ public class HighlightMethodUtil {
     s+= "</table>";
     final String errorMessage = info != null ? info.getInferenceErrorMessage() : null;
     if (errorMessage != null) {
-      s+= "reason: "; 
+      s+= "reason: ";
       s += XmlStringUtil.escapeString(errorMessage).replaceAll("\n", "<br/>");
     }
     s+= "</body></html>";
@@ -1608,9 +1608,8 @@ public class HighlightMethodUtil {
     }
     if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
       String description = HighlightUtil.buildProblemWithAccessDescription(classReference, typeResolveResult);
-      PsiElement element = classReference.getReferenceNameElement();
-      HighlightInfo info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+      PsiElement element = ObjectUtils.notNull(classReference.getReferenceNameElement(), classReference);
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       HighlightUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
       holder.add(info);
       return;
@@ -1688,7 +1687,7 @@ public class HighlightMethodUtil {
           String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", constructorName, containerName, argTypes);
           String toolTip = createMismatchedArgumentsHtmlTooltip(result, list);
-          
+
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(infoElement).description(description).escapedToolTip(toolTip).navigationShift(+1).create();
           if (info != null) {
             JavaResolveResult[] methodCandidates = results;
@@ -1710,7 +1709,7 @@ public class HighlightMethodUtil {
           }
         }
       }
-      
+
       if (result != null && !holder.hasErrorResults()) {
         holder.add(checkVarargParameterErasureToBeAccessible(result, constructorCall));
       }
@@ -1719,7 +1718,7 @@ public class HighlightMethodUtil {
 
   /**
    * If the compile-time declaration is applicable by variable arity invocation,
-   * then where the last formal parameter type of the invocation type of the method is Fn[], 
+   * then where the last formal parameter type of the invocation type of the method is Fn[],
    * it is a compile-time error if the type which is the erasure of Fn is not accessible at the point of invocation.
    */
   private static HighlightInfo checkVarargParameterErasureToBeAccessible(MethodCandidateInfo info, PsiCall place) {
