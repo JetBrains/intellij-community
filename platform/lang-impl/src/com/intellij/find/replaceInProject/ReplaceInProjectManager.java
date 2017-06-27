@@ -26,12 +26,15 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -365,22 +368,49 @@ public class ReplaceInProjectManager {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }
-    int replacedCount = 0;
-    boolean success = true;
-    for (final Usage usage : usages) {
-      try {
-        if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
-          replacedCount++;
+    
+    int[] replacedCount = {0};
+    final boolean[] success = {true};
+
+    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+      FindBundle.message("find.replace.all.action"), 
+      myProject, 
+      null,
+      "Stop",
+      indicator -> {
+        int processed = 0;
+        VirtualFile lastFile = null;
+        
+        for (final Usage usage : usages) {
+          ++processed;
+          indicator.checkCanceled();
+          indicator.setFraction((float)processed / usages.size());
+          
+          if(usage instanceof UsageInFile) {
+            VirtualFile virtualFile = ((UsageInFile)usage).getFile();
+            if (virtualFile != null && !virtualFile.equals(lastFile)) {
+              indicator.setText2(virtualFile.getPresentableUrl());
+              lastFile = virtualFile;
+            }
+          }
+          
+          ProgressManager.getInstance().executeNonCancelableSection(() -> {
+            try {
+              if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
+                replacedCount[0]++;
+              }
+            } catch (FindManager.MalformedReplacementStringException ex) {
+              markAsMalformedReplacement(replaceContext, usage);
+              success[0] = false;
+            }
+          });           
         }
       }
-      catch (FindManager.MalformedReplacementStringException e) {
-        markAsMalformedReplacement(replaceContext, usage);
-        success = false;
-      }
-    }
+    );
+    
     replaceContext.getUsageView().removeUsagesBulk(usages);
-    reportNumberReplacedOccurrences(myProject, replacedCount);
-    return success;
+    reportNumberReplacedOccurrences(myProject, replacedCount[0]);
+    return success[0];
   }
 
   private static void markAsMalformedReplacement(ReplaceContext replaceContext, Usage usage) {
