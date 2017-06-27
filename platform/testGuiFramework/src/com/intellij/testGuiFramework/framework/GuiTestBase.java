@@ -36,6 +36,7 @@ import org.fest.swing.core.ComponentPrinter;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.image.ScreenshotTaker;
 import org.fest.swing.timing.Condition;
 import org.jdom.Document;
@@ -102,7 +103,8 @@ public abstract class GuiTestBase {
       }
       //noinspection ResultOfMethodCallIgnored
       file.delete();
-      LOG.error(getHierarchy() + "\n" + "caused by:", e);
+      if (e instanceof ComponentLookupException)
+        LOG.error(getHierarchy() + "\n" + "caused by:", e);
       myScreenshotTaker.saveDesktopAsPng(file.getPath());
       LOG.info("Screenshot: " + file);
     }
