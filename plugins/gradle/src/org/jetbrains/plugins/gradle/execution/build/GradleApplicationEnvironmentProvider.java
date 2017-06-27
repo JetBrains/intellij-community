@@ -25,6 +25,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -130,7 +131,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       }
       if (sourceSetName == null) return null;
 
-      String workingDir = applicationConfiguration.getWorkingDirectory();
+      String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
                           "  rootProject.allprojects {\n" +
