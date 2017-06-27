@@ -42,6 +42,8 @@ abstract class JvmCommonIntentionActionsFactory {
                                       @PsiModifier.ModifierConstant modifier: String,
                                       shouldPresent: Boolean): IntentionAction? = null
 
+  open fun createAddAnnotationAction(declaration: UDeclaration, annotationInfo: AnnotationInsertionInfo): IntentionAction? = null
+
   open fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> = emptyList()
 
   open fun createAddBeanPropertyActions(uClass: UClass,
@@ -103,4 +105,15 @@ sealed class MethodInsertionInfo(
     parameters: List<UParameter> = emptyList()
   ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
 
+}
+
+class AnnotationInsertionInfo(
+  val qualifiedName: String
+) {
+  val literalValues = mutableListOf<Pair<String, String>>()
+
+  fun literalParam(name: String, value: String): AnnotationInsertionInfo {
+    literalValues.add(name to value)
+    return this;
+  }
 }

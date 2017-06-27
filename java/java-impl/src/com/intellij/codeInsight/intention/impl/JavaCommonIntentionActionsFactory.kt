@@ -18,13 +18,13 @@ package com.intellij.codeInsight.intention.impl
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
-import com.intellij.codeInsight.intention.AbstractIntentionAction
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
-import com.intellij.codeInsight.intention.MethodInsertionInfo
+import com.intellij.codeInsight.intention.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
@@ -111,4 +111,32 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
       CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired, true))
   }
 
+  override fun createAddAnnotationAction(declaration: UDeclaration, annotationInfo: AnnotationInsertionInfo): IntentionAction? {
+    val modifierList = declaration.psi.modifierList ?: return null
+
+    val modifierListPointer = SmartPointerManager.getInstance(modifierList.project).createSmartPsiElementPointer(modifierList)
+
+    return object : AbstractIntentionAction() {
+      override fun getText() = QuickFixBundle.message("add.annotation.to.declaration",
+                                                      StringUtilRt.getShortName(annotationInfo.qualifiedName))
+
+      override fun startInWriteAction(): Boolean = true
+
+      override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+        val modifierList = modifierListPointer.element ?: return;
+        val annotation = modifierList.addAnnotation(annotationInfo.qualifiedName)
+        val support = LanguageAnnotationSupport.INSTANCE.forLanguage(annotation.language)
+        for ((name, value) in annotationInfo.literalValues) {
+          annotation.setDeclaredAttributeValue(name, support
+            .createLiteralValue(value, annotation))
+        }
+        val formatter = CodeStyleManager.getInstance(project)
+        val codeStyleManager = JavaCodeStyleManager.getInstance(project)
+        codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
+
+      }
+
+    }
+
+  }
 }
