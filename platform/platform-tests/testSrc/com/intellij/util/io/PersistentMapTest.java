@@ -348,6 +348,22 @@ public class PersistentMapTest extends PersistentMapTestBase {
     } catch (IncorrectOperationException ignore) {}
   }
 
+  public void testCreatePersistentMapWithoutCompression() throws IOException {
+    clearMap(myFile, myMap);
+    Boolean compressionFlag = PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.get();
+    try {
+      PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(Boolean.FALSE);
+      myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+      myMap.put("Foo", "Bar");
+      assertTrue(myMap.containsMapping("Foo"));
+      myMap.close();
+      assertEquals(55,PersistentHashMap.getDataFile(myFile).length());
+    }
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);
+    }
+  }
+  
   public void testFailedReadWriteSetsCorruptedFlag() throws IOException {
     EnumeratorStringDescriptor throwingException = new EnumeratorStringDescriptor() {
       @Override
