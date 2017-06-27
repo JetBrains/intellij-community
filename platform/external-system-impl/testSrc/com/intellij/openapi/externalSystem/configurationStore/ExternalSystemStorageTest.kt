@@ -82,7 +82,7 @@ class ExternalSystemStorageTest {
       <?xml version="1.0" encoding="UTF-8"?>
       <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4" />""")
 
-      assertThat(cacheDir.resolve("test@maven.xml")).isEqualTo("""
+      assertThat(cacheDir.resolve("test.xml")).isEqualTo("""
       <module>
         <component name="NewModuleRootManager" inherit-compiler-output="true">
           <exclude-output />
