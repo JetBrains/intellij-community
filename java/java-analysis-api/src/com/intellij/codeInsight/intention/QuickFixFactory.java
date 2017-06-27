@@ -203,6 +203,7 @@ public abstract class QuickFixFactory {
   @NotNull public abstract IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull public abstract IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression call);
+  @NotNull public abstract IntentionAction createQualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression call);
 
   @NotNull public abstract IntentionAction createReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression call);
 

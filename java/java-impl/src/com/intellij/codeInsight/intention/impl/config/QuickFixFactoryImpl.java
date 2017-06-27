@@ -537,6 +537,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createQualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression call) {
+    return new QualifyStaticMethodCallFix(call);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createReplaceAddAllArrayToCollectionFix(@NotNull PsiMethodCallExpression call) {
     return new ReplaceAddAllArrayToCollectionFix(call);
   }

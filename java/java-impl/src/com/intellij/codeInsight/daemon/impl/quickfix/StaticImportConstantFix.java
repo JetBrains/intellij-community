@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
-  private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
+  protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
 
   public StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
     myRef = SmartPointerManager.getInstance(referenceElement.getProject()).createSmartPsiElementPointer(referenceElement);

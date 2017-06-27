@@ -87,7 +87,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     return true;
   }
 
-  private void doImport(final T toImport) {
+  protected void doImport(final T toImport) {
     final Project project = toImport.getProject();
     final PsiElement element = myRef.getElement();
     if (element == null) return;
