@@ -6,8 +6,11 @@ abstract class ObviousNullCheck {
 
   abstract String getBar();
 
-  void test() {
+  void test(String param) {
     assertNotNull(<warning descr="Useless null-check: a value of primitive type is never null">5 + 6</warning>);
+
+    assertNull("Null!", param);
+    assertNull(param, <warning descr="Null-check will always fail: literal is never null">"Null!"</warning>);
 
     Objects.requireNonNull(null);
     Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">"xyz"</warning>, "xyz");
@@ -27,4 +30,10 @@ abstract class ObviousNullCheck {
   static void assertNotNull(Object obj) {
     if(obj == null) throw new NullPointerException();
   }
+
+  @Contract(value="_,!null -> fail", pure=true)
+  static void assertNull(String msg, Object obj) {
+    if(obj != null) throw new NullPointerException(msg);
+  }
+
 }
