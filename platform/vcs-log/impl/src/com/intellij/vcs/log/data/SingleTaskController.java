@@ -50,7 +50,7 @@ public abstract class SingleTaskController<Request, Result> {
 
   public SingleTaskController(@NotNull Consumer<Result> handler, boolean cancelRunning) {
     myResultHandler = handler;
-    myAwaitingRequests = ContainerUtil.newArrayList();
+    myAwaitingRequests = ContainerUtil.newLinkedList();
     myCancelRunning = cancelRunning;
   }
 
@@ -95,7 +95,7 @@ public abstract class SingleTaskController<Request, Result> {
   public final List<Request> popRequests() {
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
-      myAwaitingRequests = ContainerUtil.newArrayList();
+      myAwaitingRequests = ContainerUtil.newLinkedList();
       LOG.debug("Popped requests: " + requests);
       return requests;
     }
