@@ -36,9 +36,6 @@ public interface JvmParameterizedType extends JvmType {
   JvmClassType getClassType();
 
   /**
-   * Possible type arguments are {@link JvmBoundType} and {@link JvmWildcardType}.
-   *
-   * @return type arguments
    * @see ParameterizedType#getActualTypeArguments
    */
   @NotNull
