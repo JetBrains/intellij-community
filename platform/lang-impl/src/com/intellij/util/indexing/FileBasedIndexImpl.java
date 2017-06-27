@@ -1932,6 +1932,15 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           !PowerSaveMode.isEnabled()) {
         myScheduledVfsEventsWorkers.incrementAndGet();
         myVfsEventsExecutor.submit(this::processFilesInReadActionWithYieldingToWriteAction);
+        
+        for(Project project:ProjectManager.getInstance().getOpenProjects()) {
+          DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
+          DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(project);
+
+          if (task != null) {
+            dumbService.queueTask(task);
+          }
+        }
       }
     }
 
