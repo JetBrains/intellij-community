@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.IteratorUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
 public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
   extends BaseInspection {
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -95,10 +97,8 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
         return;
       }
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiElement method = methodExpression.resolve();
-      if (method == null) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null || method instanceof PsiCompiledElement) {
         return;
       }
       final List<PsiClassType> exceptions = ExceptionUtil.getThrownExceptions(method);
