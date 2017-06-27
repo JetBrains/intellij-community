@@ -134,18 +134,17 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
-                          "  rootProject.allprojects {\n" +
-                          "    if(project.path == '" + gradlePath + "' && project.sourceSets) {\n" +
-                          "      project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
+                          "  def project = rootProject.findProject('" + gradlePath + "')\n" +
+                          "  if(project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
+                          "    project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
                           (javaExePath != null ?
-                           "        executable = '" + javaExePath + "'\n" : "") +
-                          "        classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
-                          "        main = '" + mainClass.getQualifiedName() + "'\n" +
+                          "      executable = '" + javaExePath + "'\n" : "") +
+                          "      classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
+                          "      main = '" + mainClass.getQualifiedName() + "'\n" +
                           parametersString.toString() +
                           vmParametersString.toString() +
                           (StringUtil.isNotEmpty(workingDir) ?
-                           "        workingDir = '" + workingDir + "'\n" : "") +
-                          "      }\n" +
+                          "      workingDir = '" + workingDir + "'\n" : "") +
                           "    }\n" +
                           "  }\n" +
                           "}\n";
