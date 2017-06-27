@@ -55,6 +55,7 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
+    getFontPanel().getOptionsPanel().updateWarning();
     return !getStoredPreferences().equals(getUIFontPreferences());
   }
 
@@ -75,7 +76,9 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
   @Override
   public void reset() {
     getStoredPreferences().copyTo(getUIFontPreferences());
-    getFontPanel().getOptionsPanel().updateOptionsList();
+    AppEditorFontOptionsPanel optionsPanel = getFontPanel().getOptionsPanel();
+    optionsPanel.updateWarning();
+    optionsPanel.updateOptionsList();
   }
 
   @NotNull
