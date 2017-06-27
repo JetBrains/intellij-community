@@ -71,6 +71,13 @@ abstract class ProductProperties {
   String customJvmMemoryOptionsX64 = null
 
   /**
+   * Include jre for OS X from 171.3 release.
+   * https://youtrack.jetbrains.com/issue/JRE-401
+   * As soon as the issue will be fixed the change should be reverted.
+   */
+  String customJreFileName = "jbre8u112b736.21_x64.tar.gz"
+
+  /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
