@@ -1,12 +1,9 @@
 package slowCheck;
 
-import junit.framework.TestCase;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static slowCheck.Generator.*;
@@ -14,8 +11,7 @@ import static slowCheck.Generator.*;
 /**
  * @author peter
  */
-public class GeneratorTest extends TestCase {
-  private static final CheckerSettings ourTestSettings = CheckerSettings.DEFAULT_SETTINGS.withSeed(0);
+public class GeneratorTest extends PropertyCheckerTestCase {
   
   public void testMod() {
     checkFalsified(integers(),
@@ -73,12 +69,6 @@ public class GeneratorTest extends TestCase {
       if (!(d1 <= d2)) return false;
     }
     return true;
-  }
-
-  public void testPropertyThrowsException() {
-    checkFalsified(integers(), p -> {
-      throw new AssertionError(p);
-    }, 1);
   }
 
   public void testSuchThat() {
@@ -145,22 +135,4 @@ public class GeneratorTest extends TestCase {
     assertEquals(1, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
-  private <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
-    try {
-      PropertyChecker.forAll(ourTestSettings, generator, predicate);
-      throw new AssertionError("Can't falsify " + getName());
-    }
-    catch (PropertyFalsified e) {
-      //noinspection unchecked
-      PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
-
-      System.out.println(" " + getName());
-      System.out.println("Value: " + e.getBreakingValue());
-      System.out.println("Data: " + e.getData());
-      assertEquals(minimizationSteps, failure.getTotalMinimizationStepCount());
-      assertEquals(e.getBreakingValue(), generator.generateUnstructured(e.getData()));
-
-      return failure;
-    }
-  }
 }
