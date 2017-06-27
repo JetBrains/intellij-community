@@ -80,7 +80,7 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.plugin=true -Dbundle.kotlin.plugin=true
+$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.release.plugin=true -Dbundle.kotlin.plugin=true
 
 # Temp: figure out how to preserve symlinks
 cd "$OUT/artifacts"
