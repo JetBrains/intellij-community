@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("unused")
+
 package com.intellij.testGuiFramework.generators
 
 import com.intellij.framework.PresentableVersion
@@ -433,10 +435,10 @@ class MacMessageGenerator : LocalContextCodeGenerator<JButton>() {
 
   private fun acceptMacSheetPanel(cmp: Component): Boolean {
     if (cmp !is JComponent) return false
-    if (!(Messages.canShowMacSheetPanel() && (cmp as JComponent).rootPane.parent is JDialog)) return false
+    if (!(Messages.canShowMacSheetPanel() && cmp.rootPane.parent is JDialog)) return false
     val panel = cmp.rootPane.contentPane as JPanel
 
-    if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing()) {
+    if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing) {
       val controller = MessagesFixture.findSheetController(panel)
       val sheetPanel = field("mySheetPanel").ofType(JPanel::class.java).`in`(controller).get()
       if (sheetPanel === panel) {
@@ -597,7 +599,7 @@ object Utils {
   }
 
   fun convertSimpleTreeItemToPath(tree: SimpleTree, itemName: String): String {
-    val searchableNodeRef = Ref.create<TreeNode>();
+    val searchableNodeRef = Ref.create<TreeNode>()
     val searchableNode: TreeNode?
     TreeUtil.traverse(tree.model.root as TreeNode) { node ->
       val valueFromNode = SettingsTreeFixture.getValueFromNode(tree, node)
@@ -631,7 +633,7 @@ object Utils {
       }
     }
 
-    throw ComponentLookupException("Unable to find bounded label in ${hierarchyLevel - 1} level(s) from ${component.toString()}")
+    throw ComponentLookupException("Unable to find bounded label in ${hierarchyLevel - 1} level(s) from $component")
 
   }
 
