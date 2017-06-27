@@ -92,6 +92,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
+    { "shift control alt ENTER",  "Console.Jpa.GenerateDDL", "Console.Transaction.Commit"},
     { "control E",                "RecentFiles", "Vcs.ShowMessageHistory"},
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
