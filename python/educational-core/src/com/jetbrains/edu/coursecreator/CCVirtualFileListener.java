@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -77,18 +76,17 @@ public class CCVirtualFileListener implements VirtualFileListener {
       return;
     }
 
-    Project project = ProjectUtil.guessProjectForFile(removedFile);
-    if (project == null) {
+    if (myProject == null) {
       return;
     }
-    if (project.getBasePath() !=null && !FileUtil.isAncestor(project.getBasePath(), removedFile.getPath(), true)) {
+    if (myProject.getBasePath() !=null && !FileUtil.isAncestor(myProject.getBasePath(), removedFile.getPath(), true)) {
       return;
     }
-    Course course = StudyTaskManager.getInstance(project).getCourse();
+    Course course = StudyTaskManager.getInstance(myProject).getCourse();
     if (course == null) {
       return;
     }
-    final TaskFile taskFile = StudyUtils.getTaskFile(project, removedFile);
+    final TaskFile taskFile = StudyUtils.getTaskFile(myProject, removedFile);
     if (taskFile != null) {
       deleteTaskFile(removedFile, taskFile);
       return;
@@ -97,7 +95,7 @@ public class CCVirtualFileListener implements VirtualFileListener {
       deleteTask(course, removedFile);
     }
     if (removedFile.getName().contains(EduNames.LESSON)) {
-      deleteLesson(course, removedFile, project);
+      deleteLesson(course, removedFile, myProject);
     }
   }
 
