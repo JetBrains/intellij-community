@@ -180,4 +180,25 @@ java.util.concurrent.locks.LockSupport.park(Object) LockSupport.java:175
     assert threads.size() <= 1
   }
 
+  void "test trace with trailing jar names is not a thread dump"() {
+    def threads = ThreadDumpParser.parse('''
+Jun 27 02:58:45.222 WARN  [][Atomikos:2]  Error while retrieving xids from resource - will retry later... (com.atomikos.recovery.xa.XaResourceRecoveryManager:40) 
+javax.transaction.xa.XAException
+\tat oracle.jdbc.xa.OracleXAResource.recover(OracleXAResource.java:730) ~[ojdbc-12.1.0.2.jar.8754835619381084897.jar:12.1.0.2.0]
+\tat com.atomikos.datasource.xa.RecoveryScan.recoverXids(RecoveryScan.java:32) ~[transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.recovery.xa.XaResourceRecoveryManager.retrievePreparedXidsFromXaResource(XaResourceRecoveryManager.java:158) [transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.recovery.xa.XaResourceRecoveryManager.recover(XaResourceRecoveryManager.java:67) [transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.datasource.xa.XATransactionalResource.recover(XATransactionalResource.java:451) [transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.icatch.imp.TransactionServiceImp.performRecovery(TransactionServiceImp.java:490) [transactions-4.0.4.jar.3144743539643303549.jar:?]
+\tat com.atomikos.icatch.imp.TransactionServiceImp.access$000(TransactionServiceImp.java:56) [transactions-4.0.4.jar.3144743539643303549.jar:?]
+\tat com.atomikos.icatch.imp.TransactionServiceImp$1.alarm(TransactionServiceImp.java:471) [transactions-4.0.4.jar.3144743539643303549.jar:?]
+\tat com.atomikos.timing.PooledAlarmTimer.notifyListeners(PooledAlarmTimer.java:95) [atomikos-util-4.0.4.jar.3934559012129936607.jar:?]
+\tat com.atomikos.timing.PooledAlarmTimer.run(PooledAlarmTimer.java:82) [atomikos-util-4.0.4.jar.3934559012129936607.jar:?]
+\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [?:1.8.0_131]
+\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [?:1.8.0_131]
+\tat java.lang.Thread.run(Thread.java:748) [?:1.8.0_131]
+''')
+    assert threads.size() <= 1
+  }
+
 }
