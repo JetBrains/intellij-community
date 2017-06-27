@@ -377,6 +377,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       editorHoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);
 
+      JComponent jEditor = (JComponent)editor;
+      jEditor.setOpaque(false);
+      jEditor.setBorder(DEFAULT_EDITOR_BORDER);
+
       if (editor instanceof JTextComponent) {
         editor.addFocusListener(editorFocusListener);
         editor.addMouseListener(editorHoverListener);
@@ -386,12 +390,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           etf.addFocusListener(editorFocusListener);
           etf.addMouseListener(editorHoverListener);
           etf.setBackground(getComboBackground(true));
+
+          jEditor.setBorder(JBUI.Borders.emptyTop(2));
         }
       }
-
-      JComponent jc = (JComponent)editor;
-      jc.setBorder(DEFAULT_EDITOR_BORDER);
-      jc.setOpaque(false);
     }
   }
 
@@ -499,10 +501,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
            JBUI.insets(2, 6, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 6).asUIResource();
   }
 
-  private Dimension getSizeWithButton(Dimension d) {
+  private Dimension  getSizeWithButton(Dimension d) {
     Insets i = comboBox.getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
-    return new Dimension(Math.max(d.width + JBUI.scale(10), width), ARROW_BUTTON_SIZE.height);
+    return new Dimension(Math.max(d.width + JBUI.scale(10), width),
+                         Math.max(ARROW_BUTTON_SIZE.height, d.height));
   }
 
   @Override
