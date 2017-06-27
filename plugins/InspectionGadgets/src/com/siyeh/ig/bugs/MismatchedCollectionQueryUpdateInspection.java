@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.UiUtils;
@@ -35,9 +36,10 @@ public class MismatchedCollectionQueryUpdateInspection
     final ListTable updateNamesTable = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
     final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(updateNamesTable);
 
-    final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, InspectionGadgetsBundle.message(
-      "ignored.class.names")));
-    final JPanel ignoredClassesPanel = UiUtils.createAddRemovePanel(ignoredClassesTable);
+    String ignoreClassesMessage = InspectionGadgetsBundle.message("ignored.class.names");
+    final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, ignoreClassesMessage));
+    final JPanel ignoredClassesPanel = UiUtils.createAddRemoveTreeClassChooserPanel(ignoredClassesTable, ignoreClassesMessage,
+                                                                                    CommonClassNames.JAVA_UTIL_COLLECTION);
 
     final JPanel namesPanel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     namesPanel.add(queryNamesPanel);
