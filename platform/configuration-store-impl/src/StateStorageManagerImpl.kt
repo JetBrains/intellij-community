@@ -311,12 +311,15 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
-      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement && isExternalStorageEnabled && component.externalSource != null) {
+      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement && storageManager.isExternalSystemStorageEnabled && component.externalSource != null) {
         return Resolution.CLEAR
       }
       return Resolution.DO
     }
   }
+
+  protected open val isExternalSystemStorageEnabled: Boolean
+    get() = false
 
   protected open fun beforeElementSaved(element: Element) {
   }

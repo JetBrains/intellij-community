@@ -25,6 +25,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -32,7 +33,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
@@ -126,7 +126,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
         artifactState.setArtifactType(artifact.getArtifactType().getId());
         ProjectModelExternalSource externalSource = artifact.getExternalSource();
-        if (externalSource != null && Registry.is("store.imported.project.elements.separately")) {
+        if (externalSource != null && ProjectUtilCore.isExternalStorageEnabled(myProject)) {
           //we can add this attribute only if the artifact configuration will be stored separately, otherwise we will get modified files in .idea/artifacts.
           artifactState.setExternalSystemId(externalSource.getId());
         }

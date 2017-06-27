@@ -24,7 +24,6 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.configurationStore.StreamProviderKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
@@ -52,10 +51,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -1140,7 +1136,7 @@ public class BuildManager implements Disposable {
       cmdLine.addParameter("-Dpreload.config.path=" + FileUtil.toCanonicalPath(PathManager.getOptionsPath()));
     }
 
-    if (StreamProviderKt.isExternalStorageEnabled()) {
+    if (ProjectUtilCore.isExternalStorageEnabled(project)) {
       cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + "=" + ProjectUtil.getExternalConfigurationDir(project));
     }
 

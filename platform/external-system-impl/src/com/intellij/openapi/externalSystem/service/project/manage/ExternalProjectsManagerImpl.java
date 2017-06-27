@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -35,6 +34,7 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectFileStoreOptionManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,9 +56,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
  * @since 10/23/2014
  */
 @State(name = "ExternalProjectsManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
-  private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
-
+public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable, ProjectFileStoreOptionManager {
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
@@ -84,6 +82,15 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public static ExternalProjectsManagerImpl getInstance(@NotNull Project project) {
     ExternalProjectsManager service = ServiceManager.getService(project, ExternalProjectsManager.class);
     return (ExternalProjectsManagerImpl)service;
+  }
+
+  @Override
+  public boolean isStoredExternally() {
+    return myState.storeExternally;
+  }
+
+  public void setStoreExternally(boolean value) {
+    myState.storeExternally = value;
   }
 
   @NotNull

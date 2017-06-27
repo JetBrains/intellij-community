@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.ListCellRendererWrapper;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -53,6 +57,7 @@ public class MavenImportingSettingsForm {
   private JComboBox myGeneratedSourcesComboBox;
   private JCheckBox myExcludeTargetFolderCheckBox;
   private JTextField myDependencyTypes;
+  private JCheckBox myStoreProjectFilesExternally;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
@@ -105,7 +110,7 @@ public class MavenImportingSettingsForm {
     return myPanel;
   }
 
-  public void getData(MavenImportingSettings data) {
+  public void getData(@NotNull MavenImportingSettings data) {
     data.setLookForNested(mySearchRecursivelyCheckBox.isSelected());
     data.setDedicatedModuleDir(mySeparateModulesDirCheckBox.isSelected() ? mySeparateModulesDirChooser.getText() : "");
 
@@ -126,7 +131,7 @@ public class MavenImportingSettingsForm {
     data.setDependencyTypes(myDependencyTypes.getText());
   }
 
-  public void setData(MavenImportingSettings data) {
+  public void setData(MavenImportingSettings data, @Nullable Project project) {
     mySearchRecursivelyCheckBox.setSelected(data.isLookForNested());
 
     mySeparateModulesDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
@@ -137,6 +142,13 @@ public class MavenImportingSettingsForm {
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 
     myKeepSourceFoldersCheckBox.setSelected(data.isKeepSourceFolders());
+    if (project == null) {
+      myStoreProjectFilesExternally.setVisible(false);
+    }
+    else {
+      myStoreProjectFilesExternally.setVisible(true);
+      myStoreProjectFilesExternally.setSelected(ExternalProjectsManagerImpl.getInstance(project).isStoredExternally());
+    }
     myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
 
@@ -151,10 +163,18 @@ public class MavenImportingSettingsForm {
     updateControls();
   }
 
-  public boolean isModified(MavenImportingSettings settings) {
+  public boolean isModified(@NotNull MavenImportingSettings settings, @Nullable Project project) {
+    if (project != null && ExternalProjectsManagerImpl.getInstance(project).isStoredExternally() != isStoreExternally()) {
+      return true;
+    }
+
     MavenImportingSettings formData = new MavenImportingSettings();
     getData(formData);
     return !formData.equals(settings);
+  }
+
+  boolean isStoreExternally() {
+    return myStoreProjectFilesExternally.isSelected();
   }
 
   public void updateData(WizardContext wizardContext) {
