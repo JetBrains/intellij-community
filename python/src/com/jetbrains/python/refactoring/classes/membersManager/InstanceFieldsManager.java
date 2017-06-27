@@ -21,6 +21,8 @@ import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,7 +135,9 @@ class InstanceFieldsManager extends FieldsManager {
   private static class FieldsOnly extends NotNullPredicate<PyTargetExpression> {
     @Override
     protected boolean applyNotNull(@NotNull final PyTargetExpression input) {
-      return input.getReference().resolve() instanceof PyTargetExpression;
+      final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(input.getProject(), null);
+      final PyResolveContext context = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+      return input.getReference(context).resolve() instanceof PyTargetExpression;
     }
   }
 }
