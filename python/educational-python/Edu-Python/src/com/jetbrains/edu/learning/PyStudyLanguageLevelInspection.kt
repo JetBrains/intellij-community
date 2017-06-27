@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectForContentFile
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiUtilCore
 import com.jetbrains.edu.learning.courseFormat.Course
@@ -42,7 +41,7 @@ class PyStudyLanguageLevelInspection : PyInspection() {
         val sdk = PythonSdkType.findPythonSdk(module)
         if (sdk != null) {
           val projectLanguageLevel = PythonSdkType.getLanguageLevelForSdk(sdk)
-          val project = guessProjectForContentFile(node.virtualFile) ?: return
+          val project = node.project
           val course = StudyTaskManager.getInstance(project).course ?: return
           checkIfLanguageLevelSupported(course, projectLanguageLevel, node)
         }
