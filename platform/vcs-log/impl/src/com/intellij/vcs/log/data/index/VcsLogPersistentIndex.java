@@ -76,7 +76,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Nullable private final IndexStorage myIndexStorage;
   @Nullable private final IndexDataGetter myDataGetter;
 
-  @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController = new MySingleTaskController();
+  @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController;
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -95,6 +95,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
     myRoots = ContainerUtil.newLinkedHashSet();
+    mySingleTaskController = new MySingleTaskController(project);
 
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       if (VcsLogProperties.get(entry.getValue(), VcsLogProperties.SUPPORTS_INDEXING)) {
@@ -485,8 +486,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
-    public MySingleTaskController() {
+    @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
+
+    public MySingleTaskController(@NotNull Project project) {
       super(EmptyConsumer.getInstance(), false);
+      myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 
     @NotNull
@@ -514,14 +518,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                   LOG.error("Error while indexing", t);
                 }
               }
-
             }
             finally {
               taskCompleted(null);
             }
           }
         };
-        HeavyAwareExecutor.executeOutOfHeavyProcess(task, indicator, 50, 100);
+        myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
       });
       return indicator;
     }
