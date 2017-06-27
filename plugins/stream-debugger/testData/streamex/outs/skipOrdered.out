@@ -23,15 +23,14 @@ mappings for IntStreamEx.of
 mappings for skipOrdered
   direct:
     1 -> nothing
-    2 -> nothing
+    2 -> 3
   reverse:
-    nothing <- 3
+    2 <- 3
 mappings for sum
   direct:
     3 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
