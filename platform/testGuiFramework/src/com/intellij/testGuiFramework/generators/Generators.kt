@@ -22,10 +22,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -90,6 +87,17 @@ private fun MouseEvent.isRightButton() = (this.button == rightButton)
 class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun accept(cmp: Component) = cmp is JButton
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = "button(\"${cmp.text}\").click()"
+}
+
+class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButton>{
+  override fun accept(cmp: Component): Boolean {
+    return cmp.parent.parent is ComponentWithBrowseButton<*>
+  }
+
+  override fun generate(cmp: FixedSizeButton, me: MouseEvent, cp: Point): String {
+    val className = cmp.parent.parent.javaClass.simpleName
+    return "componentWithBrowseButton($className::class.java).clickButton()"
+  }
 }
 
 class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
