@@ -26,5 +26,6 @@ import org.jetbrains.annotations.Nullable;
 public interface JvmClassType extends JvmReferenceType {
 
   @Nullable
+  @Override
   JvmClass resolve();
 }
