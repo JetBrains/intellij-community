@@ -56,7 +56,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return CodeInsightBundle.message("quickfix.i18n.concatentation");
   }
 

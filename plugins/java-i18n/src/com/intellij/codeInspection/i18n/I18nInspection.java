@@ -80,9 +80,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @NonNls public String nonNlsCommentPattern = "NON-NLS";
   private boolean ignoreForEnumConstants;
 
-  private static final LocalQuickFix I18N_QUICK_FIX = new I18nizeQuickFix();
-  private static final LocalQuickFix I18N_CONCATENATION_QUICK_FIX = new I18nizeConcatenationQuickFix();
-
   @Nullable private Pattern myCachedNonNlsPattern;
   @NonNls private static final String TO_STRING = "toString";
 
@@ -478,9 +475,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
         List<LocalQuickFix> fixes = new ArrayList<>();
         if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(expression) != null) {
-          fixes.add(I18N_CONCATENATION_QUICK_FIX);
+          fixes.add(new I18nizeConcatenationQuickFix());
         }
-        fixes.add(I18N_QUICK_FIX);
+        fixes.add(new I18nizeQuickFix());
 
         if (!isNotConstantFieldInitializer(expression)) {
           fixes.add(createIntroduceConstantFix());
