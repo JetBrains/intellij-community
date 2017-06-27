@@ -127,7 +127,7 @@ public class ChangesCacheFile {
       closeStreams();
     }
     catch (IOException e) {
-      //
+      LOG.debug(e);
     }
   }
 

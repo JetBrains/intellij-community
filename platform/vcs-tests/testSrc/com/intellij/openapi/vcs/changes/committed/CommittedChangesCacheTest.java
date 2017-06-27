@@ -74,6 +74,7 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping("", myVcs.getName())));
 
     myCache = CommittedChangesCache.getInstance(getProject());
+    assertEquals(1, myCache.getCachesHolder().getAllCaches().size());
 
     myTempDir = createTempDirectory();
     myContentRoot = getVirtualFile(myTempDir);

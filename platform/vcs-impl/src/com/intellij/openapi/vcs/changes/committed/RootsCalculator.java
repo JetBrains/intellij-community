@@ -54,18 +54,23 @@ public class RootsCalculator {
 
   @NotNull
   public Map<VirtualFile, RepositoryLocation> getRoots() {
+    LOG.debug("Collecting roots for " + myVcs);
     // TODO: It is not quite clear why using just ProjectLevelVcsManager.getRootsUnderVcs() is not sufficient
     List<VirtualFile> roots = getRootsFromMappings();
     addAll(roots, myPlManager.getRootsUnderVcs(myVcs));
 
+    logRoots("Candidates", roots);
+
     roots.removeIf(file -> getLocation(file) == null);
+
+    logRoots("Candidates with repository location", roots);
 
     Map<VirtualFile, RepositoryLocation> result = StreamEx.of(myVcs.filterUniqueRoots(roots, identity()))
       .distinct()
       .mapToEntry(this::getLocation)
       .nonNullValues()
       .toMap();
-    logRoots(result.keySet());
+    logRoots("Unique roots", result.keySet());
     return result;
   }
 
@@ -98,9 +103,9 @@ public class RootsCalculator {
     return myLocationCache.getLocation(myVcs, getFilePath(file), false);
   }
 
-  private static void logRoots(@NotNull Collection<VirtualFile> roots) {
+  private static void logRoots(@NotNull String prefix, @NotNull Collection<VirtualFile> roots) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Roots for committed changes load: " + join(roots, VirtualFile::getPath, ", "));
+      LOG.debug(prefix + ": " + join(roots, VirtualFile::getPath, ", "));
     }
   }
 }

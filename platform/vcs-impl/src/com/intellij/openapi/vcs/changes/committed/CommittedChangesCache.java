@@ -453,7 +453,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   @TestOnly
   public void refreshAllCaches() throws IOException, VcsException {
+    debug("Start refreshing all caches");
     final Collection<ChangesCacheFile> files = myCachesHolder.getAllCaches();
+    debug(files.size() + " caches found");
     for(ChangesCacheFile file: files) {
       if (file.isEmpty()) {
         initCache(file);
@@ -462,6 +464,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         refreshCache(file);
       }
     }
+    debug("Finished refreshing all caches");
   }
 
   private List<CommittedChangeList> initCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
@@ -503,6 +506,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   // todo: fix - would externally loaded necessarily for file? i.e. just not efficient now
   private List<CommittedChangeList> refreshCache(final ChangesCacheFile cacheFile) throws VcsException, IOException {
+    debug("Refreshing cache for " + cacheFile.getLocation());
     final List<CommittedChangeList> newLists = new ArrayList<>();
 
     final CachingCommittedChangesProvider provider = cacheFile.getProvider();
@@ -590,6 +594,8 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     final List<CommittedChangeList> result = new ArrayList<>();
     final Collection<ChangesCacheFile> caches = myCachesHolder.getAllCaches();
 
+    debug(caches.size() + " caches found");
+
     final MultiMap<AbstractVcs, Pair<RepositoryLocation, List<CommittedChangeList>>> byVcs =
       new MultiMap<>();
 
@@ -600,6 +606,9 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
           debug("Loading incoming changes for " + cache.getLocation());
           final List<CommittedChangeList> incomingChanges = cache.loadIncomingChanges();
           byVcs.putValue(cache.getVcs(), Pair.create(cache.getLocation(), incomingChanges));
+        }
+        else {
+          debug("Empty cache found for " + cache.getLocation());
         }
       }
       catch (IOException e) {
