@@ -585,6 +585,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
 
         report(startTime);
+
+        flush();
       }
     }
 
@@ -631,8 +633,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         displayProgress(indicator);
       });
-
-      flush();
     }
 
     public void indexAll(@NotNull ProgressIndicator indicator) throws VcsException {
@@ -647,8 +647,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         indicator.checkCanceled();
         displayProgress(indicator);
       });
-
-      flush();
     }
 
     public void displayProgress(@NotNull ProgressIndicator indicator) {
