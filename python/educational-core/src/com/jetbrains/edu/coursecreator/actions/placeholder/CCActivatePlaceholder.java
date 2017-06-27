@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class CCActivatePlaceholder extends CCSubtaskPlaceholderAction {
 
   public static final String TITLE = "Activate";
+  public static final String ACTION_ID = "CC.ActivatePlaceholder";
 
   protected CCActivatePlaceholder() {
     super(TITLE, TITLE);
