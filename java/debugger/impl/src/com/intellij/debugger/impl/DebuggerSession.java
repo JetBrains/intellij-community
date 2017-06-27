@@ -192,7 +192,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
 
           @Override
-          public void contextAction() throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
             context.initCaches();
             DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
           }
@@ -495,7 +495,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
                     notification.expire();
                     getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
                       @Override
-                      public void contextAction() throws Exception {
+                      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
                         final DebuggerContextImpl debuggerContext =
                           DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
 

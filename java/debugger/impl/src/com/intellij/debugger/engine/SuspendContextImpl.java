@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,7 +243,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   public void computeExecutionStacks(final XExecutionStackContainer container) {
     myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(this) {
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         List<JavaExecutionStack> res = new ArrayList<>();
         Collection<ThreadReferenceProxyImpl> threads = getDebugProcess().getVirtualMachineProxy().allThreads();
         JavaExecutionStack currentStack = null;

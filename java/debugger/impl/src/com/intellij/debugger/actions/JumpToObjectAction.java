@@ -18,6 +18,7 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -32,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JumpToObjectAction extends DebuggerAction{
@@ -177,7 +179,7 @@ public class JumpToObjectAction extends DebuggerAction{
     }
 
     @Override
-    public final void contextAction() throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       try {
         doAction(calcPosition(myDescriptor, myDebugProcess));
       }
