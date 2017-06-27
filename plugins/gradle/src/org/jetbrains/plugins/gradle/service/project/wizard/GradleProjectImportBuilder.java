@@ -41,6 +41,7 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -113,7 +114,8 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
         Runnable importTask = () -> ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
 
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        boolean showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport();
+        if (showSelectiveImportDialog && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             selectDataTask.run();
             ApplicationManager.getApplication().executeOnPooledThread(importTask);
