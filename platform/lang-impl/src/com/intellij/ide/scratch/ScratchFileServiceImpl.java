@@ -29,6 +29,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -49,6 +50,7 @@ import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
+import com.intellij.psi.stubs.StubElementTypeHolderEP;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
@@ -82,6 +84,11 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
       }
     });
     initFileOpenedListener(application.getMessageBus());
+
+    // make sure languages are initialized to avoid PerFileMappingsBase.handleUnknownMapping()
+    for (StubElementTypeHolderEP holderEP : Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
+      holderEP.initialize();
+    }
   }
 
   @NotNull
