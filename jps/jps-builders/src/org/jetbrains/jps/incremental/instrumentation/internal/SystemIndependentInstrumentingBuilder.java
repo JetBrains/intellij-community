@@ -38,8 +38,6 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
 /**
  * Adds assertions for method / constructor parameters that are annotated as <code>@SystemDependent</code>.
  * <p>
- * Delegates the check to <code>PathUtil.assertArgumentIsSystemIndependent</code> method.
- * <p>
  * TODO Add other kind of checks (method return, etc).
  */
 public class SystemIndependentInstrumentingBuilder extends BaseInstrumentingBuilder {
