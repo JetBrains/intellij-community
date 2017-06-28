@@ -15,19 +15,22 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -84,7 +87,8 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
         classIdentifier != null &&
         psiFile != null &&
         psiFile.getVirtualFile() != null &&
-        !checkedClass.hasModifierProperty(PsiModifier.ABSTRACT))
+        !checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+        !checkedClass.isEnum())
     {
       if (PsiUtil.isInnerClass(checkedClass)) {
         // don't check inner classes (make this an option?)
@@ -112,47 +116,72 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
                                          DevKitBundle.message("new.menu.action.text")),
                     fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
             return new ProblemDescriptor[]{problem};
-          } else {
-            // action IS registered, stop here
-            return null;
           }
+          // action IS registered, stop here
+          return null;
         }
       }
 
-      ComponentType[] types = ComponentType.values();
-      for (ComponentType type : types) {
-        PsiClass compClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(type.myClassName, scope);
-        if (compClass == null) {
-          // stop if component classes cannot be found (non-devkit module/project)
-          return null;
-        }
-        if (checkedClass.isInheritor(compClass, true)) {
-          if (RegistrationCheckerUtil.getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
-            LocalQuickFix fix = new RegisterComponentFix(type, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
-            ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
-                                                                              DevKitBundle.message("inspections.component.not.registered.message",
-                                                                                                   DevKitBundle.message(type.myPropertyKey)),
-                                                                              fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-            return new ProblemDescriptor[]{problem};
-          } else {
-            // component IS registered, stop here
+      PsiClass compClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(BaseComponent.class.getName(), scope);
+      if (compClass == null) {
+        // stop if component class cannot be found (non-devkit module/project)
+        return null;
+      }
+      if (checkedClass.isInheritor(compClass, true)) {
+        if (RegistrationCheckerUtil.getRegistrationTypes(checkedClass, false) == null && canFix(checkedClass)) {
+          ComponentType type = null;
+          for (ComponentType componentType : ComponentType.values()) {
+            if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName)) {
+              type = componentType;
+              break;
+            }
+          }
+          if (type == null) {
             return null;
           }
+
+          LocalQuickFix fix = new RegisterComponentFix(type, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+          ProblemDescriptor problem = manager.createProblemDescriptor(classIdentifier,
+                                                                      DevKitBundle.message("inspections.component.not.registered.message",
+                                                                                           DevKitBundle.message(type.myPropertyKey)),
+                                                                      fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+          return new ProblemDescriptor[]{problem};
         }
       }
     }
     return null;
   }
 
-  private static boolean isActionRegistered(PsiClass psiClass) {
-    final Set<PsiClass> registrationTypes = RegistrationCheckerUtil.getRegistrationTypes(psiClass, true);
+  private static boolean isActionRegistered(PsiClass actionClass) {
+    final Set<PsiClass> registrationTypes = RegistrationCheckerUtil.getRegistrationTypes(actionClass, true);
     if (registrationTypes != null) {
-      if (registrationTypes.isEmpty()) return true;
       for (PsiClass type : registrationTypes) {
         if (AnAction.class.getName().equals(type.getQualifiedName())) return true;
         if (ActionGroup.class.getName().equals(type.getQualifiedName())) return true;
       }
     }
+
+    // search code usages: 1) own CTOR calls  2) usage via "new ActionClass()"
+    for (PsiMethod method : actionClass.getConstructors()) {
+      final Query<PsiReference> search = MethodReferencesSearch.search(method);
+      if (search.findFirst() != null) {
+        return true;
+      }
+    }
+
+    final Query<PsiReference> search = ReferencesSearch.search(actionClass);
+    for (PsiReference reference : search) {
+      if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
+
+      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiNewExpression.class);
+      if (newExpression != null) {
+        final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+        if (classReference != null && classReference.getQualifiedName().equals(actionClass.getQualifiedName())) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
