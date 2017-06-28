@@ -49,7 +49,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
 
   @NotNull
   public String getFamilyName() {
-    return DevKitBundle.message("inspections.component.not.registered.quickfix.family");
+    return DevKitBundle.message("inspections.component.not.registered.quickfix.family", StringUtil.toLowerCase(getType()));
   }
 
   @Override
