@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.BlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +167,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
       LOG.assertTrue(statement != null);
       WriteAction.run(() -> {
         try {
-          statement.getParent().addBefore(statementFromText, statement);
+          PsiElement parent = statement.getParent();
+          BlockUtils.addBefore(parent instanceof PsiForStatement ? (PsiStatement)parent : statement, statementFromText);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
