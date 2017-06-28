@@ -46,24 +46,7 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-    UndoManager undoManager = null;
-
-    if (editor == null) {
-      final Boolean isModalContext = PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext);
-      if (isModalContext != null && isModalContext) {
-        if (Registry.is("undo.use.for.swing.in.modal.context")) {
-          undoManager = SwingUndoManagerWrapper.fromContext(dataContext);
-        }
-        // do not allow global undo in dialogs
-        if (undoManager == null) {
-          presentation.setEnabled(false);
-          return;
-        }
-      }
-    }
-    if (undoManager == null) {
-      undoManager = getUndoManager(editor, dataContext);
-    }
+    UndoManager undoManager = getUndoManager(editor, dataContext);
     if (undoManager == null) {
       presentation.setEnabled(false);
       return;
@@ -77,6 +60,11 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+    final Boolean isModalContext = PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext);
+    if (editor == null && isModalContext != null && isModalContext) {
+      return Registry.is("undo.use.for.swing.in.modal.context") ? SwingUndoManagerWrapper.fromContext(dataContext) : null;
+    }
+
     Project project = getProject(editor, dataContext);
     return project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
   }
