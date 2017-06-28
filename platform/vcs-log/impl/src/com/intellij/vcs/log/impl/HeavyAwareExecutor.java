@@ -24,11 +24,10 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class HeavyAwareExecutor {
   public static void executeOutOfHeavyProcessLater(@NotNull Runnable command, int delayMs) {
@@ -63,38 +62,51 @@ public class HeavyAwareExecutor {
         Disposable disposable = Disposer.newDisposable();
         ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator,
                                                                                                   () -> Disposer.dispose(disposable));
-        HeavyProcessLatch.INSTANCE.addListener(new CancellingOnHeavyProcessListener(indicator, longActivityDurationMs), disposable);
+        new CancellingOnHeavyProcessListener(indicator, longActivityDurationMs, disposable);
       }
     }, delayMs, TimeUnit.MILLISECONDS));
   }
 
   private static class CancellingOnHeavyProcessListener implements HeavyProcessLatch.HeavyProcessListener {
     @NotNull private final ProgressIndicator myIndicator;
-    private final int myIgnoredActivitySize;
-    @NotNull private final AtomicInteger myTasks = new AtomicInteger();
-    @NotNull private final AtomicReference<ScheduledFuture<?>> myFuture = new AtomicReference<>();
+    private final int myLongActivityDurationMs;
 
-    public CancellingOnHeavyProcessListener(@NotNull ProgressIndicator indicator, int size) {
+    @Nullable private ScheduledFuture<?> myFuture = null;
+
+    public CancellingOnHeavyProcessListener(@NotNull ProgressIndicator indicator,
+                                            int logActivityDurationMs,
+                                            @NotNull Disposable disposable) {
       myIndicator = indicator;
-      myIgnoredActivitySize = size;
+      myLongActivityDurationMs = logActivityDurationMs;
+
+      HeavyProcessLatch.INSTANCE.addListener(this, disposable);
+
+      scheduleCancel(); // in case some sneaky heavy process started before we managed to add a listener
     }
 
     @Override
     public void processStarted() {
-      if (myTasks.getAndIncrement() == 0) {
-        myFuture.compareAndSet(null, JobScheduler.getScheduler().schedule(() -> {
-          if (HeavyProcessLatch.INSTANCE.isRunning() && myIndicator.isRunning()) {
-            myIndicator.cancel();
-          }
-        }, myIgnoredActivitySize, TimeUnit.MILLISECONDS));
-      }
+      scheduleCancel();
     }
 
     @Override
     public void processFinished() {
-      if (myTasks.decrementAndGet() == 0) {
-        ScheduledFuture<?> future = myFuture.getAndSet(null);
-        if (future != null) future.cancel(true);
+      doNotCancel();
+    }
+
+    private synchronized void scheduleCancel() {
+      if (HeavyProcessLatch.INSTANCE.isRunning() && myFuture == null) {
+        myFuture = JobScheduler.getScheduler().schedule(() -> {
+          if (HeavyProcessLatch.INSTANCE.isRunning() && myIndicator.isRunning()) myIndicator.cancel();
+        }, myLongActivityDurationMs, TimeUnit.MILLISECONDS);
+      }
+    }
+
+    private synchronized void doNotCancel() {
+      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFuture != null) {
+        ScheduledFuture<?> future = myFuture;
+        myFuture = null;
+        future.cancel(true);
       }
     }
   }
