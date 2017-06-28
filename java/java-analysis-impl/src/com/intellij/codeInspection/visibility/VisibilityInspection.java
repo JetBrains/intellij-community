@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -36,10 +37,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.VisibilityUtil;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,7 +104,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         if (entryPoint instanceof EntryPointWithVisibilityLevel) {
           gc.gridy++;
           final JCheckBox checkBox = new JCheckBox(((EntryPointWithVisibilityLevel)entryPoint).getTitle());
-          checkBox.setSelected(myExtensions.getOrDefault(((EntryPointWithVisibilityLevel)entryPoint).getId(), true));
+          checkBox.setSelected(isEntryPointEnabled((EntryPointWithVisibilityLevel)entryPoint));
           checkBox.addActionListener(e -> myExtensions.put(((EntryPointWithVisibilityLevel)entryPoint).getId(), checkBox.isSelected()));
           add(checkBox, gc);
         }
@@ -181,11 +184,14 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     //ignore anonymous classes. They do not have access modifiers.
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
-      if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass() || isExported(refClass)) {
+      if (refClass.isAnonymous() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) {
         return null;
       }
     }
 
+    if (keepVisibilityLevel(refElement)) {
+      return null;
+    }
 
     //ignore unreferenced code. They could be a potential entry points.
     if (refElement.getInReferences().isEmpty()) {
@@ -215,30 +221,10 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
-  private static boolean isExported(RefClass refClass) {
-    RefModule refModule = refClass.getModule();
-    if (refModule != null) {
-      RefJavaModule refJavaModule = RefJavaModule.JAVA_MODULE.get(refModule);
-      if (refJavaModule != null) {
-        Set<RefClass> serviceImplementations = refJavaModule.getServiceImplementations();
-        if (serviceImplementations.contains(refClass)) {
-          return true;
-        }
-
-        RefEntity refOwner = refClass;
-        while (refOwner instanceof RefClass) {
-          String modifier = ((RefClass)refOwner).getAccessModifier();
-          refOwner = PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ? refOwner.getOwner() : null;
-        }
-        if (refOwner instanceof RefPackage) {
-          Map<String, List<String>> exportedPackageNames = refJavaModule.getExportedPackageNames();
-          if (exportedPackageNames.containsKey(refOwner.getQualifiedName())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  private boolean keepVisibilityLevel(RefJavaElement refElement) {
+    return StreamEx.of(ExtensionPointName.<EntryPoint>create(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensions())
+      .select(EntryPointWithVisibilityLevel.class)
+      .anyMatch(point -> point.keepVisibilityLevel(isEntryPointEnabled(point), refElement));
   }
 
   @NotNull
@@ -273,11 +259,15 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   }
 
   int getMinVisibilityLevel(PsiMember member) {
-    return Arrays.stream(ExtensionPointName.<EntryPoint>create(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensions())
-      .filter(point -> point instanceof EntryPointWithVisibilityLevel && 
-                       myExtensions.getOrDefault(((EntryPointWithVisibilityLevel)point).getId(), true))
-      .mapToInt(point -> ((EntryPointWithVisibilityLevel)point).getMinVisibilityLevel(member))
+    return StreamEx.of(ExtensionPointName.<EntryPoint>create(ToolExtensionPoints.DEAD_CODE_TOOL).getExtensions())
+      .select(EntryPointWithVisibilityLevel.class)
+      .filter(point -> isEntryPointEnabled(point))
+      .mapToInt(point -> point.getMinVisibilityLevel(member))
       .max().orElse(-1);
+  }
+
+  private boolean isEntryPointEnabled(EntryPointWithVisibilityLevel point) {
+    return myExtensions.getOrDefault(point.getId(), true);
   }
 
   private int getMinVisibilityLevel(RefJavaElement refElement) {
@@ -625,6 +615,12 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
         myExtensions.put(id, false);
       }
     }
+  }
+
+  @TestOnly
+  public void setEntryPointEnabled(@NotNull String entryPointId, boolean enabled) {
+    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
+    myExtensions.put(entryPointId, enabled);
   }
 
   private static class AcceptSuggestedAccess implements LocalQuickFix{

@@ -16,8 +16,8 @@
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInspection.reference.EntryPoint;
-import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -30,16 +30,20 @@ import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Pavel.Dolgov
  */
-public class Java9ModuleEntryPoint extends EntryPoint {
+public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
+  public static final String ID = "moduleInfo";
   public boolean ADD_EXPORTED_PACKAGES_AND_SERVICES_TO_ENTRIES = true;
 
   @NotNull
@@ -56,52 +60,124 @@ public class Java9ModuleEntryPoint extends EntryPoint {
   @Override
   public boolean isEntryPoint(@NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiClass) {
-      return isExported((PsiClass)psiElement);
+      return isServiceOrExported((PsiClass)psiElement);
     }
     if (psiElement instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)psiElement;
       if (isDefaultConstructor(method) || isProviderMethod(method)) {
-        return isExported(method.getContainingClass());
+        return isServiceOrExported(method.getContainingClass());
       }
     }
     return false;
   }
 
-  private static boolean isDefaultConstructor(PsiMethod method) {
+  @Override
+  public int getMinVisibilityLevel(PsiMember member) {
+    if (member instanceof PsiClass) {
+      final PsiJavaModule javaModule = getJavaModule(member);
+      if (javaModule != null &&
+          !isServiceClass((PsiClass)member, javaModule) &&
+          isInExportedPackage((PsiClass)member, javaModule)) {
+        return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+      }
+    }
+    return -1;
+  }
+
+  @Override
+  public String getTitle() {
+    return "Suggest package-private visibility level for classes in exported packages (Java 9+)";
+  }
+
+  @Override
+  public String getId() {
+    return ID;
+  }
+
+  @Override
+  public boolean keepVisibilityLevel(boolean entryPointEnabled, RefJavaElement refJavaElement) {
+    if (refJavaElement instanceof RefClass) {
+      RefClass refClass = (RefClass)refJavaElement;
+      RefModule refModule = refClass.getModule();
+      if (refModule != null) {
+        RefJavaModule refJavaModule = RefJavaModule.JAVA_MODULE.get(refModule);
+        if (refJavaModule != null) {
+          return isServiceClass(refClass, refJavaModule) ||
+                 !entryPointEnabled && isInExportedPackage(refClass, refJavaModule);
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isInExportedPackage(@Nullable RefClass refClass, @NotNull RefJavaModule refJavaModule) {
+    RefEntity refOwner = refClass;
+    while (refOwner instanceof RefClass) {
+      String modifier = ((RefClass)refOwner).getAccessModifier();
+      refOwner = PsiModifier.PUBLIC.equals(modifier) || PsiModifier.PROTECTED.equals(modifier) ? refOwner.getOwner() : null;
+    }
+    if (refOwner instanceof RefPackage) {
+      Map<String, List<String>> exportedPackageNames = refJavaModule.getExportedPackageNames();
+      if (exportedPackageNames.containsKey(refOwner.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isServiceClass(@Nullable RefClass refClass, @NotNull RefJavaModule refJavaModule) {
+    return refJavaModule.getServiceInterfaces().contains(refClass) ||
+           refJavaModule.getServiceImplementations().contains(refClass) ||
+           refJavaModule.getUsedServices().contains(refClass);
+  }
+
+
+  private static boolean isDefaultConstructor(@NotNull PsiMethod method) {
     return method.isConstructor() &&
            method.getParameterList().getParametersCount() == 0 &&
            method.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
-  private static boolean isProviderMethod(PsiMethod method) {
+  private static boolean isProviderMethod(@NotNull PsiMethod method) {
     return "provider".equals(method.getName()) &&
            method.getParameterList().getParametersCount() == 0 &&
            method.hasModifierProperty(PsiModifier.PUBLIC) &&
            method.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  private static boolean isExported(@Nullable PsiClass psiClass) {
-    if (psiClass != null) {
-      String className = psiClass.getQualifiedName();
-      if (className != null) {
-        final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiClass);
-        if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
-          PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
-          if (javaModule != null) {
-            String packageName = getPublicApiPackageName(psiClass);
-            if (packageName != null) {
-              Set<String> exportedPackageNames = getExportedPackageNames(javaModule);
-              if (exportedPackageNames.contains(packageName)) {
-                return true;
-              }
-            }
-            Set<String> serviceImplementationNames = getServiceImplementationNames(javaModule);
-            return serviceImplementationNames.contains(className);
-          }
-        }
+  private static boolean isServiceOrExported(@Nullable PsiClass psiClass) {
+    PsiJavaModule javaModule = getJavaModule(psiClass);
+    return javaModule != null && (isServiceClass(psiClass, javaModule) || isInExportedPackage(psiClass, javaModule));
+  }
+
+  private static boolean isInExportedPackage(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {
+    String packageName = getPublicApiPackageName(psiClass);
+    if (packageName != null) {
+      Set<String> exportedPackageNames = getExportedPackageNames(javaModule);
+      if (exportedPackageNames.contains(packageName)) {
+        return true;
       }
     }
     return false;
+  }
+
+  private static boolean isServiceClass(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {
+    Set<String> serviceClassNames = CachedValuesManager.getCachedValue(
+      javaModule, () -> CachedValueProvider.Result.create(collectServiceClassNames(javaModule), javaModule));
+
+    return serviceClassNames.contains(psiClass.getQualifiedName());
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiJavaModule getJavaModule(@Nullable PsiElement element) {
+    if (element != null) {
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(element);
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+        return JavaModuleGraphUtil.findDescriptorByElement(element);
+      }
+    }
+    return null;
   }
 
   private static String getPublicApiPackageName(PsiClass psiClass) {
@@ -128,18 +204,25 @@ public class Java9ModuleEntryPoint extends EntryPoint {
   }
 
   @NotNull
-  private static Set<String> getServiceImplementationNames(@NotNull PsiJavaModule javaModule) {
-    return CachedValuesManager.getCachedValue(javaModule, () -> {
-      Set<String> classes = StreamEx.of(javaModule.getProvides().iterator())
-        .map(PsiProvidesStatement::getImplementationList)
-        .nonNull()
-        .map(PsiReferenceList::getReferenceElements)
-        .flatMap(Arrays::stream)
-        .map(PsiJavaCodeReferenceElement::getQualifiedName)
-        .nonNull()
-        .toCollection(THashSet::new);
-      return CachedValueProvider.Result.create(classes, javaModule);
-    });
+  private static Set<String> collectServiceClassNames(@NotNull PsiJavaModule javaModule) {
+    Set<String> classes = StreamEx.of(javaModule.getProvides().spliterator())
+      .map(PsiProvidesStatement::getImplementationList)
+      .nonNull()
+      .map(PsiReferenceList::getReferenceElements)
+      .flatMap(Arrays::stream)
+      .map(PsiJavaCodeReferenceElement::getQualifiedName)
+      .nonNull()
+      .toCollection(THashSet::new);
+
+    Set<String> usages = StreamEx.of(javaModule.getUses().iterator())
+      .map(PsiUsesStatement::getClassReference)
+      .nonNull()
+      .map(PsiJavaCodeReferenceElement::getQualifiedName)
+      .nonNull()
+      .toCollection(THashSet::new);
+
+    classes.addAll(usages);
+    return classes;
   }
 
   @Override
