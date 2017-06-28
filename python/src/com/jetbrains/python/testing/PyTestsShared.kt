@@ -626,6 +626,7 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
 
     val location = context?.location
     configuration.module = context?.module
+    configuration.isUseModuleSdk = true
     if (location is com.jetbrains.python.testing.PyTargetBasedPsiLocation) {
       location.target.copyTo(configuration.target)
     }
