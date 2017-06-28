@@ -41,6 +41,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -693,7 +694,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
-    boolean isIncorrect = false;
+    PsiVariable oldVariable = null;
     PsiElement declarationScope = null;
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter &&
@@ -716,10 +717,10 @@ public class HighlightUtil extends HighlightUtilBase {
         PsiScopesUtil.treeWalkUp(proc, identifier, scope);
       }
       if (proc.size() > 0) {
-        isIncorrect = true;
+        oldVariable = proc.getResult(0);
       }
       else if (declarationScope instanceof PsiLambdaExpression) {
-        isIncorrect = checkSameNames(variable);
+        oldVariable = checkSameNames(variable);
       }
     }
     else if (variable instanceof PsiField) {
@@ -728,39 +729,50 @@ public class HighlightUtil extends HighlightUtilBase {
       if (aClass == null) return null;
       PsiField fieldByName = aClass.findFieldByName(variable.getName(), false);
       if (fieldByName != null && fieldByName != field) {
-        isIncorrect = true;
+        oldVariable = fieldByName;
       }
     }
     else {
-      isIncorrect = checkSameNames(variable);
+      oldVariable = checkSameNames(variable);
     }
 
-    if (isIncorrect) {
+    if (oldVariable != null) {
       String description = JavaErrorMessages.message("variable.already.defined", variable.getName());
       PsiIdentifier identifier = variable.getNameIdentifier();
       assert identifier != null : variable;
-      HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description).create();
+      VirtualFile vFile = PsiUtilCore.getVirtualFile(identifier);
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier);
+      if (vFile != null) {
+        final String path = FileUtil.toSystemIndependentName(vFile.getPath());
+        String linkText = "<a href=\"#navigation/" + path + ":" + oldVariable.getTextOffset() + "\">" + variable.getName() + "</a>";
+        builder = builder.description(description)
+          .escapedToolTip("<html>" + JavaErrorMessages.message("variable.already.defined", linkText) + "</html>");
+      }
+      else {
+        builder = builder.descriptionAndTooltip(description);
+      }
+      HighlightInfo highlightInfo = builder.create();
       if (variable instanceof PsiLocalVariable) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReuseVariableDeclarationFix((PsiLocalVariable)variable));
+        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNavigateToAlreadyDeclaredVariableFix((PsiLocalVariable)variable));
       }
       return highlightInfo;
     }
     return null;
   }
 
-  private static boolean checkSameNames(@NotNull PsiVariable variable) {
+  private static PsiVariable checkSameNames(@NotNull PsiVariable variable) {
     PsiElement scope = variable.getParent();
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiVariable) {
         if (child.equals(variable)) continue;
         if (Objects.equals(variable.getName(), ((PsiVariable)child).getName())) {
-          return true;
+          return (PsiVariable)child;
         }
       }
     }
-    return false;
+    return null;
   }
 
   @Nullable

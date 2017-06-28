@@ -274,6 +274,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable) {
+    return new NavigateToAlreadyDeclaredVariableFix(variable);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createConvertToStringLiteralAction() {
     return new ConvertToStringLiteralAction();
   }
