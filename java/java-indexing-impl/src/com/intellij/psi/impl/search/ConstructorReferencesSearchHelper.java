@@ -18,6 +18,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
@@ -257,6 +258,9 @@ class ConstructorReferencesSearchHelper {
             final int startOffsetInParent = identifier.getStartOffsetInParent();
             if (startOffsetInParent >= 0) { // -1 for light elements generated e.g. by lombok
               return TextRange.from(startOffsetInParent, identifier.getTextLength());
+            }
+            else {
+              return new UnfairTextRange(-1, -1);
             }
           }
         }
