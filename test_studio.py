@@ -32,6 +32,24 @@ class TestStringMethods(unittest.TestCase):
         self.assertFalse(filename == "BUILD" or filename == "BUILD.bazel",
               "Unexpected BUILD file in output dir: " + root + "/" + filename)
 
+  def test_profiler_artifacts_are_present(self):
+    required = [
+        "plugins/android/resources/perfa.jar",
+        "plugins/android/resources/profilers-transform.jar",
+      ];
+    for abi in ["x86", "arm64-v8a", "armeabi-v7a"]:
+      required += [
+          "plugins/android/resources/simpleperf/%s/simpleperf" % abi,
+          "plugins/android/resources/perfd/%s/perfd" % abi,
+          "plugins/android/resources/perfd/%s/libperfa.so" % abi,
+      ]
+
+    name = os.path.join(dist_dir, "android-studio-" + build + ".win.zip")
+    files = zipfile.ZipFile(name).namelist()
+    for req in required:
+      if "android-studio/" + req not in files:
+        self.fail("Required file not found in distribution: " + req)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', required = True)

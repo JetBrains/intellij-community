@@ -260,7 +260,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
-      fileset(file: "$root/out/studio/transform/libs/profilers-transform.jar")
+      fileset(file: "$root/out/studio/transform/jarjar/profilers-transform.jar")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
       fileset(file: "$root/out/studio/perfa/libs/perfa.jar")
