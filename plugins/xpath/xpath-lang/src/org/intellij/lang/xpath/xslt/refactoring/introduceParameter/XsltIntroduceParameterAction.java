@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlTag;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"ComponentNotRegistered"})
 public class XsltIntroduceParameterAction extends BaseIntroduceAction<IntroduceParameterOptions> {
     static final String COMMAND_NAME = "Introduce XSLT Parameter";
 

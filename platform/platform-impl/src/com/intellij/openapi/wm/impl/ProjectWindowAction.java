@@ -34,11 +34,10 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @ author Bas Leijdekkers
+ * @author Bas Leijdekkers
  * This class is programmatically instantiated and registered when opening and closing projects
  * and thus not registered in plugin.xml
  */
-@SuppressWarnings({"ComponentNotRegistered"})
 public class ProjectWindowAction extends ToggleAction implements DumbAware {
 
   private ProjectWindowAction myPrevious;
