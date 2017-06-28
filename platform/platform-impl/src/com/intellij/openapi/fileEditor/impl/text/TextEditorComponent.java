@@ -126,9 +126,13 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider {
    */
   void dispose(){
     myDocument.removeDocumentListener(myDocumentListener);
-    if (!myProject.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
-      EditorHistoryManager.getInstance(myProject).updateHistoryEntry(myFile, false);
-    }
+
+    // Fix for b/37138939: The history update here has a side effect of switching tabs since the current tab might already be removed.
+    //
+    // if (!myProject.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
+    //   EditorHistoryManager.getInstance(myProject).updateHistoryEntry(myFile, false);
+    // }
+
     disposeEditor();
     myConnection.disconnect();
 

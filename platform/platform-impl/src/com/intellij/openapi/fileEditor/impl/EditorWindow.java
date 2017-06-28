@@ -1185,7 +1185,15 @@ public class EditorWindow {
   }
 
   public void clear() {
+    Project project = getManager().getProject();
     for (EditorWithProviderComposite composite : getEditors()) {
+      // Fix for b/37138939: The history update here has a side effect of switching tabs since the current tab might already be removed.
+      //
+      if (!project.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
+        EditorHistoryManager.getInstance(project).updateHistoryEntry(composite.getFile(), false);
+      }
+      // End of fix for b/37138939
+
       Disposer.dispose(composite);
     }
     if (myTabbedPane == null) {
