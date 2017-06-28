@@ -15,12 +15,14 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
+import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -34,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
 import com.intellij.task.impl.InternalProjectTaskRunner;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +46,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -72,9 +72,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = InternalProjectTaskRunner.groupBy(tasks);
 
-    addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), cleanTasksMap, buildTasksMap);
+    List<Module> modules = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), cleanTasksMap, buildTasksMap);
     // TODO there should be 'gradle' way to build files instead of related modules entirely
-    addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), cleanTasksMap, buildTasksMap);
+    List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), cleanTasksMap, buildTasksMap);
     addArtifactsBuildTasks(taskMap.get(ArtifactBuildTask.class), cleanTasksMap, buildTasksMap);
 
     // TODO send a message if nothing to build
@@ -97,6 +97,16 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         int successes = success ? successCounter.incrementAndGet() : successCounter.get();
         int errors = success ? errorCounter.get() : errorCounter.incrementAndGet();
         if (successes + errors == rootPaths.size()) {
+          if (!project.isDisposed()) {
+            // refresh on output roots is required in order for the order enumerator to see all roots via VFS
+            final List<Module> affectedModules = ContainerUtil.concat(modules, modulesOfFiles);
+            // have to refresh in case of errors too, because run configuration may be set to ignore errors
+            Collection<String> affectedRoots = ContainerUtil.newHashSet(
+              CompilerPathsEx.getOutputPaths(ContainerUtil.toArray(affectedModules, new Module[affectedModules.size()])));
+            if (!affectedRoots.isEmpty()) {
+              CompilerUtil.refreshOutputRoots(affectedRoots);
+            }
+          }
           callback.finished(new ProjectTaskResult(false, errors, 0));
         }
       }
@@ -163,17 +173,19 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     return null;
   }
 
-  private static void addModulesBuildTasks(@Nullable Collection<? extends ProjectTask> projectTasks,
-                                           @NotNull MultiMap<String, String> cleanTasksMap,
-                                           @NotNull MultiMap<String, String> buildTasksMap) {
-    if (ContainerUtil.isEmpty(projectTasks)) return;
+  private static List<Module> addModulesBuildTasks(@Nullable Collection<? extends ProjectTask> projectTasks,
+                                                         @NotNull MultiMap<String, String> cleanTasksMap,
+                                                         @NotNull MultiMap<String, String> buildTasksMap) {
+    if (ContainerUtil.isEmpty(projectTasks)) return Collections.emptyList();
 
+    List<Module> affectedModules = new SmartList<>();
     final CachedModuleDataFinder moduleDataFinder = new CachedModuleDataFinder();
     for (ProjectTask projectTask : projectTasks) {
       if (!(projectTask instanceof ModuleBuildTask)) continue;
 
       ModuleBuildTask moduleBuildTask = (ModuleBuildTask)projectTask;
       Module module = moduleBuildTask.getModule();
+      affectedModules.add(module);
 
       final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
       if (rootProjectPath == null) continue;
@@ -218,6 +230,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         if (!moduleBuildTask.isIncrementalBuild()) {
           if (gradleTasks.contains("classes")) {
             cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanClasses" : gradlePath + ":cleanClasses"));
+            cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":cleanTestClasses" : gradlePath + ":cleanTestClasses"));
           }
           else if (gradleTasks.contains("clean")) {
             cleanRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "clean" : gradlePath + ":clean"));
@@ -228,6 +241,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         }
         if (gradleTasks.contains("classes")) {
           buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":classes" : gradlePath + ":classes"));
+          buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? ":testClasses" : gradlePath + ":testClasses"));
         }
         else if (gradleTasks.contains("build")) {
           buildRootTasks.add((StringUtil.equals(rootProjectPath, externalProjectPath) ? "build" : gradlePath + ":build"));
@@ -237,6 +251,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         }
       }
     }
+    return affectedModules;
   }
 
   private static void addArtifactsBuildTasks(@Nullable Collection<? extends ProjectTask> tasks,

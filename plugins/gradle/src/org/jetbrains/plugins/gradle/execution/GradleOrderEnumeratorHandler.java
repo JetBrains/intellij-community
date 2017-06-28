@@ -35,6 +35,7 @@ import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCach
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -117,12 +118,19 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
       externalProjectDataCache.findExternalProject(externalRootProject, rootModel.getModule());
     if (externalSourceSets.isEmpty()) return false;
 
+    boolean isGradleAwareMake = GradleSystemRunningSettings.getInstance().isUseGradleAwareMake();
     for (ExternalSourceSet sourceSet : externalSourceSets.values()) {
       if (includeTests) {
-        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result);
+        if (isGradleAwareMake) {
+          addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST), result, true);
+        }
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.TEST_RESOURCE), result, isGradleAwareMake);
       }
       if (includeProduction) {
-        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result);
+        if (isGradleAwareMake) {
+          addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.SOURCE), result, true);
+        }
+        addOutputModuleRoots(sourceSet.getSources().get(ExternalSystemSourceType.RESOURCE), result, isGradleAwareMake);
       }
     }
 
@@ -130,11 +138,15 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   }
 
   private static void addOutputModuleRoots(@Nullable ExternalSourceDirectorySet directorySet,
-                                           @NotNull Collection<String> result) {
+                                           @NotNull Collection<String> result, boolean isGradleAwareMake) {
     if (directorySet == null) return;
-
-    if (directorySet.isCompilerOutputPathInherited()) return;
-    final String path = directorySet.getOutputDir().getAbsolutePath();
-    result.add(VfsUtilCore.pathToUrl(path));
+    if (isGradleAwareMake) {
+      for (File outputDir : directorySet.getGradleOutputDirs()) {
+        result.add(VfsUtilCore.pathToUrl(outputDir.getAbsolutePath()));
+      }
+    }
+    else if (!directorySet.isCompilerOutputPathInherited()) {
+      result.add(VfsUtilCore.pathToUrl(directorySet.getOutputDir().getAbsolutePath()));
+    }
   }
 }
