@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +61,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassStubImpl(psi.getName(),
                                parentStub,
                                getSuperClassQNames(psi),
+                               getSubscriptedSuperClasses(psi),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
@@ -78,6 +80,14 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     }
 
     return result;
+  }
+
+  @NotNull
+  private static List<String> getSubscriptedSuperClasses(@NotNull PyClass pyClass) {
+    return StreamEx.of(pyClass.getSuperClassExpressions())
+      .filter(PySubscriptionExpression.class::isInstance)
+      .map(PsiElement::getText)
+      .toList();
   }
 
   @Nullable
@@ -116,6 +126,12 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       QualifiedName.serialize(entry.getValue(), dataStream);
     }
 
+    final List<String> baseClassesText = pyClassStub.getSubscriptedSuperClasses();
+    dataStream.writeByte(baseClassesText.size());
+    for (String text : baseClassesText) {
+      dataStream.writeName(text);
+    }
+
     QualifiedName.serialize(pyClassStub.getMetaClass(), dataStream);
 
     PyFileElementType.writeNullableList(dataStream, pyClassStub.getSlots());
@@ -134,6 +150,15 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       superClasses.put(QualifiedName.deserialize(dataStream), QualifiedName.deserialize(dataStream));
     }
 
+    final byte parametrizedBaseClassesCount = dataStream.readByte();
+    final ArrayList<String> parametrizedBaseClasses = new ArrayList<>();
+    for (int i = 0; i < parametrizedBaseClassesCount; i++) {
+      final StringRef ref = dataStream.readName();
+      if (ref != null) {
+        parametrizedBaseClasses.add(ref.getString());
+      }
+    }
+
     final QualifiedName metaClass = QualifiedName.deserialize(dataStream);
 
     final List<String> slots = PyFileElementType.readNullableList(dataStream);
@@ -141,7 +166,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final String docStringInStub = dataStream.readUTFFast();
     final String docString = docStringInStub.length() > 0 ? docStringInStub : null;
 
-    return new PyClassStubImpl(name, parentStub, superClasses, metaClass, slots, docString, getStubElementType());
+    return new PyClassStubImpl(name, parentStub, superClasses, parametrizedBaseClasses, metaClass, slots, docString, getStubElementType());
   }
 
   public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {

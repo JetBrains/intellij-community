@@ -36,6 +36,13 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @NotNull
   Map<QualifiedName, QualifiedName> getSuperClasses();
 
+  /**
+   * Returns literal text of the subscription expressions in the base classes list.
+   * It's intended to be used for resolving generic types and type parameters in PEP 484 notation.
+   */
+  @NotNull
+  List<String> getSubscriptedSuperClasses();
+
   @Nullable
   QualifiedName getMetaClass();
 
