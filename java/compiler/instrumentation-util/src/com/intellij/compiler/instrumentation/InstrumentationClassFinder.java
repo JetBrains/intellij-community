@@ -60,7 +60,7 @@ public class InstrumentationClassFinder {
   public static URL createJDKPlatformUrl(String jdkHomePath) throws MalformedURLException {
     return new URL(ClassFinderClasspath.Loader.JRT_PROTOCOL, null, jdkHomePath.replace(File.separatorChar, '/'));
   }
-  
+
   // compatibility with legacy code requiring ClassLoader
   public ClassLoader getLoader() {
     ClassLoader loader = myLoader;
@@ -194,6 +194,11 @@ public class InstrumentationClassFinder {
     return is;
   }
 
+  public boolean isAvaiable(String resourceName) {
+    return myPlatformClasspath.getResource(resourceName) != null ||
+           myClasspath.getResource(resourceName) != null;
+  }
+
   public InputStream getResourceAsStream(String resourceName) throws IOException {
     InputStream is = null;
 
@@ -228,7 +233,7 @@ public class InstrumentationClassFinder {
 
     return new PseudoClass(this, visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
   }
-  
+
   public static class PseudoClass {
     static final PseudoClass NULL_OBJ = new PseudoClass(null, null, null, null, 0, null);
     private final String myName;

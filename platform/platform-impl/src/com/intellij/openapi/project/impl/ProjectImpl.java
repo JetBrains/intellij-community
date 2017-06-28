@@ -53,14 +53,14 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemDependent;
-import com.intellij.util.SystemIndependent;
 import com.intellij.util.TimedReference;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 

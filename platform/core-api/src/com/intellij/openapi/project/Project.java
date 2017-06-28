@@ -18,10 +18,10 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemDependent;
-import com.intellij.util.SystemIndependent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 /**
  * An object representing an IntelliJ project.

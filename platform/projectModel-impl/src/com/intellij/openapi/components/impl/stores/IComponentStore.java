@@ -20,10 +20,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemIndependent;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.List;
 import java.util.Set;
