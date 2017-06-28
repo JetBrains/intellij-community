@@ -53,9 +53,11 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     Project project = ReadAction.compute(method::getProject);
     final SearchScope searchScope = parameters.getScope();
 
-    if (searchScope instanceof LocalSearchScope &&
-        Arrays.stream(((LocalSearchScope)searchScope).getVirtualFiles()).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE)) {
-      return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+    if (searchScope instanceof LocalSearchScope) {
+      VirtualFile[] files = ((LocalSearchScope)searchScope).getVirtualFiles();
+      if (isJavaOnlyScope(files)) {
+        return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+      }
     }
 
     Iterable<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
@@ -77,6 +79,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       }
     }
     return true;
+  }
+
+  private static boolean isJavaOnlyScope(@NotNull VirtualFile[] files) {
+    return Arrays.stream(files).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE);
   }
 
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
