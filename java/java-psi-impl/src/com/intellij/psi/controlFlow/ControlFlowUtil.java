@@ -1805,9 +1805,16 @@ public class ControlFlowUtil {
   }
 
   public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow) {
-    final InstructionClientVisitor<List<PsiReferenceExpression>> visitor = new ReadBeforeWriteClientVisitor(flow, false);
+    return getReadBeforeWrite(flow, 0);
+  }
+
+  public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow, int startOffset) {
+    if (startOffset < 0 || startOffset >= flow.getSize()) {
+      return Collections.emptyList();
+    }
+    final ReadBeforeWriteClientVisitor visitor = new ReadBeforeWriteClientVisitor(flow, false);
     depthFirstSearch(flow, visitor);
-    return visitor.getResult();
+    return visitor.getResult(startOffset);
   }
 
   private static class ReadBeforeWriteClientVisitor extends InstructionClientVisitor<List<PsiReferenceExpression>> {
@@ -1870,7 +1877,11 @@ public class ControlFlowUtil {
 
     @Override
     public List<PsiReferenceExpression> getResult() {
-      final CopyOnWriteList topReadVariables = readVariables[0];
+      return getResult(0);
+    }
+
+    public List<PsiReferenceExpression> getResult(int startOffset) {
+      final CopyOnWriteList topReadVariables = readVariables[startOffset];
       if (topReadVariables == null) return Collections.emptyList();
 
       final List<PsiReferenceExpression> result = new ArrayList<>();

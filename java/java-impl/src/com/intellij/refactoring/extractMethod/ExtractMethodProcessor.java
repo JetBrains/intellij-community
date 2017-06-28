@@ -1441,118 +1441,78 @@ public class ExtractMethodProcessor implements MatchProvider {
         LOG.assertTrue(parmModifierList != null);
         GenerateMembersUtil.copyAnnotations(modifierList, parmModifierList, SuppressWarnings.class.getName());
 
-        final NullableNotNullManager nullabilityManager = NullableNotNullManager.getInstance(myProject);
-        if (AnnotationUtil.isAnnotated(variable, nullabilityManager.getNullables()) ||
-            AnnotationUtil.isAnnotated(variable, nullabilityManager.getNotNulls()) ||
-            PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
-          final Nullness definitelyNotNull = getDefinitelyNotNull((PsiParameter)variable);
-          final String toAdd;
-          final List<String> toKeep;
-          final List<String> toRemove;
-          switch (definitelyNotNull) {
-            case NOT_NULL:
-              toAdd = nullabilityManager.getDefaultNotNull();
-              toKeep = nullabilityManager.getNotNulls();
-              toRemove = nullabilityManager.getNullables();
-              break;
-            case NULLABLE:
-              toAdd = nullabilityManager.getDefaultNullable();
-              toKeep = nullabilityManager.getNullables();
-              toRemove = nullabilityManager.getNotNulls();
-              break;
-            default:
-              return;
-          }
-          AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
-          if (!AnnotationUtil.isAnnotated(parm, toKeep)) {
-            final PsiAnnotation added = AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parmModifierList);
-            JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(added);
-          }
+        updateNullabilityAnnotation(parm, variable);
+      }
+    }
+  }
+
+  private void updateNullabilityAnnotation(@NotNull PsiParameter parm, @NotNull PsiVariable variable) {
+    final NullableNotNullManager nullabilityManager = NullableNotNullManager.getInstance(myProject);
+    final List<String> notNullAnnotations = nullabilityManager.getNotNulls();
+    final List<String> nullableAnnotations = nullabilityManager.getNullables();
+
+    if (AnnotationUtil.isAnnotated(variable, nullableAnnotations) ||
+        AnnotationUtil.isAnnotated(variable, notNullAnnotations) ||
+        PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, false)) {
+
+      final Boolean isNotNull = isNotNullAt(variable, myElements[0]);
+      if (isNotNull != null) {
+        final List<String> toKeep = isNotNull ? notNullAnnotations : nullableAnnotations;
+        final String[] toRemove = (!isNotNull ? notNullAnnotations : nullableAnnotations).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+
+        AddAnnotationPsiFix.removePhysicalAnnotations(parm, toRemove);
+        if (!AnnotationUtil.isAnnotated(parm, toKeep)) {
+          final String toAdd = isNotNull ? nullabilityManager.getDefaultNotNull() : nullabilityManager.getDefaultNullable();
+          final PsiAnnotation added =
+            AddAnnotationPsiFix.addPhysicalAnnotation(toAdd, PsiNameValuePair.EMPTY_ARRAY, parm.getModifierList());
+          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(added);
         }
       }
     }
   }
 
-  @NotNull
-  private Nullness getDefinitelyNotNull(@NotNull PsiParameter variable) {
-    if (variable.getType() instanceof PsiPrimitiveType) {
-      return Nullness.UNKNOWN;
-    }
-
-    PsiElement parent = variable.getParent();
-    if (parent instanceof PsiParameterList) {
-      final PsiElement grandParent = parent.getParent();
-      String originalMethodText = null;
-      int extractedCodeRelativeOffset = 0;
-
-      // DFA doesn't work with a part of method body or with lambda body when checking a method/lambda parameter
-      // we have to copy the whole method or convert the whole lambda to a method
-      if (grandParent instanceof PsiMethod) {
-        originalMethodText = grandParent.getText();
-        final int methodOffset = grandParent.getTextRange().getStartOffset();
-        final int extractOffset = myElements[0].getTextRange().getStartOffset();
-        extractedCodeRelativeOffset = extractOffset - methodOffset;
+  @Nullable
+  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+    if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
+      final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
+      PsiElement methodOrLambdaBody = null;
+      if (methodOrLambda instanceof PsiMethod) {
+        methodOrLambdaBody = ((PsiMethod)methodOrLambda).getBody();
       }
-      else if (grandParent instanceof PsiLambdaExpression) {
-        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)grandParent;
-        if (lambdaExpression.hasFormalParameterTypes()) {
-          final PsiElement lambdaBody = lambdaExpression.getBody();
-          if (lambdaBody instanceof PsiCodeBlock) {
-            final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(grandParent);
-            if (interfaceMethod != null) {
-              PsiType returnType = interfaceMethod.getReturnType();
-              if (returnType != null) {
-                final PsiParameterList parameterList = lambdaExpression.getParameterList();
-                final String dummyMethodHeader = returnType.getCanonicalText() + " " + interfaceMethod.getName() + parameterList.getText();
-                originalMethodText = dummyMethodHeader + lambdaBody.getText();
-
-                final int bodyOffset = lambdaBody.getTextRange().getStartOffset();
-                final int extractOffset = myElements[0].getTextRange().getStartOffset();
-                extractedCodeRelativeOffset = extractOffset - bodyOffset + dummyMethodHeader.length();
-              }
-            }
-          }
-        }
+      else if (methodOrLambda instanceof PsiLambdaExpression) {
+        methodOrLambdaBody = ((PsiLambdaExpression)methodOrLambda).getBody();
       }
-      if (originalMethodText != null) {
-        // insert a dummy usage of the variable before the extracted fragment, where we're going to check the nullness of the variable
-        final String dummyMethodText = originalMethodText.substring(0, extractedCodeRelativeOffset) +
-                                       "Object _Dummy_ = " + variable.getName() + ";" +
-                                       originalMethodText.substring(extractedCodeRelativeOffset);
-
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-        final PsiMethod dummyMethod;
-        try {
-          dummyMethod = factory.createMethodFromText(dummyMethodText, grandParent.getParent());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.debug("Failed to parse dummy method", dummyMethodText); // probably incomplete code
-          return Nullness.UNKNOWN;
-        }
-        PsiElement atOffset = dummyMethod.findElementAt(extractedCodeRelativeOffset);
-        while (atOffset != null && atOffset.getStartOffsetInParent() == 0) {
-          atOffset = atOffset.getParent();
-        }
-        if (atOffset instanceof PsiDeclarationStatement) {
-          final PsiElement[] declaredElements = ((PsiDeclarationStatement)atOffset).getDeclaredElements();
-          if (declaredElements.length == 1) {
-            final PsiElement declaredElement = declaredElements[0];
-            if (declaredElement instanceof PsiLocalVariable) {
-              final PsiExpression initializer = ((PsiLocalVariable)declaredElement).getInitializer();
-              if (initializer instanceof PsiReferenceExpression) {
-                final int parameterIndex = ((PsiParameterList)parent).getParameterIndex(variable);
-                final PsiParameter dummyParameter = dummyMethod.getParameterList().getParameters()[parameterIndex];
-                if (((PsiReferenceExpression)initializer).isReferenceTo(dummyParameter)) {
-                  final Nullness nullness = DfaUtil.checkNullness(dummyParameter, initializer);
-                  return nullness == Nullness.NOT_NULL ? Nullness.NOT_NULL : Nullness.NULLABLE; // 'unknown' counts as 'nullable'
-                }
-              }
-            }
-          }
+      if (methodOrLambdaBody instanceof PsiCodeBlock) {
+        final PsiReferenceExpression firstReadUsage = findFirstReadUsageAt(variable, startElement);
+        if (firstReadUsage != null) {
+          final Nullness nullness = DfaUtil.checkNullness(variable, firstReadUsage, methodOrLambdaBody);
+          return nullness == Nullness.NOT_NULL;
         }
       }
     }
-    return Nullness.UNKNOWN;
+    return null;
+  }
+
+  @Nullable
+  private static PsiReferenceExpression findFirstReadUsageAt(@NotNull PsiVariable variable, PsiElement startElement) {
+    final PsiCodeBlock closestCodeBlock = PsiTreeUtil.getParentOfType(startElement, PsiCodeBlock.class);
+    if (closestCodeBlock != null) {
+      try {
+        final ControlFlow controlFlow = ControlFlowFactory.getInstance(closestCodeBlock.getProject())
+          .getControlFlow(closestCodeBlock, AllVariablesControlFlowPolicy.getInstance(), false, false);
+
+        final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow);
+        for (PsiReferenceExpression referenceExpression : readBeforeWrite) {
+          if (referenceExpression.isReferenceTo(variable)) {
+            return referenceExpression;
+          }
+        }
+      }
+      catch (AnalysisCanceledException e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -69,9 +69,16 @@ public class DfaUtil {
 
   @NotNull
   public static Nullness checkNullness(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
+    return checkNullness(variable, context, null);
+  }
+
+  @NotNull
+  public static Nullness checkNullness(@Nullable final PsiVariable variable,
+                                       @Nullable final PsiElement context,
+                                       @Nullable final PsiElement outerBlock) {
     if (variable == null || context == null) return Nullness.UNKNOWN;
 
-    final PsiElement codeBlock = DfaPsiUtil.getEnclosingCodeBlock(variable, context);
+    final PsiElement codeBlock = outerBlock == null ? DfaPsiUtil.getEnclosingCodeBlock(variable, context) : outerBlock;
     Map<PsiElement, ValuableInstructionVisitor.PlaceResult> results = codeBlock == null ? null : getCachedPlaceResults(codeBlock);
     ValuableInstructionVisitor.PlaceResult placeResult = results == null ? null : results.get(context);
     if (placeResult == null) {
