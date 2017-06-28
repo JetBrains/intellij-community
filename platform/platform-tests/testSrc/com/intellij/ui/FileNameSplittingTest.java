@@ -123,7 +123,7 @@ public class FileNameSplittingTest extends TestCase {
         for (int j = 0; j < FILE.getPath().length(); j++)
           myPolicy.getPresentableName(FILE, j);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   private void doTest(String expected, int count) {

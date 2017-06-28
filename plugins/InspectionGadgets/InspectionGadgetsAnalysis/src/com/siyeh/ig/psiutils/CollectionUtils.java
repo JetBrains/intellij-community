@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,10 @@ public class CollectionUtils {
     if (resolved == null) {
       return false;
     }
-    return isCollectionClassOrInterface(resolved);
+    return InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+           InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_MAP) ||
+           InheritanceUtil.isInheritor(resolved, "com.google.common.collect.Multimap") ||
+           InheritanceUtil.isInheritor(resolved, "com.google.common.collect.Table");
   }
 
   public static boolean isCollectionClassOrInterface(PsiClass aClass) {

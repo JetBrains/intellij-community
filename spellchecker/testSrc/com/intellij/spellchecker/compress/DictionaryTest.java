@@ -41,15 +41,15 @@ public class DictionaryTest {
 
   @Test
   public void testJBDictionaryPerformance() {
-    Dictionary dictionary = loadDictionaryPerformanceTest(JETBRAINS_DIC, 1000);
-    containsWordPerformanceTest(dictionary, 2000);
+    Dictionary dictionary = loadDictionaryPerformanceTest(JETBRAINS_DIC, 10);
+    containsWordPerformanceTest(dictionary, 5);
     containsWordTest(dictionary);
   }
 
   @Test
   public void testEnglishDictionaryPerformance() {
-    Dictionary dictionary = loadDictionaryPerformanceTest(ENGLISH_DIC, 50000);
-    containsWordPerformanceTest(dictionary, 2000);
+    Dictionary dictionary = loadDictionaryPerformanceTest(ENGLISH_DIC, 500);
+    containsWordPerformanceTest(dictionary, 200);
     containsWordTest(dictionary);
   }
 
@@ -74,7 +74,7 @@ public class DictionaryTest {
 
     PlatformTestUtil.startPerformanceTest(
       "load dictionary", time, () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))
-    ).useLegacyScaling().assertTiming();
+    ).assertTiming();
 
     assertFalse(ref.isNull());
     return ref.get();
@@ -86,7 +86,7 @@ public class DictionaryTest {
       for (String s : wordsToCheck) {
         assertEquals(Boolean.TRUE, dictionary.contains(s));
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   private void containsWordTest(Dictionary dictionary) {

@@ -113,6 +113,7 @@ public abstract class QuickFixFactory {
   @NotNull public abstract IntentionAction createWrapExpressionFix(@NotNull PsiType type, @NotNull PsiExpression expression);
 
   @NotNull public abstract IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable variable);
+  @NotNull public abstract IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable);
 
   @NotNull public abstract IntentionAction createConvertToStringLiteralAction();
 

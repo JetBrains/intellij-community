@@ -124,6 +124,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("s", true, true, true, CommonClassNames.JAVA_LANG_STRING));
   }
 
+  public void testAfterSemicolon() {
+    doTest(new MockIntroduceVariableHandler("s", true, true, true, CommonClassNames.JAVA_LANG_RUNNABLE));
+  }
+
   public void testConflictingField() {
     doTest(new MockIntroduceVariableHandler("name", true, false, true, CommonClassNames.JAVA_LANG_STRING));
   }

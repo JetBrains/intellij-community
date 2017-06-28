@@ -96,8 +96,10 @@ private fun createData(body: LighterASTNode,
 
 fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(methodIndex(method))
 
-private fun methodIndex(method: PsiMethodImpl): Int {
+private fun methodIndex(method: PsiMethodImpl): Int? {
   val file = method.containingFile as PsiFileImpl
+  if (file.elementTypeForStubBuilder == null) return null
+
   val stubTree = try {
     file.stubTree ?: file.calcStubTree()
   } catch (e: ProcessCanceledException) {

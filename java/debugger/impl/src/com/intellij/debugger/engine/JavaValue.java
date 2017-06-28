@@ -306,6 +306,9 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
         if (lastRenderer instanceof ToStringRenderer) {
+          if (lastRenderer instanceof LazyToStringRenderer && !((LazyToStringRenderer)lastRenderer).isCalculated(myValueDescriptor)) {
+            return;
+          }
           value = StringUtil.wrapWithDoubleQuote(value);
         }
         renderer.renderValue(value);

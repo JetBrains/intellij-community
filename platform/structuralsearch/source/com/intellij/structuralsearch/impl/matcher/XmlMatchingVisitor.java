@@ -34,11 +34,6 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     myCaseSensitive = myMatchingVisitor.getMatchContext().getOptions().isCaseSensitiveMatch();
   }
 
-  @Override
-  public void visitElement(final PsiElement element) {
-    myMatchingVisitor.setResult(element.textMatches(element));
-  }
-
   @Override public void visitXmlAttribute(XmlAttribute attribute) {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(attribute.getName());

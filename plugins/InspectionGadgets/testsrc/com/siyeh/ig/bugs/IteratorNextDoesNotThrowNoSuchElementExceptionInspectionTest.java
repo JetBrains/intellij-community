@@ -75,6 +75,23 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "}\n");
   }
 
+  public void testEnumeration() {
+    doTest("import java.util.*;" +
+           "class EnumerationIterator<T> implements Iterator<T> {" +
+           "  Enumeration<T> myEnumeration;" +
+           "  EnumerationIterator(Enumeration<T> enumeration) {" +
+           "    myEnumeration = enumeration;" +
+           "  }" +
+           "  public boolean hasNext() {" +
+           "    return myEnumeration.hasMoreElements();" +
+           "  }" +
+           "  public T next() {" +
+           "    return myEnumeration.nextElement();" +
+           "  }" +
+           "  public void remove() {}" +
+           "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

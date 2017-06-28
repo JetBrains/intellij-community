@@ -213,7 +213,7 @@ public class ResolveClassTest extends ResolveTestCase {
 
     PsiReference ref = configure();
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 500, () -> assertNull(ref.resolve()))
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 50, () -> assertNull(ref.resolve()))
       .attempts(1).assertTiming();
   }
 
@@ -244,8 +244,7 @@ public class ResolveClassTest extends ResolveTestCase {
     }
 
     ensureIndexUpToDate();
-    System.gc();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 20000, () -> assertNull(ref.resolve()))
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> assertNull(ref.resolve()))
       .attempts(1).assertTiming();
   }
 

@@ -133,8 +133,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
-    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
-    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
+    setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
+  }
+
+  private static void setupCustomAnnotations(String pkg, String target, JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface Nullable { }");
+    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface NotNull { }");
     setCustomAnnotations(fixture.getProject(), fixture.getTestRootDisposable(), pkg + ".NotNull", pkg + ".Nullable");
   }
 
@@ -150,5 +154,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
+
+  public void testArrayComponentAndMethodAnnotationConflict() {
+    setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
+    doTest();
+  }
 
 }

@@ -152,6 +152,9 @@
   <action id="Stop">
     <keyboard-shortcut first-keystroke="shift F5"/>
   </action>
+  <action id="StopBackgroundProcesses">
+    <keyboard-shortcut first-keystroke="shift control F5"/>
+  </action>
   <action id="CommentByLineComment">
     <keyboard-shortcut first-keystroke="control SLASH"/>
     <keyboard-shortcut first-keystroke="control DIVIDE"/>

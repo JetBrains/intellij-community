@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Anchor;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.util.ActionData;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
-@TestDataPath("$CONTENT_ROOT/testData/inspections/componentNotRegistered")
+@TestDataPath("$CONTENT_ROOT/../testData/inspections/componentNotRegistered")
 public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
 
   @Override
@@ -38,7 +39,8 @@ public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
     super.setUp();
 
     myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction {}");
-    myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent {}");
+    myFixture.addClass("package com.intellij.openapi.components; public interface BaseComponent {}");
+    myFixture.addClass("package com.intellij.openapi.components; public interface ApplicationComponent extends BaseComponent {}");
 
     myFixture.enableInspections(new ComponentNotRegisteredInspection());
   }
@@ -46,6 +48,18 @@ public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
   public void testRegisteredAction() {
     setPluginXml("registeredAction-plugin.xml");
     myFixture.testHighlighting("RegisteredAction.java");
+  }
+
+  public void testRegisteredActionInIDEAProject() {
+    PsiUtil.markAsIdeaProject(getProject(), true);
+
+    try {
+      myFixture.copyFileToProject("registeredAction-plugin.xml", "someOtherPluginXmlName.xml");
+      myFixture.testHighlighting("RegisteredAction.java");
+    }
+    finally {
+      PsiUtil.markAsIdeaProject(getProject(), false);
+    }
   }
 
   public void testRegisteredActionInOptionalPluginDescriptor() {
@@ -65,6 +79,10 @@ public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
     myFixture.launchAction(registerAction);
 
     myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredAction-plugin_after.xml", true);
+  }
+
+  public void testUnregisteredActionUsedViaConstructor() {
+    myFixture.testHighlighting("UnregisteredActionUsedViaConstructor.java");
   }
 
   public void testRegisteredApplicationComponent() {

@@ -15,12 +15,10 @@
  */
 package com.intellij.java.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
@@ -30,6 +28,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -110,15 +109,15 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      PsiManager.getInstance(getProject()).dropPsiCaches();
       doHighlighting();
-    }).usesAllCPUCores().useLegacyScaling().assertTiming();
+    }).usesAllCPUCores().assertTiming();
 
     return highlightErrors();
   }
 
   public void testAThinlet() throws Exception {
-    List<HighlightInfo> errors = doTest(Math.max(10000, 24000 - JobSchedulerImpl.CORES_COUNT * 1000));
+    List<HighlightInfo> errors = doTest(1000);
     if (1170 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
@@ -126,7 +125,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   }
 
   public void testAClassLoader() throws Exception {
-    List<HighlightInfo> errors = doTest(Math.max(1000, 10000 - JobSchedulerImpl.CORES_COUNT * 1000));
+    List<HighlightInfo> errors = doTest(150);
     if (92 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
@@ -145,7 +144,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
 
-    List<HighlightInfo> infos = startTest(Math.max(1000, 10000 - JobSchedulerImpl.CORES_COUNT * 1000));
+    List<HighlightInfo> infos = startTest(200);
     assertEmpty(infos);
   }
 }

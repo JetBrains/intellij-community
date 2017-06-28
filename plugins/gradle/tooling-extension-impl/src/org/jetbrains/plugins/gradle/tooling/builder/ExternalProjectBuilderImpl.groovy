@@ -259,9 +259,23 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
 
-      def firstClassesDir = is4OrBetter ? sourceSet.output.classesDirs.files.find { true } : sourceSet.output.classesDir
-      resourcesDirectorySet.gradleOutputDir = chooseNotNull(
-        sourceSet.output.resourcesDir, firstClassesDir, project.buildDir)
+      if (is4OrBetter) {
+        if (sourceSet.output.resourcesDir) {
+          resourcesDirectorySet.addGradleOutputDir(sourceSet.output.resourcesDir)
+        }
+        else {
+          for (File outDir : sourceSet.output.classesDirs.files) {
+            resourcesDirectorySet.addGradleOutputDir(outDir)
+          }
+          if (resourcesDirectorySet.gradleOutputDirs.isEmpty()) {
+            resourcesDirectorySet.addGradleOutputDir(project.buildDir)
+          }
+        }
+      }
+      else {
+        resourcesDirectorySet.addGradleOutputDir(chooseNotNull(
+          sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir))
+      }
 
       def ideaOutDir = new File(project.projectDir, "out/" + (SourceSet.MAIN_SOURCE_SET_NAME == sourceSet.name ? "production" : GUtil.toLowerCamelCase(sourceSet.name)))
       resourcesDirectorySet.outputDir = new File(ideaOutDir, "resources")
@@ -270,7 +284,18 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      javaDirectorySet.gradleOutputDir = chooseNotNull(firstClassesDir, project.buildDir)
+      if (is4OrBetter) {
+        for (File outDir : sourceSet.output.classesDirs.files) {
+          javaDirectorySet.addGradleOutputDir(outDir)
+        }
+        if (javaDirectorySet.gradleOutputDirs.isEmpty()) {
+          javaDirectorySet.addGradleOutputDir(project.buildDir)
+        }
+      }
+      else {
+        javaDirectorySet.addGradleOutputDir(chooseNotNull(sourceSet.output.classesDir, project.buildDir))
+      }
+
       javaDirectorySet.outputDir = new File(ideaOutDir, "classes")
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
@@ -289,7 +314,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
           generatedDirectorySet = new DefaultExternalSourceDirectorySet()
           generatedDirectorySet.name = "generated " + javaDirectorySet.name
           generatedDirectorySet.srcDirs = files
-          generatedDirectorySet.gradleOutputDir = javaDirectorySet.outputDir
+          generatedDirectorySet.addGradleOutputDir(javaDirectorySet.outputDir)
           generatedDirectorySet.outputDir = javaDirectorySet.outputDir
           generatedDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
         }
@@ -329,7 +354,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def testDirectorySet = new DefaultExternalSourceDirectorySet()
             testDirectorySet.name = javaDirectorySet.name
             testDirectorySet.srcDirs = testDirs
-            testDirectorySet.gradleOutputDir = javaDirectorySet.outputDir
+            testDirectorySet.addGradleOutputDir(javaDirectorySet.outputDir)
             testDirectorySet.outputDir = javaDirectorySet.outputDir
             testDirectorySet.inheritedCompilerOutput = javaDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST, testDirectorySet)
@@ -342,7 +367,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def testResourcesDirectorySet = new DefaultExternalSourceDirectorySet()
             testResourcesDirectorySet.name = resourcesDirectorySet.name
             testResourcesDirectorySet.srcDirs = testResourcesDirs
-            testResourcesDirectorySet.gradleOutputDir = resourcesDirectorySet.outputDir
+            testResourcesDirectorySet.addGradleOutputDir(resourcesDirectorySet.outputDir)
             testResourcesDirectorySet.outputDir = resourcesDirectorySet.outputDir
             testResourcesDirectorySet.inheritedCompilerOutput = resourcesDirectorySet.isCompilerOutputPathInherited()
             sources.put(ExternalSystemSourceType.TEST_RESOURCE, testResourcesDirectorySet)
@@ -359,7 +384,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
               def testGeneratedDirectorySet = new DefaultExternalSourceDirectorySet()
               testGeneratedDirectorySet.name = generatedDirectorySet.name
               testGeneratedDirectorySet.srcDirs = testGeneratedDirs
-              testGeneratedDirectorySet.gradleOutputDir = generatedDirectorySet.outputDir
+              testGeneratedDirectorySet.addGradleOutputDir(generatedDirectorySet.outputDir)
               testGeneratedDirectorySet.outputDir = generatedDirectorySet.outputDir
               testGeneratedDirectorySet.inheritedCompilerOutput = generatedDirectorySet.isCompilerOutputPathInherited()
 
@@ -404,7 +429,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
             generatedDirectorySet.name = "generated " + mainSourceSet.name
             generatedDirectorySet.srcDirs.addAll(mainAdditionalGenDirs)
-            generatedDirectorySet.gradleOutputDir = mainSourceDirectorySet.outputDir
+            generatedDirectorySet.addGradleOutputDir(mainSourceDirectorySet.outputDir)
             generatedDirectorySet.outputDir = mainSourceDirectorySet.outputDir
             generatedDirectorySet.inheritedCompilerOutput = mainSourceDirectorySet.isCompilerOutputPathInherited()
             mainSourceSet.sources.put(ExternalSystemSourceType.SOURCE_GENERATED, generatedDirectorySet)
@@ -432,7 +457,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
             def generatedDirectorySet = new DefaultExternalSourceDirectorySet()
             generatedDirectorySet.name = "generated " + testSourceSet.name
             generatedDirectorySet.srcDirs.addAll(testAdditionalGenDirs)
-            generatedDirectorySet.gradleOutputDir = testSourceDirectorySet.outputDir
+            generatedDirectorySet.addGradleOutputDir(testSourceDirectorySet.outputDir)
             generatedDirectorySet.outputDir = testSourceDirectorySet.outputDir
             generatedDirectorySet.inheritedCompilerOutput = testSourceDirectorySet.isCompilerOutputPathInherited()
             testSourceSet.sources.put(ExternalSystemSourceType.TEST_GENERATED, generatedDirectorySet)

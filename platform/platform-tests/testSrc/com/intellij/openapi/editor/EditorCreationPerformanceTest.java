@@ -23,7 +23,7 @@ public class EditorCreationPerformanceTest extends AbstractEditorTest {
   public void testOpeningEditorWithManyLines() throws Exception {
     Document document = EditorFactory.getInstance().createDocument(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
-    PlatformTestUtil.startPerformanceTest("Editor creation", 750, () -> {
+    PlatformTestUtil.startPerformanceTest("Editor creation", 75, () -> {
       Editor editor = EditorFactory.getInstance().createEditor(document);
       try {
         LOG.debug(String.valueOf(editor.getContentComponent().getPreferredSize()));

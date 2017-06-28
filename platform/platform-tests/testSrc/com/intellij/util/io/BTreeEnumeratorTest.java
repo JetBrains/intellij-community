@@ -56,10 +56,15 @@ public class BTreeEnumeratorTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myEnumerator.close();
-    IOUtil.deleteAllFilesStartingWith(myFile);
-    assertTrue(!myFile.exists());
-    super.tearDown();
+    try {
+      myEnumerator.close();
+      IOUtil.deleteAllFilesStartingWith(myFile);
+      assertTrue(!myFile.exists());
+    }
+    finally {
+      super.tearDown();
+      
+    }
   }
 
   public void testAddEqualStrings() throws IOException {
@@ -104,14 +109,14 @@ public class BTreeEnumeratorTest extends TestCase {
     int id1 = myEnumerator.enumerate(COLLISION_1);
     
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
     
     int id2 = myEnumerator.enumerate(COLLISION_2);
     assertFalse(id1 == id2);
 
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
     assertEquals(id2, myEnumerator.tryEnumerate(COLLISION_2));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate("some string"));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate("some string"));
     
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
@@ -174,7 +179,7 @@ public class BTreeEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 2500, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();
@@ -182,7 +187,7 @@ public class BTreeEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
     myEnumerator.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }

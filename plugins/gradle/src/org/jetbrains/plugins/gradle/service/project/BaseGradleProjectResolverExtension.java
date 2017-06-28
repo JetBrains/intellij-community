@@ -384,11 +384,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             moduleData.setCompileOutputPath(sourceType, outputDir.getAbsolutePath());
             moduleData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
 
-            File gradleOutputDir = sourceDirectorySet.getGradleOutputDir();
+
             String gradleOutputPath = moduleData.getCompileOutputPath(sourceType);
-            if(!gradleOutputDir.getPath().equals(outputDir.getPath())) {
-              gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(gradleOutputDir.getAbsolutePath());
-              moduleOutputsMap.put(gradleOutputPath, Pair.create(moduleData.getId(), sourceType));
+            for (File gradleOutputDir : sourceDirectorySet.getGradleOutputDirs()) {
+              if(!gradleOutputDir.getPath().equals(outputDir.getPath())) {
+                gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(gradleOutputDir.getAbsolutePath());
+                moduleOutputsMap.put(gradleOutputPath, Pair.create(moduleData.getId(), sourceType));
+              }
             }
 
             Map<ExternalSystemSourceType, String> map = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS);

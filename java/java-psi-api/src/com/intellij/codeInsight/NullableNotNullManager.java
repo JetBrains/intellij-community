@@ -245,11 +245,35 @@ public abstract class NullableNotNullManager {
   private PsiAnnotation findPlainNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Set<String> qNames = ContainerUtil.newHashSet(getNullablesWithNickNames());
     qNames.addAll(getNotNullsWithNickNames());
-    return checkBases && owner instanceof PsiMethod
-           ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
-           : AnnotationUtil.findAnnotation(owner, qNames);
+    PsiAnnotation memberAnno = checkBases && owner instanceof PsiMethod
+                               ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
+                               : AnnotationUtil.findAnnotation(owner, qNames);
+    if (memberAnno != null) {
+      if (owner instanceof PsiMethod) {
+        return preferTypeAnnotation(memberAnno, ((PsiMethod)owner).getReturnType());
+      }
+      if (owner instanceof PsiVariable) {
+        return preferTypeAnnotation(memberAnno, ((PsiVariable)owner).getType());
+      }
+    }
+    return memberAnno;
   }
 
+  private static PsiAnnotation preferTypeAnnotation(@NotNull PsiAnnotation memberAnno, @Nullable PsiType type) {
+    if (type != null) {
+      for (PsiAnnotation typeAnno : type.getApplicableAnnotations()) {
+        if (areDifferentNullityAnnotations(memberAnno, typeAnno)) {
+          return typeAnno;
+        }
+      }
+    }
+    return memberAnno;
+  }
+
+  private static boolean areDifferentNullityAnnotations(@NotNull PsiAnnotation memberAnno, PsiAnnotation typeAnno) {
+    return isNullableAnnotation(typeAnno) && isNotNullAnnotation(memberAnno) ||
+        isNullableAnnotation(memberAnno) && isNotNullAnnotation(typeAnno);
+  }
 
   @NotNull
   protected List<String> getNullablesWithNickNames() {

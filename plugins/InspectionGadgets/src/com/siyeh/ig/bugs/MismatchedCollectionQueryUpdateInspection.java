@@ -38,8 +38,9 @@ public class MismatchedCollectionQueryUpdateInspection
 
     String ignoreClassesMessage = InspectionGadgetsBundle.message("ignored.class.names");
     final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, ignoreClassesMessage));
-    final JPanel ignoredClassesPanel = UiUtils.createAddRemoveTreeClassChooserPanel(ignoredClassesTable, ignoreClassesMessage,
-                                                                                    CommonClassNames.JAVA_UTIL_COLLECTION);
+    final JPanel ignoredClassesPanel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(ignoredClassesTable, ignoreClassesMessage, CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                   CommonClassNames.JAVA_UTIL_MAP);
 
     final JPanel namesPanel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
     namesPanel.add(queryNamesPanel);

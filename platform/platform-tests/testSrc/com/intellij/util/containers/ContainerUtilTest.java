@@ -161,7 +161,7 @@ public class ContainerUtilTest {
   @Test
   public void testCOWListPerformanceAdd() {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
-    PlatformTestUtil.startPerformanceTest("COWList add", 15000, () -> {
+    PlatformTestUtil.startPerformanceTest("COWList add", 3500, () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
         for (int i = 0; i < 15000; i++) {

@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.util.text;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.junit.Test;
 
 import java.util.Random;
@@ -31,11 +29,15 @@ public class StringUtilPerformanceTest {
   public void containsAnyChar() throws Exception {
     assertTrue(StringUtil.containsAnyChar(TEST_STRING, Integer.toString(new Random().nextInt())));
 
-    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", SystemInfo.isWindows ? 500 : 200, () -> {
+    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", 300, () -> {
       for (int i = 0; i < 1000000; i++) {
-        StringUtil.containsAnyChar(TEST_STRING, "XYZ");
-        StringUtil.containsAnyChar("XYZ", TEST_STRING);
+        if (StringUtil.containsAnyChar(TEST_STRING, "XYZ")) {
+          throw new AssertionError();
+        }
+        if (StringUtil.containsAnyChar("XYZ", TEST_STRING)) {
+          throw new AssertionError();
+        }
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 }

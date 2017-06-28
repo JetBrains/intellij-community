@@ -17,13 +17,15 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -32,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -45,8 +48,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 class IdeStartupScripts implements ApplicationComponent {
@@ -56,26 +57,31 @@ class IdeStartupScripts implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    scheduleStartupScriptsExecution();
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) return;
+    MessageBusConnection connection = application.getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      Future<List<Pair<VirtualFile, IdeScriptEngine>>> future;
+      @Override
+      public void projectOpened(Project project) {
+        if (future == null) {
+          future = PooledThreadExecutor.INSTANCE.submit(() -> prepareScriptsAndEngines());
+        }
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+          if (!project.isOpen()) return;
+          connection.disconnect();
+          runAllScriptsImpl(project, future);
+        });
+      }
+    });
   }
 
-  private static void scheduleStartupScriptsExecution() {
+  @NotNull
+  private static List<Pair<VirtualFile, IdeScriptEngine>> prepareScriptsAndEngines() {
     List<VirtualFile> scripts = getScripts();
     LOG.info(scripts.size() + " startup script(s) found");
-    if (scripts.isEmpty()) return;
+    if (scripts.isEmpty()) return Collections.emptyList();
 
-    ProjectUtil.runWhenProjectOpened(project -> new MyProjectOpenedHandler(prepareScriptEnginesAsync(scripts)));
-  }
-
-  @NotNull
-  private static Future<List<Pair<VirtualFile, IdeScriptEngine>>> prepareScriptEnginesAsync(@NotNull final List<VirtualFile> scripts) {
-    return PooledThreadExecutor.INSTANCE.submit(() -> prepareScriptEngines(scripts));
-  }
-
-  @NotNull
-  private static List<Pair<VirtualFile, IdeScriptEngine>> prepareScriptEngines(@NotNull List<VirtualFile> scripts) {
     IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
     List<Pair<VirtualFile, IdeScriptEngine>> result = ContainerUtil.newArrayList();
     for (VirtualFile script : scripts) {
@@ -129,49 +135,30 @@ class IdeStartupScripts implements ApplicationComponent {
     return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
   }
 
-  private static class MyProjectOpenedHandler implements Consumer<Project> {
-    final AtomicBoolean myScriptsExecutionStarted;
-    private final Future<List<Pair<VirtualFile, IdeScriptEngine>>> myScriptsAndEnginesFuture;
-
-    public MyProjectOpenedHandler(@NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture) {
-      myScriptsAndEnginesFuture = scriptsAndEnginesFuture;
-      myScriptsExecutionStarted = new AtomicBoolean();
-    }
-
-    @Override
-    public void accept(@NotNull Project project) {
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-        if (project.isDisposed()) return;
-        if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
-        runAllScriptsImpl(project);
-      });
-    }
-
-    private void runAllScriptsImpl(@NotNull Project project) {
-      try {
-        for (Pair<VirtualFile, IdeScriptEngine> pair : myScriptsAndEnginesFuture.get()) {
-          try {
-            if (pair.second == null) {
-              LOG.warn(pair.first.getPath() + " not supported (no script engine)");
-            }
-            else {
-              runImpl(project, pair.first, pair.second);
-            }
+  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> future) {
+    try {
+      for (Pair<VirtualFile, IdeScriptEngine> pair : future.get()) {
+        try {
+          if (pair.second == null) {
+            LOG.warn(pair.first.getPath() + " not supported (no script engine)");
           }
-          catch (Exception e) {
-            LOG.warn(e);
+          else {
+            runImpl(project, pair.first, pair.second);
           }
         }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
       }
-      catch (ProcessCanceledException e) {
-        LOG.warn("... cancelled");
-      }
-      catch (InterruptedException e) {
-        LOG.warn("... interrupted");
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+    }
+    catch (ProcessCanceledException e) {
+      LOG.warn("... cancelled");
+    }
+    catch (InterruptedException e) {
+      LOG.warn("... interrupted");
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 }
