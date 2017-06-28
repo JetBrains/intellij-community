@@ -132,6 +132,8 @@ public interface PsiResolveHelper {
 
   boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass);
 
+  boolean isAccessible(@NotNull PsiPackage pkg, @NotNull PsiElement place);
+
   /**
    * @return {@link PsiType#NULL} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise
    */

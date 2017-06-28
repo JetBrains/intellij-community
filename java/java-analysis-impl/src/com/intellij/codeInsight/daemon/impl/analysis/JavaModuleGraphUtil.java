@@ -65,11 +65,11 @@ public class JavaModuleGraphUtil {
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
-  public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @NotNull PsiJavaModule target) {
+  public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
     Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
       Result.create(exportsMap(source), source.getContainingFile()));
     Set<String> targets = exports.get(packageName);
-    return targets != null && (targets.isEmpty() || targets.contains(target.getName()));
+    return targets != null && (targets.isEmpty() || target != null && targets.contains(target.getName()));
   }
 
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {

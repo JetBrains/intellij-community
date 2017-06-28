@@ -1057,9 +1057,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
-      if (!myHolder.hasErrorResults() && resolved != null && myJavaModule != null) {
-        myHolder.add(ModuleHighlightUtil.checkPackageAccessibility(ref, resolved, myJavaModule));
-      }
     }
   }
 
@@ -1303,10 +1300,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (psiClass != null) {
         myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
-    }
-
-    if (!myHolder.hasErrorResults() && resolved != null && myJavaModule != null) {
-      myHolder.add(ModuleHighlightUtil.checkPackageAccessibility(expression, resolved, myJavaModule));
     }
   }
 

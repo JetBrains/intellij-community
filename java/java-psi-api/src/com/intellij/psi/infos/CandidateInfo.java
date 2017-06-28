@@ -134,6 +134,9 @@ public class CandidateInfo implements JavaResolveResult {
             accessible = !isAccessedThroughTypeParameterBound();
           }
         }
+        else if (myCandidate instanceof PsiPackage) {
+          accessible = helper.isAccessible((PsiPackage)myCandidate, myPlace);
+        }
       }
 
       myAccessible = accessible;

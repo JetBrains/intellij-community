@@ -323,7 +323,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (qualifier instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY, this, false)};
   }
 
   @NotNull

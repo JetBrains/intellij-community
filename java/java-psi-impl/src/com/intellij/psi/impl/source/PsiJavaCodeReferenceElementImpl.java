@@ -466,7 +466,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
           return JavaPsiFacade.getInstance(project).isPartOfPackagePrefix(packageName) ?
                  CandidateInfo.RESOLVE_RESULT_FOR_PACKAGE_PREFIX_PACKAGE : JavaResolveResult.EMPTY_ARRAY;
         }
-        return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+        return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY, this, false)};
       }
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
       case CLASS_OR_PACKAGE_NAME_KIND: {

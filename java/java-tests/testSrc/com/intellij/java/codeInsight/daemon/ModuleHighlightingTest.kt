@@ -215,7 +215,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
@@ -225,25 +225,36 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("test.java", """
         import pkg.m2.C2;
         import pkg.m2.*;
-        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>;
-        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl</error>.*;
-        import <error descr="A named module cannot access packages of an unnamed one">pkg.m4.C4</error>;
-        import <error descr="The module 'M' does not have the module 'M5' in requirements">pkg.m5.C5</error>;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.*;
+        import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
+        import <error descr="Package 'pkg.m5' is declared in module 'M5', but module 'M' does not read it">pkg.m5</error>.C5;
         import pkg.m7.C7;
 
         import pkg.lib1.LC1;
-        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl.LC1Impl</error>;
-        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl</error>.*;
+        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.LC1Impl;
+        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.*;
 
         import pkg.lib2.LC2;
         import pkg.lib2.impl.LC2Impl;
 
-        import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
+        import static <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make;
 
-        /** See also {@link C2Impl#make} */
+        import java.util.List;
+        import java.util.function.Supplier;
+
+        /** See also {@link C2Impl#I} and {@link C2Impl#make} */
         class C {{
-          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">C2Impl</error>.make();
-          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make();
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.I = 0;
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.make();
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.I = 1;
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make();
+
+          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>> l1 = null;
+          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl> l2 = null;
+
+          Supplier<C2> s1 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>::make;
+          Supplier<C2> s2 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl::make;
         }}
         """.trimIndent())
   }
@@ -289,7 +300,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addTestFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
@@ -299,25 +310,36 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("test.java", """
         import pkg.m2.C2;
         import pkg.m2.*;
-        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>;
-        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl</error>.*;
-        import <error descr="A named module cannot access packages of an unnamed one">pkg.m4.C4</error>;
-        import <error descr="The module 'M' does not have the module 'M5' in requirements">pkg.m5.C5</error>;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.*;
+        import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
+        import <error descr="Package 'pkg.m5' is declared in module 'M5', but module 'M' does not read it">pkg.m5</error>.C5;
         import pkg.m7.C7;
 
         import pkg.lib1.LC1;
-        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl.LC1Impl</error>;
-        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl</error>.*;
+        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.LC1Impl;
+        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.*;
 
         import pkg.lib2.LC2;
         import pkg.lib2.impl.LC2Impl;
 
-        import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
+        import static <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make;
 
-        /** See also {@link C2Impl#make} */
+        import java.util.List;
+        import java.util.function.Supplier;
+
+        /** See also {@link C2Impl#I} and {@link C2Impl#make} */
         class C {{
-          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">C2Impl</error>.make();
-          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make();
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.I = 0;
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.make();
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.I = 1;
+          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make();
+
+          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>> l1 = null;
+          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl> l2 = null;
+
+          Supplier<C2> s1 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>::make;
+          Supplier<C2> s2 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl::make;
         }}
         """.trimIndent(), true)
   }

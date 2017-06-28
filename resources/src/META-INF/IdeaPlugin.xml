@@ -329,6 +329,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -1994,6 +1995,8 @@
     <codeInsight.intention.jvmCommonIntentionActionsFactory language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
 
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
+
+    <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
