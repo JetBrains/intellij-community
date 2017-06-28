@@ -29,6 +29,9 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
@@ -37,11 +40,11 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
@@ -58,10 +61,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -534,12 +534,22 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public PyExpression findAssignedValue() {
     PyPsiUtils.assertValid(this);
-    PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
+    final CachedValuesManager manager = CachedValuesManager.getManager(getProject());
+    return manager.getCachedValue(this,
+                                  () -> Result
+                                    .create(findAssignedValueInternal(), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private PyExpression findAssignedValueInternal() {
+    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(this, PyAssignmentStatement.class);
     if (assignment != null) {
-      List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
-      for (Pair<PyExpression, PyExpression> pair : mapping) {
+      final List<Pair<PyExpression, PyExpression>> mapping = assignment.getTargetsToValuesMapping();
+      for (final Pair<PyExpression, PyExpression> pair : mapping) {
         PyExpression assigned_to = pair.getFirst();
-        if (assigned_to == this) return pair.getSecond();
+        if (assigned_to == this) {
+          return pair.getSecond();
+        }
       }
     }
     return null;
@@ -743,7 +753,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (withPart != null && PsiTreeUtil.isAncestor(withPart.getTarget(), this, false)) {
         forOrWith = as(withPart.getParent(), PyWithStatement.class);
       }
-      
+
       if (forOrWith != null) {
         comment = PyUtil.getCommentOnHeaderLine(forOrWith);
       }
@@ -758,7 +768,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (stub != null) {
       return stub.getTypeComment();
     }
-    
+
     final PsiComment comment = getTypeComment();
     if (comment != null) {
       return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
