@@ -115,13 +115,16 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
         if (resolved == null) return;
+        if (resolved == field) {
+          result.set(Boolean.FALSE);
+          return;
+        }
         if (PsiTreeUtil.isAncestor(ctrOrInitializer, resolved, false) && !PsiTreeUtil.isAncestor(initializer, resolved, false)) {
           // resolved somewhere inside constructor but outside initializer
           result.set(Boolean.FALSE);
+          return;
         }
-        if (resolved instanceof PsiMember &&
-            resolved != field &&
-            ((PsiMember)resolved).getContainingClass() == field.getContainingClass()) {
+        if (resolved instanceof PsiMember && ((PsiMember)resolved).getContainingClass() == field.getContainingClass()) {
           if (field.hasModifierProperty(PsiModifier.STATIC) ||
             !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
             // refers to another field/method of the same class (except referring from non-static member to static)
