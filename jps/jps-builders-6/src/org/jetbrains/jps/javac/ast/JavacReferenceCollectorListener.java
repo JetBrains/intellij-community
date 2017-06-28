@@ -116,7 +116,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
       if (e.getKind() == TaskEvent.Kind.ANALYZE) {
         // javac creates an event on each processed top level declared class not file
         final CompilationUnitTree unit = e.getCompilationUnit();
-        final String fileName = e.getSourceFile().getName();
+        final String fileName = e.getSourceFile().toUri().getPath();
 
         Tree declarationToProcess = myTreeUtility.getTree(e.getTypeElement());
 
