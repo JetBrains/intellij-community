@@ -70,10 +70,9 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    Nullness x = getTypeNullability(resultType);
-    if (x != Nullness.UNKNOWN) return x;
+    if (owner == null) return getTypeNullability(resultType);
 
-    if (owner == null || resultType instanceof PsiPrimitiveType) {
+    if (resultType instanceof PsiPrimitiveType) {
       return Nullness.UNKNOWN;
     }
 
@@ -90,6 +89,9 @@ public class DfaPsiUtil {
     if (isNotNullLocally(owner)) {
       return Nullness.NOT_NULL;
     }
+
+    Nullness fromType = getTypeNullability(resultType);
+    if (fromType != Nullness.UNKNOWN) return fromType;
 
     if (PsiJavaPatterns.psiParameter().withParents(PsiParameterList.class, PsiLambdaExpression.class).accepts(owner)) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)owner.getParent().getParent();

@@ -160,4 +160,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testMethodVsExpressionTypeAnnotationConflict() {
+    setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
+    doTest();
+  }
+
 }
