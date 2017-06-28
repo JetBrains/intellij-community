@@ -243,7 +243,7 @@ public class PluginGroups {
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
-    featuredPlugins.put("Angular", "Web Development:Angular 1&2 support:AngularJS");
+    featuredPlugins.put("Angular", "Web Development:Support for AngularJS and Angular:AngularJS");
     featuredPlugins.put("Atlassian Connector",
                         "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
   }
