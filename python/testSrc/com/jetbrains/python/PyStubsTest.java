@@ -824,4 +824,15 @@ public class PyStubsTest extends PyTestCase {
       assertNull(message, stub);
     }
   }
+
+  // PY-18816
+  public void testParametrizedBaseClass() {
+    final PyFile file = getTestFile();
+    final PyClass genericClass = file.findTopLevelClass("Class");
+    final PyClassStub stub = genericClass.getStub();
+    assertNotNull(stub);
+    final List<String> genericBases = stub.getSubscriptedSuperClasses();
+    assertContainsOrdered(genericBases, "Generic[T, V]");
+    assertNotParsed(file);
+  }
 }
