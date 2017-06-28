@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +35,11 @@ public class JBIntSpinner extends JSpinner {
     JFormattedTextField textField = editor.getTextField();
     setBackground(textField.getBackground());
     textField.setColumns(Math.max(4, textField.getColumns()));
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      textField.setHorizontalAlignment(SwingConstants.LEFT);
+    }
+
     setEditor(editor);
     final MyListener listener = new MyListener();
     addMouseWheelListener(listener);
@@ -92,9 +98,9 @@ public class JBIntSpinner extends JSpinner {
         JTextField textField = getTextField();
         if (textField.isEnabled() ) {
           MouseEvent event = SwingUtilities.convertMouseEvent(component, e, textField);
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+            IdeFocusManager.getGlobalInstance().requestFocus(textField, true)
+          );
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> textField.dispatchEvent(event));
         }
@@ -108,9 +114,7 @@ public class JBIntSpinner extends JSpinner {
         return;
       }
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        getTextField().selectAll();
-      });
+      SwingUtilities.invokeLater(() -> getTextField().selectAll());
     }
 
 

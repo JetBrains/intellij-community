@@ -38,6 +38,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,6 +116,11 @@ public class CreatePatchConfigurationPanel {
     myEncoding = new ComboBox<>();
     myWarningLabel = new JLabel();
     myToFileButton = new JBRadioButton(VcsBundle.message("create.patch.file.path"), true);
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      myToFileButton.setBorder(JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP));
+    }
+
     myToClipboardButton = new JBRadioButton(VcsBundle.message("create.patch.to.clipboard"));
     ButtonGroup group = new ButtonGroup();
     group.add(myToFileButton);

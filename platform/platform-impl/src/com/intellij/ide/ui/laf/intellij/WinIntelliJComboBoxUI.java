@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -377,6 +378,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       editorHoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);
 
+      JComponent jEditor = (JComponent)editor;
+      jEditor.setOpaque(false);
+      jEditor.setBorder(DEFAULT_EDITOR_BORDER);
+
       if (editor instanceof JTextComponent) {
         editor.addFocusListener(editorFocusListener);
         editor.addMouseListener(editorHoverListener);
@@ -386,12 +391,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           etf.addFocusListener(editorFocusListener);
           etf.addMouseListener(editorHoverListener);
           etf.setBackground(getComboBackground(true));
+
+          int topBorderWidth = editor instanceof ComboBoxCompositeEditor ? 1 : 2;
+          jEditor.setBorder(JBUI.Borders.emptyTop(topBorderWidth));
         }
       }
-
-      JComponent jc = (JComponent)editor;
-      jc.setBorder(DEFAULT_EDITOR_BORDER);
-      jc.setOpaque(false);
     }
   }
 
@@ -494,15 +498,21 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
+  protected Insets getInsets() {
+    return getBorderInsets(comboBox);
+  }
+
+  @Override
   public Insets getBorderInsets(Component c) {
     return c.getComponentOrientation().isLeftToRight() ?
            JBUI.insets(2, 6, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 6).asUIResource();
   }
 
-  private Dimension getSizeWithButton(Dimension d) {
+  private Dimension  getSizeWithButton(Dimension d) {
     Insets i = comboBox.getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
-    return new Dimension(Math.max(d.width + JBUI.scale(10), width), ARROW_BUTTON_SIZE.height);
+    return new Dimension(Math.max(d.width + JBUI.scale(10), width),
+                         Math.max(ARROW_BUTTON_SIZE.height, d.height));
   }
 
   @Override

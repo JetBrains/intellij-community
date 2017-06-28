@@ -95,11 +95,19 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
     if (UIUtil.getParentOfType(JSpinner.class, c) == null) { // Fill whole rectangle in spinner
       JBInsets.removeFrom(r, JBUI.insets(2));
 
-      if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
-        JBInsets.removeFrom(r, JBUI.insets(2, 0));
-      }
+      adjustInWrapperRect(r, c);
     }
     g2.fill(r);
+  }
+
+  static void adjustInWrapperRect(Rectangle r, Component c) {
+    if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+      int delta = c.getHeight() - c.getPreferredSize().height;
+      if (delta > 0) {
+        delta -= delta % 2 == 0 ? 0 : 1;
+        JBInsets.removeFrom(r, JBUI.insets(delta / 2, 0));
+      }
+    }
   }
 
   @Override public Dimension getPreferredSize(JComponent c) {

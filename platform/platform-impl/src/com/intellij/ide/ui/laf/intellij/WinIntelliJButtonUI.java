@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -104,8 +105,20 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     }
 
     // Draw border for emptyBorder buttons
-    if (!(c.getBorder() instanceof WinIntelliJButtonBorder) && !isComboButton(c)) {
+    if (!(c.getBorder() instanceof WinIntelliJButtonBorder)) {
       WinIntelliJButtonBorder.paint(c, g, 0, 0, c.getWidth(), c.getHeight());
+    }
+  }
+
+  @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
+    if (!isComboButton(b)) {
+      JBInsets.removeFrom(rect, b.getInsets());
+    }
+
+    if (isComboButton(b)) {
+      rect.x += JBUI.scale(5);
+    } else if (b instanceof JBOptionButton) {
+      rect.x -= JBUI.scale(4);
     }
   }
 
