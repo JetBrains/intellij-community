@@ -38,6 +38,11 @@ public interface EduPluginConfigurator {
   @NotNull
   String getTestFileName();
 
+  @NotNull
+  default String getStepikDefaultLanguage() {
+    return "";
+  }
+
   /**
    * Creates content (including its directory or module) of new lesson in project
    *

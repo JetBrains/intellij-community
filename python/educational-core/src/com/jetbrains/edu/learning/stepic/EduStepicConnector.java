@@ -130,7 +130,7 @@ public class EduStepicConnector {
     return null;
   }
 
-  private static StepicWrappers.CoursesContainer getCoursesFromStepik(@Nullable StepicUser user, URI url) throws IOException {
+  public static StepicWrappers.CoursesContainer getCoursesFromStepik(@Nullable StepicUser user, URI url) throws IOException {
     final StepicWrappers.CoursesContainer coursesContainer;
     if (user != null) {
       coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
@@ -201,10 +201,6 @@ public class EduStepicConnector {
 
   private static void setCourseLanguage(RemoteCourse info) {
     String courseType = info.getType();
-    if (info.isAdaptive() && StringUtil.isEmptyOrSpaces(courseType)) {
-      info.setLanguage("Python");
-      return;
-    }
     final int separator = courseType.indexOf(" ");
     assert separator != -1;
     final String language = courseType.substring(separator + 1);
