@@ -416,6 +416,7 @@ nohistory
 noinline
 noinspection
 noinspections
+nolint
 nologging
 nomapping
 nomaxvalue
