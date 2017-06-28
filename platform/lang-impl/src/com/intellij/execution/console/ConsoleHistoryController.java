@@ -82,6 +82,7 @@ public class ConsoleHistoryController {
 
   /** @noinspection MismatchedQueryAndUpdateOfCollection*/
   private final static FactoryMap<String, ConsoleHistoryModel> ourModels = new FactoryMap<String, ConsoleHistoryModel>() {
+    @NotNull
     @Override
     protected Map<String, ConsoleHistoryModel> createMap() {
       return ContainerUtil.createConcurrentWeakValueMap();

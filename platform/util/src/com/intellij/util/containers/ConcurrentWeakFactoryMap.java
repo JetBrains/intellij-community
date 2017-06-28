@@ -16,6 +16,8 @@
 
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Map;
 
 /**
@@ -23,6 +25,7 @@ import java.util.Map;
  */
 public abstract class ConcurrentWeakFactoryMap<T,V> extends FactoryMap<T,V>{
 
+  @NotNull
   @Override
   protected Map<T, V> createMap() {
     return ContainerUtil.createConcurrentWeakMap();

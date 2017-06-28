@@ -234,6 +234,7 @@ public class ResourceBundlePropertiesUpdateManager {
       myKeys = new ArrayList<>(properties.size());
       myKeyIndices = new FactoryMap<String, IntArrayList>() {
 
+        @NotNull
         @Override
         protected Map<String, IntArrayList> createMap() {
           return new THashMap<>(properties.size());

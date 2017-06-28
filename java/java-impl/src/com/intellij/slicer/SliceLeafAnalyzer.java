@@ -172,6 +172,7 @@ public class SliceLeafAnalyzer {
 
   public static Map<SliceNode, Collection<PsiElement>> createMap() {
     return new FactoryMap<SliceNode, Collection<PsiElement>>() {
+      @NotNull
       @Override
       protected Map<SliceNode, Collection<PsiElement>> createMap() {
         return ContainerUtil.newConcurrentMap(ContainerUtil.<SliceNode>identityStrategy());
