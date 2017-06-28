@@ -68,7 +68,7 @@ public class ChoiceTask extends Task {
         if (user == null) {
           return new StudyCheckResult(StudyStatus.Unchecked, StudyCheckAction.FAILED_CHECK_LAUNCH);
         }
-        return EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask, user);
+        return EduAdaptiveStepicConnector.checkChoiceTask(myTask, user);
       }
 
       @Override
