@@ -83,6 +83,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
 
         @SuppressWarnings("unchecked") // Checked one line above
         final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
+        Assert.assertTrue("Should use module sdk", typedConfiguration.isUseModuleSdk());
         checkConfiguration(typedConfiguration, elementToRightClickOn);
       }
     }), ModalityState.NON_MODAL);
