@@ -255,6 +255,14 @@ final class Effects implements Result {
     this.effects = effects;
   }
 
+  Effects combine(Effects other) {
+    if(this.equals(other)) return this;
+    Set<EffectQuantum> newEffects = new HashSet<>(this.effects);
+    newEffects.addAll(other.effects);
+    DataValue newReturnValue = this.returnValue.equals(other.returnValue) ? this.returnValue : DataValue.UnknownDataValue1;
+    return new Effects(newReturnValue, newEffects);
+  }
+
   Stream<EKey> dependencies() {
     return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
   }

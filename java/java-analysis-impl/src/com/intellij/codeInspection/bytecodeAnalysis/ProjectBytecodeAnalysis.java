@@ -352,22 +352,19 @@ public class ProjectBytecodeAnalysis {
       ProgressManager.checkCanceled();
       EKey hKey = queue.pop();
 
+      Map<EKey, Effects> allEquations = new HashMap<>();
       for (Equations equations : myEquationProvider.getEquations(hKey.method)) {
         boolean stable = equations.stable;
         for (DirectionResultPair pair : equations.results) {
           int dirKey = pair.directionKey;
           if (dirKey == hKey.dirKey) {
             Effects effects = (Effects)pair.result;
-            puritySolver.addEquation(new EKey(hKey.method, dirKey, stable, false), effects);
-            effects.dependencies().forEach(depKey -> {
-              if (!queued.contains(depKey)) {
-                queue.push(depKey);
-                queued.add(depKey);
-              }
-            });
+            allEquations.merge(new EKey(hKey.method, dirKey, stable, false), effects, Effects::combine);
+            effects.dependencies().filter(queued::add).forEach(queue::push);
           }
         }
       }
+      allEquations.forEach(puritySolver::addEquation);
     }
   }
 
