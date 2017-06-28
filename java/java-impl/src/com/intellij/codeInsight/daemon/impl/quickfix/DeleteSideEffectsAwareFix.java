@@ -48,16 +48,11 @@ public class DeleteSideEffectsAwareFix implements IntentionAction, LowPriorityAc
     }
     else {
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
-      if (statements.length == 1) {
-        if (statements[0] instanceof PsiIfStatement) {
-          myMessage = QuickFixBundle.message("extract.side.effects.convert.to.if");
-        }
-        else {
-          myMessage = QuickFixBundle.message("extract.side.effects.single");
-        }
+      if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
+        myMessage = QuickFixBundle.message("extract.side.effects.convert.to.if");
       }
       else {
-        myMessage = QuickFixBundle.message("extract.side.effects.multiple");
+        myMessage = QuickFixBundle.message("extract.side.effects", statements.length);
       }
     }
   }
