@@ -642,6 +642,11 @@ public class JBUI {
     public float scaleVal(float value) {
       return value * getAligningScale();
     }
+
+    @Override
+    public String toString() {
+      return getClass().getName() + " " + getIconWidth() + "x" + getIconHeight();
+    }
   }
 
   /**
