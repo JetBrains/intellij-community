@@ -16,10 +16,9 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SystemIndependent;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.ArrayList;

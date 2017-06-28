@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package org.jetbrains.annotations;
 
 import java.lang.annotation.*;
 
@@ -24,7 +24,6 @@ import java.lang.annotation.*;
  *
  * @see PathUtil#toSystemIndependentName(String)
  * @see PathUtil#toSystemDependentName(String)
- * @see PathUtil#assertArgumentIsSystemIndependent
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)

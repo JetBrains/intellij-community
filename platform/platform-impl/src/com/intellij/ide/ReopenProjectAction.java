@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemIndependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.awt.event.InputEvent;
 import java.io.File;

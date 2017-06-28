@@ -17,7 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.SystemIndependent;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;

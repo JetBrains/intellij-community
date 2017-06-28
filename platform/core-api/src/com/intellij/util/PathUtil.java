@@ -133,7 +133,7 @@ public class PathUtil {
    * <p>
    * The violations are reported via the <code>LOG.error</code>.
    * <p>
-   * This method is used by <code>SystemIndependentInstrumentingBuilder</code>.
+   * TODO SystemIndependentInstrumentingBuilder now embeds assertions directly, so we can remove this method.
    *
    * @param className     Class name
    * @param methodName    Method name
