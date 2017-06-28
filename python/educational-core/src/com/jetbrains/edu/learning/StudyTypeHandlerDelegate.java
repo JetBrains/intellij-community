@@ -2,12 +2,14 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.jetbrains.edu.coursecreator.CCUtils;
@@ -63,10 +65,11 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
       String text = String
         .format("<html>To edit this placeholder <a href=\"%s\">activate</a> it or <a href=\"%s\">switch to subtask %d</a></html>", ACTIVATE,
                 SWITCH, userVisibleSubtaskNum);
-      MyHyperlinkListener listener = new MyHyperlinkListener(taskFile, placeholder, file, editor, project, toSubtask);
-      HintManager.getInstance().showInformationHint(editor, HintUtil.createInformationLabel(text,
-                                                                                            listener, null,
-                                                                                            null));
+      MyHyperlinkAdapter listener = new MyHyperlinkAdapter(taskFile, placeholder, file, editor, project, toSubtask);
+      Balloon balloon =
+        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), listener)
+          .setHideOnLinkClick(true).createBalloon();
+      balloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(editor), Balloon.Position.below);
       return Result.STOP;
     }
     boolean insidePlaceholder = taskFile.getAnswerPlaceholder(offset) != null;
@@ -85,7 +88,8 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
     }
   }
 
-  private static class MyHyperlinkListener extends HyperlinkAdapter {
+  private static class MyHyperlinkAdapter extends HyperlinkAdapter {
+
     private final TaskFile myTaskFile;
     private final AnswerPlaceholder myPlaceholder;
     private final PsiFile myFile;
@@ -93,12 +97,12 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
     private final Project myProject;
     private final Integer myToSubtask;
 
-    public MyHyperlinkListener(TaskFile taskFile,
-                               AnswerPlaceholder placeholder,
-                               PsiFile file,
-                               Editor editor,
-                               Project project,
-                               Integer toSubtask) {
+    public MyHyperlinkAdapter(TaskFile taskFile,
+                              AnswerPlaceholder placeholder,
+                              PsiFile file,
+                              Editor editor,
+                              Project project,
+                              Integer toSubtask) {
       myTaskFile = taskFile;
       myPlaceholder = placeholder;
       myFile = file;
@@ -108,15 +112,12 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
     }
 
     @Override
-    protected void hyperlinkActivated(
-      HyperlinkEvent e) {
+    protected void hyperlinkActivated(HyperlinkEvent e) {
       String description = e.getDescription();
       if (ACTIVATE.equals(description)) {
         activatePlaceholder(myTaskFile, myPlaceholder,
                             myFile, myEditor,
                             myProject);
-        HintManager.getInstance().hideAllHints();
-        return;
       }
       if (SWITCH.equals(description)) {
         StudySubtaskUtils.switchStep(myProject,
