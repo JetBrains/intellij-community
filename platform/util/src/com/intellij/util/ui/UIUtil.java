@@ -3066,8 +3066,12 @@ public class UIUtil {
     }
   }
 
-  public static boolean isSelectionButtonDown(MouseEvent e) {
+  public static boolean isSelectionButtonDown(@NotNull MouseEvent e) {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
+  }
+
+  public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
+    return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
   }
 
   @SuppressWarnings("deprecation")
