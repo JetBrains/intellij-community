@@ -253,7 +253,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 5000, () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
@@ -272,7 +272,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }).ioBound().useLegacyScaling().assertTiming();
+    }).ioBound().assertTiming();
 
     myMap.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
@@ -286,7 +286,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       strings.add(createRandomString());
     }
 
-    PlatformTestUtil.startPerformanceTest("put/remove", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 1500, () -> {
       for (int i = 0; i < 100000; ++i) {
         final String string = strings.get(i);
         myMap.put(string, string);
@@ -305,7 +305,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       for (String string : strings) {
         myMap.remove(string);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
     myMap.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
     LOG.debug(String.format("Data file size = %d bytes\n",

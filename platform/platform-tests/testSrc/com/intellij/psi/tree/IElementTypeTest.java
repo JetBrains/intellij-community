@@ -151,7 +151,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testInitialRegisterPerformance() {
-    PlatformTestUtil.startPerformanceTest("IElementType add", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("IElementType add", 50, () -> {
       Language language = Language.ANY;
       IElementType[] old = IElementType.push(IElementType.EMPTY_ARRAY);
       try {
@@ -163,6 +163,6 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
       finally {
         IElementType.push(old);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 }

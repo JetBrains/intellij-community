@@ -596,10 +596,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = () -> assertSize(lineCount, findUsages(findModel));
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in global", 400, test).attempts(2).usesAllCPUCores().useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in global", 70, test).attempts(2).usesAllCPUCores().assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", 400, test).attempts(2).usesAllCPUCores().useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in local", 70, test).attempts(2).usesAllCPUCores().assertTiming();
     }
     finally {
       fixture.tearDown();

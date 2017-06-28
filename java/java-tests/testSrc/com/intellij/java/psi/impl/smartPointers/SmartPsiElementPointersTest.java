@@ -674,14 +674,14 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     final Document document = file.getViewProvider().getDocument();
     assertNotNull(document);
 
-    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
+    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10000, () -> {
       document.setText(StringUtil.repeat("foo foo \n", 50000));
       for (int i = 0; i < 10000; i++) {
         document.insertString(i * 20 + 100, "x\n");
         assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
         assertEquals(range, pointer.getRange());
       }
-    }).useLegacyScaling().assertTiming());
+    }).assertTiming());
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals(range, pointer.getRange());
@@ -918,7 +918,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 2000, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 500, () -> {
       List<SmartPsiFileRange> pointers = new ArrayList<>();
       for (int i = 0; i < text.length() - 1; i++) {
         pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));

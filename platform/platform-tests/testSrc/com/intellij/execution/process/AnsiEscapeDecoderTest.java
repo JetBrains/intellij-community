@@ -180,7 +180,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
     //noinspection CodeBlock2Expr
     withProcessHandlerFrom(testProcess, handler -> {
-      PlatformTestUtil.startPerformanceTest("ansi color", 15000, () -> {
+      PlatformTestUtil.startPerformanceTest("ansi color", 7000, () -> {
         for (int i = 0; i < 2_000_000; i++) {
           handler.notifyTextAvailable(i + "Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n",
                                       ProcessOutputTypes.STDOUT);

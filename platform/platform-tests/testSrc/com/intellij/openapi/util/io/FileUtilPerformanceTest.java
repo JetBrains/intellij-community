@@ -30,35 +30,35 @@ public class FileUtilPerformanceTest {
   public void toCanonicalPath() throws Exception {
     assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
-    PlatformTestUtil.startPerformanceTest("toCanonicalPath", 1000, () -> {
+    PlatformTestUtil.startPerformanceTest("toCanonicalPath", 650, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   @Test
   public void toCanonicalPathSimple() throws Exception {
     assertEquals(mySimpleTestPath, FileUtil.toCanonicalPath(mySimpleTestPath));
 
-    PlatformTestUtil.startPerformanceTest("toCanonicalPathSimple", 50, () -> {
+    PlatformTestUtil.startPerformanceTest("toCanonicalPathSimple", 210, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(mySimpleTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 8 : canonicalPath;
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   @Test
   public void isAncestor() throws Exception {
     assertTrue(FileUtil.isAncestor(myTestPath, myCanonicalPath, false));
 
-    PlatformTestUtil.startPerformanceTest("isAncestor", 4000, () -> {
+    PlatformTestUtil.startPerformanceTest("isAncestor", 3000, () -> {
       for (int i = 0; i < 1000000; ++i) {
         assert FileUtil.isAncestor(myTestPath, myCanonicalPath, false);
         assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 }

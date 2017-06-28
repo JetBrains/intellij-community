@@ -683,7 +683,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testOnlyUnderscoresPerformance() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 120, () -> {
       String small = StringUtil.repeat("_", 50000);
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
@@ -692,7 +692,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testRepeatedLetterPerformance() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 30, () -> {
       String big = StringUtil.repeat("Aaaaaa", 50000);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);

@@ -106,11 +106,12 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigFilePerformance() throws Exception {
-    configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
-
     try {
       myIgnoreInfos = true;
-      PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 25000, () -> doDoTest(true, false)).useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("Big ant file highlighting", 15_000, () -> {
+        configureByFiles(null, getVirtualFile(getTestName(false) + ".xml"), getVirtualFile("buildserver.xml"), getVirtualFile("buildserver.properties"));
+        doDoTest(true, false);
+      }).assertTiming();
     }
     finally {
       myIgnoreInfos = false;
