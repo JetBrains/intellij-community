@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
@@ -29,11 +26,13 @@ import java.util.List;
 /**
  * plugin.dtd:component interface.
  */
+@Stubbed
 public interface Component extends DomElement {
 
   @NotNull
   @Required
   @Convert(PluginPsiClassConverter.class)
+  @Stubbed
   GenericDomValue<PsiClass> getImplementationClass();
 
 
@@ -44,7 +43,7 @@ public interface Component extends DomElement {
 
   @NotNull
   @Convert(PluginPsiClassConverter.class)
-  @ExtendClass(allowEmpty=true)
+  @ExtendClass(allowEmpty = true)
   GenericDomValue<PsiClass> getHeadlessImplementationClass();
 
   @NotNull

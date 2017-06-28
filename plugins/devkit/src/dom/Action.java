@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// Generated on Wed Nov 07 17:26:02 MSK 2007
-// DTD/Schema  :    plugin.dtd
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
@@ -70,6 +67,7 @@ public interface Action extends ActionOrGroup {
         @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
 		allowNonPublic = true, allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
+        @Stubbed
         GenericAttributeValue<PsiClass> getClazz();
 
 

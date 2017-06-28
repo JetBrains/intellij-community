@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "    Element:id:com.intellij.myPlugin\n" +
                   "    Element:name:pluginName\n" +
                   "    Element:depends:anotherPlugin\n" +
+                  "      Attribute:config-file:anotherPlugin.xml\n" +
                   "    Element:module\n" +
                   "      Attribute:value:myModule\n" +
                   "    Element:extensionPoints\n" +
@@ -48,16 +49,29 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Element:action\n" +
                   "        Attribute:id:actionId\n" +
                   "        Attribute:text:actionText\n" +
+                  "        Attribute:class:actionClass\n" +
                   "      Element:group\n" +
                   "        Attribute:id:groupId\n" +
+                  "        Attribute:class:groupClass\n" +
                   "        Element:action\n" +
                   "          Attribute:id:groupAction\n" +
                   "          Attribute:text:groupActionText\n" +
+                  "          Attribute:class:actionClass\n" +
                   "        Element:group\n" +
                   "          Attribute:id:nestedGroup\n" +
                   "          Element:action\n" +
                   "            Attribute:id:nestedGroupActionId\n" +
-                  "            Attribute:text:nestedGroupActionText\n");
+                  "            Attribute:text:nestedGroupActionText\n" +
+                  "            Attribute:class:actionClass\n" +
+                  "    Element:application-components\n" +
+                  "      Element:component\n" +
+                  "        Element:implementation-class:applicationComponentClass\n" +
+                  "    Element:project-components\n" +
+                  "      Element:component\n" +
+                  "        Element:implementation-class:projectComponentClass\n" +
+                  "    Element:module-components\n" +
+                  "      Element:component\n" +
+                  "        Element:implementation-class:moduleComponentClass\n");
   }
 
   public void testXInclude() {
