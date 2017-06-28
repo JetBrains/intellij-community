@@ -173,6 +173,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     });
   }
 
+  public void clearFullValueEvaluator() {
+    myFullValueEvaluator = null;
+  }
+
   private void updateText() {
     myText.clear();
     XValueMarkers<?, ?> markers = myTree.getValueMarkers();
