@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 
 public class VcsInitialization implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsInitialization");
@@ -125,29 +126,38 @@ public class VcsInitialization implements Disposable {
         // dispose happens without prior project close (most likely light project case in tests)
         // get out of write action and wait there
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(this::waitForCompletion);
+        SwingUtilities.invokeLater(this::waitNotRunning);
       }
       else {
-        waitForCompletion();
+        waitNotRunning();
       }
     }
   }
 
-  void waitForCompletion() {
-    LOG.debug("waitForCompletion() status=" + myStatus);
+  void waitNotRunning() {
+    waitFor(status -> status != Status.RUNNING);
+  }
+
+  void waitFinished() {
+    waitFor(status -> status == Status.FINISHED);
+  }
+
+  private void waitFor(@NotNull Predicate<Status> predicate) {
+    LOG.debug("waitFor() status=" + myStatus);
     // have to wait for task completion to avoid running it in background for closed project
     long start = System.currentTimeMillis();
     Status status = null;
     while (System.currentTimeMillis() < start + 10000) {
       synchronized (myLock) {
-        if ((status=myStatus) != Status.RUNNING) {
+        status = myStatus;
+        if (predicate.test(status)) {
           break;
         }
       }
       TimeoutUtil.sleep(10);
     }
     if (status == Status.RUNNING) {
-      LOG.error("Failed to wait for completion of VCS initialization for project "+ myProject,
+      LOG.error("Failed to wait for completion of VCS initialization for project " + myProject,
                 new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
     }
   }

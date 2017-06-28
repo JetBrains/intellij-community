@@ -62,7 +62,6 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
     super.setUp();
 
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
-    myVcsManager.waitForInitialized();
 
     myVcs = new MockAbstractVcs(getProject());
     myProvider = new MockCommittedChangesProvider();
@@ -72,6 +71,8 @@ public class CommittedChangesCacheTest extends PlatformTestCase {
 
     myVcsManager.registerVcs(myVcs);
     myVcsManager.setDirectoryMappings(singletonList(new VcsDirectoryMapping("", myVcs.getName())));
+    myVcsManager.waitForInitialized();
+    assertTrue(myVcsManager.hasActiveVcss());
 
     myCache = CommittedChangesCache.getInstance(getProject());
     assertEquals(1, myCache.getCachesHolder().getAllCaches().size());
