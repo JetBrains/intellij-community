@@ -246,13 +246,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     iconRect.setBounds(0, 0, 0, 0);
 
     viewRect.setBounds(0, 0, width, height);
-    JBInsets.removeFrom(viewRect, b.getInsets());
-
-    if (isComboButton(b)) {
-      viewRect.x += 6;
-    } else if (b instanceof JBOptionButton) {
-      viewRect.x -= 4;
-    }
+    modifyViewRect(b, viewRect);
 
     // layout the text and icon
     return SwingUtilities.layoutCompoundLabel(
@@ -260,5 +254,15 @@ public class DarculaButtonUI extends BasicButtonUI {
       b.getVerticalAlignment(), b.getHorizontalAlignment(),
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
       viewRect, iconRect, textRect, text == null ? 0 : b.getIconTextGap());
+  }
+
+  protected void modifyViewRect(AbstractButton b, Rectangle rect) {
+    JBInsets.removeFrom(rect, b.getInsets());
+
+    if (isComboButton(b)) {
+      rect.x += 6;
+    } else if (b instanceof JBOptionButton) {
+      rect.x -= 4;
+    }
   }
 }

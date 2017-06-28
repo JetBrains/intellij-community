@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.net.HttpProxyConfigurable;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.config.SvnConfigureProxiesDialog;
 import org.jetbrains.idea.svn.svnkit.SvnKitManager;
@@ -160,8 +161,17 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     final long connection = configuration.getSshConnectionTimeout() <= maximum ? configuration.getSshConnectionTimeout() : maximum;
     final long read = configuration.getSshReadTimeout() <= maximum ? configuration.getSshReadTimeout() : maximum;
     mySSHConnectionTimeout =
-      new JSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
-    mySSHReadTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
-    myHttpTimeout = new JSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+      createSpinner(new SpinnerNumberModel(Long.valueOf(connection / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+    mySSHReadTimeout = createSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+    myHttpTimeout = createSpinner(new SpinnerNumberModel(Long.valueOf(read / 1000), Long.valueOf(0L), maximum, Long.valueOf(10L)));
+  }
+
+  private static JSpinner createSpinner(SpinnerModel sm) {
+    JSpinner result = new JSpinner(sm);
+    JComponent editor = result.getEditor();
+    if (UIUtil.isUnderWin10LookAndFeel() && editor instanceof JSpinner.DefaultEditor) {
+      ((JSpinner.DefaultEditor)editor).getTextField().setHorizontalAlignment(SwingConstants.RIGHT);
+    }
+    return result;
   }
 }

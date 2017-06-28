@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -391,7 +392,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           etf.addMouseListener(editorHoverListener);
           etf.setBackground(getComboBackground(true));
 
-          jEditor.setBorder(JBUI.Borders.emptyTop(2));
+          int topBorderWidth = editor instanceof ComboBoxCompositeEditor ? 1 : 2;
+          jEditor.setBorder(JBUI.Borders.emptyTop(topBorderWidth));
         }
       }
     }
@@ -496,12 +498,17 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
+  protected Insets getInsets() {
+    return getBorderInsets(comboBox);
+  }
+
+  @Override
   public Insets getBorderInsets(Component c) {
     return c.getComponentOrientation().isLeftToRight() ?
            JBUI.insets(2, 6, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 6).asUIResource();
   }
 
-  private Dimension  getSizeWithButton(Dimension d) {
+  private Dimension getSizeWithButton(Dimension d) {
     Insets i = comboBox.getInsets();
     int width = ARROW_BUTTON_SIZE.width + i.left;
     return new Dimension(Math.max(d.width + JBUI.scale(10), width),

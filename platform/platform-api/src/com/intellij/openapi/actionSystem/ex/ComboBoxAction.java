@@ -405,11 +405,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public void paintComponent(Graphics g) {
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      final Dimension size = getSize();
+    public void paint(Graphics g) {
+      Dimension size = getSize();
 
-      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) {
         super.paint(g);
       } else {
         UISettings.setupAntialiasing(g);
@@ -418,6 +417,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         final Color textColor = isEnabled()
                                 ? UIManager.getColor("Panel.foreground")
                                 : UIUtil.getInactiveTextColor();
+
         if (myForceTransparent) {
           final Icon icon = getIcon();
           int x = 7;
@@ -431,9 +431,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             g.setColor(textColor);
             UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
           }
-        }
-        else {
-
+        } else {
           if (isSmallVariant()) {
             final Graphics2D g2 = (Graphics2D)g;
             g2.setColor(UIUtil.getControlColor());
@@ -452,21 +450,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                     new JBColor(SystemInfo.isMac ? Gray._198 : Gray._208, Gray._128)));
               }
             }
-            if (UIUtil.isUnderWin10LookAndFeel()) {
-              g2.setColor(getBackground());
-              g2.fillRect(2, 0, w - 2, h);
-            } else {
-              g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
-            }
+
+            g2.fillRoundRect(2, 0, w - 2, h, 5, 5);
 
             Color borderColor = myMouseInside ? new JBColor(Gray._111, Gray._118) : new JBColor(Gray._151, Gray._95);
             g2.setPaint(borderColor);
-            if (UIUtil.isUnderWin10LookAndFeel()) {
-              g2.setColor(myMouseInside ? Gray.x96 : Gray.xAD);
-              g2.drawRect(2, 0, w - 3, h - 1);
-            } else {
-              g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
-            }
+            g2.drawRoundRect(2, 0, w - 3, h - 1, 5, 5);
 
             final Icon icon = getIcon();
             int x = 7;
@@ -486,23 +475,30 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           }
         }
       }
-      final Insets insets = super.getInsets();
-      final Icon icon = getArrowIcon(isEnabled());
-      int x;
+
+      Insets insets = super.getInsets();
+      Icon icon = getArrowIcon(isEnabled());
+      boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+
+      int x = size.width - icon.getIconWidth();
       if (isEmpty) {
-        x = (size.width - icon.getIconWidth()) / 2;
-      }
-      else {
-        if (isSmallVariant()) {
-          x = size.width - icon.getIconWidth() - insets.right + 1;
-          if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-            x-=3;
-          } else if (UIUtil.isUnderWin10LookAndFeel()) {
-            x -= JBUI.scale(3);
+        x /= 2;
+      } else {
+        if (UIUtil.isUnderWin10LookAndFeel()) {
+          x -= JBUI.scale(5);
+        } else {
+          x -= insets.right;
+
+          if (isSmallVariant()) {
+            x += JBUI.scale(1);
+
+            if (UIUtil.isUnderDefaultMacTheme()) {
+              x -= JBUI.scale(3);
+            }
           }
-        }
-        else {
-          x = size.width - icon.getIconWidth() - insets.right + (UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+          else {
+            x += JBUI.scale(UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+          }
         }
       }
 

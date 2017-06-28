@@ -21,10 +21,7 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -352,7 +349,11 @@ public class DarculaUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
+      if (UIUtil.getParentOfType(ComboBoxCompositeEditor.class, c) != null) {
+        return JBUI.emptyInsets().asUIResource();
+      } else {
+        return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
+      }
     }
   }
 
