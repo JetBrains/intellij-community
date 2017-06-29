@@ -23,7 +23,6 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -68,8 +67,6 @@ public class PushController implements Disposable {
   @NotNull private final List<PushSupport<Repository, PushSource, PushTarget>> myPushSupports;
   @NotNull private final PushLog myPushLog;
   @NotNull private final VcsPushDialog myDialog;
-  @NotNull private final PushSettings myPushSettings;
-  @NotNull private final Set<String> myExcludedRepositoryRoots;
   @Nullable private final Repository myCurrentlyOpenedRepository;
   private final List<PrePushHandler> myHandlers = ContainerUtil.newArrayList();
   private final boolean mySingleRepoProject;
@@ -82,10 +79,8 @@ public class PushController implements Disposable {
                         @NotNull VcsPushDialog dialog,
                         @NotNull List<? extends Repository> preselectedRepositories, @Nullable Repository currentRepo) {
     myProject = project;
-    myPushSettings = ServiceManager.getService(project, PushSettings.class);
     ContainerUtil.addAll(myHandlers, PrePushHandler.EP_NAME.getExtensions(project));
     myGlobalRepositoryManager = VcsRepositoryManager.getInstance(project);
-    myExcludedRepositoryRoots = ContainerUtil.newHashSet(myPushSettings.getExcludedRepoRoots());
     myPreselectedRepositories = preselectedRepositories;
     myCurrentlyOpenedRepository = currentRepo;
     myPushSupports = getAffectedSupports();
@@ -170,8 +165,7 @@ public class PushController implements Disposable {
 
   private boolean shouldPreSelect(@NotNull MyRepoModel model) {
     Repository repository = model.getRepository();
-    return preselectByUser(repository) ||
-           (notExcludedByUser(repository) && model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories());
+    return preselectByUser(repository) || model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories();
   }
 
   private RepositoryNode findNodeByRepo(@Nullable final Repository repository) {
@@ -242,7 +236,6 @@ public class PushController implements Disposable {
       @Override
       public void onTargetChanged(T newTarget) {
         repoNode.setChecked(true);
-        myExcludedRepositoryRoots.remove(model.getRepository().getRoot().getPath());
         if (!newTarget.equals(model.getTarget()) || model.hasError() || !model.hasCommitInfo()) {
           model.setTarget(newTarget);
           model.clearErrors();
@@ -253,14 +246,8 @@ public class PushController implements Disposable {
       @Override
       public void onSelectionChanged(boolean isSelected) {
         myDialog.updateOkActions();
-        if (isSelected) {
-          boolean forceLoad = myExcludedRepositoryRoots.remove(model.getRepository().getRoot().getPath());
-          if (!model.hasCommitInfo() && (forceLoad || !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories())) {
-            loadCommits(model, repoNode, false);
-          }
-        }
-        else {
-          myExcludedRepositoryRoots.add(model.getRepository().getRoot().getPath());
+        if (isSelected && !model.hasCommitInfo() && !model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
+          loadCommits(model, repoNode, false);
         }
       }
 
@@ -373,9 +360,7 @@ public class PushController implements Disposable {
           List<? extends VcsFullCommitDetails> commits = outgoing1.getCommits();
           model.setLoadedCommits(commits);
           shouldBeSelected = shouldSelectNodeAfterLoad(model);
-          myPushLog.setChildren(node,
-                                getPresentationForCommits(PushController.this.myProject, model.getLoadedCommits(),
-                                                          model.getNumberOfShownCommits()));
+          myPushLog.setChildren(node, getPresentationForCommits(myProject, model.getLoadedCommits(), model.getNumberOfShownCommits()));
           if (!commits.isEmpty()) {
             myPushLog.selectIfNothingSelected(node);
           }
@@ -403,10 +388,6 @@ public class PushController implements Disposable {
   private boolean shouldSelectNodeAfterLoad(@NotNull MyRepoModel model) {
     if (mySingleRepoProject) return true;
     return hasCommitsToPush(model) && model.isSelected();
-  }
-
-  private boolean notExcludedByUser(@NotNull Repository repository) {
-    return !myExcludedRepositoryRoots.contains(repository.getRoot().getPath());
   }
 
   private boolean preselectByUser(@NotNull Repository repository) {
@@ -494,7 +475,6 @@ public class PushController implements Disposable {
     Task.Backgroundable task = new Task.Backgroundable(myProject, "Pushing...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myPushSettings.saveExcludedRepoRoots(myExcludedRepositoryRoots);
         for (PushSupport support : myPushSupports) {
           doPushSynchronously(support, force);
         }
