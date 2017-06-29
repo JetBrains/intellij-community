@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="annotations-internal" exported="" />
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="extensions" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
