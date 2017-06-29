@@ -15,95 +15,166 @@
  */
 package com.intellij.openapi.externalSystem
 
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleServiceManager
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-
-private const val EXTERNAL_SYSTEM_MODULE_GROUP_KEY = "external.system.module.group"
-private const val LINKED_PROJECT_PATH_KEY = "external.linked.project.path"
-private const val LINKED_PROJECT_ID_KEY = "external.linked.project.id"
-private const val EXTERNAL_SYSTEM_MODULE_TYPE_KEY = "external.system.module.type"
-private const val EXTERNAL_SYSTEM_MODULE_VERSION_KEY = "external.system.module.version"
-private const val ROOT_PROJECT_PATH_KEY = "external.root.project.path"
+import com.intellij.openapi.roots.ProjectModelElement
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Transient
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 @Suppress("DEPRECATION")
-class ExternalSystemModulePropertyManager(private val module: Module) {
+@State(name = "ExternalSystem")
+class ExternalSystemModulePropertyManager(module: Module) : PersistentStateComponent<ExternalOptionStateComponent>, ProjectModelElement {
+  override fun getExternalSource() = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
+
+  private var store = if (module.project.isExternalStorageEnabled) ExternalOptionStateComponent() else ExternalOptionStateModule(module)
+
+  override fun getState() = store as? ExternalOptionStateComponent
+
+  override fun loadState(state: ExternalOptionStateComponent) {
+    store = state
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(module: Module) = ModuleServiceManager.getService(module, ExternalSystemModulePropertyManager::class.java)!!
   }
 
   @Suppress("DEPRECATION")
-  fun getExternalSystemId() = module.getOptionValue(EXTERNAL_SYSTEM_ID_KEY)
+  fun getExternalSystemId() = store.externalSystem
 
-  fun getExternalModuleType() = module.getOptionValue(EXTERNAL_SYSTEM_MODULE_TYPE_KEY)
+  fun getExternalModuleType() = store.externalSystemModuleType
 
-  fun getExternalModuleVersion() = module.getOptionValue(EXTERNAL_SYSTEM_MODULE_VERSION_KEY)
+  fun getExternalModuleVersion() = store.externalSystemModuleVersion
 
-  fun getExternalModuleGroup() = module.getOptionValue(EXTERNAL_SYSTEM_MODULE_GROUP_KEY)
+  fun getExternalModuleGroup() = store.externalSystemModuleGroup
 
-  fun getLinkedProjectId() = module.getOptionValue(LINKED_PROJECT_ID_KEY)
+  fun getLinkedProjectId() = store.linkedProjectId
 
-  fun getRootProjectPath() = module.getOptionValue(ROOT_PROJECT_PATH_KEY)
+  fun getRootProjectPath() = store.rootProjectPath
 
-  fun getLinkedProjectPath() = module.getOptionValue(LINKED_PROJECT_PATH_KEY)
+  fun getLinkedProjectPath() = store.linkedProjectPath
 
   @Suppress("DEPRECATION")
-  fun isMavenized() = "true" == module.getOptionValue(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY)
+  fun isMavenized() = store.isMavenized
 
   @Suppress("DEPRECATION")
   fun setMavenized(mavenized: Boolean) {
-    module.setOption(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY, if (mavenized) "true" else null)
-
-    if (!mavenized) {
-      return
+    if (mavenized) {
+      // clear external system API options
+      // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
+      unlinkExternalOptions()
     }
-
-    // clear external system API options
-    // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
-    module.setOption(EXTERNAL_SYSTEM_ID_KEY, null)
-    module.setOption(LINKED_PROJECT_PATH_KEY, null)
-    module.setOption(ROOT_PROJECT_PATH_KEY, null)
-    module.setOption(EXTERNAL_SYSTEM_MODULE_GROUP_KEY, null)
-    module.setOption(EXTERNAL_SYSTEM_MODULE_VERSION_KEY, null)
+    // must be after unlinkExternalOptions
+    store.isMavenized = mavenized
   }
 
   fun unlinkExternalOptions() {
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, null)
-    module.setOption(LINKED_PROJECT_ID_KEY, null)
-    module.setOption(LINKED_PROJECT_PATH_KEY, null)
-    module.setOption(ROOT_PROJECT_PATH_KEY, null)
-    module.setOption(EXTERNAL_SYSTEM_MODULE_GROUP_KEY, null)
-    module.setOption(EXTERNAL_SYSTEM_MODULE_VERSION_KEY, null)
+    store.externalSystem = null
+    store.linkedProjectId = null
+    store.linkedProjectPath = null
+    store.rootProjectPath = null
+    store.externalSystemModuleGroup = null
+    store.externalSystemModuleVersion = null
   }
 
   fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, id.toString())
-    module.setOption(LINKED_PROJECT_ID_KEY, moduleData.id)
-    module.setOption(LINKED_PROJECT_PATH_KEY, moduleData.linkedExternalProjectPath)
-    module.setOption(ROOT_PROJECT_PATH_KEY, projectData?.linkedExternalProjectPath ?: "")
+    // clear maven option, must be first
+    store.isMavenized = false
 
-    module.setOption(EXTERNAL_SYSTEM_MODULE_GROUP_KEY, moduleData.group)
-    module.setOption(EXTERNAL_SYSTEM_MODULE_VERSION_KEY, moduleData.version)
+    store.externalSystem = id.toString()
+    store.linkedProjectId = moduleData.id
+    store.linkedProjectPath = moduleData.linkedExternalProjectPath
+    store.rootProjectPath = projectData?.linkedExternalProjectPath ?: ""
 
-    // clear maven option
-    module.setOption(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY, null)
+    store.externalSystemModuleGroup = moduleData.group
+    store.externalSystemModuleVersion = moduleData.version
   }
 
   fun setExternalId(id: ProjectSystemId) {
-    module.setOption(EXTERNAL_SYSTEM_ID_KEY, id.id)
+    store.externalSystem = id.id
   }
 
   fun setExternalModuleType(type: String?) {
-    module.setOption(EXTERNAL_SYSTEM_MODULE_TYPE_KEY, type)
+    store.externalSystemModuleType = type
   }
 
   fun setLinkedProjectId(projectId: String) {
-    module.setOption(LINKED_PROJECT_ID_KEY, projectId)
+    store.linkedProjectId = projectId
   }
+}
+
+private interface ExternalOptionState {
+  var externalSystem: String?
+  var externalSystemModuleVersion: String?
+
+  var linkedProjectPath: String?
+  var linkedProjectId: String?
+  var rootProjectPath: String?
+
+  var externalSystemModuleGroup: String?
+  var externalSystemModuleType: String?
+
+  var isMavenized: Boolean
+}
+
+@Suppress("DEPRECATION")
+private class ModuleOptionDelegate(private val key: String) : ReadWriteProperty<ExternalOptionStateModule, String?> {
+  override operator fun getValue(thisRef: ExternalOptionStateModule, property: KProperty<*>) = thisRef.module.getOptionValue(key)
+
+  override operator fun setValue(thisRef: ExternalOptionStateModule, property: KProperty<*>, value: String?) {
+    thisRef.module.setOption(key, value)
+  }
+}
+
+@Suppress("DEPRECATION")
+private class ExternalOptionStateModule(internal val module: Module) : ExternalOptionState {
+  override var externalSystem by ModuleOptionDelegate(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)
+  override var externalSystemModuleVersion by ModuleOptionDelegate("external.system.module.version")
+  override var externalSystemModuleGroup by ModuleOptionDelegate("external.system.module.group")
+  override var externalSystemModuleType by ModuleOptionDelegate("external.system.module.type")
+
+  override var linkedProjectPath by ModuleOptionDelegate("external.linked.project.path")
+  override var linkedProjectId by ModuleOptionDelegate("external.linked.project.id")
+
+  override var rootProjectPath by ModuleOptionDelegate("external.root.project.path")
+
+  override var isMavenized: Boolean
+    get() = "true" == module.getOptionValue(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY)
+    set(value) {
+      module.setOption(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY, if (value) "true" else null)
+    }
+}
+
+class ExternalOptionStateComponent : ExternalOptionState {
+  @get:Attribute
+  override var externalSystem: String? = null
+  @get:Attribute
+  override var externalSystemModuleVersion: String? = null
+  @get:Attribute
+  override var externalSystemModuleGroup: String? = null
+  @get:Attribute
+  override var externalSystemModuleType: String? = null
+
+  @get:Attribute
+  override var linkedProjectPath: String? = null
+  @get:Attribute
+  override var linkedProjectId: String? = null
+  @get:Attribute
+  override var rootProjectPath: String? = null
+
+  @get:Transient
+  override var isMavenized: Boolean
+    get() = externalSystem == ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID
+    set(value) {
+      externalSystem = if (value) ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID else null
+    }
 }
