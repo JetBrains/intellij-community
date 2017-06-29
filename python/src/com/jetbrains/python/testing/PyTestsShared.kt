@@ -50,6 +50,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
+import com.intellij.util.ThreeState
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
@@ -591,7 +592,12 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    val testCaseClassRequired = RunnersThatRequireTestCaseClass.contains(runnerName)
+    val testCaseClassRequired: ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+      ThreeState.YES
+    }
+    else {
+      ThreeState.NO
+    }
     return when (element) {
       is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, context)
       is PsiDirectory -> element.name.contains("test", true) || element.children.any {

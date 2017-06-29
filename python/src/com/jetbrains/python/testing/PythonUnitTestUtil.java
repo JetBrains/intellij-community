@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ThreeState;
 import com.jetbrains.extensions.PyClassExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -64,7 +65,7 @@ public final class PythonUnitTestUtil {
 
 
   public static boolean isTestFile(@NotNull final PyFile file,
-                                   @Nullable final Boolean testCaseClassRequired,
+                                   @NotNull final ThreeState testCaseClassRequired,
                                    @Nullable final TypeEvalContext context) {
     if (file.getTopLevelClasses().stream().anyMatch(o -> isTestClass(o, testCaseClassRequired, context))) {
       return true;
@@ -79,7 +80,7 @@ public final class PythonUnitTestUtil {
 
 
   public static boolean isTestClass(@NotNull final PyClass cls,
-                                    @Nullable final Boolean testCaseClassRequired,
+                                    @NotNull final ThreeState testCaseClassRequired,
                                     @Nullable TypeEvalContext context) {
     final boolean testCaseOnly = isTestCaseClassRequired(cls, testCaseClassRequired);
     if (context == null) {
@@ -117,7 +118,7 @@ public final class PythonUnitTestUtil {
 
 
   public static boolean isTestFunction(@NotNull final PyFunction function,
-                                       @Nullable final Boolean testCaseClassRequired,
+                                       @NotNull final ThreeState testCaseClassRequired,
                                        @Nullable final TypeEvalContext context) {
     final String name = function.getName();
     if (name == null || !name.startsWith("test")) {
@@ -135,18 +136,18 @@ public final class PythonUnitTestUtil {
 
 
   /**
-   * @deprecated Use {@link #isTestClass(PyClass, Boolean, TypeEvalContext)} instead.
+   * @deprecated Use {@link #isTestClass(PyClass, ThreeState, TypeEvalContext)} instead.
    * Will be removed in 2018.
    */
   @Deprecated
   public static boolean isUnitTestCaseClass(PyClass cls) {
-    return isTestClass(cls, true, null);
+    return isTestClass(cls, ThreeState.YES, null);
   }
 
 
-  private static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor, @Nullable final Boolean userProvidedValue) {
-    if (userProvidedValue != null) {
-      return userProvidedValue;
+  private static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor, @NotNull final ThreeState userProvidedValue) {
+    if (userProvidedValue != ThreeState.UNSURE) {
+      return userProvidedValue.toBoolean();
     }
     final Module module = ModuleUtilCore.findModuleForPsiElement(anchor);
     if (module == null) {
