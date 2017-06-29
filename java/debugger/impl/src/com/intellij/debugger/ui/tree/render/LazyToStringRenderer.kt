@@ -73,6 +73,7 @@ class LazyToStringRenderer : ToStringRenderer(), FullValueEvaluatorProvider {
   }
 
   companion object {
-    private val LAZY_CALCULATED = Key.create<Boolean>("LAZY_CALCULATED")
+    @JvmField
+    val LAZY_CALCULATED = Key.create<Boolean>("LAZY_CALCULATED")
   }
 }
