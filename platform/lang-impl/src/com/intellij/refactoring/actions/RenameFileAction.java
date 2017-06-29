@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -48,8 +48,8 @@ public class RenameFileAction extends AnAction implements DumbAware {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     String place = e.getPlace();
-    boolean enabled = file != null && 
-                      (file instanceof PsiClassOwner || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) &&
+    boolean enabled = file != null &&
+                      (enabledInProjectView(file) || !ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) &&
                       place != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
@@ -57,5 +57,9 @@ public class RenameFileAction extends AnAction implements DumbAware {
       presentation.setText(RENAME_FILE);
       presentation.setDescription("Rename selected file");
     }
+  }
+
+  protected boolean enabledInProjectView(@NotNull PsiFile file) {
+    return true;
   }
 }
