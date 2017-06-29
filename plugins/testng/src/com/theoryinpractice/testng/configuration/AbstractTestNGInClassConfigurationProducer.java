@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.junit;
+package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+import com.intellij.execution.configurations.ConfigurationType;
 
-//to be deleted in 2018
+//to be delete in 2018
 @Deprecated
-public class TestClassConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
-  public TestClassConfigurationProducer() {
-    super(JUnitConfigurationType.getInstance());
+public class AbstractTestNGInClassConfigurationProducer extends TestNGInClassConfigurationProducer {
+  @Deprecated
+  public AbstractTestNGInClassConfigurationProducer() {
+  }
+
+  @Deprecated
+  public AbstractTestNGInClassConfigurationProducer(ConfigurationType configurationType) {
+    super(configurationType);
   }
 }
