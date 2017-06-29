@@ -29,15 +29,13 @@ public abstract class HandlerBase implements TraceHandler {
   private HandlerBase() {
   }
 
-  private static final String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
-
   @NotNull
   @Override
   final public String additionalVariablesDeclaration() {
     final StringBuilder stringBuilder = new StringBuilder();
     final List<Variable> variables = getVariables();
     for (final Variable variable : variables) {
-      stringBuilder.append(String.format(DECLARATION_FORMAT, variable.getTypeName(), variable.getName(), variable.getInitialExpression()));
+      stringBuilder.append(Variable.declarationStatement(variable));
     }
 
     getClassesDeclarations().forEach(stringBuilder::append);
