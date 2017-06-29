@@ -20,6 +20,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Producer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,6 +172,23 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<K, V> computeValue) {
     return new FactoryMap<K, V>() {
+      @Nullable
+      @Override
+      protected V create(K key) {
+        return computeValue.fun(key);
+      }
+    };
+  }
+
+  @NotNull
+  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Producer<Map<K, V>> createMap, @NotNull final Function<K, V> computeValue) {
+    return new FactoryMap<K, V>() {
+      @NotNull
+      @Override
+      protected Map<K, V> createMap() {
+        return createMap.produce();
+      }
+
       @Nullable
       @Override
       protected V create(K key) {
