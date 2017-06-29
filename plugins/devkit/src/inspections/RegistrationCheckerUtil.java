@@ -42,8 +42,17 @@ import java.util.Set;
 
 class RegistrationCheckerUtil {
 
+  enum RegistrationType {
+    ALL,
+    ALL_COMPONENTS,
+    APPLICATION_COMPONENT,
+    PROJECT_COMPONENT,
+    MODULE_COMPONENT,
+    ACTION
+  }
+
   @Nullable
-  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
+  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -56,7 +65,7 @@ class RegistrationCheckerUtil {
 
     final boolean isIdeaProject = PsiUtil.isIdeaProject(project);
 
-    final Set<PsiClass> pluginModuleResults = checkModule(module, isIdeaProject, psiClass, includeActions);
+    final Set<PsiClass> pluginModuleResults = checkModule(module, isIdeaProject, psiClass, registrationType);
     if (pluginModuleResults != null) {
       return pluginModuleResults;
     }
@@ -64,7 +73,7 @@ class RegistrationCheckerUtil {
     final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
     candidateModules.remove(module);  // already checked
     for (Module m : candidateModules) {
-      Set<PsiClass> types = checkModule(m, isIdeaProject, psiClass, includeActions);
+      Set<PsiClass> types = checkModule(m, isIdeaProject, psiClass, registrationType);
       if (types != null) return types;
     }
 
@@ -75,7 +84,7 @@ class RegistrationCheckerUtil {
   private static Set<PsiClass> checkModule(Module module,
                                            boolean isIdeaProject,
                                            PsiClass psiClass,
-                                           boolean includeActions) {
+                                           RegistrationType registrationType) {
     List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module, isIdeaProject);
     if (pluginXmlCandidates.isEmpty()) return null;
 
@@ -88,7 +97,7 @@ class RegistrationCheckerUtil {
 
     for (DomFileElement<IdeaPlugin> pluginXml : pluginXmlCandidates) {
       // "main" plugin.xml
-      if (!processPluginXml(pluginXml, finder, includeActions)) return finder.getTypes();
+      if (!processPluginXml(pluginXml, finder, registrationType)) return finder.getTypes();
 
       if (isIdeaProject) continue; // pluginXmlCandidates == all candidates in module
 
@@ -105,7 +114,7 @@ class RegistrationCheckerUtil {
 
           final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPlugin(depPluginXml);
           if (dependentIdeaPlugin != null) {
-            if (!processPluginXml(dependentIdeaPlugin, finder, includeActions)) return finder.getTypes();
+            if (!processPluginXml(dependentIdeaPlugin, finder, registrationType)) return finder.getTypes();
           }
         }
       }
@@ -131,23 +140,34 @@ class RegistrationCheckerUtil {
 
   private static boolean processPluginXml(DomFileElement<IdeaPlugin> pluginXml,
                                           RegistrationTypeFinder finder,
-                                          boolean includeActions) {
+                                          RegistrationType registrationType) {
     final IdeaPlugin rootElement = pluginXml.getRootElement();
 
-    if (!ContainerUtil.process(rootElement.getApplicationComponents(), components ->
-      finder.processComponents(ComponentType.APPLICATION, components.getComponents()))) {
-      return false;
-    }
-    if (!ContainerUtil.process(rootElement.getProjectComponents(), components ->
-      finder.processComponents(ComponentType.PROJECT, components.getComponents()))) {
-      return false;
-    }
-    if (!ContainerUtil.process(rootElement.getModuleComponents(), components ->
-      finder.processComponents(ComponentType.MODULE, components.getComponents()))) {
-      return false;
+    final boolean findAll = registrationType == RegistrationType.ALL;
+    final boolean allComponents = findAll || registrationType == RegistrationType.ALL_COMPONENTS;
+
+    if (allComponents || registrationType == RegistrationType.APPLICATION_COMPONENT) {
+      if (!ContainerUtil.process(rootElement.getApplicationComponents(), components ->
+        finder.processComponents(ComponentType.APPLICATION, components.getComponents()))) {
+        return false;
+      }
     }
 
-    if (includeActions) {
+    if (allComponents || registrationType == RegistrationType.PROJECT_COMPONENT) {
+      if (!ContainerUtil.process(rootElement.getProjectComponents(), components ->
+        finder.processComponents(ComponentType.PROJECT, components.getComponents()))) {
+        return false;
+      }
+    }
+
+    if (allComponents || registrationType == RegistrationType.MODULE_COMPONENT) {
+      if (!ContainerUtil.process(rootElement.getModuleComponents(), components ->
+        finder.processComponents(ComponentType.MODULE, components.getComponents()))) {
+        return false;
+      }
+    }
+
+    if (findAll || registrationType == RegistrationType.ACTION) {
       if (!ContainerUtil.process(rootElement.getActions(), actions ->
         finder.processActions(actions))) {
         return false;
