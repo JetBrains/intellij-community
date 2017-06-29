@@ -105,7 +105,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
         @Nullable
         @Override
         protected PsiClass compute() {
-          final Set<PsiClass> types = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, CHECK_ACTIONS, true);
+          final Set<PsiClass> types = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, CHECK_ACTIONS);
           return ContainerUtil.getFirstItem(types);
         }
       };

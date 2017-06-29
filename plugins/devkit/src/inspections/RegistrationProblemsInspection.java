@@ -115,7 +115,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         nameIdentifier != null &&
         checkedClass.getQualifiedName() != null &&
         checkedClass.getContainingFile().getVirtualFile() != null) {
-      final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, CHECK_ACTIONS, false);
+      final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, CHECK_ACTIONS);
       if (componentClasses != null && !componentClasses.isEmpty()) {
         List<ProblemDescriptor> problems = new SmartList<>();
 

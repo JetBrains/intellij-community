@@ -43,7 +43,7 @@ import java.util.Set;
 class RegistrationCheckerUtil {
 
   @Nullable
-  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions, boolean stopOnFirst) {
+  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -52,23 +52,19 @@ class RegistrationCheckerUtil {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-
     if (module == null) return null;
 
     final boolean isIdeaProject = PsiUtil.isIdeaProject(project);
 
-    if (PluginModuleType.isOfType(module) ||
-        PsiUtil.isPluginModule(module)) {
-      final Set<PsiClass> pluginModuleResults = checkModule(module, isIdeaProject, psiClass, includeActions, stopOnFirst);
-      if (!isIdeaProject && pluginModuleResults != null) {
-        return pluginModuleResults;
-      }
+    final Set<PsiClass> pluginModuleResults = checkModule(module, isIdeaProject, psiClass, includeActions);
+    if (pluginModuleResults != null) {
+      return pluginModuleResults;
     }
 
     final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
     candidateModules.remove(module);  // already checked
     for (Module m : candidateModules) {
-      Set<PsiClass> types = checkModule(m, isIdeaProject, psiClass, includeActions, stopOnFirst);
+      Set<PsiClass> types = checkModule(m, isIdeaProject, psiClass, includeActions);
       if (types != null) return types;
     }
 
@@ -79,8 +75,7 @@ class RegistrationCheckerUtil {
   private static Set<PsiClass> checkModule(Module module,
                                            boolean isIdeaProject,
                                            PsiClass psiClass,
-                                           boolean includeActions,
-                                           boolean stopOnFirst) {
+                                           boolean includeActions) {
     List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module, isIdeaProject);
     if (pluginXmlCandidates.isEmpty()) return null;
 
@@ -89,7 +84,7 @@ class RegistrationCheckerUtil {
       return null;
     }
 
-    final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, stopOnFirst);
+    final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass);
 
     for (DomFileElement<IdeaPlugin> pluginXml : pluginXmlCandidates) {
       // "main" plugin.xml
@@ -164,13 +159,11 @@ class RegistrationCheckerUtil {
   private static class RegistrationTypeFinder {
 
     private final PsiClass myPsiClass;
-    private final boolean myStopOnFirst;
 
     private final Set<PsiClass> myTypes = ContainerUtil.newIdentityTroveSet(1);
 
-    private RegistrationTypeFinder(PsiClass psiClass, boolean stopOnFirst) {
+    private RegistrationTypeFinder(PsiClass psiClass) {
       myPsiClass = psiClass;
-      myStopOnFirst = stopOnFirst;
     }
 
     private boolean processComponents(ComponentType type, List<? extends Component> components) {
@@ -235,7 +228,7 @@ class RegistrationCheckerUtil {
     private boolean addType(String fqn, DomElement context) {
       final PsiClass psiClass = DomJavaUtil.findClass(fqn, context);
       ContainerUtil.addIfNotNull(myTypes, psiClass);
-      return psiClass != null && myStopOnFirst;
+      return psiClass != null;
     }
 
     private Set<PsiClass> getTypes() {
