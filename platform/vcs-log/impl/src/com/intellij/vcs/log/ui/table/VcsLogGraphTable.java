@@ -967,7 +967,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
-      if (isOnBorder(e) || isOnRootColumn(e)) return;
       mouseInputListener.mouseReleased(convertMouseEvent(e));
       if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
         header.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
