@@ -516,7 +516,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       new CreateConfigurationMultipleCasesTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
                                                  PyUnitTestConfiguration.class){
         @Override
-        protected boolean isConfigurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+        protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
           // test_functions.py does not conttain any TestCase and can't be launched with unittest
           final PsiFile file = element.getContainingFile();
           return file == null || ! file.getName().endsWith("test_functions.py");

@@ -86,7 +86,7 @@ public final class PythonUnitTestUtil {
     if (context == null) {
       context = TypeEvalContext.codeInsightFallback(cls.getProject());
     }
-    final boolean inheritsTestCase = PyClassExtKt.isInherits(cls, context, PYTHON_TEST_QUALIFIED_CLASSES);
+    final boolean inheritsTestCase = PyClassExtKt.inherits(cls, context, PYTHON_TEST_QUALIFIED_CLASSES);
     if (inheritsTestCase) {
       return true;
     }

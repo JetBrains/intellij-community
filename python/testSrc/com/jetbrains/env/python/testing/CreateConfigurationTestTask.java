@@ -42,7 +42,6 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 
 /**
@@ -82,7 +81,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
 
-        if (isConfigurationShouldBeProducedForElement(elementToRightClickOn)) {
+        if (configurationShouldBeProducedForElement(elementToRightClickOn)) {
           @SuppressWarnings("unchecked") // Checked one line above
           final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
           checkConfiguration(typedConfiguration, elementToRightClickOn);
@@ -95,7 +94,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }), ModalityState.NON_MODAL);
   }
 
-  protected boolean isConfigurationShouldBeProducedForElement(@NotNull final PsiElement element) {
+  protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {
     return true;
   }
 

@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 /**
  * @author Ilya.Kazakevich
  */
-fun PyClass.isInherits(evalContext: TypeEvalContext, parentNames: Set<String>) =
+fun PyClass.inherits(evalContext: TypeEvalContext, parentNames: Set<String>) =
   this.getAncestorTypes(evalContext).filterNotNull().map { it.classQName }.filterNotNull().any { parentNames.contains(it) }
 
-fun PyClass.isInherits(evalContext: TypeEvalContext, vararg parentNames: String)= this.isInherits(evalContext, parentNames.toHashSet())
+fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String)= this.inherits(evalContext, parentNames.toHashSet())
