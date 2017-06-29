@@ -318,6 +318,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(extensions));
+    IndexInfrastructure.submitGenesisTask(() -> {
+      if (!myShutdownPerformed.get()) {
+        myChangedFilesCollector.ensureUpToDateAsync();
+      }
+      return null;
+    });
     LOG.info("Index scheduled:" + (System.nanoTime() - started) / 1000000);
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
@@ -2381,8 +2387,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
         });
         myInitialized = true;  // this will ensure that all changes to component's state will be visible to other threads
-
-        myChangedFilesCollector.ensureUpToDateAsync();
       }
     }
   }
