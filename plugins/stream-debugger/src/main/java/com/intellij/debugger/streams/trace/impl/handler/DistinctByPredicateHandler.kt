@@ -61,9 +61,10 @@ class DistinctByPredicateHandler(callNumber: Int, call: IntermediateStreamCall) 
   override fun getClassesDeclarations(): MutableList<String> {
     return mutableListOf("class $myWrapperClassName { " + LINE_SEPARATOR +
                          "  private final Object myObj;" + LINE_SEPARATOR +
-                         "  Wrapper(Object obj) { myObj = obj; }" + LINE_SEPARATOR +
+                         "  private final int myTime;" + LINE_SEPARATOR +
+                         "  Wrapper(Object obj, int time) { myObj = obj; myTime = time; }" + LINE_SEPARATOR +
                          "  public boolean equals(Object other) { return myObj == other; }" + LINE_SEPARATOR +
-                         "  public Object get() { return myObj; }" + LINE_SEPARATOR +
+                         "  public int time() { return myTime; }" + LINE_SEPARATOR +
                          "};" + LINE_SEPARATOR)
   }
 
@@ -87,7 +88,30 @@ class DistinctByPredicateHandler(callNumber: Int, call: IntermediateStreamCall) 
   override fun prepareResult(): String {
     val peekPrepare = myPeekHandler.prepareResult()
 
-    return peekPrepare
+    val utilMapName = myUtilityMap.name
+    val keys2TimesBefore = HashMapVariableImpl("keys2Times", GenericType.OBJECT, ClassTypeImpl("List<Integer>"), false)
+    val buildMap = "for (final $myWrapperClassName wrapper : $utilMapName.keys()) {" + LINE_SEPARATOR +
+                   "  final Object key = $utilMapName.get(wrapper); " + LINE_SEPARATOR +
+                   "  ${keys2TimesBefore.name}.computeIfAbsent(key, k -> new ArrayList<Integer>()).add(wrapper.time());" +
+                   "}" + LINE_SEPARATOR
+
+    val valuesAfterMapName = myValuesAfter.name
+    val transitions = HashMapVariableImpl("transitionsMap", GenericType.INT, GenericType.INT, false)
+    val buildTransitions = "for(final int afterTime : $valuesAfterMapName.keys()) {" + LINE_SEPARATOR +
+                           "  Object valueAfter = $valuesAfterMapName.get(afterTime);" + LINE_SEPARATOR +
+                           "  Object key = $utilMapName.get(new $myWrapperClassName(valueAfter, -1));" + LINE_SEPARATOR +
+                           "  for(final int beforeTime : ${keys2TimesBefore.name}.get(key)) {" + LINE_SEPARATOR +
+                           "    ${transitions.name}.put(beforeTime, afterTime);" +
+                           "  }" + LINE_SEPARATOR +
+                           "}" + LINE_SEPARATOR
+
+    val transitionsToArray = transitions.convertToArray("transitionsArray")
+    return peekPrepare +
+           Variable.declarationStatement(keys2TimesBefore) +
+           Variable.declarationStatement(transitions) +
+           buildMap +
+           buildTransitions +
+           transitionsToArray
   }
 
   override fun getResultExpression(): String {
