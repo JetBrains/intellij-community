@@ -157,19 +157,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             XValuePresentation presentation = new JavaValuePresentation(
               value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
-            // TODO move inside JavaValuePresentation
             Renderer lastRenderer = myValueDescriptor.getLastRenderer();
-            if (lastRenderer instanceof CompoundNodeRenderer) {
-              lastRenderer = ((CompoundNodeRenderer)lastRenderer).getLabelRenderer();
+            boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
+            if (!fullEvaluatorSet && lastRenderer instanceof CompoundNodeRenderer) {
+              fullEvaluatorSet = setFullValueEvaluator(((CompoundNodeRenderer)lastRenderer).getLabelRenderer());
             }
-            if (lastRenderer instanceof FullValueEvaluatorProvider) {
-              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)lastRenderer)
-                .getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
-              if (evaluator != null) {
-                node.setFullValueEvaluator(evaluator);
-              }
-            }
-            else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
+            if (!fullEvaluatorSet && value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new JavaFullValueEvaluator(myEvaluationContext) {
                 @Override
                 public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
@@ -184,6 +177,17 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               });
             }
             node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
+          }
+
+          private boolean setFullValueEvaluator(Renderer renderer) {
+            if (renderer instanceof FullValueEvaluatorProvider) {
+              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)renderer).getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
+              if (evaluator != null) {
+                node.setFullValueEvaluator(evaluator);
+                return true;
+              }
+            }
+            return false;
           }
         });
       }
