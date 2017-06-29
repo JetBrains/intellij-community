@@ -103,7 +103,6 @@ class DistributionJARsBuilder {
       productLayout.platformApiModules.each {
         withModule(it, "openapi.jar")
       }
-      withModule("annotations-internal", "openapi.jar")
       productLayout.platformImplementationModules.each {
         withModule(it, productLayout.mainJarName)
       }
