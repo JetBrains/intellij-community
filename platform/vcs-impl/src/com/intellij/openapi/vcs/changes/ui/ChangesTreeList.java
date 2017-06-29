@@ -212,6 +212,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   public void setChangeDecorator(@Nullable ChangeNodeDecorator changeDecorator) {
     myChangeDecorator = changeDecorator;
+    rebuildTree(null);
   }
 
   public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
