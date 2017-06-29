@@ -975,10 +975,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mouseEntered(@NotNull MouseEvent e) {
+      mouseInputListener.mouseEntered(convertMouseEvent(e));
     }
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
+      mouseInputListener.mouseExited(convertMouseEvent(e));
     }
 
     @Override
