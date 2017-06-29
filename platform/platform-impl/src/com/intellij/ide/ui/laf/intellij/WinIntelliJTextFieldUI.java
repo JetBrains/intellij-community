@@ -85,7 +85,7 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   static void paintTextFieldBackground(JComponent c, Graphics2D g2) {
-    g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("TextField.inactiveBackground"));
+    g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
 
     if (!c.isEnabled()) {
       g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));

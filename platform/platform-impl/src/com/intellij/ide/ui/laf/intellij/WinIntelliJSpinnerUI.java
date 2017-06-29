@@ -225,7 +225,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
         Dimension prevButtonSize = prevButton.getPreferredSize();
         prevButton.setBounds(bounds.width - prevButtonSize.width, nextButtonSize.height - JBUI.scale(1),
-                             prevButtonSize.width, prevButtonSize.height);
+                             prevButtonSize.width, bounds.height - nextButtonSize.height + JBUI.scale(1));
 
         JComponent editor = spinner.getEditor();
         if (editor != null) {
