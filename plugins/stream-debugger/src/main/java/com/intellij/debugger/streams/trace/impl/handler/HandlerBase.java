@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,16 +40,23 @@ public abstract class HandlerBase implements TraceHandler {
       stringBuilder.append(String.format(DECLARATION_FORMAT, variable.getTypeName(), variable.getName(), variable.getInitialExpression()));
     }
 
+    getClassesDeclarations().forEach(stringBuilder::append);
+
     return stringBuilder.toString();
   }
 
   @NotNull
   protected abstract List<Variable> getVariables();
 
+  @NotNull
+  protected List<String> getClassesDeclarations() {
+    return Collections.emptyList();
+  }
+
   static abstract class Producer extends HandlerBase implements TraceExpressionBuilderImpl.ProducerCallTraceHandler {
   }
 
-  static abstract class Intermediate extends HandlerBase implements TraceExpressionBuilderImpl.IntermediateCallTraceHandler {
+  public static abstract class Intermediate extends HandlerBase implements TraceExpressionBuilderImpl.IntermediateCallTraceHandler {
   }
 
   static abstract class Terminator extends HandlerBase implements TraceExpressionBuilderImpl.TerminatorCallTraceHandler {
