@@ -402,7 +402,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     final Iterable<QualifiedName> allBaseClassesQNames;
-    final List<PySubscriptionExpression> subscriptedBaseClasses = PyClassElementType.getSubscriptedSuperClassesStubSafe(pyClass);
+    final List<PySubscriptionExpression> subscriptedBaseClasses = PyClassElementType.getSubscriptedSuperClassesStubLike(pyClass);
     final Map<QualifiedName, PySubscriptionExpression> baseClassQNameToExpr = new HashMap<>();
     if (classStub == null) {
       allBaseClassesQNames = PyClassElementType.getSuperClassQNames(pyClass).keySet();
@@ -442,7 +442,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
     final TypeEvalContext typeEvalContext = context.getTypeContext();
     // XXX: Requires switching from stub to AST
-    return StreamEx.of(PyClassElementType.getSubscriptedSuperClassesStubSafe(cls))
+    return StreamEx.of(PyClassElementType.getSubscriptedSuperClassesStubLike(cls))
       .map(PySubscriptionExpression::getIndexExpression)
       .flatMap(e -> {
         final PyTupleExpression tupleExpr = as(e, PyTupleExpression.class);
@@ -835,7 +835,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             assignedValue = targetExpr.findAssignedValue();
           }
           else {
-            assignedValue = PyTypingAliasStubType.getAssignedValueStubSafe(targetExpr);
+            assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(targetExpr);
           }
           if (assignedValue != null) {
             elements.add(assignedValue);
