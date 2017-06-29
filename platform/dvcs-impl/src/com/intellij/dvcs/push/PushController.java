@@ -94,10 +94,7 @@ public class PushController implements Disposable {
       public void propertyChange(PropertyChangeEvent evt) {
         // when user starts edit we need to force disable ok actions, because tree.isEditing() still false;
         // after editing completed okActions will be enabled automatically by dialog validation
-        Boolean isEditMode = (Boolean)evt.getNewValue();
-        if (isEditMode) {
-          myDialog.disableOkActions();
-        }
+        myDialog.enableOkActions(!(Boolean)evt.getNewValue());
       }
     });
     startLoadingCommits();
@@ -276,31 +273,16 @@ public class PushController implements Disposable {
                                 repository -> !repository.equals(except) && repository.getRoot().getName().equals(candidate));
   }
 
-  public boolean isPushAllowed(final boolean force) {
+  public boolean isPushAllowed() {
     JTree tree = myPushLog.getTree();
-    return !tree.isEditing() &&
-           ContainerUtil.exists(myPushSupports, support -> isPushAllowed(support, force));
+    return !tree.isEditing() && ContainerUtil.exists(myPushSupports, support -> isPushAllowed(support));
   }
 
-  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport, boolean force) {
-    Collection<RepositoryNode> nodes = getNodesForSupport(pushSupport);
-    if (hasSomethingToPush(nodes)) return true;
-    if (hasCheckedNodesWithContent(nodes, force || myDialog.getAdditionalOptionValue(pushSupport) != null)) {
-      return !pushSupport.getRepositoryManager().isSyncEnabled() || !hasLoadingNodes(nodes);
-    }
-    return false;
-  }
-
-  private boolean hasSomethingToPush(Collection<RepositoryNode> nodes) {
-    return ContainerUtil.exists(nodes, node -> {
-      PushTarget target = myView2Model.get(node).getTarget();
-      //if node is selected target should not be null
-      return node.isChecked() && target != null && target.hasSomethingToPush();
+  private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
+    return ContainerUtil.exists(getNodesForSupport(pushSupport), node -> {
+      //if node is selected then target should not be null
+      return node.isChecked() && myView2Model.get(node).getTarget() != null;
     });
-  }
-
-  private boolean hasCheckedNodesWithContent(@NotNull Collection<RepositoryNode> nodes, final boolean withRefs) {
-    return ContainerUtil.exists(nodes, node -> node.isChecked() && (withRefs || !myView2Model.get(node).getLoadedCommits().isEmpty()));
   }
 
   @NotNull
