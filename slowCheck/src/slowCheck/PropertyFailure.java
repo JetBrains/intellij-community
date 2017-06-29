@@ -12,6 +12,9 @@ public interface PropertyFailure<T> {
 
   @NotNull
   CounterExample<T> getMinimalCounterexample();
+
+  @Nullable
+  Throwable getStoppingReason();
   
   int getTotalMinimizationStepCount();
 

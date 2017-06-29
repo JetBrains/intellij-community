@@ -79,7 +79,13 @@ public class PropertyChecker<T> {
   private CounterExampleImpl<T> findCounterExample(int sizeHint) {
     for (int i = 0; i < 100; i++) {
       StructureNode node = new StructureNode();
-      T value = generator.generateUnstructured(new GenerativeDataStructure(random, node, sizeHint));
+      T value;
+      try {
+        value = generator.generateUnstructured(new GenerativeDataStructure(random, node, sizeHint));
+      }
+      catch (Throwable e) {
+        throw new GeneratorException(seed, e);
+      }
       if (!generatedHashes.add(node.hashCode())) continue;
       
       return CounterExampleImpl.checkProperty(property, value, node);
@@ -92,12 +98,18 @@ public class PropertyChecker<T> {
     private CounterExampleImpl<T> minimized;
     private int totalSteps;
     private int sizeHint;
+    private Throwable stoppingReason;
 
     PropertyFailureImpl(@NotNull CounterExampleImpl<T> initial, int sizeHint) {
       this.initial = initial;
       this.minimized = initial;
       this.sizeHint = sizeHint;
-      shrink();
+      try {
+        shrink();
+      }
+      catch (Throwable e) {
+        stoppingReason = e;
+      }
     }
 
     @NotNull
@@ -110,6 +122,12 @@ public class PropertyChecker<T> {
     @Override
     public CounterExampleImpl<T> getMinimalCounterexample() {
       return minimized;
+    }
+
+    @Nullable
+    @Override
+    public Throwable getStoppingReason() {
+      return stoppingReason;
     }
 
     @Override

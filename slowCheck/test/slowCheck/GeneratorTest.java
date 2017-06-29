@@ -75,15 +75,6 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     PropertyChecker.forAll(integers().suchThat(i -> i < 0), i -> i < 0);
   }
 
-  public void testUnsatisfiableSuchThat() {
-    try {
-      PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i > 2), i -> i == 0);
-      fail();
-    }
-    catch (CannotSatisfyCondition ignored) {
-    }
-  }
-
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),
