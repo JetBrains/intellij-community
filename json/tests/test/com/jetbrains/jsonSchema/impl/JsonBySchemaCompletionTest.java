@@ -1,7 +1,9 @@
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 /**
  * @author Irina.Chernushina on 10/1/2015.
@@ -155,6 +157,47 @@ public class JsonBySchemaCompletionTest extends JsonBySchemaCompletionBaseTest {
                           "  }\n" +
                           "}";
     testImpl(schema, "{\"null\": <caret>}", "false", "null", "true");
+  }
+
+  public void testDescriptionFromDefinitionInCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"definitions\": {\n" +
+                          "    \"target\": {\n" +
+                          "      \"description\": \"Target description\"\n" +
+                          "    }\n" +
+                          "  },\n" +
+                          "  \"properties\": {\n" +
+                          "    \"source\": {\n" +
+                          "      \"$ref\": \"#/definitions/target\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{<caret>}", "\"source\"");
+    Assert.assertEquals(1, myItems.length);
+    final LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    Assert.assertEquals("Target description", presentation.getTypeText());
+  }
+
+  public void testDescriptionFromTitleInCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"definitions\": {\n" +
+                          "    \"target\": {\n" +
+                          "      \"title\": \"Target title\",\n" +
+                          "      \"description\": \"Target description\"\n" +
+                          "    }\n" +
+                          "  },\n" +
+                          "  \"properties\": {\n" +
+                          "    \"source\": {\n" +
+                          "      \"$ref\": \"#/definitions/target\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{<caret>}", "\"source\"");
+    Assert.assertEquals(1, myItems.length);
+    final LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    Assert.assertEquals("Target title", presentation.getTypeText());
   }
 
   @NotNull

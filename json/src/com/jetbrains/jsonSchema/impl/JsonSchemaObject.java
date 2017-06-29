@@ -87,7 +87,7 @@ public class JsonSchemaObject {
 
   // peer pointer is not merged!
   public void mergeValues(JsonSchemaObject other) {
-    // we do not copy id, schema, title and description
+    // we do not copy id, schema
 
     myProperties.putAll(other.myProperties);
     myDefinitionsMap = copyMap(myDefinitionsMap, other.myDefinitionsMap);
@@ -95,6 +95,9 @@ public class JsonSchemaObject {
                                                       other.myPatternProperties == null ? null : other.myPatternProperties.mySchemasMap);
     myPatternProperties = map == null ? null : new PatternProperties(map);
 
+    if (!StringUtil.isEmptyOrSpaces(other.myTitle)) {
+      myTitle = other.myTitle;
+    }
     if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
       myDescription = other.myDescription;
     }
@@ -546,6 +549,12 @@ public class JsonSchemaObject {
       current = current.getDefinitionsMap().get(part);
     }
     return current;
+  }
+
+  @Nullable
+  public String getDocumentation(final boolean preferShort) {
+    if (preferShort) return StringUtil.isEmptyOrSpaces(myTitle) ? myDescription : myTitle;
+    return StringUtil.isEmptyOrSpaces(myDescription) ? myTitle : myDescription;
   }
 
   @Override
