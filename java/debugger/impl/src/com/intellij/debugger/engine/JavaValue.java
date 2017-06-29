@@ -157,8 +157,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             XValuePresentation presentation = new JavaValuePresentation(
               value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
-            if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
-              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer())
+            // TODO move inside JavaValuePresentation
+            Renderer lastRenderer = myValueDescriptor.getLastRenderer();
+            if (lastRenderer instanceof CompoundNodeRenderer) {
+              lastRenderer = ((CompoundNodeRenderer)lastRenderer).getLabelRenderer();
+            }
+            if (lastRenderer instanceof FullValueEvaluatorProvider) {
+              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)lastRenderer)
                 .getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
               if (evaluator != null) {
                 node.setFullValueEvaluator(evaluator);
@@ -302,13 +307,20 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         String value = truncateToMaxLength(myValue);
         Renderer lastRenderer = myValueDescriptor.getLastRenderer();
+        if (lastRenderer instanceof OnDemandRenderer) {
+          OnDemandRenderer onDemandRenderer = (OnDemandRenderer)lastRenderer;
+          if (OnDemandRenderer.isCalculated(myValueDescriptor)) {
+            lastRenderer = onDemandRenderer.getRenderer();
+          }
+          else {
+            return;
+          }
+        }
+
         if (lastRenderer instanceof CompoundTypeRenderer) {
           lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
         if (lastRenderer instanceof ToStringRenderer) {
-          if (lastRenderer instanceof LazyToStringRenderer && !((LazyToStringRenderer)lastRenderer).isCalculated(myValueDescriptor)) {
-            return;
-          }
           value = StringUtil.wrapWithDoubleQuote(value);
         }
         renderer.renderValue(value);

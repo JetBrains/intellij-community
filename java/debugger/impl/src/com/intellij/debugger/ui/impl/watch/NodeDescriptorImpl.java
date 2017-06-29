@@ -22,7 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.LazyToStringRenderer;
+import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.HashMap;
@@ -119,7 +119,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
 
       // TODO introduce unified way to handle this
       if (myUserData != null) {
-        myUserData.remove(LazyToStringRenderer.LAZY_CALCULATED); // lazy flag should not be inherited
+        myUserData.remove(OnDemandRenderer.ON_DEMAND_CALCULATED); // calculated flag should not be inherited
       }
     }
   }
