@@ -90,8 +90,16 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return ContainerUtil.mapNotNull(pyClass.getSuperClassExpressions(), x -> as(x, PySubscriptionExpression.class));
   }
 
+  /**
+   * If the class' stub is present, return subscription expressions in the base classes list, converting
+   * their saved text chunks into {@link PyExpressionCodeFragment} and extracting top-level expressions
+   * from them. Otherwise, get suitable expressions directly from AST, but process them in the same way as
+   * if they were going to be saved in the stub.
+   *
+   * @see PyClassStub#getSubscriptedSuperClasses()
+   */
   @NotNull
-  public static List<PySubscriptionExpression> getSubscriptedSuperClassesStubSafe(@NotNull PyClass pyClass) {
+  public static List<PySubscriptionExpression> getSubscriptedSuperClassesStubLike(@NotNull PyClass pyClass) {
     final PyClassStub classStub = pyClass.getStub();
     if (classStub == null) {
       return getSubscriptedSuperClasses(pyClass);

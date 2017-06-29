@@ -136,8 +136,17 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
     return ref != null ? new PyTypingTypeAliasStubImpl(ref.getString()) : null;
   }
 
+
+  /**
+   * If the target expression's stub is present and the right hand value of the assignment is treated as
+   * a valid type alias, retrieve its text from the stub, create {@link PyExpressionCodeFragment} from it,
+   * and return the contained expression. Otherwise, get the assigned value from AST directly
+   * but process it in the same way as if it was going to be saved in the stub.
+   *
+   * @see PyTypingAliasStub
+   */
   @Nullable
-  public static PyExpression getAssignedValueStubSafe(@NotNull PyTargetExpression target) {
+  public static PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
     final PyTargetExpressionStub stub = target.getStub();
     PyExpression result = null;
     if (stub != null) {
