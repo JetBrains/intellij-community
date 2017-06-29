@@ -76,7 +76,7 @@ public class CommittedChangesBrowser extends JPanel {
     myChangeListsView = new TableView<>(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myChangesView = new RepositoryChangesBrowser(project, tableModel.getItems());
+    myChangesView = new RepositoryChangesBrowser(project);
 
     myChangeListsView.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {

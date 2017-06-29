@@ -88,7 +88,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_LOG_TABLE_PLACE);
     myDetailsPanel = new DetailsPanel(logData, ui.getColorManager(), this);
 
-    myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.emptyList(), null) {
+    myChangesBrowser = new RepositoryChangesBrowser(project) {
       @Override
       protected void buildToolBar(DefaultActionGroup toolBarGroup) {
         super.buildToolBar(toolBarGroup);

@@ -31,6 +31,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,18 +45,26 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
   private CommittedChangesBrowserUseCase myUseCase;
 
+  @Deprecated
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    this(project, changeLists, Collections.emptyList(), null);
+    this(project);
   }
 
+  @Deprecated
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                   final ChangeList initialListSelection) {
-    this(project, changeLists, changes, initialListSelection, null);
+    this(project, initialListSelection, null);
   }
 
-  public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
-                                  final ChangeList initialListSelection, VirtualFile toSelect) {
-    super(project, changeLists, changes, initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, toSelect);
+
+  public RepositoryChangesBrowser(@NotNull Project project) {
+    this(project, null, null);
+  }
+
+  public RepositoryChangesBrowser(@NotNull Project project,
+                                  @Nullable ChangeList initialListSelection,
+                                  @Nullable VirtualFile toSelect) {
+    super(project, null, Collections.emptyList(), initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, toSelect);
   }
 
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {

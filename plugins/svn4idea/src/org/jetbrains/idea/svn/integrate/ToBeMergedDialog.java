@@ -16,7 +16,10 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -57,8 +60,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
@@ -289,8 +294,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     mySplitter = new Splitter(false, 0.7f);
     mySplitter.setFirstComponent(panel);
 
-    myRepositoryChangesBrowser =
-      new RepositoryChangesBrowser(myMergeContext.getProject(), Collections.<SvnChangeList>emptyList(), emptyList(), null);
+    myRepositoryChangesBrowser = new RepositoryChangesBrowser(myMergeContext.getProject());
     myRepositoryChangesBrowser.getDiffAction()
       .registerCustomShortcutSet(myRepositoryChangesBrowser.getDiffAction().getShortcutSet(), myRevisionsList);
     setChangesDecorator();

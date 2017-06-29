@@ -47,9 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -139,10 +137,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
     final Splitter splitter = new Splitter(true, 0.8f);
-    myChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.singletonList(myChangeList),
-                                                    new ArrayList<>(myChangeList.getChanges()),
-                                                    myChangeList, myToSelect) {
-
+    myChangesBrowser = new RepositoryChangesBrowser(myProject, myChangeList, myToSelect) {
       @Override
       protected void buildToolBar(DefaultActionGroup toolBarGroup) {
         super.buildToolBar(toolBarGroup);
