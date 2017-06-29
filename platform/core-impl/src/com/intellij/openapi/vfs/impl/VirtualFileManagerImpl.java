@@ -85,7 +85,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
     if (protocol == null) return null;
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
     if (systems.isEmpty()) return null;
-    LOG.assertTrue(systems.size() == 1);
+    LOG.assertTrue(systems.size() == 1, protocol + ": " + systems);
     return systems.get(0);
   }
 
