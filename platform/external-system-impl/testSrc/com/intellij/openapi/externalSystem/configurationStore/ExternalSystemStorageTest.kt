@@ -16,12 +16,15 @@
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.ESCAPED_MODULE_DIR
-import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.configurationStore.createModule
 import com.intellij.configurationStore.useAndDispose
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
@@ -47,7 +50,7 @@ class ExternalSystemStorageTest {
   @Suppress("unused")
   @JvmField
   @Rule
-  val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule), ExternalStorageRule())
+  val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule), ExternalStorageRule(projectRule.project))
 
   @Test
   fun `must be empty if external system storage`() {
@@ -74,16 +77,19 @@ class ExternalSystemStorageTest {
       </module>""")
 
       ExternalSystemModulePropertyManager.getInstance(this).setMavenized(true)
+      // force re-save: this call not in the setMavenized because ExternalSystemModulePropertyManager in the API (since in production we have the only usage, it is ok for now)
+      (ModuleRootManager.getInstance(this) as ModuleRootManagerImpl).stateChanged()
 
       assertThat(cacheDir).doesNotExist()
       saveStore()
       assertThat(cacheDir).isDirectory
       assertThat(moduleFile).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
-      <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4" />""")
+      <module type="JAVA_MODULE" version="4" />""")
 
       assertThat(cacheDir.resolve("test.xml")).isEqualTo("""
       <module>
+        <component name="ExternalSystem" externalSystem="Maven" />
         <component name="NewModuleRootManager" inherit-compiler-output="true">
           <exclude-output />
           <content url="file://$ESCAPED_MODULE_DIR" />
@@ -94,15 +100,16 @@ class ExternalSystemStorageTest {
   }
 }
 
-private class ExternalStorageRule : TestRule {
+private class ExternalStorageRule(private val project: Project) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     return statement {
+      val manager = ExternalProjectsManagerImpl.getInstance(project)
       try {
-        IS_EXTERNAL_STORAGE_ENABLED = true
+        manager.setStoreExternally(true)
         base.evaluate()
       }
       finally {
-        IS_EXTERNAL_STORAGE_ENABLED = false
+        manager.setStoreExternally(false)
       }
     }
   }
