@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
@@ -60,7 +59,7 @@ class RegistrationCheckerUtil {
 
     if (PluginModuleType.isOfType(module) ||
         PsiUtil.isPluginModule(module)) {
-      final Set<PsiClass> pluginModuleResults = checkModule(module, psiClass, includeActions, stopOnFirst);
+      final Set<PsiClass> pluginModuleResults = checkModule(module, isIdeaProject, psiClass, includeActions, stopOnFirst);
       if (!isIdeaProject && pluginModuleResults != null) {
         return pluginModuleResults;
       }
@@ -69,26 +68,20 @@ class RegistrationCheckerUtil {
     final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
     candidateModules.remove(module);  // already checked
     for (Module m : candidateModules) {
-      Set<PsiClass> types = checkModule(m, psiClass, includeActions, stopOnFirst);
+      Set<PsiClass> types = checkModule(m, isIdeaProject, psiClass, includeActions, stopOnFirst);
       if (types != null) return types;
     }
 
-    // fallback in IJ project: all modules
-    if (isIdeaProject) {
-      for (Module m : ModuleManager.getInstance(module.getProject()).getModules()) {
-        if (candidateModules.contains(m)) continue;
-        Set<PsiClass> types = checkModule(m, psiClass, includeActions, stopOnFirst);
-        if (types != null) {
-          return types;
-        }
-      }
-    }
     return null;
   }
 
   @Nullable
-  private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, boolean includeActions, boolean stopOnFirst) {
-    List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module);
+  private static Set<PsiClass> checkModule(Module module,
+                                           boolean isIdeaProject,
+                                           PsiClass psiClass,
+                                           boolean includeActions,
+                                           boolean stopOnFirst) {
+    List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module, isIdeaProject);
     if (pluginXmlCandidates.isEmpty()) return null;
 
     final String qualifiedName = psiClass.getQualifiedName();
@@ -98,11 +91,11 @@ class RegistrationCheckerUtil {
 
     final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, stopOnFirst);
 
-    final List<XmlFile> candidateXmlFiles = ContainerUtil.map(pluginXmlCandidates, element -> element.getFile());
-
     for (DomFileElement<IdeaPlugin> pluginXml : pluginXmlCandidates) {
       // "main" plugin.xml
       if (!processPluginXml(pluginXml, finder, includeActions)) return finder.getTypes();
+
+      if (isIdeaProject) continue; // pluginXmlCandidates == all candidates in module
 
       // <depends> plugin.xml files
       for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
@@ -114,7 +107,6 @@ class RegistrationCheckerUtil {
           final PsiElement resolve = configFile.resolve();
           if (!(resolve instanceof XmlFile)) continue;
           final XmlFile depPluginXml = (XmlFile)resolve;
-          if (candidateXmlFiles.contains(depPluginXml)) continue; // already processed
 
           final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPlugin(depPluginXml);
           if (dependentIdeaPlugin != null) {
@@ -128,10 +120,7 @@ class RegistrationCheckerUtil {
   }
 
   @NotNull
-  private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module) {
-    final Project project = module.getProject();
-    final boolean isIdeaProject = PsiUtil.isIdeaProject(project);
-
+  private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module, boolean isIdeaProject) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml != null && !isIdeaProject) {
       return Collections.singletonList(DescriptorUtil.getIdeaPlugin(pluginXml));
@@ -141,7 +130,7 @@ class RegistrationCheckerUtil {
       return Collections.emptyList();
     }
 
-    return DomService.getInstance().getFileElements(IdeaPlugin.class, project,
+    return DomService.getInstance().getFileElements(IdeaPlugin.class, module.getProject(),
                                                     GlobalSearchScope.moduleRuntimeScope(module, false));
   }
 
@@ -211,7 +200,7 @@ class RegistrationCheckerUtil {
 
     private boolean processGroup(Group group) {
       final GenericAttributeValue<PsiClass> groupClazz = group.getClazz();
-      if (DomUtil.hasXml(groupClazz) && myPsiClass.isEquivalentTo(groupClazz.getValue())) {
+      if (matchesClass(groupClazz)) {
         if (addType(ActionType.GROUP.myClassName, group)) return false;
       }
 
@@ -225,10 +214,22 @@ class RegistrationCheckerUtil {
     }
 
     private boolean processAction(Action action) {
-      if (myPsiClass.isEquivalentTo(action.getClazz().getValue())) {
+      if (matchesClass(action.getClazz())) {
         if (addType(ActionType.ACTION.myClassName, action)) return false;
       }
       return true;
+    }
+
+    private boolean matchesClass(GenericAttributeValue<PsiClass> attributeValue) {
+      if (!DomUtil.hasXml(attributeValue)) return false;
+
+      final String stringValue = attributeValue.getStringValue();
+      if (stringValue == null) return false;
+
+      // perform cheap String comparison first
+      final String clazzName = stringValue.replace('$', '.');
+      return clazzName.equals(myPsiClass.getQualifiedName()) &&
+             myPsiClass.isEquivalentTo(attributeValue.getValue());
     }
 
     private boolean addType(String fqn, DomElement context) {
