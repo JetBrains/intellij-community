@@ -86,13 +86,10 @@ public class AnnotationUtil {
   }
 
   private static PsiAnnotation findOwnAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
-    ConcurrentFactoryMap<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
+    Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        ConcurrentFactoryMap<Collection<String>, PsiAnnotation> value = new ConcurrentFactoryMap<Collection<String>, PsiAnnotation>() {
-          @Nullable
-          @Override
-          protected PsiAnnotation create(Collection<String> annotationNames1) {
+        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createConcurrentMap(annotationNames1-> {
             final PsiModifierList list = listOwner.getModifierList();
             if (list == null) return null;
             for (PsiAnnotation annotation : list.getAnnotations()) {
@@ -102,20 +99,17 @@ public class AnnotationUtil {
             }
             return null;
           }
-        };
+        );
         return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(annotationNames);
   }
 
   private static PsiAnnotation findNonCodeAnnotation(final PsiModifierListOwner listOwner, Collection<String> annotationNames) {
-    ConcurrentFactoryMap<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
+    Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        ConcurrentFactoryMap<Collection<String>, PsiAnnotation> value = new ConcurrentFactoryMap<Collection<String>, PsiAnnotation>() {
-          @Nullable
-          @Override
-          protected PsiAnnotation create(Collection<String> annotationNames1) {
+        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createConcurrentMap(annotationNames1-> {
             final Project project = listOwner.getProject();
             final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
             for (String annotationName : annotationNames1) {
@@ -134,7 +128,7 @@ public class AnnotationUtil {
             return null;
 
           }
-        };
+        );
         return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(annotationNames);
@@ -184,13 +178,11 @@ public class AnnotationUtil {
     PsiAnnotation directAnnotation = findAnnotation(listOwner, annotationNames);
     if (directAnnotation != null) return directAnnotation;
 
-    ConcurrentFactoryMap<Set<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
+    Map<Set<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        ConcurrentFactoryMap<Set<String>, PsiAnnotation> value = new ConcurrentFactoryMap<Set<String>, PsiAnnotation>() {
-          @Nullable
-          @Override
-          protected PsiAnnotation create(Set<String> annotationNames1) {
+        Map<Set<String>, PsiAnnotation> value = ConcurrentFactoryMap.createConcurrentMap(annotationNames1->
+           {
             for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(listOwner)) {
               PsiAnnotation annotation = findAnnotation(superOwner, annotationNames1);
               if (annotation != null) {
@@ -199,7 +191,7 @@ public class AnnotationUtil {
             }
             return null;
           }
-        };
+        );
         return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(annotationNames);
@@ -280,6 +272,15 @@ public class AnnotationUtil {
                                      boolean checkHierarchy,
                                      boolean skipExternal,
                                      @Nullable Set<PsiMember> processed) {
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, skipExternal, processed);
+  }
+
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal,
+                                    boolean skipInferred,
+                                    @Nullable Set<PsiMember> processed) {
     if (!listOwner.isValid()) return false;
 
     PsiModifierList modifierList = listOwner.getModifierList();
@@ -289,14 +290,23 @@ public class AnnotationUtil {
     if (annotation != null) return true;
 
     PsiType type = null;
-    if (listOwner instanceof PsiMethod) type = ((PsiMethod)listOwner).getReturnType();
-    else if (listOwner instanceof PsiVariable) type = ((PsiVariable)listOwner).getType();
+    if (listOwner instanceof PsiMethod) {
+      type = ((PsiMethod)listOwner).getReturnType();
+    }
+    else if (listOwner instanceof PsiVariable) {
+      type = ((PsiVariable)listOwner).getType();
+    }
     if (type != null && type.findAnnotation(annotationFQN) != null) return true;
 
     if (!skipExternal) {
       final Project project = listOwner.getProject();
-      if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null ||
-          InferredAnnotationsManager.getInstance(project).findInferredAnnotation(listOwner, annotationFQN) != null) {
+      if (ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(listOwner, annotationFQN) != null) {
+        return true;
+      }
+    }
+    if (!skipInferred) {
+      final Project project = listOwner.getProject();
+      if (InferredAnnotationsManager.getInstance(project).findInferredAnnotation(listOwner, annotationFQN) != null) {
         return true;
       }
     }
@@ -536,7 +546,7 @@ public class AnnotationUtil {
     if (a == null) {
       return b == null;
     }
-    else if (b == null) {
+    if (b == null) {
       return false;
     }
     final String name = a.getQualifiedName();
