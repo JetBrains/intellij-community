@@ -75,9 +75,9 @@ public class UnixProcessManager {
     return C_LIB != null ? C_LIB.getpid() : 0;
   }
 
-  public static void sendSignal(int pid, int signal) {
+  public static int sendSignal(int pid, int signal) {
     checkCLib();
-    C_LIB.kill(pid, signal);
+    return C_LIB.kill(pid, signal);
   }
 
   private static void checkCLib() {
@@ -91,8 +91,60 @@ public class UnixProcessManager {
     return sendSignalToProcessTree(process, SIGINT);
   }
 
+  public static boolean sendSigIntToForeignProcessTree(int pid) {
+    return sendSignalToForeignProcessTree(pid, SIGINT);
+  }
+
+  public static boolean sendSigKillToForeignProcessTree(int pid) {
+    return sendSignalToForeignProcessTree(pid, SIGKILL);
+  }
+
   public static boolean sendSigKillToProcessTree(Process process) {
     return sendSignalToProcessTree(process, SIGKILL);
+  }
+
+  private static boolean doSendSignalToProcessTree(int process_pid, int signal, boolean isInherited) {
+    checkCLib();
+
+    final int our_pid = isInherited ? C_LIB.getpid() : -1;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Sending signal " + signal + " to process tree with root PID " + process_pid);
+    }
+
+    final Ref<Integer> foundPid = new Ref<Integer>();
+    final ProcessInfo processInfo = new ProcessInfo();
+    final List<Integer> childrenPids = new ArrayList<Integer>();
+
+    findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
+
+    // result is true if signal was sent to at least one process
+    final boolean result;
+    if (!foundPid.isNull()) {
+      processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
+      result = true;
+    }
+    else {
+      for (Integer pid : childrenPids) {
+        processInfo.killProcTree(pid, signal, UNIX_KILLER);
+      }
+      result = !childrenPids.isEmpty(); //we've tried to kill at least one process
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Done sending signal " + signal + "; found: " + foundPid.get()
+        + ", children: " + childrenPids + ", result: " + result);
+    }
+
+    return result;
+  }
+
+  public static boolean sendSignalToForeignProcessTree(int pid, int signal) {
+    try {
+      return doSendSignalToProcessTree(pid, signal, false);
+    } catch (Exception e) {
+      //If we fail somehow just return false
+      LOG.warn("Error killing the process", e);
+      return false;
+    }
   }
 
   /**
@@ -102,38 +154,8 @@ public class UnixProcessManager {
    */
   public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
     try {
-      checkCLib();
-
-      final int our_pid = C_LIB.getpid();
       final int process_pid = getProcessPid(process);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Sending signal " + signal + " to process tree with root PID " + process_pid);
-      }
-
-      final Ref<Integer> foundPid = new Ref<Integer>();
-      final ProcessInfo processInfo = new ProcessInfo();
-      final List<Integer> childrenPids = new ArrayList<Integer>();
-
-      findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
-
-      // result is true if signal was sent to at least one process
-      final boolean result;
-      if (!foundPid.isNull()) {
-        processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
-        result = true;
-      }
-      else {
-        for (Integer pid : childrenPids) {
-          processInfo.killProcTree(pid, signal, UNIX_KILLER);
-        }
-        result = !childrenPids.isEmpty(); //we've tried to kill at least one process
-      }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Done sending signal " + signal + "; found: " + foundPid.get()
-                  + ", children: " + childrenPids + ", result: " + result);
-      }
-
-      return result;
+      return doSendSignalToProcessTree(process_pid, signal, true);
     }
     catch (Exception e) {
       //If we fail somehow just return false
@@ -165,7 +187,7 @@ public class UnixProcessManager {
           ourPidFound.set(true);
         }
         else if (pid == process_pid) {
-          if (parent_pid == our_pid) {
+          if (parent_pid == our_pid || our_pid == -1) {
             foundPid.set(pid);
           }
           else {
@@ -175,7 +197,7 @@ public class UnixProcessManager {
         return false;
       }
     });
-    if (!ourPidFound.get()) {
+    if (our_pid != -1 && !ourPidFound.get()) {
       throw new IllegalStateException("IDE pid is not found in ps list(" + our_pid + ")");
     }
   }
