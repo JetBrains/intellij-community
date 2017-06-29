@@ -61,7 +61,7 @@ class LazyToStringRenderer : ToStringRenderer(), FullValueEvaluatorProvider {
   }
 
   fun isCalculated(descriptor: ValueDescriptor): Boolean {
-    return java.lang.Boolean.TRUE == descriptor.getUserData(LAZY_CALCULATED)
+    return LAZY_CALCULATED.get(descriptor, false)
   }
 
   override fun getName(): String {
