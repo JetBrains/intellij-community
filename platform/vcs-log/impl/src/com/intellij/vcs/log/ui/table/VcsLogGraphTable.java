@@ -987,7 +987,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (isOnBorder(e) || isOnRootColumn(e)) return;
       int deltaX = Math.abs(e.getX() - myStartXCoordinate);
       int deltaY = Math.abs(e.getY() - myStartYCoordinate);
-      boolean sameColumn = (header.getTable().getColumnModel().getColumn(header.getTable().columnAtPoint(e.getPoint())) ==
+      Point point = new Point(Math.min(Math.max(e.getX(), 0), header.getTable().getWidth() - 1), e.getY());
+      boolean sameColumn = (header.getTable().getColumnModel().getColumn(header.getTable().columnAtPoint(point)) ==
                             header.getDraggedColumn());
       // start dragging only if mouse moved horizontally
       // or if dragging was already started earlier (it looks weird to stop mid-dragging)
