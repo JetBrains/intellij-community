@@ -289,8 +289,7 @@ public class DefaultJDOMExternalizer {
           throw new InvalidDataException("wrong type: " + type);
         }
       }
-      catch (NoSuchFieldException ex) {
-        LOG.debug("No field '" + fieldName + "' in " + data.getClass(), ex);
+      catch (NoSuchFieldException ignore) {
       }
       catch (SecurityException ex) {
         throw new InvalidDataException();
