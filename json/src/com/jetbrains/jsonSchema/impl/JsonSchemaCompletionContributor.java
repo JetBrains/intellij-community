@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -210,13 +211,13 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     private void addPropertyVariant(@NotNull String key, @NotNull JsonSchemaObject jsonSchemaObject, boolean hasValue, boolean insertComma) {
-      final String description = jsonSchemaObject.getDescription();
-      final String title = jsonSchemaObject.getTitle();
+      jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(new JsonSchemaResolver(jsonSchemaObject).resolve()),
+                                              jsonSchemaObject);
       key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
-      String typeText = StringUtil.isEmpty(title) ? description : title;
-      if (!StringUtil.isEmpty(typeText)) {
+      final String typeText = StringUtil.escapeXml(jsonSchemaObject.getDocumentation(true));
+      if (!StringUtil.isEmptyOrSpaces(typeText)) {
         builder = builder.withTypeText(typeText, true);
       }
 

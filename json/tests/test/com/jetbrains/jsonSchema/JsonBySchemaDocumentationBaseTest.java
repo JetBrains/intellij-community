@@ -20,8 +20,10 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilBase;
 import com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 
@@ -52,7 +54,8 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
 
         @Override
         public void doCheck() {
-          PsiElement psiElement = DocumentationManager.getInstance(getProject()).findTargetElement(myEditor, myFile);
+          final PsiElement psiElement = PsiUtilBase.getElementAtCaret(myEditor);
+          Assert.assertNotNull(psiElement);
           assertDocumentation(psiElement, psiElement, hasDoc);
         }
       });
@@ -65,6 +68,12 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
   protected void assertDocumentation(@NotNull PsiElement docElement, @NotNull PsiElement context, boolean shouldHaveDoc) {
     DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(context);
     String inlineDoc = documentationProvider.generateDoc(docElement, context);
+    String quickNavigate = documentationProvider.getQuickNavigateInfo(docElement, context);
+    checkExpectedDoc(shouldHaveDoc, inlineDoc, false);
+    checkExpectedDoc(shouldHaveDoc, quickNavigate, true);
+  }
+
+  private void checkExpectedDoc(boolean shouldHaveDoc, String inlineDoc, boolean preferShort) {
     if (shouldHaveDoc) {
       assertNotNull("inline help is null", inlineDoc);
     }
@@ -72,7 +81,7 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
       assertNull("inline help is not null", inlineDoc);
     }
     if (shouldHaveDoc) {
-      assertSameLinesWithFile(getTestDataPath() + "/" + getTestName(true) + ".html", inlineDoc);
+      assertSameLinesWithFile(getTestDataPath() + "/" + getTestName(true) + (preferShort ? "_short.html" : ".html"), inlineDoc);
     }
   }
 }
