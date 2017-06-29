@@ -708,4 +708,17 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     }
   }
+
+  protected static class DisposablePanel extends JPanel implements Disposable {
+    public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
+      super(layout);
+      if (parent != null) {
+        Disposer.register(parent, this);
+      }
+    }
+
+    @Override
+    public void dispose() {
+    }
+  }
 }
