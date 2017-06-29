@@ -109,7 +109,6 @@ public final class PyTestSdkTools {
 
 
     final SdkModificator modificator = sdk.getSdkModificator();
-    modificator.removeRoots(OrderRootType.CLASSES);
 
     modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
 
