@@ -19,20 +19,23 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author max
@@ -61,7 +64,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassStubImpl(psi.getName(),
                                parentStub,
                                getSuperClassQNames(psi),
-                               getSubscriptedSuperClasses(psi),
+                               ContainerUtil.map(getSubscriptedSuperClasses(psi), PsiElement::getText),
                                PyPsiUtils.asQualifiedName(psi.getMetaClassExpression()),
                                psi.getOwnSlots(),
                                PyPsiUtils.strValue(psi.getDocStringExpression()),
@@ -83,11 +86,18 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
   }
 
   @NotNull
-  private static List<String> getSubscriptedSuperClasses(@NotNull PyClass pyClass) {
-    return StreamEx.of(pyClass.getSuperClassExpressions())
-      .filter(PySubscriptionExpression.class::isInstance)
-      .map(PsiElement::getText)
-      .toList();
+  private static List<PySubscriptionExpression> getSubscriptedSuperClasses(@NotNull PyClass pyClass) {
+    return ContainerUtil.mapNotNull(pyClass.getSuperClassExpressions(), x -> as(x, PySubscriptionExpression.class));
+  }
+
+  @NotNull
+  public static List<PySubscriptionExpression> getSubscriptedSuperClassesStubSafe(@NotNull PyClass pyClass) {
+    final PyClassStub classStub = pyClass.getStub();
+    if (classStub == null) {
+      return getSubscriptedSuperClasses(pyClass);
+    }
+    return ContainerUtil.mapNotNull(classStub.getSubscriptedSuperClasses(),
+                                    x -> as(PyTypingTypeProvider.createExpressionFromFragment(x, pyClass), PySubscriptionExpression.class));
   }
 
   @Nullable
