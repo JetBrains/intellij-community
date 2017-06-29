@@ -105,15 +105,17 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   public void updateText(@NotNull final Producer<String> contentProducer) {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      if (!isDisposed) {
-        final String newText = contentProducer.produce();
-        if (StringUtil.isEmpty(newText)) {
-          hide();
+      DocumentUtil.writeInRunUndoTransparentAction(() -> {
+        if (!isDisposed) {
+          final String newText = contentProducer.produce();
+          if (StringUtil.isEmpty(newText)) {
+            hide();
+          }
+          else if (!myEditor.getDocument().getText().equals(newText)) {
+            myEditor.getDocument().setText(newText);
+          }
         }
-        else if (!myEditor.getDocument().getText().equals(newText)) {
-          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
-        }
-      }
+      });
     }, 100);
   }
 
