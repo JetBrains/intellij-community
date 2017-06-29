@@ -232,7 +232,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     def androidPluginLib = "$targetDirectory/plugins/android/lib"
 
     buildContext.ant.copy(todir: "$androidPluginLib") {
-      fileset(dir: "$root/out/studio/runtime")
       fileset(file: "$root/prebuilts/studio/layoutlib/data/layoutlib.jar")
     }
 
@@ -259,14 +258,22 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       fileset(dir: "$root/tools/studio/google/cloud/tools/android-studio-plugin/resources/clientTemplates")
     }
 
-    buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
-      fileset(file: "$root/out/studio/transform/jarjar/profilers-transform.jar")
+
+    // Profiler prebuilt binaries:
+    buildContext.ant.copy(todir: "$androidPluginLib") {
+      fileset(file: "$root/bazel-genfiles/tools/base/profiler/studio-profiler-grpc-1.0-jarjar.jar")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
-      fileset(file: "$root/out/studio/perfa/libs/perfa.jar")
+      fileset(file: "$root/bazel-genfiles/tools/base/profiler/transform/profilers-transform.jar")
+    }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
+      fileset(file: "$root/bazel-genfiles/tools/base/profiler/app/perfa.jar")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfd") {
-      fileset(dir: "$root/out/studio/native/out/release")
+      fileset(dir: "$root/bazel-bin/tools/base/profiler/native/perfd/android")
+    }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfa") {
+      fileset(dir: "$root/bazel-bin/tools/base/profiler/native/perfa/android")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/simpleperf") {
       fileset(dir: "$root/prebuilts/tools/common/simpleperf")

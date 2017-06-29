@@ -41,7 +41,7 @@ class TestStringMethods(unittest.TestCase):
       required += [
           "plugins/android/resources/simpleperf/%s/simpleperf" % abi,
           "plugins/android/resources/perfd/%s/perfd" % abi,
-          "plugins/android/resources/perfd/%s/libperfa.so" % abi,
+          "plugins/android/resources/perfa/%s/libperfa.so" % abi,
       ]
 
     name = os.path.join(dist_dir, "android-studio-" + build + ".win.zip")

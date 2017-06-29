@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="studio-profiler-grpc-1.0-jarjar">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../out/studio/grpc-java/jarjar/studio-profiler-grpc-1.0-jarjar.jar!/" />
+    <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/profiler/studio-profiler-grpc-1.0-jarjar.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
