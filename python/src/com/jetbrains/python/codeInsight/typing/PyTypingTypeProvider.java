@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -39,8 +38,12 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -353,30 +356,73 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Collections.emptyMap();
     }
     final Map<PyType, PyType> results = new HashMap<>();
-    // XXX: Requires switching from stub to AST
-    for (PyExpression e : cls.getSuperClassExpressions()) {
-      final PySubscriptionExpression subscriptionExpr = as(e, PySubscriptionExpression.class);
-      final PyExpression superExpr = subscriptionExpr != null ? subscriptionExpr.getOperand() : e;
-      final PyType superType = context.getType(superExpr);
-      final PyClassType superClassType = as(superType, PyClassType.class);
-      final PyClass superClass = superClassType != null ? superClassType.getPyClass() : null;
-      final Map<PyType, PyType> superSubstitutions = superClass != null
-                                                     ? doPreventingRecursion(RECURSION_KEY, false,
-                                                                             () -> getGenericSubstitutions(superClass, context))
-                                                     : null;
+
+    for (Map.Entry<PyClass, PySubscriptionExpression> e : getResolvedSuperClassesAndTypeParameters(cls, context).entrySet()) {
+      final PySubscriptionExpression subscriptionExpr = e.getValue();
+      final PyClass superClass = e.getKey();
+      final Map<PyType, PyType> superSubstitutions = doPreventingRecursion(RECURSION_KEY, false, () -> getGenericSubstitutions(superClass, context));
       if (superSubstitutions != null) {
         results.putAll(superSubstitutions);
       }
-      final List<PyType> superGenerics = superClass != null ? collectGenericTypes(superClass, ctx) : Collections.emptyList();
-      final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
-      for (int i = 0; i < superGenerics.size(); i++) {
-        final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
-        final PyType superGeneric = superGenerics.get(i);
-        final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
-        final PyType actualType = typeRef != null ? typeRef.get() : null;
-        if (!superGeneric.equals(actualType)) {
-          results.put(superGeneric, actualType);
+      if (superClass != null) {
+        final List<PyType> superGenerics = collectGenericTypes(superClass, ctx);
+        final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
+        for (int i = 0; i < superGenerics.size(); i++) {
+          final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
+          final PyType superGeneric = superGenerics.get(i);
+          final Ref<PyType> typeRef = expr != null ? getType(expr, ctx) : null;
+          final PyType actualType = typeRef != null ? typeRef.get() : null;
+          if (!superGeneric.equals(actualType)) {
+            results.put(superGeneric, actualType);
+          }
         }
+      }
+    }
+    return results;
+  }
+
+  @NotNull
+  private static Map<PyClass, PySubscriptionExpression> getResolvedSuperClassesAndTypeParameters(@NotNull PyClass pyClass,
+                                                                                                 @NotNull TypeEvalContext context) {
+    final Map<PyClass, PySubscriptionExpression> results = new LinkedHashMap<>();
+    final PyClassStub classStub = pyClass.getStub();
+
+    if (context.maySwitchToAST(pyClass)) {
+      for (PyExpression e : pyClass.getSuperClassExpressions()) {
+        final PySubscriptionExpression subscriptionExpr = as(e, PySubscriptionExpression.class);
+        final PyExpression superExpr = subscriptionExpr != null ? subscriptionExpr.getOperand() : e;
+        final PyType superType = context.getType(superExpr);
+        final PyClassType superClassType = as(superType, PyClassType.class);
+        final PyClass superClass = superClassType != null ? superClassType.getPyClass() : null;
+        if (superClass != null) {
+          results.put(superClass, subscriptionExpr);
+        }
+      }
+      return results;
+    }
+
+    final Iterable<QualifiedName> allBaseClassesQNames;
+    final List<PySubscriptionExpression> subscriptedBaseClasses = PyClassElementType.getSubscriptedSuperClassesStubSafe(pyClass);
+    final Map<QualifiedName, PySubscriptionExpression> baseClassQNameToExpr = new HashMap<>();
+    if (classStub == null) {
+      allBaseClassesQNames = PyClassElementType.getSuperClassQNames(pyClass).keySet();
+    }
+    else {
+      allBaseClassesQNames = classStub.getSuperClasses().keySet();
+    }
+    for (PySubscriptionExpression subscriptedBase : subscriptedBaseClasses) {
+      final PyExpression operand = subscriptedBase.getOperand();
+      if (operand instanceof PyReferenceExpression) {
+        final QualifiedName className = PyPsiUtils.asQualifiedName(operand);
+        baseClassQNameToExpr.put(className, subscriptedBase);
+      }
+    }
+    for (QualifiedName qName : allBaseClassesQNames) {
+      final List<PsiElement> classes = resolveQualifiedNameInFile(qName, (PyFile)pyClass.getContainingFile(), context);
+      // Better way to handle results of the multiresove
+      final PyClass firstFound = ContainerUtil.findInstance(classes, PyClass.class);
+      if (firstFound != null) {
+        results.put(firstFound, baseClassQNameToExpr.get(qName));
       }
     }
     return results;
@@ -396,8 +442,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
     final TypeEvalContext typeEvalContext = context.getTypeContext();
     // XXX: Requires switching from stub to AST
-    return StreamEx.of(cls.getSuperClassExpressions())
-      .select(PySubscriptionExpression.class)
+    return StreamEx.of(PyClassElementType.getSubscriptedSuperClassesStubSafe(cls))
       .map(PySubscriptionExpression::getIndexExpression)
       .flatMap(e -> {
         final PyTupleExpression tupleExpr = as(e, PyTupleExpression.class);
@@ -786,7 +831,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         if (element instanceof PyTargetExpression) {
           final PyTargetExpression targetExpr = (PyTargetExpression)element;
           final PyExpression assignedValue;
-          if (context.maySwitchToAST(expression)) {
+          if (context.maySwitchToAST(targetExpr)) {
             assignedValue = targetExpr.findAssignedValue();
           }
           else {
@@ -823,16 +868,25 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final QualifiedName qualifiedName = turnPlainReferenceExpressionIntoQualifiedName(expression);
     final PyFile pyFile = as(FileContextUtil.getContextFile(expression), PyFile.class);
 
-    if (pyFile != null && qualifiedName != null && qualifiedName.getComponentCount() > 0) {
+    if (pyFile != null && qualifiedName != null) {
+      return resolveQualifiedNameInFile(qualifiedName, pyFile, context);
+    }
+    return Collections.singletonList(expression);
+  }
+
+  @NotNull
+  private static List<PsiElement> resolveQualifiedNameInFile(@NotNull QualifiedName qualifiedName,
+                                                             @NotNull PyFile pyFile,
+                                                             @NotNull TypeEvalContext context) {
+    if (qualifiedName.getComponentCount() > 0) {
       List<RatedResolveResult> results = new ArrayList<>();
+      final String first = qualifiedName.getFirstComponent();
       //noinspection ConstantConditions
-      results.addAll(pyFile.multiResolveName(qualifiedName.getFirstComponent(), false));
+      results.addAll(pyFile.multiResolveName(first, false));
       if (results.isEmpty()) {
-        for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
-          if (provider instanceof PyOverridingReferenceResolveProvider) {
-            continue;
-          }
-          results.addAll(provider.resolveName(expression, context));
+        final PsiElement builtinSymbol = PyBuiltinCache.getInstance(pyFile).getByName(first);
+        if (builtinSymbol != null) {
+          results.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, builtinSymbol));
         }
       }
 
@@ -846,7 +900,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             final PyType type = context.getType((PyTypedElement)element);
             if (type != null) {
               final List<? extends RatedResolveResult> resolved =
-                type.resolveMember(name, expression, AccessDirection.READ, resolveContext);
+                type.resolveMember(name, null, AccessDirection.READ, resolveContext);
               if (resolved != null) {
                 children.addAll(resolved);
               }
@@ -857,7 +911,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
       return PyUtil.filterTopPriorityResults(results.toArray(RatedResolveResult.EMPTY_ARRAY));
     }
-    return Collections.singletonList(expression);
+    return Collections.emptyList();
   }
 
   /**

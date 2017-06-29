@@ -750,7 +750,7 @@ public class PyStubsTest extends PyTestCase {
       assertNotParsed(file);
     });
   }
-  
+
   // PY-18116
   public void testVariableAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
@@ -834,5 +834,19 @@ public class PyStubsTest extends PyTestCase {
     final List<String> genericBases = stub.getSubscriptedSuperClasses();
     assertContainsOrdered(genericBases, "Generic[T, V]");
     assertNotParsed(file);
+  }
+
+  // PY-18816
+  public void testComplexGenericType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      final PsiManager manager = PsiManager.getInstance(myFixture.getProject());
+      final PyFile originFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("a.py"));
+      final PyFile libFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("mod.py"));
+
+      final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
+      assertType("Tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
+      assertNotParsed(libFile);
+    });
   }
 }
