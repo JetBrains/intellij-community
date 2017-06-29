@@ -992,8 +992,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       mouseInputListener.mouseDragged(convertMouseEvent(e));
       // if I change cursor on mouse pressed, it will change on double-click as well
       // and I do not want that
-      if (header.getDraggedColumn() != null && header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
-        header.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+      if (header.getDraggedColumn() != null) {
+        if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
+          header.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        }
+        int draggedColumn = header.getTable().convertColumnIndexToView(header.getDraggedColumn().getModelIndex());
+        if (header.getTable().convertColumnIndexToView(ROOT_COLUMN) == draggedColumn + (header.getDraggedDistance() < 0 ? -1 : 1)) {
+          mouseReleased(e); //cancel dragging to the root column
+        }
       }
     }
 
