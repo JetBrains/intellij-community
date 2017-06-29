@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -457,5 +458,16 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   public static BuildScriptDataBuilder getBuildScriptData(@Nullable Module module) {
     return module == null ? null : module.getUserData(BUILD_SCRIPT_DATA);
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      GradleProjectSettings settings = getExternalProjectSettings();
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(settings.isStoreProjectFilesExternally());
+    }
+    return project;
   }
 }
