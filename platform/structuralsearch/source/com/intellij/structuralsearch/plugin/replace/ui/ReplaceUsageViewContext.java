@@ -31,6 +31,7 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,7 +66,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
 
     final Runnable previewReplacement = () -> {
       final Set<Usage> selection = myUsageView.getSelectedUsages();
-      if (selection == null || selection.isEmpty()) {
+      if (selection.isEmpty()) {
         return;
       }
       for (Usage usage : selection) {
@@ -85,10 +86,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
     myUsageView.addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
   }
 
-  private void replace(Collection<Usage> usages) {
-    if (usages == null) {
-      return;
-    }
+  private void replace(@NotNull Collection<Usage> usages) {
     final Set<Usage> excluded = myUsageView.getExcludedUsages();
     usages = usages.stream().filter(u -> !excluded.contains(u)).filter(u -> isValid((UsageInfo2UsageAdapter)u)).collect(Collectors.toList());
 
