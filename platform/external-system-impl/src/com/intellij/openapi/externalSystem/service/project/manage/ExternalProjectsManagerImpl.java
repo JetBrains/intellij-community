@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -33,8 +34,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectFileStoreOptionManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +62,8 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
  */
 @State(name = "ExternalProjectsManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable, ProjectFileStoreOptionManager {
+  private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
+
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
   private final AtomicBoolean isInitializationStarted = new AtomicBoolean();
   private final CompositeRunnable myPostInitializationActivities = new CompositeRunnable();
@@ -91,6 +98,17 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   public void setStoreExternally(boolean value) {
     myState.storeExternally = value;
+    // force re-save
+    try {
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        if (!module.isDisposed()) {
+          ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).stateChanged();
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
   }
 
   @NotNull
