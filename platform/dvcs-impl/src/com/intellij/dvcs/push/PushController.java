@@ -138,31 +138,29 @@ public class PushController implements Disposable {
     Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
     Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
+    MyRepoModel<?, ?, ?> currentRepoModel = myView2Model.get(nodeForCurrentEditor);
+    if (nodeForCurrentEditor != null && isPreChecked(currentRepoModel)) {
+      // put current editor repo to be loaded at first
+      priorityLoading.put(nodeForCurrentEditor, currentRepoModel);
+    }
+
     for (Map.Entry<RepositoryNode, MyRepoModel<?, ?, ?>> entry : myView2Model.entrySet()) {
       MyRepoModel model = entry.getValue();
-      Repository repository = model.getRepository();
       RepositoryNode repoNode = entry.getKey();
-      if (preselectByUser(repository)) {
-        priorityLoading.put(repoNode, model);
-      }
-      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories() && !repoNode.equals(nodeForCurrentEditor)) {
-        others.put(repoNode, model);
-      }
-      if (shouldPreSelect(model)) {
+      if (isPreChecked(model)) {
+        priorityLoading.putIfAbsent(repoNode, model);
         model.setChecked(true);
       }
-    }
-    if (nodeForCurrentEditor != null) {
-      //add repo for currently opened editor to the end of priority queue
-      priorityLoading.put(nodeForCurrentEditor, myView2Model.get(nodeForCurrentEditor));
+      else if (model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories()) {
+        others.put(repoNode, model);
+      }
     }
     loadCommitsFromMap(priorityLoading);
     loadCommitsFromMap(others);
   }
 
-  private boolean shouldPreSelect(@NotNull MyRepoModel model) {
-    Repository repository = model.getRepository();
-    return preselectByUser(repository) || model.getSupport().shouldRequestIncomingChangesForNotCheckedRepositories();
+  private boolean isPreChecked(@NotNull MyRepoModel model) {
+    return model.getSupport().getRepositoryManager().isSyncEnabled() || preselectByUser(model.getRepository());
   }
 
   private RepositoryNode findNodeByRepo(@Nullable final Repository repository) {
@@ -369,7 +367,7 @@ public class PushController implements Disposable {
 
   private boolean shouldSelectNodeAfterLoad(@NotNull MyRepoModel model) {
     if (mySingleRepoProject) return true;
-    return hasCommitsToPush(model) && model.isSelected();
+    return model.isSelected() && (hasCommitsToPush(model) || !model.getSupport().getRepositoryManager().isSyncEnabled());
   }
 
   private boolean preselectByUser(@NotNull Repository repository) {
