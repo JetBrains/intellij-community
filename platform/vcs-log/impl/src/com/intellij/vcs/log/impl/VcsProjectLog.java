@@ -19,6 +19,7 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -92,7 +94,7 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAny
   private void recreateLog() {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    GuiUtils.invokeLaterIfNeeded(() -> {
       disposeLog();
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -100,7 +102,7 @@ public class VcsProjectLog implements Disposable {
           createLog();
         }
       });
-    });
+    }, ModalityState.any());
   }
 
   @CalledInAwt
