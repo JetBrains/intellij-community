@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -47,6 +46,7 @@ import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.actions.AnnotateRevisionAction;
+import com.intellij.openapi.vcs.history.actions.CreatePatchAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -70,7 +70,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -451,7 +450,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
     if (diffGroup != null) result.add(diffGroup);
-    result.add(new MyCreatePatch());
+    result.add(new CreatePatchAction());
     result.add(new GetVersionAction());
     result.add(new AnnotateRevisionAction());
     AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
@@ -1036,52 +1035,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private static class FolderPatchCreationTask extends Task.Backgroundable {
-    @NotNull private final AbstractVcs myVcs;
-    @NotNull private final VcsFileRevision myRevision;
-    private CommittedChangeList myList;
-    private VcsException myException;
-
-    private FolderPatchCreationTask(@NotNull AbstractVcs vcs, @NotNull VcsFileRevision revision) {
-      super(vcs.getProject(), VcsBundle.message("create.patch.loading.content.progress"), true);
-      myVcs = vcs;
-      myRevision = revision;
-    }
-
-    @Override
-    public void run(@NotNull ProgressIndicator indicator) {
-      CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
-      if (provider == null) return;
-
-      RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
-      if (changedRepositoryPath == null) return;
-
-      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
-
-      try {
-        myList = AbstractVcsHelperImpl.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
-        //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
-      }
-      catch (VcsException e1) {
-        myException = e1;
-      }
-    }
-
-    @Override
-    public void onSuccess() {
-      AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-      if (myException != null) {
-        helper.showError(myException, VcsBundle.message("create.patch.error.title", myException.getMessage()));
-      }
-      else if (myList == null) {
-        helper.showError(null, "Can not load changelist contents");
-      }
-      else {
-        CreatePatchFromChangesAction.createPatch(myProject, myList.getComment(), new ArrayList<>(myList.getChanges()));
-      }
-    }
-  }
-
   private class MyShowAsTreeAction extends ToggleAction implements DumbAware {
     public MyShowAsTreeAction() {
       super(VcsBundle.message("action.name.show.files.as.tree"), null, PlatformIcons.SMALL_VCS_CONFIGURABLE);
@@ -1168,64 +1121,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void update(AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myInRefresh);
-    }
-  }
-
-  public static class MyCreatePatch extends DumbAwareAction {
-    private final AnAction myUsualDelegate;
-
-    public MyCreatePatch() {
-      super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
-            VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Vcs.Patch);
-      myUsualDelegate = new CreatePatchFromChangesAction.Dialog();
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-      VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-      VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-      Project project = e.getProject();
-      if (filePath == null || revisions == null || vcsKey == null || project == null) return;
-
-      AbstractVcs vcs = VcsUtil.findVcsByKey(notNull(project), vcsKey);
-      if (vcs == null) return;
-
-      if (filePath.isDirectory()) {
-        if (revisions.length != 1) return;
-        ProgressManager.getInstance().run(new FolderPatchCreationTask(vcs, revisions[0]));
-      }
-      else {
-        myUsualDelegate.actionPerformed(e);
-      }
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setVisible(true);
-
-      VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-      VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
-      Project project = e.getProject();
-      VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-
-      if (filePath == null || filePath.isNonLocal() || revisions == null || provider == null || project == null || vcsKey == null) {
-        e.getPresentation().setEnabled(false);
-        return;
-      }
-
-      if (filePath.isDirectory()) {
-        if (!provider.supportsHistoryForDirectories()) {
-          e.getPresentation().setEnabled(false);
-        }
-        else {
-          e.getPresentation().setEnabled(revisions.length == 1 && revisions[0].getChangedRepositoryPath() != null);
-        }
-      }
-      else {
-        e.getPresentation().setEnabled((revisions.length > 0) && (revisions.length < 3));
-      }
     }
   }
 
