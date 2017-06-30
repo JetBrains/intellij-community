@@ -927,6 +927,31 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(!findResult.isStringFound());
   }
 
+  public void testRegExpSOEWhenMatch2() throws InterruptedException {
+    String text = "package com.intellij.demo;\n" +
+                  "\n";
+    for(int i = 0; i < 10; ++i) text += text;
+    text += "public class Foo {}";
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("package((?:\\n|.)+)class (\\w+)");
+    findModel.setRegularExpressions(true);
+
+    FindResult findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(findResult.isStringFound());
+
+    findModel = FindManagerTestUtils.configureFindModel("package((.|\\n)+)class (\\w+)");
+    findModel.setRegularExpressions(true);
+
+    findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(findResult.isStringFound());
+
+    findModel = FindManagerTestUtils.configureFindModel("package(([^\\n]|\\n)+)class (\\w+)");
+    findModel.setRegularExpressions(true);
+
+    findResult = myFindManager.findString(text, 0, findModel, null);
+    assertTrue(!findResult.isStringFound()); // SOE, no match
+  }
+
   public void testFindRegexpThatMatchesWholeFile() throws Exception {
     FindModel findModel = FindManagerTestUtils.configureFindModel("[^~]+\\Z");
     findModel.setRegularExpressions(true);
