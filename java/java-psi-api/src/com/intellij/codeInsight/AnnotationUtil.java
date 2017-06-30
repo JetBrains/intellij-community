@@ -257,25 +257,25 @@ public class AnnotationUtil {
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN, boolean checkHierarchy) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, null);
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, true, true, null);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,
                                     boolean skipExternal) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, null);
-  }
-
-  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                     @NotNull String annotationFQN,
-                                     boolean checkHierarchy,
-                                     boolean skipExternal,
-                                     @Nullable Set<PsiMember> processed) {
-    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, skipExternal, processed);
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, skipExternal);
   }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
+                                    @NotNull String annotationFQN,
+                                    boolean checkHierarchy,
+                                    boolean skipExternal,
+                                    boolean skipInferred) {
+    return isAnnotated(listOwner, annotationFQN, checkHierarchy, skipExternal, skipInferred, null);
+  }
+
+  private static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     @NotNull String annotationFQN,
                                     boolean checkHierarchy,
                                     boolean skipExternal,
@@ -318,7 +318,7 @@ public class AnnotationUtil {
         if (!processed.add(method)) return false;
         final PsiMethod[] superMethods = method.findSuperMethods();
         for (PsiMethod superMethod : superMethods) {
-          if (isAnnotated(superMethod, annotationFQN, true, skipExternal, processed)) return true;
+          if (isAnnotated(superMethod, annotationFQN, true, skipExternal, skipInferred, processed)) return true;
         }
       }
       else if (listOwner instanceof PsiClass) {
@@ -327,7 +327,7 @@ public class AnnotationUtil {
         if (!processed.add(clazz)) return false;
         final PsiClass[] superClasses = clazz.getSupers();
         for (PsiClass superClass : superClasses) {
-          if (isAnnotated(superClass, annotationFQN, true, skipExternal, processed)) return true;
+          if (isAnnotated(superClass, annotationFQN, true, skipExternal, skipInferred, processed)) return true;
         }
       }
     }

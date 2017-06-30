@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -37,7 +36,6 @@ import java.util.List;
  * @author cdr
  */
 public class AnnotateMethodFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AnnotateMethodFix");
   protected final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
@@ -68,7 +66,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
-      if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false, false, true, null) &&
+      if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false, false, true) &&
           superMethod.getManager().isInProject(superMethod)) {
         int ret = shouldAnnotateBaseMethod(method, superMethod, project);
         if (ret != 0 && ret != 1) return;
@@ -81,7 +79,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
       PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod psiMethod : methods) {
         if (AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
-            !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false, true, null) &&
+            !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false, true) &&
             psiMethod.getManager().isInProject(psiMethod)) {
           toAnnotate.add(psiMethod);
         }
