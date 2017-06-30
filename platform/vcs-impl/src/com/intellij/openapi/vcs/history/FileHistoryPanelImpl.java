@@ -353,7 +353,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private void updateMessage() {
-    List<TreeNodeOnVcsRevision> selection = getSelection();
+    //noinspection unchecked
+    List<TreeNodeOnVcsRevision> selection = (List<TreeNodeOnVcsRevision>)myDualView.getSelection();
     myDetails.update(selection);
     if (selection.isEmpty()) {
       return;
@@ -454,7 +455,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public Object getData(String dataId) {
     VcsFileRevision firstSelectedRevision = getFirstSelectedRevision();
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      List selectedItems = getSelection();
+      List selectedItems = myDualView.getSelection();
       if (selectedItems.size() != 1) return null;
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
         return null;
@@ -551,21 +552,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myRevisionToVirtualFile.get(revision);
   }
 
-  private List<TreeNodeOnVcsRevision> getSelection() {
-    //noinspection unchecked
-    return myDualView.getSelection();
-  }
-
   @Nullable
   private VcsFileRevision getFirstSelectedRevision() {
-    List<TreeNodeOnVcsRevision> selection = getSelection();
+    //noinspection unchecked
+    List<TreeNodeOnVcsRevision> selection = (List<TreeNodeOnVcsRevision>)myDualView.getSelection();
     if (selection.isEmpty()) return null;
     return selection.get(0).getRevision();
   }
 
   @NotNull
   public VcsFileRevision[] getSelectedRevisions() {
-    List<TreeNodeOnVcsRevision> selection = getSelection();
+    //noinspection unchecked
+    List<TreeNodeOnVcsRevision> selection = (List<TreeNodeOnVcsRevision>)myDualView.getSelection();
     VcsFileRevision[] result = new VcsFileRevision[selection.size()];
     for (int i = 0; i < selection.size(); i++) {
       result[i] = selection.get(i).getRevision();
@@ -630,7 +628,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return getSelection().size() > 0;
+    //noinspection unchecked
+    return ((List<TreeNodeOnVcsRevision>)myDualView.getSelection()).size() > 0;
   }
 
   @Override
