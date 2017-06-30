@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -126,12 +127,24 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final PsiExpression defToInline = getDefToInline(local, innerClassesWithUsages.isEmpty() ? refExpr : innerClassesWithUsages.get(0), containerBlock);
-    if (defToInline == null){
-      final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-      return;
+    final PsiExpression defToInline;
+    try {
+      defToInline = getDefToInline(local, innerClassesWithUsages.isEmpty() ? refExpr : innerClassesWithUsages.get(0), containerBlock, true);
+      if (defToInline == null){
+        final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        return;
+      }
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof AnalysisCanceledException) {
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("extract.method.control.flow.analysis.failed")),
+                                            REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        return;
+      }
+      throw e;
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
@@ -318,14 +331,15 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   @Nullable
   static PsiExpression getDefToInline(final PsiVariable local,
                                       final PsiElement refExpr,
-                                      final PsiCodeBlock block) {
+                                      final PsiCodeBlock block,
+                                      final boolean rethrow) {
     if (refExpr != null) {
       PsiElement def;
       if (refExpr instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression) refExpr)) {
         def = refExpr;
       }
       else {
-        final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr);
+        final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr, rethrow);
         if (defs.length == 1) {
           def = defs[0];
         }

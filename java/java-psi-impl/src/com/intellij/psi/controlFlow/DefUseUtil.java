@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.Stack;
@@ -264,6 +265,11 @@ public class DefUseUtil {
 
   @NotNull
   public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref) {
+    return getDefs(body, def, ref, false);
+  }
+
+  @NotNull
+  public static PsiElement[] getDefs(PsiCodeBlock body, final PsiVariable def, PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
         private final IntArrayList[] myBackwardTraces = getBackwardTraces(instructions);
@@ -314,6 +320,9 @@ public class DefUseUtil {
       return refsDefs.get(def, ref);
     }
     catch (AnalysisCanceledException e) {
+      if (rethrow) {
+        ExceptionUtil.rethrowAllAsUnchecked(e);
+      }
       return PsiElement.EMPTY_ARRAY;
     }
   }
