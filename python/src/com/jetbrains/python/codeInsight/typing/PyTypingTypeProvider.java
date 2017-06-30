@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -623,7 +624,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyExpression getAnnotationValue(@NotNull PyAnnotationOwner owner, @NotNull TypeEvalContext context) {
-    if (context.maySwitchToAST(owner)) {
+    final boolean elementWasParsed = owner instanceof StubBasedPsiElement && ((StubBasedPsiElement)owner).getStub() == null;
+    if (context.maySwitchToAST(owner) || elementWasParsed) {
       final PyAnnotation annotation = owner.getAnnotation();
       if (annotation != null) {
         return annotation.getValue();
@@ -665,7 +667,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
-    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, anchor);
+    // TODO pass the real anchor as the context element for the fragment to resolve local classes/type aliases
+    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, anchor.getContainingFile());
     if (expr != null) {
       // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
       if (expr instanceof PyTupleExpression) {
