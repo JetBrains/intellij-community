@@ -118,16 +118,14 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<>();
   private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
-  private final AntWorkspaceConfiguration myAntWorkspaceConfiguration;
   private final StartupManager myStartupManager;
 
-  public AntConfigurationImpl(final Project project, final AntWorkspaceConfiguration antWorkspaceConfiguration, final DaemonCodeAnalyzer daemon) {
+  public AntConfigurationImpl(final Project project, final DaemonCodeAnalyzer daemon) {
     super(project);
     getProperties().registerProperty(DEFAULT_ANT, AntReference.EXTERNALIZER);
     getProperties().rememberKey(INSTANCE);
     getProperties().rememberKey(DEFAULT_JDK_NAME);
     INSTANCE.set(getProperties(), this);
-    myAntWorkspaceConfiguration = antWorkspaceConfiguration;
     myPsiManager = PsiManager.getInstance(project);
     myStartupManager = StartupManager.getInstance(project);
     addAntConfigurationListener(new AntConfigurationListener() {
@@ -441,12 +439,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public boolean isFilterTargets() {
-    return myAntWorkspaceConfiguration.FILTER_TARGETS;
+    return getAntWorkspaceConfiguration().FILTER_TARGETS;
   }
 
   @Override
   public void setFilterTargets(final boolean value) {
-    myAntWorkspaceConfiguration.FILTER_TARGETS = value;
+    getAntWorkspaceConfiguration().FILTER_TARGETS = value;
   }
 
   @Override
@@ -530,12 +528,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public boolean isAutoScrollToSource() {
-    return myAntWorkspaceConfiguration.IS_AUTOSCROLL_TO_SOURCE;
+    return getAntWorkspaceConfiguration().IS_AUTOSCROLL_TO_SOURCE;
   }
 
   @Override
   public void setAutoScrollToSource(final boolean value) {
-    myAntWorkspaceConfiguration.IS_AUTOSCROLL_TO_SOURCE = value;
+    getAntWorkspaceConfiguration().IS_AUTOSCROLL_TO_SOURCE = value;
   }
 
   @Override
@@ -675,6 +673,10 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         StringSetSpinAllocator.dispose(registeredIds);
       }
     }
+  }
+
+  private AntWorkspaceConfiguration getAntWorkspaceConfiguration() {
+    return AntWorkspaceConfiguration.getInstance(getProject());
   }
 
   private static void collectTargetActions(final AntBuildTarget[] targets,
