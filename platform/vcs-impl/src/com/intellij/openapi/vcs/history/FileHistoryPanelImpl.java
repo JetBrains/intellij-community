@@ -1037,12 +1037,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private static class FolderPatchCreationTask extends Task.Backgroundable {
-    private final AbstractVcs myVcs;
-    private final VcsFileRevision myRevision;
+    @NotNull private final AbstractVcs myVcs;
+    @NotNull private final VcsFileRevision myRevision;
     private CommittedChangeList myList;
     private VcsException myException;
 
-    private FolderPatchCreationTask(@NotNull AbstractVcs vcs, final VcsFileRevision revision) {
+    private FolderPatchCreationTask(@NotNull AbstractVcs vcs, @NotNull VcsFileRevision revision) {
       super(vcs.getProject(), VcsBundle.message("create.patch.loading.content.progress"), true);
       myVcs = vcs;
       myRevision = revision;
@@ -1050,12 +1050,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      final CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
+      CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
       if (provider == null) return;
-      final RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
+
+      RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
       if (changedRepositoryPath == null) return;
-      final VcsVirtualFile vf =
-        new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
+
+      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
+
       try {
         myList = AbstractVcsHelperImpl.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
         //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
