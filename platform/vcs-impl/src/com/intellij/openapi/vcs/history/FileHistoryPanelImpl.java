@@ -91,7 +91,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
   @NotNull private final FileHistoryRefresherI myRefresherI;
-  @NotNull private final DiffFromHistoryHandler myDiffHandler;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
   @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
@@ -141,10 +140,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myHistorySession = session;
     myFilePath = filePath;
     myStartingRevision = startingRevision;
-
-    DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
-    myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
-
     myDetails = new DetailsPanel(vcs.getProject());
 
     refreshRevisionsOrder();
@@ -1009,23 +1004,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (!isEnabled()) return;
+      VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
+      FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+      VcsHistoryProvider provider = e.getRequiredData(VcsDataKeys.HISTORY_PROVIDER);
 
-      List<TreeNodeOnVcsRevision> selection = getSelection();
+      DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
+      DiffFromHistoryHandler diffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
-      int selectionSize = selection.size();
-      if (selectionSize > 1) {
-        List<VcsFileRevision> selectedRevisions = ContainerUtil.sorted(ContainerUtil.map(selection, TreeNodeOnVcsRevision::getRevision),
+      if (revisions.length > 1) {
+        List<VcsFileRevision> selectedRevisions = ContainerUtil.sorted(Arrays.asList(revisions),
                                                                        myRevisionsInOrderComparator);
         VcsFileRevision olderRevision = selectedRevisions.get(0);
-        VcsFileRevision newestRevision = selectedRevisions.get(selection.size() - 1);
-        myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, olderRevision, newestRevision);
+        VcsFileRevision newestRevision = selectedRevisions.get(revisions.length - 1);
+        diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, olderRevision, newestRevision);
       }
-      else if (selectionSize == 1) {
-        final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
-        final int selectedRow = flatView.getSelectedRow();
-        VcsFileRevision revision = getFirstSelectedRevision();
-
+      else if (revisions.length == 1) {
+        TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
+        int selectedRow = flatView.getSelectedRow();
         VcsFileRevision previousRevision;
         if (selectedRow == (flatView.getRowCount() - 1)) {
           // no previous
@@ -1035,26 +1030,30 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
           previousRevision = flatView.getRow(selectedRow + 1).getRevision();
         }
 
-        if (revision != null) {
-          myDiffHandler.showDiffForOne(e, e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, previousRevision, revision);
+        if (revisions[0] != null) {
+          diffHandler.showDiffForOne(e, e.getRequiredData(CommonDataKeys.PROJECT), filePath, previousRevision, revisions[0]);
         }
       }
     }
 
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(getSelection().size() > 0 && isEnabled());
+      e.getPresentation().setEnabled(isEnabled(e));
     }
 
-    public boolean isEnabled() {
-      final int selectionSize = getSelection().size();
-      if (selectionSize == 1) {
-        List<TreeNodeOnVcsRevision> sel = getSelection();
-        return myHistorySession.isContentAvailable(sel.get(0).getRevision());
+    public boolean isEnabled(@NotNull AnActionEvent e) {
+      VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+      VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+      VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
+      if (revisions == null || historySession == null || filePath == null || provider == null) return false;
+
+      if (revisions.length == 1) {
+        return historySession.isContentAvailable(revisions[0]);
       }
-      else if (selectionSize > 1) {
-        List<TreeNodeOnVcsRevision> sel = getSelection();
-        return myHistorySession.isContentAvailable(sel.get(0).getRevision()) &&
-               myHistorySession.isContentAvailable(sel.get(sel.size() - 1).getRevision());
+      else if (revisions.length > 1) {
+        return historySession.isContentAvailable(revisions[0]) &&
+               historySession.isContentAvailable(revisions[revisions.length - 1]);
+        // incorrect, since we compare sorted revisions in actionPerformed
       }
       return false;
     }
