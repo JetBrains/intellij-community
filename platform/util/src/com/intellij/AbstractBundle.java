@@ -70,7 +70,7 @@ public abstract class AbstractBundle {
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
-    ConcurrentWeakFactoryMap.createMap(new Function<ClassLoader, Map<String, ResourceBundle>>() {
+    ConcurrentWeakFactoryMap.createWeakMap(new Function<ClassLoader, Map<String, ResourceBundle>>() {
       @Override
       public Map<String, ResourceBundle> fun(ClassLoader k) {return ContainerUtil.createConcurrentSoftValueMap();}
     });

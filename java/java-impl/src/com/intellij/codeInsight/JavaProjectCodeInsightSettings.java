@@ -44,7 +44,7 @@ import java.util.regex.Pattern;
 @State(name = "JavaProjectCodeInsightSettings", storages = @Storage("codeInsightSettings.xml"))
 public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentMap<String, Pattern> ourPatterns = ConcurrentWeakFactoryMap.createMap(key->
+  private static final ConcurrentMap<String, Pattern> ourPatterns = ConcurrentWeakFactoryMap.createWeakMap(key->
       PatternUtil.fromMask(key)
   );
 
