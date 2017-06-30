@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      AssertHint hint = AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS.get(methodName), false);
+      AssertHint hint = AssertHint.create(expression, methodName ->
+        AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false);
       if (hint == null) {
         return;
       }
@@ -162,7 +163,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      AssertHint assertHint = AssertHint.create(methodCallExpression, methodName -> AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS.get(methodName), false);
+      AssertHint assertHint = AssertHint.create(methodCallExpression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT
+        .get(methodName), false);
       if (assertHint == null) {
         return;
       }
