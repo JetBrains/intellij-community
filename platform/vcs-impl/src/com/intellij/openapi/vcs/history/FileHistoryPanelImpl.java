@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
@@ -44,6 +43,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.actions.AnnotateRevisionAction;
 import com.intellij.openapi.vcs.history.actions.CreatePatchAction;
+import com.intellij.openapi.vcs.history.actions.CompareRevisionsAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -345,7 +345,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myDualView.setTreeCellRenderer(new MyTreeCellRenderer(myDualView.getTree().getCellRenderer(), () -> myHistorySession));
     myDualView.setCellWrapper(new MyCellWrapper(() -> myHistorySession));
 
-    myDualView.installDoubleClickHandler(new MyDiffAction());
+    myDualView.installDoubleClickHandler(new CompareRevisionsAction());
 
     myDualView.getFlatView().getTableViewModel().setSortable(true);
     RowSorter<? extends TableModel> rowSorter = myDualView.getFlatView().getRowSorter();
@@ -403,7 +403,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
-    final MyDiffAction diffAction = new MyDiffAction();
+    CompareRevisionsAction diffAction = new CompareRevisionsAction();
     diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), null);
     result.add(diffAction);
 
@@ -999,52 +999,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void setSelected(AnActionEvent e, boolean state) {
       VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE = state;
       chooseView();
-    }
-  }
-
-  private class MyDiffAction extends DumbAwareAction {
-    public MyDiffAction() {
-      super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
-    }
-
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
-      FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-      VcsHistoryProvider provider = e.getRequiredData(VcsDataKeys.HISTORY_PROVIDER);
-
-      DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
-      DiffFromHistoryHandler diffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
-
-      if (revisions.length == 2){
-        diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, revisions[0], revisions[1]);
-      }
-      else if (revisions.length == 1) {
-        VcsFileRevision previousRevision = e.getRequiredData(PREVIOUS_REVISION_FOR_DIFF);
-        if (revisions[0] != null) {
-          diffHandler.showDiffForOne(e, e.getRequiredData(CommonDataKeys.PROJECT), filePath, previousRevision, revisions[0]);
-        }
-      }
-    }
-
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(isEnabled(e));
-    }
-
-    public boolean isEnabled(@NotNull AnActionEvent e) {
-      VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-      VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
-      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-      VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
-      if (revisions == null || historySession == null || filePath == null || provider == null) return false;
-
-      if (revisions.length == 1) {
-        return historySession.isContentAvailable(revisions[0]) && e.getData(PREVIOUS_REVISION_FOR_DIFF) != null;
-      }
-      else if (revisions.length == 2) {
-        return historySession.isContentAvailable(revisions[0]) &&
-               historySession.isContentAvailable(revisions[revisions.length - 1]);
-      }
-      return false;
     }
   }
 
