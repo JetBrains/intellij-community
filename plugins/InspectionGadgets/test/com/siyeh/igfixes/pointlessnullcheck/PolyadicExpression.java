@@ -1,6 +1,6 @@
 class PolyadicExpression {
   void m(Object arg) {
-    if (arg instanceof String /*1*/ && /*2*/ arg.equals(arg) && arg != null<caret>) {
+    if (arg != null<caret> /*1*/ && /*2*/ arg instanceof String && arg.equals(arg)) {
       System.out.println("warning");
     }
   }
