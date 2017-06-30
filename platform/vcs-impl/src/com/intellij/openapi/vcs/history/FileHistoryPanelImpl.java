@@ -42,8 +42,8 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.actions.AnnotateRevisionAction;
-import com.intellij.openapi.vcs.history.actions.CreatePatchAction;
 import com.intellij.openapi.vcs.history.actions.CompareRevisionsAction;
+import com.intellij.openapi.vcs.history.actions.CreatePatchAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
@@ -81,6 +81,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.reverseOrder;
+
 /**
  * author: lesya
  */
@@ -98,10 +101,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
   @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
   @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = ContainerUtil.newHashMap();
-  @NotNull private final Comparator<VcsFileRevision> myRevisionsInOrderComparator = (o1, o2) -> {
-    // descending
-    return Comparing.compare(myRevisionsOrder.get(o2.getRevisionNumber()), myRevisionsOrder.get(o1.getRevisionNumber()));
-  };
   @NotNull private final DetailsPanel myDetails;
   @NotNull private final DualView myDualView;
   @Nullable private final JComponent myAdditionalDetails;
@@ -280,7 +279,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                                 @NotNull VcsHistoryProvider provider,
                                                 @Nullable ColumnInfo[] additionalColumns) {
     ArrayList<DualViewColumnInfo> columns = new ArrayList<>();
-    columns.add(new TreeNodeColumnInfoWrapper<>(new RevisionColumnInfo(myRevisionsInOrderComparator)));
+    columns.add(new TreeNodeColumnInfoWrapper<>(
+      new RevisionColumnInfo(comparing(revision -> myRevisionsOrder.get(revision.getRevisionNumber()), reverseOrder()))));
     if (!provider.isDateOmittable()) columns.add(new TreeNodeColumnInfoWrapper<>(new DateColumnInfo()));
     columns.add(new TreeNodeColumnInfoWrapper<>(new AuthorColumnInfo()));
     if (additionalColumns != null) {
@@ -538,7 +538,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     final VcsFileRevision[] revisions = getSelectedRevisions();
 
     if (revisions.length > 0) {
-      Arrays.sort(revisions, Comparator.comparing(VcsRevisionDescription::getRevisionNumber));
+      Arrays.sort(revisions, comparing(VcsRevisionDescription::getRevisionNumber));
 
       for (VcsFileRevision revision : revisions) {
         if (!myHistorySession.isContentAvailable(revision)) {
@@ -739,7 +739,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Nullable
     @Override
     public Comparator<VcsFileRevision> getComparator() {
-      return Comparator.comparing(revision -> valueOf(revision));
+      return comparing(revision -> valueOf(revision));
     }
 
     @Nullable
