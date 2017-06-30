@@ -29,11 +29,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting";
+  private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/genericsHighlighting";
 
   @Override
   protected void setUp() throws Exception {
@@ -57,9 +56,12 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     IdeaTestUtil.setTestVersion(sdkVersion, getModule(), getTestRootDisposable());
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
-  private void doTest5(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_6, checkWarnings); }
+
+  private void doTest5(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_5, checkWarnings); }
   private void doTest6(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, checkWarnings); }
-  private void doTest7Incompatibility(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_7, checkWarnings); }
+  private void doTest7(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, checkWarnings); }
+  private void doTest7Incompatibility() { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_7, false); }
+  private void doTest8Incompatibility(boolean checkWarnings) { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, checkWarnings); }
 
   public void testReferenceTypeParams() { doTest5(false); }
   public void testOverridingMethods() { doTest5(false); }
@@ -72,7 +74,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExplicitMethodParameters1() { doTest5(false); }
   public void testInferenceWithBounds() { doTest5(false); }
   public void testInferenceWithSuperBounds() { doTest5(false); }
-  public void testInferenceWithUpperBoundPromotion() { doTest7Incompatibility(false); }
+  public void testInferenceWithUpperBoundPromotion() { doTest7Incompatibility(); }
   public void testVariance() { doTest5(false); }
   public void testForeachTypes() { doTest5(false); }
   public void testRawOverridingMethods() { doTest5(false); }
@@ -80,8 +82,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAutoboxingMethods() { doTest5(false); }
   public void testAutoboxingConstructors() { doTest5(false); }
   public void testEnumWithAbstractMethods() { doTest5(false); }
-  public void testEnum() { doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_5, false); }
-  public void testEnum56239() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
+  public void testEnum() { doTest5(false); }
+  public void testEnum56239() { doTest6(false); }
   public void testSameErasure() { doTest5(false); }
   public void testPairsWithSameErasure() { doTest5(false); }
   public void testMethods() { doTest5(false); }
@@ -109,7 +111,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEADEV57343() { doTest5(false); }
   public void testSOE() { doTest5(true); }
   public void testGenericExtendException() { doTest5(false); }
-  public void testSameErasureDifferentReturnTypes() { doTest7Incompatibility(false); }
+  public void testSameErasureDifferentReturnTypes() { doTest7Incompatibility(); }
   public void testSameErasureDifferentReturnTypesJdk14() { doTest5(false); }
   public void testDeepConflictingReturnTypes() { doTest5(false); }
   public void testInheritFromTypeParameter() { doTest5(false); }
@@ -125,15 +127,15 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPrivateInnerClassRef() { doTest5(false); }
   public void testWideningCastToTypeParam() { doTest5(false); }
   public void testCapturedWildcardAssignments() { doTest5(false); }
-  public void testTypeParameterBoundVisibility() { doTest7Incompatibility(false); }
+  public void testTypeParameterBoundVisibility() { doTest7Incompatibility(); }
   public void testTypeParameterBoundVisibilityJdk14() { doTest5(false); }
   public void testUncheckedWarningsLevel6() { doTest6(true); }
   public void testIDEA77991() { doTest5(false); }
   public void testIDEA80386() { doTest5(false); }
-  public void testIDEA66311() { doTest7Incompatibility(false); }
-  public void testIDEA67672() { doTest7Incompatibility(false); }
-  public void testIDEA88895() { doTest7Incompatibility(false); }
-  public void testIDEA67667() { doTest7Incompatibility(false); }
+  public void testIDEA66311() { doTest7Incompatibility(); }
+  public void testIDEA67672() { doTest7Incompatibility(); }
+  public void testIDEA88895() { doTest7Incompatibility(); }
+  public void testIDEA67667() { doTest7Incompatibility(); }
   public void testIDEA66311_16() { doTest5(false); }
   public void testIDEA76283() { doTest5(false); }
   public void testIDEA74899() { doTest5(false); }
@@ -147,8 +149,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA67681() { doTest5(false); }
   public void testIDEA67599() { doTest5(false); }
   public void testIDEA57668() { doTest5(false); }
-  public void testIDEA57667() { doTest7Incompatibility(false); }
-  public void testIDEA57650() { doTest7Incompatibility(false); }
+  public void testIDEA57667() { doTest7Incompatibility(); }
+  public void testIDEA57650() { doTest7Incompatibility(); }
   public void testIDEA57378() { doTest5(false); }
   public void testIDEA57557() { doTest5(false); }
   public void testIDEA57563() { doTest5(false); }
@@ -177,39 +179,37 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA57309() { doTest5(false); }
   public void testIDEA90802() { doTest5(false); }
   public void testIDEA70370() { doTest5(true); }
-  public void testInaccessibleThroughWildcard() { doTest7Incompatibility(false);}
+  public void testInaccessibleThroughWildcard() { doTest7Incompatibility();}
   public void testInconvertibleTypes() { doTest5(false); }
   public void testIncompatibleReturnType() { doTest5(false); }
-  
   public void testContinueInferenceAfterFirstRawResult() { doTest5(false); }
   public void testDoNotAcceptLowerBoundIfRaw() { doTest5(false); }
   public void testStaticOverride() { doTest5(false); }
-  public void testTypeArgumentsGivenOnRawType() { doTest7Incompatibility(false); }
+  public void testTypeArgumentsGivenOnRawType() { doTest7Incompatibility(); }
   public void testSelectFromTypeParameter() { doTest5(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() { doTest5(false); }
-
   public void testIDEA94011() { doTest5(false); }
   public void testDifferentTypeParamsInOverloadedMethods() { doTest5(true); }
   public void testIDEA91626() { doTest5(true); }
   public void testIDEA92022() { doTest5(false); }
   public void testRawOnParameterized() { doTest5(false); }
   public void testFailedInferenceWithBoxing() { doTest5(false); }
-  public void testFixedFailedInferenceWithBoxing() { doTest7Incompatibility(false); }
-  public void testInferenceWithBoxingCovariant() { doTest7Incompatibility(false); }
-  public void testSuperWildcardIsNotWithinItsBound() { doTest7Incompatibility(false); }
-  public void testSpecificReturnType() { doTest7Incompatibility(false); }
-  public void testParameterizedParameterBound() { doTest7Incompatibility(false); }
-  public void testInstanceClassInStaticContextAccess() { doTest7Incompatibility(false); }
-  public void testFlattenIntersectionType() { doTest7Incompatibility(false); }
-  public void testIDEA97276() { doTest7Incompatibility(false); }
-  public void testWildcardsBoundsIntersection() { doTest7Incompatibility(false); }
-  public void testOverrideWithMoreSpecificReturn() { doTest7Incompatibility(false); }
-  public void testIDEA97888() { doTest7Incompatibility(false); }
+  public void testFixedFailedInferenceWithBoxing() { doTest7Incompatibility(); }
+  public void testInferenceWithBoxingCovariant() { doTest7Incompatibility(); }
+  public void testSuperWildcardIsNotWithinItsBound() { doTest7Incompatibility(); }
+  public void testSpecificReturnType() { doTest7Incompatibility(); }
+  public void testParameterizedParameterBound() { doTest7Incompatibility(); }
+  public void testInstanceClassInStaticContextAccess() { doTest7Incompatibility(); }
+  public void testFlattenIntersectionType() { doTest7Incompatibility(); }
+  public void testIDEA97276() { doTest7Incompatibility(); }
+  public void testWildcardsBoundsIntersection() { doTest7Incompatibility(); }
+  public void testOverrideWithMoreSpecificReturn() { doTest7Incompatibility(); }
+  public void testIDEA97888() { doTest7Incompatibility(); }
   public void testMethodCallParamsOnRawType() { doTest5(false); }
   public void testIDEA98421() { doTest5(false); }
   public void testErasureTypeParameterBound() { doTest5(false); }
   public void testThisAsAccessObject() { doTest5(false); }
-  public void testIDEA67861() { doTest7Incompatibility(false); }
+  public void testIDEA67861() { doTest7Incompatibility(); }
   public void testIDEA67597() { doTest5(false); }
   public void testIDEA57539() { doTest5(false); }
   public void testIDEA67570() { doTest5(false); }
@@ -237,73 +237,41 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA27080(){ doTest5(false); }
   public void testIDEA22079(){ doTest5(false); }
   public void testIDEA21602(){ doTest5(false); }
-  public void testIDEA21602_7(){ doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-
-  public void testIDEA21597() throws Exception { doTest5(false);}
-  public void testIDEA20573() throws Exception { doTest5(false);}
-  public void testIDEA20244() throws Exception { doTest5(false);}
-  public void testIDEA22005() throws Exception { doTest5(false);}
-  public void testIDEA57259() throws Exception { doTest5(false);}
-  public void testIDEA107957() throws Exception { doTest6(false);}
-  public void testIDEA109875() throws Exception { doTest6(false);}
-  public void testIDEA106964() throws Exception { doTest5(false);}
-  public void testIDEA107782() throws Exception { doTest5(false);}
-  public void testInheritedWithDifferentArgsInTypeParams() throws Exception { doTest5(false);}
-  public void testInheritedWithDifferentArgsInTypeParams1() throws Exception { doTest5(false);}
-  public void testIllegalForwardReferenceInTypeParameterDefinition() throws Exception { doTest5(false);}
-
-  public void testIDEA57877() throws Exception { doTest5(false);}
-  public void testIDEA110568() throws Exception { doTest5(false);}
-  public void testTypeParamsCyclicInference() throws Exception { doTest5(false);}
-  public void testCaptureTopLevelWildcardsForConditionalExpression() throws Exception { doTest5(false);}
-  public void testGenericsOverrideMethodInRawInheritor() throws Exception { doTest5(false);}
-
-  public void testIDEA107654() throws Exception {
-    doTest5(false);
-  }
-
-  public void testIDEA55510() throws Exception {
-    doTest5(false);
-  }
-
-  public void testIDEA27185(){ doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
-  public void testIDEA67571(){ doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testTypeArgumentsOnRawType(){ doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
-  public void testTypeArgumentsOnRawType17(){ doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-
+  public void testIDEA21602_7(){ doTest7(false); }
+  public void testIDEA21597() { doTest5(false);}
+  public void testIDEA20573() { doTest5(false);}
+  public void testIDEA20244() { doTest5(false);}
+  public void testIDEA22005() { doTest5(false);}
+  public void testIDEA57259() { doTest5(false);}
+  public void testIDEA107957() { doTest6(false);}
+  public void testIDEA109875() { doTest6(false);}
+  public void testIDEA106964() { doTest5(false);}
+  public void testIDEA107782() { doTest5(false);}
+  public void testInheritedWithDifferentArgsInTypeParams() { doTest5(false);}
+  public void testInheritedWithDifferentArgsInTypeParams1() { doTest5(false);}
+  public void testIllegalForwardReferenceInTypeParameterDefinition() { doTest5(false);}
+  public void testIDEA57877() { doTest5(false);}
+  public void testIDEA110568() { doTest5(false);}
+  public void testTypeParamsCyclicInference() { doTest5(false);}
+  public void testCaptureTopLevelWildcardsForConditionalExpression() { doTest5(false);}
+  public void testGenericsOverrideMethodInRawInheritor() { doTest5(false);}
+  public void testIDEA107654() { doTest5(false); }
+  public void testIDEA55510() { doTest5(false); }
+  public void testIDEA27185(){ doTest6(false); }
+  public void testIDEA67571(){ doTest7(false); }
+  public void testTypeArgumentsOnRawType(){ doTest6(false); }
+  public void testTypeArgumentsOnRawType17(){ doTest7(false); }
   public void testWildcardsOnRawTypes() { doTest5(false); }
-  public void testDisableWithinBoundsCheckForSuperWildcards() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA108287() throws Exception {
-    doTest5(false);
-  }
-
-  public void testIDEA77128() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testDisableCastingToNestedWildcards() throws Exception {
-    doTest5(false);
-  }
-
-  public void testBooleanInferenceFromIfCondition() throws Exception {
-    doTest5(false);
-  }
-
-  public void testMethodCallOnRawTypesExtended() throws Exception {
-    doTest5(false);
-  }
-
-  public void testIDEA104100() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
-  public void testIDEA104160() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
-  public void testSOEInLeastUpperClass() {doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);}
-
-  public void testIDEA57334() {
-    doTest5(false);
-  }
-
+  public void testDisableWithinBoundsCheckForSuperWildcards() { doTest7(false); }
+  public void testIDEA108287() { doTest5(false); }
+  public void testIDEA77128() { doTest7(false); }
+  public void testDisableCastingToNestedWildcards() { doTest5(false); }
+  public void testBooleanInferenceFromIfCondition() { doTest5(false); }
+  public void testMethodCallOnRawTypesExtended() { doTest5(false); }
+  public void testIDEA104100() {doTest7(false);}
+  public void testIDEA104160() {doTest7(false);}
+  public void testSOEInLeastUpperClass() {doTest7(false);}
+  public void testIDEA57334() { doTest5(false); }
   public void testIDEA57325() { doTest5(false); }
   public void testIDEA67835() { doTest5(false); }
   public void testIDEA67744() { doTest5(false); }
@@ -324,17 +292,14 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testBoxingSpecific() { doTest5(false); }
   public void testIDEA67843() { doTest5(false); }
   public void testAmbiguousTypeParamVsConcrete() { doTest5(false); }
-  public void testRawAssignments() throws Exception { doTest5(false); }
-  public void testIDEA87860() throws Exception { doTest5(false); }
-  public void testIDEA67584() throws Exception { doTest5(false); }
-  public void testIDEA113225() throws Exception { doTest5(false); }
-  public void testIDEA67518() throws Exception { doTest5(false); }
-  public void testIDEA57252() throws Exception { doTest5(false); }
-  public void testIDEA57274() throws Exception { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA67591() throws Exception {
-    doTest5(false);
-  }
-
+  public void testRawAssignments() { doTest5(false); }
+  public void testIDEA87860() { doTest5(false); }
+  public void testIDEA67584() { doTest5(false); }
+  public void testIDEA113225() { doTest5(false); }
+  public void testIDEA67518() { doTest5(false); }
+  public void testIDEA57252() { doTest5(false); }
+  public void testIDEA57274() { doTest7(false); }
+  public void testIDEA67591() { doTest5(false); }
   public void testIDEA114894() { doTest5(false); }
   public void testIDEA60818() { doTest5(false); }
   public void testIDEA63331() { doTest5(false); }
@@ -343,298 +308,120 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA71582() { doTest5(false); }
   public void testIDEA65377() { doTest5(false); }
   public void testIDEA113526() { doTest5(true); }
-  public void testIncompatibleReturnTypeBounds() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA116493() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA117827() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA118037() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA119546() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA118527() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA120153() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA120563() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA121400() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA123316() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testUnrelatedReturnInTypeArgs() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA123352() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA123518() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA64103() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA123338() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA124271() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA124352() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA124019() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA123509() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA125031() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA24479() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA118536() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA125744() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA125423() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA118533() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA112117() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA24496() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA58692() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA57290() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA119757() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA67578() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA57388() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA125800() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA125816() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA57338() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
-  public void testIDEA67600() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA126697() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true); }
-  public void testIDEA126633() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA124363() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA78402() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA106985() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testIDEA114797() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testCaptureWildcardFromUnboundCaptureWildcard() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testSuperCaptureSubstitutionWhenTypeParameterHasUpperBounds() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
-  public void testParameterBoundsWithCapturedWildcard() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
+  public void testIncompatibleReturnTypeBounds() { doTest7(false); }
+  public void testIDEA116493() { doTest7(false); }
+  public void testIDEA117827() { doTest7(false); }
+  public void testIDEA118037() { doTest7(false); }
+  public void testIDEA119546() { doTest7(false); }
+  public void testIDEA118527() { doTest7(false); }
+  public void testIDEA120153() { doTest7(false); }
+  public void testIDEA120563() { doTest7(false); }
+  public void testIDEA121400() { doTest7(false); }
+  public void testIDEA123316() { doTest7(false); }
+  public void testUnrelatedReturnInTypeArgs() { doTest7(false); }
+  public void testIDEA123352() { doTest7(false); }
+  public void testIDEA123518() { doTest7(false); }
+  public void testIDEA64103() { doTest7(false); }
+  public void testIDEA123338() { doTest7(false); }
+  public void testIDEA124271() { doTest7(false); }
+  public void testIDEA124352() { doTest7(false); }
+  public void testIDEA124019() { doTest7(false); }
+  public void testIDEA123509() { doTest7(false); }
+  public void testIDEA125031() { doTest7(false); }
+  public void testIDEA24479() { doTest7(false); }
+  public void testIDEA118536() { doTest7(false); }
+  public void testIDEA125744() { doTest7(false); }
+  public void testIDEA125423() { doTest7(false); }
+  public void testIDEA118533() { doTest7(false); }
+  public void testIDEA112117() { doTest7(false); }
+  public void testIDEA24496() { doTest7(false); }
+  public void testIDEA58692() { doTest7(false); }
+  public void testIDEA57290() { doTest7(false); }
+  public void testIDEA119757() { doTest7(false); }
+  public void testIDEA67578() { doTest7(false); }
+  public void testIDEA57388() { doTest7(false); }
+  public void testIDEA125800() { doTest7(false); }
+  public void testIDEA125816() { doTest7(false); }
+  public void testIDEA57338() { doTest6(false); }
+  public void testIDEA67600() { doTest7(false); }
+  public void testIDEA126697() { doTest7(true); }
+  public void testIDEA126633() { doTest7(false); }
+  public void testIDEA124363() { doTest7(false); }
+  public void testIDEA78402() { doTest7(false); }
+  public void testIDEA106985() { doTest7(false); }
+  public void testIDEA114797() { doTest7(false); }
+  public void testCaptureWildcardFromUnboundCaptureWildcard() { doTest7(false); }
+  public void testSuperCaptureSubstitutionWhenTypeParameterHasUpperBounds() { doTest7(false); }
+  public void testParameterBoundsWithCapturedWildcard() { doTest7(false); }
   //jdk should propagate LL 1.4 but actually it provides LL 1.7?!
   public void testCastObjectToIntJdk14() { doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_4, false); }
+  public void testSubstitutorCaptureBoundComposition() { doTest7(false); }
+  public void testIDEA57508() { doTest7(false); }
+  public void testIDEA57293() { doTest7(false); }
+  public void testIDEA59283() { doTest7(false); }
+  public void testIDEA127767() { doTest7(false); }
+  public void testIDEA113631() { doTest7(false); }
+  public void testIDEA57537() { doTest7(false); }
+  public void testMethodCallTypeErasedWhenUncheckedConversionWasAppliedDuringApplicabilityCheck() { doTest7(false); }
+  public void testMethodCallTypeNotErasedWhenUncheckedConversionWasAppliedButNoTypeParamsProvided() { doTest7(false); }
+  public void testInferredParameterInBoundsInRecursiveGenerics() { doTest7(false); }
+  public void testIDEA65386() { doTest7(true); }
+  public void testHiddenMethodsOfAnonymousClass() { doTest7(false); }
+  public void testNestedLevelsToCheckTypeArguments() { doTest7(false); }
+  public void testExpectedTypeFromOuterArrayCreation() { doTest7(false); }
+  public void testDistinguishWildcardCapturesAlsoByMethodCalls() { doTest7(false); }
+  public void testSubstituteTypeParameterOfCapturedWildcardOnSubstitution() { doTest7(false); }
+  public void testAssignabilityBetweenWildcardsAndArrays() { doTest7(false); }
+  public void testCastConversionToTypeParameter() { doTest7(false); }
+  public void testTypeDistinctProverForWildcardAndTypeParameter() { doTest7(false); }
+  public void testIDEA58687() { doTest7(false); }
+  public void testDontReportWeakerVisibilityProblemUpInHierarchy() { doTest7(false); }
+  public void testSuperObjectCapturedWildcardEquality() { doTest7(false); }
+  public void testSOEInInfiniteTypesWithSuperWildcards() { doTest7(false); }
+  public void testMakeUseOfUpperBoundOfCaptureWildcardDuringNormalization() { doTest7(false); }
+  public void testCastFromGenericTypeWithTypeParameterWithExtendsAsArgument() { doTest7(true); }
+  public void testIDEA139067() { doTest7(true); }
+  public void testIDEA57336() { doTest(LanguageLevel.JDK_1_8, JavaSdkVersion.JDK_1_8, true); }
+  public void testPreserveCaptureWildcardsInUpperBounds() { doTest7(false); }
+  public void testIDEA57361() { doTest7(false); }
+  public void testRetrieveBoundFromCapturedWildcardUpperBoundOnNormalize() { doTest7(false); }
+  public void testCapturedBoundOfCapture() { doTest7(false); }
+  public void testWildcardsWithRawBound() { doTest7(false); }
+  public void testIDEA98866() { doTest7(false); }
+  public void testIDEA81318() { doTest7(false); }
+  public void testIDEA138957() { doTest7(false); }
+  public void testIDEA130453() { doTest7(false); }
+  public void testReifiableTypeWithLocalClasses() { doTest7(false); }
+  public void testStopBoundsPromotionInsideNestedWildcards() { doTest7(false); }
+  public void testIDEA130243() { doTest7(false); }
+  public void testCastingToPrimitive() { doTest7(false); }
+  public void testProvablyDistinctForWildcardsWithArrayBounds() { doTest7(false); }
+  public void testReturnTypeOverrideEquivalenceWithTypeHierarchy() { doTest7(false); }
+  public void testIgnoreReturnTypeClashForObjectProtectedMethodsAndInterfaceMethodsWithSameSignature() { doTest7(false); }
+  public void testIDEA150499() { doTest7(false); }
+  public void testRecursiveTypesTypeArgumentDistinction() { doTest7(true); }
+  public void testRecursiveBoundsDependencies() { doTest7(false); }
+  public void testUnboxingFromTypeParameter() { doTest7(false); }
 
-  public void testSubstitutorCaptureBoundComposition() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA57508() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA57293() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-  
-  public void testIDEA59283() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA127767() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA113631() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA57537() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testMethodCallTypeErasedWhenUncheckedConversionWasAppliedDuringApplicabilityCheck() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-  
-  public void testMethodCallTypeNotErasedWhenUncheckedConversionWasAppliedButNoTypeParamsProvided() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testInferredParameterInBoundsInRecursiveGenerics() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA65386() {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);
-  }
-
-  public void testHiddenMethodsOfAnonymousClass() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testNestedLevelsToCheckTypeArguments() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testExpectedTypeFromOuterArrayCreation() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testDistinguishWildcardCapturesAlsoByMethodCalls() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testSubstituteTypeParameterOfCapturedWildcardOnSubstitution() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testAssignabilityBetweenWildcardsAndArrays() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testCastConversionToTypeParameter() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testTypeDistinctProverForWildcardAndTypeParameter() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA58687() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testDontReportWeakerVisibilityProblemUpInHierarchy() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testSuperObjectCapturedWildcardEquality() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testSOEInInfiniteTypesWithSuperWildcards() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-
-  }
-
-  public void testMakeUseOfUpperBoundOfCaptureWildcardDuringNormalization() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testCastFromGenericTypeWithTypeParameterWithExtendsAsArgument() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);
-  }
-
-  public void testIDEA139067() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);
-  }
-
-  public void testIDEA57336() throws Exception {
-    doTest(LanguageLevel.JDK_1_8, JavaSdkVersion.JDK_1_8, true);
-  }
-
-  public void testPreserveCaptureWildcardsInUpperBounds() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA57361() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testRetrieveBoundFromCapturedWildcardUpperBoundOnNormalize() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testCapturedBoundOfCapture() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testWildcardsWithRawBound() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA98866() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA81318() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA138957() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA130453() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testReifiableTypeWithLocalClasses() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testStopBoundsPromotionInsideNestedWildcards() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA130243() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testCastingToPrimitive() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testProvablyDistinctForWildcardsWithArrayBounds() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testReturnTypeOverrideEquivalenceWithTypeHierarchy() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIgnoreReturnTypeClashForObjectProtectedMethodsAndInterfaceMethodsWithSameSignature() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testIDEA150499() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testRecursiveTypesTypeArgumentDistinction() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);
-  }
-
-  public void testRecursiveBoundsDependencies() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testUnboxingFromTypeParameter() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testLeastUpperBoundWithRecursiveTypes() throws Exception {
-    final PsiManager manager = getPsiManager();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    final PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(PsiType.INT.getBoxedType(manager, scope), 
-                                                                    PsiType.LONG.getBoxedType(manager, scope), 
-                                                                    manager);
+  public void testLeastUpperBoundWithRecursiveTypes() {
+    PsiManager manager = getPsiManager();
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(
+      PsiType.INT.getBoxedType(manager, scope), PsiType.LONG.getBoxedType(manager, scope), manager);
     assertNotNull(leastUpperBound);
     assertEquals("Number & Comparable<? extends Number & Comparable<?>>", leastUpperBound.getPresentableText());
   }
 
-  public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testCaptureConversionWithWildcardBounds() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testArrayContainsInTypeParameterWithSerializableBound() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);
-  }
-
-  public void testIntersectTypeParameterBounds() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testTopLevelCaptureConversion() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testNoCaptureConversionForArrayType() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testErasureOfMethodCallExpressionTypeIfItDoesntDependOnGenericsParameter() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testUncheckedConversionInReturnType() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
-  }
-
-  public void testNotErasedReturnValueUnderJdk7() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
-  }
-
-  public void testAvoidDblSubstitutionDuringErasureOfParameterTypesOfMethodSignature() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
-  }
-
-  public void testUncheckedWarningWhenCastingFromCapturedWildcard() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, true);
-  }
-
-  public void testEnclosingRefInTopLevelClassExtendingInnerWhichExtendsItsOuter() throws Exception {
-    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, true);
-  }
+  public void testReturnTypeSubstitutableForSameOverrideEquivalentMethods() { doTest7(false); }
+  public void testCaptureConversionWithWildcardBounds() { doTest7(false); }
+  public void testArrayContainsInTypeParameterWithSerializableBound() { doTest7(true); }
+  public void testIntersectTypeParameterBounds() { doTest7(false); }
+  public void testTopLevelCaptureConversion() { doTest7(false); }
+  public void testNoCaptureConversionForArrayType() { doTest7(false); }
+  public void testErasureOfMethodCallExpressionTypeIfItDoesntDependOnGenericsParameter() { doTest7(false); }
+  public void testUncheckedConversionInReturnType() { doTest7(false); }
+  public void testNotErasedReturnValueUnderJdk7() { doTest8Incompatibility(false); }
+  public void testAvoidDblSubstitutionDuringErasureOfParameterTypesOfMethodSignature() { doTest8Incompatibility(false); }
+  public void testUncheckedWarningWhenCastingFromCapturedWildcard() { doTest8Incompatibility(true); }
+  public void testEnclosingRefInTopLevelClassExtendingInnerWhichExtendsItsOuter() { doTest8Incompatibility(true); }
 }
