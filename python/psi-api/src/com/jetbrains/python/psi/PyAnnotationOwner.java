@@ -15,12 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public interface PyAnnotationOwner {
+public interface PyAnnotationOwner extends PsiElement {
   @Nullable
   PyAnnotation getAnnotation();
 
