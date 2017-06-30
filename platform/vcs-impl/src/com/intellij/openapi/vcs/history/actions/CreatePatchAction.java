@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -36,8 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public class CreatePatchAction extends DumbAwareAction {
   private final AnAction myUsualDelegate;
 
@@ -49,17 +48,15 @@ public class CreatePatchAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
-    VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
-    Project project = e.getProject();
-    if (filePath == null || revisions == null || vcsKey == null || project == null) return;
-
-    AbstractVcs vcs = VcsUtil.findVcsByKey(notNull(project), vcsKey);
-    if (vcs == null) return;
+    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+    VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
 
     if (filePath.isDirectory()) {
       if (revisions.length != 1) return;
+
+      AbstractVcs vcs = VcsUtil.findVcsByKey(e.getRequiredData(CommonDataKeys.PROJECT), e.getRequiredData(VcsDataKeys.VCS));
+      if (vcs == null) return;
+
       ProgressManager.getInstance().run(new FolderPatchCreationTask(vcs, revisions[0]));
     }
     else {
