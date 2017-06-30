@@ -27,34 +27,21 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * @author gregsh
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final FactoryMap<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
-    @Override
-    protected T create(String key) {
-      return findFileByPathInner(key);
-    }
-
-    @Override
-    public T get(Object key) {
-      T file = super.get(key);
-      if (file != null && !file.isValid()) {
-        remove(key);
-        return super.get(key);
-      }
-      return file;
-    }
-  };
+  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(this::findFileByPathInner);
 
   public DummyCachingFileSystem(String protocol) {
     myProtocol = protocol;
@@ -88,7 +75,12 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @Override
   public final T findFileByPath(@NotNull String path) {
-    return myCachedFiles.get(path);
+    T file = myCachedFiles.get(path);
+    if (file != null && !file.isValid()) {
+      myCachedFiles.remove(path);
+      file = myCachedFiles.get(path);
+    }
+    return file;
   }
 
   @Override
@@ -130,7 +122,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @NotNull
   public Collection<T> getCachedFiles() {
-    return myCachedFiles.notNullValues();
+    return myCachedFiles.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   public void onProjectClosed() {
@@ -169,11 +161,12 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearInvalidFiles() {
-    for (T t : myCachedFiles.notNullValues()) {
-      if (!t.isValid()) myCachedFiles.removeValue(t);
+    Collection<T> values = myCachedFiles.values();
+    for (T t : values) {
+      if (t == null || !t.isValid()) {
+        values.remove(t);
+      }
     }
-    //noinspection StatementWithEmptyBody
-    while (myCachedFiles.removeValue(null)) ;
   }
 
   private void cleanup() {

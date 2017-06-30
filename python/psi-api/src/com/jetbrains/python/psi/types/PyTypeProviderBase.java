@@ -38,12 +38,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     .orElse(null);
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = new FactoryMap<String, ReturnTypeDescriptor>() {
-    @Override
-    protected ReturnTypeDescriptor create(String key) {
-      return new ReturnTypeDescriptor();
-    }
-  };
+  private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = FactoryMap.createMap(key -> new ReturnTypeDescriptor());
 
   @Nullable
   @Override

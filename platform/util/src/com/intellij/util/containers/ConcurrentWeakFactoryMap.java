@@ -16,19 +16,21 @@
 
 package com.intellij.util.containers;
 
+import com.intellij.util.Function;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
-public abstract class ConcurrentWeakFactoryMap<T,V> extends FactoryMap<T,V>{
-
+public abstract class ConcurrentWeakFactoryMap {
   @NotNull
-  @Override
-  protected Map<T, V> createMap() {
-    return ContainerUtil.createConcurrentWeakMap();
+  public static <T, V> ConcurrentMap<T, V> createMap(@NotNull Function<T, V> compute) {
+    return ConcurrentFactoryMap.createMap(compute, new Producer<ConcurrentMap<T, V>>() {
+      @Override
+      public ConcurrentMap<T, V> produce() {return ContainerUtil.createConcurrentWeakMap();}
+    });
   }
-
 }

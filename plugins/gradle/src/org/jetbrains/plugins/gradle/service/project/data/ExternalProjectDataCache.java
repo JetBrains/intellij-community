@@ -55,24 +55,12 @@ public class ExternalProjectDataCache {
 
   public ExternalProjectDataCache(@NotNull Project project) {
     myProject = project;
-    myExternalRootProjects = new ConcurrentFactoryMap<Pair<ProjectSystemId, File>, ExternalProject>() {
-      @Override
-      protected Map<Pair<ProjectSystemId, File>, ExternalProject> createMap() {
-        return ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
-      }
+    myExternalRootProjects = ConcurrentFactoryMap.createMap(key->
+      new ExternalProjectSerializer().load(key.first, key.second),
 
-      @Nullable
-      @Override
-      protected ExternalProject create(Pair<ProjectSystemId, File> key) {
-        return new ExternalProjectSerializer().load(key.first, key.second);
-      }
-
-      @Override
-      public ExternalProject put(Pair<ProjectSystemId, File> key, ExternalProject value) {
-        new ExternalProjectSerializer().save(value);
-        return super.put(key, value);
-      }
-    };
+                                                            () ->
+        ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY)
+    );
   }
 
 
@@ -93,9 +81,11 @@ public class ExternalProjectDataCache {
   }
 
   public void saveExternalProject(@NotNull ExternalProject externalProject) {
+    DefaultExternalProject value = new DefaultExternalProject(externalProject);
+    new ExternalProjectSerializer().save(value);
     myExternalRootProjects.put(
       Pair.create(new ProjectSystemId(externalProject.getExternalSystemId()), externalProject.getProjectDir()),
-      new DefaultExternalProject(externalProject)
+      value
     );
   }
 

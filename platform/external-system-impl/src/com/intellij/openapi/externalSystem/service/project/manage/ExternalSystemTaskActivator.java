@@ -139,17 +139,14 @@ public class ExternalSystemTaskActivator {
 
     //noinspection MismatchedQueryAndUpdateOfCollection
     Map<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>> lazyConfigurationsMap =
-      new FactoryMap<ProjectSystemId, Map<String, RunnerAndConfigurationSettings>>() {
-        @Nullable
-        @Override
-        protected Map<String, RunnerAndConfigurationSettings> create(ProjectSystemId key) {
+      FactoryMap.createMap(key-> {
           final AbstractExternalSystemTaskConfigurationType configurationType =
             ExternalSystemUtil.findConfigurationType(key);
           if (configurationType == null) return null;
           return ContainerUtil.map2Map(RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType),
                                        configurationSettings -> Pair.create(configurationSettings.getName(), configurationSettings));
         }
-      };
+      );
 
     for (final ExternalProjectsStateProvider.TasksActivation activation : stateProvider.getAllTasksActivation()) {
       final boolean hashPath = modules.contains(activation.projectPath);

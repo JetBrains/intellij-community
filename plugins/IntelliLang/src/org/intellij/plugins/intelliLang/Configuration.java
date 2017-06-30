@@ -192,12 +192,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
   @NonNls private static final String SOURCE_MODIFICATION_ALLOWED = "SOURCE_MODIFICATION_ALLOWED";
 
-  private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
-    @Override
-    protected List<BaseInjection> create(final String key) {
-      return ContainerUtil.createLockFreeCopyOnWriteList();
-    }
-  };
+  private final Map<String, List<BaseInjection>> myInjections =
+    ConcurrentFactoryMap.createMap(key -> ContainerUtil.createLockFreeCopyOnWriteList());
 
   protected Collection<BaseInjection> getAllInjections() {
     List<BaseInjection> injections = new ArrayList<>();

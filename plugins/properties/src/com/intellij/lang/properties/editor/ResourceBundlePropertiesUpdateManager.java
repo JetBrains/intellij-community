@@ -232,20 +232,7 @@ public class ResourceBundlePropertiesUpdateManager {
     public PropertiesOrder(@NotNull PropertiesFile file) {
       final List<IProperty> properties = file.getProperties();
       myKeys = new ArrayList<>(properties.size());
-      myKeyIndices = new FactoryMap<String, IntArrayList>() {
-
-        @NotNull
-        @Override
-        protected Map<String, IntArrayList> createMap() {
-          return new THashMap<>(properties.size());
-        }
-
-        @NotNull
-        @Override
-        protected IntArrayList create(String key) {
-          return new IntArrayList(1);
-        }
-      };
+      myKeyIndices = FactoryMap.createMap(k->new IntArrayList(1),()->new THashMap<>(properties.size()));
 
       int index = 0;
       for (IProperty property : properties) {

@@ -34,7 +34,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
@@ -49,6 +48,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -58,10 +58,10 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
 
-  private static final Pattern                                    GRADLE_CLASS_PATTERN  = Pattern.compile(".*_gradle_.*");
-  private static final String                                     SCRIPT_CLOSURE_PREFIX = "build_";
-  private static final Key<CachedValue<ClassLoader>>              GRADLE_CLASS_LOADER   = Key.create("GRADLE_CLASS_LOADER");
-  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME     = Key.create("GRADLE_CLASS_NAME");
+  private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
+  private static final String SCRIPT_CLOSURE_PREFIX = "build_";
+  private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
+  private static final Key<CachedValue<Map<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
 
   private final GradleInstallationManager myLibraryManager;
 
@@ -150,7 +150,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return UrlClassLoader.build().urls(urls).get();
   }
 
-  private class ScriptSourceMapCalculator implements CachedValueProvider<FactoryMap<File, String>> {
+  private class ScriptSourceMapCalculator implements CachedValueProvider<Map<File, String>> {
     private final Module myModule;
 
     public ScriptSourceMapCalculator(Module module) {
@@ -158,13 +158,8 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     }
 
     @Override
-    public Result<FactoryMap<File, String>> compute() {
-      final FactoryMap<File, String> result = new ConcurrentFactoryMap<File, String>() {
-        @Override
-        protected String create(File scriptFile) {
-          return calcClassName(scriptFile);
-        }
-      };
+    public Result<Map<File, String>> compute() {
+      final Map<File, String> result = ConcurrentFactoryMap.createMap(scriptFile -> calcClassName(scriptFile));
       return Result.create(result, ProjectRootManager.getInstance(myModule.getProject()));
     }
 

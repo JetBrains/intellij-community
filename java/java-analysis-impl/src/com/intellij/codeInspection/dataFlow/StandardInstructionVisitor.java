@@ -66,9 +66,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private final Set<PsiElement> myNotToReportReachability = new THashSet<>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<MethodCallInstruction, Nullness> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Nullness>() {
-    @Override
-    protected Nullness create(MethodCallInstruction key) {
+  private final Map<MethodCallInstruction, Nullness> myReturnTypeNullability = FactoryMap.createMap(key-> {
       final PsiCall callExpression = key.getCallExpression();
       if (callExpression instanceof PsiNewExpression) {
         return Nullness.NOT_NULL;
@@ -76,7 +74,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
       return callExpression != null ? DfaPsiUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
     }
-  };
+  );
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

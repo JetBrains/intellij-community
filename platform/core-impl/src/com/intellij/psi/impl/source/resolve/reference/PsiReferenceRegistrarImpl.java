@@ -28,12 +28,12 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Dmitry Avdeev
@@ -43,14 +43,11 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = ContainerUtil.newTroveMap();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = ContainerUtil.newTroveMap();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final ConcurrentFactoryMap<Class, ProviderBinding[]> myBindingCache;
+  private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
   public PsiReferenceRegistrarImpl(final Language language) {
-    myBindingCache = new ConcurrentFactoryMap<Class, ProviderBinding[]>() {
-      @Nullable
-      @Override
-      protected ProviderBinding[] create(Class key) {
+    myBindingCache = ConcurrentFactoryMap.createMap(key-> {
         List<ProviderBinding> result = ContainerUtil.newSmartList();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
           if (bindingClass.isAssignableFrom(key)) {
@@ -69,7 +66,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
         //noinspection unchecked
         return result.toArray(new ProviderBinding[result.size()]);
       }
-    };
+    );
   }
 
   public void markInitialized() {

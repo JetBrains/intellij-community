@@ -33,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -63,20 +62,10 @@ public class LibraryScopeCache {
       }
     });
   private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
-  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
-    @Nullable
-    @Override
-    protected GlobalSearchScope create(@NotNull List<OrderEntry> key) {
-      return calcLibraryScope(key);
-    }
-  };
-  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
-    @Nullable
-    @Override
-    protected GlobalSearchScope create(@NotNull List<OrderEntry> key) {
-      return calcLibraryUseScope(key);
-    }
-  };
+  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache =
+    ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
+  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache =
+    ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
 
   public LibraryScopeCache(Project project) {
     myProject = project;

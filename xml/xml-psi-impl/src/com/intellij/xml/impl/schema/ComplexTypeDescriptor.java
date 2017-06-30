@@ -29,7 +29,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -88,22 +87,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   };
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new ConcurrentFactoryMap<String, CachedValue<CanContainAttributeType>>() {
-    @Override
-    protected CachedValue<CanContainAttributeType> create(final String key) {
-      return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
-        THashSet<Object> dependencies = new THashSet<>();
-        CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<>(), dependencies);
-        if (dependencies.isEmpty()) {
-          dependencies.add(myTag.getContainingFile());
-        }
-        if (DumbService.isDumb(myTag.getProject())) {
-          dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
-        }
-        return CachedValueProvider.Result.create(type, ArrayUtil.toObjectArray(dependencies));
-      }, false);
-    }
-  };
+  private final Map<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache =
+    ConcurrentFactoryMap.createMap(key -> CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
+      THashSet<Object> dependencies = new THashSet<>();
+      CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<>(), dependencies);
+      if (dependencies.isEmpty()) {
+        dependencies.add(myTag.getContainingFile());
+      }
+      if (DumbService.isDumb(myTag.getProject())) {
+        dependencies.add(DumbService.getInstance(myTag.getProject()).getModificationTracker());
+      }
+      return CachedValueProvider.Result.create(type, ArrayUtil.toObjectArray(dependencies));
+    }, false));
 
   private volatile XmlElementDescriptor[] myElementDescriptors;
   private volatile XmlAttributeDescriptor[] myAttributeDescriptors;

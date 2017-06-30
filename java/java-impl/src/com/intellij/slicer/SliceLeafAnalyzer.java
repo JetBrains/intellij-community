@@ -33,8 +33,8 @@ import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
@@ -171,18 +171,7 @@ public class SliceLeafAnalyzer {
   }
 
   public static Map<SliceNode, Collection<PsiElement>> createMap() {
-    return new FactoryMap<SliceNode, Collection<PsiElement>>() {
-      @NotNull
-      @Override
-      protected Map<SliceNode, Collection<PsiElement>> createMap() {
-        return ContainerUtil.newConcurrentMap(ContainerUtil.<SliceNode>identityStrategy());
-      }
-
-      @Override
-      protected Collection<PsiElement> create(SliceNode key) {
-        return ContainerUtil.newConcurrentSet(LEAF_ELEMENT_EQUALITY);
-      }
-    };
+    return ConcurrentFactoryMap.createMap(k->ContainerUtil.newConcurrentSet(LEAF_ELEMENT_EQUALITY), ()->ContainerUtil.newConcurrentMap(ContainerUtil.<SliceNode>identityStrategy()));
   }
 
   static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {

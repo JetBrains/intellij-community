@@ -67,6 +67,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
 public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>{
@@ -367,13 +368,8 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   public static class UsageTypeExtension implements UsageTypeProvider {
-    private static final ConcurrentFactoryMap<RootType, UsageType> ourUsageTypes = new ConcurrentFactoryMap<RootType, UsageType>() {
-      @Nullable
-      @Override
-      protected UsageType create(RootType key) {
-        return new UsageType("Usage in " + key.getDisplayName());
-      }
-    };
+    private static final ConcurrentMap<RootType, UsageType> ourUsageTypes =
+      ConcurrentFactoryMap.createMap(key -> new UsageType("Usage in " + key.getDisplayName()));
 
     @Nullable
     @Override

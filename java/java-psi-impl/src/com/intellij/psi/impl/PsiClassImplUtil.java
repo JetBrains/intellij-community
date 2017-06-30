@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ik
@@ -347,18 +348,20 @@ public class PsiClassImplUtil {
     return factory.createMethodFromText(text, null).getSignature(PsiSubstitutor.EMPTY);
   }
 
-  private static class MembersMap extends ConcurrentFactoryMap<MemberType, Map<String, PsiMember[]>> {
-    private final PsiClass myPsiClass;
-    private final GlobalSearchScope myResolveScope;
+  private static class MembersMap {
+    final ConcurrentMap<MemberType, Map<String, PsiMember[]>> myMap;
 
     MembersMap(PsiClass psiClass, GlobalSearchScope scope) {
-      myPsiClass = psiClass;
-      myResolveScope = scope;
+      myMap = createMembersMap(psiClass, scope);
     }
 
-    @Nullable
-    @Override
-    protected Map<String, PsiMember[]> create(final MemberType key) {
+    private Map<String, PsiMember[]> get(MemberType type) {
+      return myMap.get(type);
+    }
+  }
+
+  private static ConcurrentMap<MemberType, Map<String, PsiMember[]>> createMembersMap(PsiClass psiClass, GlobalSearchScope scope) {
+    return ConcurrentFactoryMap.createMap(key -> {
       final Map<String, List<PsiMember>> map = ContainerUtil.newTroveMap();
 
       final List<PsiMember> allMembers = ContainerUtil.newArrayList();
@@ -400,14 +403,14 @@ public class PsiClassImplUtil {
         }
       };
 
-      processDeclarationsInClassNotCached(myPsiClass, processor, ResolveState.initial(), null, null, myPsiClass, false,
-                                          PsiUtil.getLanguageLevel(myPsiClass), myResolveScope);
+      processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(), null, null, psiClass, false,
+                                          PsiUtil.getLanguageLevel(psiClass), scope);
       Map<String, PsiMember[]> result = ContainerUtil.newTroveMap();
       for (String name : map.keySet()) {
         result.put(name, map.get(name).toArray(PsiMember.EMPTY_ARRAY));
       }
       return result;
-    }
+    });
   }
 
   private static class ByNameCachedValueProvider implements ParameterizedCachedValueProvider<Map<GlobalSearchScope, MembersMap>, PsiClass> {
@@ -415,7 +418,7 @@ public class PsiClassImplUtil {
 
     @Override
     public CachedValueProvider.Result<Map<GlobalSearchScope, MembersMap>> compute(@NotNull final PsiClass myClass) {
-      Map<GlobalSearchScope, MembersMap> map = ConcurrentFactoryMap.createConcurrentMap(scope -> new MembersMap(myClass, scope));
+      Map<GlobalSearchScope, MembersMap> map = ConcurrentFactoryMap.createMap(scope -> new MembersMap(myClass, scope));
       return CachedValueProvider.Result.create(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }

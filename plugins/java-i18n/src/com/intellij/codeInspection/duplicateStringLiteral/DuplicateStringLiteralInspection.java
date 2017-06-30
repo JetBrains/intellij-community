@@ -207,7 +207,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   private List<PsiLiteralExpression> getDuplicateLiterals(String stringToFind, PsiLiteralExpression place) {
     Project project = place.getProject();
     Map<String, List<PsiLiteralExpression>> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      Map<String, List<PsiLiteralExpression>> value = ConcurrentFactoryMap.createConcurrentMap(
+      Map<String, List<PsiLiteralExpression>> value = ConcurrentFactoryMap.createMap(
         s -> Collections.unmodifiableList(findDuplicateLiterals(s, project)));
       return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
     });

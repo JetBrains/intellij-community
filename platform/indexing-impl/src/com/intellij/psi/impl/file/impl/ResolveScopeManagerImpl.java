@@ -30,8 +30,8 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,32 +47,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new FactoryMap<VirtualFile, GlobalSearchScope>() {
-
-    @NotNull
-    @Override
-    protected Map<VirtualFile, GlobalSearchScope> createMap() {
-      return ContainerUtil.createConcurrentWeakKeySoftValueMap();
-    }
-
-    @Override
-    protected GlobalSearchScope create(@NotNull VirtualFile key) {
-      GlobalSearchScope scope = null;
-      for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
-        scope = resolveScopeProvider.getResolveScope(key, myProject);
-        if (scope != null) break;
-      }
-      if (scope == null) scope = getInherentResolveScope(key);
-      for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-        final SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
-        if (extra != null) {
-          scope = scope.union(extra);
-        }
-      }
-
-      return scope;
-    }
-  };
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
   public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
@@ -81,6 +56,26 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(key-> {
+        GlobalSearchScope scope = null;
+        for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
+          scope = resolveScopeProvider.getResolveScope(key, myProject);
+          if (scope != null) break;
+        }
+        if (scope == null) scope = getInherentResolveScope(key);
+        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+          final SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
+          if (extra != null) {
+            scope = scope.union(extra);
+          }
+        }
+
+        return scope;
+      },
+
+                                                                 ContainerUtil::createConcurrentWeakKeySoftValueMap
+
+    );
     ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
   }
 

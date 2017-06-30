@@ -122,12 +122,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<String, Set<Object>> mySuppressedNodes = new FactoryMap<String, Set<Object>>() {
-    @Override
-    protected Set<Object> create(String key) {
-      return new THashSet<>();
-    }
-  };
+  private final Map<String, Set<Object>> mySuppressedNodes = FactoryMap.createMap(key -> new THashSet<>());
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();

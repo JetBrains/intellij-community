@@ -36,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * @author Max Medvedev
  */
@@ -44,7 +46,7 @@ public class GdkMethodHolder {
   private static final Key<CachedValue<GdkMethodHolder>> CACHED_STATIC = Key.create("Cached static gdk method holder");
 
   private final String myClassName;
-  private final ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
+  private final ConcurrentMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
   private final NotNullLazyValue<MultiMap<String, PsiMethod>> myOriginalMethodByType;
   private final boolean myStatic;
   private final GlobalSearchScope myScope;
@@ -77,16 +79,14 @@ public class GdkMethodHolder {
       }
     };
 
-    myOriginalMethodsByNameAndType = new ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>>() {
-      @Override
-      protected MultiMap<String, PsiMethod> create(String name) {
+    myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name-> {
         MultiMap<String, PsiMethod> map = new MultiMap<>();
         for (PsiMethod method : byName.get(name)) {
           map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
         }
         return map;
       }
-    };
+    );
   }
 
   private PsiType getCategoryTargetType(PsiMethod method) {

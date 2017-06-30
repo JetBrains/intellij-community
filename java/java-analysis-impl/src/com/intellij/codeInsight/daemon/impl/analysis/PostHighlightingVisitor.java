@@ -364,14 +364,11 @@ class PostHighlightingVisitor {
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = new ConcurrentFactoryMap<PsiMethod, Boolean>() {
-    @Nullable
-    @Override
-    protected Boolean create(PsiMethod method) {
+  private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = ConcurrentFactoryMap.createMap(method-> {
       boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
       return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
     }
-  };
+  );
 
   private boolean isOverriddenOrOverrides(@NotNull PsiMethod method) {
     return isOverriddenOrOverrides.get(method);

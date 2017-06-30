@@ -56,8 +56,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
@@ -81,18 +81,8 @@ public class ConsoleHistoryController {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
   /** @noinspection MismatchedQueryAndUpdateOfCollection*/
-  private final static FactoryMap<String, ConsoleHistoryModel> ourModels = new FactoryMap<String, ConsoleHistoryModel>() {
-    @NotNull
-    @Override
-    protected Map<String, ConsoleHistoryModel> createMap() {
-      return ContainerUtil.createConcurrentWeakValueMap();
-    }
-
-    @Override
-    protected ConsoleHistoryModel create(String key) {
-      return new ConsoleHistoryModel(null);
-    }
-  };
+  private final static Map<String, ConsoleHistoryModel> ourModels = ConcurrentFactoryMap.createMap(key->
+      new ConsoleHistoryModel(null), ContainerUtil::createConcurrentWeakValueMap);
   private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
     ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
 

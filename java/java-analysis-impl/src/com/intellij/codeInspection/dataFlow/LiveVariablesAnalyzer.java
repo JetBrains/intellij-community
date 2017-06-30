@@ -42,10 +42,7 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final FactoryMap<PsiElement, List<DfaVariableValue>> myClosureReads = new FactoryMap<PsiElement, List<DfaVariableValue>>() {
-    @NotNull
-    @Override
-    protected List<DfaVariableValue> create(PsiElement closure) {
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, List<DfaVariableValue>> myClosureReads = FactoryMap.createMap(closure-> {
       final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
       closure.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
@@ -61,7 +58,7 @@ public class LiveVariablesAnalyzer {
       });
       return ContainerUtil.newArrayList(result);
     }
-  };
+  );
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
     myFactory = factory;

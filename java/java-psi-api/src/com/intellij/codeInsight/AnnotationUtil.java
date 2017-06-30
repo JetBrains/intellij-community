@@ -89,7 +89,7 @@ public class AnnotationUtil {
     Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createConcurrentMap(annotationNames1-> {
+        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
             final PsiModifierList list = listOwner.getModifierList();
             if (list == null) return null;
             for (PsiAnnotation annotation : list.getAnnotations()) {
@@ -109,7 +109,7 @@ public class AnnotationUtil {
     Map<Collection<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createConcurrentMap(annotationNames1-> {
+        Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
             final Project project = listOwner.getProject();
             final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
             for (String annotationName : annotationNames1) {
@@ -181,7 +181,7 @@ public class AnnotationUtil {
     Map<Set<String>, PsiAnnotation> map = CachedValuesManager.getCachedValue(
       listOwner,
       () -> {
-        Map<Set<String>, PsiAnnotation> value = ConcurrentFactoryMap.createConcurrentMap(annotationNames1->
+        Map<Set<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1->
            {
             for (PsiModifierListOwner superOwner : getSuperAnnotationOwners(listOwner)) {
               PsiAnnotation annotation = findAnnotation(superOwner, annotationNames1);

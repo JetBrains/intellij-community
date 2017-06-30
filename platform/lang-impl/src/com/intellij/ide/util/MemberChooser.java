@@ -205,9 +205,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private DefaultTreeModel buildModel() {
     final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     final Ref<Integer> count = new Ref<>(0);
-    final FactoryMap<MemberChooserObject, ParentNode> map = new FactoryMap<MemberChooserObject, ParentNode>() {
-      @Override
-      protected ParentNode create(final MemberChooserObject key) {
+    Ref<Map<MemberChooserObject, ParentNode>> mapRef = new Ref<>();
+    mapRef.set(FactoryMap.createMap(key-> {
         ParentNode node = null;
         DefaultMutableTreeNode parentNode = rootNode;
 
@@ -215,7 +214,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
           MemberChooserObject parentNodeDelegate = ((ClassMember)key).getParentNodeDelegate();
 
           if (parentNodeDelegate != null) {
-            parentNode = get(parentNodeDelegate);
+            parentNode = mapRef.get().get(parentNodeDelegate);
           }
         }
         if (isContainerNode(key)) {
@@ -228,8 +227,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         }
         return node;
       }
-    };
-
+    ));
+    final Map<MemberChooserObject, ParentNode> map = mapRef.get();
     for (T object : myElements) {
       final ParentNode parentNode = map.get(object.getParentNodeDelegate());
       final MemberNode elementNode = createMemberNode(count, object, parentNode);

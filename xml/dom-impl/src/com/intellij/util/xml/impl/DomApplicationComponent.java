@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
@@ -28,7 +29,6 @@ import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -36,63 +36,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.util.containers.ContainerUtil.createConcurrentSoftValueMap;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * @author peter
  */
 public class DomApplicationComponent {
-  private final FactoryMap<String,Set<DomFileDescription>> myRootTagName2FileDescription = new FactoryMap<String, Set<DomFileDescription>>() {
-    @Override
-    protected Set<DomFileDescription> create(final String key) {
-      return new THashSet<>();
-    }
-  };
+  private final Map<String, Set<DomFileDescription>> myRootTagName2FileDescription = FactoryMap.createMap(key -> new THashSet<>());
   private final Set<DomFileDescription> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
-  private final FactoryMap<Class, DomElementsAnnotator> myClass2Annotator = new ConcurrentFactoryMap<Class, DomElementsAnnotator>() {
-
-    @Override
-    protected DomElementsAnnotator create(Class key) {
+  private final Map<Class, DomElementsAnnotator> myClass2Annotator = ConcurrentFactoryMap.createMap(key-> {
       final DomFileDescription desc = findFileDescription(key);
       return desc == null ? null : desc.createAnnotator();
     }
-  };
+  );
 
-  private final FactoryMap<Class, StaticGenericInfo> myGenericInfos = new FactoryMap<Class, StaticGenericInfo>() {
-    @Override
-    protected Map<Class, StaticGenericInfo> createMap() {
-      return createConcurrentSoftValueMap();
-    }
-    @Nullable
-    @Override
-    protected StaticGenericInfo create(Class type) {
-      return new StaticGenericInfo(type);
-    }
-  };
-  private final FactoryMap<Class, InvocationCache> myInvocationCaches = new FactoryMap<Class, InvocationCache>() {
-    @Override
-    protected Map<Class, InvocationCache> createMap() {
-      return createConcurrentSoftValueMap();
-    }
-
-    @Nullable
-    @Override
-    protected InvocationCache create(Class key) {
-      return new InvocationCache(key);
-    }
-  };
-  private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
-    new ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
-      @Override
-      @NotNull
-      protected VisitorDescription create(final Class<? extends DomElementVisitor> key) {
-        return new VisitorDescription(key);
-      }
-    };
+  private final Map<Class, StaticGenericInfo> myGenericInfos = ConcurrentFactoryMap.createMap(StaticGenericInfo::new,
+                                                                                              ContainerUtil::createConcurrentSoftValueMap);
+  private final Map<Class, InvocationCache> myInvocationCaches = ConcurrentFactoryMap.createMap(InvocationCache::new,
+                                                                                                ContainerUtil::createConcurrentSoftValueMap);
+  private final Map<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
+    ConcurrentFactoryMap.createMap(VisitorDescription::new);
 
 
   public DomApplicationComponent() {

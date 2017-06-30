@@ -61,7 +61,7 @@ class ScopedClassHierarchy {
   private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
   private volatile List<PsiClassType.ClassResolveResult> myImmediateSupersWithCapturing;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<LanguageLevel, Map<PsiClass, PsiSubstitutor>> myAllSupersWithCapturing = ConcurrentFactoryMap.createConcurrentMap(this::calcAllMemberSupers);
+  private final Map<LanguageLevel, Map<PsiClass, PsiSubstitutor>> myAllSupersWithCapturing = ConcurrentFactoryMap.createMap(this::calcAllMemberSupers);
 
   ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {
     myPlaceClass = psiClass;
@@ -100,7 +100,7 @@ class ScopedClassHierarchy {
   @NotNull
   static ScopedClassHierarchy getHierarchy(@NotNull final PsiClass psiClass, @NotNull final GlobalSearchScope resolveScope) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
-      Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createConcurrentMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
+      Map<GlobalSearchScope, ScopedClassHierarchy> result = ConcurrentFactoryMap.createMap(resolveScope1 -> new ScopedClassHierarchy(psiClass, resolveScope1));
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     }).get(resolveScope);
   }

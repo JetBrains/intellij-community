@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -41,7 +40,6 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -176,10 +174,7 @@ public class ConsoleViewUtil {
       });
     }
     static final Map<Key, List<TextAttributesKey>> textAttributeKeys = ContainerUtil.newConcurrentMap();
-    static final Map<Key, TextAttributes> mergedTextAttributes = new ConcurrentFactoryMap<Key, TextAttributes>() {
-      @Nullable
-      @Override
-      protected TextAttributes create(Key contentKey) {
+    static final Map<Key, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
         for (TextAttributesKey key : textAttributeKeys.get(contentKey)) {
@@ -190,11 +185,9 @@ public class ConsoleViewUtil {
         }
         return result;
       }
-    };
+    );
 
-    static final Map<List<TextAttributesKey>, Key> keys = new ConcurrentFactoryMap<List<TextAttributesKey>, Key>() {
-      @Override
-      protected Key create(List<TextAttributesKey> keys) {
+    static final Map<List<TextAttributesKey>, Key> keys = ConcurrentFactoryMap.createMap(keys-> {
         StringBuilder keyName = new StringBuilder("ConsoleViewUtil_");
         for (TextAttributesKey key : keys) {
           keyName.append("_").append(key.getExternalName());
@@ -211,7 +204,7 @@ public class ConsoleViewUtil {
         ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
         return newKey;
       }
-    };
+    );
   }
 
   public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text, @NotNull SyntaxHighlighter highlighter) {

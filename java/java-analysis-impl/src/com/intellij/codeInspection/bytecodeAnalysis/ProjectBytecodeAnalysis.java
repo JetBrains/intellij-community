@@ -236,7 +236,7 @@ public class ProjectBytecodeAnalysis {
   public PsiAnnotation createContractAnnotation(String contractValue) {
     Map<String, PsiAnnotation> cache = CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
       Map<String, PsiAnnotation> map =
-        ConcurrentFactoryMap.createConcurrentMap(attrs -> createAnnotationFromText("@org.jetbrains.annotations.Contract(" + attrs + ")"));
+        ConcurrentFactoryMap.createMap(attrs -> createAnnotationFromText("@org.jetbrains.annotations.Contract(" + attrs + ")"));
       return CachedValueProvider.Result.create(map, ModificationTracker.NEVER_CHANGED);
     });
     return cache.get(contractValue);

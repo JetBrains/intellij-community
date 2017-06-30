@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 /**
@@ -57,7 +58,7 @@ public class MetaAnnotationUtil {
     final Project project = module.getProject();
 
     Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(project).getCachedValue(module, () -> {
-      Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createConcurrentMap(key -> {
+      Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, key.getSecond());
 
         PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(key.getFirst(), moduleScope);
@@ -169,8 +170,9 @@ public class MetaAnnotationUtil {
 
   @Nullable
   private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
-    ConcurrentFactoryMap<String, PsiAnnotation> cachedValue = CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
-      ConcurrentFactoryMap<String, PsiAnnotation> metaAnnotationsMap = ConcurrentFactoryMap.createConcurrentMap(anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
+    ConcurrentMap<String, PsiAnnotation> cachedValue = CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
+      ConcurrentMap<String, PsiAnnotation>
+        metaAnnotationsMap = ConcurrentFactoryMap.createMap(anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
       return new CachedValueProvider.Result<>(metaAnnotationsMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
     return cachedValue.get(annotationToFind);

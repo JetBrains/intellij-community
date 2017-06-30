@@ -21,7 +21,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,13 +30,7 @@ import java.util.Map;
  * @since 10/23/2014
  */
 public class ExternalProjectsState {
-  private final Map<String, State> myExternalSystemsState = new NullSafeMap<String, State>() {
-    @NotNull
-    @Override
-    protected State create(String key) {
-      return new State();
-    }
-  };
+  private final Map<String, State> myExternalSystemsState = FactoryMap.createMap(key-> new State());
 
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
@@ -57,19 +50,7 @@ public class ExternalProjectsState {
   public static class State {
     private ExternalProjectsViewState projectsViewState = new ExternalProjectsViewState();
 
-    private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = new NullSafeMap<String, TaskActivationState>() {
-      @NotNull
-      @Override
-      protected TaskActivationState create(String key) {
-        return new TaskActivationState();
-      }
-
-      @NotNull
-      @Override
-      protected Map<String, TaskActivationState> createMap() {
-        return new LinkedHashMap<>();
-      }
-    };
+    private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = FactoryMap.createMap(key-> new TaskActivationState(), LinkedHashMap::new);
 
     @Property(surroundWithTag = false)
     @MapAnnotation(keyAttributeName = "path", entryTagName = "task",
@@ -89,14 +70,6 @@ public class ExternalProjectsState {
 
     public void setProjectsViewState(ExternalProjectsViewState projectsViewState) {
       this.projectsViewState = projectsViewState;
-    }
-  }
-
-  public static abstract class NullSafeMap<K,V> extends FactoryMap<K,V> {
-    @Override
-    public V put(K key, V value) {
-      if(value == null) return null;
-      return super.put(key, value);
     }
   }
 }

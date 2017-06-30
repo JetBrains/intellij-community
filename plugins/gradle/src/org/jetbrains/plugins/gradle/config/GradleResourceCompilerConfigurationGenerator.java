@@ -177,13 +177,8 @@ public class GradleResourceCompilerConfigurationGenerator {
     final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = ContainerUtil.newTroveMap();
 
     //noinspection MismatchedQueryAndUpdateOfCollection
-    final Map<String, ExternalProject> lazyExternalProjectMap = new FactoryMap<String, ExternalProject>() {
-      @Nullable
-      @Override
-      protected ExternalProject create(String gradleProjectPath) {
-        return externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
-      }
-    };
+    final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.createMap(
+      gradleProjectPath -> externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath)));
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;

@@ -17,6 +17,7 @@ package com.intellij.execution.rmi;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
@@ -29,6 +30,7 @@ import java.rmi.ServerError;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Gregory.Shrago
@@ -37,32 +39,33 @@ public class RemoteUtil {
   RemoteUtil() {
   }
 
-  private static final ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
-    new ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>>() {
-      @Override
-      protected Map<Method, Method> create(Couple<Class<?>> key) {
-        final THashMap<Method, Method> map = new THashMap<Method, Method>();
-        for (Method method : key.second.getMethods()) {
-          Method m = null;
-          main:
-          for (Method candidate : key.first.getMethods()) {
-            if (!candidate.getName().equals(method.getName())) continue;
-            Class<?>[] cpts = candidate.getParameterTypes();
-            Class<?>[] mpts = method.getParameterTypes();
-            if (cpts.length != mpts.length) continue;
-            for (int i = 0; i < mpts.length; i++) {
-              Class<?> mpt = mpts[i];
-              Class<?> cpt = castArgumentClassToLocal(cpts[i]);
-              if (!cpt.isAssignableFrom(mpt)) continue main;
-            }
-            m = candidate;
-            break;
-          }
-          if (m != null) map.put(method, m);
-        }
-        return map;
-      }
-    };
+  private static final ConcurrentMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
+    ConcurrentFactoryMap.createMap(new Function<Couple<Class<?>>, Map<Method, Method>>() {
+     @Override
+     public Map<Method, Method> fun(Couple<Class<?>> key) {
+       final THashMap<Method, Method> map = new THashMap<Method, Method>();
+       for (Method method : key.second.getMethods()) {
+         Method m = null;
+         main:
+         for (Method candidate : key.first.getMethods()) {
+           if (!candidate.getName().equals(method.getName())) continue;
+           Class<?>[] cpts = candidate.getParameterTypes();
+           Class<?>[] mpts = method.getParameterTypes();
+           if (cpts.length != mpts.length) continue;
+           for (int i = 0; i < mpts.length; i++) {
+             Class<?> mpt = mpts[i];
+             Class<?> cpt = castArgumentClassToLocal(cpts[i]);
+             if (!cpt.isAssignableFrom(mpt)) continue main;
+           }
+           m = candidate;
+           break;
+         }
+         if (m != null) map.put(method, m);
+       }
+       return map;
+     }
+     }
+    );
 
   @NotNull
   public static <T> T castToRemoteNotNull(Object object, Class<T> clazz) {

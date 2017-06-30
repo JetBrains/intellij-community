@@ -131,18 +131,7 @@ public class SliceNullnessAnalyzer {
   }
 
   public static Map<SliceNode, NullAnalysisResult> createMap() {
-    return new FactoryMap<SliceNode, NullAnalysisResult>() {
-      @Override
-      protected NullAnalysisResult create(SliceNode key) {
-        return new NullAnalysisResult();
-      }
-
-      @NotNull
-      @Override
-      protected Map<SliceNode, NullAnalysisResult> createMap() {
-        return ContainerUtil.newIdentityTroveMap();
-      }
-    };
+    return FactoryMap.createMap(k->new NullAnalysisResult(), ContainerUtil::newIdentityTroveMap);
   }
 
   private static NullAnalysisResult node(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls) {

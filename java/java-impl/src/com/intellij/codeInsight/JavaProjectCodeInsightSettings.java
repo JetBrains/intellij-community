@@ -34,6 +34,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,13 +44,10 @@ import java.util.regex.Pattern;
 @State(name = "JavaProjectCodeInsightSettings", storages = @Storage("codeInsightSettings.xml"))
 public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentWeakFactoryMap<String, Pattern> ourPatterns = new ConcurrentWeakFactoryMap<String, Pattern>() {
-    @Nullable
-    @Override
-    protected Pattern create(String key) {
-      return PatternUtil.fromMask(key);
-    }
-  };
+  private static final ConcurrentMap<String, Pattern> ourPatterns = ConcurrentWeakFactoryMap.createMap(key->
+      PatternUtil.fromMask(key)
+  );
+
 
   @Tag("excluded-names")
   @AbstractCollection(surroundWithTag = false, elementTag = "name", elementValueAttribute = "")

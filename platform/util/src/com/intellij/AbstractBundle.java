@@ -16,9 +16,9 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,13 +69,11 @@ public abstract class AbstractBundle {
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final FactoryMap<ClassLoader, Map<String, ResourceBundle>> ourCache =
-    new ConcurrentWeakFactoryMap<ClassLoader, Map<String, ResourceBundle>>() {
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
+    ConcurrentWeakFactoryMap.createMap(new Function<ClassLoader, Map<String, ResourceBundle>>() {
       @Override
-      protected Map<String, ResourceBundle> create(ClassLoader key) {
-        return ContainerUtil.createConcurrentSoftValueMap();
-      }
-    };
+      public Map<String, ResourceBundle> fun(ClassLoader k) {return ContainerUtil.createConcurrentSoftValueMap();}
+    });
 
   public static ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
     Map<String, ResourceBundle> map = ourCache.get(loader);

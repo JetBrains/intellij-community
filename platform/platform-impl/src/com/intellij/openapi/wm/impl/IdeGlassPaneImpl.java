@@ -71,13 +71,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   });
   private final JRootPane myRootPane;
 
-  private final Map<String, PaintersHelper> myNamedPainters = new FactoryMap<String, PaintersHelper>() {
-    @Nullable
-    @Override
-    protected PaintersHelper create(String key) {
-      return new PaintersHelper(IdeGlassPaneImpl.this);
-    }
-  };
+  private final Map<String, PaintersHelper> myNamedPainters = FactoryMap.createMap(key -> new PaintersHelper(IdeGlassPaneImpl.this));
 
   private boolean myPreprocessorActive;
   private final Map<Object, Cursor> myListener2Cursor = new LinkedHashMap<>();

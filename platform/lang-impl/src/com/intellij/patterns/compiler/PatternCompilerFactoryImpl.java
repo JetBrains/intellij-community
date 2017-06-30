@@ -33,9 +33,7 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
     new ExtensionPointName<>("com.intellij.patterns.patternClass");
 
 
-  private final Map<String, Class[]> myClasses = new ConcurrentFactoryMap<String, Class[]>() {
-    @Override
-    protected Class[] create(String key) {
+  private final Map<String, Class[]> myClasses = ConcurrentFactoryMap.createMap(key-> {
       final ArrayList<Class> result = new ArrayList<>(1);
       final List<String> typeList = key == null? null : Arrays.asList(key.split(",|\\s"));
       for (PatternClassBean bean : PATTERN_CLASS_EP.getExtensions()) {
@@ -43,13 +41,9 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
       }
       return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(new Class[result.size()]);
     }
-  };
-  private final Map<List<Class>, PatternCompiler> myCompilers = new ConcurrentFactoryMap<List<Class>, PatternCompiler>() {
-    @Override
-    protected PatternCompiler create(List<Class> key) {
-      return new PatternCompilerImpl(key);
-    }
-  };
+  );
+  private final Map<List<Class>, PatternCompiler> myCompilers =
+    ConcurrentFactoryMap.createMap(key -> new PatternCompilerImpl(key));
 
   @NotNull
   @Override

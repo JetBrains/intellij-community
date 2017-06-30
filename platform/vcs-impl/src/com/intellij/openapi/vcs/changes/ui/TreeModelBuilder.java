@@ -76,7 +76,10 @@ public class TreeModelBuilder {
     myShowFlatten = showFlatten;
     myRoot = ChangesBrowserNode.create(myProject, ROOT_NODE_VALUE);
     myModel = new DefaultTreeModel(myRoot);
-    myGroupingPoliciesCache = new MyGroupingPolicyFactoryMap(myProject, myModel);
+    myGroupingPoliciesCache = FactoryMap.createMap(key-> {
+          ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
+          return factory != null ? factory.createGroupingPolicy(myModel) : null;
+        });
     myFoldersCache = new HashMap<>();
   }
 
@@ -492,23 +495,5 @@ public class TreeModelBuilder {
   @Deprecated
   public DefaultTreeModel buildModel(@NotNull List<Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
     return setChanges(changes, changeNodeDecorator).build();
-  }
-
-
-  private static class MyGroupingPolicyFactoryMap extends FactoryMap<ChangesBrowserNode, ChangesGroupingPolicy> {
-    @NotNull private final Project myProject;
-    @NotNull private final DefaultTreeModel myModel;
-
-    public MyGroupingPolicyFactoryMap(@NotNull Project project, @NotNull DefaultTreeModel model) {
-      myProject = project;
-      myModel = model;
-    }
-
-    @Nullable
-    @Override
-    protected ChangesGroupingPolicy create(ChangesBrowserNode key) {
-      ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
-      return factory != null ? factory.createGroupingPolicy(myModel) : null;
-    }
   }
 }

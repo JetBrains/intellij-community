@@ -205,13 +205,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     if (!isServiceEnabledFor(element)) return null;
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Boolean, Integer>() {
-                                                                                          @Nullable
-                                                                                          @Override
-                                                                                          protected Integer create(Boolean constructorSuggestion) {
-                                                                                            return calculateOccurrenceCount(element, constructorSuggestion.booleanValue());
-                                                                                          }
-                                                                                        },
+                                                () -> CachedValueProvider.Result.create(ConcurrentFactoryMap.createMap(
+                                                  (Boolean constructorSuggestion) -> calculateOccurrenceCount(element,
+                                                                                                    constructorSuggestion.booleanValue())),
                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
                                                                                         this)).get(Boolean.valueOf(isConstructorSuggestion));
     }
@@ -405,16 +401,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       Map<VirtualFile, SearchId[]> candidatesPerFile = ReadAction.compute(() -> {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-          new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, SearchId[]>>() {
-            @Nullable
-            @Override
-            protected Map<VirtualFile, SearchId[]> create(HierarchySearchKey key) {
-              return calculateDirectInheritors(aClass,
-                                               useScope,
-                                               key.mySearchFileType,
-                                               key.mySearchType);
-            }
-          }, PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
+          ConcurrentFactoryMap.createMap((HierarchySearchKey key) -> calculateDirectInheritors(aClass,
+                                                                                               useScope,
+                                                                                               key.mySearchFileType,
+                                                                                               key.mySearchType)),
+          PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
       });
 
       if (candidatesPerFile == null) return null;

@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -30,13 +29,8 @@ import java.util.Map;
  * @author yole
  */
 public class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
-  private final Map<String, CoreJarHandler> myHandlers = new ConcurrentFactoryMap<String, CoreJarHandler>() {
-    @Nullable
-    @Override
-    protected CoreJarHandler create(String key) {
-      return new CoreJarHandler(CoreJarFileSystem.this, key);
-    }
-  };
+  private final Map<String, CoreJarHandler> myHandlers =
+    ConcurrentFactoryMap.createMap(key -> new CoreJarHandler(CoreJarFileSystem.this, key));
 
   @NotNull
   @Override

@@ -77,13 +77,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (conflicts.isEmpty()) return null;
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    final FactoryMap<MethodCandidateInfo, PsiSubstitutor> map = new FactoryMap<MethodCandidateInfo, PsiSubstitutor>() {
-      @Nullable
-      @Override
-      protected PsiSubstitutor create(MethodCandidateInfo key) {
-        return key.getSubstitutor(false);
-      }
-    };
+    final Map<MethodCandidateInfo, PsiSubstitutor> map = FactoryMap.createMap(key -> key.getSubstitutor(false));
     boolean atLeastOneMatch = checkParametersNumber(conflicts, getActualParametersLength(), map, true);
     if (conflicts.size() == 1) return conflicts.get(0);
 
@@ -150,7 +144,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
                              @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
-                             FactoryMap<MethodCandidateInfo, PsiSubstitutor> map, 
+                             Map<MethodCandidateInfo, PsiSubstitutor> map,
                              @NotNull LanguageLevel languageLevel) {
     final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
 
@@ -210,7 +204,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkSameSignatures(conflicts, null);
   }
 
-  protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts, FactoryMap<MethodCandidateInfo, PsiSubstitutor> map) {
+  protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts, Map<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
@@ -279,7 +273,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   @NotNull
-  private static PsiSubstitutor getSubstitutor(MethodCandidateInfo existing, FactoryMap<MethodCandidateInfo, PsiSubstitutor> map) {
+  private static PsiSubstitutor getSubstitutor(MethodCandidateInfo existing, Map<MethodCandidateInfo, PsiSubstitutor> map) {
     return map != null ? map.get(existing) : existing.getSubstitutor(false);
   }
 
@@ -339,7 +333,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   public boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
                                        final int argumentsCount,
-                                       FactoryMap<MethodCandidateInfo, PsiSubstitutor> map,
+                                       Map<MethodCandidateInfo, PsiSubstitutor> map,
                                        boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
     TIntArrayList unmatchedIndices = null;
@@ -450,7 +444,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private Specifics isMoreSpecific(@NotNull MethodCandidateInfo info1,
                                    @NotNull MethodCandidateInfo info2,
                                    @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
-                                   FactoryMap<MethodCandidateInfo, PsiSubstitutor> map, 
+                                   Map<MethodCandidateInfo, PsiSubstitutor> map,
                                    @NotNull LanguageLevel languageLevel) {
     PsiMethod method1 = info1.getElement();
     PsiMethod method2 = info2.getElement();

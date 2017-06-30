@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -62,9 +63,9 @@ public class ChainCompletionContext {
   @NotNull
   private final PsiResolveHelper myResolveHelper;
   @NotNull
-  private final FactoryMap<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
+  private final Map<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
   @NotNull
-  private final FactoryMap<MethodIncompleteSignature, PsiMethod[]> myResolver;
+  private final Map<MethodIncompleteSignature, PsiMethod[]> myResolver;
 
   private final NotNullLazyValue<Set<LightRef>> myContextClassReferences = new NotNullLazyValue<Set<LightRef>>() {
     @NotNull
