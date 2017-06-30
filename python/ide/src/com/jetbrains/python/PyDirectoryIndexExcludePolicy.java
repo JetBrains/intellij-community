@@ -16,12 +16,17 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,10 +35,10 @@ import java.util.List;
  * @author traff
  */
 public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolicy {
-  
+
   private final Project myProject;
 
-  public PyDirectoryIndexExcludePolicy(@NotNull  Project project) {
+  public PyDirectoryIndexExcludePolicy(@NotNull Project project) {
     myProject = project;
   }
 
@@ -41,13 +46,25 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
   @Override
   public VirtualFile[] getExcludeRootsForProject() {
     List<VirtualFile> result = Lists.newArrayList();
-    for (VirtualFile root: ProjectRootManager.getInstance(myProject).getContentRoots()) {
+    for (VirtualFile root : ProjectRootManager.getInstance(myProject).getContentRoots()) {
       VirtualFile file = root.findChild(".tox");
       if (file != null) {
         result.add(file);
       }
     }
-    
+
+    for (Module m : ModuleManager.getInstance(myProject).getModules()) {
+      Sdk sdk = PythonSdkType.findPythonSdk(m);
+      if (sdk != null) {
+        for (VirtualFile dir : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+          VirtualFile sitePackages = dir.findChild("site-packages");
+          if (sitePackages != null) {
+            result.add(sitePackages);
+          }
+        }
+      }
+    }
+
     return result.toArray(new VirtualFile[result.size()]);
   }
 
