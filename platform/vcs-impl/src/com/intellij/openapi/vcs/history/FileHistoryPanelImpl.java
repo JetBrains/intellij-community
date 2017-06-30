@@ -104,7 +104,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull private final DualView myDualView;
   @Nullable private final JComponent myAdditionalDetails;
   @Nullable private final Consumer<VcsFileRevision> myRevisionSelectionListener;
-  private VcsHistorySession myHistorySession;
+
+  @NotNull private VcsHistorySession myHistorySession;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private volatile boolean myInRefresh;
   private List<Object> myTargetSelection;
@@ -114,7 +115,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   public FileHistoryPanelImpl(@NotNull AbstractVcs vcs,
                               @NotNull FilePath filePath,
-                              VcsHistorySession session,
+                              @NotNull VcsHistorySession session,
                               VcsHistoryProvider provider,
                               ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
@@ -125,7 +126,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public FileHistoryPanelImpl(@NotNull AbstractVcs vcs,
                               @NotNull FilePath filePath,
                               @Nullable VcsRevisionNumber startingRevision,
-                              VcsHistorySession session,
+                              @NotNull VcsHistorySession session,
                               VcsHistoryProvider provider,
                               ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
@@ -192,7 +193,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         mySplitter.repaint();
       }
 
-      public void consume(VcsHistorySession vcsHistorySession) {
+      public void consume(@NotNull VcsHistorySession vcsHistorySession) {
         FileHistoryPanelImpl.this.refresh(vcsHistorySession);
       }
     };
@@ -300,7 +301,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
-  private void refresh(final VcsHistorySession session) {
+  private void refresh(@NotNull VcsHistorySession session) {
     myHistorySession = session;
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
@@ -438,7 +439,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       result.add(new MyShowDetailsAction());
     }
 
-    if (!popup && myHistorySession != null && myHistorySession.getHistoryAsTreeProvider() != null) {
+    if (!popup && myHistorySession.getHistoryAsTreeProvider() != null) {
       result.add(new MyShowAsTreeAction());
     }
 
@@ -485,7 +486,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
       return firstSelectedRevision;
     }
-    else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId) && myHistorySession != null) {
+    else if (VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION.is(dataId)) {
       return !myHistorySession.hasLocalSource();
     }
     else if (VcsDataKeys.VCS.is(dataId)) {
@@ -1072,7 +1073,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
       else if (selectionSize > 1) {
         List<TreeNodeOnVcsRevision> sel = getSelection();
-        return myHistorySession.isContentAvailable(sel.get(0).getRevision()) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1).getRevision());
+        return myHistorySession.isContentAvailable(sel.get(0).getRevision()) &&
+               myHistorySession.isContentAvailable(sel.get(sel.size() - 1).getRevision());
       }
       return false;
     }
