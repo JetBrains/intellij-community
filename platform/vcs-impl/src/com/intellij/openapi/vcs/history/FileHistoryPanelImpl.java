@@ -1073,11 +1073,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       final int selectionSize = getSelection().size();
       if (selectionSize == 1) {
         List<TreeNodeOnVcsRevision> sel = getSelection();
-        return myHistorySession.isContentAvailable(sel.get(0));
+        return myHistorySession.isContentAvailable(sel.get(0).getRevision());
       }
       else if (selectionSize > 1) {
         List<TreeNodeOnVcsRevision> sel = getSelection();
-        return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
+        return myHistorySession.isContentAvailable(sel.get(0).getRevision()) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1).getRevision());
       }
       return false;
     }
