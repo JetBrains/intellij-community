@@ -267,7 +267,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
                                @NotNull FilePath path,
                                @Nullable VcsRevisionNumber startingRevisionNumber) {
-    String existingRevision = historyPanel.getStartingRevision() == null ? null : historyPanel.getStartingRevision().asString();
+    String existingRevision = historyPanel.myStartingRevision == null ? null : historyPanel.myStartingRevision.asString();
     String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
     return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
   }
@@ -275,11 +275,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @CalledInAwt
   void scheduleRefresh(boolean canUseLastRevision) {
     refreshUiAndScheduleDataRefresh(canUseLastRevision);
-  }
-
-  @Nullable
-  public VcsRevisionNumber getStartingRevision() {
-    return myStartingRevision;
   }
 
   @NotNull
