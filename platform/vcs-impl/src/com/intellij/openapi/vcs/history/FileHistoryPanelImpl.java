@@ -1213,16 +1213,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         return;
       }
 
-      boolean enabled = (!filePath.isDirectory()) || provider.supportsHistoryForDirectories();
-      int selectionSize = revisions.length;
-      if (enabled && (!filePath.isDirectory())) {
-        // in order to do not load changes only for action update
-        enabled = (selectionSize > 0) && (selectionSize < 3);
+      if (filePath.isDirectory()) {
+        if (!provider.supportsHistoryForDirectories()) {
+          e.getPresentation().setEnabled(false);
+        }
+        else {
+          e.getPresentation().setEnabled(revisions.length == 1 && revisions[0].getChangedRepositoryPath() != null);
+        }
       }
-      else if (enabled) {
-        enabled = selectionSize == 1 && revisions[0].getChangedRepositoryPath() != null;
+      else {
+        e.getPresentation().setEnabled((revisions.length > 0) && (revisions.length < 3));
       }
-      e.getPresentation().setEnabled(enabled);
     }
   }
 
