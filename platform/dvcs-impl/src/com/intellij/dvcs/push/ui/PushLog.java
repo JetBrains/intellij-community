@@ -141,6 +141,17 @@ public class PushLog extends JPanel implements DataProvider {
         }
         restoreSelection(lastSelectedPathComponent);
       }
+
+      @Override
+      protected void installSpeedSearch() {
+        new TreeSpeedSearch(this, path -> {
+          Object pathComponent = path.getLastPathComponent();
+          if (pathComponent instanceof RepositoryNode) {
+            return ((RepositoryNode)pathComponent).getRepositoryName();
+          }
+          return pathComponent.toString();
+        });
+      }
     };
     myTree.setUI(new MyTreeUi());
     myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
