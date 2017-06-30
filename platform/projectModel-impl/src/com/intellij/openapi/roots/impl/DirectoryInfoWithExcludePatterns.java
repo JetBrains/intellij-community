@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
@@ -51,7 +52,7 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private boolean isExcludedByPatterns(@NotNull VirtualFile file, @Nullable FileTypeAssocTable<Boolean> patterns) {
     if (patterns == null) return false;
 
-    VirtualFile current = file;
+    VirtualFile current = getPhysicalFile(file);
     while (current != null && !myRoot.equals(current)) {
       if (patterns.findAssociatedFileType(current.getNameSequence()) != null) {
         return true;
@@ -62,6 +63,10 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
       LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
     }
     return false;
+  }
+
+  private static VirtualFile getPhysicalFile(VirtualFile file) {
+    return file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
   }
 
   @Override
@@ -75,7 +80,7 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
     boolean inContent = getContentRoot() != null;
     if (!inContent && !myInLibrarySource) return false;
 
-    VirtualFile current = file;
+    VirtualFile current = getPhysicalFile(file);
     while (current != null && !myRoot.equals(current)) {
       CharSequence name = current.getNameSequence();
       boolean excludedFromModule = myContentExcludePatterns != null && myContentExcludePatterns.findAssociatedFileType(name) != null;
