@@ -19,7 +19,6 @@ import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,7 +32,6 @@ public abstract class HandlerBase implements TraceHandler {
   @Override
   final public String additionalVariablesDeclaration() {
     final StringBuilder stringBuilder = new StringBuilder();
-    getClassesDeclarations().forEach(stringBuilder::append);
     final List<Variable> variables = getVariables();
     for (final Variable variable : variables) {
       stringBuilder.append(Variable.declarationStatement(variable));
@@ -45,11 +43,6 @@ public abstract class HandlerBase implements TraceHandler {
 
   @NotNull
   protected abstract List<Variable> getVariables();
-
-  @NotNull
-  protected List<String> getClassesDeclarations() {
-    return Collections.emptyList();
-  }
 
   static abstract class Producer extends HandlerBase implements TraceExpressionBuilderImpl.ProducerCallTraceHandler {
   }

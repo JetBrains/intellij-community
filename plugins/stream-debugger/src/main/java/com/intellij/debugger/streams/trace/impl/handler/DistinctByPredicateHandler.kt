@@ -58,10 +58,6 @@ class DistinctByPredicateHandler(callNumber: Int, call: IntermediateStreamCall) 
     return variables
   }
 
-  override fun getClassesDeclarations(): MutableList<String> {
-    return mutableListOf()
-  }
-
   override fun transformCall(call: IntermediateStreamCall): IntermediateStreamCall {
     return call.updateArguments(
       listOf(CallArgumentImpl(myKeyExtractor.type,
