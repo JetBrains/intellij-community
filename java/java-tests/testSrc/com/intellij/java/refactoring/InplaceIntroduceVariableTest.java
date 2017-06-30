@@ -134,6 +134,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
+  public void testReplaceAllIntroduceFieldInLocalClass() throws Exception {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("smth");
+      }
+    });
+  }
+
   public void testRanges() throws Exception {
      doTest(new Pass<AbstractInplaceIntroducer>() {
        @Override

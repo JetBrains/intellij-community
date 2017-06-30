@@ -1,7 +1,7 @@
 public class TestClass {
     void x() {
         new Exception() {
-            final int j = doSomething();
+            private final int j = doSomething();
 
             int doSomething() { return 1; }
             void a() {
