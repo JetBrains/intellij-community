@@ -352,25 +352,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDualView, true));
 
     myDualView.addListSelectionListener(e -> updateMessage());
-
     myDualView.setRootVisible(false);
-
     myDualView.expandAll();
 
-    final TreeCellRenderer defaultCellRenderer = myDualView.getTree().getCellRenderer();
-
-    final Getter<VcsHistorySession> sessionGetter = () -> myHistorySession;
-    myDualView.setTreeCellRenderer(new MyTreeCellRenderer(defaultCellRenderer, sessionGetter));
-
-    myDualView.setCellWrapper(new MyCellWrapper(sessionGetter));
+    myDualView.setTreeCellRenderer(new MyTreeCellRenderer(myDualView.getTree().getCellRenderer(), () -> myHistorySession));
+    myDualView.setCellWrapper(new MyCellWrapper(() -> myHistorySession));
 
     myDualView.installDoubleClickHandler(new MyDiffAction());
 
-    final TableView flatView = myDualView.getFlatView();
-    TableViewModel sortableModel = flatView.getTableViewModel();
-    sortableModel.setSortable(true);
-
-    final RowSorter<? extends TableModel> rowSorter = flatView.getRowSorter();
+    myDualView.getFlatView().getTableViewModel().setSortable(true);
+    RowSorter<? extends TableModel> rowSorter = myDualView.getFlatView().getRowSorter();
     if (rowSorter != null) {
       rowSorter.setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.DESCENDING)));
     }
