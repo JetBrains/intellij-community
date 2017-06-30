@@ -35,14 +35,16 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
@@ -236,6 +238,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return -1;
   }
 
+  /**
+   * @return {@code true} if this model is updating its structure
+   */
+  public boolean isProcessing() {
+    return processor.getTaskCount() > 0;
+  }
+
   private boolean isValidThread() {
     if (processor.foreground.isValidThread()) return true;
     LOG.warn("AsyncTreeModel is used from unexpected thread");
@@ -244,23 +253,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
   @NotNull
   private Promise<Node> promiseRootEntry() {
-    CmdGetRoot command = tree.reference.get();
-    if (command == null) {
-      command = new CmdGetRoot("Load root", null);
-      processor.process(command);
-    }
-    return command.promise;
+    return tree.queue.promise(processor, () -> new CmdGetRoot("Load root", null));
   }
 
   @NotNull
   private Promise<Node> promiseChildren(@NotNull Node node) {
-    CmdGetChildren command = node.reference.get();
-    if (command == null) {
+    return node.queue.promise(processor, () -> {
       node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), true));
-      command = new CmdGetChildren("Load children", node, false);
-      processor.process(command);
-    }
-    return command.promise;
+      return new CmdGetChildren("Load children", node, false);
+    });
   }
 
   private Node getEntry(Object object) {
@@ -363,32 +364,20 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return emptyList();
   }
 
-  private static <T extends ObsolescentCommand> T setCommandToProcess(AtomicReference<T> reference, T command) {
-    T old = reference.getAndSet(command);
-    if (old == null || Promise.State.PENDING != old.promise.getState()) return null;
-    if (command != null) command.promise.notify(old.promise);
-    return old;
-  }
-
-  private static <T extends ObsolescentCommand> void resetCommand(AtomicReference<T> reference) {
-    T old = setCommandToProcess(reference, null);
-    if (old != null) old.promise.setError("loading cancelled");
-  }
-
-  private static void resetCommand(@NotNull Node node, String prefix) {
-    resetCommand(node.reference);
-    if (prefix != null) LOG.warn(prefix + node.object);
-  }
-
   private static abstract class ObsolescentCommand implements Obsolescent, Command<Node>, Function<Object, Node> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
-    private final String name;
-    private final Object object;
+    final String name;
+    final Object object;
+    volatile boolean started;
 
     ObsolescentCommand(String name, Object object) {
       this.name = name;
       this.object = object;
       LOG.debug("create command: ", this);
+    }
+
+    boolean isPending() {
+      return Promise.State.PENDING == promise.getState();
     }
 
     @Override
@@ -398,6 +387,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
     @Override
     public Node get() {
+      started = true;
       LOG.debug("background command: ", this);
       return isObsolete() ? null : apply(object);
     }
@@ -406,12 +396,12 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   private final class CmdGetRoot extends ObsolescentCommand {
     private CmdGetRoot(String name, Object object) {
       super(name, object);
-      setCommandToProcess(tree.reference, this);
+      tree.queue.add(this, old -> old.started || old.object != object);
     }
 
     @Override
     public boolean isObsolete() {
-      return this != tree.reference.get();
+      return this != tree.queue.get();
     }
 
     @Override
@@ -432,13 +422,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       Node root = tree.root;
       if (root == null && loaded == null) {
         LOG.debug("no root");
-        promise.setResult(null);
+        tree.queue.done(this, null);
         return;
       }
 
       if (root != null && loaded != null && root.object.equals(loaded.object)) {
         LOG.debug("same root: ", root.object);
-        promise.setResult(root);
+        tree.queue.done(this, root);
         if (root.isLoadingRequired()) return;
         processor.process(new CmdGetChildren("Update root children", root, true));
         return;
@@ -448,7 +438,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         tree.removeMapping(null, root);
       }
       if (!tree.map.isEmpty()) {
-        tree.map.values().forEach(value -> resetCommand(value, "remove staled node: "));
+        tree.map.values().forEach(node -> {
+          node.queue.close();
+          LOG.warn("remove staled node: " + node.object);
+        });
         tree.map.clear();
       }
 
@@ -459,30 +452,33 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         loaded.insertPath(path);
         treeStructureChanged(path, null, null);
         LOG.debug("new root: ", loaded.object);
-        promise.setResult(loaded);
+        tree.queue.done(this, loaded);
       }
       else {
         treeStructureChanged(null, null, null);
         LOG.debug("root removed");
-        promise.setResult(null);
+        tree.queue.done(this, null);
       }
     }
   }
 
   private final class CmdGetChildren extends ObsolescentCommand {
     private final Node node;
-    private final boolean deep;
+    private volatile boolean deep;
 
     public CmdGetChildren(String name, Node node, boolean deep) {
       super(name, node.object);
-      CmdGetChildren old = setCommandToProcess(node.reference, this);
       this.node = node;
-      this.deep = deep || old != null && old.deep;
+      if (deep) this.deep = true;
+      node.queue.add(this, old -> {
+        if (!deep && old.deep && old.isPending()) this.deep = true;
+        return true;
+      });
     }
 
     @Override
     public boolean isObsolete() {
-      if (this == node.reference.get()) return false;
+      if (this == node.queue.get()) return false;
       LOG.debug("obsolete command: ", this);
       return true;
     }
@@ -539,7 +535,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         return;
       }
       if (node != tree.map.get(loaded.object)) {
-        resetCommand(node, "ignore removed node: ");
+        node.queue.close();
+        LOG.warn("ignore removed node: " + node.object);
         return;
       }
       LOG.debug("foreground command: ", this);
@@ -550,7 +547,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         node.setLeaf(loaded.leaf);
         treeNodesChanged(node, null);
         LOG.debug("no children: ", node.object);
-        promise.setResult(node);
+        node.queue.done(this, node);
         return;
       }
 
@@ -560,7 +557,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         node.setLeaf(loaded.leaf);
         treeNodesRemoved(node, removed);
         LOG.debug("children removed: ", node.object);
-        promise.setResult(node);
+        node.queue.done(this, node);
         return;
       }
 
@@ -588,7 +585,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         node.setChildren(newChildren);
         treeNodesInserted(node, inserted);
         LOG.debug("children inserted: ", node.object);
-        promise.setResult(node);
+        node.queue.done(this, node);
         return;
       }
 
@@ -627,7 +624,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       if (!inserted.isEmpty()) treeNodesInserted(node, inserted);
       if (!contained.isEmpty()) treeNodesChanged(node, contained);
       LOG.debug("children changed: ", node.object);
-      promise.setResult(node);
+      node.queue.done(this, node);
 
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
@@ -639,8 +636,73 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
   }
 
+  private static final class CommandQueue<T extends ObsolescentCommand> {
+    private final ArrayDeque<T> deque = new ArrayDeque<>();
+    private volatile boolean closed;
+
+    T get() {
+      synchronized (deque) {
+        return deque.peekFirst();
+      }
+    }
+
+    @NotNull
+    Promise<Node> promise(@NotNull Command.Processor processor, @NotNull Supplier<T> supplier) {
+      T command;
+      synchronized (deque) {
+        command = deque.peekFirst();
+        if (command != null) return command.promise;
+        command = supplier.get();
+      }
+      processor.process(command);
+      return command.promise;
+    }
+
+    void add(@NotNull T command, @NotNull Predicate<T> predicate) {
+      synchronized (deque) {
+        if (closed) return;
+        T old = deque.peekFirst();
+        boolean add = old == null || predicate.test(old);
+        if (add) deque.addFirst(command);
+      }
+    }
+
+    void done(T command, Node node) {
+      Iterable<AsyncPromise<Node>> promises;
+      synchronized (deque) {
+        if (closed) return;
+        if (!deque.contains(command)) return;
+        promises = getPromises(command);
+        if (deque.isEmpty()) deque.addLast(command);
+      }
+      promises.forEach(promise -> promise.setResult(node));
+    }
+
+    void close() {
+      Iterable<AsyncPromise<Node>> promises;
+      synchronized (deque) {
+        if (closed) return;
+        closed = true;
+        if (deque.isEmpty()) return;
+        promises = getPromises(null);
+      }
+      promises.forEach(promise -> promise.setError("cancel loading"));
+    }
+
+    private Iterable<AsyncPromise<Node>> getPromises(T command) {
+      ArrayList<AsyncPromise<Node>> list = new ArrayList<>();
+      while (true) {
+        T last = deque.pollLast();
+        if (last == null) break;
+        if (last.isPending()) list.add(last.promise);
+        if (last.equals(command)) break;
+      }
+      return list;
+    }
+  }
+
   private static final class Tree {
-    private final AtomicReference<CmdGetRoot> reference = new AtomicReference<>();
+    private final CommandQueue<CmdGetRoot> queue = new CommandQueue<>();
     private final HashMap<Object, Node> map = new HashMap<>();
     private volatile Node root;
 
@@ -655,7 +717,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
         child.removePaths(parent);
         if (child.paths.isEmpty()) {
-          resetCommand(child.reference);
+          child.queue.close();
           Node node = map.remove(child.object);
           if (node != child) {
             LOG.warn("invalid node: " + child.object);
@@ -667,7 +729,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   }
 
   private static final class Node {
-    private final AtomicReference<CmdGetChildren> reference = new AtomicReference<>();
+    private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
     private final SmartHashSet<TreePath> paths = new SmartHashSet<>();
     private final Object object;
     private volatile boolean leaf;
