@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
@@ -174,7 +175,18 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
 
   private static Pair<String, String> askForUrlAndToken() {
     final String urlToken = Messages.showInputDialog("Please, enter your Jupyter Notebook URL and authentication token",
-                                                     "Jupyter Notebook", null, "http://localhost:8888/?token=", null);
+                                                     "Jupyter Notebook", null, "http://localhost:8888/?token=",
+                                                     new InputValidator() {
+                                                       @Override
+                                                       public boolean checkInput(String inputString) {
+                                                         return !inputString.endsWith("?token=");
+                                                       }
+
+                                                       @Override
+                                                       public boolean canClose(String inputString) {
+                                                         return true;
+                                                       }
+                                                     });
     if (!StringUtil.isEmptyOrSpaces(urlToken)) {
       final String trimmed = urlToken.trim();
       final List<String> strings = StringUtil.split(trimmed, "?token=", true);
