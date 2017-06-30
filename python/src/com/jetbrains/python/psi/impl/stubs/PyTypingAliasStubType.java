@@ -159,7 +159,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
         aliasText = Objects.toString(stub.getInitializer(), null);
       }
       if (aliasText != null) {
-        result = PyTypingTypeProvider.createExpressionFromFragment(aliasText, target);
+        result = PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile());
       }
     }
     else {

@@ -72,10 +72,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -939,6 +936,24 @@ public class PyUtil {
         manager.commitDocument(document);
       }
     }
+  }
+
+  /**
+   * Create a new expressions fragment from the given text, setting the specified element as its context,
+   * and return the contained expression of the first expression statement in it.
+   *
+   * @param expressionText text of the expression
+   * @param context        context element used to resolve symbols in the expression
+   * @return instance of {@link PyExpression} as described
+   *
+   * @see PyExpressionCodeFragment
+   */
+  @Nullable
+  public static PyExpression createExpressionFromFragment(@NotNull String expressionText, @NotNull PsiElement context) {
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(context.getProject(), "dummy.py", expressionText, false);
+    codeFragment.setContext(context);
+    final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
+    return statement != null ? statement.getExpression() : null;
   }
 
   public static class KnownDecoratorProviderHolder {

@@ -34,7 +34,6 @@ import com.jetbrains.python.documentation.docstrings.NumpyDocString;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -343,10 +342,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
    */
   @Nullable
   private static PyType getNominalType(@NotNull PsiElement anchor, @NotNull String typeString) {
-    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", typeString, false);
-    final PsiElement element = codeFragment.getFirstChild();
-    if (element instanceof PyExpressionStatement) {
-      final PyExpression expression = ((PyExpressionStatement)element).getExpression();
+    final PyExpression expression = PyUtil.createExpressionFromFragment(typeString, anchor);
+    if (expression != null) {
       final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
       if (expression instanceof PyStringLiteralExpression) {
         return builtinCache.getStrType();
