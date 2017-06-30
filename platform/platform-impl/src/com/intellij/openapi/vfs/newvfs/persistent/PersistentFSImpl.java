@@ -665,6 +665,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private void processEvent(@NotNull VFileEvent event) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     // optimisation: skip all groupings
     if (event.isValid()) {
       BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
