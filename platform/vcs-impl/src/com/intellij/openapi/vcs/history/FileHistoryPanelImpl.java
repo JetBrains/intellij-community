@@ -391,22 +391,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   private void setupDetails() {
-    boolean showDetails = !myIsStaticAndEmbedded && getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+    boolean showDetails = !myIsStaticAndEmbedded && VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_DETAILS;
     myDualView.setViewBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     mySplitter.setSecondComponent(showDetails ? myDetailsSplitter : null);
   }
 
   private void chooseView() {
-    if (getConfiguration().SHOW_FILE_HISTORY_AS_TREE) {
+    if (VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE) {
       myDualView.switchToTheTreeMode();
     }
     else {
       myDualView.switchToTheFlatMode();
     }
-  }
-
-  private VcsConfiguration getConfiguration() {
-    return VcsConfiguration.getInstance(myVcs.getProject());
   }
 
   @NotNull
@@ -1014,11 +1010,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return getConfiguration().SHOW_FILE_HISTORY_AS_TREE;
+      return VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      getConfiguration().SHOW_FILE_HISTORY_AS_TREE = state;
+      VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE = state;
       chooseView();
     }
   }
@@ -1106,12 +1102,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return getConfiguration().SHOW_FILE_HISTORY_DETAILS;
+      return VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_DETAILS;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      getConfiguration().SHOW_FILE_HISTORY_DETAILS = state;
+      VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_DETAILS = state;
       setupDetails();
     }
   }
