@@ -451,7 +451,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18427
   public void testConditionalType() {
-    doTest("Union[str, int]",
+    doTest("Union[int, str]",
            "if something:\n" +
            "    Type = int\n" +
            "else:\n" +
