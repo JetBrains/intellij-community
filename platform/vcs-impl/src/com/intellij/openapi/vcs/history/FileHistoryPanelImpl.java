@@ -88,6 +88,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
+  public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
+
   @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
   @NotNull private final FileHistoryRefresherI myRefresherI;
@@ -515,6 +517,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
     else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
+    }
+    else if (PREVIOUS_REVISION_FOR_DIFF.is(dataId)) {
+      TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
+      if (flatView.getSelectedRow() == (flatView.getRowCount() - 1)) {
+        // no previous
+        return myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL;
+      }
+      else {
+        return flatView.getRow(flatView.getSelectedRow() + 1).getRevision();
+      }
     }
     else {
       return super.getData(dataId);
@@ -1011,17 +1023,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, olderRevision, newestRevision);
       }
       else if (revisions.length == 1) {
-        TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
-        int selectedRow = flatView.getSelectedRow();
-        VcsFileRevision previousRevision;
-        if (selectedRow == (flatView.getRowCount() - 1)) {
-          // no previous
-          previousRevision = myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL;
-        }
-        else {
-          previousRevision = flatView.getRow(selectedRow + 1).getRevision();
-        }
-
+        VcsFileRevision previousRevision = e.getRequiredData(PREVIOUS_REVISION_FOR_DIFF);
         if (revisions[0] != null) {
           diffHandler.showDiffForOne(e, e.getRequiredData(CommonDataKeys.PROJECT), filePath, previousRevision, revisions[0]);
         }
@@ -1040,7 +1042,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       if (revisions == null || historySession == null || filePath == null || provider == null) return false;
 
       if (revisions.length == 1) {
-        return historySession.isContentAvailable(revisions[0]);
+        return historySession.isContentAvailable(revisions[0]) && e.getData(PREVIOUS_REVISION_FOR_DIFF) != null;
       }
       else if (revisions.length > 1) {
         return historySession.isContentAvailable(revisions[0]) &&
