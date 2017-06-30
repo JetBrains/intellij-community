@@ -17,28 +17,11 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.Function;
-import com.intellij.util.Producer;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.concurrent.ConcurrentMap;
 
 /**
- * @author peter
+ * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+ * TODO to remove in IDEA 2018
  */
+@Deprecated
 public abstract class ConcurrentWeakFactoryMap extends ConcurrentFactoryMap {
-  /**
-   * Use {@link #createWeakMap(Function)} instead
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
-  public ConcurrentWeakFactoryMap() {
-  }
-
-  @NotNull
-  public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<T, V> compute) {
-    return ConcurrentFactoryMap.createMap(compute, new Producer<ConcurrentMap<T, V>>() {
-      @Override
-      public ConcurrentMap<T, V> produce() {return ContainerUtil.createConcurrentWeakMap();}
-    });
-  }
 }
