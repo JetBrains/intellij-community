@@ -33,12 +33,12 @@ public abstract class HandlerBase implements TraceHandler {
   @Override
   final public String additionalVariablesDeclaration() {
     final StringBuilder stringBuilder = new StringBuilder();
+    getClassesDeclarations().forEach(stringBuilder::append);
     final List<Variable> variables = getVariables();
     for (final Variable variable : variables) {
       stringBuilder.append(Variable.declarationStatement(variable));
     }
 
-    getClassesDeclarations().forEach(stringBuilder::append);
 
     return stringBuilder.toString();
   }
