@@ -326,7 +326,7 @@ public class RecursionManager {
 
       Set<MyKey> loop = new THashSet<MyKey>();
       boolean inLoop = false;
-      for (Map.Entry<MyKey, Integer> entry: progressMap.entrySet()) {
+      for (Map.Entry<MyKey, Integer> entry: new ArrayList<Map.Entry<MyKey, Integer>>(progressMap.entrySet())) {
         if (inLoop) {
           entry.setValue(reentrancyCount);
           loop.add(entry.getKey());

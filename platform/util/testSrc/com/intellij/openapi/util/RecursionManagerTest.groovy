@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util
 
+import groovy.transform.Immutable
 import junit.framework.TestCase
 
 /**
@@ -160,6 +161,32 @@ class RecursionManagerTest extends TestCase {
     def key = ["b"]
     prevent(key) {
       key << "a"
+    }
+  }
+
+  void "test key equals that invokes RecursionManager"() {
+    prevent(new RecursiveKey('a')) {
+      prevent(new RecursiveKey('b')) {
+        prevent(new RecursiveKey('a')) {
+          throw new AssertionError("shouldn't be called")
+        }
+      }
+    }
+  }
+
+  @Immutable
+  private static class RecursiveKey {
+    final String id;
+
+    @Override
+    int hashCode() {
+      return id.hashCode()
+    }
+
+    @Override
+    boolean equals(Object obj) {
+      RecursionManager.doPreventingRecursion("abc", false) { true }
+      return obj instanceof RecursiveKey && obj.id == id;
     }
   }
 
