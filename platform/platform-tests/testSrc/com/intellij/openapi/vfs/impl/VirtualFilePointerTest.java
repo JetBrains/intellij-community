@@ -763,7 +763,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final LoggingListener listener = new LoggingListener();
     final String url = VfsUtilCore.pathToUrl("/a/b/c/d/e");
     final VirtualFilePointer thePointer = myVirtualFilePointerManager.create(url, disposable, listener);
-    TempFileSystem.getInstance();
+    assertNotNull(TempFileSystem.getInstance());
     PlatformTestUtil.startPerformanceTest("same url vfp create", 9000, () -> {
       for (int i = 0; i < 10_000_000; i++) {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(url, disposable, listener);
@@ -962,6 +962,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       ready.await();
 
       VirtualFilePointer bc = VirtualFilePointerManager.getInstance().create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
+      assertNotNull(bc);
 
       run = false;
       ConcurrencyUtil.joinAll(threads);
