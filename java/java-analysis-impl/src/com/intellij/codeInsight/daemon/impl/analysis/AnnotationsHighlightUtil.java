@@ -376,9 +376,10 @@ public class AnnotationsHighlightUtil {
         HighlightInfo info = checkReferenceTarget(annotation, ref);
         if (info != null) return info;
       }
-      else if (owner instanceof PsiModifierList) {
-        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward((PsiModifierList)owner,
-                                                                 PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+      else if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement) {
+        PsiElement nextElement = owner instanceof PsiTypeElement
+            ? (PsiTypeElement)owner
+            : PsiTreeUtil.skipSiblingsForward((PsiModifierList)owner, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
         if (nextElement instanceof PsiTypeElement) {
           PsiTypeElement typeElement = (PsiTypeElement)nextElement;
           PsiType type = typeElement.getType();
@@ -391,13 +392,11 @@ public class AnnotationsHighlightUtil {
             HighlightInfo info = checkReferenceTarget(annotation, ref);
             if (info != null) return info;
           }
-        }
-      }
-      else if (owner instanceof PsiTypeElement) {
-        PsiElement context = PsiTreeUtil.skipParentsOfType((PsiTypeElement)owner, PsiTypeElement.class);
-        if (context instanceof PsiClassObjectAccessExpression) {
-          String message = JavaErrorMessages.message("annotation.not.allowed.class");
-          return annotationError(annotation, message);
+          PsiElement context = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
+          if (context instanceof PsiClassObjectAccessExpression) {
+            String message = JavaErrorMessages.message("annotation.not.allowed.class");
+            return annotationError(annotation, message);
+          }
         }
       }
     }
