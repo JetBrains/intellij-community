@@ -25,15 +25,15 @@ import com.intellij.util.Consumer;
  * @author Konstantin Bulenkov
  */
 public class UISimpleSettingsProvider implements SearchTopHitProvider, OptionsTopHitProvider.CoveredByToggleActions {
-  private static OptionDescription CYCLING_SCROLLING = AppearanceOptionsTopHitProvider.appearance("Cyclic scrolling", "CYCLE_SCROLLING");
+  private static OptionDescription CYCLING_SCROLLING = AppearanceOptionsTopHitProvider.appearance("Cyclic scrolling", "cycleScrolling");
   private static OptionDescription MEMORY_INDICATOR = AppearanceOptionsTopHitProvider.appearance("Show Memory Indicator",
-                                                                                                 "SHOW_MEMORY_INDICATOR");
+                                                                                                 "showMemoryIndicator");
   private static OptionDescription SHOW_MAIN_TOOLBAR = AppearanceOptionsTopHitProvider.appearance("Show Main Toolbar", "showMainToolbar");
   private static OptionDescription SHOW_NAVIGATION_BAR = AppearanceOptionsTopHitProvider.appearance("Show Navigation Bar",
-                                                                                                    "SHOW_NAVIGATION_BAR");
+                                                                                                    "showNavigationBar");
   private static OptionDescription HIDE_TOOL_STRIPES = AppearanceOptionsTopHitProvider.appearance("Hide Tool Window Bars",
-                                                                                                  "HIDE_TOOL_STRIPES");
-  private static OptionDescription SHOW_STATUS_BAR = AppearanceOptionsTopHitProvider.appearance("Show Status Bar", "SHOW_STATUS_BAR");
+                                                                                                  "hideToolStripes");
+  private static OptionDescription SHOW_STATUS_BAR = AppearanceOptionsTopHitProvider.appearance("Show Status Bar", "showStatusBar");
   private static OptionDescription IS_BLOCK_CURSOR = EditorOptionsTopHitProvider.editor("Show Block Cursor", "IS_BLOCK_CURSOR");
   private static OptionDescription IS_WHITESPACES_SHOWN = EditorOptionsTopHitProvider.editor("Show Whitespaces", "IS_WHITESPACES_SHOWN");
   private static OptionDescription ARE_LINE_NUMBERS_SHOWN = EditorOptionsTopHitProvider.editor("Show Line Numbers",
