@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PsiJavaPatterns.or;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiReferenceExpression;
 
 public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
@@ -184,7 +186,12 @@ public class MethodChainCompletionContributor extends CompletionContributor {
 
   @NotNull
   private static ElementPattern<PsiElement> patternForMethodCallArgument() {
-    return psiElement().withSuperParent(3, PsiMethodCallExpression.class);
+    return psiElement().withParent(psiReferenceExpression().with(new PatternCondition<PsiReferenceExpression>("qualifier is null") {
+      @Override
+      public boolean accepts(@NotNull PsiReferenceExpression expression, ProcessingContext context) {
+        return expression.getQualifierExpression() == null;
+      }
+    }).withSuperParent(2, PsiMethodCallExpression.class));
   }
 
   private static ElementPattern<PsiElement> patternForReturnExpression() {

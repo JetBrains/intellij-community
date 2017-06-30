@@ -226,6 +226,10 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals("f.createClass", element.getLookupString());
   }
 
+  public void testSuggestionForArgumentShouldNotBeDisplayed() {
+    assertEmpty(doCompletion());
+  }
+
   public void testMethodCallInFieldInitializer() {
     doTestRendering();
   }
