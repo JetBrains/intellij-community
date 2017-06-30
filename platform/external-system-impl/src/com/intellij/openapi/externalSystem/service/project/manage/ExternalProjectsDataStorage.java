@@ -104,7 +104,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
           }
         }
         else {
-          markDirty(projectInfo.getExternalProjectPath());
+          String projectPath = projectInfo.getNullSafeExternalProjectPath();
+          if (projectPath != null) {
+            markDirty(projectPath);
+          }
         }
       }
     }
