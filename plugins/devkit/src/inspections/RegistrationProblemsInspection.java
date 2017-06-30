@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -114,7 +115,12 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     if (CHECK_JAVA_CODE &&
         nameIdentifier != null &&
         checkedClass.getQualifiedName() != null &&
-        checkedClass.getContainingFile().getVirtualFile() != null) {
+        checkedClass.getContainingFile().getVirtualFile() != null &&
+        !checkedClass.isInterface() &&
+        !checkedClass.isEnum() &&
+        !checkedClass.hasModifierProperty(PsiModifier.PRIVATE) &&
+        !checkedClass.hasModifierProperty(PsiModifier.PROTECTED) &&
+        !PsiUtil.isInnerClass(checkedClass) ) {
       final RegistrationCheckerUtil.RegistrationType registrationType =
         CHECK_ACTIONS ? RegistrationCheckerUtil.RegistrationType.ALL : RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS;
       final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, registrationType);
