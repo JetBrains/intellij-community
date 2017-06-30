@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -249,6 +250,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   public void registerMultiHostInjector(@NotNull MultiHostInjector injector) {
     myManualInjectors.add(injector);
     clearInjectorCache();
+  }
+
+  @Override
+  public void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable) {
+    registerMultiHostInjector(injector);
+    Disposer.register(parentDisposable, () -> unregisterMultiHostInjector(injector));
   }
 
   @Override
