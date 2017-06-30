@@ -30,11 +30,15 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -65,6 +69,7 @@ import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
@@ -100,6 +105,7 @@ public class FindManagerImpl extends FindManager {
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
   private FindUIHelper myHelper;
+  private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
@@ -475,7 +481,7 @@ public class FindManagerImpl extends FindManager {
     }
 
     if (model.isRegularExpressions()){
-      return findStringByRegularExpression(text, offset, model);
+      return findStringByRegularExpression(text, offset, model, file);
     }
 
     final StringSearcher searcher = createStringSearcher(model);
@@ -730,7 +736,10 @@ public class FindManagerImpl extends FindManager {
     return syntaxHighlighter;
   }
 
-  private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
+  private FindResult findStringByRegularExpression(CharSequence text,
+                                                   int startOffset,
+                                                   FindModel model,
+                                                   VirtualFile file) {
     Matcher matcher = compileRegExp(model, text);
     if (matcher == null) {
       return NOT_FOUND_RESULT;
@@ -757,9 +766,24 @@ public class FindManagerImpl extends FindManager {
         return new FindResultImpl(start, end);
       }
     } catch (StackOverflowError soe) {
+      String stringToFind = model.getStringToFind();
+      
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+          ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
+        String content = stringToFind + " produced stack overflow when matching content of the file";
+        LOG.info(content);
+        //noinspection SSBasedInspection
+        GROUP.createNotification("Regular expression failed to match",
+                                     content + " " + file.getPath(),
+                                     NotificationType.ERROR,
+                                     null
+                                   ).notify(myProject);
+      }
       return NOT_FOUND_RESULT;
     }
   }
+  
+  private static final ConcurrentIntObjectMap<Boolean> ourReportedPatterns = ContainerUtil.createConcurrentIntObjectMap();
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
     Pattern pattern = model.compileRegExp();

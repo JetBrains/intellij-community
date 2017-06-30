@@ -15,6 +15,7 @@
  */
 package com.intellij.find;
 
+import com.intellij.Patches;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -937,8 +938,19 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
     Pattern pattern = myPattern;
     if (pattern == PatternUtil.NOTHING) {
+      int flags = isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+
+      if (toFind.contains("\\n") && Patches.JDK_SOE_IN_REGEXP) { // if needed use DOT_ALL for modified pattern to avoid SOE
+        String modifiedStringToFind = StringUtil.replace(toFind, "\\n|.", ".");
+        modifiedStringToFind = StringUtil.replace(modifiedStringToFind, ".|\\n", ".");
+        
+        if (!modifiedStringToFind.equals(toFind)) {
+          flags |= Pattern.DOTALL;
+          toFind = modifiedStringToFind;
+        }
+      }
       try {
-        myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+        myPattern = pattern = Pattern.compile(toFind, flags);
       }
       catch (PatternSyntaxException e) {
         myPattern = pattern = null;
