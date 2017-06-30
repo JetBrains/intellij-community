@@ -1015,12 +1015,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
       DiffFromHistoryHandler diffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
-      if (revisions.length > 1) {
-        List<VcsFileRevision> selectedRevisions = ContainerUtil.sorted(Arrays.asList(revisions),
-                                                                       myRevisionsInOrderComparator);
-        VcsFileRevision olderRevision = selectedRevisions.get(0);
-        VcsFileRevision newestRevision = selectedRevisions.get(revisions.length - 1);
-        diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, olderRevision, newestRevision);
+      if (revisions.length == 2){
+        diffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), filePath, revisions[0], revisions[1]);
       }
       else if (revisions.length == 1) {
         VcsFileRevision previousRevision = e.getRequiredData(PREVIOUS_REVISION_FOR_DIFF);
@@ -1044,10 +1040,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       if (revisions.length == 1) {
         return historySession.isContentAvailable(revisions[0]) && e.getData(PREVIOUS_REVISION_FOR_DIFF) != null;
       }
-      else if (revisions.length > 1) {
+      else if (revisions.length == 2) {
         return historySession.isContentAvailable(revisions[0]) &&
                historySession.isContentAvailable(revisions[revisions.length - 1]);
-        // incorrect, since we compare sorted revisions in actionPerformed
       }
       return false;
     }
