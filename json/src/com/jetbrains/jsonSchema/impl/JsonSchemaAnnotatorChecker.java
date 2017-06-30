@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
@@ -43,6 +44,8 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 4/25/2017.
  */
 class JsonSchemaAnnotatorChecker {
+  private static final Set<JsonSchemaType> PRIMITIVE_TYPES =
+    ContainerUtil.set(JsonSchemaType._integer, JsonSchemaType._number, JsonSchemaType._boolean, JsonSchemaType._string, JsonSchemaType._null);
   private final Map<PsiElement, String> myErrors;
   private boolean myHadTypeError;
 
@@ -351,13 +354,12 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
-    if (getMatchingSchemaType(schema, type) != null) return true;
-    if (schema.getEnum() != null && (JsonSchemaType._integer.equals(type) ||
-                                     JsonSchemaType._number.equals(type) || JsonSchemaType._boolean.equals(type) ||
-                                     JsonSchemaType._string.equals(type))) {
-      return true;
+    if (schema.getEnum() != null) {
+      return PRIMITIVE_TYPES.contains(type);
     }
-    return false;
+    final JsonSchemaType matchingSchemaType = getMatchingSchemaType(schema, type);
+    if (matchingSchemaType != null) return matchingSchemaType.equals(type);
+    return true;
   }
 
   @Nullable
@@ -550,7 +552,7 @@ class JsonSchemaAnnotatorChecker {
   private JsonSchemaObject processOneOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> oneOf) {
     final Map<PsiElement, String> errors = new HashMap<>();
     boolean wasTypeError = false;
-    int cntCorrect = 0;
+    final List<JsonSchemaObject> correct = new SmartList<>();
     JsonSchemaObject current = null;
     for (JsonSchemaObject object : oneOf) {
       // skip it if something JS awaited, we do not process it currently
@@ -562,7 +564,7 @@ class JsonSchemaAnnotatorChecker {
       if (checker.isCorrect()) {
         current = object;
         errors.clear();
-        ++cntCorrect;
+        correct.add(object);
       }
       else {
         if (errors.isEmpty() || wasTypeError && !checker.isHadTypeError() || errors.size() > checker.getErrors().size()) {
@@ -573,10 +575,15 @@ class JsonSchemaAnnotatorChecker {
         }
       }
     }
-    if (cntCorrect == 1) return current;
-    if (cntCorrect > 0) {
+    if (correct.size() == 1) return current;
+    if (correct.size() > 0) {
       final JsonSchemaType type = JsonSchemaType.getType(value);
-      if (type != null) error("Validates to more than one variant", value.getDelegate());
+      if (type != null) {
+        // also check maybe some currently not checked properties like format are different with schemes
+        if (!schemesDifferWithNotCheckedProperties(correct)) {
+          error("Validates to more than one variant", value.getDelegate());
+        }
+      }
     }
     else {
       if (!errors.isEmpty()) {
@@ -586,6 +593,10 @@ class JsonSchemaAnnotatorChecker {
       }
     }
     return current;
+  }
+
+  private static boolean schemesDifferWithNotCheckedProperties(@NotNull final List<JsonSchemaObject> list) {
+    return list.stream().anyMatch(s -> !StringUtil.isEmptyOrSpaces(s.getFormat()));
   }
 
   // returns the schema, selected for annotation
