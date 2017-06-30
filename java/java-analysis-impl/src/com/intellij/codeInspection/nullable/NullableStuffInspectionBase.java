@@ -523,20 +523,22 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       PsiAnnotation annotation = isDeclaredNotNull == null ? isDeclaredNullable : isDeclaredNotNull;
       reportPrimitiveType(holder, annotation, annotation, parameter);
     }
-    if (parameter.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)parameter.getParent()).getIteratedValue();
-      Nullness itemTypeNullability = DfaPsiUtil.getTypeNullability(iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue));
-      if (isDeclaredNotNull != null && itemTypeNullability == Nullness.NULLABLE) {
-        holder.registerProblem(isDeclaredNotNull, "Loop parameter can be null",
-                               new RemoveAnnotationQuickFix(isDeclaredNotNull, null));
-      }
-      else if (isDeclaredNullable != null && itemTypeNullability == Nullness.NOT_NULL) {
-        holder.registerProblem(isDeclaredNullable, "Loop parameter is always not-null",
-                               new RemoveAnnotationQuickFix(isDeclaredNullable, null));
-      }
+    if (parameter instanceof PsiParameter) {
+      checkLoopParameterNullability(holder, isDeclaredNotNull, isDeclaredNullable, DfaPsiUtil.inferParameterNullability((PsiParameter)parameter));
     }
 
     return new Annotated(isDeclaredNotNull != null,isDeclaredNullable != null);
+  }
+
+  private static void checkLoopParameterNullability(ProblemsHolder holder, @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, Nullness expectedNullability) {
+    if (notNull != null && expectedNullability == Nullness.NULLABLE) {
+      holder.registerProblem(notNull, "Parameter can be null",
+                             new RemoveAnnotationQuickFix(notNull, null));
+    }
+    else if (nullable != null && expectedNullability == Nullness.NOT_NULL) {
+      holder.registerProblem(nullable, "Parameter is always not-null",
+                             new RemoveAnnotationQuickFix(nullable, null));
+    }
   }
 
   private static void reportPrimitiveType(final ProblemsHolder holder, final PsiElement psiElement, final PsiAnnotation annotation,

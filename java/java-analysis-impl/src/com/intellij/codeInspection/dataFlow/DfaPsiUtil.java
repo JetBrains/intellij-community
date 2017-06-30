@@ -17,12 +17,12 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -93,12 +93,25 @@ public class DfaPsiUtil {
     Nullness fromType = getTypeNullability(resultType);
     if (fromType != Nullness.UNKNOWN) return fromType;
 
-    if (PsiJavaPatterns.psiParameter().withParents(PsiParameterList.class, PsiLambdaExpression.class).accepts(owner)) {
-      PsiLambdaExpression lambda = (PsiLambdaExpression)owner.getParent().getParent();
-      int index = lambda.getParameterList().getParameterIndex((PsiParameter)owner);
-      return getFunctionalParameterNullability(lambda, index);
+    if (owner instanceof PsiParameter) {
+      return inferParameterNullability((PsiParameter)owner);
     }
 
+    return Nullness.UNKNOWN;
+  }
+
+  @NotNull
+  public static Nullness inferParameterNullability(@NotNull PsiParameter parameter) {
+    PsiElement parent = parameter.getParent();
+    if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
+      return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
+    }
+    if (parent instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)parent).getIteratedValue();
+      if (iteratedValue != null) {
+        return getTypeNullability(JavaGenericsUtil.getCollectionItemType(iteratedValue));
+      }
+    }
     return Nullness.UNKNOWN;
   }
 
@@ -142,7 +155,7 @@ public class DfaPsiUtil {
     if(nullness != Nullness.UNKNOWN) {
       return nullness;
     }
-    PsiClassType type = ObjectUtils.tryCast(function.getFunctionalInterfaceType(), PsiClassType.class);
+    PsiClassType type = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (sam != null && index < sam.getParameterList().getParametersCount()) {
       PsiParameter parameter = sam.getParameterList().getParameters()[index];
@@ -151,7 +164,7 @@ public class DfaPsiUtil {
         return nullness;
       }
       PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
-      return getTypeNullability(parameterType);
+      return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
     }
     return Nullness.UNKNOWN;
   }

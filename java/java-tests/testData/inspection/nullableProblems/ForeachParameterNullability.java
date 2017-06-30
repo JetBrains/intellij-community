@@ -11,11 +11,13 @@ class JC {
   }
 
   void usage() {
-    for (<warning descr="Loop parameter can be null">@NotNull</warning> Object o : getNullableStuff()) {
+    for (<warning descr="Parameter can be null">@NotNull</warning> Object o : getNullableStuff()) {
       System.out.println(o.getClass());
     }
-    for (<warning descr="Loop parameter is always not-null">@Nullable</warning> Object o : getNotNullStuff()) {
+    for (<warning descr="Parameter is always not-null">@Nullable</warning> Object o : getNotNullStuff()) {
       System.out.println(o.getClass());
     }
+    getNullableStuff().forEach((<warning descr="Parameter can be null">@NotNull</warning> Object s) -> System.out.println(s.hashCode()));
+    getNotNullStuff().forEach((<warning descr="Parameter is always not-null">@Nullable</warning> Object s) -> System.out.println(s.hashCode()));
   }
 }
