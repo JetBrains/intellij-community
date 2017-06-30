@@ -124,21 +124,27 @@ public interface PsiResolveHelper {
   @Nullable
   PsiVariable resolveAccessibleReferencedVariable(@NotNull String referenceText, PsiElement context);
 
-  /** Returns {@code true} if a member is accessible from a given place according to JLS 6.6 "Access Control" */
+  /**
+   * Returns {@code true} if a member is accessible from a given place according to JLS 6.6 "Access Control".
+   */
   boolean isAccessible(@NotNull PsiMember member,
                        @Nullable PsiModifierList modifierList,
                        @NotNull PsiElement place,
                        @Nullable PsiClass accessObjectClass,
                        @Nullable PsiElement currentFileResolveScope);
 
-  /** Returns {@code true} if a member is accessible from a given place according to JLS 6.6 "Access Control" */
+  /**
+   * Returns {@code true} if a member is accessible from a given place according to JLS 6.6 "Access Control".
+   */
   boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass);
 
-  /** Returns {@code true} if a package is accessible from a given place according to JLS 6.6 "Access Control" */
+  /**
+   * Returns {@code true} if a package is accessible from a given place according to JLS 6.6 "Access Control".
+   */
   boolean isAccessible(@NotNull PsiPackage pkg, @NotNull PsiElement place);
 
   /**
-   * @return {@link PsiType#NULL} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise
+   * Returns {@link PsiType#NULL} iff no type could be inferred, {@code null} iff the type inferred is raw, the inferred type otherwise.
    */
   PsiType inferTypeForMethodTypeParameter(@NotNull PsiTypeParameter typeParameter,
                                           @NotNull PsiParameter[] parameters,
