@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -36,9 +38,7 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class RegistrationCheckerUtil {
 
@@ -85,7 +85,7 @@ class RegistrationCheckerUtil {
                                            boolean isIdeaProject,
                                            PsiClass psiClass,
                                            RegistrationType registrationType) {
-    List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module, isIdeaProject);
+    List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module, isIdeaProject, psiClass);
     if (pluginXmlCandidates.isEmpty()) return null;
 
     final String qualifiedName = psiClass.getQualifiedName();
@@ -124,7 +124,9 @@ class RegistrationCheckerUtil {
   }
 
   @NotNull
-  private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module, boolean isIdeaProject) {
+  private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module,
+                                                                              boolean isIdeaProject,
+                                                                              PsiClass psiClass) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml != null && !isIdeaProject) {
       return Collections.singletonList(DescriptorUtil.getIdeaPlugin(pluginXml));
@@ -134,8 +136,24 @@ class RegistrationCheckerUtil {
       return Collections.emptyList();
     }
 
-    return DomService.getInstance().getFileElements(IdeaPlugin.class, module.getProject(),
-                                                    GlobalSearchScope.moduleRuntimeScope(module, false));
+    final String className = psiClass.getName();
+    if (className == null) {
+      return Collections.emptyList();
+    }
+
+    final Project project = module.getProject();
+    final DomService domService = DomService.getInstance();
+    final Collection<VirtualFile> pluginXmlCandidates =
+      domService.getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.moduleRuntimeScope(module, false));
+
+    final VirtualFile[] pluginXmlFilesWithWord = CacheManager.SERVICE.getInstance(project)
+      .getVirtualFilesWithWord(className,
+                               UsageSearchContext.IN_PLAIN_TEXT,
+                               GlobalSearchScope.filesWithLibrariesScope(project, pluginXmlCandidates),
+                               true);
+
+    return domService.getFileElements(IdeaPlugin.class, project,
+                                      GlobalSearchScope.filesWithLibrariesScope(project, Arrays.asList(pluginXmlFilesWithWord)));
   }
 
   private static boolean processPluginXml(DomFileElement<IdeaPlugin> pluginXml,
