@@ -709,6 +709,13 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     }
   }
 
+  /**
+   * {@link FinderRecursivePanel} disposes right component on selection change if it is disposable.
+   * If an inheritor creates disposable objects during right component creation,
+   * the disposable objects must be registered as children of the created right component
+   * in order to dispose created objects on selection change.
+   * {@link DisposablePanel} could be used as a right component in that case.
+   */
   protected static class DisposablePanel extends JPanel implements Disposable {
     public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
       super(layout);
