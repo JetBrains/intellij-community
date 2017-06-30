@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,22 +36,24 @@ import java.util.HashSet;
  */
 public abstract class CollectionsListSettings {
   @NonNls
-  public static final SortedSet<String> DEFAULT_COLLECTION_LIST = new TreeSet<>();
+  public static final SortedSet<String> DEFAULT_COLLECTION_LIST;
 
   static {
-    DEFAULT_COLLECTION_LIST.add("java.util.concurrent.ConcurrentHashMap");
-    DEFAULT_COLLECTION_LIST.add("java.util.concurrent.PriorityBlockingQueue");
-    DEFAULT_COLLECTION_LIST.add("java.util.ArrayDeque");
-    DEFAULT_COLLECTION_LIST.add("java.util.ArrayList");
-    DEFAULT_COLLECTION_LIST.add("java.util.HashMap");
-    DEFAULT_COLLECTION_LIST.add("java.util.Hashtable");
-    DEFAULT_COLLECTION_LIST.add("java.util.HashSet");
-    DEFAULT_COLLECTION_LIST.add("java.util.IdentityHashMap");
-    DEFAULT_COLLECTION_LIST.add("java.util.LinkedHashMap");
-    DEFAULT_COLLECTION_LIST.add("java.util.LinkedHashSet");
-    DEFAULT_COLLECTION_LIST.add("java.util.PriorityQueue");
-    DEFAULT_COLLECTION_LIST.add("java.util.Vector");
-    DEFAULT_COLLECTION_LIST.add("java.util.WeakHashMap");
+    final SortedSet<String> set = new TreeSet<>();
+    set.add("java.util.concurrent.ConcurrentHashMap");
+    set.add("java.util.concurrent.PriorityBlockingQueue");
+    set.add("java.util.ArrayDeque");
+    set.add("java.util.ArrayList");
+    set.add("java.util.HashMap");
+    set.add("java.util.Hashtable");
+    set.add("java.util.HashSet");
+    set.add("java.util.IdentityHashMap");
+    set.add("java.util.LinkedHashMap");
+    set.add("java.util.LinkedHashSet");
+    set.add("java.util.PriorityQueue");
+    set.add("java.util.Vector");
+    set.add("java.util.WeakHashMap");
+    DEFAULT_COLLECTION_LIST = Collections.unmodifiableSortedSet(set);
   }
 
   private final List<String> myCollectionClassesRequiringCapacity;
