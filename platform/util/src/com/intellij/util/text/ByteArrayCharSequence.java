@@ -65,7 +65,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   @Override
   @NotNull
   public String toString() {
-    return new String(myChars, myStart, length(), CharsetToolkit.US_ASCII_CHARSET);
+    return new String(myChars, myStart, length(), CharsetToolkit.ISO_8859_1_CHARSET);
   }
 
   @NotNull
