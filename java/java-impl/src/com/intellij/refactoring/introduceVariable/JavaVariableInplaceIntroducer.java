@@ -63,7 +63,7 @@ import java.util.List;
 
 public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer {
 
-  private SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
+  private SmartPsiElementPointer<? extends PsiElement> myPointer;
 
   private JCheckBox myCanBeFinalCb;
   private final IntroduceVariableSettings mySettings;
@@ -120,12 +120,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
   @Nullable
   protected PsiVariable getVariable() {
-    final PsiDeclarationStatement declarationStatement = myPointer != null ? myPointer.getElement() : null;
-    if (declarationStatement != null) {
-      PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+    final PsiElement declarationStatement = myPointer != null ? myPointer.getElement() : null;
+    if (declarationStatement instanceof PsiDeclarationStatement) {
+      PsiElement[] declaredElements = ((PsiDeclarationStatement)declarationStatement).getDeclaredElements();
       return declaredElements.length == 0 ? null : (PsiVariable)declaredElements[0];
     }
-    return null;
+    return declarationStatement instanceof PsiVariable ? (PsiVariable)declarationStatement : null;
   }
 
   @Override
@@ -427,10 +427,19 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   protected PsiVariable introduceVariable() {
     PsiVariable variable = IntroduceVariableBase
       .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);
-    final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
-    myPointer = declarationStatement != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(declarationStatement) : null;
-    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
-    setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+    if (variable instanceof PsiField) {
+      myPointer = smartPointerManager.createSmartPsiElementPointer(variable);
+    }
+    else {
+      final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+      if (declarationStatement != null) {
+        SmartPsiElementPointer<PsiDeclarationStatement> pointer = smartPointerManager.createSmartPsiElementPointer(declarationStatement);
+        myPointer = pointer;
+        myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, pointer);
+        setAdvertisementText(getAdvertisementText(declarationStatement, variable.getType(), myHasTypeSuggestion));
+      }
+    }
 
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
     return variable;

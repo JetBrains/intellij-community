@@ -919,8 +919,15 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           initializer = simplifyVariableInitializer(initializer, selectedType.getType());
 
           PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, project);
-          PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createVariableDeclarationStatement(settings.getEnteredName(), type, initializer, container);
+          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          PsiElement declaration;
+          if (container instanceof PsiClass) {
+            declaration = elementFactory.createField(settings.getEnteredName(), type);
+            ((PsiField)declaration).setInitializer(initializer);
+          }
+          else {
+            declaration = elementFactory.createVariableDeclarationStatement(settings.getEnteredName(), type, initializer, container);
+          }
           if (!isInsideLoop) {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
@@ -940,7 +947,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             }
           }
 
-          PsiExpression ref = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(settings.getEnteredName(), null);
+          PsiExpression ref = elementFactory.createExpressionFromText(settings.getEnteredName(), null);
           if (settings.isReplaceAllOccurrences()) {
             ArrayList<PsiElement> array = new ArrayList<>();
             for (PsiExpression occurrence : occurrences) {
@@ -970,9 +977,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             }
           }
 
-          declaration = (PsiDeclarationStatement) RefactoringUtil.putStatementInLoopBody(declaration, container, anchorStatement, replaceSelf && replaceLoop);
-          declaration = (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(declaration);
-          PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
+          if (declaration instanceof PsiDeclarationStatement) {
+            declaration = RefactoringUtil.putStatementInLoopBody((PsiStatement)declaration, container, anchorStatement, replaceSelf && replaceLoop);
+          }
+          declaration = JavaCodeStyleManager.getInstance(project).shortenClassReferences(declaration);
+          PsiVariable var =  (PsiVariable) (declaration instanceof PsiDeclarationStatement ? ((PsiDeclarationStatement) declaration).getDeclaredElements()[0] : declaration);
           PsiUtil.setModifierProperty(var, PsiModifier.FINAL, settings.isDeclareFinal());
           fieldConflictsResolver.fix();
           return SmartPointerManager.getInstance(project).createSmartPsiElementPointer(var);
@@ -982,7 +991,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         return null;
       }
 
-      private PsiDeclarationStatement addDeclaration(PsiDeclarationStatement declaration, PsiExpression initializer) {
+      private PsiElement addDeclaration(PsiElement declaration, PsiExpression initializer) {
         if (anchor instanceof PsiDeclarationStatement) {
           final PsiElement[] declaredElements = ((PsiDeclarationStatement)anchor).getDeclaredElements();
           if (declaredElements.length > 1) {
@@ -1001,11 +1010,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               final PsiVariable psiVariable = (PsiVariable)declaredElements[usedFirstVar[0]];
               psiVariable.normalizeDeclaration();
               final PsiDeclarationStatement parDeclarationStatement = PsiTreeUtil.getParentOfType(psiVariable, PsiDeclarationStatement.class);
-              return (PsiDeclarationStatement)container.addAfter(declaration, parDeclarationStatement);
+              return container.addAfter(declaration, parDeclarationStatement);
             }
           }
         }
-        return  (PsiDeclarationStatement) container.addBefore(declaration, anchor);
+        return container.addBefore(declaration, anchor);
       }
     });
     return pointer != null ? pointer.getElement() : null;
