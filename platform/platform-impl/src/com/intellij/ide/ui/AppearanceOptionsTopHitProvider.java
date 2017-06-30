@@ -64,12 +64,12 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
     return ID;
   }
 
-  static BooleanOptionDescription appearance(String option, String field) {
-    return option(option, field, "preferences.lookFeel");
+  static BooleanOptionDescription appearance(String option, String propertyName) {
+    return option(option, propertyName, "preferences.lookFeel");
   }
 
-  static BooleanOptionDescription option(String option, String field, String configurableId) {
-    return new PublicMethodBasedOptionDescription(option, configurableId, "get" + StringUtil.capitalize(field), "set" + StringUtil.capitalize(field)) {
+  static BooleanOptionDescription option(String option, String propertyName, String configurableId) {
+    return new PublicMethodBasedOptionDescription(option, configurableId, "get" + StringUtil.capitalize(propertyName), "set" + StringUtil.capitalize(propertyName)) {
       @Override
       public Object getInstance() {
         return UISettings.getInstance();
