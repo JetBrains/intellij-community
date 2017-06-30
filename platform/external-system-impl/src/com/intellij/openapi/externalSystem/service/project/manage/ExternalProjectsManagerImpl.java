@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -102,6 +103,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     try {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
         if (!module.isDisposed()) {
+          ExternalSystemModulePropertyManager.getInstance(module).swapStore();
           ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).stateChanged();
         }
       }

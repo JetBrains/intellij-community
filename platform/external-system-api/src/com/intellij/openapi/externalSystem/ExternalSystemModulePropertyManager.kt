@@ -30,14 +30,16 @@ import com.intellij.util.xmlb.annotations.Transient
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
+val EMPTY_STATE = ExternalOptionStateComponent()
+
 @Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
-class ExternalSystemModulePropertyManager(module: Module) : PersistentStateComponent<ExternalOptionStateComponent>, ProjectModelElement {
+class ExternalSystemModulePropertyManager(private val module: Module) : PersistentStateComponent<ExternalOptionStateComponent>, ProjectModelElement {
   override fun getExternalSource() = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
 
   private var store = if (module.project.isExternalStorageEnabled) ExternalOptionStateComponent() else ExternalOptionStateModule(module)
 
-  override fun getState() = store as? ExternalOptionStateComponent
+  override fun getState() = store as? ExternalOptionStateComponent ?: EMPTY_STATE
 
   override fun loadState(state: ExternalOptionStateComponent) {
     store = state
@@ -75,6 +77,23 @@ class ExternalSystemModulePropertyManager(module: Module) : PersistentStateCompo
     }
     // must be after unlinkExternalOptions
     store.isMavenized = mavenized
+  }
+
+  fun swapStore() {
+    val oldStore = store
+    if (oldStore is ExternalOptionStateModule) {
+      store = ExternalOptionStateComponent()
+    }
+    else {
+      store = ExternalOptionStateModule(module)
+    }
+
+    store.externalSystem = oldStore.externalSystem
+    store.linkedProjectId = oldStore.linkedProjectId
+    store.linkedProjectPath = oldStore.linkedProjectPath
+    store.rootProjectPath = oldStore.rootProjectPath
+    store.externalSystemModuleGroup = oldStore.externalSystemModuleGroup
+    store.externalSystemModuleVersion = oldStore.externalSystemModuleVersion
   }
 
   fun unlinkExternalOptions() {
