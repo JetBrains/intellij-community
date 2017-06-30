@@ -40,9 +40,8 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -418,7 +417,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     for (QualifiedName qName : allBaseClassesQNames) {
-      final List<PsiElement> classes = resolveQualifiedNameInFile(qName, (PyFile)pyClass.getContainingFile(), context);
+      final List<PsiElement> classes = PyResolveUtil.resolveQualifiedNameInFile(qName, (PyFile)pyClass.getContainingFile(), context);
       // Better way to handle results of the multiresove
       final PyClass firstFound = ContainerUtil.findInstance(classes, PyClass.class);
       if (firstFound != null) {
@@ -865,49 +864,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyFile pyFile = as(FileContextUtil.getContextFile(expression), PyFile.class);
 
     if (pyFile != null && qualifiedName != null) {
-      return resolveQualifiedNameInFile(qualifiedName, pyFile, context);
+      return PyResolveUtil.resolveQualifiedNameInFile(qualifiedName, pyFile, context);
     }
     return Collections.singletonList(expression);
-  }
-
-  @NotNull
-  private static List<PsiElement> resolveQualifiedNameInFile(@NotNull QualifiedName qualifiedName,
-                                                             @NotNull PyFile pyFile,
-                                                             @NotNull TypeEvalContext context) {
-    if (qualifiedName.getComponentCount() > 0) {
-      List<RatedResolveResult> results = new ArrayList<>();
-      final String first = qualifiedName.getFirstComponent();
-      //noinspection ConstantConditions
-      results.addAll(pyFile.multiResolveName(first, false));
-      if (results.isEmpty()) {
-        final PsiElement builtinSymbol = PyBuiltinCache.getInstance(pyFile).getByName(first);
-        if (builtinSymbol != null) {
-          results.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, builtinSymbol));
-        }
-      }
-
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-
-      for (String name : qualifiedName.removeHead(1).getComponents()) {
-        final List<RatedResolveResult> children = new ArrayList<>();
-        for (RatedResolveResult result : results) {
-          final PsiElement element = result.getElement();
-          if (element instanceof PyTypedElement) {
-            final PyType type = context.getType((PyTypedElement)element);
-            if (type != null) {
-              final List<? extends RatedResolveResult> resolved =
-                type.resolveMember(name, null, AccessDirection.READ, resolveContext);
-              if (resolved != null) {
-                children.addAll(resolved);
-              }
-            }
-          }
-        }
-        results = children;
-      }
-      return PyUtil.filterTopPriorityResults(results.toArray(RatedResolveResult.EMPTY_ARRAY));
-    }
-    return Collections.emptyList();
   }
 
   /**
@@ -917,7 +876,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
    * For instance, for the expression "foo.bar.baz" it returns the qualified name "foo.bar.baz",
    * but for "foo[0].bar.baz" it will return null.
    * <p>
-   * If you need to take into account such implicit "magical" names, use {@link com.jetbrains.python.psi.impl.PyPsiUtils#asQualifiedName(PyExpression)}
+   * If you need to take into account such implicit "magical" names, use {@link PyPsiUtils#asQualifiedName(PyExpression)}
    * or {@link PyQualifiedExpression#asQualifiedName()}.
    * @param expression
    */
