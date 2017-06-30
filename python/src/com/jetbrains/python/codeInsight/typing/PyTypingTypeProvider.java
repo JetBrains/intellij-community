@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -36,7 +37,6 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
@@ -263,7 +263,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static PyExpression getReturnTypeAnnotation(@NotNull PyFunction function) {
     final String annotation = function.getAnnotationValue();
     if (annotation != null) {
-      return createExpressionFromFragment(annotation, function);
+      return PyUtil.createExpressionFromFragment(annotation, function);
     }
     final PyFunctionTypeAnnotation functionAnnotation = getFunctionTypeAnnotation(function);
     if (functionAnnotation != null) {
@@ -638,13 +638,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static Ref<PyType> getStringBasedType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
-    final PyExpression expr = createExpressionFromFragment(contents, anchor);
+    final PsiFile file = FileContextUtil.getContextFile(anchor);
+    if (file == null) {
+      return null;
+    }
+    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, file);
     return expr != null ? getType(expr, context) : null;
   }
 
   @Nullable
   private static Ref<PyType> getVariableTypeCommentType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull Context context) {
-    final PyExpression expr = createExpressionFromFragment(contents, anchor);
+    final PyExpression expr = PyUtil.createExpressionFromFragment(contents, anchor);
     if (expr != null) {
       // Such syntax is specific to "# type:" comments, unpacking in type hints is not allowed anywhere else
       if (expr instanceof PyTupleExpression) {
@@ -655,14 +659,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return getType(expr, context);
     }
     return null;
-  }
-
-  @Nullable
-  public static PyExpression createExpressionFromFragment(@NotNull String contents, @NotNull PsiElement anchor) {
-    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", contents, false);
-    codeFragment.setContext(FileContextUtil.getContextFile(anchor));
-    final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
-    return statement != null ? statement.getExpression() : null;
   }
 
   @Nullable

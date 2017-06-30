@@ -22,7 +22,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -105,7 +104,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       return getSubscriptedSuperClasses(pyClass);
     }
     return ContainerUtil.mapNotNull(classStub.getSubscriptedSuperClasses(),
-                                    x -> as(PyTypingTypeProvider.createExpressionFromFragment(x, pyClass), PySubscriptionExpression.class));
+                                    x -> as(PyUtil.createExpressionFromFragment(x, pyClass.getContainingFile()),
+                                            PySubscriptionExpression.class));
   }
 
   @Nullable
