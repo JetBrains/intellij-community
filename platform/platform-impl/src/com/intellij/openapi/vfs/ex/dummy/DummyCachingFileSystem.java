@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -161,10 +162,10 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearInvalidFiles() {
-    Collection<T> values = myCachedFiles.values();
-    for (T t : values) {
+    for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
+      T t = entry.getValue();
       if (t == null || !t.isValid()) {
-        values.remove(t);
+        myCachedFiles.remove(entry.getKey());
       }
     }
   }
