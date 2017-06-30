@@ -63,7 +63,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -169,7 +168,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     final TableLinkMouseListener listener = new TableLinkMouseListener();
     listener.installOn(myDualView.getFlatView());
     listener.installOn(myDualView.getTreeView());
-    setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
     setupDualView(addToGroup(true, new DefaultActionGroup(null, false)));
     if (isStaticEmbedded) {
@@ -327,18 +326,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private void adjustEmptyText() {
     VirtualFile virtualFile = myFilePath.getVirtualFile();
     if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
-      setEmptyText("File " + myFilePath.getName() + " not found");
+      myDualView.setEmptyText("File " + myFilePath.getName() + " not found");
     }
     else if (myInRefresh) {
-      setEmptyText(CommonBundle.getLoadingTreeNodeText());
+      myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
     }
     else {
-      setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
+      myDualView.setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
     }
-  }
-
-  private void setEmptyText(@NotNull String emptyText) {
-    myDualView.setEmptyText(emptyText);
   }
 
   protected void addActionsTo(DefaultActionGroup group) {
