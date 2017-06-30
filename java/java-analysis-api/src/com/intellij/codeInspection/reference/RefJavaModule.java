@@ -36,7 +36,13 @@ public interface RefJavaModule extends RefElement {
   Map<String, List<String>> getExportedPackageNames();
 
   @NotNull
+  Set<RefClass> getServiceInterfaces();
+
+  @NotNull
   Set<RefClass> getServiceImplementations();
+
+  @NotNull
+  Set<RefClass> getUsedServices();
 
   @NotNull
   List<RequiredModule> getRequiredModules();

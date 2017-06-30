@@ -50,6 +50,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
@@ -112,7 +113,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
   public void testXmlProlog() throws IOException {
     VirtualFile vTestRoot = getTestRoot();
-    VirtualFile xml = vTestRoot.findChild("xNotepadUtf8.xml");
+    VirtualFile xml = ObjectUtils.assertNotNull(vTestRoot.findChild("xNotepadUtf8.xml"));
 
     String expected = UTF8_XML_PROLOG + XML_TEST_BODY;
     String text = getDocument(xml).getText();
@@ -154,7 +155,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testChangeToUtfProlog() throws IOException {
-    VirtualFile src = getTestRoot().findChild("xWin1251.xml");
+    VirtualFile src = find("xWin1251.xml");
     final File dir = createTempDirectory();
     final File file = new File(dir, "copy.xml");
     FileUtil.copy(new File(src.getPath()), file);
@@ -178,25 +179,30 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testDefaultHtml() {
-    VirtualFile file = getTestRoot().findChild("defaultHtml.html");
+    VirtualFile file = find("defaultHtml.html");
 
     assertEquals(EncodingProjectManager.getInstance(getProject()).getDefaultCharset(), file.getCharset());
   }
 
+  @NotNull
+  private static VirtualFile find(String name) {
+    return ObjectUtils.assertNotNull(getTestRoot().findChild(name));
+  }
+
   public void testTrickyProlog() {
-    VirtualFile xml = getTestRoot().findChild("xTrickyProlog.xml");
+    VirtualFile xml = find("xTrickyProlog.xml");
 
     assertEquals("Big5", xml.getCharset().name());
   }
 
   public void testDefaultXml() {
-    VirtualFile xml = getTestRoot().findChild("xDefault.xml");
+    VirtualFile xml = find("xDefault.xml");
 
     assertEquals(CharsetToolkit.UTF8_CHARSET, xml.getCharset());
   }
 
   public void testIbm866() {
-    VirtualFile xml = getTestRoot().findChild("xIbm866.xml");
+    VirtualFile xml = find("xIbm866.xml");
 
     String expected = prolog(Charset.forName("IBM866")) + XML_TEST_BODY;
     String text = getDocument(xml).getText();
@@ -210,8 +216,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testUTF16BOM() throws IOException {
-    VirtualFile vTestRoot = getTestRoot();
-    VirtualFile file = vTestRoot.findChild(getTestName(false) + ".txt");
+    VirtualFile file = find(getTestName(false) + ".txt");
     File source = new File(file.getPath());
     byte[] bytesSource = FileUtil.loadFileBytes(source);
     assertTrue(Arrays.toString(bytesSource), CharsetToolkit.hasUTF16LEBom(bytesSource));
@@ -254,7 +259,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
                      WINDOWS_1252);
 
     myFilesToDelete.add(temp);
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile file = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
     assertEquals(WINDOWS_1252, file.getCharset());
 
@@ -372,8 +377,10 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
   public void testCopyMove() throws IOException {
     File root = createTempDirectory();
-    File dir1 = new File(root, "dir1"); dir1.mkdir();
-    File dir2 = new File(root, "dir2"); dir2.mkdir();
+    File dir1 = new File(root, "dir1");
+    assertTrue(dir1.mkdir());
+    File dir2 = new File(root, "dir2");
+    assertTrue(dir2.mkdir());
     final VirtualFile vdir1 = getVirtualFile(dir1);
     final VirtualFile vdir2 = getVirtualFile(dir2);
     assertNotNull(dir1.getPath(), vdir1);
@@ -402,8 +409,10 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
   public void testCopyNested() throws IOException, IncorrectOperationException {
     File root = createTempDirectory();
-    File dir1 = new File(root, "dir1"); dir1.mkdir();
-    File dir2 = new File(root, "dir2"); dir2.mkdir();
+    File dir1 = new File(root, "dir1");
+    assertTrue(dir1.mkdir());
+    File dir2 = new File(root, "dir2");
+    assertTrue(dir2.mkdir());
     final VirtualFile vdir1 = getVirtualFile(dir1);
     final VirtualFile vdir2 = getVirtualFile(dir2);
     assertNotNull(dir1.getPath(), vdir1);
@@ -416,10 +425,10 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       protected void run() throws Throwable {
         VirtualFile winf = vdir1.createChildData(this, "xxx.txt");
 
-        PsiDirectory psidir1 = PsiManager.getInstance(getProject()).findDirectory(vdir1);
-        PsiDirectory psidir2 = PsiManager.getInstance(getProject()).findDirectory(vdir2);
+        PsiDirectory psidir1 = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findDirectory(vdir1));
+        PsiDirectory psidir2 = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findDirectory(vdir2));
         CopyFilesOrDirectoriesHandler.copyToDirectory(psidir1, psidir1.getName(), psidir2);
-        VirtualFile winfCopy = psidir2.getVirtualFile().findFileByRelativePath(psidir1.getName() + "/" + winf.getName());
+        VirtualFile winfCopy = ObjectUtils.assertNotNull(psidir2.getVirtualFile().findFileByRelativePath(psidir1.getName() + "/" + winf.getName()));
         assertEquals(WINDOWS_1251, winfCopy.getCharset());
         VirtualFile dir1Copy = psidir2.getVirtualFile().findChild(psidir1.getName());
         assertEquals(WINDOWS_1251, EncodingManager.getInstance().getEncoding(dir1Copy, false));
@@ -466,8 +475,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testVFileGetInputStreamIsBOMAware() throws IOException {
-    VirtualFile vTestRoot = getTestRoot();
-    VirtualFile file = vTestRoot.findChild("UTF16BOM.txt");
+    VirtualFile file = find("UTF16BOM.txt");
 
     String vfsLoad = VfsUtilCore.loadText(file);
     assertEquals("\u041f\u0440\u0438", vfsLoad);
@@ -478,8 +486,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertArrayEquals(CharsetToolkit.UTF16LE_BOM, file.getBOM());
   }
   public void testSetCharsetAfter() throws IOException {
-    VirtualFile vTestRoot = getTestRoot();
-    VirtualFile file = vTestRoot.findChild("UTF16LE_NOBOM.txt");
+    VirtualFile file = find("UTF16LE_NOBOM.txt");
     file.setCharset(CharsetToolkit.UTF_16LE_CHARSET);
     file.setBOM(null);
     String vfsLoad = VfsUtilCore.loadText(file);
@@ -606,7 +613,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   public void testSetEncodingForDirectoryChangesEncodingsForEvenNotLoadedFiles() throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     File fc = FileUtil.createTempDirectory("", "");
-    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fc);
+    VirtualFile root = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fc));
     PsiTestUtil.addContentRoot(getModule(), root);
 
     VirtualFile file = createChildData(root, "win.txt");
@@ -693,7 +700,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     change(file, WINDOWS_1251);
     assertEquals(WINDOWS_1251, file.getCharset());
 
-    Document document = documentManager.getDocument(file);
+    Document document = ObjectUtils.assertNotNull(documentManager.getDocument(file));
     change(file, CharsetToolkit.UTF8_CHARSET);
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
 
@@ -701,7 +708,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     UIUtil.dispatchAllInvocationEvents();
 
     assertEquals(WINDOWS_1251, file.getCharset());
-    document.getText();
+    ObjectUtils.assertNotNull(document.getText());
   }
 
   private void globalUndo() {
@@ -718,7 +725,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   public void testCantReloadBOMDetected() throws IOException {
     VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, THREE_RUSSIAN_LETTERS, CharsetToolkit.UTF8_CHARSET);
     file.contentsToByteArray();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
     assertEquals(THREE_RUSSIAN_LETTERS, document.getText());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
     EncodingManager.getInstance().setEncoding(file, CharsetToolkit.UTF_16LE_CHARSET);
@@ -731,7 +738,8 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     String text = "text";
     VirtualFile file = createTempFile("txt", CharsetToolkit.UTF8_BOM, text, CharsetToolkit.UTF8_CHARSET);
     file.contentsToByteArray();
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
+    
     assertEquals(text, document.getText());
     assertEquals(CharsetToolkit.UTF8_CHARSET, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
@@ -809,9 +817,10 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       EncodingManager.getInstance().setDefaultCharsetName(differentFromDefault);
 
       File temp = createTempDirectory();
-      VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+      VirtualFile tempDir = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp));
 
-      final Project newProject = ProjectManagerEx.getInstanceEx().newProject("new", tempDir.getPath(), false, false);
+      final Project newProject =
+        ObjectUtils.assertNotNull(ProjectManagerEx.getInstanceEx().newProject("new", tempDir.getPath(), false, false));
       Disposer.register(getTestRootDisposable(), () -> ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject)));
       PlatformTestUtil.saveProject(newProject);
 
@@ -829,14 +838,14 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testFileMustNotLoadInWrongEncodingIfAccessedBeforeProjectOpen() {
-    VirtualFile dir = getTestRoot().findChild("newEncoding");
-    VirtualFile file = dir.findFileByRelativePath("src/xxx.txt");
+    VirtualFile dir = find("newEncoding");
+    VirtualFile file = ObjectUtils.assertNotNull(dir.findFileByRelativePath("src/xxx.txt"));
 
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    document.getText();
+    Document document = ObjectUtils.assertNotNull(FileDocumentManager.getInstance().getDocument(file));
+    ObjectUtils.assertNotNull(document.getText());
     UIUtil.dispatchAllInvocationEvents();
 
-    Project newEncodingProject = ProjectUtil.openProject(dir.getPath(), null, false);
+    Project newEncodingProject = ObjectUtils.assertNotNull(ProjectUtil.openProject(dir.getPath(), null, false));
     UIUtil.dispatchAllInvocationEvents();
     try {
       assertEquals(US_ASCII, file.getCharset());
@@ -906,7 +915,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     File file = createTempFile("a.txt", text);
     setContentOnDisk(file, null, text, CharsetToolkit.UTF_16LE_CHARSET);
 
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    VirtualFile vFile = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
     vFile.setCharset(CharsetToolkit.UTF_16LE_CHARSET);
     vFile.setBOM(null);
     CharSequence loaded = LoadTextUtil.loadText(vFile);

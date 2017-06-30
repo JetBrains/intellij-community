@@ -16,6 +16,7 @@
 package com.intellij.java.propertyBased
 
 import com.intellij.java.propertyBased.PsiIndexConsistencyTest.Action.*
+import com.intellij.lang.java.lexer.JavaLexer
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
@@ -55,7 +56,7 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
       10 to Generator.sampledFrom(*RefKind.values()).map { LoadRef(it) },
       10 to Generator.sampledFrom(*RefKind.values()).map { ClearRef(it) },
       5 to Generator.booleans().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
-      5 to Generator.from { data -> TextChange(Generator.asciiIdentifiers().generateValue(data),
+      5 to Generator.from { data -> TextChange(Generator.asciiIdentifiers().suchThat { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) }.generateValue(data),
                                                Generator.booleans().generateValue(data),
                                                Generator.booleans().generateValue(data)) }
     ))

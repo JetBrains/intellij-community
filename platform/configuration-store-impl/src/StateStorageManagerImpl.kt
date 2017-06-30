@@ -318,7 +318,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  protected open val isExternalSystemStorageEnabled: Boolean
+  open val isExternalSystemStorageEnabled: Boolean
     get() = false
 
   protected open fun beforeElementSaved(element: Element) {

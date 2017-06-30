@@ -54,6 +54,7 @@ public class JsonSchemaResolver {
     return MatchResult.create(node);
   }
 
+  @NotNull
   public Collection<JsonSchemaObject> resolve() {
     return resolve(false, false, false);
   }

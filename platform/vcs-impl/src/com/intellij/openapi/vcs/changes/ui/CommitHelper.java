@@ -54,17 +54,13 @@ import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
-import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
-import static com.intellij.openapi.vcs.changes.ChangeListManagerImpl.showRemoveEmptyChangeListsProposal;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs;
-import static com.intellij.openapi.vcs.changes.ui.CommitHelper.ChangeListsModificationAfterCommit.*;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 
 public class CommitHelper {
@@ -292,41 +288,13 @@ public class CommitHelper {
     }
   }
 
-  enum ChangeListsModificationAfterCommit {
-    DELETE_LIST,
-    MOVE_OTHERS,
-    NOTHING,
-    ASK_BEFORE_DELETE
-  }
-
-  public static ChangeListsModificationAfterCommit getRemoveStrategy(VcsShowConfirmationOption.Value removeEmptyInactive) {
-    if (removeEmptyInactive == DO_ACTION_SILENTLY) return DELETE_LIST;
-    if (removeEmptyInactive == SHOW_CONFIRMATION) return ASK_BEFORE_DELETE;
-    return NOTHING;
-  }
-
   private class CommitProcessor extends GeneralCommitProcessor {
     @NotNull private LocalHistoryAction myAction = LocalHistoryAction.NULL;
-    private ChangeListsModificationAfterCommit myPostRefreshModification;
     private boolean myCommitSuccess;
     @Nullable private final AbstractVcs myVcs;
 
     private CommitProcessor(@Nullable AbstractVcs vcs) {
       myVcs = vcs;
-      myPostRefreshModification = NOTHING;
-      if (myChangeList instanceof LocalChangeList) {
-        LocalChangeList localList = (LocalChangeList)myChangeList;
-        boolean containsAll = newHashSet(myIncludedChanges).containsAll(myChangeList.getChanges());
-        if (containsAll && !localList.isDefault() && !localList.isReadOnly()) {
-          myPostRefreshModification = getRemoveStrategy(myConfiguration.REMOVE_EMPTY_INACTIVE_CHANGELISTS);
-        }
-        else if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT &&
-                 !containsAll &&
-                 localList.isDefault() &&
-                 myAllOfDefaultChangeListChangesIncluded) {
-          myPostRefreshModification = MOVE_OTHERS;
-        }
-      }
     }
 
     @Override
@@ -382,18 +350,9 @@ public class CommitHelper {
         clManager.invokeAfterUpdate(
           () -> {
             if (myCommitSuccess) {
-              // do delete/ move of change list if needed
-              if (myPostRefreshModification == DELETE_LIST || shouldDeleteWithConfirmation()) {
-                clManager.removeChangeList(myChangeList.getName());
-              }
-              else if (myPostRefreshModification == MOVE_OTHERS) {
-                ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
-                if (dialog.showAndGet()) {
-                  Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
-                  MoveChangesToAnotherListAction.askAndMove(myProject, changes, emptyList());
-                }
-              }
+              updateChangelistAfterRefresh();
             }
+
             CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
             // in background since commit must have authorized
             cache.refreshAllCachesAsync(false, true);
@@ -405,11 +364,27 @@ public class CommitHelper {
       }
     }
 
-    boolean shouldDeleteWithConfirmation() {
-      // check that changelist exists before asking
-      return myPostRefreshModification == ASK_BEFORE_DELETE &&
-             ChangeListManager.getInstance(myProject).findChangeList(myChangeList.getName()) != null &&
-             showRemoveEmptyChangeListsProposal(myProject, myConfiguration, singleton(myChangeList));
+    private void updateChangelistAfterRefresh() {
+      if (!(myChangeList instanceof LocalChangeList)) return;
+
+      ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+      LocalChangeList localList = clManager.findChangeList(myChangeList.getName());
+      if (localList == null) return;
+
+      if (!localList.isDefault()) {
+        clManager.scheduleAutomaticEmptyChangeListDeletion(localList);
+      }
+      else {
+        Collection<Change> changes = localList.getChanges();
+        if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT &&
+            !changes.isEmpty() &&
+            myAllOfDefaultChangeListChangesIncluded) {
+          ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
+          if (dialog.showAndGet()) {
+            MoveChangesToAnotherListAction.askAndMove(myProject, changes, emptyList());
+          }
+        }
+      }
     }
   }
 

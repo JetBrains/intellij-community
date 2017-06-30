@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author nik
@@ -60,7 +60,8 @@ public class PackagingElementPath {
   @NotNull
   public String getPathStringFrom(String separator, @Nullable CompositePackagingElement<?> ancestor) {
     final List<CompositePackagingElement<?>> parents = getParentsFrom(ancestor);
-    return StringUtil.join(ContainerUtil.reverse(parents), RenameablePackagingElement::getName, separator);
+    // StringUtil.join ignores empty strings whereas this monstrosity doesn't
+    return ContainerUtil.reverse(parents).stream().map(RenameablePackagingElement::getName).collect(Collectors.joining("/"));
   }
   
   public List<CompositePackagingElement<?>> getParents() {

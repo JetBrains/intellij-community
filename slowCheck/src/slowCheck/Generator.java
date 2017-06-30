@@ -34,7 +34,11 @@ public final class Generator<T> {
   }
   
   public <V> Generator<V> map(@NotNull Function<T,V> fun) {
-    return from(data -> fun.apply(generateUnstructured(data)));
+    return from(data -> fun.apply(myFunction.apply(data)));
+  }
+  
+  public <V> Generator<V> flatMap(@NotNull Function<T,Generator<V>> fun) {
+    return from(data -> fun.apply(generateValue(data)).generateValue(data));
   }
   
   public Generator<T> noShrink() {

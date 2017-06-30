@@ -4,10 +4,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -41,7 +38,7 @@ import static com.jetbrains.edu.learning.StudySerializationUtils.Xml.REMOTE_COUR
  * about study in context of current project
  */
 
-@State(name = "StudySettings", storages = @Storage("study_project.xml"))
+@State(name = "StudySettings", storages = @Storage(value = "study_project.xml", roamingType = RoamingType.DISABLED))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
   public static final int CURRENT_VERSION = 6;

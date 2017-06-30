@@ -16,7 +16,6 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.PathReference;
 import com.intellij.openapi.project.Project;
@@ -43,8 +42,17 @@ import java.util.Set;
 
 class RegistrationCheckerUtil {
 
+  enum RegistrationType {
+    ALL,
+    ALL_COMPONENTS,
+    APPLICATION_COMPONENT,
+    PROJECT_COMPONENT,
+    MODULE_COMPONENT,
+    ACTION
+  }
+
   @Nullable
-  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, boolean includeActions, boolean stopOnFirst) {
+  static Set<PsiClass> getRegistrationTypes(PsiClass psiClass, RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -53,42 +61,31 @@ class RegistrationCheckerUtil {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-
     if (module == null) return null;
 
     final boolean isIdeaProject = PsiUtil.isIdeaProject(project);
 
-    if (PluginModuleType.isOfType(module) ||
-        PsiUtil.isPluginModule(module)) {
-      final Set<PsiClass> pluginModuleResults = checkModule(module, psiClass, includeActions, stopOnFirst);
-      if (!isIdeaProject && pluginModuleResults != null) {
-        return pluginModuleResults;
-      }
+    final Set<PsiClass> pluginModuleResults = checkModule(module, isIdeaProject, psiClass, registrationType);
+    if (pluginModuleResults != null) {
+      return pluginModuleResults;
     }
 
     final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
     candidateModules.remove(module);  // already checked
     for (Module m : candidateModules) {
-      Set<PsiClass> types = checkModule(m, psiClass, includeActions, stopOnFirst);
+      Set<PsiClass> types = checkModule(m, isIdeaProject, psiClass, registrationType);
       if (types != null) return types;
     }
 
-    // fallback in IJ project: all modules
-    if (isIdeaProject) {
-      for (Module m : ModuleManager.getInstance(module.getProject()).getModules()) {
-        if (candidateModules.contains(m)) continue;
-        Set<PsiClass> types = checkModule(m, psiClass, includeActions, stopOnFirst);
-        if (types != null) {
-          return types;
-        }
-      }
-    }
     return null;
   }
 
   @Nullable
-  private static Set<PsiClass> checkModule(Module module, PsiClass psiClass, boolean includeActions, boolean stopOnFirst) {
-    List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module);
+  private static Set<PsiClass> checkModule(Module module,
+                                           boolean isIdeaProject,
+                                           PsiClass psiClass,
+                                           RegistrationType registrationType) {
+    List<DomFileElement<IdeaPlugin>> pluginXmlCandidates = findPluginXmlFilesForModule(module, isIdeaProject);
     if (pluginXmlCandidates.isEmpty()) return null;
 
     final String qualifiedName = psiClass.getQualifiedName();
@@ -96,13 +93,13 @@ class RegistrationCheckerUtil {
       return null;
     }
 
-    final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, stopOnFirst);
-
-    final List<XmlFile> candidateXmlFiles = ContainerUtil.map(pluginXmlCandidates, element -> element.getFile());
+    final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass);
 
     for (DomFileElement<IdeaPlugin> pluginXml : pluginXmlCandidates) {
       // "main" plugin.xml
-      if (!processPluginXml(pluginXml, finder, includeActions)) return finder.getTypes();
+      if (!processPluginXml(pluginXml, finder, registrationType)) return finder.getTypes();
+
+      if (isIdeaProject) continue; // pluginXmlCandidates == all candidates in module
 
       // <depends> plugin.xml files
       for (Dependency dependency : pluginXml.getRootElement().getDependencies()) {
@@ -114,11 +111,10 @@ class RegistrationCheckerUtil {
           final PsiElement resolve = configFile.resolve();
           if (!(resolve instanceof XmlFile)) continue;
           final XmlFile depPluginXml = (XmlFile)resolve;
-          if (candidateXmlFiles.contains(depPluginXml)) continue; // already processed
 
           final DomFileElement<IdeaPlugin> dependentIdeaPlugin = DescriptorUtil.getIdeaPlugin(depPluginXml);
           if (dependentIdeaPlugin != null) {
-            if (!processPluginXml(dependentIdeaPlugin, finder, includeActions)) return finder.getTypes();
+            if (!processPluginXml(dependentIdeaPlugin, finder, registrationType)) return finder.getTypes();
           }
         }
       }
@@ -128,10 +124,7 @@ class RegistrationCheckerUtil {
   }
 
   @NotNull
-  private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module) {
-    final Project project = module.getProject();
-    final boolean isIdeaProject = PsiUtil.isIdeaProject(project);
-
+  private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module, boolean isIdeaProject) {
     XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml != null && !isIdeaProject) {
       return Collections.singletonList(DescriptorUtil.getIdeaPlugin(pluginXml));
@@ -141,29 +134,40 @@ class RegistrationCheckerUtil {
       return Collections.emptyList();
     }
 
-    return DomService.getInstance().getFileElements(IdeaPlugin.class, project,
+    return DomService.getInstance().getFileElements(IdeaPlugin.class, module.getProject(),
                                                     GlobalSearchScope.moduleRuntimeScope(module, false));
   }
 
   private static boolean processPluginXml(DomFileElement<IdeaPlugin> pluginXml,
                                           RegistrationTypeFinder finder,
-                                          boolean includeActions) {
+                                          RegistrationType registrationType) {
     final IdeaPlugin rootElement = pluginXml.getRootElement();
 
-    if (!ContainerUtil.process(rootElement.getApplicationComponents(), components ->
-      finder.processComponents(ComponentType.APPLICATION, components.getComponents()))) {
-      return false;
-    }
-    if (!ContainerUtil.process(rootElement.getProjectComponents(), components ->
-      finder.processComponents(ComponentType.PROJECT, components.getComponents()))) {
-      return false;
-    }
-    if (!ContainerUtil.process(rootElement.getModuleComponents(), components ->
-      finder.processComponents(ComponentType.MODULE, components.getComponents()))) {
-      return false;
+    final boolean findAll = registrationType == RegistrationType.ALL;
+    final boolean allComponents = findAll || registrationType == RegistrationType.ALL_COMPONENTS;
+
+    if (allComponents || registrationType == RegistrationType.APPLICATION_COMPONENT) {
+      if (!ContainerUtil.process(rootElement.getApplicationComponents(), components ->
+        finder.processComponents(ComponentType.APPLICATION, components.getComponents()))) {
+        return false;
+      }
     }
 
-    if (includeActions) {
+    if (allComponents || registrationType == RegistrationType.PROJECT_COMPONENT) {
+      if (!ContainerUtil.process(rootElement.getProjectComponents(), components ->
+        finder.processComponents(ComponentType.PROJECT, components.getComponents()))) {
+        return false;
+      }
+    }
+
+    if (allComponents || registrationType == RegistrationType.MODULE_COMPONENT) {
+      if (!ContainerUtil.process(rootElement.getModuleComponents(), components ->
+        finder.processComponents(ComponentType.MODULE, components.getComponents()))) {
+        return false;
+      }
+    }
+
+    if (findAll || registrationType == RegistrationType.ACTION) {
       if (!ContainerUtil.process(rootElement.getActions(), actions ->
         finder.processActions(actions))) {
         return false;
@@ -175,13 +179,11 @@ class RegistrationCheckerUtil {
   private static class RegistrationTypeFinder {
 
     private final PsiClass myPsiClass;
-    private final boolean myStopOnFirst;
 
     private final Set<PsiClass> myTypes = ContainerUtil.newIdentityTroveSet(1);
 
-    private RegistrationTypeFinder(PsiClass psiClass, boolean stopOnFirst) {
+    private RegistrationTypeFinder(PsiClass psiClass) {
       myPsiClass = psiClass;
-      myStopOnFirst = stopOnFirst;
     }
 
     private boolean processComponents(ComponentType type, List<? extends Component> components) {
@@ -211,7 +213,7 @@ class RegistrationCheckerUtil {
 
     private boolean processGroup(Group group) {
       final GenericAttributeValue<PsiClass> groupClazz = group.getClazz();
-      if (DomUtil.hasXml(groupClazz) && myPsiClass.isEquivalentTo(groupClazz.getValue())) {
+      if (matchesClass(groupClazz)) {
         if (addType(ActionType.GROUP.myClassName, group)) return false;
       }
 
@@ -225,16 +227,28 @@ class RegistrationCheckerUtil {
     }
 
     private boolean processAction(Action action) {
-      if (myPsiClass.isEquivalentTo(action.getClazz().getValue())) {
+      if (matchesClass(action.getClazz())) {
         if (addType(ActionType.ACTION.myClassName, action)) return false;
       }
       return true;
     }
 
+    private boolean matchesClass(GenericAttributeValue<PsiClass> attributeValue) {
+      if (!DomUtil.hasXml(attributeValue)) return false;
+
+      final String stringValue = attributeValue.getStringValue();
+      if (stringValue == null) return false;
+
+      // perform cheap String comparison first
+      final String clazzName = stringValue.replace('$', '.');
+      return clazzName.equals(myPsiClass.getQualifiedName()) &&
+             myPsiClass.isEquivalentTo(attributeValue.getValue());
+    }
+
     private boolean addType(String fqn, DomElement context) {
       final PsiClass psiClass = DomJavaUtil.findClass(fqn, context);
       ContainerUtil.addIfNotNull(myTypes, psiClass);
-      return psiClass != null && myStopOnFirst;
+      return psiClass != null;
     }
 
     private Set<PsiClass> getTypes() {

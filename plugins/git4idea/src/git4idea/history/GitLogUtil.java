@@ -90,6 +90,7 @@ public class GitLogUtil {
       for (String parent : record.getParentsHashes()) {
         parents.add(HashImpl.build(parent));
       }
+      record.setUsedHandler(h);
       return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
                                         record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(),
                                         record.getCommitterEmail(),
@@ -121,6 +122,7 @@ public class GitLogUtil {
       List<GitLogRecord> records = parser.parse(output);
       for (GitLogRecord record : records) {
         if (record == null) continue;
+        record.setUsedHandler(handler);
 
         Hash hash = HashImpl.build(record.getHash());
         List<Hash> parents = getParentHashes(factory, record);
@@ -286,6 +288,7 @@ public class GitLogUtil {
       try {
         GitLogRecord record = parser.parseOneRecord(output);
         if (record != null) {
+          record.setUsedHandler(handler);
           converter.consume(record);
         }
       }

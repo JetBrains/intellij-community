@@ -137,6 +137,7 @@ public class SliceNullnessAnalyzer {
         return new NullAnalysisResult();
       }
 
+      @NotNull
       @Override
       protected Map<SliceNode, NullAnalysisResult> createMap() {
         return ContainerUtil.newIdentityTroveMap();

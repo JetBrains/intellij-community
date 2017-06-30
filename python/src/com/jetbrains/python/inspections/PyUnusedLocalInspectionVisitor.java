@@ -157,7 +157,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final String name = readWriteInstruction.getName();
         // Ignore empty, wildcards, global and nonlocal names
         final Scope scope = ControlFlowCache.getScope(owner);
-        if (name == null || "_".equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
+        if (name == null || PyNames.UNDERSCORE.equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
+          continue;
+        }
+        // Ignore underscore-prefixed parameters
+        if (name.startsWith(PyNames.UNDERSCORE) && element instanceof PyParameter) {
           continue;
         }
         // Ignore elements out of scope

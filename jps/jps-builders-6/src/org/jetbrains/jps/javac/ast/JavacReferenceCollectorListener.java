@@ -34,6 +34,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.*;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -116,7 +117,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
       if (e.getKind() == TaskEvent.Kind.ANALYZE) {
         // javac creates an event on each processed top level declared class not file
         final CompilationUnitTree unit = e.getCompilationUnit();
-        final String fileName = e.getSourceFile().toUri().getPath();
+        final String fileName = new File(e.getSourceFile().toUri().getPath()).getPath();
 
         Tree declarationToProcess = myTreeUtility.getTree(e.getTypeElement());
 

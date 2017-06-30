@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -192,12 +194,19 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
-    VirtualFile file = getVirtualFile();
-    if (file != null && ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
+    if (shouldReadIndex()) {
       return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
-    } else {
+    }
+    else {
       // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
       return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
     }
+  }
+
+  private boolean shouldReadIndex() {
+    Project project = getProject();
+    if (DumbService.getInstance(project).isDumb()) return false;
+    VirtualFile file = getVirtualFile();
+    return file != null && ProjectFileIndex.getInstance(project).isInContent(file);
   }
 }

@@ -39,6 +39,7 @@ public class MockFileManager implements FileManager {
   // in mock tests it's LightVirtualFile, they're only alive when they're referenced, 
   // and there can not be several instances representing the same file
   private final FactoryMap<VirtualFile, FileViewProvider> myViewProviders = new ConcurrentWeakFactoryMap<VirtualFile, FileViewProvider>() {
+    @NotNull
     @Override
     protected Map<VirtualFile, FileViewProvider> createMap() {
       return ContainerUtil.createConcurrentWeakKeyWeakValueMap();

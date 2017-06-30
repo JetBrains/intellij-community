@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,25 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.FullValueEvaluatorProvider;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer{
+public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, FullValueEvaluatorProvider {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ClassLabelRenderer");
+  public boolean myOnDemand;
 
   private CachedEvaluator myLabelExpression = createCachedEvaluator();
 
@@ -61,6 +61,10 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer{
 
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
     throws EvaluateException {
+
+    if (myOnDemand && !OnDemandRenderer.isCalculated(descriptor)) {
+      return "";
+    }
 
     final Value value = descriptor.getValue();
 
@@ -88,6 +92,15 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer{
     return result;
   }
 
+  @Nullable
+  @Override
+  public XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext, ValueDescriptorImpl valueDescriptor) {
+    if (myOnDemand && !OnDemandRenderer.isCalculated(valueDescriptor)) {
+      return OnDemandRenderer.createFullValueEvaluator("… " + getLabelExpression().getText());
+    }
+    return null;
+  }
+
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -111,4 +124,11 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer{
     myLabelExpression.setReferenceExpression(expression);
   }
 
+  public boolean isOnDemand() {
+    return myOnDemand;
+  }
+
+  public void setOnDemand(boolean value) {
+    myOnDemand = value;
+  }
 }

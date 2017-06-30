@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ChangeListModification {
   LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment);
+
+  void setDefaultChangeList(@NotNull String name);
   void setDefaultChangeList(@NotNull LocalChangeList list);
 
   void removeChangeList(final String name);

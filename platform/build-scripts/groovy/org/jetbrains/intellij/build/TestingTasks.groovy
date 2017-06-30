@@ -17,6 +17,9 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.TestingTasksImpl
+
+import java.util.function.Predicate
+
 /**
  * @author nik
  */
@@ -26,7 +29,7 @@ abstract class TestingTasks {
    * @param defaultMainModule main module to be used instead of {@link TestingOptions#mainModule} if it isn't specified
    * @param excludedSourceDirectory if not {@code null} tests from modules which sources are located under this directory will be skipped
    */
-  abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, String excludedSourceDirectory)
+  abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition)
 
   static TestingTasks create(CompilationContext context, TestingOptions options = new TestingOptions()) {
     return new TestingTasksImpl(context, options)

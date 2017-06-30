@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableProvider;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Sergey.Malenkov
@@ -47,21 +50,23 @@ public final class RemoteServerListConfigurableProvider extends ConfigurableProv
   @NotNull
   private static List<ServerType<?>> getServerTypesInCloudsList() {
     Application application = ApplicationManager.getApplication();
-    List<ServerType<?>> excludedTypes = Arrays.stream(application.getExtensions(Configurable.APPLICATION_CONFIGURABLE))
-      .filter(RemoteServerListConfigurableProvider::isRemoteServerListConfigurable)
-      .filter(ConfigurableEP::canCreateConfigurable)
-      .map(ConfigurableEP::createConfigurable)
-      .map(RemoteServerListConfigurable.class::cast)
-      .map(RemoteServerListConfigurable::getDisplayedServerTypes)
-      .flatMap(List::stream)
-      .collect(Collectors.toList());
+    Set<ServerType<?>> excludedTypes = Arrays.stream(application.getExtensions(Configurable.APPLICATION_CONFIGURABLE))
+      .flatMap(RemoteServerListConfigurableProvider::tryGetServerTypes)
+      .collect(Collectors.toSet());
 
     ServerType<?>[] allServerTypes = ServerType.EP_NAME.getExtensions();
     return ContainerUtil.filter(allServerTypes, t -> !excludedTypes.contains(t));
   }
 
-  private static boolean isRemoteServerListConfigurable(@NotNull ConfigurableEP<Configurable> ep) {
+  @NotNull
+  private static Stream<ServerType<?>> tryGetServerTypes(@NotNull ConfigurableEP<?> ep) {
     Class<?> type = ep.getConfigurableType();
-    return type != null && RemoteServerListConfigurable.class.isAssignableFrom(type);
+    if (type != null && RemoteServerListConfigurable.class.isAssignableFrom(type)) {
+      UnnamedConfigurable configurable = ep.createConfigurable();
+      if (configurable instanceof RemoteServerListConfigurable) {
+        return ((RemoteServerListConfigurable)configurable).getDisplayedServerTypes().stream();
+      }
+    }
+    return Stream.empty();
   }
 }

@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,9 @@ public abstract class NewEditChangelistPanel extends JPanel {
     ComponentWithTextFieldWrapper componentWithTextField = createComponentWithTextField(project);
     myNameTextField = componentWithTextField.getEditorTextField();
     myNameTextField.setOneLineMode(true);
-    myNameTextField.setText("New changelist");
+    String generateUniqueName = UniqueNameGenerator
+      .generateUniqueName("New changelist", "", "", " (", ")", s -> ChangeListManager.getInstance(myProject).findChangeList(s) == null);
+    myNameTextField.setText(generateUniqueName);
     myNameTextField.selectAll();
     add(componentWithTextField.myComponent, gb);
     nameLabel.setLabelFor(myNameTextField);

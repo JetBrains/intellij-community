@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ class CompoundRendererConfigurable extends JPanel {
   private final JRadioButton myRbDefaultLabel;
   private final JRadioButton myRbExpressionLabel;
   private final JBCheckBox myShowTypeCheckBox;
+  private final JBCheckBox myOnDemandCheckBox;
   private final JRadioButton myRbDefaultChildrenRenderer;
   private final JRadioButton myRbExpressionChildrenRenderer;
   private final JRadioButton myRbListChildrenRenderer;
@@ -88,6 +89,7 @@ class CompoundRendererConfigurable extends JPanel {
     labelButtonsGroup.add(myRbExpressionLabel);
 
     myShowTypeCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.show.type"));
+    myOnDemandCheckBox = new JBCheckBox(DebuggerBundle.message("label.compound.renderer.configurable.ondemand"));
 
     myRbDefaultChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.default.renderer"));
     myRbExpressionChildrenRenderer = new JRadioButton(DebuggerBundle.message("label.compound.renderer.configurable.use.expression"));
@@ -156,6 +158,8 @@ class CompoundRendererConfigurable extends JPanel {
                                      JBUI.insetsLeft(10), 0, 0));
     panel.add(myLabelEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                    GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
+    panel.add(myOnDemandCheckBox, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                         GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
 
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
@@ -218,7 +222,9 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private void updateEnabledState() {
-    myLabelEditor.setEnabled(myRbExpressionLabel.isSelected());
+    boolean isLabelRenderer = myRbExpressionLabel.isSelected();
+    myLabelEditor.setEnabled(isLabelRenderer);
+    myOnDemandCheckBox.setEnabled(isLabelRenderer);
 
     final boolean isChildrenExpression = myRbExpressionChildrenRenderer.isSelected();
     myChildrenExpandedEditor.setEnabled(isChildrenExpression);
@@ -321,6 +327,7 @@ class CompoundRendererConfigurable extends JPanel {
     if (myRbExpressionLabel.isSelected()) {
       labelRenderer = new LabelRenderer();
       labelRenderer.setLabelExpression(TextWithImportsImpl.fromXExpression(myLabelEditor.getExpression()));
+      labelRenderer.setOnDemand(myOnDemandCheckBox.isSelected());
     }
     renderer.setLabelRenderer(labelRenderer);
     // children
@@ -362,7 +369,9 @@ class CompoundRendererConfigurable extends JPanel {
     }
     else {
       myRbExpressionLabel.setSelected(true);
-      myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(((LabelRenderer)labelRenderer).getLabelExpression()));
+      LabelRenderer lr = (LabelRenderer)labelRenderer;
+      myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(lr.getLabelExpression()));
+      myOnDemandCheckBox.setSelected(lr.isOnDemand());
     }
 
     getTableModel().clear();

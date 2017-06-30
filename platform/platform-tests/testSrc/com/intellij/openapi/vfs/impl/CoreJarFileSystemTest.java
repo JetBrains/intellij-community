@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ObjectUtils;
 
 /**
  * @author yole
@@ -27,7 +28,7 @@ public class CoreJarFileSystemTest extends UsefulTestCase{
   public void testSimple() {
     CoreJarFileSystem fs = new CoreJarFileSystem();
     String jarPath = PlatformTestUtil.getPlatformTestDataPath() + "vfs/corejar/rt.jar";
-    VirtualFile root = fs.findFileByPath(jarPath + "!/");
+    VirtualFile root = ObjectUtils.assertNotNull(fs.findFileByPath(jarPath + "!/"));
     VirtualFile[] children = root.getChildren();
     assertEquals(4, children.length);
 

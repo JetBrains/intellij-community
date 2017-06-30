@@ -218,8 +218,6 @@
             icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
     <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction"
             icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
-    <action id="Diff.SelectedChange" class="com.intellij.openapi.actionSystem.EmptyAction"
-            icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoChangedFile"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <reference ref="Annotate"/>
@@ -381,7 +379,6 @@
       <separator/>
       <reference ref="Diff.PrevChange"/>
       <reference ref="Diff.NextChange"/>
-      <reference ref="Diff.SelectedChange"/>
       <separator/>
 
       <add-to-group group-id="Diff.KeymapGroup" anchor="after" relative-to-action="CompareClipboardWithSelection"/>

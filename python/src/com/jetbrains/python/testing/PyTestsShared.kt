@@ -700,7 +700,7 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
           }
         }
       }
-      element = element.parent
+      element = element.parent ?: break
     }
     while (element !is com.intellij.psi.PsiDirectory) // if parent is folder, then we are at file level
     return null

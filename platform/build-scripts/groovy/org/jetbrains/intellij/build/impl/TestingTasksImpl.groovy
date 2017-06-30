@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
@@ -28,6 +27,7 @@ import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.util.function.Predicate
 /**
  * @author nik
  */
@@ -42,7 +42,7 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   @Override
-  void runTests(List<String> additionalJvmOptions, String defaultMainModule, String excludedSourceDirectory) {
+  void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
     def compilationTasks = CompilationTasks.create(context)
     if (options.mainModule != null) {
       compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule])
@@ -108,11 +108,11 @@ class TestingTasksImpl extends TestingTasks {
         systemProperties[key.substring("pass.".length())] = value
       }
     }
-
-    if (excludedSourceDirectory != null) {
+    
+    if (rootExcludeCondition != null) {
       List<JpsModule> excludedModules = context.project.modules.findAll {
         List<String> contentRoots = it.contentRootsList.urls
-        !contentRoots.isEmpty() && FileUtil.isAncestor(new File(excludedSourceDirectory), JpsPathUtil.urlToFile(contentRoots.first()), false)
+        !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
       }
       List<String> excludedRoots = excludedModules.collectMany {
         [context.projectBuilder.moduleOutput(it), context.projectBuilder.moduleTestsOutput(it)]

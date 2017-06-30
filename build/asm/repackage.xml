@@ -15,7 +15,7 @@
   -->
 <project name="Patches and repackages ASM library" default="package">
   <!-- set this property to the path to a downloaded ASM source .jar file -->
-  <property name="asm.src" value=""/>
+  <property name="asm.src" value="/home/sher/asm-src.zip"/>
 
   <property name="src.dir" value="${basedir}/src"/>
   <property name="out.dir" value="${basedir}/out"/>
@@ -42,7 +42,6 @@
     <patch dir="${src.dir}" strip="0" patchfile="1_version_check.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="2_coverage_fix.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="3_api_version.patch" failonerror="true"/>
-    <patch dir="${src.dir}" strip="0" patchfile="4_textifier_transient_method.patch" failonerror="true"/>
     <delete file="${src.dir}/org/objectweb/asm/optimizer/ModuleInfoBndPlugin.java" quiet="true"/>
   </target>
 

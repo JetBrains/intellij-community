@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.LineSeparator
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.loadElement
 import org.jdom.Element
 import java.io.FileNotFoundException
@@ -87,7 +86,7 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
   override fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
     = ModuleFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
 
-  private class ModuleFileStorage(storageManager: StateStorageManagerImpl,
+  private class ModuleFileStorage(storageManager: ModuleStateStorageManager,
                                   file: Path,
                                   fileSpec: String,
                                   rootElementName: String?,
@@ -100,8 +99,8 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
       val virtualFile = virtualFile
       if (virtualFile == null || !virtualFile.exists()) {
         // only on first load
-        if (storageDataRef.get() == null) {
-          throw FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", file.systemIndependentPath))
+        if (storageDataRef.get() == null && !storageManager.isExternalSystemStorageEnabled) {
+          throw FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", file.toString()))
         }
         else {
           return null

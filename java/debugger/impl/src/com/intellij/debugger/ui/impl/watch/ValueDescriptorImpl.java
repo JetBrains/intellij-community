@@ -33,6 +33,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -326,6 +327,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       @Override
       public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
         return null;
+      }
+
+      @Override
+      public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
+        return ValueDescriptorImpl.this.getRenderer(debugProcess);
+      }
+
+      @Override
+      public <T> T getUserData(Key<T> key) {
+        return ValueDescriptorImpl.this.getUserData(key);
       }
     };
     descriptor.myFullValue = true;

@@ -82,6 +82,15 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  public void testSingleUnderscore() {
+    doTest();
+  }
+
+  // PY-3996
+  public void testUnderscorePrefixed() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
 

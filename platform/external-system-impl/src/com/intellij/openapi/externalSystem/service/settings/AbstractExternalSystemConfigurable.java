@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -128,8 +129,7 @@ public abstract class AbstractExternalSystemConfigurable<
     addTitle(ExternalSystemBundle.message("settings.title.project.settings"));
     List<ProjectSettings> settings = ContainerUtilRt.newArrayList(s.getLinkedProjectsSettings());
     myProjectsList.setVisibleRowCount(Math.max(3, Math.min(5, settings.size())));
-    ContainerUtil.sort(settings,
-                       (s1, s2) -> getProjectName(s1.getExternalProjectPath()).compareTo(getProjectName(s2.getExternalProjectPath())));
+    ContainerUtil.sort(settings, Comparator.comparing(s2 -> getProjectName(s2.getExternalProjectPath())));
 
     myProjectSettingsControls.clear();
     for (ProjectSettings setting : settings) {

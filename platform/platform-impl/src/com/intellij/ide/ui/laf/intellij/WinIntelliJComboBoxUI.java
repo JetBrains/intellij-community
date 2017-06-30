@@ -19,7 +19,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -116,11 +115,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         }
       }
 
-      g2.setColor(getComboBackground(editor != null && editor.isOpaque()));
+      boolean isOpaque = editor != null && editor.isOpaque();
+      g2.setColor(getComboBackground(isOpaque));
       JBInsets.removeFrom(r, JBUI.insets(2));
 
-      if (!comboBox.isEnabled()) {
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
+      if (!comboBox.isEnabled() && !isOpaque) {
+        float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
       }
 
       g2.fill(r);
@@ -256,10 +257,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             }
           }
 
-          if (!comboBox.isEnabled()) {
-            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
-          }
-
           Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
           int x = JBUI.scale(5);
           int y = (getHeight() - icon.getIconHeight()) / 2;
@@ -392,8 +389,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           etf.addMouseListener(editorHoverListener);
           etf.setBackground(getComboBackground(true));
 
-          int topBorderWidth = editor instanceof ComboBoxCompositeEditor ? 1 : 2;
-          jEditor.setBorder(JBUI.Borders.emptyTop(topBorderWidth));
+          jEditor.setBorder(JBUI.Borders.emptyTop(1));
         }
       }
     }
@@ -460,7 +456,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         }
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
+
+        float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
@@ -505,7 +503,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   public Insets getBorderInsets(Component c) {
     return c.getComponentOrientation().isLeftToRight() ?
-           JBUI.insets(2, 6, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 6).asUIResource();
+           JBUI.insets(2, 5, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 5).asUIResource();
   }
 
   private Dimension  getSizeWithButton(Dimension d) {

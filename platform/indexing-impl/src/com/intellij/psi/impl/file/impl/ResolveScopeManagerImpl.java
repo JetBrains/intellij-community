@@ -49,6 +49,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
 
   private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new FactoryMap<VirtualFile, GlobalSearchScope>() {
 
+    @NotNull
     @Override
     protected Map<VirtualFile, GlobalSearchScope> createMap() {
       return ContainerUtil.createConcurrentWeakKeySoftValueMap();

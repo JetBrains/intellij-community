@@ -111,7 +111,6 @@ class DistributionJARsBuilder {
       }
       withModule("util")
       withModule("util-rt", "util.jar")
-      withModule("annotations-internal", "util.jar")
       withModule("annotations")
       withModule("annotations-common", "annotations.jar")
       withModule("extensions")

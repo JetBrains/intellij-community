@@ -1470,12 +1470,12 @@ public class UsageViewImpl implements UsageView {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Set<Usage> getSelectedUsages() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
-      return null;
+      return Collections.emptySet();
     }
 
     Set<Usage> usages = new THashSet<>();
@@ -1679,7 +1679,7 @@ public class UsageViewImpl implements UsageView {
 
       else if (key == USAGES_KEY) {
         final Set<Usage> selectedUsages = getSelectedUsages();
-        sink.put(USAGES_KEY, selectedUsages != null ? selectedUsages.toArray(new Usage[selectedUsages.size()]) : null);
+        sink.put(USAGES_KEY, selectedUsages.toArray(new Usage[selectedUsages.size()]));
       }
 
       else if (key == USAGE_TARGETS_KEY) {

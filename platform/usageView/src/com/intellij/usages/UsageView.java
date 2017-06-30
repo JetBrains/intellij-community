@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,8 +81,7 @@ public interface UsageView extends Disposable {
   @NotNull
   Set<Usage> getExcludedUsages();
 
-  @Nullable
-  Set<Usage> getSelectedUsages();
+  @NotNull Set<Usage> getSelectedUsages();
   @NotNull Set<Usage> getUsages();
   @NotNull List<Usage> getSortedUsages();
 

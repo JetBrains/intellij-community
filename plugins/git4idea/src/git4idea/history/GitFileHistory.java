@@ -118,7 +118,9 @@ public class GitFileHistory {
       }
 
       try {
-        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(recordConsumer.getFirstCommit(), currentPath);
+        String firstCommit = recordConsumer.getFirstCommit();
+        if (firstCommit == null) return;
+        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(firstCommit, currentPath);
         if (firstCommitParentAndPath == null) {
           return;
         }
@@ -448,7 +450,7 @@ public class GitFileHistory {
       return myCurrentPath.get();
     }
 
-    @NotNull
+    @Nullable
     public String getFirstCommit() {
       return myFirstCommit.get();
     }

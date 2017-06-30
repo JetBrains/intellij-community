@@ -16,14 +16,13 @@
 package org.jetbrains.jps.incremental.instrumentation.internal;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 
 /*
   A template for the synthetic method embedded by the bytecode instrumentation.
  */
 class AssertionMethodImpl {
   private static void assertArgumentIsSystemIndependent(String className, String methodName, String parameterName, String argument) {
-    if (SystemInfo.isWindows && argument != null && argument.contains("\\")) {
+    if (argument != null && argument.indexOf('\\') > -1) {
       String message = String.format("Argument for @SystemIndependent parameter '%s' of %s.%s must be system-independent: %s",
                                      parameterName, className, methodName, argument);
 

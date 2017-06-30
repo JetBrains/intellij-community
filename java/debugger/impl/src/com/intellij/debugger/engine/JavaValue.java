@@ -157,14 +157,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             XValuePresentation presentation = new JavaValuePresentation(
               value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);
 
-            if (myValueDescriptor.getLastRenderer() instanceof FullValueEvaluatorProvider) {
-              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)myValueDescriptor.getLastRenderer())
-                .getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
-              if (evaluator != null) {
-                node.setFullValueEvaluator(evaluator);
-              }
+            Renderer lastRenderer = myValueDescriptor.getLastRenderer();
+            boolean fullEvaluatorSet = setFullValueEvaluator(lastRenderer);
+            if (!fullEvaluatorSet && lastRenderer instanceof CompoundNodeRenderer) {
+              fullEvaluatorSet = setFullValueEvaluator(((CompoundNodeRenderer)lastRenderer).getLabelRenderer());
             }
-            else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
+            if (!fullEvaluatorSet && value.length() > XValueNode.MAX_VALUE_LENGTH) {
               node.setFullValueEvaluator(new JavaFullValueEvaluator(myEvaluationContext) {
                 @Override
                 public void evaluate(@NotNull final XFullValueEvaluationCallback callback) {
@@ -179,6 +177,17 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               });
             }
             node.setPresentation(nodeIcon, presentation, myValueDescriptor.isExpandable());
+          }
+
+          private boolean setFullValueEvaluator(Renderer renderer) {
+            if (renderer instanceof FullValueEvaluatorProvider) {
+              XFullValueEvaluator evaluator = ((FullValueEvaluatorProvider)renderer).getFullValueEvaluator(myEvaluationContext, myValueDescriptor);
+              if (evaluator != null) {
+                node.setFullValueEvaluator(evaluator);
+                return true;
+              }
+            }
+            return false;
           }
         });
       }
@@ -302,13 +311,20 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         String value = truncateToMaxLength(myValue);
         Renderer lastRenderer = myValueDescriptor.getLastRenderer();
+        if (lastRenderer instanceof OnDemandRenderer) {
+          OnDemandRenderer onDemandRenderer = (OnDemandRenderer)lastRenderer;
+          if (OnDemandRenderer.isCalculated(myValueDescriptor)) {
+            lastRenderer = onDemandRenderer.getRenderer();
+          }
+          else {
+            return;
+          }
+        }
+
         if (lastRenderer instanceof CompoundTypeRenderer) {
           lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
         if (lastRenderer instanceof ToStringRenderer) {
-          if (lastRenderer instanceof LazyToStringRenderer && !((LazyToStringRenderer)lastRenderer).isCalculated(myValueDescriptor)) {
-            return;
-          }
           value = StringUtil.wrapWithDoubleQuote(value);
         }
         renderer.renderValue(value);

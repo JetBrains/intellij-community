@@ -106,6 +106,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.ide.projectView.impl.StatisticsKt.triggerProjectViewPane;
+
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
@@ -546,7 +548,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-          viewSelectionChanged();
+          viewSelectionChanged(true);
         }
       }
     });
@@ -575,6 +577,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private boolean viewSelectionChanged() {
+    return viewSelectionChanged(false);
+  }
+
+  private boolean viewSelectionChanged(boolean fromContentManager) {
     Content content = getContentManager().getSelectedContent();
     if (content == null) return false;
     final String id = content.getUserData(ID_KEY);
@@ -584,6 +590,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
+    if (fromContentManager) {
+      triggerProjectViewPane(myCurrentViewId, myCurrentViewSubId);
+    }
     ProjectViewSelectInTarget target = getProjectViewSelectInTarget(newPane);
     if (target != null) target.setSubId(subId);
     if (isAutoscrollFromSource(id)) {

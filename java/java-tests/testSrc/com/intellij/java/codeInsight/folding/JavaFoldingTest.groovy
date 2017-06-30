@@ -27,10 +27,10 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -841,36 +841,6 @@ class Foo {
     assertEquals 3, expandedFoldRegionsCount
   }
 
-  public void "test single line closure unfolds when converted to multiline"() {
-    boolean oldValue = Registry.is("editor.durable.folding.state")
-    try {
-      Registry.get("editor.durable.folding.state").setValue(false)
-
-      @Language("JAVA")
-      def text = """
-  class Foo {
-    void m() {
-      SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                  System.out.println();
-              }
-          });
-    }
-  }
-  """
-      configure text
-      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable"))
-      myFixture.editor.caretModel.moveToOffset(text.indexOf("System"))
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-      myFixture.doHighlighting()
-      assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(text.indexOf("new Runnable")) == null
-    }
-    finally {
-      Registry.get("editor.durable.folding.state").setValue(oldValue)
-    }
-  }
-
   public void "test folding state is preserved for unchanged text in bulk mode"() {
     @Language("JAVA")
     def text = """
@@ -1081,6 +1051,37 @@ class Foo {
     finally {
       CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldValue
     }
+  }
+
+  public void testGroupedFoldingsAreNotUpdatedOnUnrelatedDocumentChange() throws Exception {
+    configure """\
+class Foo {
+  void m() {
+    SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println();
+            }
+        });
+  }
+}
+"""
+    assertTopLevelFoldRegionsState "[FoldRegion +(56:143), placeholder='(Runnable) () → { ', FoldRegion +(164:188), placeholder=' }']"
+    
+    (myFixture.editor.foldingModel as FoldingModelEx).addListener(new FoldingListener() {
+      @Override
+      void onFoldRegionStateChange(@NotNull FoldRegion region) {
+        fail "Unexpected fold region change"
+      }
+
+      @Override
+      void onFoldProcessingEnd() {
+        fail "Unexpected fold regions change"
+      }
+    }, myFixture.testRootDisposable)
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf("SwingUtilities"))
+    myFixture.type(' ')
+    myFixture.doHighlighting()
   }
 
   private void assertTopLevelFoldRegionsState(String expectedState) {
