@@ -391,8 +391,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         throw new RuntimeException("Highlighting still running after "+(System.currentTimeMillis()-start)/1000+" seconds.\n"+ ThreadDumper.dumpThreadsToString());
       }
 
-      final HighlightingSessionImpl session =
-        (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, textEditors.get(0).getEditor(), progress, null);
+      HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, progress, null);
       wrap(() -> {
         if (!waitInOtherThread(60000, canChangeDocument)) {
           throw new TimeoutException("Unable to complete in 60s");

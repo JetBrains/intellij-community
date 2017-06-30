@@ -76,8 +76,6 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
     if (!Registry.is("editor.injected.highlighting.enabled")) return;
 
-    final Set<HighlightInfo> gotHighlights = new THashSet<>(100);
-
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
@@ -99,6 +97,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       // sync here because all writes happened in another thread
       result = injectedResult;
     }
+    final Set<HighlightInfo> gotHighlights = new THashSet<>(100);
     final List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
     for (HighlightInfo info : result) {
       if (myRestrictRange.contains(info)) {
@@ -119,7 +118,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         myHighlights.addAll(toApplyInside);
         gotHighlights.clear();
 
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, toApplyInside, myPriorityRange, myRestrictRange,
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApplyInside, myPriorityRange, myRestrictRange,
                                                                         getId());
       }
 
@@ -132,13 +131,13 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       }
       toApply.addAll(injectionsOutside);
 
-      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()),
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()),
                                                                        getId());
     }
     else {
       // else apply only result (by default apply command) and only within inside
       myHighlights.addAll(gotHighlights);
-      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, myHighlights, myRestrictRange, myRestrictRange,
+      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange,
                                                                       getId());
     }
   }

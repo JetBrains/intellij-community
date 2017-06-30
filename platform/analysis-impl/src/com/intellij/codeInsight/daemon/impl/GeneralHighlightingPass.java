@@ -238,7 +238,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, progress, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
 
       if (success) {
-        myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, outsideResult, myPriorityRange,
+        myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
+                                                                         outsideResult, myPriorityRange,
                                                                          myRestrictRange, getId());
 
         if (myUpdateAll) {
@@ -302,7 +303,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                   nestedRange, nestedInfos);
       final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
       if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, insideResult, myPriorityRange, myRestrictRange, getId());
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
       runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
@@ -314,7 +315,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       assert info != null;
       postInfos.add(info);
     }
-    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
+    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
+                                                                    postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
     return success;
   }
 
