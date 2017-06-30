@@ -453,9 +453,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   public Object getData(String dataId) {
-    VcsFileRevision firstSelectedRevision = getFirstSelectedRevision();
+    List selectedItems = myDualView.getSelection();
+    VcsFileRevision firstSelectedRevision = selectedItems.isEmpty() ? null : ((TreeNodeOnVcsRevision)selectedItems.get(0)).getRevision();
+
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      List selectedItems = myDualView.getSelection();
       if (selectedItems.size() != 1) return null;
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {
         return null;
@@ -550,14 +551,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                             : new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()));
     }
     return myRevisionToVirtualFile.get(revision);
-  }
-
-  @Nullable
-  private VcsFileRevision getFirstSelectedRevision() {
-    //noinspection unchecked
-    List<TreeNodeOnVcsRevision> selection = (List<TreeNodeOnVcsRevision>)myDualView.getSelection();
-    if (selection.isEmpty()) return null;
-    return selection.get(0).getRevision();
   }
 
   @NotNull
