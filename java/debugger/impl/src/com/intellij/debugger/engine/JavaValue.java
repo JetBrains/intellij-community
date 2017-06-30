@@ -311,20 +311,13 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         String value = truncateToMaxLength(myValue);
         Renderer lastRenderer = myValueDescriptor.getLastRenderer();
-        if (lastRenderer instanceof OnDemandRenderer) {
-          OnDemandRenderer onDemandRenderer = (OnDemandRenderer)lastRenderer;
-          if (OnDemandRenderer.isCalculated(myValueDescriptor)) {
-            lastRenderer = onDemandRenderer.getRenderer();
-          }
-          else {
-            return;
-          }
-        }
-
         if (lastRenderer instanceof CompoundTypeRenderer) {
           lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
         if (lastRenderer instanceof ToStringRenderer) {
+          if (!((ToStringRenderer)lastRenderer).isShowValue(myValueDescriptor, myValueDescriptor.getStoredEvaluationContext())) {
+            return; // to avoid empty line for not calculated toStrings
+          }
           value = StringUtil.wrapWithDoubleQuote(value);
         }
         renderer.renderValue(value);

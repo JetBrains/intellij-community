@@ -18,23 +18,23 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.FullValueEvaluatorProvider;
-import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, FullValueEvaluatorProvider {
+public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   public boolean myOnDemand;
 
@@ -62,7 +62,7 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, F
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
     throws EvaluateException {
 
-    if (myOnDemand && !OnDemandRenderer.isCalculated(descriptor)) {
+    if (!isShowValue(descriptor, evaluationContext)) {
       return "";
     }
 
@@ -92,13 +92,10 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, F
     return result;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext, ValueDescriptorImpl valueDescriptor) {
-    if (myOnDemand && !OnDemandRenderer.isCalculated(valueDescriptor)) {
-      return OnDemandRenderer.createFullValueEvaluator("… " + getLabelExpression().getText());
-    }
-    return null;
+  public String getLinkText() {
+    return "… " + getLabelExpression().getText();
   }
 
   public void readExternal(Element element) throws InvalidDataException {
@@ -122,6 +119,11 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, F
 
   public void setLabelExpression(TextWithImports expression) {
     myLabelExpression.setReferenceExpression(expression);
+  }
+
+  @Override
+  public boolean isOnDemand(EvaluationContext evaluationContext) {
+    return myOnDemand || OnDemandRenderer.super.isOnDemand(evaluationContext);
   }
 
   public boolean isOnDemand() {

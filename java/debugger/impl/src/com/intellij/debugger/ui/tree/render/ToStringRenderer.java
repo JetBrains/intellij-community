@@ -34,10 +34,11 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public class ToStringRenderer extends NodeRendererImpl {
+public class ToStringRenderer extends NodeRendererImpl implements OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "ToStringRenderer";
 
   private boolean USE_CLASS_FILTERS = false;
@@ -76,6 +77,11 @@ public class ToStringRenderer extends NodeRendererImpl {
   @Override
   public String calcLabel(final ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, final DescriptorLabelListener labelListener)
     throws EvaluateException {
+
+    if (!isShowValue(valueDescriptor, evaluationContext)) {
+      return "";
+    }
+
     final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
@@ -94,6 +100,12 @@ public class ToStringRenderer extends NodeRendererImpl {
       }
     });
     return XDebuggerUIConstants.COLLECTING_DATA_MESSAGE;
+  }
+
+  @NotNull
+  @Override
+  public String getLinkText() {
+    return DebuggerBundle.message("message.node.toString");
   }
 
   public boolean isUseClassFilters() {

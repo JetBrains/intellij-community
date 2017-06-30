@@ -610,4 +610,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
     return "";
   }
+
+  public EvaluationContextImpl getStoredEvaluationContext() {
+    return myStoredEvaluationContext;
+  }
 }
