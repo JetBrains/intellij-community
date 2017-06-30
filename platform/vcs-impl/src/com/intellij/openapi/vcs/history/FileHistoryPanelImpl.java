@@ -70,6 +70,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +86,8 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * author: lesya
@@ -1035,11 +1038,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   private static class FolderPatchCreationTask extends Task.Backgroundable {
     private final AbstractVcs myVcs;
-    private final TreeNodeOnVcsRevision myRevision;
+    private final VcsFileRevision myRevision;
     private CommittedChangeList myList;
     private VcsException myException;
 
-    private FolderPatchCreationTask(@NotNull AbstractVcs vcs, final TreeNodeOnVcsRevision revision) {
+    private FolderPatchCreationTask(@NotNull AbstractVcs vcs, final VcsFileRevision revision) {
       super(vcs.getProject(), VcsBundle.message("create.patch.loading.content.progress"), true);
       myVcs = vcs;
       myRevision = revision;
@@ -1052,7 +1055,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       final RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
       if (changedRepositoryPath == null) return;
       final VcsVirtualFile vf =
-        new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision.getRevision(), VcsFileSystem.getInstance());
+        new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
       try {
         myList = AbstractVcsHelperImpl.getRemoteList(myVcs, myRevision.getRevisionNumber(), vf);
         //myList = provider.getOneList(vf, myRevision.getRevisionNumber());
@@ -1166,7 +1169,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  public class MyCreatePatch extends DumbAwareAction {
+  public static class MyCreatePatch extends DumbAwareAction {
     private final AnAction myUsualDelegate;
 
     public MyCreatePatch() {
@@ -1177,10 +1180,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      if (myFilePath.isDirectory()) {
-        final List<TreeNodeOnVcsRevision> selection = getSelection();
-        if (selection.size() != 1) return;
-        ProgressManager.getInstance().run(new FolderPatchCreationTask(myVcs, selection.get(0)));
+      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+      VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+      VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
+      Project project = e.getProject();
+      if (filePath == null || revisions == null || vcsKey == null || project == null) return;
+
+      AbstractVcs vcs = VcsUtil.findVcsByKey(notNull(project), vcsKey);
+      if (vcs == null) return;
+
+      if (filePath.isDirectory()) {
+        if (revisions.length != 1) return;
+        ProgressManager.getInstance().run(new FolderPatchCreationTask(vcs, revisions[0]));
       }
       else {
         myUsualDelegate.actionPerformed(e);
@@ -1190,18 +1201,26 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(true);
-      if (myFilePath.isNonLocal()) {
+
+      VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+      VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
+      Project project = e.getProject();
+      VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
+
+      if (filePath == null || filePath.isNonLocal() || revisions == null || provider == null || project == null || vcsKey == null) {
         e.getPresentation().setEnabled(false);
         return;
       }
-      boolean enabled = (!myFilePath.isDirectory()) || myProvider.supportsHistoryForDirectories();
-      final int selectionSize = getSelection().size();
-      if (enabled && (!myFilePath.isDirectory())) {
+
+      boolean enabled = (!filePath.isDirectory()) || provider.supportsHistoryForDirectories();
+      int selectionSize = revisions.length;
+      if (enabled && (!filePath.isDirectory())) {
         // in order to do not load changes only for action update
         enabled = (selectionSize > 0) && (selectionSize < 3);
       }
       else if (enabled) {
-        enabled = selectionSize == 1 && getSelection().get(0).getChangedRepositoryPath() != null;
+        enabled = selectionSize == 1 && revisions[0].getChangedRepositoryPath() != null;
       }
       e.getPresentation().setEnabled(enabled);
     }
