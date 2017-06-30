@@ -37,6 +37,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null);
     String description = IdeBundle.message("action.description.create.new.module.group");
     presentation.setDescription(description);
   }
@@ -44,7 +45,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     final List<String> newGroup;
     if (myModuleGroup != null) {
       String message = IdeBundle.message("prompt.specify.name.of.module.subgroup", myModuleGroup.presentableText(), whatToMove(modules));
