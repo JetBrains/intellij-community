@@ -41,7 +41,7 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
   protected static int verifyPyDevDParameters(List<String> params) {
     params = Lists.newArrayList(params);
     int debugParam = params.remove("--DEBUG") ? 1 : 0;
-    int qtDebugParam = params.remove("--qt-support") ? 1 : 0;
+    int qtDebugParam = params.remove("--qt-support=auto") ? 1 : 0;
     assertEquals(PythonHelper.DEBUGGER.asParamString(), params.get(0));
     assertEquals("--multiproc", params.get(1));
     assertEquals("--client", params.get(2));
