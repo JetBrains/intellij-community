@@ -339,13 +339,16 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
 
 class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
 
-  override fun priority() = 2
+  override fun priority() = 0
+  override fun isLastContext() = true
   override fun acceptor(): (Component) -> Boolean = { component -> component.javaClass.name.endsWith("ProjectViewImpl\$MyPanel") }
   override fun generate(cmp: JPanel) = "projectView {"
 
 }
 
 class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
+
+  override fun priority() = 1
 
   private fun Component.containsLocationOnScreen(locationOnScreen: Point): Boolean {
     val rectangle = this.bounds
@@ -386,7 +389,7 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
 
 class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
 
-  override fun priority() = 1
+  override fun priority() = 2
 
   private fun Component.containsLocationOnScreen(locationOnScreen: Point): Boolean {
     val rectangle = this.bounds

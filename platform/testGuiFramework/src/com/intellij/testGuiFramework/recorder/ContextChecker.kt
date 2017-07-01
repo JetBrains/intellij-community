@@ -88,7 +88,10 @@ private class ContextTree(val writeFun: (String) -> Unit) {
   }
 
   fun addContexts(localContextList: List<Context>) {
-    localContextList.forEach { addContext(it) }
+    for(context in localContextList) {
+      addContext(context)
+      if (context.originalGenerator is LocalContextCodeGenerator && context.originalGenerator.isLastContext()) break
+    }
   }
 
   private fun Context.inContextTree(): Boolean =

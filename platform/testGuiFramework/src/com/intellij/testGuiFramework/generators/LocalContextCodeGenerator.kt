@@ -38,6 +38,9 @@ abstract class LocalContextCodeGenerator<C : Component> : ContextCodeGenerator<C
     if (myAcceptor(curCmp)) return curCmp else return null
   }
 
+  // to stop adding more contexts than its in -> ProjectView
+  open fun isLastContext(): Boolean = false
+
   abstract fun acceptor(): (Component) -> Boolean
 
   override fun accept(cmp: Component) = (findComponentInHierarchy(cmp) != null)
