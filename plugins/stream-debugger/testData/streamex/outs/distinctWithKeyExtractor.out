@@ -30,14 +30,14 @@ mappings for distinct
     1 -> 2
     3 -> 4
     5 -> 6
-    7 -> nothing
-    8 -> nothing
-    9 -> nothing
-    10 -> nothing
+    7 -> 2
+    8 -> 4
+    9 -> 6
+    10 -> 2
   reverse:
-    1 <- 2
-    3 <- 4
-    5 <- 6
+    1,7,10 <- 2
+    3,8 <- 4
+    5,9 <- 6
 mappings for count
   direct:
     2 -> nothing
@@ -45,7 +45,6 @@ mappings for count
     6 -> nothing
   reverse:
     empty
-wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
