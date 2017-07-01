@@ -40,11 +40,14 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
 import com.intellij.testGuiFramework.generators.Utils.convertSimpleTreeItemToPath
-import com.intellij.testGuiFramework.generators.Utils.getBoundedLabel
+import com.intellij.testGuiFramework.generators.Utils.findBoundedText
 import com.intellij.testGuiFramework.generators.Utils.getCellText
 import com.intellij.testGuiFramework.generators.Utils.getJTreePath
 import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
 import com.intellij.testGuiFramework.generators.Utils.withRobot
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.hasOnCenterXAxis
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
@@ -104,10 +107,10 @@ class ComponentWithBrowseButtonGenerator : ComponentCodeGenerator<FixedSizeButto
 
 class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
   override fun accept(cmp: Component) = cmp is ActionButton
-  override fun generate(cmp: ActionButton, me: MouseEvent, cp: Point) : String {
+  override fun generate(cmp: ActionButton, me: MouseEvent, cp: Point): String {
     val text = cmp.action.templatePresentation.text
     val simpleClassName = cmp.action.javaClass.simpleName
-    val result: String =  if (text.isNullOrEmpty())
+    val result: String = if (text.isNullOrEmpty())
       "actionButtonByClass(\"$simpleClassName\").click()"
     else
       "actionButton(\"$text\").click()"
@@ -123,7 +126,7 @@ class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
 
 class JTextFieldGenerator : ComponentCodeGenerator<JTextField> {
   override fun accept(cmp: Component) = cmp is JTextField
-  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${getBoundedLabel(3, cmp).text.orEmpty()}\").${clicks(
+  override fun generate(cmp: JTextField, me: MouseEvent, cp: Point) = "textfield(\"${findBoundedText(3, cmp).orEmpty()}\").${clicks(
     me)}"
 }
 
@@ -178,7 +181,7 @@ class JCheckBoxGenerator : ComponentCodeGenerator<JCheckBox> {
 
 class JComboBoxGenerator : ComponentCodeGenerator<JComboBox<*>> {
   override fun accept(cmp: Component) = cmp is JComboBox<*>
-  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${getBoundedLabel(3, cmp).text}\")"
+  override fun generate(cmp: JComboBox<*>, me: MouseEvent, cp: Point) = "combobox(\"${findBoundedText(3, cmp).orEmpty()}\")"
 }
 
 class BasicArrowButtonDelegatedGenerator : ComponentCodeGenerator<BasicArrowButton> {
@@ -655,6 +658,37 @@ object Utils {
     }
   }
 
+
+  fun findBoundedText(hierarchyLevel: Int, target: Component): String? {
+    //let's try to find bounded label firstly
+    try {
+      return getBoundedLabel(hierarchyLevel, target).text
+    } catch (e: ComponentLookupException) {
+      //do nothing
+    }
+
+    var container = target.parent
+    for (i in 1..hierarchyLevel) {
+      val boundedText = findBoundedText(target, container)
+      if (boundedText != null)
+        return boundedText
+      else
+        container = container.parent ?: break
+    }
+    return null
+//    throw ComponentLookupException("Unable to find any bounded label (JLabel or JRadioButton) in $hierarchyLevel level(s) from $target component")
+  }
+
+  fun findBoundedText(target: Component, container: Component): String? {
+    val textComponents = withRobot { robot ->
+      robot.finder().findAll(container as Container,
+                             ComponentMatcher { component -> component!!.isTextComponent() && target.hasOnCenterXAxis(component, true) })
+    }
+    if (textComponents.isEmpty()) return null
+    //if  more than one component is found let's take the righter one
+    return textComponents.sortedBy { it.bounds.x + it.bounds.width }.last().getComponentText()
+  }
+
   fun getJTreePath(cmp: JTree, path: TreePath): String {
     val pathArray = getJTreePathArray(cmp, path)
     return pathArray.joinToString(separator = ", ", transform = { str -> "\"$str\"" })
@@ -672,7 +706,6 @@ object Utils {
   fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {
     val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
     val result = robotFunction(robot)
-    robot.cleanUpWithoutDisposingWindows()
     return result
   }
 }
