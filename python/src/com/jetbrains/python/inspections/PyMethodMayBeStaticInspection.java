@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,10 +78,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (!attributes.isEmpty()) return;
       if (isTestElement(node)) return;
 
-      final PyStatementList statementList = node.getStatementList();
-      final PyStatement[] statements = statementList.getStatements();
-
-      if (statements.length == 1 && statements[0] instanceof PyPassStatement) return;
+      if (PyUtil.isEmptyFunction(node)) return;
 
       final PyParameter[] parameters = node.getParameterList().getParameters();
 
