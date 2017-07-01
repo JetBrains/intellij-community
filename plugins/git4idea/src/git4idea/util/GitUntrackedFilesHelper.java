@@ -18,6 +18,7 @@ package git4idea.util;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -44,6 +45,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class GitUntrackedFilesHelper {
+
+  private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHelper.class);
 
   private GitUntrackedFilesHelper() {
   }
@@ -115,17 +118,20 @@ public class GitUntrackedFilesHelper {
                                                              @NotNull final String rollbackProposal,
                                                              @NotNull VirtualFile root,
                                                              @NotNull final Collection<String> relativePaths) {
-    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
-    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
+    Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
+    List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
                                                                       absolutePath -> GitUtil.findRefreshFileOrLog(absolutePath));
 
-    final Ref<Boolean> rollback = Ref.create();
+    Ref<Boolean> rollback = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       JComponent filesBrowser;
       if (untrackedFiles.isEmpty()) {
+        LOG.debug("Couldn't find the untracked files, displaying simplified dialog.");
         filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
       }
       else {
+        long validFiles = untrackedFiles.stream().filter(VirtualFile::isValid).count();
+        LOG.debug(String.format("Untracked files: [%s]. Valid: %d (of %d)", untrackedFiles, validFiles, untrackedFiles.size()));
         filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false));
       }
       String title = "Could not " + StringUtil.capitalize(operationName);
