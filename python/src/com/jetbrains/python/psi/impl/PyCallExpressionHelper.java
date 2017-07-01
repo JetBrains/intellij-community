@@ -196,7 +196,9 @@ public class PyCallExpressionHelper {
                                function -> new ClarifiedResolveResult(resolveResult, function, null, true));
     }
     else if (resolved instanceof PyCallExpression) { // foo = classmethod(foo)
-      final Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall((PyCallExpression)resolved);
+      final PyCallExpression resolvedCall = (PyCallExpression)resolved;
+
+      final Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall(resolvedCall);
       if (wrapperInfo != null) {
         final String wrapperName = wrapperInfo.getFirst();
         final PyFunction.Modifier wrappedModifier = PyNames.CLASSMETHOD.equals(wrapperName)
@@ -207,6 +209,22 @@ public class PyCallExpressionHelper {
 
         final ClarifiedResolveResult result = new ClarifiedResolveResult(resolveResult, wrapperInfo.getSecond(), wrappedModifier, false);
         return Collections.singletonList(result);
+      }
+      else {
+        final PyType resolvedCallType = resolveContext.getTypeEvalContext().getType(resolvedCall);
+        if (resolvedCallType instanceof PyClassLikeType) {
+          final List<? extends RatedResolveResult> dunderCall =
+            ((PyClassLikeType)resolvedCallType).resolveMember(PyNames.CALL, resolvedCall, AccessDirection.READ, resolveContext, true);
+
+          if (!ContainerUtil.isEmpty(dunderCall)) {
+            return StreamEx
+              .of(dunderCall)
+              .map(RatedResolveResult::getElement)
+              .nonNull()
+              .map(element -> new ClarifiedResolveResult(resolveResult, element, null, false))
+              .toList();
+          }
+        }
       }
     }
     else if (resolved instanceof PyFunction) {

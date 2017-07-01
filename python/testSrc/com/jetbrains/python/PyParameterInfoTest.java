@@ -696,6 +696,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-24930
+  public void testCallOperator() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        for (int offset : StreamEx.of(loadTest(2).values()).map(PsiElement::getTextOffset)) {
+          feignCtrlP(offset).check("self: Foo, arg: int", new String[]{"arg: int"}, new String[]{"self: Foo, "});
+        }
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.
