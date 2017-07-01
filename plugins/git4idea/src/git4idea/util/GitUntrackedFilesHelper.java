@@ -132,7 +132,7 @@ public class GitUntrackedFilesHelper {
       else {
         long validFiles = untrackedFiles.stream().filter(VirtualFile::isValid).count();
         LOG.debug(String.format("Untracked files: [%s]. Valid: %d (of %d)", untrackedFiles, validFiles, untrackedFiles.size()));
-        filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false));
+        filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, true));
       }
       String title = "Could not " + StringUtil.capitalize(operationName);
       String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);
