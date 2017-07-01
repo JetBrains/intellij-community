@@ -21,8 +21,8 @@ target(compile: "Compile project") {
   if (!isDefined("skip_build")) {
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
+    pruneTestPlugins()
   }
-  pruneTestPlugins()
 }
 
 private pass(String prop) {

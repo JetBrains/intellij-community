@@ -34,8 +34,8 @@ target(compile: "Compile project") {
     clearBuildCaches()
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
+    pruneTestPlugins()
   }
-  pruneTestPlugins()
 }
 
 private pass(List<String> args, String prop) {
