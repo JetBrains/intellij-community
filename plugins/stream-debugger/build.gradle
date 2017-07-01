@@ -1,5 +1,5 @@
 buildscript {
-  ext.kotlin_version = '1.1.1'
+  ext.kotlin_version = '1.1.2'
   repositories {
     maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
     mavenCentral()
@@ -21,6 +21,12 @@ repositories {
 
 sourceSets {
   main.kotlin.srcDirs += 'src/main/java'
+}
+
+compileKotlin {
+  kotlinOptions {
+    jvmTarget = '1.8'
+  }
 }
 
 apply plugin: 'idea'
