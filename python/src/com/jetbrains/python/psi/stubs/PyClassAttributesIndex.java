@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.stubs;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -8,8 +9,10 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +32,20 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
   public static Collection<PyClass> find(@NotNull String name, @NotNull Project project) {
     return StubIndex.getElements(KEY, name, project, GlobalSearchScope.allScope(project), PyClass.class);
   }
+
+  public static Collection<PyTargetExpression> findAttributes(@NotNull String name, @NotNull Project project, GlobalSearchScope scope) {
+    List<PyTargetExpression> ret = new ArrayList<>();
+    StubIndex.getInstance().processElements(KEY, name, project, scope, PyClass.class, clazz -> {
+      ProgressManager.checkCanceled();
+      PyTargetExpression attr = clazz.findClassAttribute(name, false, null);
+      if (attr != null) {
+        ret.add(attr);
+      }
+      return true;
+    });
+    return ret;
+  }
+
 
   /**
    * Returns all attributes: methods, class and instance fields that are declared directly in the specified class

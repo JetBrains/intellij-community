@@ -49,6 +49,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
@@ -157,6 +158,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
         ret.add(new ImplicitResolveResult(pyFunction, getImplicitResultRate(pyFunction, imports)));
       }
     }
+
+    PyClassAttributesIndex.findAttributes(referencedName, project, scope).forEach(classAttribute -> {
+      ret.add(new ImplicitResolveResult(classAttribute, getImplicitResultRate(classAttribute, imports)));
+    });
+
 
     final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, scope);
     for (Object attribute : attributes) {
