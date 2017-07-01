@@ -1,0 +1,54 @@
+LineBreakpoint created at Collapse.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! partialReduction.Collapse
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Collapse.java:8
+StreamEx.of(1, 3, 5, 4, 2, 3)
+.collapse((x, y) -> x % 2 == y % 2, (x, y) -> x + y)
+.forEach(System.out::println)
+StreamEx.of
+    before: nothing
+    after: 1,2,3,4,6,7
+collapse
+    before: 1,2,3,4,6,7
+    after: 5,8,9
+forEach
+    before: 5,8,9
+    after: nothing
+mappings for StreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 4
+    nothing <- 6
+    nothing <- 7
+mappings for collapse
+  direct:
+    1 -> 5
+    2 -> 5
+    3 -> 5
+    4 -> 8
+    6 -> 8
+    7 -> 9
+  reverse:
+    1,2,3 <- 5
+    4,6 <- 8
+    7 <- 9
+mappings for forEach
+  direct:
+    5 -> nothing
+    8 -> nothing
+    9 -> nothing
+  reverse:
+    empty
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+9
+6
+3
+9
+6
+3

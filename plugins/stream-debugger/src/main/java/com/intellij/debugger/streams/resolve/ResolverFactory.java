@@ -16,11 +16,18 @@
 package com.intellij.debugger.streams.resolve;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public interface ResolverFactory {
-  @NotNull
+  @Nullable
   ValuesOrderResolver getResolver(@NotNull String methodName);
+
+  interface StrongFactory extends ResolverFactory {
+    @NotNull
+    @Override
+    ValuesOrderResolver getResolver(@NotNull String methodName);
+  }
 }

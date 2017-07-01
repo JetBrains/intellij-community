@@ -38,35 +38,35 @@ mappings for ints.stream
     nothing <- 27
 mappings for parallel
   direct:
-    1 -> nothing
-    3 -> nothing
-    5 -> nothing
-    7 -> nothing
-    9 -> nothing
-    11 -> nothing
-    13 -> nothing
-    15 -> nothing
-    17 -> nothing
-    19 -> nothing
-    21 -> nothing
-    23 -> nothing
-    25 -> nothing
-    27 -> nothing
+    1 -> 2
+    3 -> 4
+    5 -> 6
+    7 -> 8
+    9 -> 10
+    11 -> 12
+    13 -> 14
+    15 -> 16
+    17 -> 18
+    19 -> 20
+    21 -> 22
+    23 -> 24
+    25 -> 26
+    27 -> 28
   reverse:
-    nothing <- 2
-    nothing <- 4
-    nothing <- 6
-    nothing <- 8
-    nothing <- 10
-    nothing <- 12
-    nothing <- 14
-    nothing <- 16
-    nothing <- 18
-    nothing <- 20
-    nothing <- 22
-    nothing <- 24
-    nothing <- 26
-    nothing <- 28
+    1 <- 2
+    3 <- 4
+    5 <- 6
+    7 <- 8
+    9 <- 10
+    11 <- 12
+    13 <- 14
+    15 <- 16
+    17 <- 18
+    19 <- 20
+    21 <- 22
+    23 <- 24
+    25 <- 26
+    27 <- 28
 mappings for sorted
   direct:
     2 -> 29

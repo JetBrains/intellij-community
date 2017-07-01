@@ -1,0 +1,41 @@
+LineBreakpoint created at Less.java:10
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.Less
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Less.java:10
+DoubleStreamEx.of(1., 2., 3., 4.)
+.less(2)
+.max()
+DoubleStreamEx.of
+    before: nothing
+    after: 1,3,4,5
+less
+    before: 1,3,4,5
+    after: 2
+max
+    before: 2
+    after: 2147483646
+mappings for DoubleStreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 4
+    nothing <- 5
+mappings for less
+  direct:
+    1 -> 2
+    3 -> nothing
+    4 -> nothing
+    5 -> nothing
+  reverse:
+    1 <- 2
+mappings for max
+  direct:
+    2 -> 2147483646
+  reverse:
+    2 <- 2147483646
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+1.0

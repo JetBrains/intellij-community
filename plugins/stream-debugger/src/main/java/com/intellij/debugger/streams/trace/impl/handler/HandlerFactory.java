@@ -16,10 +16,13 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
+import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
@@ -31,8 +34,18 @@ public class HandlerFactory {
                                                                                            @NotNull IntermediateStreamCall call) {
     final String callName = call.getName();
     switch (callName) {
+      case "distinctKeys":
+        return new DistinctKeysHandler(number, call);
+      case "distinctValues":
+        return new DistinctValuesHandler(number, call);
       case "distinct":
-        return new DistinctHandler(number, call);
+        final List<CallArgument> arguments = call.getArguments();
+        if (arguments.isEmpty() || arguments.get(0).getType().equals("int")) {
+          return new DistinctHandler(number, call);
+        }
+        else {
+          return new DistinctByKeyHandler(number, call);
+        }
       default:
         return new PeekTracerHandler(number, callName, call.getTypeBefore(), call.getTypeAfter());
     }

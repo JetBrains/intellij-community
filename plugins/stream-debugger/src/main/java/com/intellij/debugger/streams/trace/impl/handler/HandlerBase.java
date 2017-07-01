@@ -28,16 +28,15 @@ public abstract class HandlerBase implements TraceHandler {
   private HandlerBase() {
   }
 
-  private static final String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
-
   @NotNull
   @Override
   final public String additionalVariablesDeclaration() {
     final StringBuilder stringBuilder = new StringBuilder();
     final List<Variable> variables = getVariables();
     for (final Variable variable : variables) {
-      stringBuilder.append(String.format(DECLARATION_FORMAT, variable.getTypeName(), variable.getName(), variable.getInitialExpression()));
+      stringBuilder.append(Variable.declarationStatement(variable));
     }
+
 
     return stringBuilder.toString();
   }
@@ -48,7 +47,7 @@ public abstract class HandlerBase implements TraceHandler {
   static abstract class Producer extends HandlerBase implements TraceExpressionBuilderImpl.ProducerCallTraceHandler {
   }
 
-  static abstract class Intermediate extends HandlerBase implements TraceExpressionBuilderImpl.IntermediateCallTraceHandler {
+  public static abstract class Intermediate extends HandlerBase implements TraceExpressionBuilderImpl.IntermediateCallTraceHandler {
   }
 
   static abstract class Terminator extends HandlerBase implements TraceExpressionBuilderImpl.TerminatorCallTraceHandler {

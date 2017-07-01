@@ -1,0 +1,39 @@
+LineBreakpoint created at TakeWhileInclusive.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;C:\Projects\stream-debugger-plugin\java\lib\streamex-0.6.5.jar;!RT_JAR! filtering.TakeWhileInclusive
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+TakeWhileInclusive.java:8
+IntStreamEx.of(1, 2, 3)
+.takeWhileInclusive(x -> x % 2 != 0)
+.count()
+IntStreamEx.of
+    before: nothing
+    after: 1,3
+takeWhileInclusive
+    before: 1,3
+    after: 2,4
+count
+    before: 2,4
+    after: nothing
+mappings for IntStreamEx.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+mappings for takeWhileInclusive
+  direct:
+    1 -> 2
+    3 -> 4
+  reverse:
+    1 <- 2
+    3 <- 4
+mappings for count
+  direct:
+    2 -> nothing
+    4 -> nothing
+  reverse:
+    empty
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
+2

@@ -15,70 +15,54 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.resolve.impl.StdLibResolverFactory;
+import com.intellij.debugger.streams.resolve.impl.StreamExResolverFactoryImpl;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class ResolverFactoryImpl implements ResolverFactory {
+public class ResolverFactoryImpl implements ResolverFactory.StrongFactory {
   private static final ValuesOrderResolver EMPTY_RESOLVER = new MyEmptyResolver();
 
-  private static class Holder {
-    private static final ResolverFactoryImpl INSTANCE = new ResolverFactoryImpl();
+  private final List<ResolverFactory> myFactories;
+
+  private ResolverFactoryImpl(@NotNull ResolverFactory... factories) {
+    super();
+    myFactories = new ArrayList<>(Arrays.asList(factories));
   }
 
-  public static ResolverFactory getInstance() {
+  private static class Holder {
+    private static final ResolverFactoryImpl INSTANCE =
+      new ResolverFactoryImpl(new StdLibResolverFactory(), new StreamExResolverFactoryImpl());
+  }
+
+  public static ResolverFactory.StrongFactory getInstance() {
     return Holder.INSTANCE;
   }
 
   @NotNull
   @Override
   public ValuesOrderResolver getResolver(@NotNull String methodName) {
-    switch (methodName) {
-      case "filter":
-      case "limit":
-      case "skip":
-      case "peek":
-      case "onClose":
-        return new FilterResolver();
-      case "flatMap":
-      case "flatMapToInt":
-      case "flatMapToLong":
-      case "flatMapToDouble":
-        return new FlatMapResolver();
-      case "map":
-      case "mapToInt":
-      case "mapToLong":
-      case "mapToDouble":
-      case "mapToObj":
-      case "boxed":
-        return new MapResolver();
-      case "sorted":
-      case "toArray":
-      case "collect":
-        return new IdentityResolver();
-      case "allMatch":
-      case "anyMatch":
-      case "noneMatch":
-        return new AllToResultResolver();
-      case "max":
-      case "min":
-      case "findAny":
-      case "findFirst":
-        return new OptionalOrderResolver();
-      case "distinct":
-        return new DistinctResolver();
-      default:
-        return EMPTY_RESOLVER;
+    for (final ResolverFactory factory : myFactories) {
+      final ValuesOrderResolver resolver = factory.getResolver(methodName);
+      if (resolver != null) {
+        return resolver;
+      }
     }
+
+    return EMPTY_RESOLVER;
   }
+
+  private static ValuesOrderResolver tryToGetExtensionResolver(@NotNull String methodName) {
+    return EMPTY_RESOLVER;
+  }
+
 
   private static class MyEmptyResolver implements ValuesOrderResolver {
     @NotNull

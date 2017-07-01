@@ -15,12 +15,15 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public interface Variable {
+  String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
+
   @NotNull
   String getName();
 
@@ -29,4 +32,9 @@ public interface Variable {
 
   @NotNull
   String getInitialExpression();
+
+  @NotNull
+  static String declarationStatement(@NotNull Variable variable) {
+    return String.format(DECLARATION_FORMAT, variable.getTypeName(), variable.getName(), variable.getInitialExpression());
+  }
 }
