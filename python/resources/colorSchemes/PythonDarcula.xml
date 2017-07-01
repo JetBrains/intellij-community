@@ -13,8 +13,7 @@
   </option>
   <option name="PY.KEYWORD">
     <value>
-      <option name="FOREGROUND" value="cc7832" />
-      <option name="FONT_TYPE" value="1" />
+      <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
     </value>
   </option>
   <option name="PY.KEYWORD_ARGUMENT">
