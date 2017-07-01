@@ -27,7 +27,7 @@ import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
 /**
  * @author Vitaliy.Bibaev
  */
-class DistinctByPredicateHandler(callNumber: Int, call: IntermediateStreamCall) : Intermediate() {
+class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) : Intermediate() {
   private companion object {
     val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
   }

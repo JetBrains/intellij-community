@@ -40,7 +40,7 @@ public class HandlerFactory {
           return new DistinctHandler(number, call);
         }
         else {
-          return new DistinctByPredicateHandler(number, call);
+          return new DistinctByKeyHandler(number, call);
         }
       default:
         return new PeekTracerHandler(number, callName, call.getTypeBefore(), call.getTypeAfter());
