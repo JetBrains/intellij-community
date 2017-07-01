@@ -10,6 +10,6 @@
     </root>
 
     <logger name="org.eclipse.jetty" level="INFO"/>
-    <logger name="kserver" level="INFO"/>
+    <logger name="server" level="INFO"/>
 
 </configuration>

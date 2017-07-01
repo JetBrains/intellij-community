@@ -23,8 +23,8 @@ gradle.taskGraph.whenReady { taskGraph ->
 dependencies {
     compile project(':runtime')
     compile project(':runtime-jvm')
-    compile project(':kclient')
-    compile project(':kclient-jvm')
+    compile project(':client:client')
+    compile project(':client:client-jvm')
     compile project(':client-api')
 
     compile "org.jetbrains.ktor:ktor-core:$ktorVersion"
