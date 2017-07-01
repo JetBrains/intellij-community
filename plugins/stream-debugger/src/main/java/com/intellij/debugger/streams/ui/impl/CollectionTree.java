@@ -27,14 +27,17 @@ import com.intellij.debugger.streams.ui.ValuesSelectionListener;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.Value;
 import icons.StreamDebuggerIcons;
@@ -45,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
@@ -102,37 +104,34 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(traceElements).groupingBy(TraceElement::getValue);
 
-    getTreeModel().addTreeModelListener(new TreeModelAdapter() {
+    addTreeListener(new XDebuggerTreeListener() {
       @Override
-      public void treeNodesInserted(TreeModelEvent event) {
-        final Object[] children = event.getChildren();
-        for (Object child : children) {
-          if (child instanceof XValueNodeImpl) {
-            final XValueNodeImpl node = (XValueNodeImpl)child;
-            final XValue container = node.getValueContainer();
-            if (container instanceof JavaValue) {
-              // TODO; optimize?
-              evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
-                @Override
-                protected void action() throws Exception {
-                  final Value value = ((JavaValue)container).getDescriptor().getValue();
-                  ApplicationManager.getApplication().invokeLater(() -> {
-                    final List<TraceElement> traceElements = map2TraceElement.get(value);
-                    if (traceElements != null && !traceElements.isEmpty()) {
-                      final TraceElement head = traceElements.get(0);
-                      myValue2Path.put(head, node.getPath());
-                      myPath2Value.put(node.getPath(), head);
-                      map2TraceElement.put(value, tail(traceElements));
-                    }
-                  });
-                }
-              });
-            }
-          }
-        }
+      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        final XDebuggerTreeListener listener = this;
+        if (node instanceof XValueContainerNode) {
+          final XValueContainer container = ((XValueContainerNode)node).getValueContainer();
+          if (container instanceof JavaValue) {
+            final ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
+            evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+              @Override
+              protected void action() throws Exception {
+                final Value value = descriptor.getValue();
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  final List<TraceElement> trace = map2TraceElement.get(value);
+                  if (trace != null && !trace.isEmpty()) {
+                    final TraceElement head = trace.get(0);
+                    myValue2Path.put(head, node.getPath());
+                    myPath2Value.put(node.getPath(), head);
+                    map2TraceElement.put(value, tail(trace));
+                  }
 
-        if (myPath2Value.size() == traceElements.size()) {
-          getTreeModel().removeTreeModelListener(this);
+                  if (myPath2Value.size() == traceElements.size()) {
+                    CollectionTree.this.removeTreeListener(listener);
+                  }
+                });
+              }
+            });
+          }
         }
       }
     });
