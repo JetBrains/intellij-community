@@ -34,6 +34,10 @@ public class HandlerFactory {
                                                                                            @NotNull IntermediateStreamCall call) {
     final String callName = call.getName();
     switch (callName) {
+      case "distinctKeys":
+        return new DistinctKeysHandler(number, call);
+      case "distinctValues":
+        return new DistinctValuesHandler(number, call);
       case "distinct":
         final List<CallArgument> arguments = call.getArguments();
         if (arguments.isEmpty() || arguments.get(0).getType().equals("int")) {

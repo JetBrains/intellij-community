@@ -36,6 +36,8 @@ public class ResolverFactory {
   public CallTraceResolver getResolver(@NotNull String callName) {
     switch (callName) {
       case "distinct":
+      case "distinctKeys":
+      case "distinctValues":
         return new DistinctCallTraceResolver();
       case "toArray":
       case "collect":

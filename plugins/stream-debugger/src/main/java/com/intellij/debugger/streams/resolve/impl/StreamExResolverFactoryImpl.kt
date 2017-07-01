@@ -47,6 +47,7 @@ class StreamExResolverFactoryImpl : ResolverFactory {
       "parallel", "skipOrdered" -> FilterResolver()
       "zipWith" -> MapResolver()
       "chain", "prefix", "prefixKeys", "prefixValues", "headTail" -> null
+      "distinctKeys", "distinctValues" -> DistinctResolver()
       else -> null
     }
   }

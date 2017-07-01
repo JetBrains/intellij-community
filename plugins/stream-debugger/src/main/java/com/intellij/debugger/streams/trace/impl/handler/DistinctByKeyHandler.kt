@@ -23,11 +23,12 @@ import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
 import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.openapi.util.TextRange
 
 /**
  * @author Vitaliy.Bibaev
  */
-class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) : Intermediate() {
+open class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) : Intermediate() {
   private companion object {
     val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
   }
@@ -118,6 +119,25 @@ class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) : Inte
   }
 
   private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall {
-    return IntermediateStreamCallImpl(name, args, typeBefore, typeAfter, textRange)
+    return IntermediateStreamCallImpl("distinct", args, typeBefore, typeAfter, textRange)
   }
 }
+
+open class DistinctByCustomKey(callNumber: Int, call: IntermediateStreamCall, extractorType: String, extractorExpression: String)
+  : DistinctByKeyHandler(callNumber, call.transform(extractorType, extractorExpression)) {
+
+  companion object {
+    fun IntermediateStreamCall.transform(extractorType: String, extractorExpression: String): IntermediateStreamCall {
+      return IntermediateStreamCallImpl("distinct", listOf(CallArgumentImpl(extractorType, extractorExpression)), typeBefore,
+                                        typeAfter, TextRange.EMPTY_RANGE)
+    }
+  }
+}
+
+class DistinctKeysHandler(callNumber: Int, call: IntermediateStreamCall)
+  : DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
+                        "java.util.Map.Entry::getKey")
+
+class DistinctValuesHandler(callNumber: Int, call: IntermediateStreamCall)
+  : DistinctByCustomKey(callNumber, call, "java.util.function.Function<java.util.Map.Entry, java.lang.Object>",
+                        "java.util.Map.Entry::getValue")
