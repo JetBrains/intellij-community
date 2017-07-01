@@ -17,6 +17,7 @@ package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -30,6 +31,7 @@ import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,14 +92,16 @@ class ReplaceUsageViewContext extends UsageViewContext {
     final Set<Usage> excluded = myUsageView.getExcludedUsages();
     usages = usages.stream().filter(u -> !excluded.contains(u)).filter(u -> isValid((UsageInfo2UsageAdapter)u)).collect(Collectors.toList());
 
-    final List<VirtualFile> files = usages.stream().map(i -> ((UsageInfo2UsageAdapter)i).getFile()).collect(Collectors.toList());
+    final List<VirtualFile> files = usages.stream().map(i -> ((UsageInFile)i).getFile()).collect(Collectors.toList());
     if (ReadonlyStatusHandler.getInstance(mySearchContext.getProject()).ensureFilesWritable(files).hasReadonlyFiles()) {
       return;
     }
     removeUsagesAndSelectNext(usages, excluded);
+    final List<ReplacementInfo> replacementInfos = usages.stream().map(usage2ReplacementInfo::get).collect(Collectors.toList());
     final LocalHistoryAction action = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
     try {
-      replacer.replaceAll(usages.stream().map(usage2ReplacementInfo::get).collect(Collectors.toList()));
+      CommandProcessor.getInstance().executeCommand(
+        mySearchContext.getProject(), () -> replacer.replaceAll(replacementInfos), SSRBundle.message("structural.replace.title"), null);
     } finally {
       action.finish();
     }
