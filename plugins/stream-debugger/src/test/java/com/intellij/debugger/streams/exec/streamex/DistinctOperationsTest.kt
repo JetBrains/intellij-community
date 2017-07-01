@@ -24,6 +24,7 @@ class DistinctOperationsTest : StreamExTestCase() {
   fun testDistinctAtLeast() = doStreamExWithResultTest()
 
   fun testDistinctWithKeyExtractor() = doStreamExWithResultTest()
+  fun testDistinctWithStatefulExtractor() = doStreamExWithResultTest()
 
   fun testDistinctKeys() = doStreamExWithResultTest()
   fun testDistinctValues() = doStreamExWithResultTest()
