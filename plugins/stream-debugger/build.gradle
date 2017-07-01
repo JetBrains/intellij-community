@@ -50,3 +50,16 @@ intellij {
 dependencies {
   compile files("${System.properties['java.home']}/../lib/tools.jar")
 }
+
+task psiTest(type: Test, group: 'Verification') {
+  include 'com/intellij/debugger/streams/chain/*'
+}
+
+task streamExTest(type: Test, group: 'Verification') {
+  include 'com/intellij/debugger/streams/exec/streamex/*'
+}
+
+task stdLibStreamsTest(type: Test, group: 'Verification') {
+  include 'com/intellij/debugger/streams/exec/*'
+  exclude 'com/intellij/debugger/streams/exec/streamex/*'
+}
