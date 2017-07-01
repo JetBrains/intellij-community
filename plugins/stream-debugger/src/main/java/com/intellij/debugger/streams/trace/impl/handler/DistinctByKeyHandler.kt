@@ -89,14 +89,12 @@ class DistinctByKeyHandler(callNumber: Int, call: IntermediateStreamCall) : Inte
 
     val valuesAfterMapName = myTime2ValueAfter.name
     val transitions = HashMapVariableImpl("transitionsMap", GenericType.INT, GenericType.INT, false)
-    val buildTransitions = "final boolean[] visited = new boolean[${myKeys.name}.size()];" + LINE_SEPARATOR +
-                           "for(final int afterTime : $valuesAfterMapName.keySet()) {" + LINE_SEPARATOR +
+    val buildTransitions = "for(final int afterTime : $valuesAfterMapName.keySet()) {" + LINE_SEPARATOR +
                            "  Object valueAfter = $valuesAfterMapName.get(afterTime);" + LINE_SEPARATOR +
                            "  Object key = null;" + LINE_SEPARATOR +
-                           "  for (int i = 0; i < visited.length; i++) {" + LINE_SEPARATOR +
-                           "    if (!visited[i] && valueAfter == ${myBeforeValues.name}.get(i)) {" + LINE_SEPARATOR +
+                           "  for (int i = 0; i < ${myBeforeTimes.name}.size(); i++) {" + LINE_SEPARATOR +
+                           "    if (!${transitions.name}.containsKey(${myBeforeTimes.name}.get(i)) && valueAfter == ${myBeforeValues.name}.get(i)) {" + LINE_SEPARATOR +
                            "      key = ${myKeys.name}.get(i); " + LINE_SEPARATOR +
-                           "      visited[i] = true;" + LINE_SEPARATOR +
                            "      break;" + LINE_SEPARATOR +
                            "    }" + LINE_SEPARATOR +
                            "  }" + LINE_SEPARATOR +
