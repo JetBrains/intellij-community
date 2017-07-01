@@ -85,31 +85,23 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
 
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass checkedClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    PsiFile psiFile = checkedClass.getContainingFile();
     PsiIdentifier classIdentifier = checkedClass.getNameIdentifier();
-    if (checkedClass.getQualifiedName() != null &&
-        classIdentifier != null &&
-        psiFile != null &&
-        psiFile.getVirtualFile() != null &&
+    if (classIdentifier != null &&
+        checkedClass.getQualifiedName() != null &&
+        checkedClass.getContainingFile().getVirtualFile() != null &&
         !checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-        !checkedClass.isEnum()) {
-      if (PsiUtil.isInnerClass(checkedClass)) {
-        // don't check inner classes (make this an option?)
-        return null;
-      }
+        !checkedClass.isEnum() &&
+        !PsiUtil.isInnerClass(checkedClass)) {
 
       GlobalSearchScope scope = checkedClass.getResolveScope();
 
-      if (CHECK_ACTIONS) {
+      if (shouldCheckActionClass(checkedClass)) {
         PsiClass actionClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(AnAction.class.getName(), scope);
         if (actionClass == null) {
           // stop if action class cannot be found (non-devkit module/project)
           return null;
         }
         if (checkedClass.isInheritor(actionClass, true)) {
-          if (IGNORE_NON_PUBLIC && !checkedClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-            return null;
-          }
           if (!isActionRegistered(checkedClass) && canFix(checkedClass)) {
             LocalQuickFix fix = new RegisterActionFix(org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
             ProblemDescriptor problem =
@@ -167,6 +159,12 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
   private static PsiClass findRegistrationType(@Nullable PsiClass checkedClass, RegistrationCheckerUtil.RegistrationType type) {
     final Set<PsiClass> types = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, type);
     return ContainerUtil.getFirstItem(types);
+  }
+
+  private boolean shouldCheckActionClass(PsiClass psiClass) {
+    if (!CHECK_ACTIONS) return false;
+    if (IGNORE_NON_PUBLIC && !psiClass.hasModifierProperty(PsiModifier.PUBLIC)) return false;
+    return true;
   }
 
   private static boolean isActionRegistered(PsiClass actionClass) {
