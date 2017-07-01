@@ -417,4 +417,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testPromotingBytearrayToStrAndUnicode() {
     doTest();
   }
+
+  // PY-24930
+  public void testCallOperator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 }
