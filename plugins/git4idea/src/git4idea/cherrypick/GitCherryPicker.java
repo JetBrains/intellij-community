@@ -68,6 +68,7 @@ public class GitCherryPicker extends VcsCherryPicker {
       result -> isNothingToCommitMessage(result),
       commit -> createCommitMessage(commit),
       originalChanges -> GitUtil.findCorrespondentLocalChanges(ChangeListManager.getInstance(myProject), originalChanges),
+      true,
       repository -> cancelCherryPick(repository));
     applyProcess.execute();
   }

@@ -15,6 +15,7 @@
  */
 package git4idea.revert
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.VcsLogUtil
@@ -213,10 +214,31 @@ class GitRevertTest : GitSingleRepoTest() {
     GitRevertOperation(myProject, listOf(commit), false).execute()
 
     `assert commit dialog was shown`()
-    assertEquals("Commit message is incorrect", """
-      Revert "${commit.subject}"
+    assertEquals("Commit message is incorrect", commitMessageForRevert(commit), actualMessage)
+  }
 
-      This reverts commit ${commit.id.toShortString()}""".trimIndent(), actualMessage)
+  fun `test reverting commit doesn't preserve authorship of the original commit`() {
+    file("a.txt").create("initial\n").add()
+    git("commit --author='Original Author <original@example.com>' -m original_commit")
+    val commit = GitLogUtil.collectFullDetails(myProject, myProjectRoot, "-1").first()
+
+    vcsHelper.onCommit { false }
+
+    GitRevertOperation(myProject, listOf(commit), false).execute()
+
+    val changeListName = commitMessageForRevert(commit)
+    val changeLists = changeListManager.changeListsCopy
+    val list = changeLists.find { StringUtil.equalsIgnoreWhitespaces(it.name, changeListName) }
+    assertNotNull("Didn't find changelist with name '$changeListName' among :$changeLists", list)
+    val data = list!!.data
+    assertNull("There should be no author information in the changelist: $data", data)
+  }
+
+  private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {
+    return """
+        Revert "${commit.subject}"
+
+        This reverts commit ${commit.id.toShortString()}""".trimIndent()
   }
 
   private fun prepareRevertConflict(fileName: String) : VcsFullCommitDetails {

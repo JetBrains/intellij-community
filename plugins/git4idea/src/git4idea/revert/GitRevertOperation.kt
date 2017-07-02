@@ -50,7 +50,8 @@ class GitRevertOperation(private val project: Project,
                            findLocalChanges = { changesInCommit ->
                              val allChanges = OpenTHashSet(ChangeListManager.getInstance(project).allChanges)
                              changesInCommit.mapNotNull { allChanges.get(reverseChange(it)) }
-                           }).execute()
+                           },
+                           preserveCommitMetadata = false).execute()
   }
 
   private fun doRevert(autoCommit: Boolean,
