@@ -18,9 +18,11 @@ package git4idea.revert
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber
+import git4idea.history.GitLogUtil
 import git4idea.test.*
 import java.nio.charset.Charset
 
@@ -200,7 +202,7 @@ class GitRevertTest : GitSingleRepoTest() {
   fun `test default commit message proposed on revert`() {
     val file = file("r.txt")
     file.create("initial\n").addCommit("Created r.txt")
-    val commit = file.append("second\n").addCommit("Appended something").details()
+    val commit = file.append("second\n").addCommit("Append something").details()
 
     var actualMessage : String = ""
     vcsHelper.onCommit { msg ->
@@ -212,7 +214,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     `assert commit dialog was shown`()
     assertEquals("Commit message is incorrect", """
-      Revert ${commit.subject}
+      Revert "${commit.subject}"
 
       This reverts commit ${commit.id.asString()}""".trimIndent(), actualMessage)
   }
