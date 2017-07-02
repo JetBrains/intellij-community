@@ -43,7 +43,7 @@ class GitRevertOperation(private val project: Project,
                            emptyCommitDetector = { result -> result.outputAsJoinedString.contains("nothing to commit") },
                            defaultCommitMessageGenerator = { commit ->
                              """
-                             Revert ${commit.subject}
+                             Revert "${commit.subject}"
 
                              This reverts commit ${commit.id.asString()}""".trimIndent()
                            },
