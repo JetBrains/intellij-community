@@ -162,7 +162,11 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
   if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
     return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
   }
-  else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("javascript:")) {
+  else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") ||
+           url.startsWith("javascript:") || url.startsWith("webpack:")) {
+    // consider checking :/ instead of :// because scheme may be followed by path, not by authority
+    // https://tools.ietf.org/html/rfc3986#section-1.1.2
+    // be careful with windows paths: C:/Users
     return Urls.parseEncoded(url) ?: UrlImpl(url)
   }
   else {
