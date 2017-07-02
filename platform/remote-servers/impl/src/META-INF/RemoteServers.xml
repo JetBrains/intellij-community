@@ -66,5 +66,8 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="RemoteServersViewPopup"/>
+    <group id="RemoteServersViewToolbar.Top">
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
   </actions>
 </idea-plugin>
