@@ -34,6 +34,11 @@
     ]]></description>
 
   <change-notes><![CDATA[
+      0.1.4 <br>
+        <ul>
+            <li> Support <a href="https://github.com/amaembo/streamex">StreamEx</a> library </li>
+            <li> Minor fixes and improvements </li>
+        </ul>
       0.1.3 <br>
         <ul>
             <li> Remove usage of unsupported API </li>
