@@ -45,7 +45,7 @@ class GitRevertOperation(private val project: Project,
                              """
                              Revert "${commit.subject}"
 
-                             This reverts commit ${commit.id.asString()}""".trimIndent()
+                             This reverts commit ${commit.id.toShortString()}""".trimIndent()
                            },
                            findLocalChanges = { changesInCommit ->
                              val allChanges = OpenTHashSet(ChangeListManager.getInstance(project).allChanges)

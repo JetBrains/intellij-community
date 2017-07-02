@@ -216,7 +216,7 @@ class GitRevertTest : GitSingleRepoTest() {
     assertEquals("Commit message is incorrect", """
       Revert "${commit.subject}"
 
-      This reverts commit ${commit.id.asString()}""".trimIndent(), actualMessage)
+      This reverts commit ${commit.id.toShortString()}""".trimIndent(), actualMessage)
   }
 
   private fun prepareRevertConflict(fileName: String) : VcsFullCommitDetails {
