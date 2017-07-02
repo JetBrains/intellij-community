@@ -66,6 +66,7 @@ class GitApplyChangesProcess(private val project: Project,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                              private val defaultCommitMessageGenerator: (VcsFullCommitDetails) -> String,
                              private val findLocalChanges: (Collection<Change>) -> Collection<Change>,
+                             private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
   private val git = Git.getInstance()
@@ -278,7 +279,8 @@ class GitApplyChangesProcess(private val project: Project,
 
     val adjustedMessage = commitMessage.replace('\n', ' ').replace("[ ]{2,}".toRegex(), " ")
     val changeListName = createNameForChangeList(adjustedMessage, 0)
-    val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage, commit)
+    val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage,
+                                                                                     if (preserveCommitMetadata) commit else null)
     val actualChangeList = moveChanges(originalChanges, createdChangeList)
     if (actualChangeList != null && !actualChangeList.changes.isEmpty()) {
       return createdChangeList
