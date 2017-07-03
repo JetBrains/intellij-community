@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.testFramework.PlatformTestCase;
 import junit.framework.Assert;
 
@@ -60,6 +61,24 @@ public class PresentationTest extends PlatformTestCase {
       Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
 
       Assert.assertTrue(menuTexts[i].length() > p.getDisplayedMnemonicIndex());
+    }
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    UISettings.getInstance().setDisableMnemonics(false);
+    UISettings.getInstance().setDisableMnemonicsInControls(false);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      UISettings defaults = new UISettings();
+      UISettings.getInstance().setDisableMnemonics(defaults.getDisableMnemonics());
+      UISettings.getInstance().setDisableMnemonicsInControls(defaults.getDisableMnemonicsInControls());
+    } finally {
+      super.tearDown();
     }
   }
 }
