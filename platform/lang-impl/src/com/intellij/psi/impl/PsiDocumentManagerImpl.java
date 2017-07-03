@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
@@ -125,15 +126,20 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
       if (PomModelImpl.isAllowPsiModification()
           // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
           && ApplicationManager.getApplication().isWriteAccessAllowed()) {
-        // commit document to avoid OOME
+        // commit one document to avoid OOME
         for (Document document : myUncommittedDocuments) {
           if (document != event.getDocument()) {
-            finishCommitInWriteAction(document, Collections.emptyList(), true, true);
+            doCommitWithoutReparse(document);
             break;
           }
         }
       }
     }
+  }
+
+  @VisibleForTesting
+  public void doCommitWithoutReparse(@NotNull Document document) {
+    finishCommitInWriteAction(document, Collections.emptyList(), true, true);
   }
 
   @Override

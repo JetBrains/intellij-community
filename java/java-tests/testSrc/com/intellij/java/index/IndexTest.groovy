@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
@@ -72,6 +73,7 @@ import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.*
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+
 /**
  * @author Eugene Zhuravlev
  * @since Dec 12, 2007
@@ -718,6 +720,29 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  void "test commit without reparse properly changes index"() {
+    def srcFile = myFixture.addFileToProject('A.java', 'class A {}')
+    assert findClass('A' ) != null
+
+    Document document = FileDocumentManager.getInstance().getDocument(srcFile.virtualFile)
+    document.replaceString(0, document.getTextLength(), 'class B {}')
+    assertNotNull(findClass('A'))
+    
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).doCommitWithoutReparse(document)
+
+    assertNull(findClass("A"))
+    assertNotNull(findClass("B"))
+
+    document.replaceString(0, document.getTextLength(), 'class C {}')
+    assertNotNull(findClass('B'))
+
+    FileDocumentManager.getInstance().saveDocument(document)
+    ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).doCommitWithoutReparse(document)
+
+    assertNull(findClass("B"))
+    assertNotNull(findClass("C"))
+  }
+  
   void "test read-only index has read-only storages"() {
     def index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true).getIndex()
 
