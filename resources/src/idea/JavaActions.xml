@@ -225,7 +225,7 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction" text="Create..."/>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
-      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Force Renderers On-demand">
+      <action id="Debugger.MuteRenderers" class="com.intellij.debugger.ui.tree.actions.ForceOnDemandRenderersAction" text="Mute Renderers">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
     </group>
