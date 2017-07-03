@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ class BuildOptions {
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
   /** generate actual searchableOptions.xml file. If it is skipped the version of this file located in sources will be used, it may be outdated. */
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  static final PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   /** product DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
