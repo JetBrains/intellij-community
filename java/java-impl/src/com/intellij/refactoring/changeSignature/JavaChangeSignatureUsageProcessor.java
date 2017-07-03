@@ -33,10 +33,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -51,6 +54,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1002,7 +1006,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  private static class ConflictSearcher {
+  public static class ConflictSearcher {
     private final JavaChangeInfo myChangeInfo;
 
     private ConflictSearcher(@NotNull JavaChangeInfo changeInfo) {
@@ -1104,7 +1108,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       throws IncorrectOperationException {
       PsiMethod method = myChangeInfo.getMethod();
       PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
-      VisibilityUtil.setVisibility(modifierList, myChangeInfo.getNewVisibility());
+      String visibility = myChangeInfo.getNewVisibility();
+      VisibilityUtil.setVisibility(modifierList, visibility);
+
+      searchForHierarchyConflicts(method, conflictDescriptions, visibility);
 
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();
@@ -1122,7 +1129,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                           RefactoringUIUtil.getDescription(method, true),
-                                          VisibilityUtil.toPresentableText(myChangeInfo.getNewVisibility()),
+                                          VisibilityUtil.toPresentableText(visibility),
                                           RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflictDescriptions.putValue(method, message);
               if (!needToChangeCalls()) {
@@ -1132,6 +1139,68 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           }
         }
       }
+    }
+
+    public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, String> conflicts, final String modifier) {
+      SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
+        methodSignature -> {
+          final PsiMethod superMethod = methodSignature.getMethod();
+          if (!hasCompatibleVisibility(superMethod, true, modifier)) {
+            conflicts.putValue(superMethod, IntentionPowerPackBundle.message(
+              "0.will.have.incompatible.access.privileges.with.super.1",
+              RefactoringUIUtil.getDescription(method, false),
+              RefactoringUIUtil.getDescription(superMethod, true)));
+          }
+          return true;
+        });
+      OverridingMethodsSearch.search(method).forEach(overridingMethod -> {
+        if (!isVisibleFromOverridingMethod(method, overridingMethod, modifier)) {
+          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
+            "0.will.no.longer.be.visible.from.overriding.1",
+            RefactoringUIUtil.getDescription(method, false),
+            RefactoringUIUtil.getDescription(overridingMethod, true)));
+        }
+        else if (!hasCompatibleVisibility(overridingMethod, false, modifier)) {
+          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
+            "0.will.have.incompatible.access.privileges.with.overriding.1",
+            RefactoringUIUtil.getDescription(method, false),
+            RefactoringUIUtil.getDescription(overridingMethod, true)));
+        }
+        return false;
+      });
+    }
+
+    private static boolean hasCompatibleVisibility(PsiMethod method, boolean isSuper, final String modifier) {
+      if (modifier.equals(PsiModifier.PRIVATE)) {
+        return false;
+      }
+      else if (modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
+        if (isSuper) {
+          return !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
+        }
+        return true;
+      }
+      else if (modifier.equals(PsiModifier.PROTECTED)) {
+        if (isSuper) {
+          return !method.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+        else {
+          return method.hasModifierProperty(PsiModifier.PROTECTED) || method.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+      }
+      else if (modifier.equals(PsiModifier.PUBLIC)) {
+        if (!isSuper) {
+          return method.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+        return true;
+      }
+      throw new AssertionError();
+    }
+
+    private static boolean isVisibleFromOverridingMethod(PsiMethod method, PsiMethod overridingMethod, final String modifier) {
+      final PsiModifierList modifierListCopy = (PsiModifierList)method.getModifierList().copy();
+      modifierListCopy.setModifierProperty(modifier, true);
+      return JavaResolveUtil.isAccessible(method, method.getContainingClass(), modifierListCopy, overridingMethod, null, null);
     }
 
 

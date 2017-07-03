@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.Map;
 
 public class ParenthesesUtils {
 
-  public static final Map<IElementType, IElementType> tokenMap = new HashMap<>();
+  private static final Map<IElementType, IElementType> tokenMap = new HashMap<>();
 
   private ParenthesesUtils() {}
 

@@ -29,7 +29,6 @@ import git4idea.repo.GitRepository
 
 /**
  * Commits should be provided in the "UI" order, i.e. as if `git log --date-order` is called, i.e. in reverse-chronological order.
- * They are going to be reverted in the reverse order, but the GitRevertOperation will reverse them on its own.
  */
 class GitRevertOperation(private val project: Project,
                          private val commits: List<VcsFullCommitDetails>,
@@ -37,21 +36,22 @@ class GitRevertOperation(private val project: Project,
   private val git = Git.getInstance()
 
   fun execute() {
-    GitApplyChangesProcess(project, commits.reversed(), autoCommit, "revert", "reverted",
+    GitApplyChangesProcess(project, commits, autoCommit, "revert", "reverted",
                            command = { repository, hash, autoCommit, listeners ->
                              doRevert(autoCommit, repository, hash, listeners)
                            },
                            emptyCommitDetector = { result -> result.outputAsJoinedString.contains("nothing to commit") },
                            defaultCommitMessageGenerator = { commit ->
                              """
-                             Revert ${commit.subject}
+                             Revert "${commit.subject}"
 
-                             This reverts commit ${commit.id.asString()}""".trimIndent()
+                             This reverts commit ${commit.id.toShortString()}""".trimIndent()
                            },
                            findLocalChanges = { changesInCommit ->
                              val allChanges = OpenTHashSet(ChangeListManager.getInstance(project).allChanges)
                              changesInCommit.mapNotNull { allChanges.get(reverseChange(it)) }
-                           }).execute()
+                           },
+                           preserveCommitMetadata = false).execute()
   }
 
   private fun doRevert(autoCommit: Boolean,

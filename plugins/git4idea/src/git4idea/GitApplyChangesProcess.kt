@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
+import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -66,6 +67,7 @@ class GitApplyChangesProcess(private val project: Project,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                              private val defaultCommitMessageGenerator: (VcsFullCommitDetails) -> String,
                              private val findLocalChanges: (Collection<Change>) -> Collection<Change>,
+                             private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
   private val git = Git.getInstance()
@@ -277,8 +279,9 @@ class GitApplyChangesProcess(private val project: Project,
     }
 
     val adjustedMessage = commitMessage.replace('\n', ' ').replace("[ ]{2,}".toRegex(), " ")
-    val changeListName = createNameForChangeList(adjustedMessage, 0)
-    val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage, commit)
+    val changeListName = createNameForChangeList(adjustedMessage)
+    val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage,
+                                                                                     if (preserveCommitMetadata) commit else null)
     val actualChangeList = moveChanges(originalChanges, createdChangeList)
     if (actualChangeList != null && !actualChangeList.changes.isEmpty()) {
       return createdChangeList
@@ -326,13 +329,9 @@ class GitApplyChangesProcess(private val project: Project,
     }
   }
 
-  private fun createNameForChangeList(proposedName: String, step: Int): String {
-    return if (changeListManager.changeLists.any { it.name == nameWithStep(proposedName, step) })
-      createNameForChangeList(proposedName, step + 1)
-    else nameWithStep(proposedName, step)
+  private fun createNameForChangeList(proposedName: String): String {
+    return UniqueNameGenerator.generateUniqueName(proposedName, "", "", "-", "", { changeListManager.findChangeList(it) == null })
   }
-
-  private fun nameWithStep(name: String, step: Int) = if (step == 0) name else name + "-" + step
 
   private fun notifyResult(successfulCommits: List<VcsFullCommitDetails>, skipped: List<VcsFullCommitDetails>) {
     if (skipped.isEmpty()) {

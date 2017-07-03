@@ -17,7 +17,6 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.ui.ComponentWithBrowseButton
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.fixtures.*
@@ -27,6 +26,9 @@ import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
 import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreenshotDirPath
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findBoundedComponentByText
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
@@ -492,10 +494,11 @@ open class GuiTestCase : GuiTestBase() {
     return ComponentWithBrowseButtonFixture(component, myRobot)
   }
 
-  private fun combobox(container: Container, labelText: String, timeout: Long): JComboBoxFixture {
+  private fun combobox(container: Container, text: String, timeout: Long): JComboBoxFixture {
     //wait until label has appeared
-    waitUntilFound(container, JLabel::class.java, timeout) { jLabel -> jLabel.isShowing && jLabel.text == labelText }
-    return GuiTestUtil.findComboBox(myRobot, container, labelText)
+    waitUntilFound(container, Component::class.java, timeout) { component -> component.isTextComponent() && component.getComponentText() == text }
+    val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
+    return JComboBoxFixture(myRobot, comboBox)
   }
 
   private fun checkbox(container: Container, labelText: String, timeout: Long): CheckBoxFixture {
@@ -532,12 +535,10 @@ open class GuiTestCase : GuiTestBase() {
       val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
       return JTextComponentFixture(myRobot, jTextField)
     }
-
-    val jLabel = waitUntilFound(container, JLabel::class.java, timeout) { jLabel -> jLabel.isShowing && jLabel.text == labelText }
-    if (jLabel.labelFor != null && jLabel.labelFor is TextFieldWithBrowseButton)
-      return JTextComponentFixture(myRobot, (jLabel.labelFor as TextFieldWithBrowseButton).textField)
-    else
-      return JTextComponentFixture(myRobot, myRobot.finder().findByLabel(labelText, JTextComponent::class.java))
+    //wait until label has appeared
+    waitUntilFound(container, Component::class.java, timeout) { component -> component.isTextComponent() && component.getComponentText() == labelText }
+    val jTextComponent = findBoundedComponentByText(myRobot, container, labelText!!, JTextComponent::class.java)
+    return JTextComponentFixture(myRobot, jTextComponent)
   }
 
   private fun linkLabel(container: Container, labelText: String, timeout: Long): ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>> {

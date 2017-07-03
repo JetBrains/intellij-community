@@ -67,7 +67,7 @@ public class AddActionToolbarTest extends GuiTestCase {
     findAndClickOkButton(preferencesDialog);
     //choose File in project tree
 
-    ideFrameFixture.getProjectView().selectProjectPane().selectByPath(ideFrameFixture.getProject().getName(), "src", "Main.java").click();
+    ideFrameFixture.getProjectView().selectProjectPane().expandByPath(ideFrameFixture.getProject().getName(), "src", "Main.java").click();
     //ActionButton("Print") wait and click
     ActionButtonFixture.findByActionId("Print", myRobot, ideFrameFixture.target()).waitUntilEnabledAndShowing().click();
     //Dialog("Print")

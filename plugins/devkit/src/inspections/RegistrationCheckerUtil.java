@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -38,7 +39,10 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class RegistrationCheckerUtil {
 
@@ -127,13 +131,12 @@ class RegistrationCheckerUtil {
   private static List<DomFileElement<IdeaPlugin>> findPluginXmlFilesForModule(Module module,
                                                                               boolean isIdeaProject,
                                                                               PsiClass psiClass) {
-    XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-    if (pluginXml != null && !isIdeaProject) {
-      return Collections.singletonList(DescriptorUtil.getIdeaPlugin(pluginXml));
-    }
-
     if (!isIdeaProject) {
-      return Collections.emptyList();
+      XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+      if (pluginXml == null) {
+        return Collections.emptyList();
+      }
+      return Collections.singletonList(DescriptorUtil.getIdeaPlugin(pluginXml));
     }
 
     final String className = psiClass.getName();
@@ -151,9 +154,14 @@ class RegistrationCheckerUtil {
                                UsageSearchContext.IN_PLAIN_TEXT,
                                GlobalSearchScope.filesWithLibrariesScope(project, pluginXmlCandidates),
                                true);
+    return ContainerUtil.mapNotNull(pluginXmlFilesWithWord, virtualFile -> {
+      final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      if (psiFile instanceof XmlFile) {
+        return DomManager.getDomManager(project).getFileElement((XmlFile)psiFile, IdeaPlugin.class);
+      }
 
-    return domService.getFileElements(IdeaPlugin.class, project,
-                                      GlobalSearchScope.filesWithLibrariesScope(project, Arrays.asList(pluginXmlFilesWithWord)));
+      return null;
+    });
   }
 
   private static boolean processPluginXml(DomFileElement<IdeaPlugin> pluginXml,

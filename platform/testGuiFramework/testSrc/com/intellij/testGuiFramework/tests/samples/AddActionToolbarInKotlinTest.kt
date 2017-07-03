@@ -43,7 +43,7 @@ class AddActionToolbarInKotlinTestTest : GuiTestCase() {
       }
 
       projectView {
-        selectProjectPane().selectByPath(project.name, "src", "Main.java").click()
+        selectProjectPane().expandByPath(project.name, "src", "Main.java").click()
       }
       actionButton("Print").waitUntilEnabledAndShowing().click()
 

@@ -362,13 +362,12 @@ class GitMergeOperation extends GitBranchOperation {
     }
   }
 
-  private class DeleteMergedLocalBranchNotificationListener implements NotificationListener {
+  private class DeleteMergedLocalBranchNotificationListener extends NotificationListener.Adapter {
     @Override
-    public void hyperlinkUpdate(@NotNull Notification notification,
-                                @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equalsIgnoreCase("delete")) {
-        GitBrancher brancher = GitBrancher.getInstance(myProject);
-        brancher.deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      if (event.getDescription().equalsIgnoreCase("delete")) {
+        notification.expire();
+        GitBrancher.getInstance(myProject).deleteBranch(myBranchToMerge, new ArrayList<>(getRepositories()));
       }
     }
   }

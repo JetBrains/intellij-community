@@ -16,10 +16,8 @@
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,14 +27,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
@@ -48,8 +42,6 @@ import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
-import git4idea.util.GitUntrackedFilesHelper;
-import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,9 +56,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 
 /**
  * The unstash dialog
@@ -312,51 +301,15 @@ public class GitUnstashDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     VirtualFile root = getGitRoot();
-    final GitLineHandler h = handler();
-    final AtomicBoolean conflict = new AtomicBoolean();
+    GitLineHandler h = handler();
 
-    h.addLineListener(new GitLineHandlerAdapter() {
-      public void onLineAvailable(String line, Key outputType) {
-        if (line.contains("Merge conflict")) {
-          conflict.set(true);
-        }
-      }
-    });
-    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
-    GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, MERGE);
-    h.addLineListener(untrackedFilesDetector);
-    h.addLineListener(localChangesDetector);
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      GitStashUtils.unstash(myProject, root, h, new UnstashConflictResolver(myProject, root, getSelectedStash()));
+    }, GitBundle.getString("unstash.unstashing"), true, myProject);
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
-      final Ref<GitCommandResult> result = Ref.create();
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      boolean completed = progressManager.runProcessWithProgressSynchronously(() -> {
-        h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
-        Git git = Git.getInstance();
-        result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
-      }, GitBundle.getString("unstash.unstashing"), true, myProject);
-
-      if (!completed) return;
-
-      VfsUtil.markDirtyAndRefresh(false, true, false, root);
-      GitCommandResult res = result.get();
-      if (conflict.get()) {
-        boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();
-        LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
-      } else if (untrackedFilesDetector.wasMessageDetected()) {
-        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, untrackedFilesDetector.getRelativeFilePaths(),
-                                                                  "unstash", null);
-      } else if (localChangesDetector.wasMessageDetected()) {
-        LocalChangesWouldBeOverwrittenHelper.showErrorDialog(myProject, root, "unstash", localChangesDetector.getRelativeFilePaths());
-      } else if (!res.success()) {
-        GitUIUtil.showOperationErrors(myProject, h.errors(), h.printableCommandLine());
-      }
+    if (completed) {
+      super.doOKAction();
     }
-    finally {
-      token.finish();
-    }
-    super.doOKAction();
   }
 
   public static void showUnstashDialog(Project project, List<VirtualFile> gitRoots, VirtualFile defaultRoot) {

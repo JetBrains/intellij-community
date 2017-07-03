@@ -51,7 +51,9 @@ import java.util.Set;
 public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector, TreeContent {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
   @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
+  @NonNls private static final String PLACE_TOOLBAR_TOP = "ServersToolWindowContent#Toolbar.Top";
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
+  @NonNls private static final String SERVERS_TOOL_WINDOW_TOP_TOOLBAR = "RemoteServersViewToolbar.Top";
   @NonNls private static final String SERVERS_TOOL_WINDOW_POPUP = "RemoteServersViewPopup";
 
   private static final String MESSAGE_CARD = "message";
@@ -85,6 +87,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
+
+    getMainPanel().add(createTopToolbar(), BorderLayout.NORTH);
 
     getMainPanel().add(createToolbar(), BorderLayout.WEST);
     Splitter splitter = new Splitter(false, 0.3f);
@@ -269,6 +273,14 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
         pollDeployments(connection);
       }
     }, POLL_DEPLOYMENTS_DELAY, ModalityState.any()));
+  }
+
+  private JComponent createTopToolbar() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOP_TOOLBAR));
+    ActionToolbar topToolbar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR_TOP, group, true);
+    topToolbar.setTargetComponent(myTree);
+    return topToolbar.getComponent();
   }
 
   private JComponent createToolbar() {

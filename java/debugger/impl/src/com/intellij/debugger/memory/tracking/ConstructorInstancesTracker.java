@@ -256,7 +256,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         if (suspendContext != null) {
           final MemoryViewDebugProcessData data = suspendContext.getDebugProcess().getUserData(MemoryViewDebugProcessData.KEY);
           ObjectReference thisRef = getThisObject(suspendContext, event);
-          if (thisRef.referenceType().name().equals(myClassName) && data != null) {
+          if (thisRef != null && thisRef.referenceType().name().equals(myClassName) && data != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
             data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));

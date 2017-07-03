@@ -23,28 +23,30 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
-             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener,
-             FocusChangeListener {
+             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener, PropertyChangeListener {
 
   public static final String SPACE = "     ";
   public static final String SEPARATOR = ":";
@@ -53,6 +55,7 @@ public class PositionPanel extends EditorBasedWidget
 
   private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
   private static final String CHAR_COUNT_UNKNOWN = "...";
+  private static final String FOCUS_OWNER_PROPERTY = "focusOwner";
 
   private final Alarm myAlarm;
   private CodePointCountTask myCountTask;
@@ -111,7 +114,7 @@ public class PositionPanel extends EditorBasedWidget
   public Consumer<MouseEvent> getClickConsumer() {
     return mouseEvent -> {
       Project project = getProject();
-      Editor editor = getEditor();
+      Editor editor = getFocusedEditor();
       if (project == null || editor == null) return;
 
       CommandProcessor processor = CommandProcessor.getInstance();
@@ -137,11 +140,9 @@ public class PositionPanel extends EditorBasedWidget
     multicaster.addDocumentListener(this, this);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(DocumentBulkUpdateListener.TOPIC, this);
-    ObjectUtils.consumeIfCast(
-      multicaster,
-      EditorEventMulticasterEx.class,
-      multicasterEx -> multicasterEx.addFocusChangeListner(this, this)
-    );
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUS_OWNER_PROPERTY, this);
+    Disposer.register(this, 
+                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(FOCUS_OWNER_PROPERTY, this));
   }
 
   @Override
@@ -182,16 +183,6 @@ public class PositionPanel extends EditorBasedWidget
     onDocumentUpdate(doc);
   }
 
-  @Override
-  public void focusGained(Editor editor) {
-    updatePosition(editor);
-  }
-
-  @Override
-  public void focusLost(Editor editor) {
-    updatePosition(getEditor());
-  }
-
   private void onDocumentUpdate(Document document) {
     Editor[] editors = EditorFactory.getInstance().getEditors(document);
     for (Editor editor : editors) {
@@ -202,9 +193,26 @@ public class PositionPanel extends EditorBasedWidget
     }
   }
 
-  private static boolean isFocusedEditor(Editor editor) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+  private boolean isFocusedEditor(Editor editor) {
+    Component focusOwner = getFocusedComponent();
     return focusOwner == editor.getContentComponent();
+  }
+
+  private Component getFocusedComponent() {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner == null) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+      IdeFrame frame = focusManager.getLastFocusedFrame();
+      if (frame != null) {
+        focusOwner = focusManager.getLastFocusedFor(frame);
+      }
+    }
+    return focusOwner;
+  }
+
+  private Editor getFocusedEditor() {
+    Component component = getFocusedComponent();
+    return component instanceof EditorComponentImpl ? ((EditorComponentImpl)component).getEditor() : getEditor();
   }
 
   private void updatePosition(final Editor editor) {
@@ -274,6 +282,11 @@ public class PositionPanel extends EditorBasedWidget
     else {
       return "";
     }
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent e) {
+    updatePosition(getFocusedEditor());
   }
 
   private class CodePointCountTask implements Runnable {

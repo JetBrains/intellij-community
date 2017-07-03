@@ -18,6 +18,7 @@ package git4idea.test
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
+import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.history.GitHistoryUtils
 import git4idea.history.GitLogUtil
@@ -44,8 +45,16 @@ fun GitRepository.assertStatus(file: File, status: Char) {
  * Checks the latest part of git history by commit messages.
  */
 fun GitRepository.assertLatestHistory(vararg expectedMessages: String) {
+  assertLatestHistory( { it.fullMessage }, *expectedMessages)
+}
+
+fun GitRepository.assertLatestSubjects(vararg expectedMessages: String) {
+  assertLatestHistory( { it.subject }, *expectedMessages)
+}
+
+private fun GitRepository.assertLatestHistory(mapping: (VcsCommitMetadata) -> String, vararg expectedMessages: String) {
   val actualMessages = GitLogUtil.collectMetadata(this.project, this.root).commits
-    .map { it.fullMessage }
+    .map(mapping)
     .subList(0, expectedMessages.size)
   assertOrderedEquals("History is incorrect", actualMessages, expectedMessages.asList())
 }

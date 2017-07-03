@@ -15,6 +15,7 @@
  */
 package git4idea.ui.branch;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
@@ -292,6 +293,14 @@ class GitBranchPopupActions {
           GitBrancher brancher = GitBrancher.getInstance(myProject);
           brancher.renameBranch(myCurrentBranchName, newName, myRepositories);
           reportUsage("git.branch.rename");
+        }
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if (myRepositories.stream().anyMatch(Repository::isFresh)) {
+          e.getPresentation().setEnabled(false);
+          e.getPresentation().setDescription("Renaming branch is not possible before the first commit");
         }
       }
     }

@@ -34,7 +34,7 @@ public interface DebugEventListener extends EventListener {
    * asynchronously, due to a user action in the browser (without explicitly resuming the VM through
    * @param vm
    */
-  default void resumed(Vm vm) {
+  default void resumed(@NotNull Vm vm) {
   }
 
   /**

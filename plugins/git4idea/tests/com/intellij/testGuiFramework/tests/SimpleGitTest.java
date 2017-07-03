@@ -44,7 +44,7 @@ public class SimpleGitTest extends GitGuiTestCase {
 
     ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
     final String projectName = ideFrameFixture.getProject().getName();
-    projectPane.selectByPath(projectName, "src");
+    projectPane.expandByPath(projectName, "src");
 
     //invoke "New..." action
     invokeAction("NewElement");

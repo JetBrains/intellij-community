@@ -53,6 +53,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
   }
 
+  public void testWarnAboutAssigningWeakerAccessPrivileges() {
+    try {
+      doTest(PsiModifier.PRIVATE,null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+      fail("Conflict expected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+  }
+
   public void testDelegateWithoutChangesWarnAboutSameMethodInClass() throws Exception {
     try {
       doTest(null, new ParameterInfoImpl[0], true);

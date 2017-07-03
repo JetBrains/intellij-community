@@ -297,4 +297,11 @@ public class FoldingTest extends AbstractEditorTest {
         assertNull(c2);
       });
   }
+
+  public void _testCollapseInnerRegion() {
+    FoldRegion inner = addFoldRegion(10, 15, "inner");
+    FoldRegion outer = addCollapsedFoldRegion(10, 20, "outer");
+    myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
+    assertSame(outer, myModel.getCollapsedRegionAtOffset(10));
+  }
 }

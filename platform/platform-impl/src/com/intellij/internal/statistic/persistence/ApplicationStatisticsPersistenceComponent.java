@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements
                                                                                                 PersistentStateComponent<Element>,
                                                                                                 BaseComponent {
-  private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
+  private boolean persistOnClosing = false;
 
   private static final String TOKENIZER = ",";
 

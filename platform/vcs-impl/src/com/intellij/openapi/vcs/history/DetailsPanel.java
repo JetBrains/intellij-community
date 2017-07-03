@@ -71,7 +71,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     boolean addRevisionInfo = selection.size() > 1;
     StringBuilder html = new StringBuilder();
     for (TreeNodeOnVcsRevision revision : selection) {
-      String message = revision.getCommitMessage();
+      String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
       if (html.length() > 0) {
         html.append("<br/><br/>");

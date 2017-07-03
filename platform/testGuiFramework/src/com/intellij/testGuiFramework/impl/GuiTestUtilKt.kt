@@ -15,10 +15,17 @@
  */
 package com.intellij.testGuiFramework.impl
 
+import org.fest.swing.core.ComponentMatcher
+import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
 import org.fest.swing.edt.GuiTask
+import org.fest.swing.exception.ComponentLookupException
+import java.awt.Component
+import java.awt.Container
 import java.util.*
+import javax.swing.JLabel
+import javax.swing.JRadioButton
 
 /**
  * @author Sergey Karashevich
@@ -113,7 +120,6 @@ object GuiTestUtilKt {
       }
     }
 
-
   }
 
 
@@ -131,6 +137,45 @@ object GuiTestUtilKt {
 
     fun isLeaf() = (children.count() == 0)
 
+  }
+
+  fun Component.isTextComponent(): Boolean {
+    val textComponentsTypes = arrayOf(JLabel::class.java, JRadioButton::class.java)
+    return textComponentsTypes.any { it.isInstance(this) }
+  }
+
+  fun Component.getComponentText(): String? {
+    when (this) {
+      is JLabel -> return this.text
+      is JRadioButton -> return this.text
+      else -> return null
+    }
+  }
+
+  fun findComponentByText(robot: Robot, container: Container, text: String): Component
+    = robot.finder().find(container, ComponentMatcher { component ->
+    component!!.isTextComponent() && component.getComponentText() == text })
+
+  fun <BoundedComponent> findBoundedComponentByText(robot: Robot, container: Container, text: String, componentType: Class<BoundedComponent>): BoundedComponent {
+    val componentWithText = findComponentByText(robot, container, text)
+    if (componentWithText is JLabel && componentWithText.labelFor != null && componentType.isInstance(componentWithText.labelFor)) return componentWithText.labelFor as BoundedComponent
+    val components = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) && component!!.hasOnCenterXAxis(componentWithText, true) })
+    if (components.isEmpty()) throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text" )
+    val first = components.sortedBy { it.bounds.x }.first()
+    return first as BoundedComponent
+  }
+
+  //Does the textComponent intersects X axis line going through the center of this component and lays lefter than this component
+  fun Component.hasOnCenterXAxis(textComponent: Component, onLeft: Boolean): Boolean {
+    val centerXAxis = this.bounds.height / 2 + this.bounds.y
+    val sideCheck =
+      if (onLeft)
+        textComponent.bounds.x + textComponent.bounds.width < this.bounds.x
+      else
+        textComponent.bounds.x > this.bounds.x + this.bounds.width
+    return (textComponent.bounds.y <= centerXAxis)
+           && (textComponent.bounds.y + textComponent.bounds.height >= centerXAxis)
+           && (sideCheck)
   }
 
   fun runOnEdt(task: () -> Unit) {
@@ -165,12 +210,12 @@ object GuiTestUtilKt {
 
 fun main(args: Array<String>) {
   val tree = GuiTestUtilKt.createTree("project\n" +
-                           "  src\n" +
-                           "    com.username\n" +
-                           "      Test1.java\n" +
-                           "      Test2.java\n" +
-                           "  lib\n" +
-                           "    someLib1\n" +
-                           "   someLib2")
+                                      "  src\n" +
+                                      "    com.username\n" +
+                                      "      Test1.java\n" +
+                                      "      Test2.java\n" +
+                                      "  lib\n" +
+                                      "    someLib1\n" +
+                                      "   someLib2")
   tree.print()
 }
