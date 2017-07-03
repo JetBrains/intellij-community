@@ -1,3 +1,5 @@
+package org.jetbrains.plugins.ipnb;
+
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;

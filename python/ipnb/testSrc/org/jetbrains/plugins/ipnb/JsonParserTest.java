@@ -1,3 +1,5 @@
+package org.jetbrains.plugins.ipnb;
+
 import com.google.common.collect.Iterables;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightVirtualFile;

@@ -1,3 +1,5 @@
+package org.jetbrains.plugins.ipnb;
+
 import com.intellij.openapi.application.PathManager;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;

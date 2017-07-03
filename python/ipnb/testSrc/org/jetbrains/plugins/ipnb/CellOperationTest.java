@@ -1,4 +1,7 @@
+package org.jetbrains.plugins.ipnb;
+
 import com.intellij.testFramework.LightVirtualFile;
+import junit.framework.TestCase;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
@@ -15,9 +18,9 @@ public class CellOperationTest extends IpnbTestCase {
     final IpnbFile ipnbFile = IpnbParser.parseIpnbFile(fileText, new LightVirtualFile());
     ipnbFile.addCell(IpnbCodeCell.createEmptyCodeCell(), ipnbFile.getCells().size());
     final IpnbCodeCell cell = (IpnbCodeCell)ipnbFile.getCells().get(ipnbFile.getCells().size() - 1);
-    assertTrue(cell.getCellOutputs().isEmpty());
-    assertNull(cell.getPromptNumber());
-    assertTrue(cell.getMetadata().isEmpty());
+    TestCase.assertTrue(cell.getCellOutputs().isEmpty());
+    TestCase.assertNull(cell.getPromptNumber());
+    TestCase.assertTrue(cell.getMetadata().isEmpty());
   }
   
   public void testRemoveCell() throws IOException {
@@ -28,6 +31,6 @@ public class CellOperationTest extends IpnbTestCase {
     ipnbFile.addCell(IpnbCodeCell.createEmptyCodeCell(), ipnbFile.getCells().size());
     ipnbFile.removeCell(ipnbFile.getCells().size() - 1);
     
-    assertEquals(fileText, IpnbTestCase.getFileText(fileName));
+    TestCase.assertEquals(fileText, IpnbTestCase.getFileText(fileName));
   }
 }
