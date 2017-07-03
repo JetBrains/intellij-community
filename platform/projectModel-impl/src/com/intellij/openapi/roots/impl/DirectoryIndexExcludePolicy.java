@@ -34,6 +34,11 @@ public interface DirectoryIndexExcludePolicy {
   VirtualFile[] getExcludeRootsForProject();
 
   @NotNull
+  default VirtualFile[] getExcludeRootsForProjectSdk() {
+    return VirtualFile.EMPTY_ARRAY;
+  }
+
+  @NotNull
   VirtualFilePointer[] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel);
 
   @NotNull

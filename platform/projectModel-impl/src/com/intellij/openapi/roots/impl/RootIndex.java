@@ -204,6 +204,7 @@ public class RootIndex {
     }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));
+      info.excludedFromProjectSdk.addAll(ContainerUtil.filter(policy.getExcludeRootsForProjectSdk(), file -> ensureValid(file, policy)));
     }
     for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
@@ -641,6 +642,7 @@ public class RootIndex {
     @NotNull final MultiMap<VirtualFile, Library> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
     @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
+    @NotNull final Set<VirtualFile> excludedFromProjectSdk = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> excludedFromModule = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, String> packagePrefix = ContainerUtil.newHashMap();
@@ -654,6 +656,7 @@ public class RootIndex {
       result.addAll(excludedFromLibraries.keySet());
       result.addAll(excludedFromModule.keySet());
       result.addAll(excludedFromProject);
+      result.addAll(excludedFromProjectSdk);
       return result;
     }
 
@@ -862,7 +865,9 @@ public class RootIndex {
     Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
     VirtualFile libraryClassRoot = libraryClassRootInfo != null ? libraryClassRootInfo.first : null;
 
-    boolean inProject = moduleContentRoot != null || libraryClassRoot != null || librarySourceRoot != null;
+    boolean inProject = moduleContentRoot != null ||
+                        ( (libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromProjectSdk.contains(root));
+
     VirtualFile nearestContentRoot;
     if (inProject) {
       nearestContentRoot = moduleContentRoot;

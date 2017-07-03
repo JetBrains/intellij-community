@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -30,11 +31,13 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author traff
  */
 public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolicy {
+  private final static String[] SITE_PACKAGES = new String[]{"site-packages", "dist-packages"};
 
   private final Project myProject;
 
@@ -53,13 +56,24 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
       }
     }
 
+    return result.toArray(new VirtualFile[result.size()]);
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] getExcludeRootsForProjectSdk() {
+    List<VirtualFile> result = Lists.newArrayList();
+
     for (Module m : ModuleManager.getInstance(myProject).getModules()) {
       Sdk sdk = PythonSdkType.findPythonSdk(m);
       if (sdk != null) {
+        Set<VirtualFile> roots = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
         for (VirtualFile dir : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-          VirtualFile sitePackages = dir.findChild("site-packages");
-          if (sitePackages != null) {
-            result.add(sitePackages);
+          for (String name : SITE_PACKAGES) {
+            VirtualFile sitePackages = dir.findChild(name);
+            if (sitePackages != null && !roots.contains(sitePackages)) {
+              result.add(sitePackages);
+            }
           }
         }
       }
@@ -71,8 +85,8 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
   @NotNull
   @Override
   public VirtualFilePointer[] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) {
-    
-    
+
+
     return VirtualFilePointer.EMPTY_ARRAY;
   }
 }
