@@ -351,8 +351,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
     treeGroup.addAction(new ShowConfigurationsAction());
-    treeGroup.addAction(new PreviousOccurrenceAction());
-    treeGroup.addAction(new NextOccurrenceAction());
+    treeGroup.addAction(new PreviousConfigurationAction());
+    treeGroup.addAction(new NextConfigurationAction());
     treeGroup.addSeparator();
 
     TreeExpander treeExpander = new DefaultTreeExpander(myTree);
@@ -461,10 +461,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       if (isSelected(e)) {
         if (myLastSelection instanceof DashboardNode) {
           Content content = ((DashboardNode)myLastSelection).getContent();
-          if (content != null && content.getManager() != myContentManager) {
-            content = null;
-          }
-          enabled = content != null;
+          enabled = content != null && content.getManager() == myContentManager;
         }
         else {
           enabled = false;
@@ -485,8 +482,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
   }
 
-  private class PreviousOccurrenceAction extends AnAction implements DumbAware {
-    PreviousOccurrenceAction() {
+  private class PreviousConfigurationAction extends AnAction implements DumbAware {
+    PreviousConfigurationAction() {
       super(ExecutionBundle.message("run.dashboard.previous.configuration.action.name"), null, AllIcons.Actions.PreviousOccurence);
     }
 
@@ -501,8 +498,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
   }
 
-  private class NextOccurrenceAction extends AnAction implements DumbAware {
-    NextOccurrenceAction() {
+  private class NextConfigurationAction extends AnAction implements DumbAware {
+    NextConfigurationAction() {
       super(ExecutionBundle.message("run.dashboard.next.configuration.action.name"), null, AllIcons.Actions.NextOccurence);
     }
 
