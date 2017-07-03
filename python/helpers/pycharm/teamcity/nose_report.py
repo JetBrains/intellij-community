@@ -5,7 +5,7 @@ import datetime
 import inspect
 
 from teamcity import is_running_under_teamcity
-from teamcity.common import is_string, get_class_fullname, convert_error_to_string, dump_test_stdout
+from teamcity.common import is_string, get_class_fullname, convert_error_to_string, dump_test_stdout, FlushingStringIO
 from teamcity.messages import TeamcityServiceMessages
 
 import nose
@@ -87,6 +87,18 @@ class TeamcityReport(Plugin):
     def configure(self, options, conf):
         self.enabled = is_running_under_teamcity()
         self.config = conf
+
+        if self._capture_plugin_enabled():
+            capture_plugin = self._get_capture_plugin()
+            old_before_test = capture_plugin.beforeTest
+
+            def newCaptureBeforeTest(test):
+                old_before_test(test)
+                test_id = self.get_test_id(test)
+                capture_plugin._buf = FlushingStringIO(lambda data: dump_test_stdout(self.messages, test_id, test_id, data))
+                sys.stdout = capture_plugin._buf
+
+            capture_plugin.beforeTest = newCaptureBeforeTest
 
     def options(self, parser, env=os.environ):
         pass
