@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="AndroidStudio" type="Application" factoryName="Application" singleton="true">
+    <log_file path="$PROJECT_DIR$/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
     <option name="VM_PARAMETERS" value="-ea -Xbootclasspath/p:../out/classes/production/boot -Xms512m -Xmx1024m -Didea.is.internal=true -Didea.platform.prefix=AndroidStudio -Dandroid.extra_templates.path=../../../sdk/templates -Dapple.laf.useScreenMenuBar=true -Dcom.apple.mrj.application.apple.menu.about.name=AndroidStudio -Dsun.awt.disablegrab=true -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine" />
