@@ -160,16 +160,18 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void initComponent() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
 
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(Project project) {
-        JobScheduler.getScheduler().schedule(() -> UsagesCollector.doPersistProjectUsages(project), DELAY_IN_MIN, TimeUnit.MINUTES);
-      }
-    });
+      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+        @Override
+        public void projectOpened(Project project) {
+          JobScheduler.getScheduler().schedule(() -> UsagesCollector.doPersistProjectUsages(project), DELAY_IN_MIN, TimeUnit.MINUTES);
+        }
+      });
 
-    persistPeriodically();
+      persistPeriodically();
+    }
   }
 
   private static void persistPeriodically() {
