@@ -54,6 +54,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -67,6 +68,7 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -1273,6 +1275,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         highlighter.setLineMarkerRenderer(new MyLineStatusMarkerRenderer(range));
 
         range.setHighlighter(highlighter);
+      }
+
+      @Nullable
+      @Override
+      protected VirtualFile getVirtualFile() {
+        return FileDocumentManager.getInstance().getFile(myDocument);
       }
     }
 
