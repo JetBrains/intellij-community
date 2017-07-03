@@ -59,6 +59,16 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     complete("module M { provides pkg.main.MySvc with MSI<caret> }", "module M { provides pkg.main.MySvc with pkg.main.MySvcImpl;<caret> }")
   }
 
+  fun testImports() {
+    addFile("module-info.java", "module M { requires M2; }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\npublic class C2Impl { }", M2)
+    myFixture.configureByText("test.java", "import pkg.m2.<caret>")
+    myFixture.completeBasic()
+    assertOrderedEquals(myFixture.lookupElementStrings!!, "*", "C2") // no 'impl'
+  }
+
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)
