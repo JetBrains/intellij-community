@@ -31,7 +31,7 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
 
   @Override
   public Result checkAutoPopup(char charTyped, Project project, Editor editor, PsiFile file) {
-    return handleTyping(project, editor, file);
+    return handleTyping(project, editor, file, false);
   }
 
   @Override
@@ -40,11 +40,11 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
                                 Editor editor,
                                 PsiFile file,
                                 FileType fileType) {
-    return handleTyping(project, editor, file);
+    return handleTyping(project, editor, file, true);
   }
 
   @NotNull
-  private static Result handleTyping(Project project, Editor editor, PsiFile file) {
+  private static Result handleTyping(Project project, Editor editor, PsiFile file, boolean showBaloon) {
     if (!StudyUtils.isStudyProject(project)) {
       return Result.CONTINUE;
     }
@@ -58,18 +58,21 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
       if (placeholder == null || placeholder.isActive()) {
         return Result.CONTINUE;
       }
-      Integer toSubtask = Collections.max(placeholder.getSubtaskInfos().keySet().stream()
-                                            .filter(k -> k < ((TaskWithSubtasks)taskFile.getTask()).getActiveSubtaskIndex())
-                                            .collect(Collectors.toList()));
-      int userVisibleSubtaskNum = toSubtask + 1;
-      String text = String
-        .format("<html>To edit this placeholder <a href=\"%s\">activate</a> it or <a href=\"%s\">switch to subtask %d</a></html>", ACTIVATE,
-                SWITCH, userVisibleSubtaskNum);
-      MyHyperlinkAdapter listener = new MyHyperlinkAdapter(taskFile, placeholder, file, editor, project, toSubtask);
-      Balloon balloon =
-        JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), listener)
-          .setHideOnLinkClick(true).createBalloon();
-      balloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(editor), Balloon.Position.below);
+      if (showBaloon) {
+        Integer toSubtask = Collections.max(placeholder.getSubtaskInfos().keySet().stream()
+                                              .filter(k -> k < ((TaskWithSubtasks)taskFile.getTask()).getActiveSubtaskIndex())
+                                              .collect(Collectors.toList()));
+        int userVisibleSubtaskNum = toSubtask + 1;
+        String text = String
+          .format("<html>To edit this placeholder <a href=\"%s\">activate</a> it or <a href=\"%s\">switch to subtask %d</a></html>",
+                  ACTIVATE,
+                  SWITCH, userVisibleSubtaskNum);
+        MyHyperlinkAdapter listener = new MyHyperlinkAdapter(taskFile, placeholder, file, editor, project, toSubtask);
+        Balloon balloon =
+          JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text, null, MessageType.WARNING.getPopupBackground(), listener)
+            .setHideOnLinkClick(true).createBalloon();
+        balloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(editor), Balloon.Position.below);
+      }
       return Result.STOP;
     }
     boolean insidePlaceholder = taskFile.getAnswerPlaceholder(offset) != null;
