@@ -61,7 +61,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
   @NotNull private final List<DashboardGrouper> myGroupers;
-  private boolean myShowConfigurations;
+  private boolean myShowConfigurations = true;
 
   private RunDashboardContent myDashboardContent;
   private Content myToolWindowContent;
@@ -314,7 +314,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public State getState() {
     State state = new State();
-    state.showConfigurations = myShowConfigurations;
     state.ruleStates = myGroupers.stream()
       .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
       .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
@@ -324,7 +323,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public void loadState(State state) {
-    myShowConfigurations = state.showConfigurations;
     state.ruleStates.forEach(ruleState -> {
       for (DashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
@@ -336,7 +334,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   static class State {
-    boolean showConfigurations = true;
     public List<RuleState> ruleStates = new ArrayList<>();
   }
 
