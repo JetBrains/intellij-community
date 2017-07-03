@@ -1000,18 +1000,19 @@ class InternalGetVariable(InternalThreadCommand):
         """ Converts request into python variable """
         try:
             xml = "<xml>"
-            valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            _typeName, valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
             if valDict is None:
                 valDict = {}
 
             keys = valDict.keys()
-            if hasattr(keys, 'sort'):
-                keys.sort(compare_object_attrs) #Python 3.0 does not have it
-            else:
-                if IS_PY3K:
-                    keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
+            if _typeName != "OrderedDict":
+                if hasattr(keys, 'sort'):
+                    keys.sort(compare_object_attrs) #Python 3.0 does not have it
                 else:
-                    keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
+                    if IS_PY3K:
+                        keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
+                    else:
+                        keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
 
             for k in keys:
                 xml += pydevd_xml.var_to_xml(valDict[k], to_string(k))

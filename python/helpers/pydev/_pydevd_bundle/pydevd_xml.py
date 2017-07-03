@@ -78,20 +78,27 @@ def _update_type_map():
         try:
             from django.utils.datastructures import MultiValueDict
             _TYPE_MAP.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
-            #we should put it before dict
+            # we should put it before dict
         except:
             pass  #django may not be installed
 
         try:
             from django.forms import BaseForm
             _TYPE_MAP.insert(0, (BaseForm, pydevd_resolver.djangoFormResolver))
-            #we should put it before instance resolver
+            # we should put it before instance resolver
         except:
             pass  #django may not be installed
 
         try:
             from collections import deque
             _TYPE_MAP.append((deque, pydevd_resolver.dequeResolver))
+        except:
+            pass
+
+        try:
+            from collections import OrderedDict
+            _TYPE_MAP.insert(0, (OrderedDict, pydevd_resolver.orderedDictResolver))
+            # we should put it before dict
         except:
             pass
 
