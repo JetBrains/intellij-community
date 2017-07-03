@@ -198,6 +198,7 @@ public class JsonSchemaObject {
     myPatternProperties = new PatternProperties(patternProperties);
   }
 
+  @Nullable
   public JsonSchemaType getType() {
     return myType;
   }
