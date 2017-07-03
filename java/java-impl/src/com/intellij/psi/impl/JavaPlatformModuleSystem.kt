@@ -37,10 +37,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun checkAccess(target: PsiClass, place: PsiElement) = checkAccess(target, place, false)
 
   private fun checkAccess(target: PsiClass, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
-    if (PsiUtil.isLanguageLevel9OrHigher(place)) {
+    val useFile = place.containingFile
+    if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
       val targetFile = target.containingFile
       if (targetFile is PsiClassOwner) {
-        return checkAccess(targetFile, place, targetFile.packageName, quick)
+        return checkAccess(targetFile, useFile, targetFile.packageName, quick)
       }
     }
 
@@ -59,7 +60,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
             val test = index.isInTestSourceContent(useVFile)
             val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
             if (dirs.size == 1) {
-              return checkAccess(dirs[0], place, target.qualifiedName, quick)
+              return checkAccess(dirs[0], useFile, target.qualifiedName, quick)
             }
           }
         }
@@ -71,7 +72,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private val ERR = Pair("-", emptyList<IntentionAction>())
 
-  private fun checkAccess(target: PsiFileSystemItem, place: PsiElement, packageName: String, quick: Boolean): Pair<String, List<IntentionAction>>? {
+  private fun checkAccess(target: PsiFileSystemItem,
+                          place: PsiFileSystemItem,
+                          packageName: String,
+                          quick: Boolean): Pair<String, List<IntentionAction>>? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
     val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
 
