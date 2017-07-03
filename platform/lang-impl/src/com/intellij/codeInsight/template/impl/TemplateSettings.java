@@ -69,11 +69,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
   public static final char CUSTOM_CHAR = 'C';
+  public static final char NONE_CHAR = 'N';
 
   @NonNls private static final String SPACE = "SPACE";
   @NonNls private static final String TAB = "TAB";
   @NonNls private static final String ENTER = "ENTER";
   @NonNls private static final String CUSTOM = "CUSTOM";
+  @NonNls private static final String NONE = "NONE";
 
   @NonNls private static final String NAME = "name";
   @NonNls private static final String VALUE = "value";
@@ -115,6 +117,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return TAB.equals(shortcut) ? TAB_CHAR :
              ENTER.equals(shortcut) ? ENTER_CHAR :
              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
+             NONE.equals(shortcut) ? NONE_CHAR :
              SPACE_CHAR;
     }
 
@@ -124,6 +127,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return shortcut == TAB_CHAR ? TAB :
              shortcut == ENTER_CHAR ? ENTER :
              shortcut == CUSTOM_CHAR ? CUSTOM :
+             shortcut == NONE_CHAR ? NONE :
              SPACE;
     }
   }
@@ -446,6 +450,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     else if (SPACE.equals(shortcut)) {
       template.setShortcutChar(SPACE_CHAR);
     }
+    else if (NONE.equals(shortcut)) {
+      template.setShortcutChar(NONE_CHAR);
+    }
     else {
       template.setShortcutChar(DEFAULT_CHAR);
     }
@@ -620,6 +627,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
     else if (template.getShortcutChar() == SPACE_CHAR) {
       element.setAttribute(SHORTCUT, SPACE);
+    }
+    else if (template.getShortcutChar() == NONE_CHAR) {
+      element.setAttribute(SHORTCUT, NONE);
     }
     if (template.getDescription() != null) {
       element.setAttribute(DESCRIPTION, template.getDescription());

@@ -2,7 +2,7 @@
 <templateSet group="surround">
 
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.braces"
-            name="B" toReformat="true" toShortenFQNames="true" value="{$SELECTION$}">
+            name="B" toReformat="true" toShortenFQNames="true" value="{$SELECTION$}" shortcut="NONE">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_COMMENT" value="false" />
@@ -18,7 +18,7 @@
   </template>
 
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.parens"
-            name="P" toReformat="false" toShortenFQNames="true" value="($SELECTION$)">
+            name="P" toReformat="false" toShortenFQNames="true" value="($SELECTION$)" shortcut="NONE">
     <context>
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_COMMENT" value="false" />
