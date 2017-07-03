@@ -273,6 +273,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myLastSelection = node;
     if (node instanceof DashboardNode) {
       Content content = ((DashboardNode)node).getContent();
+      if (content != null && content.getManager() != myContentManager) {
+        content = null;
+      }
       updateContentToolbar(content);
       if (content != null) {
         if (content != myContentManager.getSelectedContent()) {

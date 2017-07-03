@@ -16,7 +16,6 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.dashboard.RunDashboardContributor;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
@@ -568,8 +567,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   @Nullable
   public String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null) {
-      ConfigurationType type = settings.getType();
-      if (RunDashboardContributor.isShowInDashboard(type)) {
+      RunDashboardContributor contributor = RunDashboardContributor.getContributor(settings.getType());
+      if (contributor != null && contributor.isShowInDashboard(settings.getConfiguration())) {
         return RunDashboardManager.getInstance(myProject).getToolWindowId();
       }
     }
