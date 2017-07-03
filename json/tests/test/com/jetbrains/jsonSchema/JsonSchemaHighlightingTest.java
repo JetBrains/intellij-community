@@ -92,7 +92,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                  "  }\n" +
                                  "}");
     doTest(schema, "{\"prop\": [101, 102]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18.0\">16</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18\">16</warning>]}");
     doTest(schema, "{\"prop\": [<warning descr=\"Type is not allowed\">\"test\"</warning>]}");
   }
 
