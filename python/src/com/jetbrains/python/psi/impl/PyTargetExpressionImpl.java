@@ -534,9 +534,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public PyExpression findAssignedValue() {
     PyPsiUtils.assertValid(this);
-    final CachedValuesManager manager = CachedValuesManager.getManager(getProject());
-    return manager.getCachedValue(this,
-                                  () -> Result
+    return CachedValuesManager.getCachedValue(this,
+                                              () -> Result
                                     .create(findAssignedValueInternal(), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
