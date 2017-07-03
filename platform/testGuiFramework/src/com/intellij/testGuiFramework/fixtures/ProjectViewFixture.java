@@ -18,7 +18,10 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
@@ -256,11 +259,6 @@ public class ProjectViewFixture extends ToolWindowFixture {
       throw new AssertionError("Unable to find 'External Libraries' node");
     }
 
-    public NodeFixture selectByPath(@NotNull final String... paths) {
-      NodeFixture nodeFixture = getNode(paths);
-      nodeFixture.select();
-      return nodeFixture;
-    }
 
     public NodeFixture expandByPath(@NotNull final String... paths) {
       NodeFixture nodeFixture = getNode(paths);
@@ -271,10 +269,10 @@ public class ProjectViewFixture extends ToolWindowFixture {
     @NotNull
     private NodeFixture getNode(@NotNull String[] path) {
       AbstractTreeStructure treeStructure = getTreeStructure();
-      BasePsiNode basePsiNode = GuiActionRunner.execute(new GuiQuery<BasePsiNode>() {
+      ProjectViewNode projectViewNode = GuiActionRunner.execute(new GuiQuery<ProjectViewNode>() {
         @Nullable
         @Override
-        protected BasePsiNode executeInEDT() throws Throwable {
+        protected ProjectViewNode executeInEDT() throws Throwable {
           Object root = treeStructure.getRootElement();
           ExtendedTreeFixture treeFixture = new ExtendedTreeFixture(myRobot, myPane.getTree());
           Tree tree = (Tree)myPane.getTree();
@@ -306,11 +304,11 @@ public class ProjectViewFixture extends ToolWindowFixture {
             }
           }
 
-          return (BasePsiNode)root;
+          return (ProjectViewNode)root;
         }
       });
-      if (basePsiNode == null) throw new ComponentLookupException("Unable to find node with next path: " + Arrays.toString(path));
-      return new NodeFixture(basePsiNode, treeStructure, myPane);
+      if (projectViewNode == null) throw new ComponentLookupException("Unable to find node with next path: " + Arrays.toString(path));
+      return new NodeFixture(projectViewNode, treeStructure, myPane);
     }
   }
 
@@ -371,12 +369,12 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public void click() {
-      expand().select().scrollTo();
+      expand().scrollTo();
       myRobot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 1);
     }
 
     public void doubleClick() {
-      expand().select().scrollTo();
+      expand().scrollTo();
       myRobot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 2);
     }
 
@@ -385,7 +383,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public void invokeContextMenu() {
-      expand().select().scrollTo();
+      expand().scrollTo();
       myRobot.click(getLocationOnScreen(), MouseButton.RIGHT_BUTTON, 1);
     }
 
@@ -437,35 +435,6 @@ public class ProjectViewFixture extends ToolWindowFixture {
           myPane.expand(myPath, true);
         }
       });
-      return this;
-    }
-
-    @NotNull
-    public NodeFixture select() {
-      GuiActionRunner.execute(new GuiTask() {
-        @Override
-        protected void executeInEDT() throws Throwable {
-          VirtualFile vf2select = myNode instanceof ClassTreeNode
-                                  ? ((ClassTreeNode)myNode).getPsiClass().getContainingFile().getVirtualFile()
-                                  : ((BasePsiNode)myNode).getVirtualFile();
-          myPane.select(myNode, vf2select, true);
-        }
-      });
-      pause(new Condition("Node to be selected") {
-        @Override
-        public boolean test() {
-          return myNode.equals(GuiActionRunner.execute(new GuiQuery<Object>() {
-            @Override
-            protected Object executeInEDT() throws Throwable {
-              DefaultMutableTreeNode selectedNode = myPane.getSelectedNode();
-              if (selectedNode != null) {
-                return selectedNode.getUserObject();
-              }
-              return null;
-            }
-          }));
-        }
-      }, SHORT_TIMEOUT);
       return this;
     }
 
