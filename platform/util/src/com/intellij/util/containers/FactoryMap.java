@@ -173,7 +173,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return ContainerUtil.map2Set(myMap.entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
+    return ContainerUtil.map2Set(getMap().entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
           @Override
           public Entry<K,V> fun(Entry<K,V> entry) {
             return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
