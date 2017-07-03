@@ -35,6 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,14 +69,14 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-        HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag);
+        DocumentUtil.writeInRunUndoTransparentAction(() -> HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag));
       }
       return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
     }
 
     PsiFile file = token.getFile();
     if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-      HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file);
+      DocumentUtil.writeInRunUndoTransparentAction(() -> HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file));
     }
     return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
   }
