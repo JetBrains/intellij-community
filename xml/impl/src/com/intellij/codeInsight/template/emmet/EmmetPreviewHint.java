@@ -179,7 +179,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       @NotNull
       @Override
       public Insets getInsets() {
-        return new Insets(1, 2, 0, 0);
+        return JBUI.insets(1, 2, 0, 0);
       }
     };
     panel.setBackground(previewEditor.getBackgroundColor());
