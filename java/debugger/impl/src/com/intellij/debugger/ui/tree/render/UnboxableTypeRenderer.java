@@ -38,6 +38,11 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
         throws EvaluateException {
         return DebuggerUtils.getValueAsString(evaluationContext, UnBoxingEvaluator.getInnerPrimitiveValue((ObjectReference)descriptor.getValue()));
       }
+
+      @Override
+      public boolean isOnDemand(EvaluationContext evaluationContext) {
+        return false;
+      }
     }, null);
     LOG.assertTrue(UnBoxingEvaluator.isTypeUnboxable(className));
     setClassName(className);
