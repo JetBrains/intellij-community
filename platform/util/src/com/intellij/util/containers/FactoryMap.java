@@ -24,6 +24,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -66,7 +67,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
         map.put(k, v);
       }
     }
-    return value == FAKE_NULL() ? null : value;
+    return nullize(value);
   }
 
   private Map<K, V> getMap() {
@@ -86,6 +87,10 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     //noinspection unchecked
     return key == null ? FactoryMap.<T>FAKE_NULL() : (T)key;
   }
+  @Nullable
+  private static <T> T nullize(T value) {
+    return value == FAKE_NULL() ? null : value;
+  }
 
   @Override
   public final boolean containsKey(Object key) {
@@ -97,13 +102,13 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     K k = notNull(key);
     V v = notNull(value);
     v = getMap().put(k, v);
-    return v == FAKE_NULL() ? null : v;
+    return nullize(v);
   }
 
   @Override
   public V remove(Object key) {
     V v = getMap().remove(key);
-    return v == FAKE_NULL() ? null : v;
+    return nullize(v);
   }
 
   @NotNull
@@ -121,9 +126,9 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   }
 
   public boolean removeValue(Object value) {
-    Object t = ObjectUtils.notNull(value, FAKE_NULL());
+    Object t = notNull(value);
     //noinspection SuspiciousMethodCalls
-    return getMap().values().remove(t);
+    return getMap().values().remove(t);                                                                                
   }
 
 
@@ -160,7 +165,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return ContainerUtil.map(getMap().values(), new Function<V, V>() {
       @Override
       public V fun(V v) {
-        return v == FAKE_NULL() ? null : v;
+        return nullize(v);
       }
     });
   }
@@ -168,7 +173,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return getMap().entrySet();
+    return ContainerUtil.map2Set(myMap.entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
+          @Override
+          public Entry<K,V> fun(Entry<K,V> entry) {
+            return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
+          }
+        });
   }
 
   @NotNull
