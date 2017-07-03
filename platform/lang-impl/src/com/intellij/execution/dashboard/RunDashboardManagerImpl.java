@@ -88,7 +88,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void initToolWindowListeners() {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
 
     connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
@@ -142,6 +142,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       @Override
       public void selectionChanged(ContentManagerEvent event) {
         updateToolWindowContent();
+        updateDashboard(true);
       }
     });
   }
@@ -183,15 +184,16 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(runConfiguration -> RunDashboardContributor.isShowInDashboard(runConfiguration.getType()))
+      .filter(runConfiguration -> RunDashboardContributor.getContributor(runConfiguration.getType()) != null)
       .collect(Collectors.toList());
 
     //noinspection ConstantConditions ???
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
     configurations.forEach(configurationSettings -> {
-      List<RunContentDescriptor> descriptors = executionManager.getDescriptors(
-        settings -> Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration()));
-      if (descriptors.isEmpty()) {
+      List<RunContentDescriptor> descriptors = filterByContent(executionManager.getDescriptors(
+          settings -> Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration())));
+      RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());
+      if (descriptors.isEmpty() && contributor != null &&  contributor.isShowInDashboard(configurationSettings.getConfiguration())) {
         result.add(Pair.create(configurationSettings, null));
       }
       else {
@@ -203,16 +205,23 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     // It should be shown in he dashboard tree.
     List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
       .collect(Collectors.toList());
-    List<RunContentDescriptor> notStoredDescriptors = executionManager.getRunningDescriptors(settings -> {
-      RunConfiguration configuration = settings.getConfiguration();
-      return RunDashboardContributor.isShowInDashboard(settings.getType()) && !storedConfigurations.contains(configuration);
-    });
+    List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getRunningDescriptors(settings ->
+      RunDashboardContributor.getContributor(settings.getType()) != null && !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {
       Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
       settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
     });
 
     return result;
+  }
+
+  private List<RunContentDescriptor> filterByContent(List<RunContentDescriptor> descriptors) {
+    return descriptors.stream()
+      .filter(descriptor -> {
+        Content content = descriptor.getAttachedContent();
+        return content != null && content.getManager() == myContentManager;
+      })
+      .collect(Collectors.toList());
   }
 
   @Override
@@ -227,7 +236,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null && RunDashboardContributor.isShowInDashboard(settings.getType())) {
+    if (settings != null && RunDashboardContributor.getContributor(settings.getType()) != null) {
       updateDashboard(true);
     }
   }
