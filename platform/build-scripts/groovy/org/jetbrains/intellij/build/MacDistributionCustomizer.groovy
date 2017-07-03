@@ -106,6 +106,14 @@ abstract class MacDistributionCustomizer {
   String dmgImagePathForEAP = null
 
   /**
+   * Include jre for OS X from 171.3 release.
+   * https://youtrack.jetbrains.com/issue/JRE-401
+   * As soon as the issue will be fixed the change should be reverted.
+   */
+  String customJreFileName = "jbre8u112b736.21_x64.tar.gz"
+
+
+  /**
    * Application bundle name: &lt;name&gt;.app. Current convention is to have ProductName.app for release and ProductName Version EAP.app.
    * @param applicationInfo application info that can be used to check for EAP and building version
    * @param buildNumber current build number

@@ -52,9 +52,9 @@ class MacDmgBuilder {
   static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     def jreDir = new File(buildContext.paths.projectHome, 'build/jdk')
-    def jreArchivePath = new File(jreDir, buildContext.productProperties.customJreFileName)
+    def jreArchivePath = new File(jreDir, customizer.customJreFileName)
     if (!jreArchivePath.exists()) {
-      buildContext.bundledJreManager.findMacJreArchive()
+      jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
     }
 
     if (jreArchivePath != null) {
