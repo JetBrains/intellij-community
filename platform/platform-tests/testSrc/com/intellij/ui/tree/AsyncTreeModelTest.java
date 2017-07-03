@@ -31,6 +31,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
 
 public final class AsyncTreeModelTest {
   private final static boolean PRINT = false;
@@ -45,31 +46,17 @@ public final class AsyncTreeModelTest {
   @Test
   public void testNullRoot() {
     testAsync(() -> null, test
-      -> testNullRoot(test, ()
+      -> testPathState0(test.tree, ()
       -> test.updateModelAndWait(model -> model.setRoot(createRoot()), ()
-      -> testRootOnly(test, test::done))));
-  }
-
-  private static void testNullRoot(@NotNull ModelTest test, @NotNull Runnable task) {
-    assert 0 == test.tree.getRowCount() : "tree should have no nodes";
-    String state = getPathState(test.tree);
-    assert state.isEmpty() : "unexpected tree state";
-    task.run();
+      -> testPathState1(test.tree, test::done))));
   }
 
   @Test
   public void testRootOnly() {
     testAsync(AsyncTreeModelTest::createRoot, test
-      -> testRootOnly(test, ()
+      -> testPathState1(test.tree, ()
       -> test.updateModelAndWait(model -> model.setRoot(null), ()
-      -> testNullRoot(test, test::done))));
-  }
-
-  private static void testRootOnly(@NotNull ModelTest test, @NotNull Runnable task) {
-    assert 1 == test.tree.getRowCount() : "tree should have only one node";
-    String state = getPathState(test.tree);
-    assert state.equals("    'root'\n") : "unexpected tree state";
-    task.run();
+      -> testPathState0(test.tree, test::done))));
   }
 
   @Test
@@ -84,10 +71,10 @@ public final class AsyncTreeModelTest {
     assert mutable == first.equals(second);
     assert first != second : "both nodes should not be the same";
     testAsync(() -> first, test
-      -> testRootOnly(test, ()
+      -> testPathState1(test.tree, ()
       -> testRootOnlyUpdate(test, first, ()
       -> test.updateModelAndWait(model -> model.setRoot(second), ()
-      -> testRootOnly(test, ()
+      -> testPathState1(test.tree, ()
       -> testRootOnlyUpdate(test, mutable ? first : second, test::done))))));
   }
 
@@ -97,6 +84,57 @@ public final class AsyncTreeModelTest {
     assert expected == actual : "expected node should be the same";
     task.run();
   }
+
+  @Test
+  public void testChildren() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.collapse(path, ()
+      -> testPathState1(test.tree, ()
+      -> test.setRootVisible(false, ()
+      -> testPathState0(test.tree, ()
+      -> test.expand(path, ()
+      -> testPathState(test.tree, CHILDREN, ()
+      -> test.expand(path.pathByAddingChild(color), ()
+      -> testPathState(test.tree, CHILDREN_COLOR, ()
+      -> test.expand(path.pathByAddingChild(greek), ()
+      -> testPathState(test.tree, CHILDREN_COLOR_GREEK, ()
+      -> test.collapse(path, ()
+      -> testPathState0(test.tree, ()
+      -> test.setRootVisible(true, ()
+      -> testPathState1(test.tree, ()
+      -> test.expand(path, ()
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN_COLOR_GREEK, test::done))))))))))))))))));
+  }
+
+  private static final String CHILDREN
+    = "      'color'\n" +
+      "      'digit'\n" +
+      "      'greek'\n";
+  private static final String CHILDREN_COLOR
+    = "     +'color'\n" +
+      "        'red'\n" +
+      "        'green'\n" +
+      "        'blue'\n" +
+      "      'digit'\n" +
+      "      'greek'\n";
+  private static final String CHILDREN_COLOR_GREEK
+    = "     +'color'\n" +
+      "        'red'\n" +
+      "        'green'\n" +
+      "        'blue'\n" +
+      "      'digit'\n" +
+      "     +'greek'\n" +
+      "        'alpha'\n" +
+      "        'beta'\n" +
+      "        'gamma'\n" +
+      "        'delta'\n" +
+      "        'epsilon'\n";
 
   @NotNull
   private static TreeNode createRoot() {
@@ -116,6 +154,21 @@ public final class AsyncTreeModelTest {
   @NotNull
   private static TreeNode createGreekNode() {
     return new Node("greek", "alpha", "beta", "gamma", "delta", "epsilon");
+  }
+
+  private static void testPathState(@NotNull JTree tree, @NotNull String state, @NotNull Runnable task) {
+    assertEquals("unexpected tree state", state, getPathState(tree));
+    task.run();
+  }
+
+  private static void testPathState0(@NotNull JTree tree, @NotNull Runnable task) {
+    assert 0 == tree.getRowCount() : "tree should have no nodes";
+    testPathState(tree, "", task);
+  }
+
+  private static void testPathState1(@NotNull JTree tree, @NotNull Runnable task) {
+    assert 1 == tree.getRowCount() : "tree should have only one node";
+    testPathState(tree, "    'root'\n", task);
   }
 
   @NotNull
@@ -253,6 +306,21 @@ public final class AsyncTreeModelTest {
           promise.setError(throwable);
         }
       };
+    }
+
+    private void setRootVisible(boolean visible, @NotNull Runnable task) {
+      tree.setRootVisible(visible);
+      runOnSwingThreadWhenProcessingDone(task);
+    }
+
+    private void expand(@NotNull TreePath path, @NotNull Runnable task) {
+      tree.expandPath(path);
+      runOnSwingThreadWhenProcessingDone(task);
+    }
+
+    private void collapse(@NotNull TreePath path, @NotNull Runnable task) {
+      tree.collapsePath(path);
+      runOnSwingThreadWhenProcessingDone(task);
     }
 
     private void updateModelAndWait(Consumer<DefaultTreeModel> consumer, @NotNull Runnable task) {
