@@ -29,6 +29,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -61,7 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
  * @since 13.0
  */
-public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, Disposable {
+public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, UserDataHolder, Disposable {
 
   @NotNull
   private final Project myProject;
@@ -100,6 +103,8 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       return false;
     }
   };
+
+  private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected FinderRecursivePanel(@NotNull FinderRecursivePanel parent) {
     this(parent.getProject(), parent, parent.getGroupId());
@@ -383,6 +388,17 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       return myCopyProvider;
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public <U> U getUserData(@NotNull Key<U> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <U> void putUserData(@NotNull Key<U> key, @Nullable U value) {
+    myUserDataHolder.putUserData(key, value);
   }
 
   @Override
@@ -690,6 +706,19 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
     @Override
     protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    }
+  }
+
+  protected static class DisposablePanel extends JPanel implements Disposable {
+    public DisposablePanel(LayoutManager layout, @Nullable Disposable parent) {
+      super(layout);
+      if (parent != null) {
+        Disposer.register(parent, this);
+      }
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 }
