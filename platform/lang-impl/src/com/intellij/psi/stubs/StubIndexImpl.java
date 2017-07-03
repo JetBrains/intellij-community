@@ -341,9 +341,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(stubUpdatingIndexId);
+    final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);   // wait for initialization to finish
+    
     fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope);
-
-    final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
     try {
@@ -406,9 +406,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   @Override
   public <K> boolean processAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Processor<K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+    final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
-    final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey);
     myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
     try {
       myAccessValidator.startedProcessingActivityForIndex(indexKey);
