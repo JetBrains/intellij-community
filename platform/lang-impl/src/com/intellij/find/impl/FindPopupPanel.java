@@ -60,7 +60,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -543,9 +542,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         if (e.getValueIsAdjusting()) return;
         int index = myResultsPreviewTable.getSelectedRow();
         if (index != -1) {
-          UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
-          myUsagePreviewPanel.updateLayout(usageInfo.isValid() ? Collections.singletonList(usageInfo) : null);
-          VirtualFile file = usageInfo.getVirtualFile();
+          UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0);
+          myUsagePreviewPanel.updateLayout(adapter.isValid() ? Arrays.asList(adapter.getMergedInfos()) : null);
+          VirtualFile file = adapter.getFile();
           String path = "";
           if (file != null) {
             String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());
