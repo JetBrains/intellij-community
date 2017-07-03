@@ -22,50 +22,47 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
 
 public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    if (c instanceof JSpinner) {
-      JSpinner spinner = (JSpinner)c;
+    if (!(c instanceof JSpinner)) return;
 
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        g2.translate(x, y);
+    JSpinner spinner = (JSpinner)c;
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      Rectangle r = new Rectangle(x, y, width, height);
+      JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
 
-        int bw = JBUI.scale(1);
+      boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
+      if (c.isEnabled()) {
 
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
-        if (c.isEnabled()) {
-
-          if (DarculaSpinnerBorder.isFocused(c) || hover) {
-            width -= JBUI.scale(WinIntelliJSpinnerUI.BUTTON_WIDTH) - bw;
-          }
-
-          if (DarculaSpinnerBorder.isFocused(c)) {
-            g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-          } else {
-            g2.setColor(UIManager.getColor(hover ? "TextField.hoverBorderColor" : "TextField.borderColor"));
-          }
+        if (DarculaSpinnerBorder.isFocused(c)) {
+          g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
         } else {
-          g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
-          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+          g2.setColor(UIManager.getColor(hover ? "TextField.hoverBorderColor" : "TextField.borderColor"));
         }
-
-        border.append(new Rectangle2D.Double(0, 0, width, height), false);
-        border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
-        g2.fill(border);
-
-      } finally {
-        g2.dispose();
+      } else {
+        g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
       }
+
+      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      border.append(r, false);
+
+      Rectangle innerRect = new Rectangle(r);
+      JBInsets.removeFrom(innerRect, JBUI.insets(1));
+      border.append(innerRect, false);
+
+      g2.fill(border);
+
+    } finally {
+      g2.dispose();
     }
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new JBInsets(1, 1, 1, 1).asUIResource();
+    return new JBInsets(2, 2, 2, 2).asUIResource();
   }
 }

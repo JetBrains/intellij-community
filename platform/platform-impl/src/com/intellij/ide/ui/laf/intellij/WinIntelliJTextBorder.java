@@ -66,10 +66,10 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
         JComponent jc = (JComponent)c;
         if (c.hasFocus()) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
-        } else if (jc.isEnabled() && jc.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+        } else if (jc.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
           g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
-        } else {
-          g2.setColor(UIManager.getColor("TextField.borderColor"));
+        } else{
+          g2.setColor(UIManager.getColor(jc.isEnabled() ? "TextField.borderColor" : "Button.intellij.native.borderColor"));
         }
 
         if (!jc.isEnabled()) {

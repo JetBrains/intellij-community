@@ -386,16 +386,19 @@ public class DarculaUIUtil {
 
     @Override
     public void mouseEntered(MouseEvent e) {
-      JComponent c = (JComponent)e.getComponent();
-      c.putClientProperty(hoverProperty, Boolean.TRUE);
-      repaintComponent.repaint();
+      setHover((JComponent)e.getComponent(), Boolean.TRUE);
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-      JComponent c = (JComponent)e.getComponent();
-      c.putClientProperty(hoverProperty, Boolean.FALSE);
-      repaintComponent.repaint();
+      setHover((JComponent)e.getComponent(), Boolean.FALSE);
+    }
+
+    private void setHover(JComponent c, Boolean value) {
+      if (c.isEnabled()) {
+        c.putClientProperty(hoverProperty, value);
+        repaintComponent.repaint();
+      }
     }
   }
 }
