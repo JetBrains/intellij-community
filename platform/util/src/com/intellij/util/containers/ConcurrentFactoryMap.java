@@ -24,6 +24,7 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -157,7 +158,12 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return myMap.entrySet();
+    return ContainerUtil.map2Set(myMap.entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
+          @Override
+          public Entry<K,V> fun(Entry<K,V> entry) {
+            return entry.getKey() == FAKE_NULL() ? new AbstractMap.SimpleEntry<K, V>(null, entry.getValue()) : entry;
+          }
+        });
   }
 
   @NotNull
