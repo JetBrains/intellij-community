@@ -2787,8 +2787,11 @@ public class HighlightUtil extends HighlightUtilBase {
       return info;
     }
 
-    boolean ignore = PsiUtil.isInsideJavadocComment(ref) || PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null;
-    if (!ignore && !result.isValidResult()) {
+    boolean skipValidityChecks =
+      PsiUtil.isInsideJavadocComment(ref) ||
+      PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
+      resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
+    if (!skipValidityChecks && !result.isValidResult()) {
       if (!result.isAccessible()) {
         Pair<String, List<IntentionAction>> problem = buildProblemWithAccessDescription(ref, result, resolved);
         boolean moduleAccessProblem = problem.second != null;

@@ -37,7 +37,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun checkAccess(target: PsiClass, place: PsiElement) = checkAccess(target, place, false)
 
   private fun checkAccess(target: PsiClass, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
-    val useFile = place.containingFile
+    val useFile = place.containingFile?.originalFile
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
       val targetFile = target.containingFile
       if (targetFile is PsiClassOwner) {
@@ -49,19 +49,17 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun checkAccess(target: PsiPackage, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
-    if (place.parent !is PsiJavaCodeReferenceElement) {
-      val useFile = place.containingFile
-      if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-        val useVFile = useFile.virtualFile
-        if (useVFile != null) {
-          val index = ProjectFileIndex.getInstance(useFile.project)
-          val module = index.getModuleForFile(useVFile)
-          if (module != null) {
-            val test = index.isInTestSourceContent(useVFile)
-            val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
-            if (dirs.size == 1) {
-              return checkAccess(dirs[0], useFile, target.qualifiedName, quick)
-            }
+    val useFile = place.containingFile?.originalFile
+    if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
+      val useVFile = useFile.virtualFile
+      if (useVFile != null) {
+        val index = ProjectFileIndex.getInstance(useFile.project)
+        val module = index.getModuleForFile(useVFile)
+        if (module != null) {
+          val test = index.isInTestSourceContent(useVFile)
+          val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
+          if (dirs.size == 1) {
+            return checkAccess(dirs[0], useFile, target.qualifiedName, quick)
           }
         }
       }
