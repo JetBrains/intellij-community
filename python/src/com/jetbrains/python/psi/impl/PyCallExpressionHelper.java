@@ -250,8 +250,7 @@ public class PyCallExpressionHelper {
                                    || isQualifiedByInstance(callable, qualifiers, context)
                                    || callable instanceof PyBoundFunction;
 
-      final PyExpression lastQualifier = ContainerUtil.getLastItem(qualifiers);
-      final boolean isByClass = lastQualifier != null && isQualifiedByClass(callable, lastQualifier, context);
+      final boolean isByClass = isQualifiedByClass(callable, qualifiers, context);
 
       final int resolvedImplicitOffset =
         implicitOffset + getImplicitArgumentCount(callable, resolvedModifier, isConstructorCall, isByInstance, isByClass);
@@ -283,13 +282,16 @@ public class PyCallExpressionHelper {
    */
   public static int getImplicitArgumentCount(@NotNull final PyReferenceExpression callReference, @NotNull PyFunction function,
                                              @NotNull PyResolveContext resolveContext) {
-    QualifiedResolveResult followed = callReference.followAssignmentsChain(resolveContext);
-    final List<PyExpression> qualifiers = followed.getQualifiers();
-    final PyExpression firstQualifier = ContainerUtil.getFirstItem(qualifiers);
-    boolean isByInstance = isQualifiedByInstance(function, qualifiers, resolveContext.getTypeEvalContext());
+    final List<PyExpression> qualifiers = callReference.followAssignmentsChain(resolveContext).getQualifiers();
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+
+    final boolean isByInstance = isQualifiedByInstance(function, qualifiers, context);
+
     final boolean isConstructorCall = isConstructorName(function.getName()) &&
                                       (!callReference.isQualified() || !isConstructorName(callReference.getName()));
-    boolean isByClass = firstQualifier != null && isQualifiedByClass(function, firstQualifier, resolveContext.getTypeEvalContext());
+
+    final boolean isByClass = isQualifiedByClass(function, qualifiers, context);
+
     return getImplicitArgumentCount(function, function.getModifier(), isConstructorCall, isByInstance, isByClass);
   }
 
@@ -366,15 +368,38 @@ public class PyCallExpressionHelper {
   public static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
                                               @NotNull PyExpression qualifier,
                                               @NotNull TypeEvalContext context) {
-    if (isQualifiedByClass(resolved, qualifier, context)) {
-      return false;
-    }
     final PyType qualifierType = context.getType(qualifier);
-    if (qualifierType != null) {
-      // TODO: handle UnionType
-      if (qualifierType instanceof PyModuleType) return false; // qualified by module, not instance.
+
+    if (qualifierType instanceof PyClassType) {
+      final PyClassType qualifierClassType = (PyClassType)qualifierType;
+      return !qualifierClassType.isDefinition() && belongsToSpecifiedClassHierarchy(resolved, qualifierClassType.getPyClass(), context);
     }
+    else if (qualifierType instanceof PyClassLikeType) {
+      return !((PyClassLikeType)qualifierType).isDefinition();
+    }
+    else if (qualifierType instanceof PyModuleType) {
+      return false; // qualified by module, not instance.
+    }
+    else if (qualifierType instanceof PyUnionType) {
+      final Collection<PyType> members = ((PyUnionType)qualifierType).getMembers();
+
+      if (members.stream().anyMatch(PyClassType.class::isInstance)) {
+        return StreamEx
+          .of(members)
+          .select(PyClassType.class)
+          .filter(type -> belongsToSpecifiedClassHierarchy(resolved, type.getPyClass(), context))
+          .anyMatch(type -> !type.isDefinition());
+      }
+    }
+
     return true; // NOTE. best guess: unknown qualifier is more probably an instance.
+  }
+
+  private static boolean isQualifiedByClass(@Nullable PyCallable resolved,
+                                            @NotNull List<PyExpression> qualifiers,
+                                            @NotNull TypeEvalContext context) {
+    return !qualifiers.isEmpty() &&
+           StreamEx.of(qualifiers).nonNull().allMatch(qualifier -> isQualifiedByClass(resolved, qualifier, context));
   }
 
   private static boolean isQualifiedByClass(@Nullable PyCallable resolved,

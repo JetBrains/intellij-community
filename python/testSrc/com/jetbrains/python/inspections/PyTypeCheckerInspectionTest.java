@@ -417,4 +417,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testPromotingBytearrayToStrAndUnicode() {
     doTest();
   }
+
+  // PY-22662
+  public void testCallOtherClassMethodSavedIntoClassAttr() {
+    doTest();
+  }
 }

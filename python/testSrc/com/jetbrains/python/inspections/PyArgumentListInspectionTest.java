@@ -317,6 +317,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22662
+  public void testCallOtherClassMethodSavedIntoClassAttr() {
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 
