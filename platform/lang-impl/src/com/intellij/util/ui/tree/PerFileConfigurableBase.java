@@ -58,7 +58,6 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -412,7 +411,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private static String keyToString(Object o) {
     if (o == null) return "";
     if (o instanceof String) return (String)o;
-    if (o instanceof VirtualFile) return ((VirtualFile)o).getPath();
+    if (o instanceof VirtualFile) return FileUtil.toSystemDependentName(((VirtualFile)o).getPath());
     return String.valueOf(o);
   }
 
@@ -636,11 +635,13 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderer.setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
       VirtualFile parent = file.getParent();
       if (parent != null) {
-        String parentPath = FileUtil.toSystemDependentName(parent.getPath());
-        renderer.append(parentPath, SimpleTextAttributes.GRAY_ATTRIBUTES);
-        if (!parentPath.endsWith(File.separator)) {
-          renderer.append(File.separator, SimpleTextAttributes.GRAY_ATTRIBUTES);
-        }
+        VirtualFile dir = myProject.getBaseDir();
+        String projectPath = dir == null ? null : dir.getPath();
+        String parentPath = parent.getPath();
+        String relativePath = projectPath != null && parentPath.startsWith(projectPath) ?
+                              "..." + parentPath.substring(projectPath.length()) : parentPath;
+        String presentablePath = FileUtil.toSystemDependentName(relativePath + "/");
+        renderer.append(presentablePath, SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
