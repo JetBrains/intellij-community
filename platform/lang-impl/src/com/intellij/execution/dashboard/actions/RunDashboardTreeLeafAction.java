@@ -52,7 +52,7 @@ public abstract class RunDashboardTreeLeafAction<T extends DashboardNode> extend
   }
 
   private static Set<AbstractTreeNode> getLeaves(Collection<? extends AbstractTreeNode> nodes) {
-    Set<AbstractTreeNode> result = new HashSet<>();
+    Set<AbstractTreeNode> result = new LinkedHashSet<>();
     for (AbstractTreeNode<?> node : nodes) {
       Collection<? extends AbstractTreeNode> children = node.getChildren();
       if (children.isEmpty()) {
