@@ -49,29 +49,16 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Element:action\n" +
                   "        Attribute:id:actionId\n" +
                   "        Attribute:text:actionText\n" +
-                  "        Attribute:class:actionClass\n" +
                   "      Element:group\n" +
                   "        Attribute:id:groupId\n" +
-                  "        Attribute:class:groupClass\n" +
                   "        Element:action\n" +
                   "          Attribute:id:groupAction\n" +
                   "          Attribute:text:groupActionText\n" +
-                  "          Attribute:class:actionClass\n" +
                   "        Element:group\n" +
                   "          Attribute:id:nestedGroup\n" +
                   "          Element:action\n" +
                   "            Attribute:id:nestedGroupActionId\n" +
-                  "            Attribute:text:nestedGroupActionText\n" +
-                  "            Attribute:class:actionClass\n" +
-                  "    Element:application-components\n" +
-                  "      Element:component\n" +
-                  "        Element:implementation-class:applicationComponentClass\n" +
-                  "    Element:project-components\n" +
-                  "      Element:component\n" +
-                  "        Element:implementation-class:projectComponentClass\n" +
-                  "    Element:module-components\n" +
-                  "      Element:component\n" +
-                  "        Element:implementation-class:moduleComponentClass\n");
+                  "            Attribute:text:nestedGroupActionText\n");
   }
 
   public void testXInclude() {

@@ -17,7 +17,6 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.List;
 /**
  * plugin.dtd:module-components interface.
  */
-@Stubbed
 public interface ModuleComponents extends DomElement {
 
 	/**
@@ -33,7 +31,6 @@ public interface ModuleComponents extends DomElement {
 	 * @return the list of component children.
 	 */
 	@NotNull
-	@Stubbed
 	List<Component.Module> getComponents();
 	/**
 	 * Adds new child to the list of component children.

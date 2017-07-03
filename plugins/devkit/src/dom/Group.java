@@ -76,7 +76,6 @@ public interface Group extends Actions, ActionOrGroup {
         @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
 		allowAbstract = false, allowInterface = false)
         @Convert(PluginPsiClassConverter.class)
-	@Stubbed
 	GenericAttributeValue<PsiClass> getClazz();
 
 
