@@ -120,7 +120,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   @Override
   public DataExternalizer<Collection<Integer>> createExternalizer() {
     return new DataExternalizer<Collection<Integer>>() {
-      private boolean myEnsuredStubElementTypesLoaded;
+      private volatile boolean myEnsuredStubElementTypesLoaded;
 
       @Override
       public void save(@NotNull DataOutput out, Collection<Integer> value) throws IOException {
