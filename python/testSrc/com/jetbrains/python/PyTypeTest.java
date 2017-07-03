@@ -1702,6 +1702,24 @@ public class PyTypeTest extends PyTestCase {
            "expr = max(l)");
   }
 
+  public void testWithAsType() {
+    doTest("Union[A, B]",
+           "from typing import Union\n" +
+           "\n" +
+           "class A(object):\n" +
+           "    def __enter__(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "class B(object):\n" +
+           "    def __enter__(self):\n" +
+           "        return self\n" +
+           "\n" +
+           "def f(x):\n" +
+           "    # type: (Union[A, B]) -> None\n" +
+           "    with x as expr:\n" +
+           "        pass");
+  }
+
   // PY-23634
   public void testMinListKnownElements() {
     doTest("int",
