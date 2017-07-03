@@ -132,6 +132,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       if (sourceSetName == null) return null;
 
       String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
+      workingDir = workingDir == null ? null : FileUtil.toSystemIndependentName(workingDir);
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
                           "  def project = rootProject.findProject('" + gradlePath + "')\n" +
