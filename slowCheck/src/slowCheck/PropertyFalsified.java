@@ -32,6 +32,7 @@ public class PropertyFalsified extends RuntimeException {
     Throwable first = failure.getFirstCounterExample().getExceptionCause();
     if (exceptionsDiffer(first, failure.getMinimalCounterexample().getExceptionCause())) {
       msg += "\n " + FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION;
+      msg += "\n Initial value: " + failure.getFirstCounterExample().getExampleValue() + "\n";
       if (first != null) {
         msg += "\n Initial exception: " + printStackTrace(first) + "\n==========================\n";
       } else {
