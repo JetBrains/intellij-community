@@ -136,6 +136,16 @@ public final class AsyncTreeModelTest {
       "        'delta'\n" +
       "        'epsilon'\n";
 
+  @Test
+  public void testChildrenResolve() {
+    Node node = new Node("node");
+    testAsync(() -> new Node("root", new Node("upper", new Node("middle", new Node("lower", node)))), test
+      -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
+      -> test.resolve(new TreePath(node.getPath()), path
+      -> test.expand(path.getParentPath(), () // expand parent path because leaf nodes are ignored
+      -> testPathState(test.tree, "   +'root'\n     +'upper'\n       +'middle'\n         +'lower'\n            'node'\n", test::done)))));
+  }
+
   @NotNull
   private static TreeNode createRoot() {
     return new Node("root");
@@ -357,6 +367,17 @@ public final class AsyncTreeModelTest {
       }
       else {
         runOnSwingThread(task);
+      }
+    }
+
+    private void resolve(@NotNull TreePath path, @NotNull Consumer<TreePath> consumer) {
+      TreeModel model = tree.getModel();
+      if (model instanceof AsyncTreeModel) {
+        AsyncTreeModel async = (AsyncTreeModel)model;
+        async.resolve(path).rejected(error -> promise.setError(error)).done(consumer::accept);
+      }
+      else {
+        runOnSwingThread(() -> consumer.accept(path));
       }
     }
 
