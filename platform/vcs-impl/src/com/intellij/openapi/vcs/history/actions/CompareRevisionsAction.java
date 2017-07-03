@@ -50,23 +50,25 @@ public class CompareRevisionsAction extends DumbAwareAction {
   }
 
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(isEnabled(e));
-  }
-
-  public boolean isEnabled(@NotNull AnActionEvent e) {
     VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     VcsHistoryProvider provider = e.getData(VcsDataKeys.HISTORY_PROVIDER);
-    if (revisions == null || historySession == null || filePath == null || provider == null) return false;
+    if (revisions == null || historySession == null || filePath == null || provider == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     if (revisions.length == 1) {
-      return historySession.isContentAvailable(revisions[0]) && e.getData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF) != null;
+      e.getPresentation().setEnabled(historySession.isContentAvailable(revisions[0]) &&
+                                     e.getData(FileHistoryPanelImpl.PREVIOUS_REVISION_FOR_DIFF) != null);
     }
     else if (revisions.length == 2) {
-      return historySession.isContentAvailable(revisions[0]) &&
-             historySession.isContentAvailable(revisions[revisions.length - 1]);
+      e.getPresentation().setEnabled(historySession.isContentAvailable(revisions[0]) &&
+                                     historySession.isContentAvailable(revisions[revisions.length - 1]));
     }
-    return false;
+    else {
+      e.getPresentation().setEnabled(false);
+    }
   }
 }
