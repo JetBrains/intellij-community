@@ -194,11 +194,6 @@ public class InstrumentationClassFinder {
     return is;
   }
 
-  public boolean isAvaiable(String resourceName) {
-    return myPlatformClasspath.getResource(resourceName) != null ||
-           myClasspath.getResource(resourceName) != null;
-  }
-
   public InputStream getResourceAsStream(String resourceName) throws IOException {
     InputStream is = null;
 

@@ -23,7 +23,6 @@ import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
-import org.jetbrains.jps.incremental.instrumentation.internal.SystemIndependentInstrumentingBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.resources.ResourcesBuilder;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -52,7 +51,6 @@ public class JavaBuilderService extends BuilderService {
     return Arrays.asList(
       new JavaBuilder(SharedThreadPool.getInstance()),
       new NotNullInstrumentingBuilder(),
-      new SystemIndependentInstrumentingBuilder(),
       new RmiStubsGenerator(),
       new DependencyResolvingBuilder(),
       new BackwardReferenceIndexBuilder()

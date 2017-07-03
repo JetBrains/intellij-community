@@ -63,10 +63,6 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
 
   @Override
   protected boolean isEnabled(CompileContext context, ModuleChunk chunk) {
-    return isEnabledIn(context);
-  }
-
-  public static boolean isEnabledIn(CompileContext context) {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     return JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).isAddNotNullAssertions();
   }

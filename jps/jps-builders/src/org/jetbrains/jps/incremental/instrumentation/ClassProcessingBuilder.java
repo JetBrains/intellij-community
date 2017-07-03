@@ -58,10 +58,6 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
 
   protected abstract boolean isEnabled(CompileContext context, ModuleChunk chunk);
 
-  protected boolean isEnabled(CompileContext context, InstrumentationClassFinder finder) throws IOException {
-    return true;
-  }
-
   protected abstract String getProgressMessage();
 
   @Override
@@ -79,35 +75,33 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
       return ExitCode.NOTHING_DONE;
     }
 
-    InstrumentationClassFinder finder = CLASS_FINDER.get(context); // try using shared finder
-    if (finder == null) {
-      final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
-      final Collection<File> classpath = new ArrayList<>();
-      classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
-      classpath.addAll(ProjectPaths.getSourceRootsWithDependents(chunk).keySet());
-      final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
-      finder = createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
-      CLASS_FINDER.set(context, finder);
-    }
-
-    if (!isEnabled(context, finder)) {
-      return ExitCode.NOTHING_DONE;
-    }
-
     final String progress = getProgressMessage();
     final boolean shouldShowProgress = !StringUtil.isEmptyOrSpaces(progress);
     if (shouldShowProgress) {
       context.processMessage(new ProgressMessage(progress + " [" + chunk.getPresentableShortName() + "]"));
     }
 
+    ExitCode exitCode = ExitCode.NOTHING_DONE;
     try {
-      return performBuild(context, chunk, finder, outputConsumer);
+      InstrumentationClassFinder finder = CLASS_FINDER.get(context); // try using shared finder
+      if (finder == null) {
+        final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
+        final Collection<File> classpath = new ArrayList<>();
+        classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
+        classpath.addAll(ProjectPaths.getSourceRootsWithDependents(chunk).keySet());
+        final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
+        finder = createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
+        CLASS_FINDER.set(context, finder);
+      }
+
+      exitCode = performBuild(context, chunk, finder, outputConsumer);
     }
     finally {
       if (shouldShowProgress) {
         context.processMessage(new ProgressMessage("")); // cleanup progress
       }
     }
+    return exitCode;
   }
 
   @Override
