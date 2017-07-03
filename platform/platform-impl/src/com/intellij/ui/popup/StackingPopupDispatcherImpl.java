@@ -126,12 +126,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
           return false;
         }
 
-        //click on context menu item
-        if (MenuSelectionManager.defaultManager().getSelectedPath().length > 0) {
+        if (!popup.canClose()){
           return false;
         }
 
-        if (!popup.canClose()){
+        //click on context menu item
+        if (MenuSelectionManager.defaultManager().getSelectedPath().length > 0) {
           return false;
         }
 
