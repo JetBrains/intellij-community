@@ -85,6 +85,10 @@ public abstract class RunDashboardContributor {
     return true;
   }
 
+  public boolean handleDoubleClick(@NotNull RunConfiguration runConfiguration) {
+    return false;
+  }
+
   @Nullable
   public static RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
     if (!Registry.is("ide.run.dashboard")) {

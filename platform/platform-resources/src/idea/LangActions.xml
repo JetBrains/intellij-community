@@ -1025,9 +1025,12 @@
     </group>
 
     <group id="RunDashboardTreeToolbar">
-      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"/>
-      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"/>
-      <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"/>
+      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
+              use-shortcut-of="EditSource"/>
+      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
+              use-shortcut-of="EditorDuplicate"/>
+      <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
+              use-shortcut-of="$Delete"/>
     </group>
     <group id="RunDashboardPopup"/>
   </actions>
