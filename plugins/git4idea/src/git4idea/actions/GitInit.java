@@ -60,10 +60,10 @@ public class GitInit extends DumbAwareAction {
     if (baseDir == null) {
       baseDir = project.getBaseDir();
     }
-    doInit(project, fcd, baseDir, baseDir);
+    doInit(project, fcd, baseDir);
   }
 
-  private static void doInit(final Project project, FileChooserDescriptor fcd, VirtualFile baseDir, final VirtualFile finalBaseDir) {
+  private static void doInit(final Project project, FileChooserDescriptor fcd, VirtualFile baseDir) {
     FileChooser.chooseFile(fcd, project, baseDir, root -> {
       if (GitUtil.isUnderGit(root) && Messages.showYesNoDialog(project,
                                                                GitBundle.message("init.warning.already.under.git",
@@ -85,11 +85,10 @@ public class GitInit extends DumbAwareAction {
       if (project.isDefault()) {
         return;
       }
-      final String path = root.equals(finalBaseDir) ? "" : root.getPath();
       GitVcs.runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          refreshAndConfigureVcsMappings(project, root, path);
+          refreshAndConfigureVcsMappings(project, root, root.getPath());
         }
       });
     });
