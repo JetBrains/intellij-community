@@ -281,6 +281,14 @@ public class PushLog extends JPanel implements DataProvider {
     myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
   }
 
+  public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {
+    TreePath selectionPath = repositoryNode != null ? TreeUtil.getPathFromRoot(repositoryNode) : TreeUtil.getFirstNodePath(myTree);
+    myTree.setSelectionPath(selectionPath);
+    if (shouldScrollTo) {
+      myTree.scrollPathToVisible(selectionPath);
+    }
+  }
+
   private class MyShowCommitInfoAction extends DumbAwareAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
@@ -540,25 +548,28 @@ public class PushLog extends JPanel implements DataProvider {
     //todo should be optimized in case of start loading just edited node
     final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
     model.nodeStructureChanged(parentNode);
-    expandSelected(parentNode);
+    autoExpandChecked(parentNode);
     myShouldRepaint = false;
   }
 
-  private void expandSelected(@NotNull DefaultMutableTreeNode node) {
+  private void autoExpandChecked(@NotNull DefaultMutableTreeNode node) {
     if (node.getChildCount() <= 0) return;
     if (node instanceof RepositoryNode) {
-      TreePath path = TreeUtil.getPathFromRoot(node);
-      myTree.expandPath(path);
+      expandIfChecked((RepositoryNode)node);
       return;
     }
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
          childNode != null;
          childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
       if (!(childNode instanceof RepositoryNode)) return;
-      TreePath path = TreeUtil.getPathFromRoot(childNode);
-      if (((RepositoryNode)childNode).isChecked()) {
-        myTree.expandPath(path);
-      }
+      expandIfChecked((RepositoryNode)childNode);
+    }
+  }
+
+  private void expandIfChecked(@NotNull RepositoryNode node) {
+    if (node.isChecked()) {
+      TreePath path = TreeUtil.getPathFromRoot(node);
+      myTree.expandPath(path);
     }
   }
 

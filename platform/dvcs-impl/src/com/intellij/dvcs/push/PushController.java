@@ -155,6 +155,10 @@ public class PushController implements Disposable {
         others.put(repoNode, model);
       }
     }
+    if (myPreselectedRepositories.isEmpty()) {
+      boolean shouldScrollTo = myView2Model.values().stream().noneMatch(MyRepoModel::isSelected);
+      myPushLog.highlightNodeOrFirst(nodeForCurrentEditor, shouldScrollTo);
+    }
     loadCommitsFromMap(priorityLoading);
     loadCommitsFromMap(others);
   }
@@ -341,7 +345,7 @@ public class PushController implements Disposable {
           model.setLoadedCommits(commits);
           shouldBeSelected = shouldSelectNodeAfterLoad(model);
           myPushLog.setChildren(node, getPresentationForCommits(myProject, model.getLoadedCommits(), model.getNumberOfShownCommits()));
-          if (!commits.isEmpty()) {
+          if (!commits.isEmpty() && shouldBeSelected) {
             myPushLog.selectIfNothingSelected(node);
           }
         }
