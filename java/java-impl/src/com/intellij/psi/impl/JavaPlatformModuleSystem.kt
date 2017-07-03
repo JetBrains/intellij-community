@@ -30,20 +30,27 @@ import com.intellij.psi.util.PsiUtil
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName() = "Java Platform Module System"
 
-  override fun isAccessible(target: PsiElement, place: PsiElement) = checkAccess(target, place, true) == null
+  override fun isAccessible(target: PsiPackage, place: PsiElement) = checkAccess(target, place, true) == null
+  override fun isAccessible(target: PsiClass, place: PsiElement) = checkAccess(target, place, true) == null
 
-  override fun checkAccess(target: PsiElement, place: PsiElement) = checkAccess(target, place, false)
+  override fun checkAccess(target: PsiPackage, place: PsiElement) = checkAccess(target, place, false)
+  override fun checkAccess(target: PsiClass, place: PsiElement) = checkAccess(target, place, false)
 
-  private fun checkAccess(target: PsiElement, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
-    val useFile = place.containingFile
-    if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      if (target is PsiClass) {
-        val targetFile = target.containingFile
-        if (targetFile is PsiClassOwner) {
-          return checkAccess(targetFile, place, targetFile.packageName, quick)
-        }
+  private fun checkAccess(target: PsiClass, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
+    if (PsiUtil.isLanguageLevel9OrHigher(place)) {
+      val targetFile = target.containingFile
+      if (targetFile is PsiClassOwner) {
+        return checkAccess(targetFile, place, targetFile.packageName, quick)
       }
-      else if (target is PsiPackage && place.parent !is PsiJavaCodeReferenceElement) {
+    }
+
+    return null
+  }
+
+  private fun checkAccess(target: PsiPackage, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
+    if (place.parent !is PsiJavaCodeReferenceElement) {
+      val useFile = place.containingFile
+      if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
         val useVFile = useFile.virtualFile
         if (useVFile != null) {
           val index = ProjectFileIndex.getInstance(useFile.project)

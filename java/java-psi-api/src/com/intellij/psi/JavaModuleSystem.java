@@ -25,5 +25,6 @@ public interface JavaModuleSystem {
 
   @NotNull String getName();
 
-  boolean isAccessible(@NotNull PsiElement target, @NotNull PsiElement place);
+  boolean isAccessible(@NotNull PsiPackage target, @NotNull PsiElement place);
+  boolean isAccessible(@NotNull PsiClass target, @NotNull PsiElement place);
 }

@@ -18,7 +18,9 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaModuleSystem;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,5 +29,6 @@ import java.util.List;
 
 @ApiStatus.Experimental
 public interface JavaModuleSystemEx extends JavaModuleSystem {
-  @Nullable Pair<String, List<IntentionAction>> checkAccess(@NotNull PsiElement target, @NotNull PsiElement place);
+  @Nullable Pair<String, List<IntentionAction>> checkAccess(@NotNull PsiPackage target, @NotNull PsiElement place);
+  @Nullable Pair<String, List<IntentionAction>> checkAccess(@NotNull PsiClass target, @NotNull PsiElement place);
 }

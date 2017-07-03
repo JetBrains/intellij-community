@@ -1758,9 +1758,9 @@ public class HighlightUtil extends HighlightUtilBase {
     for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensions()) {
       Pair<String, List<IntentionAction>> problem = null;
       if (moduleSystem instanceof JavaModuleSystemEx) {
-        problem = ((JavaModuleSystemEx)moduleSystem).checkAccess(target, place);
+        problem = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
       }
-      else if (!moduleSystem.isAccessible(target, place)) {
+      else if (!isAccessible(moduleSystem, target, place)) {
         String message = JavaErrorMessages.message("visibility.module.access.problem", symbolName, containerName, moduleSystem.getName());
         problem = pair(message, Collections.emptyList());
       }
@@ -1770,6 +1770,18 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
+  }
+
+  private static Pair<String, List<IntentionAction>> checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
+    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target), place);
+    if (target instanceof PsiClass) return system.checkAccess(((PsiClass)target), place);
+    return null;
+  }
+
+  private static boolean isAccessible(JavaModuleSystem system, PsiElement target, PsiElement place) {
+    if (target instanceof PsiPackage) return system.isAccessible(((PsiPackage)target), place);
+    if (target instanceof PsiClass) return system.isAccessible(((PsiClass)target), place);
+    return true;
   }
 
   private static PsiElement getContainer(PsiModifierListOwner refElement) {
