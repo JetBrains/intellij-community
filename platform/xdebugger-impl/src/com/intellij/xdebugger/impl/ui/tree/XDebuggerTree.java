@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,6 +213,25 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     });
     registerShortcuts();
 
+    new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        TreePath[] paths = getSelectionPaths();
+        if (paths != null) {
+          for (TreePath path : paths) {
+            Object component = path.getLastPathComponent();
+            if (component instanceof XDebuggerTreeNode) {
+              XDebuggerTreeNodeHyperlink link = ((XDebuggerTreeNode)component).getLink();
+              if (link != null) {
+                // dummy event
+                link.onClick(new MouseEvent(XDebuggerTree.this, 0,0,0,0,0,1,false));
+              }
+            }
+          }
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this, this);
+
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
 
     addComponentListener(myMoveListener);
@@ -243,7 +262,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   public void updateEditor() {
     myAlarm.cancelAndRequest();
   }
-  
+
   public boolean isUnderRemoteDebug() {
     DataContext context = DataManager.getInstance().getDataContext(this);
     ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
