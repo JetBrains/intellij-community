@@ -56,7 +56,6 @@ import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
@@ -85,6 +84,23 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
  * If runner name is here that means test runner only can run inheritors for TestCase
  */
 val RunnersThatRequireTestCaseClass = setOf(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME)
+
+/**
+ * Checks if element could be test target
+ * @param testCaseClassRequired see [PythonUnitTestUtil] docs
+ */
+fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext) = when (element) {
+  is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, typeEvalContext)
+  is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
+    it is PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, typeEvalContext)
+  }
+  is PyFunction -> PythonUnitTestUtil.isTestFunction(element,
+                                                     testCaseClassRequired, typeEvalContext)
+  is com.jetbrains.python.psi.PyClass -> {
+    PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, typeEvalContext)
+  }
+  else -> false
+}
 
 
 /**
@@ -598,18 +614,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     else {
       ThreeState.NO
     }
-    return when (element) {
-      is PyFile -> PythonUnitTestUtil.isTestFile(element, testCaseClassRequired, context)
-      is PsiDirectory -> element.name.contains("test", true) || element.children.any {
-        it is PyFile && PythonUnitTestUtil.isTestFile(it, testCaseClassRequired, context)
-      }
-      is PyFunction -> PythonUnitTestUtil.isTestFunction(element,
-                                                         testCaseClassRequired, context)
-      is PyClass -> {
-        PythonUnitTestUtil.isTestClass(element, testCaseClassRequired, context)
-      }
-      else -> false
-    }
+    return isTestElement(element, testCaseClassRequired, context)
   }
 
   /**
