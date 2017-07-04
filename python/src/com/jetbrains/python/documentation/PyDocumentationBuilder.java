@@ -579,7 +579,7 @@ public class PyDocumentationBuilder {
       final String rootPath = finder.getResult();
       if (rootPath != null) {
         final String afterPart = path.substring(rootPath.length());
-        myProlog.addWith(TagSmall, $(rootPath).addWith(TagBold, $(afterPart)));
+        myProlog.addWith(TagSpan.withAttribute("path", rootPath + afterPart), $("").addWith(TagSmall, $(rootPath).addWith(TagBold, $(afterPart))));
       }
       else {
         myProlog.addWith(TagSmall, $(path));
