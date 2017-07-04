@@ -205,13 +205,15 @@ public abstract class XVariablesViewBase extends XDebugView {
 
     @Override
     public void selectionChanged(final SelectionEvent e) {
-      if (!Registry.is("debugger.valueTooltipAutoShowOnSelection") || myEditor.getCaretModel().getCaretCount() > 1) {
+      if (!Registry.is("debugger.valueTooltipAutoShowOnSelection") ||
+          myEditor.getCaretModel().getCaretCount() > 1 ||
+          e.getNewRanges().length != 1 ||
+          !Objects.equals(e.getNewRange(), e.getOldRange())) {
         return;
       }
 
       final String text = myEditor.getDocument().getText(e.getNewRange()).trim();
-      final boolean isSelectionChanged = e.getNewRanges().length == 1 && !Objects.equals(e.getNewRange(), e.getOldRange());
-      if (isSelectionChanged && !IGNORED_TEXTS.contains(text) && SIDE_EFFECT_PRODUCERS.stream().noneMatch(text::contains)) {
+      if (IGNORED_TEXTS.contains(text) && SIDE_EFFECT_PRODUCERS.stream().noneMatch(text::contains)) {
         final XDebugSession session = getSession(myTreePanel.getTree());
         if (session == null) return;
         XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
