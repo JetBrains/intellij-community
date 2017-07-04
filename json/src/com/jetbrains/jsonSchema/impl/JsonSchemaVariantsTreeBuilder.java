@@ -101,7 +101,7 @@ public class JsonSchemaVariantsTreeBuilder {
         CachedValuesManager.getManager(element.getProject())
           .createParameterizedCachedValue((JsonSchemaObject param) -> {
             final Operation expand = new ProcessDefinitionsOperation(param);
-            expand.doMap();
+            expand.doMap(new HashSet<>());
             expand.doReduce();
             return CachedValueProvider.Result.create(expand, element.getContainingFile(),
                                                      JsonSchemaService.Impl.get(project).getAnySchemaChangeTracker());
@@ -132,12 +132,12 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations = new ArrayList<>();
     }
 
-    protected abstract void map();
+    protected abstract void map(@NotNull Set<Pair<VirtualFile, String>> control);
     protected abstract void reduce();
 
-    public void doMap() {
-      map();
-      myChildOperations.forEach(Operation::doMap);
+    public void doMap(@NotNull final Set<Pair<VirtualFile, String>> control) {
+      map(control);
+      myChildOperations.forEach(operation -> operation.doMap(control));
     }
 
     public void doReduce() {
@@ -189,15 +189,11 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map() {
-      final Set<Pair<VirtualFile, String>> control = new HashSet<>();
+    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
-        if (!control.add(Pair.create(current.getSchemaFile(), current.getRef()))) {
-          myState = SchemaResolveState.cyclicDefinition;
-          LOG.debug(String.format("Cyclic definition: '%s' in file %s", current.getRef(), current.getSchemaFile()));
-          return;
-        }
+        // this definition was already expanded; do not cycle
+        if (!control.add(Pair.create(current.getSchemaFile(), current.getRef()))) break;
         final JsonSchemaObject definition = getSchemaFromDefinition(current);
         if (definition == null) {
           myState = SchemaResolveState.brokenDefinition;
@@ -227,7 +223,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map() {
+    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
       assert mySourceNode.getAllOf() != null;
       myChildOperations.addAll(mySourceNode.getAllOf().stream()
         .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
@@ -271,7 +267,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map() {
+    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
       assert mySourceNode.getOneOf() != null;
       myChildOperations.addAll(mySourceNode.getOneOf().stream()
                                  .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
@@ -297,7 +293,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map() {
+    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
       assert mySourceNode.getAnyOf() != null;
       myChildOperations.addAll(mySourceNode.getAnyOf().stream()
                                  .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
