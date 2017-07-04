@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
@@ -63,7 +64,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   private final Project myProject;
 
-  public JavaPsiImplementationHelperImpl(Project project) {
+  public JavaPsiImplementationHelperImpl(@NotNull Project project) {
     myProject = project;
   }
 
@@ -138,20 +139,18 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
-    if (virtualFile == null) return PsiUtil.getLanguageLevel(myProject);
-
     // For default project, do not look into virtual file system.
     // It is important for Upsource, where operations are done in default project to
     // prevent expensive look-up into VFS
-    if (myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
+    if (virtualFile == null || myProject.isDefault()) return PsiUtil.getLanguageLevel(myProject);
 
-    final VirtualFile folder = virtualFile.getParent();
-    if (folder != null) {
-      final LanguageLevel level = folder.getUserData(LanguageLevel.KEY);
+    VirtualFile parent = virtualFile.getParent();
+    if (parent != null) {
+      LanguageLevel level = parent.getUserData(LanguageLevel.KEY);
       if (level != null) return level;
     }
 
-    final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = index.getModuleForFile(virtualFile);
     if (module != null && index.isInSourceContent(virtualFile)) {
       return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
@@ -278,22 +277,23 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    LOG.assertTrue(catchBodyTemplate != null);
+    FileTemplate template = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    if (template == null) throw new IncorrectOperationException("Missing template: " + JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
     Properties props = FileTemplateManager.getInstance(myProject).getDefaultProperties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, exceptionType.getCanonicalText());
     if (context != null && context.isPhysical()) {
-      final PsiDirectory directory = context.getContainingFile().getContainingDirectory();
+      PsiDirectory directory = context.getContainingFile().getContainingDirectory();
       if (directory != null) {
         JavaTemplateUtil.setPackageNameAttribute(props, directory);
       }
     }
 
-    final PsiCodeBlock codeBlockFromText;
     try {
-      codeBlockFromText = PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + catchBodyTemplate.getText(props) + "\n}", null);
+      PsiCodeBlock block =
+        PsiElementFactory.SERVICE.getInstance(myProject).createCodeBlockFromText("{\n" + template.getText(props) + "\n}", null);
+      Objects.requireNonNull(catchSection.getCatchBlock()).replace(block);
     }
     catch (ProcessCanceledException ce) {
       throw ce;
@@ -301,6 +301,5 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
     }
-    catchSection.getCatchBlock().replace(codeBlockFromText);
   }
 }
