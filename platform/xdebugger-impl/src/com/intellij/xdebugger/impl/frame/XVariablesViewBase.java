@@ -208,7 +208,7 @@ public abstract class XVariablesViewBase extends XDebugView {
       if (!Registry.is("debugger.valueTooltipAutoShowOnSelection") ||
           myEditor.getCaretModel().getCaretCount() > 1 ||
           e.getNewRanges().length != 1 ||
-          !Objects.equals(e.getNewRange(), e.getOldRange())) {
+          Objects.equals(e.getNewRange(), e.getOldRange())) {
         return;
       }
 
