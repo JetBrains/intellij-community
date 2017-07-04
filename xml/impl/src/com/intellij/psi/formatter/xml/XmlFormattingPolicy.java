@@ -161,6 +161,10 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean shouldSaveSpacesBetweenTagAndText();
 
+  public boolean allowWrapBeforeText() {
+    return true;
+  }
+
   public boolean processJavaTree() {
     return myProcessJavaTree;
   }
