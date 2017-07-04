@@ -370,6 +370,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StringEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="string.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.StringEqualityInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="StringEqualsCharSequence" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="string.equals.char.sequence.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.bugs.StringEqualsCharSequenceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SubtractionInCompareTo" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="subtraction.in.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
