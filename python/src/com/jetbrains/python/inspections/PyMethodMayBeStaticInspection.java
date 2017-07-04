@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.fstrings.PyFStringAwareRecursiveVisitor;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionFromMethodQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
@@ -92,7 +93,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       }
 
       final boolean[] mayBeStatic = {true};
-      PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
+      PyRecursiveElementVisitor visitor = new PyFStringAwareRecursiveVisitor() {
         @Override
         public void visitPyRaiseStatement(PyRaiseStatement node) {
           super.visitPyRaiseStatement(node);
