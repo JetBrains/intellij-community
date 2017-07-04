@@ -73,12 +73,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       psiElement(PsiReferenceExpression.class).withParent(PsiResourceExpression.class)));
 
   private final CompletionType myCompletionType;
+  @NotNull
   private final PsiElement myPosition;
   private final Set<PsiField> myNonInitializedFields;
   private final Condition<PsiClass> myRequiredSuper;
   private final ExpectedTypeInfo[] myExpectedTypes;
 
-  public PreferByKindWeigher(CompletionType completionType, final PsiElement position, ExpectedTypeInfo[] expectedTypes) {
+  public PreferByKindWeigher(CompletionType completionType, @NotNull final PsiElement position, ExpectedTypeInfo[] expectedTypes) {
     super("kind");
     myCompletionType = completionType;
     myPosition = position;
@@ -134,12 +135,14 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     probableKeyword,
     castVariable,
     variable,
+    getter,
     qualifiedWithField,
     qualifiedWithGetter,
     superMethodParameters,
     expectedTypeConstant,
     expectedTypeArgument,
-    getter,
+    getterQualifiedByMethod,
+    accessibleFieldGetter,
     normal,
     collectionFactory,
     expectedTypeMethod,
@@ -209,12 +212,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (chain.getQualifier().getUserData(INTRODUCED_VARIABLE) == Boolean.TRUE) {
         return MyResult.introducedVariable;
       }
+      if (myCompletionType == CompletionType.SMART && qualifier instanceof PsiMethod && isGetter(object)) {
+        return MyResult.getterQualifiedByMethod;
+      }
     }
 
-
     if (myCompletionType == CompletionType.SMART) {
-      if (isGetter(object)) return MyResult.getter;
-
+      if (isGetter(object)) {
+        return chain == null && isAccessibleFieldGetter(object) ? MyResult.accessibleFieldGetter : MyResult.getter;
+      }
       return MyResult.normal;
     }
 
@@ -279,6 +285,13 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return inCallArg || isInMethodTypeArg(myPosition) ? ThreeState.NO : ThreeState.UNSURE;
     }
     return ThreeState.UNSURE;
+  }
+
+  private boolean isAccessibleFieldGetter(Object object) {
+    if (!(object instanceof PsiMethod)) return false;
+
+    PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)object);
+    return field != null && PsiResolveHelper.SERVICE.getInstance(myPosition.getProject()).isAccessible(field, myPosition, null);
   }
 
   static boolean isInMethodTypeArg(PsiElement position) {
