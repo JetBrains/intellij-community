@@ -86,7 +86,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
           if (aClass.getContainingClass() != null) return false;
           return true;
         }
-      });
+      }, null, true);
     }
 
     protected void addPatternFilter() {

@@ -128,7 +128,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                            boolean tracingEnabled,
                                            boolean trackTestFolders, Project project) {
 
-    return createSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, coverageByTestEnabled,
+    return createSuite(covRunner, name, coverageDataFileProvider, filters, null, lastCoverageTimeStamp, coverageByTestEnabled,
                        tracingEnabled, trackTestFolders, project);
   }
 
@@ -141,6 +141,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       final JavaCoverageEnabledConfiguration javaConfig = (JavaCoverageEnabledConfiguration)config;
       return createSuite(covRunner, name, coverageDataFileProvider,
                          javaConfig.getPatterns(),
+                         javaConfig.getExcludePatterns(),
                          new Date().getTime(),
                          javaConfig.isTrackPerTestCoverage() && !javaConfig.isSampling(),
                          !javaConfig.isSampling(),
@@ -186,8 +187,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final JavaCoverageSuite javaSuite = (JavaCoverageSuite)coverageSuite;
 
-      final List<PsiPackage> packages = javaSuite.getCurrentSuitePackages(project);
-      if (isUnderFilteredPackages((PsiClassOwner)psiFile, packages)) {
+      if (javaSuite.isPackageFiltered(ReadAction.compute(() ->((PsiClassOwner)psiFile).getPackageName()))) {
         return true;
       } else {
         final List<PsiClass> classes = javaSuite.getCurrentSuiteClasses(project);
@@ -240,16 +240,6 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static boolean isModuleOutputNeeded(Module module, final JavaSourceRootType rootType) {
     CompilerManager compilerManager = CompilerManager.getInstance(module.getProject());
     return ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream().anyMatch(vFile -> !compilerManager.isExcludedFromCompilation(vFile));
-  }
-
-  public static boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
-    final PsiPackage hisPackage =
-      ReadAction.compute(() -> JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(javaFile.getPackageName()));
-    if (hisPackage == null) return false;
-    for (PsiPackage aPackage : packages) {
-      if (PsiTreeUtil.isAncestor(aPackage, hisPackage, false)) return true;
-    }
-    return false;
   }
 
   @Nullable
@@ -554,11 +544,12 @@ public class JavaCoverageEngine extends CoverageEngine {
   protected JavaCoverageSuite createSuite(CoverageRunner acceptedCovRunner,
                                           String name, CoverageFileProvider coverageDataFileProvider,
                                           String[] filters,
+                                          String[] excludePatterns,
                                           long lastCoverageTimeStamp,
                                           boolean coverageByTestEnabled,
                                           boolean tracingEnabled,
                                           boolean trackTestFolders, Project project) {
-    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, lastCoverageTimeStamp, coverageByTestEnabled, tracingEnabled,
+    return new JavaCoverageSuite(name, coverageDataFileProvider, filters, excludePatterns, lastCoverageTimeStamp, coverageByTestEnabled, tracingEnabled,
                                  trackTestFolders, acceptedCovRunner, this, project);
   }
 
