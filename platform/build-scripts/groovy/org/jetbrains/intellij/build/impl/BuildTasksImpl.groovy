@@ -96,6 +96,7 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.messages.progress("Building provided modules list for modules $modules")
       String targetFile = "${targetDirectory.absolutePath}/builtinModules.json"
       FileUtil.delete(new File(targetFile))
+      // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
       runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFile])
       if (!new File(targetFile).exists()) {
         buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
@@ -111,6 +112,8 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
       String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
       FileUtil.delete(new File(targetFile))
+      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+      // It'll process all UI elements in Settings dialog and build index for them.
       runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, pathsToLicenses, ['traverseUI', targetFile])
       if (!new File(targetFile).exists()) {
         buildContext.messages.error("Failed to build searchable options index: $targetFile doesn't exist")
