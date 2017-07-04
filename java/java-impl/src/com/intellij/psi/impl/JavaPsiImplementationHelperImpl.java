@@ -68,8 +68,9 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public PsiClass getOriginalClass(PsiClass psiClass) {
+  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) return (PsiClass)cls;
 
@@ -104,7 +105,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
+  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
 
     PsiClass[] classes = clsFile.getClasses();
@@ -220,7 +221,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   @Override
-  public ASTNode getDefaultImportAnchor(PsiImportList list, PsiImportStatementBase statement) {
+  public ASTNode getDefaultImportAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(list.getProject());
     ImportHelper importHelper = new ImportHelper(settings);
     return importHelper.getDefaultAnchor(list, statement);
