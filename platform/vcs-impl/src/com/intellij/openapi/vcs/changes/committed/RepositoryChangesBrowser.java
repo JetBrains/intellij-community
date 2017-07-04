@@ -71,7 +71,9 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    toolBarGroup.add(new ShowDiffWithLocalAction());
+    toolBarGroup.add(new ShowDiffWithLocalAction(true));
+    toolBarGroup.add(new ShowDiffWithLocalAction(false));
+
     myEditSourceAction = new MyEditSourceAction();
     myEditSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     toolBarGroup.add(myEditSourceAction);

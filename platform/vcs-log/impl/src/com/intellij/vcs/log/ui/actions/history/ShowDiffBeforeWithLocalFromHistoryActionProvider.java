@@ -28,17 +28,10 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowDiffWithLocalFromHistoryActionProvider extends FileHistorySingleCommitAction implements AnActionExtensionProvider {
+public class ShowDiffBeforeWithLocalFromHistoryActionProvider extends FileHistorySingleCommitAction implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-
-    e.getPresentation().setDescription("Compare selected revision with the local version of the file");
   }
 
   @Override
@@ -46,7 +39,15 @@ public class ShowDiffWithLocalFromHistoryActionProvider extends FileHistorySingl
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
 
-    return filePath != null && filePath.getVirtualFile() != null && handler != null;
+    if (filePath == null || filePath.getVirtualFile() == null || handler == null) {
+      return false;
+    }
+
+    if (detail != null) {
+      return detail.getParents().size() == 1;
+    }
+
+    return true;
   }
 
   @Override
@@ -55,10 +56,11 @@ public class ShowDiffWithLocalFromHistoryActionProvider extends FileHistorySingl
                                @NotNull VcsFullCommitDetails detail,
                                @NotNull AnActionEvent e) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
+    if (detail.getParents().size() != 1) return;
 
     FilePath path = e.getRequiredData(VcsDataKeys.FILE_PATH);
     VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
 
-    handler.showDiffWithLocal(detail.getRoot(), ui.getPath(detail), detail.getId(), path);
+    handler.showDiffWithLocal(detail.getRoot(), ui.getBeforePath(detail), detail.getParents().get(0), path);
   }
 }

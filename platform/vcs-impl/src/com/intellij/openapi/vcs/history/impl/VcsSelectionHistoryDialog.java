@@ -208,7 +208,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     final DefaultActionGroup popupActions = new DefaultActionGroup();
     popupActions.add(new MyDiffAction());
-    popupActions.add(new MyDiffLocalAction());
+    popupActions.add(new MyDiffAfterWithLocalAction());
     popupActions.add(ShowAllAffectedGenericAction.getInstance());
     popupActions.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
@@ -496,8 +496,8 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
   }
 
-  private class MyDiffLocalAction extends DumbAwareAction {
-    public MyDiffLocalAction() {
+  private class MyDiffAfterWithLocalAction extends DumbAwareAction {
+    public MyDiffAfterWithLocalAction() {
       ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 

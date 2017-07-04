@@ -30,11 +30,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowDiffWithLocalAction extends ExtendableAction implements DumbAware {
+public class ShowDiffAfterWithLocalAction extends ExtendableAction implements DumbAware {
   private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider");
+    ExtensionPointName.create("com.intellij.openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider");
 
-  public ShowDiffWithLocalAction() {
+  public ShowDiffAfterWithLocalAction() {
     super(EP_NAME);
   }
 
