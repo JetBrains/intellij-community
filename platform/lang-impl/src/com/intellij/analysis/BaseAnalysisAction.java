@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -77,8 +76,7 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                 AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                 project,
                                                                 scope,
-                                                                module != null ? ModuleUtilCore
-                                                                  .getModuleNameInReadAction(module) : null,
+                                                                module != null ? module.getName() : null,
                                                                 rememberScope, AnalysisUIOptions.getInstance(project), element) {
       @Override
       @Nullable
