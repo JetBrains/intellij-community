@@ -76,6 +76,7 @@ else:
 #=======================================================================================================================
 IS_PY3K = False
 IS_PY34_OLDER = False
+IS_PY36_OLDER = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -85,6 +86,8 @@ try:
         IS_PY2 = False
         if (sys.version_info[0] == 3 and sys.version_info[1] >= 4) or sys.version_info[0] > 3:
             IS_PY34_OLDER = True
+        if (sys.version_info[0] == 3 and sys.version_info[1] >= 6) or sys.version_info[0] > 3:
+            IS_PY36_OLDER = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
