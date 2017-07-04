@@ -144,7 +144,7 @@ public class FileParser {
   }
 
   @NotNull
-  private Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<PsiBuilder> stopper) {
+  protected Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<PsiBuilder> stopper) {
     PsiBuilder.Marker list = builder.mark();
 
     boolean isEmpty = true;
@@ -189,7 +189,7 @@ public class FileParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
+  protected PsiBuilder.Marker parseImportStatement(PsiBuilder builder) {
     if (builder.getTokenType() != JavaTokenType.IMPORT_KEYWORD) return null;
 
     final PsiBuilder.Marker statement = builder.mark();

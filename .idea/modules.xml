@@ -157,6 +157,8 @@
       <module fileurl="file://$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" filepath="$PROJECT_DIR$/jps/model-impl/jps-model-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" filepath="$PROJECT_DIR$/jps/model-serialization/jps-serialization-tests.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/jps-standalone-builder.iml" group="jps" />
+      <module fileurl="file://$PROJECT_DIR$/java/execution/jshell-frontend/jshell-frontend.iml" filepath="$PROJECT_DIR$/java/execution/jshell-frontend/jshell-frontend.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/java/execution/jshell-protocol/jshell-protocol.iml" filepath="$PROJECT_DIR$/java/execution/jshell-protocol/jshell-protocol.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/json/json.iml" filepath="$PROJECT_DIR$/json/json.iml" group="json" />
       <module fileurl="file://$PROJECT_DIR$/json/tests/json-tests.iml" filepath="$PROJECT_DIR$/json/tests/json-tests.iml" group="json" />
       <module fileurl="file://$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" filepath="$PROJECT_DIR$/java/jsp-base-openapi/jsp-base-openapi.iml" group="java" />

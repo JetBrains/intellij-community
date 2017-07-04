@@ -361,6 +361,8 @@
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
+    <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
+    <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
@@ -1242,6 +1244,7 @@
     </intentionAction>
 
     <lang.parserDefinition language="JAVA" implementationClass="com.intellij.lang.java.JavaParserDefinition"/>
+    <lang.parserDefinition language="JShellLanguage" implementationClass="com.intellij.lang.java.JShellParserDefinition"/>
 
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
@@ -1996,6 +1999,8 @@
 
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
 
+    <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
   </extensions>
 
@@ -2026,6 +2031,11 @@
     <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
     <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
 
+    <action id="JShell.Console"
+            class="com.intellij.execution.jshell.LaunchJShellConsoleAction"
+            text="JShell Console..." description="Launch JShell Console">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>
