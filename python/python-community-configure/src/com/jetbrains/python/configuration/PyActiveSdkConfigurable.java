@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyPackageManagers;
@@ -66,7 +67,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private boolean mySdkSettingsWereModified = false;
 
   private JPanel myMainPanel;
-  private ComboBox mySdkCombo;
+  private ComboBox<Object> mySdkCombo;
   private PyInstalledPackagesPanel myPackagesPanel;
   private JButton myDetailsButton;
   private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
@@ -93,7 +94,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myMainPanel = new JPanel(layout);
     final JLabel interpreterLabel = new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter"));
     final JLabel emptyLabel = new JLabel("  ");
-    mySdkCombo = new ComboBox() {
+    mySdkCombo = new ComboBox<Object>() {
       @Override
       public void setSelectedItem(Object item) {
         if (SHOW_ALL.equals(item)) {
@@ -133,7 +134,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, notificationsArea);
     final GridBagConstraints c = new GridBagConstraints();
     c.fill = GridBagConstraints.HORIZONTAL;
-    c.insets = new Insets(2,2,2,2);
+    c.insets = JBUI.insets(2);
 
     c.gridx = 0;
     c.gridy = 0;
@@ -144,7 +145,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     c.weightx = 0.1;
     myMainPanel.add(mySdkCombo, c);
 
-    c.insets = new Insets(2,0,2,2);
+    c.insets = JBUI.insets(2, 0, 2, 2);
     c.gridx = 2;
     c.gridy = 0;
     c.weightx = 0.0;
@@ -156,7 +157,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       customUiProvider.customizeActiveSdkPanel(myProject, mySdkCombo, myMainPanel, c, myDisposable);
     }
 
-    c.insets = new Insets(2,2,0,2);
+    c.insets = JBUI.insets(2, 2, 0, 2);
     c.gridx = 0;
     c.gridy++;
     c.gridwidth = 3;
@@ -227,10 +228,10 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     return mySdkSettingsWereModified || selectedSdk instanceof PyDetectedSdk || !Comparing.equal(sdk, selectedSdk);
   }
 
-  @Nullable
   /**
    * returns real sdk or detected one
    */
+  @Nullable
   private Sdk getSelectedSdk() {
     final Sdk selectedItem = (Sdk)mySdkCombo.getSelectedItem();
     if (selectedItem instanceof PyDetectedSdk) return selectedItem;
@@ -351,8 +352,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     items.add(SHOW_ALL);
 
     mySdkCombo.setRenderer(new PySdkListCellRenderer(false));
-    //noinspection unchecked
-    mySdkCombo.setModel(new CollectionComboBoxModel(items, selection));
+    mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
   }
 
   @Override
