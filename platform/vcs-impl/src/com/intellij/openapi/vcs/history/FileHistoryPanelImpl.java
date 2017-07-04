@@ -198,7 +198,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     };
 
-    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
     // todo react to event?
     updateAlarm.addRequest(new Runnable() {
       public void run() {
