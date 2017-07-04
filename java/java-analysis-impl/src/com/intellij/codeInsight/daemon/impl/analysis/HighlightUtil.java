@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.JavaModuleSystemEx;
+import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -1747,40 +1748,40 @@ public class HighlightUtil extends HighlightUtilBase {
       }
       else {
         String containerName = getContainerName(refElement, result.getSubstitutor());
-        Pair<String, List<IntentionAction>> problem = checkModuleAccess(resolved, reference, symbolName, containerName);
-        if (problem != null) return problem;
+        ErrorWithFixes problem = checkModuleAccess(resolved, reference, symbolName, containerName);
+        if (problem != null) return pair(problem.message, problem.fixes);
         return pair(JavaErrorMessages.message("visibility.access.problem", symbolName, containerName), null);
       }
     }
   }
 
-  private static Pair<String, List<IntentionAction>> checkModuleAccess(PsiElement target, PsiElement place, String symbolName, String containerName) {
+  private static ErrorWithFixes checkModuleAccess(PsiElement target, PsiElement place, String symbolName, String containerName) {
+    ErrorWithFixes error = null;
     for (JavaModuleSystem moduleSystem : JavaModuleSystem.EP_NAME.getExtensions()) {
-      Pair<String, List<IntentionAction>> problem = null;
       if (moduleSystem instanceof JavaModuleSystemEx) {
-        problem = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
+        error = checkAccess((JavaModuleSystemEx)moduleSystem, target, place);
       }
       else if (!isAccessible(moduleSystem, target, place)) {
         String message = JavaErrorMessages.message("visibility.module.access.problem", symbolName, containerName, moduleSystem.getName());
-        problem = pair(message, Collections.emptyList());
+        error = new ErrorWithFixes(message);
       }
-      if (problem != null) {
-        return problem;
+      if (error != null) {
+        return error;
       }
     }
 
     return null;
   }
 
-  private static Pair<String, List<IntentionAction>> checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
-    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target), place);
+  private static ErrorWithFixes checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
     if (target instanceof PsiClass) return system.checkAccess(((PsiClass)target), place);
+    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target), place);
     return null;
   }
 
   private static boolean isAccessible(JavaModuleSystem system, PsiElement target, PsiElement place) {
-    if (target instanceof PsiPackage) return system.isAccessible(((PsiPackage)target), place);
     if (target instanceof PsiClass) return system.isAccessible(((PsiClass)target), place);
+    if (target instanceof PsiPackage) return system.isAccessible(((PsiPackage)target), place);
     return true;
   }
 
