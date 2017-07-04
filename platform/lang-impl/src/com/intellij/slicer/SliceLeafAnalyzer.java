@@ -152,7 +152,7 @@ public class SliceLeafAnalyzer {
     });
   }
 
-  public static Map<SliceNode, Collection<PsiElement>> createMap() {
+  public Map<SliceNode, Collection<PsiElement>> createMap() {
     return ConcurrentFactoryMap.createMap(k->ContainerUtil.newConcurrentSet(myLeafEquality), ()->ContainerUtil.newConcurrentMap(ContainerUtil.<SliceNode>identityStrategy()));
   }
 
