@@ -401,7 +401,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
-    execute(command, false);  // set temp. breakpoint
+    execute(command, true);  // set temp. breakpoint
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
