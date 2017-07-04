@@ -15,20 +15,16 @@
  */
 package com.intellij.openapi.vcs.history.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.*;
 import org.jetbrains.annotations.NotNull;
 
-public class CompareRevisionsAction extends DumbAwareAction {
-  public CompareRevisionsAction() {
-    super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
-  }
+public class CompareRevisionsAction implements AnActionExtensionProvider {
 
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
@@ -49,7 +45,15 @@ public class CompareRevisionsAction extends DumbAwareAction {
     }
   }
 
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(VcsDataKeys.HISTORY_SESSION) != null;
+  }
+
   public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setText(VcsBundle.message("action.name.compare"));
+    e.getPresentation().setDescription(VcsBundle.message("action.description.compare"));
+
     VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);

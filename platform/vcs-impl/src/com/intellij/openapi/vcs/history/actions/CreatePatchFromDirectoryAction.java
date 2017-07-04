@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.vcs.history.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
@@ -37,14 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class CreatePatchAction extends DumbAwareAction {
-  private final AnAction myUsualDelegate;
-
-  public CreatePatchAction() {
-    super(VcsBundle.message("action.name.create.patch.for.selected.revisions"),
-          VcsBundle.message("action.description.create.patch.for.selected.revisions"), AllIcons.Vcs.Patch);
-    myUsualDelegate = new CreatePatchFromChangesAction.Dialog();
-  }
+public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -59,14 +51,20 @@ public class CreatePatchAction extends DumbAwareAction {
 
       ProgressManager.getInstance().run(new FolderPatchCreationTask(vcs, revisions[0]));
     }
-    else {
-      myUsualDelegate.actionPerformed(e);
-    }
+  }
+
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    VcsHistorySession session = e.getData(VcsDataKeys.HISTORY_SESSION);
+    FilePath path = e.getData(VcsDataKeys.FILE_PATH);
+    return session != null && path != null && path.isDirectory();
   }
 
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(true);
+    e.getPresentation().setText(VcsBundle.message("action.name.create.patch.for.selected.revisions"));
+    e.getPresentation().setDescription(VcsBundle.message("action.description.create.patch.for.selected.revisions"));
 
     VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
@@ -88,7 +86,7 @@ public class CreatePatchAction extends DumbAwareAction {
       }
     }
     else {
-      e.getPresentation().setEnabled((revisions.length > 0) && (revisions.length < 3));
+      e.getPresentation().setEnabled(false);
     }
   }
 
