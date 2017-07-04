@@ -76,7 +76,7 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                 AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                 project,
                                                                 scope,
-                                                                module != null ? module.getName() : null,
+                                                                module,
                                                                 rememberScope, AnalysisUIOptions.getInstance(project), element) {
       @Override
       @Nullable

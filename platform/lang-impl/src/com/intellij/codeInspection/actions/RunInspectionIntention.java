@@ -97,7 +97,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
       customScope,
-      module != null ? module.getName() : null,
+      module,
       true, AnalysisUIOptions.getInstance(project), context);
     if (!dlg.showAndGet()) {
       return;

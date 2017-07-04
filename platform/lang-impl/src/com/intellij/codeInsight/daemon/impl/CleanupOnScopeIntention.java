@@ -47,7 +47,7 @@ class CleanupOnScopeIntention extends CleanupIntention {
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
       analysisScope,
-      module != null ? module.getName() : null,
+      module,
       true, AnalysisUIOptions.getInstance(project), file);
     if (!dlg.showAndGet()) {
       return null;
