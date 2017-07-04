@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor;
+package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.TestFileType;
@@ -29,6 +28,7 @@ import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -127,6 +127,14 @@ public class FoldingTest extends AbstractEditorTest {
 
   public void testAdjacentRegions() {
     addCollapsedFoldRegion(5, 7, "AA");
+    assertFalse(myModel.isOffsetCollapsed(4));
+    assertTrue(myModel.isOffsetCollapsed(5));
+    assertTrue(myModel.isOffsetCollapsed(6));
+    assertFalse(myModel.isOffsetCollapsed(7));
+    assertFalse(myModel.isOffsetCollapsed(8));
+    assertFalse(myModel.isOffsetCollapsed(10));
+    assertFalse(myModel.isOffsetCollapsed(11));
+
     addCollapsedFoldRegion(7, 10, "BB");
     FoldRegion[] regions = myModel.getAllFoldRegions();
     assertEquals(2, regions.length);
@@ -300,14 +308,14 @@ public class FoldingTest extends AbstractEditorTest {
       });
   }
 
-  public void _testCollapseInnerRegion() {
+  public void testCollapseInnerRegion() {
     FoldRegion inner = addFoldRegion(10, 15, "inner");
     FoldRegion outer = addCollapsedFoldRegion(10, 20, "outer");
     myModel.runBatchFoldingOperation(() -> inner.setExpanded(false));
     assertSame(outer, myModel.getCollapsedRegionAtOffset(10));
   }
   
-  public void _testNoIdenticalRegionsSpecialCase() {
+  public void testNoIdenticalRegionsSpecialCase() {
     addFoldRegion(10, 20, "1");
     addFoldRegion(15, 20, "2");
     addFoldRegion(16, 17, "3");
@@ -316,5 +324,16 @@ public class FoldingTest extends AbstractEditorTest {
     assertSize(2, regions);
     assertEquals(TextRange.create(10, 15), TextRange.create(regions[0]));
     assertEquals(TextRange.create(11, 12), TextRange.create(regions[1]));
+  }
+
+  public void test1() {
+    String text = myEditor.getDocument().getText().codePoints().mapToObj(c -> c + "\n").collect(Collectors.joining());
+    WriteCommandAction.runWriteCommandAction(getProject(), ()-> myEditor.getDocument().setText(text));
+    addFoldRegion(20, 151, "1");
+    addFoldRegion(289, 357, "2");
+    addCollapsedFoldRegion(282, 357, "3");
+    FoldRegion[] regions = myEditor.getFoldingModel().getAllFoldRegions();
+    assertSize(3, regions);
+    assertEquals(21, ((FoldingModelImpl)myEditor.getFoldingModel()).getTotalNumberOfFoldedLines());
   }
 }
