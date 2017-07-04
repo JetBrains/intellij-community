@@ -579,10 +579,12 @@ public class PyDocumentationBuilder {
     else {
       QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
       if (name != null) {
-        myProlog.add($("Module ")).addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
+        myProlog.add($("Module "))
+          .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
       }
       else {
-        myProlog.addWith(TagSmall, $(file.getPath()));
+        String path = file.getPath();
+        myProlog.addWith(TagSpan.withAttribute("path", path), $("").addWith(TagSmall, $(path)));
       }
     }
   }
