@@ -41,10 +41,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
-import com.intellij.openapi.vcs.history.actions.AnnotateRevisionAction;
 import com.intellij.openapi.vcs.history.actions.CompareRevisionsAction;
-import com.intellij.openapi.vcs.history.actions.CreatePatchAction;
-import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -89,7 +86,8 @@ import static java.util.Comparator.reverseOrder;
  */
 public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider {
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
-  private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
+  private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
+  private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
 
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
 
@@ -168,7 +166,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     listener.installOn(myDualView.getTreeView());
     myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
-    setupDualView(addToGroup(true, new DefaultActionGroup(null, false)));
+    setupDualView(fillActionGroup(true, new DefaultActionGroup(null, false)));
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
@@ -329,7 +327,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   protected void addActionsTo(DefaultActionGroup group) {
-    addToGroup(false, group);
+    fillActionGroup(false, group);
   }
 
   private void setupDualView(@NotNull DefaultActionGroup group) {
@@ -398,24 +396,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   }
 
   @NotNull
-  private DefaultActionGroup addToGroup(boolean popup, DefaultActionGroup result) {
+  private DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
-    CompareRevisionsAction diffAction = new CompareRevisionsAction();
-    diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), null);
-    result.add(diffAction);
-
-    if (popup) {
-      result.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"));
-    }
-
-    final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
-    if (diffGroup != null) result.add(diffGroup);
-    result.add(new CreatePatchAction());
-    result.add(new GetVersionAction());
-    result.add(new AnnotateRevisionAction());
+    AnAction actionGroup = ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP : VCS_HISTORY_TOOLBAR_ACTION_GROUP);
+    result.add(actionGroup);
     AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {

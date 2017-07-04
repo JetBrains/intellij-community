@@ -177,7 +177,30 @@
               text="Shelf Settings" description="Open shelf settings" icon="AllIcons.General.SecondaryGroup"/>
     </group>
 
+    <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
+
+    <action id="FileHistory.AnnotateRevision" class="com.intellij.openapi.vcs.history.actions.AnnotateRevisionAction"/>
+    <action id="FileHistory.CreatePatch" class="com.intellij.openapi.vcs.history.actions.CreatePatchAction"/>
+    <action id="FileHistory.CompareRevisions" class="com.intellij.openapi.vcs.history.actions.CompareRevisionsAction"
+                  use-shortcut-of="Diff.ShowDiff"/>
+
+    <group id="VcsHistoryInternalGroup.Popup">
+      <reference ref="FileHistory.CompareRevisions"/>
+      <reference ref="Vcs.ShowDiffWithLocal"/>
+      <reference ref="VcsHistoryActionsGroup"/>
+      <reference ref="FileHistory.CreatePatch"/>
+      <reference ref="Vcs.GetVersion"/>
+      <reference ref="FileHistory.AnnotateRevision"/>
+    </group>
+
+    <group id="VcsHistoryInternalGroup.Toolbar">
+      <reference ref="FileHistory.CompareRevisions"/>
+      <reference ref="VcsHistoryActionsGroup"/>
+      <reference ref="FileHistory.CreatePatch"/>
+      <reference ref="Vcs.GetVersion"/>
+      <reference ref="FileHistory.AnnotateRevision"/>
+    </group>
 
     <group id="CommittedChangesToolbar">
       <action id="CommittedChanges.Refresh" class="com.intellij.openapi.vcs.changes.committed.RefreshCommittedAction"
