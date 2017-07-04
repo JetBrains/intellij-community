@@ -938,13 +938,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
       final TreePath path = tree.getPathForRow(row);
       if (path == null) return result;
-      final VcsFileRevision revision = row >= 0 ? (VcsFileRevision)path.getLastPathComponent() : null;
+      TreeNodeOnVcsRevision node = row >= 0 ? ((TreeNodeOnVcsRevision)path.getLastPathComponent()) : null;
 
-      if (revision != null) {
-        if (myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
+      if (node != null) {
+        if (myHistorySession.get().isCurrentRevision(node.getRevision().getRevisionNumber())) {
           makeBold(result);
         }
-        if (!selected && myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
+        if (!selected && myHistorySession.get().isCurrentRevision(node.getRevision().getRevisionNumber())) {
           result.setBackground(new JBColor(new Color(188, 227, 231), new Color(188, 227, 231)));
         }
         ((JComponent)result).setOpaque(false);
