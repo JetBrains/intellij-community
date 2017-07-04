@@ -98,7 +98,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean incompleteCode) {
       Project project = file.getProject();
       GlobalSearchScope scope = incompleteCode ? GlobalSearchScope.allScope(project) : file.getResolveScope();
-      return JavaFileManager.SERVICE.getInstance(project).findModules(moduleName, scope);
+      return JavaFileManager.getInstance(project).findModules(moduleName, scope);
     }
   }
 
