@@ -269,7 +269,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                @Nullable VcsRevisionNumber startingRevisionNumber) {
     String existingRevision = historyPanel.myStartingRevision == null ? null : historyPanel.myStartingRevision.asString();
     String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
-    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
+    return historyPanel.myFilePath.equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   @CalledInAwt
@@ -582,11 +582,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull
   public FileHistoryRefresherI getRefresher() {
     return myRefresherI;
-  }
-
-  @NotNull
-  public FilePath getFilePath() {
-    return myFilePath;
   }
 
   @Nullable
