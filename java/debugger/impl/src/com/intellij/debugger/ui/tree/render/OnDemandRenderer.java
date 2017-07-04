@@ -40,7 +40,7 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
   @Override
   default XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext,
                                                     ValueDescriptorImpl valueDescriptor) {
-    if (isOnDemand(evaluationContext) && !isCalculated(valueDescriptor)) {
+    if (isOnDemand(evaluationContext, valueDescriptor) && !isCalculated(valueDescriptor)) {
       return createFullValueEvaluator(getLinkText());
     }
     return null;
@@ -48,12 +48,12 @@ public interface OnDemandRenderer extends FullValueEvaluatorProvider {
 
   String getLinkText();
 
-  default boolean isOnDemand(EvaluationContext evaluationContext) {
+  default boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
     return isOnDemandForced(evaluationContext);
   }
 
   default boolean isShowValue(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext) {
-    return !isOnDemand(evaluationContext) || isCalculated(valueDescriptor);
+    return !isOnDemand(evaluationContext, valueDescriptor) || isCalculated(valueDescriptor);
   }
 
   static XFullValueEvaluator createFullValueEvaluator(String text) {

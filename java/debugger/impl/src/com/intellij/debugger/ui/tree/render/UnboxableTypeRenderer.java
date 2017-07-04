@@ -40,7 +40,7 @@ public abstract class UnboxableTypeRenderer extends CompoundReferenceRenderer {
       }
 
       @Override
-      public boolean isOnDemand(EvaluationContext evaluationContext) {
+      public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
         return false;
       }
     }, null);

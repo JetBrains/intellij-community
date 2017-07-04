@@ -122,8 +122,8 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
   }
 
   @Override
-  public boolean isOnDemand(EvaluationContext evaluationContext) {
-    return myOnDemand || OnDemandRenderer.super.isOnDemand(evaluationContext);
+  public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
+    return myOnDemand || OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
   }
 
   public boolean isOnDemand() {
