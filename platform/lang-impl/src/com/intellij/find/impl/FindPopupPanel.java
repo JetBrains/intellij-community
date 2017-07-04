@@ -383,6 +383,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
+        e.getPresentation().setVisible(myHelper.getModel().isOpenInNewTabVisible());
       }
     });
     tabResultsContextGroup.setPopup(true);

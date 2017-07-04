@@ -177,9 +177,8 @@ public class FindUIHelper implements Disposable {
   }
 
   void setUseSeparateView(boolean separateView) {
-    if (myModel.isOpenInNewTabEnabled()) {
-      myModel.setOpenInNewTab(separateView);
-    }
+    if (!myModel.isOpenInNewTabEnabled()) throw new IllegalStateException("'Open in new Tab' is not enabled");
+    myModel.setOpenInNewTab(separateView);
     FindSettings.getInstance().setShowResultsInSeparateView(separateView);
   }
 
