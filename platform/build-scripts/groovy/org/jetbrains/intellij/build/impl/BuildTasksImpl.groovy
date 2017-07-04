@@ -91,16 +91,17 @@ class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  void buildProvidedModulesList(File targetDirectory, List<String> modules, List<String> pathsToLicenses) {
+  void buildProvidedModulesList(List<String> modules, List<String> pathsToLicenses) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
       buildContext.messages.progress("Building provided modules list for modules $modules")
-      String targetFile = "${targetDirectory.absolutePath}/builtinModules.json"
+      String targetFile = "${buildContext.paths.artifacts}/builtinModules.json"
       FileUtil.delete(new File(targetFile))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
       runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFile])
       if (!new File(targetFile).exists()) {
         buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
       }
+      buildContext.notifyArtifactBuilt(targetFile)
     })
   }
 
