@@ -45,6 +45,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "debugger-impl",
     "dom-impl",
     "execution-impl",
+    "jshell-protocol",
     "external-system-impl",
     "idea-ui",
     "java-analysis-impl",
@@ -58,7 +59,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "testFramework",
     "tests_bootstrap",
     "ui-designer-core",
-    "uast-java",
+    "uast-java"
   ]
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "copyright", "properties", "terminal", "editorconfig", "settings-repository", "yaml",
