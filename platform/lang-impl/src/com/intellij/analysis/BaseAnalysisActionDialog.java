@@ -195,7 +195,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myScopeCombo.setCurrentSelection(false);
 
     //correct selection
-    myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || myFileName == null);
+    myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || (myFileName == null && !myModuleButton.isSelected()));
     myFileButton.setSelected(myFileName != null &&
                              (!myRememberScope ||
                              myAnalysisOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && myAnalysisOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));

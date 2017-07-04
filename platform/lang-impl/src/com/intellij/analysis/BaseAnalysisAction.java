@@ -16,6 +16,7 @@
 
 package com.intellij.analysis;
 
+import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,12 +62,10 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final Module module = e.getData(LangDataKeys.MODULE);
-    if (project == null) {
-      return;
-    }
+    Module module = getModuleFromContext(dataContext);
     AnalysisScope scope = getInspectionScope(dataContext);
     LOG.assertTrue(scope != null);
     final boolean rememberScope = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
@@ -124,8 +123,9 @@ public abstract class BaseAnalysisAction extends AnAction {
   @Nullable
   private AnalysisScope getInspectionScope(@NotNull DataContext dataContext) {
     if (CommonDataKeys.PROJECT.getData(dataContext) == null) return null;
-
-    AnalysisScope scope = getInspectionScopeImpl(dataContext);
+    AnalysisScope scope = getFileScopeFromInspectionView(dataContext);
+    if (scope != null) return scope;
+    scope = getInspectionScopeImpl(dataContext);
 
     return scope != null && scope.getScopeType() != AnalysisScope.INVALID ? scope : null;
   }
@@ -198,4 +198,27 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
+  private static AnalysisScope getFileScopeFromInspectionView(DataContext dataContext) {
+    InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);
+    if (inspectionView != null) {
+      AnalysisScope scope = inspectionView.getScope();
+      if (scope.getScopeType() == AnalysisScope.FILE && scope.isValid()) {
+        return scope;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Module getModuleFromContext(@NotNull DataContext dataContext) {
+    InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);
+    if (inspectionView != null) {
+      AnalysisScope scope = inspectionView.getScope();
+      if (scope.getScopeType() == AnalysisScope.MODULE && scope.isValid()) {
+        return scope.getModule();
+      }
+    }
+
+    return dataContext.getData(LangDataKeys.MODULE);
+  }
 }
