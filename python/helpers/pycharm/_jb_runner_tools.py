@@ -399,4 +399,4 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1} in {2}".format(framework_name, " ".join(args), os.getcwd()))
+    print("Launching {0} with arguments {1} in {2}\n".format(framework_name, " ".join(args), os.getcwd()))
