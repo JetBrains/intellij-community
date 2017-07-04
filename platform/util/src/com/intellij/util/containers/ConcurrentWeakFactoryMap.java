@@ -23,5 +23,5 @@ import com.intellij.util.Function;
  * TODO to remove in IDEA 2018
  */
 @Deprecated
-public abstract class ConcurrentWeakFactoryMap extends ConcurrentFactoryMap {
+public abstract class ConcurrentWeakFactoryMap<K,V> extends ConcurrentFactoryMap<K,V> {
 }
