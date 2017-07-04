@@ -216,8 +216,6 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
     
-    buildTasks.buildProvidedModulesList(new File(buildContext.paths.artifacts), productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
-
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
     ant.copy(file: applicationInfoFile, todir: "$applicationInfoDir/idea")
