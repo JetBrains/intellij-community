@@ -150,9 +150,11 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasManagement) return false;
 
-    if (!PyPackageUtil.packageManagementEnabled(getSelectedSdk())) return false;
+    final Sdk sdk = getSelectedSdk();
+    if (sdk == null) return false;
+    if (!PyPackageUtil.packageManagementEnabled(sdk)) return false;
 
-    if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
+    if (PythonSdkType.isVirtualEnv(sdk) && pkg instanceof PyPackage) {
       final String location = ((PyPackage)pkg).getLocation();
       if (location != null && location.startsWith(PySdkUtil.getUserSite())) {
         return false;
