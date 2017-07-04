@@ -17,10 +17,8 @@ package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class Java9AccessCanBeTightenedTest : LightCodeInsightFixtureTestCase() {
@@ -35,7 +33,7 @@ class Java9AccessCanBeTightenedTest : LightCodeInsightFixtureTestCase() {
     super.setUp()
     inspection = createGlobalTool()
 
-    enableInspectionTool(project, inspection.sharedLocalInspectionTool!!, Disposable { })
+    myFixture.enableInspections(inspection.sharedLocalInspectionTool!!)
   }
 
   fun testPublicClass() = doTestClass()
