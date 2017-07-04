@@ -40,6 +40,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
+import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,10 +50,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -71,36 +69,46 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
-    PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
-    if (cls != null && cls.isValid()) return (PsiClass)cls;
+    return findCompiledElement(psiClass, scope -> {
+      String fqn = psiClass.getQualifiedName();
+      return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
+    });
+  }
 
-    if (DumbService.isDumb(myProject)) return psiClass;
+  @NotNull
+  @Override
+  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+    return findCompiledElement(module, scope -> JavaFileManager.getInstance(myProject).findModules(module.getName(), scope));
+  }
 
-    VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-    final ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
-    if (vFile == null || !idx.isInLibrarySource(vFile)) return psiClass;
+  private <T extends PsiElement> T findCompiledElement(T original, Function<GlobalSearchScope, Collection<T>> candidateFinder) {
+    PsiCompiledElement cls = original.getUserData(ClsElementImpl.COMPILED_ELEMENT);
+    if (cls != null && cls.isValid()) {
+      @SuppressWarnings("unchecked") T t = (T)cls;
+      return t;
+    }
 
-    String fqn = psiClass.getQualifiedName();
-    if (fqn == null) return psiClass;
-
-    final Set<OrderEntry> orderEntries = ContainerUtil.newHashSet(idx.getOrderEntriesForFile(vFile));
-    GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
-    for (PsiClass original : JavaPsiFacade.getInstance(myProject).findClasses(fqn, librariesScope)) {
-      PsiFile psiFile = original.getContainingFile();
-      if (psiFile != null) {
-        VirtualFile candidateFile = psiFile.getVirtualFile();
-        if (candidateFile != null) {
-          // order for file and vFile has non empty intersection.
-          List<OrderEntry> entries = idx.getOrderEntriesForFile(candidateFile);
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0; i < entries.size(); i++) {
-            if (orderEntries.contains(entries.get(i))) return original;
+    if (!DumbService.isDumb(myProject)) {
+      VirtualFile vFile = original.getContainingFile().getVirtualFile();
+      ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
+      if (vFile != null && idx.isInLibrarySource(vFile)) {
+        GlobalSearchScope librariesScope = LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope();
+        Set<OrderEntry> originalEntries = ContainerUtil.newHashSet(idx.getOrderEntriesForFile(vFile));
+        for (T candidate : candidateFinder.apply(librariesScope)) {
+          PsiFile candidateFile = candidate.getContainingFile();
+          if (candidateFile != null) {
+            VirtualFile candidateVFile = candidateFile.getVirtualFile();
+            if (candidateVFile != null) {
+              for (OrderEntry candidateEntry : idx.getOrderEntriesForFile(candidateVFile)) {
+                if (originalEntries.contains(candidateEntry)) return candidate;
+              }
+            }
           }
         }
       }
     }
 
-    return psiClass;
+    return original;
   }
 
   @NotNull

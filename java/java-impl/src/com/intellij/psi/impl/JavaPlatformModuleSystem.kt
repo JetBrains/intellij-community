@@ -74,7 +74,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
 
     if (targetModule != null) {
-      if (targetModule == useModule) {
+      if (targetModule.originalElement == useModule?.originalElement) {
         return null
       }
       if (useModule == null && targetModule.containingFile?.virtualFile?.fileSystem !is JrtFileSystem) {

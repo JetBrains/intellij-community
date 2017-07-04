@@ -43,6 +43,12 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
 
   @NotNull
   @Override
+  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+    return module;
+  }
+
+  @NotNull
+  @Override
   public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     return clsFile;
   }
