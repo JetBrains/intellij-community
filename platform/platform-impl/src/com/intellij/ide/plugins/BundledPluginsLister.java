@@ -45,7 +45,16 @@ public class BundledPluginsLister extends ApplicationStarterEx {
   @Override
   public void main(String[] args) {
     try {
-      OutputStream out = args.length == 2 ? new FileOutputStream(args[1]) : System.out;
+      OutputStream out;
+      if (args.length == 2) {
+        File outFile = new File(args[1]);
+        File parentFile = outFile.getParentFile();
+        if (parentFile != null) parentFile.mkdirs();
+        out = new FileOutputStream(outFile);
+      }
+      else {
+        out = System.out;
+      }
       JsonWriter writer = new JsonWriter(new OutputStreamWriter(out, CharsetToolkit.UTF8_CHARSET));
 
       try {
