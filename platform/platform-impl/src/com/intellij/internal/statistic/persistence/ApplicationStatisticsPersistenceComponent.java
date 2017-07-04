@@ -45,7 +45,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
                                                                                                 BaseComponent {
   // 30 minutes considered enough for project indexing and other tasks
   private static final int DELAY_IN_MIN = 30;
-  private static final Map<Project, Future> persistProjectStatisticsTasks = new HashMap<>();
+  private static final Map<Project, Future> persistProjectStatisticsTasks = Collections.synchronizedMap(new HashMap<>());
 
   private static final String TOKENIZER = ",";
 
