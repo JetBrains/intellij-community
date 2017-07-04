@@ -227,9 +227,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final ProcessOutput output = PySdkUtil.getProcessOutput(runDirectory, new String[]{condaPython, path, "channels"});
     if (output.getExitCode() != 0) return;
     final List<String> lines = output.getStdoutLines();
-    for (String line : lines) {
-      CONDA_CHANNELS.add(line);
-    }
+    CONDA_CHANNELS.addAll(lines);
     LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 }

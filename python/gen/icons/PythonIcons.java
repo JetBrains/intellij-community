@@ -36,6 +36,7 @@ public class PythonIcons {
   }
   
   public static class Python {
+    public static final Icon Anaconda = load("/icons/com/jetbrains/python/anaconda.png"); // 16x16
     
     public static class Buildout {
       public static final Icon Buildout = load("/icons/com/jetbrains/python/buildout/buildout.png"); // 16x16
