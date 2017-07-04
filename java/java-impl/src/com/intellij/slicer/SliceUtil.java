@@ -18,6 +18,7 @@ package com.intellij.slicer;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -241,6 +243,14 @@ class SliceUtil {
     return true;
   }
 
+  public static Collection<SliceUsage> collectMethodReturnValues(@NotNull SliceUsage parent,
+                                                                 @NotNull PsiSubstitutor parentSubstitutor,
+                                                                 PsiMethod methodCalled) {
+    CommonProcessors.CollectProcessor<SliceUsage> processor = new CommonProcessors.CollectProcessor<>();
+    processMethodReturnValue(processor, parent, parentSubstitutor, null, methodCalled, null, PsiSubstitutor.EMPTY);
+    return processor.getResults();
+  }
+
   private static boolean processMethodReturnValue(@NotNull final PsiMethodCallExpression methodCallExpr,
                                                   @NotNull final Processor<SliceUsage> processor,
                                                   @NotNull final JavaSliceUsage parent,
@@ -261,6 +271,16 @@ class SliceUtil {
 
     final PsiType parentType = parentSubstitutor.substitute(methodCallExpr.getType());
     final PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
+    return processMethodReturnValue(processor, parent, parentSubstitutor, qualifierClass, methodCalled, parentType, substitutor);
+  }
+
+  private static boolean processMethodReturnValue(@NotNull Processor<SliceUsage> processor,
+                                                  @NotNull SliceUsage parent,
+                                                  @NotNull PsiSubstitutor parentSubstitutor,
+                                                  @Nullable PsiClass qualifierClass,
+                                                  PsiMethod methodCalled,
+                                                  @Nullable PsiType parentType,
+                                                  @NotNull PsiSubstitutor substitutor) {
     Collection<PsiMethod> overrides = new THashSet<>();
     OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).forEach((PsiMethod override) -> {
       PsiClass containingClass = override.getContainingClass();
@@ -272,6 +292,8 @@ class SliceUtil {
     });
     overrides.add(methodCalled);
 
+    int indexNesting = parent instanceof JavaSliceUsage ? ((JavaSliceUsage)parent).indexNesting : 0;
+
     final boolean[] result = {true};
     for (PsiMethod override : overrides) {
       if (!result[0]) break;
@@ -280,11 +302,17 @@ class SliceUtil {
       }
       if (!parent.getScope().contains(override)) continue;
 
+      Language language = override.getLanguage();
+      if (language != JavaLanguage.INSTANCE) {
+        handToProcessor(override, processor, parent, substitutor, indexNesting, "");
+        continue;
+      }
+
       final PsiCodeBlock body = override.getBody();
       if (body == null) continue;
 
       final PsiSubstitutor s = methodCalled == override ? substitutor :
-        MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodCalled.getSignature(substitutor), override.getSignature(substitutor));
+                               MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodCalled.getSignature(substitutor), override.getSignature(substitutor));
       final PsiSubstitutor superSubstitutor = s == null ? parentSubstitutor : s;
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -299,8 +327,8 @@ class SliceUtil {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
           PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));
-          if (right == null || !TypeConversionUtil.isAssignable(parentType, right)) return;
-          if (!handToProcessor(returnValue, processor, parent, substitutor, parent.indexNesting, "")) {
+          if (right == null || (parentType != null && !TypeConversionUtil.isAssignable(parentType, right))) return;
+          if (!handToProcessor(returnValue, processor, parent, substitutor, indexNesting, "")) {
             stopWalking();
             result[0] = false;
           }
@@ -387,7 +415,7 @@ class SliceUtil {
                                      @NotNull PsiSubstitutor substitutor,
                                      int indexNesting,
                                      @NotNull String syntheticField) {
-    return new JavaSliceUsage(simplify(element), parent, substitutor,indexNesting, syntheticField);
+    return new JavaSliceUsage(simplify(element), parent, substitutor, indexNesting, syntheticField);
   }
 
   @NotNull

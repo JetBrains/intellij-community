@@ -130,14 +130,17 @@ public class SliceTreeTest extends SliceTestCase {
   public void testLeafExpressionsAreEmptyInCaseOfInfinitelyExpandingTreeWithDuplicateNodes() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Tuple");
     SliceNode root = (SliceNode)treeStructure.getRootElement();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, SliceLeafAnalyzer.createMap());
+    SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
+    Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, analyzer.createMap());
     assertNotNull(leaves);
     assertEmpty(leaves);
   }
+
   public void testLeafExpressionsSimple() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DupSlice");
     SliceNode root = (SliceNode)treeStructure.getRootElement();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, SliceLeafAnalyzer.createMap());
+    SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
+    Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, analyzer.createMap());
     assertNotNull(leaves);
     PsiElement element = assertOneElement(leaves);
     assertTrue(element instanceof PsiLiteralExpression);
@@ -146,11 +149,12 @@ public class SliceTreeTest extends SliceTestCase {
   public void testLeafExpressionsMoreComplex() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Duplicate");
     SliceNode root = (SliceNode)treeStructure.getRootElement();
-    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
+    SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
+    Map<SliceNode, Collection<PsiElement>> map = analyzer.createMap();
+    Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, map);
     assertNotNull(leaves);
     List<PsiElement> list = new ArrayList<>(leaves);
-    String message = ContainerUtil.map(list, element -> element.getClass() + ": '" + element.getText() + "' (" + SliceLeafAnalyzer.LEAF_ELEMENT_EQUALITY.computeHashCode(element) + ") ").toString();
+    String message = ContainerUtil.map(list, element -> element.getClass() + ": '" + element.getText() + "' (" + JavaSlicerAnalysisUtil.LEAF_ELEMENT_EQUALITY.computeHashCode(element) + ") ").toString();
     assertEquals(map.entrySet()+"\n"+message, 2, leaves.size());
     Collections.sort(list, (o1, o2) -> o1.getText().compareTo(o2.getText()));
     assertTrue(list.get(0) instanceof PsiLiteralExpression);
@@ -163,15 +167,16 @@ public class SliceTreeTest extends SliceTestCase {
   public void testGroupByValuesCorrectLeaves() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DuplicateLeaves");
     SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
+    SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
+    Map<SliceNode, Collection<PsiElement>> map = analyzer.createMap();
+    Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, map);
     assertNotNull(leaves);
     assertEquals(1, leaves.size());
     PsiElement leaf = leaves.iterator().next();
     assertTrue(leaf instanceof PsiLiteralExpression);
     assertEquals("\"oo\"", leaf.getText());
 
-    SliceRootNode newRoot = SliceLeafAnalyzer.createTreeGroupedByValues(leaves, root, map);
+    SliceRootNode newRoot = analyzer.createTreeGroupedByValues(leaves, root, map);
     Collection<SliceNode> children = newRoot.getChildren();
     assertEquals(1, children.size());
     SliceNode child = children.iterator().next();
@@ -207,10 +212,11 @@ public class SliceTreeTest extends SliceTestCase {
   public void testNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, SliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzer.createMap();
-    SliceNullnessAnalyzer.NullAnalysisResult leaves = SliceNullnessAnalyzer.calcNullableLeaves(root, treeStructure, map);
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
+    JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
+    JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
 
-    SliceRootNode newRoot = SliceNullnessAnalyzer.createNewTree(leaves, root, map);
+    SliceRootNode newRoot = analyzer.createNewTree(leaves, root, map);
 
     checkStructure(newRoot, "Null Values\n" +
                             "  Value: o\n" +
@@ -327,10 +333,12 @@ public class SliceTreeTest extends SliceTestCase {
   public void testDoubleNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("DoubleNulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, SliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzer.createMap();
-    SliceNullnessAnalyzer.NullAnalysisResult leaves = SliceNullnessAnalyzer.calcNullableLeaves(root, treeStructure, map);
+    Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = JavaSliceNullnessAnalyzer.createMap();
+    JavaSliceNullnessAnalyzer analyzer = new JavaSliceNullnessAnalyzer();
 
-    SliceRootNode newRoot = SliceNullnessAnalyzer.createNewTree(leaves, root, map);
+    JavaSliceNullnessAnalyzer.NullAnalysisResult leaves = analyzer.calcNullableLeaves(root, treeStructure, map);
+
+    SliceRootNode newRoot = analyzer.createNewTree(leaves, root, map);
     checkStructure(newRoot,
         "Null Values\n" +
         "  Value: null\n" +
@@ -344,8 +352,9 @@ public class SliceTreeTest extends SliceTestCase {
   public void testGroupByLeavesWithLists() throws Exception {
     SliceTreeStructure treeStructure = configureTree(getTestName(false));
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
+    SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
+    Map<SliceNode, Collection<PsiElement>> map = analyzer.createMap();
+    Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, map);
     assertEquals(2, leaves.size());
     Set<String> names = ContainerUtil.map2Set(leaves, PsiElement::getText);
     assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"xxx\""), names);
@@ -360,8 +369,9 @@ public class SliceTreeTest extends SliceTestCase {
   private Set<String> groupByLeaves() throws Exception {
     SliceTreeStructure treeStructure = configureTree(getTestName(false));
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
-    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
-    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
+    SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
+    Map<SliceNode, Collection<PsiElement>> map = analyzer.createMap();
+    Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, map);
     return ContainerUtil.map2Set(leaves, PsiElement::getText);
   }
 
