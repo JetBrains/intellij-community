@@ -145,6 +145,7 @@ class BuildTasksImpl extends BuildTasks {
     buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx500m")
       jvmarg(value: "-Xbootclasspath/a:${buildContext.projectBuilder.moduleOutput(buildContext.findModule("boot"))}")
+      sysproperty(key: "java.awt.headless", value: true)
       sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
       sysproperty(key: "idea.system.path", value: systemPath)
       sysproperty(key: "idea.config.path", value: configPath)
