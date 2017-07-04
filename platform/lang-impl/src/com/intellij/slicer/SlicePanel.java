@@ -51,15 +51,11 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -179,6 +175,49 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
   }
 
+  class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
+    @NotNull
+    private final SliceUsageCellRendererBase rootRenderer;
+
+    @NotNull
+    private final Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
+
+    public MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
+      this.rootRenderer = rootRenderer;
+      rootRenderer.setOpaque(false);
+    }
+
+    @NotNull
+    private SliceUsageCellRendererBase getRenderer(Object value) {
+      if (!(value instanceof DefaultMutableTreeNode)) return rootRenderer;
+
+      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      if (!(userObject instanceof SliceNode)) return rootRenderer;
+
+      SliceLanguageSupportProvider provider = ((SliceNode)userObject).getProvider();
+      if (provider == null) return rootRenderer;
+
+      SliceUsageCellRendererBase renderer = providersToRenderers.get(provider);
+      if (renderer == null) {
+        renderer = provider.getRenderer();
+        renderer.setOpaque(false);
+        providersToRenderers.put(provider, renderer);
+      }
+      return renderer;
+    }
+
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      return getRenderer(value).getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+  }
+
   @NotNull
   private JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
@@ -192,9 +231,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     tree.setOpaque(false);
 
     tree.setToggleClickCount(-1);
-    SliceUsageCellRendererBase renderer = myProvider.getRenderer();
-    renderer.setOpaque(false);
-    tree.setCellRenderer(renderer);
+    tree.setCellRenderer(new MultiLanguageTreeCellRenderer(myProvider.getRenderer()));
     UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
     
