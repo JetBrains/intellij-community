@@ -57,13 +57,13 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   @NotNull
   public List<RepoPackage> getAllPackages() throws IOException {
-    return useConda() ? versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages()) : super.getAllPackages();
+    return useConda() ? versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages(false)) : super.getAllPackages();
   }
 
   @Override
   @NotNull
   public List<RepoPackage> reloadAllPackages() throws IOException {
-    return useConda() ? getAllPackages() : super.reloadAllPackages();
+    return useConda() ? versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages(true)) : super.reloadAllPackages();
   }
 
   @Override
