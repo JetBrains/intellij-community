@@ -31,9 +31,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @State(
@@ -45,6 +45,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
                                                                                                 BaseComponent {
   // 30 minutes considered enough for project indexing and other tasks
   private static final int DELAY_IN_MIN = 30;
+  private static final Map<Project, Future> persistProjectStatisticsTasks = new HashMap<>();
 
   private static final String TOKENIZER = ",";
 
@@ -160,18 +161,25 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void initComponent() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
 
-      connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-        @Override
-        public void projectOpened(Project project) {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(Project project) {
+        ScheduledFuture<?> future =
           JobScheduler.getScheduler().schedule(() -> UsagesCollector.doPersistProjectUsages(project), DELAY_IN_MIN, TimeUnit.MINUTES);
-        }
-      });
+        persistProjectStatisticsTasks.put(project, future);
+      }
 
-      persistPeriodically();
-    }
+      public void projectClosed(Project project) {
+        Future future = persistProjectStatisticsTasks.remove(project);
+        if (future != null) {
+          future.cancel(true);
+        }
+      }
+    });
+
+    persistPeriodically();
   }
 
   private static void persistPeriodically() {
