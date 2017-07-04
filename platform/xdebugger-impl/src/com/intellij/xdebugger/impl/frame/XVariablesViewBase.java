@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -180,6 +181,8 @@ public abstract class XVariablesViewBase extends XDebugView {
   private static class MySelectionListener implements SelectionListener {
     private static final Collection<String> SIDE_EFFECT_PRODUCERS = StreamEx.of("exec(", "++", "--", "=").toList();
     private static final Set<String> IGNORED_TEXTS = StreamEx.of("", ";", "()").toSet();
+    private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private static final int EVALUATION_DELAY_MILLIS = 100;
 
     private final Editor myEditor;
     private final XStackFrame myStackFrame;
@@ -218,8 +221,15 @@ public abstract class XVariablesViewBase extends XDebugView {
         int offset = range.getStartOffset();
         LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
         Point point = myEditor.logicalPositionToXY(pos);
-        new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session, true).invokeHint();
+        showTooltip(point, info, evaluator, session);
       }
+    }
+
+    private void showTooltip(Point point, ExpressionInfo info, XDebuggerEvaluator evaluator, XDebugSession session) {
+      ALARM.cancelAllRequests();
+      ALARM.addRequest(
+        () -> new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session, true).invokeHint(),
+        EVALUATION_DELAY_MILLIS);
     }
   }
 }
