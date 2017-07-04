@@ -151,7 +151,15 @@ class JsonSchemaAnnotatorChecker {
     }
 
     if (schema.getNot() != null) {
-      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, new JsonSchemaResolver(schema.getNot()).detailedResolve());
+      final MatchResult result = new JsonSchemaResolver(schema.getNot()).detailedResolve();
+      if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
+
+      // if 'not' uses reference to owning schema back -> do not check, seems it does not make any sense
+      if (result.mySchemas.stream().anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject())) ||
+          result.myExcludingSchemas.stream().flatMap(Collection::stream)
+            .anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject()))) return;
+
+      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result);
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate());
     }
   }
