@@ -281,7 +281,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     String pref = prefix == null ? "" : prefix;
     pref += name;
     if (addTrailingSlash) {
-      pref += "_";
+      pref += "\";
     }
     return pref;
   }
