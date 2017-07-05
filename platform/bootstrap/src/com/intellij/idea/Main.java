@@ -18,7 +18,6 @@ package com.intellij.idea;
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,6 +37,7 @@ public class Main {
   public static final int LICENSE_ERROR = 7;
   public static final int PLUGIN_ERROR = 8;
   public static final int OUT_OF_MEMORY = 9;
+  @SuppressWarnings("unused") // left for compatibility and reserved for future use
   public static final int UNSUPPORTED_JAVA_VERSION = 10;
   public static final int PRIVACY_POLICY_REJECTION = 11;
 
@@ -71,12 +71,6 @@ public class Main {
     }
     else if (!checkGraphics()) {
       System.exit(NO_GRAPHICS);
-    }
-
-    if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
-      showMessage("Unsupported Java Version",
-                  "Cannot start under Java " + SystemInfo.JAVA_RUNTIME_VERSION + ": Java 1.8 or later is required.", true);
-      System.exit(UNSUPPORTED_JAVA_VERSION);
     }
 
     try {
