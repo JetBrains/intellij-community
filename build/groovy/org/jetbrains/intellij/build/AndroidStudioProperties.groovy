@@ -180,13 +180,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withResourceFromModule("android","device-art-resources", "lib/device-art-resources")
       withResourceArchiveFromModule("android", "annotations", "lib/androidAnnotations.jar")
 
-      // TODO: Are these still needed?
-      withResourceFromModule("android","lib/gluegen-rt.jar", "lib")
-      withResourceFromModule("android","lib/gluegen-rt-natives-linux-amd64.jar", "lib")
-      withResourceFromModule("android","lib/gluegen-rt-natives-linux-i586.jar", "lib")
-      withResourceFromModule("android","lib/gluegen-rt-natives-macosx-universal.jar", "lib")
-      withResourceFromModule("android","lib/gluegen-rt-natives-windows-amd64.jar", "lib")
-      withResourceFromModule("android","lib/gluegen-rt-natives-windows-i586.jar", "lib")
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }
