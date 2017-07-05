@@ -372,7 +372,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private JComponent createLeftActionsToolbar() {
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new RerunAction(this, this));
+    group.add(new RerunAction(this));
     group.add(new CloseAction(myGlobalInspectionContext));
     final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
