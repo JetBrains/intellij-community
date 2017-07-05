@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,12 +134,6 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
     pack();
   }
 
-  @NotNull
-  @Override
-  protected Action[] createLeftSideActions() {
-    return new Action[] { new ConfigureVcsAction() };
-  }
-
   protected void doOKAction() {
     if (myVcsConfigurable != null) {
       try {
@@ -232,17 +228,6 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
           };
         ProgressManager.getInstance().run(task);
       }
-    }
-  }
-
-  private class ConfigureVcsAction extends AbstractAction {
-    public ConfigureVcsAction() {
-      super(VcsBundle.message("button.configure"));
-    }
-
-    public void actionPerformed(ActionEvent e) {
-      VcsDescriptor wrapper = (VcsDescriptor) myVCSComboBox.getSelectedItem();
-      new VcsConfigurationsDialog(myProject, null, wrapper).show();
     }
   }
 }
