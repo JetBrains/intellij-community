@@ -1964,6 +1964,15 @@ public class PyTypeTest extends PyTestCase {
            "expr = my_list.count");
   }
 
+  public void testConstructingGenericClassWithNotFilledGenericValue() {
+    doTest("MyIterator",
+           "from typing import Iterator\n" +
+           "class MyIterator(Iterator[]):\n" +
+           "    def __init__(self) -> None:\n" +
+           "        self.other = \"other\"\n" +
+           "expr = MyIterator()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

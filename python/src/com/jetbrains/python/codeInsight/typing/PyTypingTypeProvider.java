@@ -410,6 +410,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         final PyTupleExpression tupleExpr = as(e, PyTupleExpression.class);
         return tupleExpr != null ? StreamEx.of(tupleExpr.getElements()) : StreamEx.of(e);
       })
+      .nonNull()
       .flatMap(e -> tryResolving(e, typeEvalContext).stream())
       .map(e -> getGenericTypeFromTypeVar(e, context))
       .select(PyType.class)
