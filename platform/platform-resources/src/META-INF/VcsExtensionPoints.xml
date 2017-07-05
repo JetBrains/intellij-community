@@ -78,7 +78,9 @@
     <extensionPoint qualifiedName="com.intellij.ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
 
-    <extensionPoint name="openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider"
+    <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
+                    interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
+    <extensionPoint name="openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
     <extensionPoint name="openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>

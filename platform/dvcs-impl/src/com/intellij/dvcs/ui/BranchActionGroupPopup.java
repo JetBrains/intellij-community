@@ -48,10 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -133,29 +130,24 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private void trackDimensions(@Nullable String dimensionKey) {
     Window popupWindow = getPopupWindow();
     if (popupWindow == null) return;
-    popupWindow.addComponentListener(new ComponentAdapter() {
+    ComponentListener windowListener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
         if (myShown) {
           processOnSizeChanged();
         }
       }
-
+    };
+    popupWindow.addComponentListener(windowListener);
+    addPopupListener(new JBPopupAdapter() {
       @Override
-      public void componentHidden(ComponentEvent e) {
-        popupWindow.removeComponentListener(this);
+      public void onClosed(LightweightWindowEvent event) {
+        popupWindow.removeComponentListener(windowListener);
+        if (dimensionKey != null && myUserSizeChanged) {
+          WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
+        }
       }
     });
-    if (dimensionKey != null) {
-      addPopupListener(new JBPopupAdapter() {
-        @Override
-        public void onClosed(LightweightWindowEvent event) {
-          if (myUserSizeChanged) {
-            WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
-          }
-        }
-      });
-    }
   }
 
   private void processOnSizeChanged() {

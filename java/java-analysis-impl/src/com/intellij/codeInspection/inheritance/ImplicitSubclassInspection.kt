@@ -17,8 +17,8 @@ package com.intellij.codeInspection.inheritance
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInspection.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -185,7 +185,8 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
       if (declaration.modifierList?.hasModifierProperty(name) != shouldPresent) {
-        (actionsFactory.createChangeModifierAction(declaration, name, shouldPresent))?.let {
+        (actionsFactory.createChangeModifierAction(declaration as @com.intellij.psi.JvmCommon PsiModifierListOwner, name,
+                                                   shouldPresent))?.let {
           actionsList.add(it)
         }
       }

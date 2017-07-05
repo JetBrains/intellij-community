@@ -139,9 +139,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
         if (!PyUtil.isEmptyFunction(node)) {
-          final PyStatementList statements = node.getStatementList();
-          ReturnVisitor visitor = new ReturnVisitor(node);
-          statements.accept(visitor);
+          final ReturnVisitor visitor = new ReturnVisitor(node);
+          node.getStatementList().accept(visitor);
           if (!visitor.myHasReturns) {
             final PyType expected = getExpectedReturnType(node);
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
@@ -150,6 +149,11 @@ public class PyTypeCheckerInspection extends PyInspection {
                               String.format("Expected to return '%s', got no return", expectedName));
             }
           }
+        }
+
+        if (PyUtil.isInit(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
+          registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
+                          PyNames.INIT + " should return " + PyNames.NONE);
         }
       }
     }

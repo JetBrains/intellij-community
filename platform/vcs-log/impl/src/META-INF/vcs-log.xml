@@ -37,7 +37,8 @@
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
-    <openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryActionProvider"/>
+    <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffBeforeWithLocalFromHistoryActionProvider"/>
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromHistoryActionProvider"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
   </extensions>
@@ -122,6 +123,7 @@
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal.Before"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>
@@ -132,7 +134,6 @@
     </group>
     <group id="Vcs.FileHistory.Toolbar">
       <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
@@ -176,6 +177,7 @@
     <group id="Log.FileHistory.KeymapGroup" popup="false">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Diff.ShowDiff"/>
+      <reference id="Vcs.ShowDiffWithLocal.Before"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>

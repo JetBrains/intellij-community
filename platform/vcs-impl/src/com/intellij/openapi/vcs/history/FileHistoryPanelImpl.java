@@ -408,7 +408,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), null);
     result.add(diffAction);
 
-    result.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"));
+    if (popup) {
+      result.add(ActionManager.getInstance().getAction("Vcs.ShowDiffWithLocal"));
+    }
 
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
     if (diffGroup != null) result.add(diffGroup);

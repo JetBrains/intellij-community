@@ -40,12 +40,12 @@ import java.util.Set;
 public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
-       public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       AbstractJavaFXTestCase.addJavaFxJarAsLibrary(module, model);
-       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
-       super.configureModule(module, model, contentEntry);
-     }
-   };
+      PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
+      super.configureModule(module, model, contentEntry);
+    }
+  };
 
   @NotNull
   @Override
@@ -106,7 +106,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testCreateMethodEscalateVisibility() throws Exception {
-    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", VisibilityUtil.ESCALATE_VISIBILITY,
+                                ".java");
   }
 
   public void testCreateFieldEmptyName() throws Exception {
@@ -122,7 +123,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     assertNotNull(intention);
     Set<String> languages = JavaFxInjectPageLanguageIntention.getAvailableLanguages(getProject());
     assertContainsElements(languages, "groovy");
-    JavaFxInjectPageLanguageIntention languageIntention = (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
+    JavaFxInjectPageLanguageIntention languageIntention =
+      (JavaFxInjectPageLanguageIntention)((IntentionActionDelegate)intention).getDelegate();
     languageIntention.registerPageLanguage(getProject(), (XmlFile)myFixture.getFile(), "groovy");
     myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }
@@ -168,7 +170,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     myFixture.enableInspections(new JavaFxUnresolvedFxIdReferenceInspection());
   }
-  
+
   @NotNull
   @Override
   protected String getTestDataPath() {

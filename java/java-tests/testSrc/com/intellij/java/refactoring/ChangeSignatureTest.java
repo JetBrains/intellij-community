@@ -226,6 +226,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testParamJavadocRenamedReordered() {
+    doTest(null, new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "a", PsiType.BOOLEAN),
+      new ParameterInfoImpl(-1, "c", PsiType.BOOLEAN),
+      new ParameterInfoImpl(1, "b1", PsiType.BOOLEAN),
+    }, false);
+  }
+
   public void testJavadocNoNewLineInserted() {
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(0, "newArgs", PsiType.DOUBLE),

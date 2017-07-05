@@ -1327,7 +1327,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
 
             Component rendererComponent = tree.getCellRenderer()
-              .getTreeCellRendererComponent(tree, node.getUserObject(), tree.getSelectionModel().isPathSelected(path),
+              .getTreeCellRendererComponent(tree, node, tree.getSelectionModel().isPathSelected(path),
                                             tree.isExpanded(path), node.isLeaf(), tree.getRowForPath(path), tree.hasFocus());
             clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
             clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);

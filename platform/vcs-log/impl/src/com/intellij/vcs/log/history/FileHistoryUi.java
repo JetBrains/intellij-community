@@ -129,7 +129,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Nullable
-  public FilePath getPath(@NotNull VcsFullCommitDetails details) {
+  public FilePath getAfterPath(@NotNull VcsFullCommitDetails details) {
     if (myPath.isDirectory()) return myPath;
 
     List<Change> changes = collectRelevantChanges(details);
@@ -141,6 +141,21 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     }
 
     return null;// file was deleted
+  }
+
+  @Nullable
+  public FilePath getBeforePath(@NotNull VcsFullCommitDetails details) {
+    if (myPath.isDirectory()) return myPath;
+
+    List<Change> changes = collectRelevantChanges(details);
+    for (Change change : changes) {
+      ContentRevision revision = change.getBeforeRevision();
+      if (revision != null) {
+        return revision.getFile();
+      }
+    }
+
+    return null;// file was created
   }
 
   @NotNull

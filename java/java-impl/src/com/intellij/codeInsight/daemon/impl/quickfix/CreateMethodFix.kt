@@ -22,15 +22,13 @@ import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
-import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.util.PsiNavigateUtil
-import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.toUElementOfType
 
-class UastCreateMethodFix(containingClass: UClass, private val createMethodAction: IntentionAction)
+class CreateMethodFix(containingClass: @JvmCommon PsiClass, private val createMethodAction: IntentionAction)
   : LocalQuickFixBase(createMethodAction.text, createMethodAction.familyName) {
 
   private val containingClass = SmartPointerManager.getInstance(containingClass.project).createSmartPsiElementPointer(containingClass)
@@ -44,22 +42,27 @@ class UastCreateMethodFix(containingClass: UClass, private val createMethodActio
     reformatAndOpenCreatedMethod(newMethod)
   }
 
-  private fun reformatAndOpenCreatedMethod(method: UMethod) {
+  private fun reformatAndOpenCreatedMethod(method: @JvmCommon PsiMethod) {
     CodeStyleManager.getInstance(containingClass.project).reformat(method)
-    PsiNavigateUtil.navigate(method.uastBody?.psi?.lastChild ?: method)
+    PsiNavigateUtil.navigate((method.body ?: uastBody(method))?.lastChild ?: method)
+  }
+
+  private fun uastBody(method: PsiMethod): PsiElement? = when (method) {
+    is UMethod -> method.uastBody?.psi
+    else -> method.toUElementOfType<UMethod>()?.uastBody?.psi
   }
 
   companion object {
     @JvmStatic
-    fun createVoidMethodIfFixPossible(uClass: UClass,
+    fun createVoidMethodIfFixPossible(psiClass: @JvmCommon PsiClass,
                                       methodName: String,
-                                      @PsiModifier.ModifierConstant modifier: String): UastCreateMethodFix? {
-      if (!ModuleUtilCore.projectContainsFile(uClass.project, uClass.containingFile.virtualFile, false)) return null
-      val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(uClass.language) ?: return null
+                                      @PsiModifier.ModifierConstant modifier: String): CreateMethodFix? {
+      if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return null
+      val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(psiClass.language) ?: return null
       val action = actionsFactory.createAddCallableMemberActions(
-        MethodInsertionInfo.simpleMethodInfo(uClass, methodName, modifier, PsiType.VOID, emptyList())
+        MethodInsertionInfo.simpleMethodInfo(psiClass, methodName, modifier, PsiType.VOID, emptyList())
       ).firstOrNull() ?: return null
-      return UastCreateMethodFix(uClass, action)
+      return CreateMethodFix(psiClass, action)
     }
   }
 

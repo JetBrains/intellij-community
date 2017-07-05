@@ -77,7 +77,7 @@ public class ReindexerNewTest extends TestCase {
   }
 
   public static void checkCase(int[] ints1, int[] ints2) throws FilesTooBigForDiffException {
-    checkCase(ints1, ints2, null);
+    checkCase(ints1, ints2, "");
   }
 
   public static void checkCase(int[] ints1, int[] ints2, String message) throws FilesTooBigForDiffException {
@@ -102,24 +102,12 @@ public class ReindexerNewTest extends TestCase {
       }
     };
 
-    IntLCS lcs = new IntLCS(ints1, ints2);
-    lcs.execute();
-    BitSet[] expectedChanges = lcs.getChanges();
-
     Reindexer reindexer = new Reindexer();
     int[][] discarded = reindexer.discardUnique(ints1, ints2);
-    lcs = new IntLCS(discarded[0], discarded[1]);
+    MyersLCS lcs = new MyersLCS(discarded[0], discarded[1]);
     lcs.execute();
-    BitSet[] changes = lcs.getChanges();
-    reindexer.reindex(changes, builder);
+    reindexer.reindex(lcs.getChanges(), builder);
 
-    if (message != null) {
-      assertEquals(message, expectedChanges[0], reindexChanges[0]);
-      assertEquals(message, expectedChanges[1], reindexChanges[1]);
-    }
-    else {
-      assertEquals(expectedChanges[0], reindexChanges[0]);
-      assertEquals(expectedChanges[1], reindexChanges[1]);
-    }
+    IntLCSAutoTest.verifyLCS(ints1, ints2, reindexChanges[0], reindexChanges[1]);
   }
 }

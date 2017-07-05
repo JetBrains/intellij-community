@@ -72,10 +72,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -939,6 +936,28 @@ public class PyUtil {
         manager.commitDocument(document);
       }
     }
+  }
+
+  @Nullable
+  public static PyType getReturnTypeToAnalyzeAsCallType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    if (isInit(function)) {
+      final PyClass cls = function.getContainingClass();
+      if (cls != null) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType providedClassType = provider.getGenericType(cls, context);
+          if (providedClassType != null) {
+            return providedClassType;
+          }
+        }
+
+        final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
+        if (classType != null) {
+          return classType.toInstance();
+        }
+      }
+    }
+
+    return context.getReturnType(function);
   }
 
   public static class KnownDecoratorProviderHolder {

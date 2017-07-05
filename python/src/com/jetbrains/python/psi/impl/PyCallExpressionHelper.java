@@ -567,10 +567,10 @@ public class PyCallExpressionHelper {
 
         return Ref.create(new PyClassTypeImpl(cls, false));
       }
-      if (t != null && !(t instanceof PyNoneType)) {
+      if (t != null) {
         return Ref.create(t);
       }
-      if (cls != null && t == null) {
+      if (cls != null) {
         final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));

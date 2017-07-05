@@ -22,46 +22,47 @@ import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.MethodInsertionInfo
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UParameter
-
 
 class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
 
-  override fun createChangeModifierAction(declaration: UDeclaration, modifier: String, shouldPresent: Boolean): IntentionAction {
+  override fun createChangeModifierAction(declaration: @JvmCommon PsiModifierListOwner,
+                                          modifier: String,
+                                          shouldPresent: Boolean): IntentionAction {
     return ModifierFix(declaration.modifierList, modifier, shouldPresent, false)
   }
 
   override fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> {
     return when (info) {
       is MethodInsertionInfo.Method -> with(info) {
-        createAddMethodAction(containingClass, name, modifiers.joinToString(" "), returnType, parameters)
+        createAddMethodAction(targetClass, name, modifiers.joinToString(" "), returnType, parameters)
           ?.let { listOf(it) } ?: emptyList()
       }
 
       is MethodInsertionInfo.Constructor ->
-        listOf(AddConstructorFix(info.containingClass.psi, info.parameters.map { it.psi }))
+        listOf(AddConstructorFix(info.targetClass.javaPsi(), info.parameters.map { it.javaPsi() }))
     }
   }
 
-  private fun createAddMethodAction(uClass: UClass,
+  private fun createAddMethodAction(psiClass: @JvmCommon PsiClass,
                                     methodName: String,
                                     @PsiModifier.ModifierConstant @NotNull visibilityModifier: String,
                                     returnType: PsiType,
-                                    parameters: List<UParameter>): IntentionAction? {
-    val paramsString = parameters.mapIndexed { i, t -> "${t.type.presentableText} ${t.name ?: "arg$i"}" }.joinToString()
+                                    parameters: List<@JvmCommon PsiParameter>): IntentionAction? {
+    val paramsString = parameters.mapIndexed { i, t -> "${t.type.canonicalText} ${t.name ?: "arg$i"}" }.joinToString()
     val signatureString =
-      "${VisibilityUtil.getVisibilityString(visibilityModifier)} ${returnType.presentableText} $methodName($paramsString){}"
-    val targetClassPointer = SmartPointerManager.getInstance(uClass.project).createSmartPsiElementPointer(uClass.psi)
+      "${VisibilityUtil.getVisibilityString(visibilityModifier)} ${returnType.canonicalText} $methodName($paramsString){}"
+    val targetClassPointer = SmartPointerManager.getInstance(psiClass.project).createSmartPsiElementPointer(psiClass.javaPsi())
     return object : AbstractIntentionAction() {
 
       private val text = targetClassPointer.element?.let { psiClass ->
@@ -77,17 +78,30 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
       override fun getText(): String = text
 
       override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-        targetClassPointer.element?.let { targetClass ->
-          targetClass.add(createMethod(targetClass))
+        val targetClass = targetClassPointer.element ?: return
+        runWriteAction {
+          val addedMethod = targetClass.add(createMethod(targetClass))
+          JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedMethod)
         }
       }
 
-      private fun createMethod(targetClass: PsiClass): PsiMethod = PsiElementFactory.SERVICE.getInstance(targetClass.project)
-        .createMethodFromText(signatureString, targetClass)
+      private fun createMethod(targetClass: PsiClass): PsiMethod {
+        val elementFactory = JVMElementFactories.getFactory(targetClass.language, targetClass.project) // it could be Groovy
+                             ?: JavaPsiFacade.getElementFactory(targetClass.project)
+        return elementFactory.createMethodFromText(signatureString, targetClass)
+      }
     }
   }
 
-  override fun createAddBeanPropertyActions(uClass: UClass,
+  private inline fun <reified T : PsiElement> T.javaPsi(): T {
+    assert(language == JavaLanguage.INSTANCE)
+    return when (this) {
+      is org.jetbrains.uast.UElement -> psi as T
+      else -> this
+    }
+  }
+
+  override fun createAddBeanPropertyActions(psiClass: @JvmCommon PsiClass,
                                             propertyName: String,
                                             @PsiModifier.ModifierConstant visibilityModifier: String,
                                             propertyType: PsiType,
@@ -95,20 +109,20 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
                                             getterRequired: Boolean): List<IntentionAction> {
     if (getterRequired && setterRequired)
       return listOf<IntentionAction>(
-        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+        CreateJavaBeanPropertyFix(psiClass.javaPsi(), propertyName, propertyType, getterRequired, setterRequired,
                                   true),
-        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+        CreateJavaBeanPropertyFix(psiClass.javaPsi(), propertyName, propertyType, getterRequired, setterRequired,
                                   false))
     if (getterRequired || setterRequired)
       return listOf<IntentionAction>(
-        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+        CreateJavaBeanPropertyFix(psiClass.javaPsi(), propertyName, propertyType, getterRequired, setterRequired,
                                   true),
-        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+        CreateJavaBeanPropertyFix(psiClass.javaPsi(), propertyName, propertyType, getterRequired, setterRequired,
                                   false),
-        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, true, true, true))
+        CreateJavaBeanPropertyFix(psiClass.javaPsi(), propertyName, propertyType, true, true, true))
 
     return listOf<IntentionAction>(
-      CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired, true))
+      CreateJavaBeanPropertyFix(psiClass.javaPsi(), propertyName, propertyType, getterRequired, setterRequired, true))
   }
 
 }

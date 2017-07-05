@@ -111,8 +111,8 @@ public class Diff {
     }
     else {
       try {
-        IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-        intLCS.execute();
+        MyersLCS intLCS = new MyersLCS(discarded[0], discarded[1]);
+        intLCS.executeWithThreshold();
         changes = intLCS.getChanges();
       }
       catch (FilesTooBigForDiffException e) {

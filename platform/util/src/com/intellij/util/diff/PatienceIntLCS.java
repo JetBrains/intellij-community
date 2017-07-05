@@ -86,8 +86,8 @@ class PatienceIntLCS {
 
       if (matching == null) {
         if (thresholdCheckCounter >= 0) checkReduction(count1, count2);
-        IntLCS intLCS = new IntLCS(myFirst, mySecond, start1, count1, start2, count2, myChanges1, myChanges2);
-        intLCS.execute();
+        MyersLCS intLCS = new MyersLCS(myFirst, mySecond, start1, count1, start2, count2, myChanges1, myChanges2);
+        intLCS.executeLinear();
       }
       else {
         int s1, s2, c1, c2;
