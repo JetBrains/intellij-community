@@ -68,6 +68,7 @@ public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
+    myFixture.configureByFile("unittest.py");
     myFixture.configureByFile("inspections/PyAttributeOutsideInitInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyAttributeOutsideInitInspection.class);
     myFixture.checkHighlighting(false, false, true);
