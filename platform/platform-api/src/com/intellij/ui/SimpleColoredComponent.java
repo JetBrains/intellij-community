@@ -411,11 +411,26 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     width += computeTextWidth(font, mainTextOnly);
     width += myIpad.right + borderInsets.right;
 
-    // Calculate height
+    // Take into account that the component itself can have a border
+    final Insets insets = getInsets();
+    if (insets != null) {
+      width += insets.left + insets.right;
+    }
+
+    int height = computePreferredHeight();
+
+    return new Dimension(width, height);
+  }
+
+  public final synchronized int computePreferredHeight() {
     int height = myIpad.top + myIpad.bottom;
+
+    Font font = getBaseFont();
 
     final FontMetrics metrics = getFontMetrics(font);
     int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
+    
+    Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     textHeight += borderInsets.top + borderInsets.bottom;
 
     if (myIcon != null) {
@@ -428,11 +443,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     // Take into account that the component itself can have a border
     final Insets insets = getInsets();
     if (insets != null) {
-      width += insets.left + insets.right;
       height += insets.top + insets.bottom;
     }
 
-    return new Dimension(width, height);
+    return height;
   }
 
   private Rectangle computePaintArea() {
