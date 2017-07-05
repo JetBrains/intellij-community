@@ -265,7 +265,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public PyType getCallType(@Nullable PyExpression receiver,
                             @NotNull Map<PyExpression, PyCallableParameter> parameters,
                             @NotNull TypeEvalContext context) {
-    return analyzeCallType(context.getReturnType(this), receiver, parameters, context);
+    return analyzeCallType(PyUtil.getReturnTypeToAnalyzeAsCallType(this, context), receiver, parameters, context);
   }
 
   @Nullable

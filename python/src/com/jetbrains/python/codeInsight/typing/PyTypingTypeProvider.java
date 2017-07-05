@@ -241,24 +241,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
-      // We model generic classes as return types of their constructors here
-      final boolean isInit = PyUtil.isInit(function);
-      if (isInit) {
-        final PyClass cls = function.getContainingClass();
-        if (cls != null) {
-          final PyType genericType = getGenericType(cls, context);
-          if (genericType != null) {
-            return Ref.create(genericType);
-          }
-        }
-      }
       final PyExpression value = getReturnTypeAnnotation(function);
       if (value != null) {
         final Ref<PyType> typeRef = getType(value, new Context(context));
         if (typeRef != null) {
-          if (isInit && typeRef.get() instanceof PyNoneType) {
-            return null;
-          }
           if (function.isAsync() && function.isAsyncAllowed() && !function.isGenerator()) {
             return Ref.create(wrapInCoroutineType(typeRef.get(), callable));
           }
@@ -495,10 +481,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (genericType != null) {
         return Ref.create(genericType);
       }
-      final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
-      if (classType != null) {
-        return classType;
-      }
       final PyType stringBasedType = getStringBasedType(resolved, context);
       if (stringBasedType != null) {
         return Ref.create(stringBasedType);
@@ -506,6 +488,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final Ref<PyType> anyType = getAnyType(resolved);
       if (anyType != null) {
         return anyType;
+      }
+      final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
+      if (classType != null) {
+        return classType;
       }
       return null;
     }
