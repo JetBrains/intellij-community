@@ -974,6 +974,34 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testBuilderChainWithArrayAccess() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWithArrayAccessExpr() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWithArrayAccessIf() throws Exception {
+    doTest();
+  }
+
+  public void testBuilderChainWith2DimArrayAccess() throws Exception {
+    doTest();
+  }
+
+  public void testCallOnArrayElement() throws Exception {
+    doTest();
+  }
+
+  public void testCallOn2DimArrayElement() throws Exception {
+    doTest();
+  }
+
+  public void testCallOnFieldArrayElement() throws Exception {
+    doTest();
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.ELSE_ON_NEW_LINE = true;
