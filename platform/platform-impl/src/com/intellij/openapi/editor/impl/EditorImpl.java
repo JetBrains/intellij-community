@@ -4600,7 +4600,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super.validateTree();
       height -= getHeight();
 
-      if (height != 0) {
+      if (height != 0 && !(myOldHeight == 0 && getComponentCount() > 0 && getPermanentHeaderComponent() == getComponent(0))) {
         myVerticalScrollBar.setValue(myVerticalScrollBar.getValue() - height);
       }
       myOldHeight = getHeight();
