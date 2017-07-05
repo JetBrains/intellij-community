@@ -23,14 +23,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Processor;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -235,25 +232,22 @@ public final class PythonImportUtils {
     return true;
   }
 
-  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
+  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String refText, Project project,
+                                                              GlobalSearchScope scope) {
     List<PsiElement> result = new ArrayList<>();
-    //add packages
-    FilenameIndex.processFilesByName(reftext, true, file -> {
+    // Add packages
+    FilenameIndex.processFilesByName(refText, true, item -> {
       ProgressManager.checkCanceled();
-      if (!file.isDirectory() ){
-        return true;
+      final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
+      if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
+        result.add(candidatePackageDir);
       }
-      PsiDirectory candidatePackageDir = (PsiDirectory) file;
-      if (candidatePackageDir.findFile(PyNames.INIT_DOT_PY) == null){
-        return true;
-      }
-      result.add(candidatePackageDir);
       return true;
     }, scope, project, null);
-    //Add modules
-    FilenameIndex.processFilesByName(reftext + ".py", false, true, item -> {
+    // Add modules
+    FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (isImportableModule(targetFile, item)){
+      if (isImportableModule(targetFile, item)) {
         result.add(item);
       }
       return true;
