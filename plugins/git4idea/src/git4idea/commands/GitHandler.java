@@ -471,7 +471,7 @@ public abstract class GitHandler {
   }
 
   private void unsetGitTrace() {
-    myEnv.put("GIT_TRACE", "0");
+    myEnv.putAll(getCommonEnvironment());
   }
 
   private void setupHttpAuthenticator() throws IOException {
@@ -808,4 +808,10 @@ public abstract class GitHandler {
     public void setInputProcessor(@Nullable ThrowableConsumer<OutputStream, IOException> inputProcessor) {
       myInputProcessor = inputProcessor;
     }
+
+  public static @NotNull Map<String, String> getCommonEnvironment() {
+    Map<String,String> commonEnv = new HashMap<>();
+    commonEnv.put("GIT_TRACE","0");
+    return commonEnv;
+  }
 }
