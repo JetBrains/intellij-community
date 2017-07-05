@@ -170,6 +170,10 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
       try {
         if (ToStringRenderer.UNIQUE_ID.equals(id)) {
           myToStringRenderer.readExternal(elem);
+          if (!myToStringRenderer.isEnabled()) {
+            myToStringRenderer.setEnabled(true);
+            myToStringRenderer.setOnDemand(true);
+          }
         }
         else if (ClassRenderer.UNIQUE_ID.equals(id)) {
           myClassRenderer.readExternal(elem);
