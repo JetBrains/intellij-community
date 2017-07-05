@@ -840,8 +840,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final int targetLanguageLevel = JpsJavaSdkType.parseVersion(langLevel);
     if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
-      options.add("--release");
-      options.add(String.valueOf(targetLanguageLevel));
+      if (compilerSdkVersion != targetLanguageLevel) {
+        // Only specify '--release' when cross-compilation is indeed really required.
+        // Otherwise '--release' may not be compatible with other compilation options, e.g. exporting a package from system module
+        options.add("--release");
+        options.add(String.valueOf(targetLanguageLevel));
+      }
       return;
     }
 
