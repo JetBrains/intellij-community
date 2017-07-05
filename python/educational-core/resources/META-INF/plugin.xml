@@ -84,7 +84,9 @@
             text="Switch Task Description Panel">
     </action>
 
-    <action id="Edu.UpdateRecommendation" class="com.jetbrains.edu.learning.actions.StudyUpdateRecommendationAction"/>
+    <action id="Edu.UpdateRecommendation" popup="true" class="com.jetbrains.edu.learning.actions.StudyUpdateRecommendationAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="CutCopyPasteGroup"/>
+    </action>
 
     <!--course creator-->
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">
