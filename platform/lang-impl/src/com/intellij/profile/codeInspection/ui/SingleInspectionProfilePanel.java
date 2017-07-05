@@ -937,7 +937,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           });
         final JPanel panel = wrappedTable.createPanel();
         panel.setMinimumSize(new Dimension(getMinimumSize().width, 3 * scopesAndScopesAndSeveritiesTable.getRowHeight()));
-        severityPanel.add(new JBLabel("Severity by Scope"),
+        severityPanel.add(new JBLabel(InspectionsBundle.message("inspection.scopes.and.severities")),
                           new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                  JBUI.insets(5, 0, 2, 10), 0, 0));
         severityPanel.add(panel, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
