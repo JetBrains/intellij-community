@@ -67,6 +67,22 @@ public class RestTitle extends RestElement {
   }
 
   @Nullable
+  public String getOverline() {
+    final String text = getNode().getText().trim();
+    final Pair<Character, Character> adornments = getAdornments();
+    final Character overlineChar = adornments.getFirst();
+    if (overlineChar == null) return null;
+    int end = 0;
+    for (int i = 0; i < text.length(); i++) {
+      if (text.charAt(i) != overlineChar) {
+        end = i;
+        break;
+      }
+    }
+    return text.substring(0, end);
+  }
+
+  @Nullable
   public String getUnderline() {
     final String text = getNode().getText().trim();
     if (text.length() < 2) return null;
