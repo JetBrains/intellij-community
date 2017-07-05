@@ -18,6 +18,7 @@ package com.intellij.java.codeInspection
 import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -56,8 +57,17 @@ class Java9AccessCanBeTightenedTest : LightCodeInsightFixtureTestCase() {
     val enabled = !testName.endsWith("Off")
 
     inspection.setEntryPointEnabled(Java9ModuleEntryPoint.ID, enabled)
-    myFixture.configureByFiles("$testName/foo/bar/$className.java", "$testName/module-info.java")
+    addModuleInfo(testDataPath + testName)
+    myFixture.configureByFiles("$testName/foo/bar/$className.java")
     myFixture.checkHighlighting()
+  }
+
+  private fun addModuleInfo(path: String) {
+    val sourceFile = FileUtil.findFirstThatExist("$path/module-info.java")
+    val text = String(FileUtil.loadFileText(sourceFile!!))
+
+    val moduleInfo = myFixture.configureByText("module-info.java", text)
+    myFixture.allowTreeAccessForFile(moduleInfo.virtualFile)
   }
 
   private fun createGlobalTool() = VisibilityInspection().apply {
