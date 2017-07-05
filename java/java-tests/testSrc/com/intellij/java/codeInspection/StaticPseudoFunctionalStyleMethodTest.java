@@ -105,6 +105,10 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     doTest();
   }
 
+  public void testListsTransform() {
+    doTest();
+  }
+
   public void _testReplaceWithMethodReference() {
     doTest();
   }
