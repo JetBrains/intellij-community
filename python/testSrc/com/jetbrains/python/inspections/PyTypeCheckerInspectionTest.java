@@ -427,4 +427,8 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testAnnotatedDunderInitInGenericClass() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  public void testDunderInitAnnotatedAsNonNone() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 }
