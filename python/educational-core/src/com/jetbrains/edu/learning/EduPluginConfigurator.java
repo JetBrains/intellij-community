@@ -119,8 +119,7 @@ public interface EduPluginConfigurator {
       StudyPreviousTaskAction.ACTION_ID,
       StudyNextTaskAction.ACTION_ID,
       StudyRefreshTaskFileAction.ACTION_ID,
-      StudyShowHintAction.ACTION_ID,
-      StudyUpdateRecommendationAction.ACTION_ID
+      StudyShowHintAction.ACTION_ID
     };
     ActionManager actionManager = ActionManager.getInstance();
     Arrays.stream(ids)
