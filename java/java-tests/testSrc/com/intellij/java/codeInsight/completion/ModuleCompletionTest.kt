@@ -43,6 +43,18 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
     variants("module M { exports pkg.<caret> }", "main", "other")
     complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other<caret> }")
+    complete("module M { exports pkg.other <caret> }", "module M { exports pkg.other to <caret> }")
+    variants("module M { exports pkg.other to <caret> }", "M2", "java.base", "lib.multi.release", "lib.named")
+  }
+
+  fun testOpens() {
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    variants("module M { opens pkg.<caret> }", "main", "other")
+    complete("module M { opens pkg.o<caret> }", "module M { opens pkg.other<caret> }")
+    complete("module M { opens pkg.other <caret> }", "module M { opens pkg.other to <caret> }")
+    variants("module M { opens pkg.other to <caret> }", "M2", "java.base", "lib.multi.release", "lib.named")
   }
 
   fun testUses() {
