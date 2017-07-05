@@ -273,16 +273,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     paintButtonLook(g);
 
     if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-
-      int x = 5;
-      int y = 4;
-
-      if (getPopState() == PUSHED) {
-        x++;
-        y++;
-      }
-
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(x), JBUI.scale(y));
+      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(4));
     }
   }
 
