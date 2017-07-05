@@ -66,7 +66,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\npublic class C2Impl { }", M2)
     myFixture.configureByText("test.java", "import pkg.m2.<caret>")
     myFixture.completeBasic()
-    assertOrderedEquals(myFixture.lookupElementStrings!!, "*", "C2") // no 'impl'
+    assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
   }
 
   fun testStdAnnotation() = complete("@Dep<caret>", "@Deprecated<caret>")
@@ -85,8 +85,8 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun variants(text: String, vararg variants: String) {
     myFixture.configureByText("module-info.java", text)
-    val result = myFixture.completeBasic()?.map { it.lookupString }
-    assertThat(result).containsExactlyInAnyOrder(*variants)
+    myFixture.completeBasic()
+    assertThat(myFixture.lookupElementStrings).containsExactlyInAnyOrder(*variants)
   }
   //</editor-fold>
 }
