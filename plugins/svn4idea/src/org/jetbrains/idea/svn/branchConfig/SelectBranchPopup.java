@@ -214,7 +214,7 @@ public class SelectBranchPopup {
         .setResizable(true)
         .setItemChoosenCallback(() -> {
           if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-            SwingUtilities.invokeLater(() -> loadBranches(selectedValue, () -> showBranchPopup(selectedValue)));
+            loadBranches(selectedValue, () -> showBranchPopup(selectedValue));
             return;
           }
           SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
