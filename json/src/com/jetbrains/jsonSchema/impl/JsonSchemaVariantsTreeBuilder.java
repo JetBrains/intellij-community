@@ -132,7 +132,7 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations = new ArrayList<>();
     }
 
-    protected abstract void map(@NotNull Set<JsonObject> control);
+    protected abstract void map(@NotNull Set<JsonObject> visited);
     protected abstract void reduce();
 
     public void doMap(@NotNull final Set<JsonObject> visited) {
@@ -223,7 +223,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<JsonObject> control) {
+    public void map(@NotNull final Set<JsonObject> visited) {
       assert mySourceNode.getAllOf() != null;
       myChildOperations.addAll(mySourceNode.getAllOf().stream()
         .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
