@@ -15,8 +15,6 @@
  */
 package com.intellij.find.impl;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.findInProject.FindInProjectManager;
@@ -71,6 +69,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -168,24 +167,17 @@ class FindInProjectTask {
   }
 
   private static void logStats(@NotNull Collection<VirtualFile> otherFiles, long time) {
+    String topExtensions = otherFiles.stream()
+      .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(), Collectors.counting()))
+      .entrySet().stream()
+      .sorted(Comparator.comparingInt((Map.Entry<String, Long> entry) -> entry.getValue().intValue()).reversed())
+      .map(entry -> entry.getKey() + "(" + entry.getValue() + ")")
+      .limit(10)
+      .collect(Collectors.joining(", "));
 
-    final Multiset<String> stats = HashMultiset.create();
-    for (VirtualFile file : otherFiles) {
-      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      stats.add(StringUtil.notNullize(file.getExtension()).toLowerCase());
-    }
-
-    List<String> extensions = ContainerUtil.newArrayList(stats.elementSet());
-    Collections.sort(extensions, (o1, o2) -> stats.count(o2) - stats.count(o1));
-
-    String message = "Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
-                     "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
-                     "Most frequent non-indexed file extensions: ";
-    for (int i = 0; i < Math.min(10, extensions.size()); i++) {
-      String extension = extensions.get(i);
-      message += extension + "(" + stats.count(extension) + ") ";
-    }
-    LOG.info(message);
+    LOG.info("Search in " + otherFiles.size() + " files with unknown types took " + time + "ms.\n" +
+             "Mapping their extensions to an existing file type (e.g. Plain Text) might speed up the search.\n" +
+             "Most frequent non-indexed file extensions: " + topExtensions);
   }
 
   private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
