@@ -113,8 +113,10 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
 
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
-          super.visitPyReferenceExpression(node);
-          if (selfName.equals(node.getName())) {
+          if (node.isQualified()) {
+            super.visitPyReferenceExpression(node);
+          }
+          else if (selfName.equals(node.getName())) {
             mayBeStatic[0] = false;
           }
         }
