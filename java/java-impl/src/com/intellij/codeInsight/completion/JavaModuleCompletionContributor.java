@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.completion.BasicExpressionCompletionContributor.createKeywordLookupItem;
 
-class JavaModuleCompletion {
+class JavaModuleCompletionContributor {
   static boolean isModuleFile(@NotNull PsiFile file) {
     return PsiJavaModule.MODULE_INFO_FILE.equals(file.getName()) && PsiUtil.isLanguageLevel9OrHigher(file);
   }
