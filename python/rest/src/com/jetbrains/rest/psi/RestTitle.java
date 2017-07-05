@@ -16,6 +16,7 @@
 package com.jetbrains.rest.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.jetbrains.rest.validation.RestElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import java.text.StringCharacterIterator;
  * User : catherine
  */
 public class RestTitle extends RestElement {
+  private static String ourAdornmentSymbols = "=-`:.'\\~^_*+#>";
+
   public RestTitle(@NotNull final ASTNode node) {
     super(node);
   }
@@ -77,6 +80,17 @@ public class RestTitle extends RestElement {
       }
     }
     return text.substring(start, text.length());
+  }
+
+  public Pair<Character, Character> getAdornments() {
+    final String text = getNode().getText().trim();
+    if (text.length() < 2) return Pair.empty();
+    Character overline = text.charAt(0);
+    if (ourAdornmentSymbols.indexOf(overline) < 0) {
+      overline = null;
+    }
+    final char underline = text.charAt(text.length()-2);
+    return Pair.create(overline, underline);
   }
 
   @Override

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RestParser implements PsiParser {
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
     while (!builder.eof()) {
       IElementType type = builder.getTokenType();
