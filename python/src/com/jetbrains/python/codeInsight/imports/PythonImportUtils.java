@@ -232,25 +232,22 @@ public final class PythonImportUtils {
     return true;
   }
 
-  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
+  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String refText, Project project,
+                                                              GlobalSearchScope scope) {
     List<PsiElement> result = new ArrayList<>();
-    //add packages
-    FilenameIndex.processFilesByName(reftext, true, file -> {
+    // Add packages
+    FilenameIndex.processFilesByName(refText, true, item -> {
       ProgressManager.checkCanceled();
-      if (!file.isDirectory() ){
-        return true;
+      final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
+      if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
+        result.add(candidatePackageDir);
       }
-      PsiDirectory candidatePackageDir = (PsiDirectory) file;
-      if (candidatePackageDir.findFile(PyNames.INIT_DOT_PY) == null){
-        return true;
-      }
-      result.add(candidatePackageDir);
       return true;
     }, scope, project, null);
-    //Add modules
-    FilenameIndex.processFilesByName(reftext + ".py", false, true, item -> {
+    // Add modules
+    FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (isImportableModule(targetFile, item)){
+      if (isImportableModule(targetFile, item)) {
         result.add(item);
       }
       return true;
