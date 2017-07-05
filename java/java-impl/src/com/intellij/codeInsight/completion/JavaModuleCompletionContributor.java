@@ -157,7 +157,7 @@ class JavaModuleCompletionContributor {
   private static void processPackage(PsiPackage pkg, GlobalSearchScope scope, Consumer<LookupElement> result) {
     String packageName = pkg.getQualifiedName();
     if (isQualified(packageName) && !PsiUtil.isPackageEmpty(pkg.getDirectories(scope), packageName)) {
-      result.consume(new OverrideableSpace(lookupElement(pkg), TailType.SEMICOLON));
+      result.consume(new OverrideableSpace(lookupElement(pkg), TailType.NONE));
     }
     for (PsiPackage subPackage : pkg.getSubPackages(scope)) {
       processPackage(subPackage, scope, result);

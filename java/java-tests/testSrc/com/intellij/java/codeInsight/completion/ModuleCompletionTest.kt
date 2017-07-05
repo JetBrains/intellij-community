@@ -42,7 +42,7 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
     addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
     variants("module M { exports pkg.<caret> }", "main", "other")
-    complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other;<caret> }")
+    complete("module M { exports pkg.o<caret> }", "module M { exports pkg.other<caret> }")
   }
 
   fun testUses() {
