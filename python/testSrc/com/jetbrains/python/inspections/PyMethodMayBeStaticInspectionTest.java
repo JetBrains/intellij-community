@@ -115,6 +115,11 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-25076
+  public void testAttributeNamedSelf() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
     myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
