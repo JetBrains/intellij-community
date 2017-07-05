@@ -25,8 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UastContextKt;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 import static com.intellij.util.ArrayUtil.toObjectArray;
@@ -35,14 +33,14 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
 public class CreateBeanPropertyFixes {
 
   public static LocalQuickFix[] createFixes(String propertyName,
-                                            @NotNull PsiClass psiClass,
+                                            @NotNull @JvmCommon PsiClass psiClass,
                                             @Nullable PsiType type,
                                             final boolean createSetter) {
     return IntentionWrapper.wrapToQuickFixes(createActions(propertyName, psiClass, type, createSetter), psiClass.getContainingFile());
   }
 
   public static IntentionAction[] createActions(String propertyName,
-                                                @NotNull PsiClass psiClass,
+                                                @NotNull @JvmCommon PsiClass psiClass,
                                                 @Nullable PsiType type,
                                                 final boolean createSetter) {
     if (psiClass instanceof PsiCompiledElement) return IntentionAction.EMPTY_ARRAY;
@@ -55,9 +53,8 @@ public class CreateBeanPropertyFixes {
     }
     JvmCommonIntentionActionsFactory factory = JvmCommonIntentionActionsFactory.forLanguage(psiClass.getLanguage());
     if (factory == null) return IntentionAction.EMPTY_ARRAY;
-    UClass uClass = UastContextKt.toUElement(psiClass, UClass.class);
-    if (uClass == null) return IntentionAction.EMPTY_ARRAY;
-    return toObjectArray(factory.createAddBeanPropertyActions(uClass, propertyName, PsiModifier.PUBLIC, type, createSetter, !createSetter),
-                         IntentionAction.class);
+    return toObjectArray(
+      factory.createAddBeanPropertyActions(psiClass, propertyName, PsiModifier.PUBLIC, type, createSetter, !createSetter),
+      IntentionAction.class);
   }
 }

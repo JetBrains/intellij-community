@@ -17,13 +17,13 @@ package com.intellij.codeInsight.intention
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiType
-import com.intellij.psi.PsiTypeParameter
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastContext
 
 /**
  * Extension Point provides language-abstracted code modifications for JVM-based languages.
@@ -38,18 +38,22 @@ import org.jetbrains.uast.UParameter
 @ApiStatus.Experimental
 abstract class JvmCommonIntentionActionsFactory {
 
-  open fun createChangeModifierAction(declaration: UDeclaration,
+  open fun createChangeModifierAction(declaration: @JvmCommon PsiModifierListOwner,
                                       @PsiModifier.ModifierConstant modifier: String,
-                                      shouldPresent: Boolean): IntentionAction? = null
+                                      shouldPresent: Boolean): IntentionAction? =
+    //Fallback if Uast-version of method is overridden
+    createChangeModifierAction(declaration.asUast<UDeclaration>(), modifier, shouldPresent)
 
   open fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> = emptyList()
 
-  open fun createAddBeanPropertyActions(uClass: UClass,
+  open fun createAddBeanPropertyActions(psiClass: @JvmCommon PsiClass,
                                         propertyName: String,
                                         @PsiModifier.ModifierConstant visibilityModifier: String,
                                         propertyType: PsiType,
                                         setterRequired: Boolean,
-                                        getterRequired: Boolean): List<IntentionAction> = emptyList()
+                                        getterRequired: Boolean): List<IntentionAction> =
+    //Fallback if Uast-version of method is overridden
+    createAddBeanPropertyActions(psiClass.asUast<UClass>(), propertyName, visibilityModifier, propertyType, setterRequired, getterRequired)
 
   companion object : LanguageExtension<JvmCommonIntentionActionsFactory>(
     "com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory") {
@@ -58,49 +62,78 @@ abstract class JvmCommonIntentionActionsFactory {
     override fun forLanguage(l: Language): JvmCommonIntentionActionsFactory? = super.forLanguage(l)
   }
 
+  //A fallback to old api
+  @Deprecated("use or/and override @JvmCommon-version of this method instead")
+  open fun createChangeModifierAction(declaration: UDeclaration,
+                                      @PsiModifier.ModifierConstant modifier: String,
+                                      shouldPresent: Boolean): IntentionAction? = null
+
+  @Deprecated("use or/and override @JvmCommon-version of this method instead")
+  open fun createAddBeanPropertyActions(uClass: UClass,
+                                        propertyName: String,
+                                        @PsiModifier.ModifierConstant visibilityModifier: String,
+                                        propertyType: PsiType,
+                                        setterRequired: Boolean,
+                                        getterRequired: Boolean): List<IntentionAction> = emptyList()
+
+
 }
 
+@ApiStatus.Experimental
 sealed class MethodInsertionInfo(
-  val containingClass: UClass,
+  val targetClass: @JvmCommon PsiClass,
   @PsiModifier.ModifierConstant
   val modifiers: List<String> = emptyList(),
   val typeParams: List<PsiTypeParameter> = emptyList(),
-  val parameters: List<UParameter> = emptyList()
+  val parameters: List<@JvmCommon PsiParameter> = emptyList()
 ) {
+
+  @Deprecated("use `targetClass`", ReplaceWith("targetClass"))
+  val containingClass: UClass
+    get() = targetClass.asUast<UClass>()
+
   companion object {
 
     @JvmStatic
-    fun constructorInfo(containingClass: UClass, parameters: List<UParameter>) =
-      Constructor(containingClass = containingClass, parameters = parameters)
+    fun constructorInfo(targetClass: @JvmCommon PsiClass, parameters: List<@JvmCommon PsiParameter>) =
+      Constructor(targetClass = targetClass, parameters = parameters)
 
     @JvmStatic
-    fun simpleMethodInfo(containingClass: UClass,
+    fun simpleMethodInfo(containingClass: @JvmCommon PsiClass,
                          methodName: String,
                          @PsiModifier.ModifierConstant modifier: String,
                          returnType: PsiType,
-                         parameters: List<UParameter>) =
+                         parameters: List<@JvmCommon PsiParameter>) =
       Method(name = methodName,
              modifiers = listOf(modifier),
-             containingClass = containingClass,
+             targetClass = containingClass,
              returnType = returnType,
              parameters = parameters)
+
   }
 
   class Method(
-    containingClass: UClass,
+    targetClass: @JvmCommon PsiClass,
     val name: String,
     modifiers: List<String> = emptyList(),
-    typeParams: List<PsiTypeParameter> = emptyList(),
+    typeParams: List<@JvmCommon PsiTypeParameter> = emptyList(),
     val returnType: PsiType,
-    parameters: List<UParameter> = emptyList(),
+    parameters: List<@JvmCommon PsiParameter> = emptyList(),
     val isAbstract: Boolean = false
-  ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
+  ) : MethodInsertionInfo(targetClass, modifiers, typeParams, parameters)
 
   class Constructor(
-    containingClass: UClass,
+    targetClass: @JvmCommon PsiClass,
     modifiers: List<String> = emptyList(),
-    typeParams: List<PsiTypeParameter> = emptyList(),
-    parameters: List<UParameter> = emptyList()
-  ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
+    typeParams: List<@JvmCommon PsiTypeParameter> = emptyList(),
+    parameters: List<@JvmCommon PsiParameter> = emptyList()
+  ) : MethodInsertionInfo(targetClass, modifiers, typeParams, parameters)
 
+}
+
+@Deprecated("remove after kotlin plugin will be ported")
+private inline fun <reified T : UElement> PsiElement.asUast(): T = when (this) {
+  is T -> this
+  else -> this.let { ServiceManager.getService(project, UastContext::class.java).convertElement(this, null, T::class.java) as T? }
+          ?: throw UnsupportedOperationException("cant convert $this to ${T::class}")
 }
