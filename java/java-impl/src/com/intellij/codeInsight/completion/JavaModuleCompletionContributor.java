@@ -149,6 +149,9 @@ class JavaModuleCompletionContributor {
         }
       }
     }
+    else if (refOwner instanceof PsiAnnotation) {
+      processClasses(context.getProject(), null, resultSet, ANNOTATION_FILTER, TailType.NONE);
+    }
   }
 
   private static void processPackage(PsiPackage pkg, GlobalSearchScope scope, Consumer<LookupElement> result) {
@@ -162,7 +165,9 @@ class JavaModuleCompletionContributor {
   }
 
   private static final Predicate<PsiClass> SERVICE_FILTER =
-    psiClass -> !psiClass.isEnum() && psiClass.hasModifierProperty(PsiModifier.PUBLIC);
+    cl -> !cl.isEnum() && !cl.isAnnotationType() && cl.hasModifierProperty(PsiModifier.PUBLIC);
+
+  private static final Predicate<PsiClass> ANNOTATION_FILTER = cl -> cl.isAnnotationType();
 
   private static void processClasses(Project project,
                                      GlobalSearchScope scope,
@@ -193,7 +198,7 @@ class JavaModuleCompletionContributor {
     public void handleInsert(InsertionContext context, LookupElement item) {
       Object e = item.getObject();
       String fqn = e instanceof PsiClass ? ((PsiClass)e).getQualifiedName() : ((PsiQualifiedNamedElement)e).getQualifiedName();
-      if (fqn != null) {
+      if (fqn != null && !fqn.equals("java.lang." + item.getLookupString())) {
         int start = JavaCompletionUtil.findQualifiedNameStart(context);
         context.getDocument().replaceString(start, context.getTailOffset(), fqn);
       }

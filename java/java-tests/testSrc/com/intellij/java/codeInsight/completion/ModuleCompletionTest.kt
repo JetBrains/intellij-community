@@ -69,6 +69,13 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertOrderedEquals(myFixture.lookupElementStrings!!, "*", "C2") // no 'impl'
   }
 
+  fun testStdAnnotation() = complete("@Dep<caret>", "@Deprecated<caret>")
+
+  fun testOwnAnnotation() {
+    addFile("pkg/main/OwnAnno.java", "package pkg.main;\npublic @interface OwnAnno { }")
+    complete("@Own<caret>", "@pkg.main.OwnAnno<caret>")
+  }
+
   //<editor-fold desc="Helpers.">
   private fun complete(text: String, expected: String) {
     myFixture.configureByText("module-info.java", text)
