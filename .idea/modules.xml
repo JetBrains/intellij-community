@@ -29,7 +29,7 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/../adt/idea/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" filepath="$PROJECT_DIR$/../vendor/google/android-ndk/android-ndk.iml" group="plugins/Android" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/../adt/idea/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" filepath="$PROJECT_DIR$/../adt/idea/rt/android-rt.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/android-test-framework.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/android-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/android-tests.iml" />
