@@ -287,7 +287,7 @@ public class JShellHandler {
       try {
         final StringBuffer stdOut = new StringBuffer();
         final Response response = myMessageReader.receive(unparsedText -> stdOut.append(unparsedText));
-        renderResponse(response, stdOut.toString());
+        renderResponse(request, response, stdOut.toString());
         return response;
       }
       catch (IOException e) {
@@ -297,36 +297,47 @@ public class JShellHandler {
     return null;
   }
 
-  private void renderResponse(Response response, String stdOut) {
+  private void renderResponse(Request request, Response response, String stdOut) {
     //myConsoleView.print("\n-------------------evaluation " + response.getUid() + "------------------------", ConsoleViewContentType.NORMAL_OUTPUT);
     final List<Event> events = response.getEvents();
     if (events != null) {
-      for (Event event : events) {
-        if (event.getCauseSnippet() == null) {
-          final String exception = event.getExceptionText();
-          if (!StringUtil.isEmptyOrSpaces(exception)) {
-            myConsoleView.print("\n" + exception, ConsoleViewContentType.SYSTEM_OUTPUT);
+      if (request.getCommand() == Request.Command.DROP_STATE) {
+        int droppedCount = 0;
+        for (Event event : events) {
+          final CodeSnippet.Status prevStatus = event.getPreviousStatus();
+          final CodeSnippet.Status status = event.getStatus();
+          if (event.getSnippet() != null && prevStatus != status && status == CodeSnippet.Status.DROPPED) {
+            droppedCount++;
           }
-          final String diagnostic = event.getDiagnostic();
-          if (!StringUtil.isEmptyOrSpaces(diagnostic)) {
-            myConsoleView.print("\n" + diagnostic, ConsoleViewContentType.SYSTEM_OUTPUT);
-          }
+        }
+        JShellDiagnostic.notifyInfo("Dropped " + droppedCount + " code snippets", myProject);
+      }
+      else {
+        for (Event event : events) {
+          if (event.getCauseSnippet() == null) {
+            final String exception = event.getExceptionText();
+            if (!StringUtil.isEmptyOrSpaces(exception)) {
+              myConsoleView.print("\n" + exception, ConsoleViewContentType.SYSTEM_OUTPUT);
+            }
+            final String diagnostic = event.getDiagnostic();
+            if (!StringUtil.isEmptyOrSpaces(diagnostic)) {
+              myConsoleView.print("\n" + diagnostic, ConsoleViewContentType.SYSTEM_OUTPUT);
+            }
 
-          final String descr = getEventDescription(event);
-          if (!StringUtil.isEmptyOrSpaces(descr)) {
-            myConsoleView.print("\n" + descr, ConsoleViewContentType.SYSTEM_OUTPUT);
-          }
-          final CodeSnippet snippet = event.getSnippet();
-          final String value = snippet != null && !snippet.getSubKind().hasValue()? null : event.getValue();
-          if (value != null) {
-            myConsoleView.print(" = " + (value.isEmpty()? "\"\"" : value), ConsoleViewContentType.NORMAL_OUTPUT);
+            final String descr = getEventDescription(event);
+            if (!StringUtil.isEmptyOrSpaces(descr)) {
+              myConsoleView.print("\n" + descr, ConsoleViewContentType.SYSTEM_OUTPUT);
+            }
+            final CodeSnippet snippet = event.getSnippet();
+            final String value = snippet != null && !snippet.getSubKind().hasValue()? null : event.getValue();
+            if (value != null) {
+              myConsoleView.print(" = " + (value.isEmpty()? "\"\"" : value), ConsoleViewContentType.NORMAL_OUTPUT);
+            }
           }
         }
       }
     }
-    else {
-      myConsoleView.print("\nCompleted.", ConsoleViewContentType.SYSTEM_OUTPUT);
-    }
+
     if (!StringUtil.isEmpty(stdOut)) {
       //myConsoleView.print("\n-----evaluation output-----\n", ConsoleViewContentType.NORMAL_OUTPUT);
       myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);

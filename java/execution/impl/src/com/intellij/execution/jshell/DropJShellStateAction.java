@@ -30,9 +30,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 class DropJShellStateAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.ExecuteJShellAction");
   private static final AnAction ourInstance = new DropJShellStateAction();
-
+  // todo: icon!
   private DropJShellStateAction() {
-    super(AllIcons.Actions.Delete);
+    super("Drop All Code Snippets", "Invalidate all code snippets in the associated JShell instance", AllIcons.Actions.Delete);
   }
 
   @Override
