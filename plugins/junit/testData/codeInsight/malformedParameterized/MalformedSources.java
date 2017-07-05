@@ -8,7 +8,7 @@ class ParameterizedTestsDemo {
   void testWithParamsNoSource(int i) { }
 
   @ParameterizedTest
-  @MethodSource(names = {<warning descr="Method source 'a' must be static">"a"</warning>,
+  @MethodSource(value = {<warning descr="Method source 'a' must be static">"a"</warning>,
     <warning descr="Method source 'b' should have no parameters">"b"</warning>,
     <warning descr="Method source 'c' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]">"c"</warning>,
     "d"})
@@ -31,7 +31,7 @@ class ParameterizedTestsDemo {
   }
 
   @ParameterizedTest
-  @MethodSource(names = {<warning descr="Multiple parameters have to be wrapped in Arguments">"d"</warning>})
+  @MethodSource(value = {<warning descr="Multiple parameters have to be wrapped in Arguments">"d"</warning>})
   void testWithMultipleParams(Object s, int i) { }
 
   @ParameterizedTest

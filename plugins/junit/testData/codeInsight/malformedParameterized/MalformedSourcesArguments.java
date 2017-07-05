@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 class MethodSourceProblem {
   @ParameterizedTest
-  @MethodSource(names = {"stream",  "iterator"})
+  @MethodSource(value = {"stream",  "iterator"})
   void test(int x, int y) {
     System.out.println(x + ", "+ y);
   }
