@@ -22,7 +22,7 @@ public class StudyUpdateRecommendationAction extends DumbAwareAction {
   public static final String ACTION_ID = "Edu.UpdateRecommendation";
 
   public StudyUpdateRecommendationAction() {
-    super("Update course", "Update course", EducationalCoreIcons.Stepik);
+    super("Update course", "Update course", EducationalCoreIcons.StepikRefresh);
   }
 
   @Override
