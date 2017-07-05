@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -185,30 +184,19 @@ public class SelectBranchPopup {
 
     @Nullable
     private void loadBranches(final String selectedBranchesHolder, final Runnable runnable) {
-      final ProgressManager pm = ProgressManager.getInstance();
-      pm.run(new ModalityIgnorantBackgroundableTask(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches"), true) {
+      new Task.Backgroundable(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches"), true) {
         @Override
-        protected void doInAwtIfFail(@NotNull Exception e) {
+        public void onFinished() {
           runnable.run();
         }
 
         @Override
-        protected void doInAwtIfCancel() {
-          runnable.run();
-        }
-
-        @Override
-        protected void doInAwtIfSuccess() {
-          runnable.run();
-        }
-
-        @Override
-        protected void runImpl(@NotNull ProgressIndicator indicator) {
+        public void run(@NotNull ProgressIndicator indicator) {
           final NewRootBunch manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
 
           manager.reloadBranches(myVcsRoot, selectedBranchesHolder, InfoReliability.setByUser, false);
         }
-      });
+      }.queue();
     }
 
     private void showBranchPopup(final String selectedValue) {
