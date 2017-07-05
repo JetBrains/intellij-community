@@ -105,7 +105,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       final List<PyType> matchedReturnTypes = new ArrayList<>();
 
       for (PyFunction overload : overloads) {
-        final PyType returnType = context.getReturnType(overload);
+        final PyType returnType = PyUtil.getReturnTypeToAnalyzeAsCallType(overload, context);
         allReturnTypes.add(PyTypeChecker.substitute(returnType, new HashMap<>(), context));
 
         final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);

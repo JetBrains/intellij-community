@@ -422,4 +422,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testCallOperator() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  // PY-24763
+  public void testAnnotatedDunderInitInGenericClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 }

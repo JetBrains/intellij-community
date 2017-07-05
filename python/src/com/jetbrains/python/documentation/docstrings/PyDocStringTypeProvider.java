@@ -58,16 +58,11 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    if (callable instanceof PyDocStringOwner) {
-      final StructuredDocString docString = ((PyDocStringOwner)callable).getStructuredDocString();
-      if (docString != null) {
-        final String typeText = docString.getReturnType();
-        if (StringUtil.isNotEmpty(typeText)) {
-          return parseType(callable, typeText, context);
-        }
-      }
+    if (callable instanceof PyFunction && PyUtil.isInit((PyFunction)callable)) {
+      return null;
     }
-    return null;
+
+    return getReturnTypeFromDocString(callable, context);
   }
 
   @NotNull
@@ -87,12 +82,23 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
   public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyFunction init = cls.findInitOrNew(true, context);
     if (init != null) {
-      final PyType initType = context.getType(init);
-      final PyCallableType callableType = PyUtil.as(initType, PyCallableType.class);
-      if (callableType != null) {
-        return callableType.getReturnType(context);
+      return Ref.deref(getReturnTypeFromDocString(init, context));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getReturnTypeFromDocString(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+    if (callable instanceof PyDocStringOwner) {
+      final StructuredDocString docString = ((PyDocStringOwner)callable).getStructuredDocString();
+      if (docString != null) {
+        final String typeText = docString.getReturnType();
+        if (StringUtil.isNotEmpty(typeText)) {
+          return parseType(callable, typeText, context);
+        }
       }
     }
+
     return null;
   }
 }
