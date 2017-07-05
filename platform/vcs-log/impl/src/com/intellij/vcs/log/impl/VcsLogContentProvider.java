@@ -33,6 +33,7 @@ import com.intellij.util.ContentsUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -113,15 +114,22 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
     ContentManager manager = toolWindow.getContentManager();
     JComponent component = ContentUtilEx.findContentComponent(manager, c -> {
+      VcsLogPanel vcsLogPanel = null;
       if (c instanceof VcsLogPanel) {
-        AbstractVcsLogUi ui = ((VcsLogPanel)c).getUi();
+        vcsLogPanel = (VcsLogPanel)c;
+      }
+      else if (c instanceof JPanel) {
+        vcsLogPanel = ContainerUtil.findInstance(c.getComponents(), VcsLogPanel.class);
+      }
+
+      if (vcsLogPanel != null) {
+        AbstractVcsLogUi ui = vcsLogPanel.getUi();
         //noinspection unchecked
         return clazz.isInstance(ui) && condition.value((U)ui);
       }
       return false;
     });
     if (component == null) return false;
-    //noinspection unchecked
 
     if (!toolWindow.isVisible()) toolWindow.activate(null);
     return ContentUtilEx.selectContent(manager, component, true);
@@ -147,6 +155,10 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     toolWindow.activate(null);
 
     logManager.scheduleInitialization();
+  }
+
+  public static boolean selectLogUi(@NotNull Project project, @NotNull VcsLogUi ui) {
+    return findAndSelectContent(project, AbstractVcsLogUi.class, u -> u.equals(ui));
   }
 
   @NotNull
