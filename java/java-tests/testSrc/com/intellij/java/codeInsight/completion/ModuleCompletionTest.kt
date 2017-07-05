@@ -69,7 +69,8 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
   }
 
-  fun testStdAnnotation() = complete("@Dep<caret>", "@Deprecated<caret>")
+  fun testStdAnnotation1() = complete("@Dep<caret>", "@Deprecated<caret>")
+  fun testStdAnnotation2() = complete("@Dep<caret> module M { }", "@Deprecated<caret> module M { }")
 
   fun testOwnAnnotation() {
     addFile("pkg/main/OwnAnno.java", "package pkg.main;\npublic @interface OwnAnno { }")
