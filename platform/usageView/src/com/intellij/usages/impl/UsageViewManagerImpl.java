@@ -15,12 +15,14 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -211,12 +213,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
-  public static void showTooManyUsagesWarning(@NotNull final Project project,
-                                              @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
-                                              @NotNull final ProgressIndicator indicator,
-                                              @NotNull final UsageViewPresentation presentation,
-                                              final int usageCount,
-                                              @Nullable final UsageViewImpl usageView) {
+  public static void showTooManyUsagesWarningLater(@NotNull final Project project,
+                                                   @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
+                                                   @NotNull final ProgressIndicator indicator,
+                                                   @NotNull final UsageViewPresentation presentation,
+                                                   final int usageCount,
+                                                   @Nullable final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
       int shownUsageCount = usageView == null ? usageCount : usageView.getRoot().getRecursiveUsageCount();

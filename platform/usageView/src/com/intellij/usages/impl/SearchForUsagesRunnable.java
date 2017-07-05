@@ -383,7 +383,7 @@ class SearchForUsagesRunnable implements Runnable {
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UsageViewManagerImpl.showTooManyUsagesWarning(myProject, tooManyUsagesStatus, indicator1, myPresentation, usageCount, usageView);
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, indicator1, myPresentation, usageCount, usageView);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {

@@ -1575,7 +1575,7 @@ public abstract class ChooseByNameBase {
                 tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
                 if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                   int usageCount = elementsArray.size() + myMaximumListSizeLimit;
-                  UsageViewManagerImpl.showTooManyUsagesWarning(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
+                  UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
                 }
                 return false;
               }
