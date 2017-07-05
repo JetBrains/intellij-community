@@ -685,9 +685,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
     lineSet = lineSet.clearModificationFlags();
-    for (int i = 0; i < modifiedLines.size(); i++) {
-      lineSet = lineSet.setModified(modifiedLines.get(i));
-    }
+    lineSet = lineSet.setModified(modifiedLines);
     myLineSet = lineSet;
     myFrozen = null;
   }

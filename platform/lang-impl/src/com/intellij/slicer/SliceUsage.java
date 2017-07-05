@@ -28,6 +28,9 @@ import com.intellij.util.Processor;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author cdr
  */
@@ -49,13 +52,23 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     this.params = params;
   }
 
+  @NotNull
+  private static Collection<SliceUsage> transformToLanguageSpecificUsage(@NotNull SliceUsage usage) {
+    PsiElement element = usage.getElement();
+    if (element == null) return Collections.singletonList(usage);
+    SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
+    if (!(provider instanceof SliceUsageTransformer)) return Collections.singletonList(usage);
+    Collection<SliceUsage> transformedUsages = ((SliceUsageTransformer)provider).transform(usage);
+    return transformedUsages != null ? transformedUsages : Collections.singletonList(usage);
+  }
+
   public void processChildren(@NotNull Processor<SliceUsage> processor) {
     final PsiElement element = ReadAction.compute(this::getElement);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();
 
     final Processor<SliceUsage> uniqueProcessor =
-      new CommonProcessors.UniqueProcessor<>(processor, new TObjectHashingStrategy<SliceUsage>() {
+      new CommonProcessors.UniqueProcessor<SliceUsage>(processor, new TObjectHashingStrategy<SliceUsage>() {
         @Override
         public int computeHashCode(final SliceUsage object) {
           return object.getUsageInfo().hashCode();
@@ -65,7 +78,12 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
         public boolean equals(final SliceUsage o1, final SliceUsage o2) {
           return o1.getUsageInfo().equals(o2.getUsageInfo());
         }
-      });
+      }) {
+        @Override
+        public boolean process(SliceUsage usage) {
+          return transformToLanguageSpecificUsage(usage).stream().allMatch(super::process);
+        }
+      };
 
     ApplicationManager.getApplication().runReadAction(() -> {
       if (params.dataFlowToThis) {
@@ -92,4 +110,8 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
 
   @NotNull
   protected abstract SliceUsage copy();
+
+  public boolean canBeLeaf() {
+    return getElement() != null;
+  }
 }

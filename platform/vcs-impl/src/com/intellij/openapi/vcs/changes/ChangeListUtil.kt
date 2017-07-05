@@ -13,33 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("ChangeListUtil")
+
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 
-object ChangeListUtil {
+private val CHANGELIST_NAME_PATTERN = "\\s\\[(.*)\\]"
+private val STASH_MESSAGE_PATTERN = VcsBundle.message("stash.changes.message", ".*")
+private val SYSTEM_CHANGELIST_REGEX = (STASH_MESSAGE_PATTERN + CHANGELIST_NAME_PATTERN).toRegex()
 
-  private val CHANGELIST_NAME_PATTERN = "\\s\\[([\\s\\S]*)\\]"
-  private val STASH_MESSAGE_PATTERN = VcsBundle.message("stash.changes.message", "[\\s\\S]*")
-  private val SYSTEM_CHANGELIST_REGEX = (STASH_MESSAGE_PATTERN + CHANGELIST_NAME_PATTERN).toRegex()
+fun createSystemShelvedChangeListName(systemPrefix: String, changelistName: String): String {
+  return "$systemPrefix [$changelistName]"
+}
 
-  @JvmStatic fun createSystemShelvedChangeListName(systemPrefix: String, changelistName: String): String {
-    return "$systemPrefix [$changelistName]"
-  }
+private fun getOriginalName(shelvedName: String): String {
+  return SYSTEM_CHANGELIST_REGEX.matchEntire(shelvedName)?.groups?.get(1)?.value ?: shelvedName
+}
 
-  fun getOriginalName(shelvedName: String): String {
-    return SYSTEM_CHANGELIST_REGEX.matchEntire(shelvedName)?.groups?.get(1)?.value ?: shelvedName
-  }
+fun getPredefinedChangeList(shelvedList: ShelvedChangeList, changeListManager: ChangeListManager): LocalChangeList? {
+  val defaultName = shelvedList.DESCRIPTION
+  return changeListManager.findChangeList(defaultName) ?:
+         if (shelvedList.isMarkedToDelete) changeListManager.findChangeList(getOriginalName(defaultName)) else null
+}
 
-  @JvmStatic fun getPredefinedChangeList(shelvedList: ShelvedChangeList, changeListManager: ChangeListManager): LocalChangeList? {
-    val defaultName = shelvedList.DESCRIPTION
-    return changeListManager.findChangeList(defaultName) ?:
-           if (shelvedList.isMarkedToDelete) changeListManager.findChangeList(getOriginalName(defaultName)) else null
-  }
-
-  @JvmStatic fun getChangeListNameForUnshelve(shelvedList: ShelvedChangeList): String {
-    val defaultName = shelvedList.DESCRIPTION
-    return if (shelvedList.isMarkedToDelete) getOriginalName(defaultName) else defaultName
-  }
+fun getChangeListNameForUnshelve(shelvedList: ShelvedChangeList): String {
+  val defaultName = shelvedList.DESCRIPTION
+  return if (shelvedList.isMarkedToDelete) getOriginalName(defaultName) else defaultName
 }

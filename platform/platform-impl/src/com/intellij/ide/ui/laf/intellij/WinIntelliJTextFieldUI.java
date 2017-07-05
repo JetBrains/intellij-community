@@ -62,7 +62,8 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
   @Override
   protected void paintBackground(Graphics g) {
     JTextComponent c = getComponent();
-    if (UIUtil.getParentOfType(JComboBox.class, c) != null) return;
+    if (UIUtil.getParentOfType(JComboBox.class, c) != null ||
+        UIUtil.getParentOfType(JSpinner.class, c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -88,15 +89,13 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
     g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
 
     if (!c.isEnabled()) {
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
     }
 
     Rectangle r = new Rectangle(c.getSize());
-    if (UIUtil.getParentOfType(JSpinner.class, c) == null) { // Fill whole rectangle in spinner
-      JBInsets.removeFrom(r, JBUI.insets(2));
+    JBInsets.removeFrom(r, JBUI.insets(2));
+    adjustInWrapperRect(r, c);
 
-      adjustInWrapperRect(r, c);
-    }
     g2.fill(r);
   }
 

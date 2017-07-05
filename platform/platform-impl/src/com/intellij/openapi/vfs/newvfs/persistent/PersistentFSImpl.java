@@ -842,7 +842,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         return;
       }
 
-      int parentId = parent.getId();
+      int parentId = getFileId(parent);
       int[] oldIds = FSRecords.list(parentId);
       TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(deleteEvents.size(), oldIds.length));
       parentChildrenIds.addAll(oldIds);
@@ -869,7 +869,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     for (Map.Entry<VirtualDirectoryImpl, Collection<VFileCreateEvent>> entry : creations.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
       Collection<VFileCreateEvent> createEvents = entry.getValue();
-      int parentId = parent.getId();
+      int parentId = getFileId(parent);
       int[] oldIds = FSRecords.list(parentId);
       TIntHashSet parentChildrenIds = new TIntHashSet(Math.max(createEvents.size(), oldIds.length));
       parentChildrenIds.addAll(oldIds);

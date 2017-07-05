@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.*;
@@ -109,6 +110,11 @@ public abstract class LineStatusTrackerBase {
 
   @CalledInAwt
   protected void fireFileUnchanged() {
+  }
+
+  @Nullable
+  protected VirtualFile getVirtualFile() {
+    return null;
   }
 
   //

@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
@@ -128,18 +129,18 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     PsiClass containingClass = member.getContainingClass();
     boolean accessible = JavaResolveUtil.isAccessible(member, containingClass, modifierList, place, accessObjectClass, currentFileResolveScope);
     if (accessible && member instanceof PsiClass) {
-      accessible = isAccessible(member, place);
+      accessible = isAccessible(moduleSystem -> moduleSystem.isAccessible(((PsiClass)member), place));
     }
     return accessible;
   }
 
   @Override
   public boolean isAccessible(@NotNull PsiPackage pkg, @NotNull PsiElement place) {
-    return isAccessible((PsiElement)pkg, place);
+    return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg, place));
   }
 
-  private static boolean isAccessible(PsiElement target, PsiElement place) {
-    return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(moduleSystem -> moduleSystem.isAccessible(target, place));
+  private static boolean isAccessible(Predicate<JavaModuleSystem> predicate) {
+    return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
   }
 
   @NotNull

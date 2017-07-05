@@ -198,7 +198,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     };
 
-    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
     // todo react to event?
     updateAlarm.addRequest(new Runnable() {
       public void run() {
@@ -246,7 +246,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision)).append(" ");
+    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision.getRevisionNumber())).append(" ");
     sb.append(revision.getAuthor());
     long time = revision.getRevisionDate().getTime();
     sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
@@ -269,7 +269,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                @Nullable VcsRevisionNumber startingRevisionNumber) {
     String existingRevision = historyPanel.myStartingRevision == null ? null : historyPanel.myStartingRevision.asString();
     String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
-    return historyPanel.getFilePath().equals(path) && Comparing.equal(existingRevision, newRevision);
+    return historyPanel.myFilePath.equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
   @CalledInAwt
@@ -282,22 +282,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                                 @NotNull VcsHistoryProvider provider,
                                                 @Nullable ColumnInfo[] additionalColumns) {
     ArrayList<DualViewColumnInfo> columns = new ArrayList<>();
-    columns.add(new RevisionColumnInfo(myRevisionsInOrderComparator));
-    if (!provider.isDateOmittable()) columns.add(new DateColumnInfo());
-    columns.add(new AuthorColumnInfo());
-    ArrayList<DualViewColumnInfo> additionalColumnInfo = new ArrayList<>();
+    columns.add(new TreeNodeColumnInfoWrapper<>(new RevisionColumnInfo(myRevisionsInOrderComparator)));
+    if (!provider.isDateOmittable()) columns.add(new TreeNodeColumnInfoWrapper<>(new DateColumnInfo()));
+    columns.add(new TreeNodeColumnInfoWrapper<>(new AuthorColumnInfo()));
     if (additionalColumns != null) {
       for (ColumnInfo additionalColumn : additionalColumns) {
-        additionalColumnInfo.add(new FileHistoryColumnWrapper(additionalColumn) {
-          @Override
-          protected DualView getDualView() {
-            return myDualView;
-          }
-        });
+        columns.add(new TreeNodeColumnInfoWrapper(additionalColumn));
       }
     }
-    columns.addAll(additionalColumnInfo);
-    columns.add(new MessageColumnInfo(project));
+    columns.add(new TreeNodeColumnInfoWrapper<>(new MessageColumnInfo(project)));
     return columns.toArray(new DualViewColumnInfo[columns.size()]);
   }
 
@@ -508,7 +501,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return myFilePath.getIOFile();
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      VirtualFile virtualFile = getVirtualFile();
+      VirtualFile virtualFile = myFilePath.getVirtualFile();
       return virtualFile == null || !virtualFile.isValid() ? null : virtualFile;
     }
     else if (VcsDataKeys.FILE_HISTORY_PANEL.is(dataId)) {
@@ -591,16 +584,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myRefresherI;
   }
 
-  @NotNull
-  public FilePath getFilePath() {
-    return myFilePath;
-  }
-
-  @Nullable
-  public VirtualFile getVirtualFile() {
-    return myFilePath.getVirtualFile();
-  }
-
   private void refreshRevisionsOrder() {
     final List<VcsFileRevision> list = myHistorySession.getRevisionList();
     myRevisionsOrder.clear();
@@ -662,65 +645,103 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     updateMessage();
   }
 
-  public static class RevisionColumnInfo extends VcsColumnInfo<VcsRevisionNumber> {
-    private final Comparator<VcsFileRevision> myComparator;
+  private class TreeNodeColumnInfoWrapper<T extends Comparable<T>> extends FileHistoryColumnWrapper<T> {
+    public TreeNodeColumnInfoWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
+      super(additionalColumn);
+    }
 
-    public RevisionColumnInfo(Comparator<VcsFileRevision> comparator) {
+    @Override
+    protected DualView getDualView() {
+      return myDualView;
+    }
+  }
+
+  public static class RevisionColumnInfo extends ColumnInfo<VcsFileRevision, VcsRevisionNumber> {
+    @Nullable private final Comparator<VcsFileRevision> myComparator;
+    @NotNull private final ColoredTableCellRenderer myRenderer;
+
+    public RevisionColumnInfo(@Nullable Comparator<VcsFileRevision> comparator) {
       super(VcsBundle.message("column.name.revision.version"));
       myComparator = comparator;
+      myRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          setOpaque(selected);
+          append(RevisionColumnInfo.toString((VcsRevisionNumber)value));
+          SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
+        }
+      };
     }
 
     @NotNull
-    private static String toString(@NotNull VcsFileRevision o) {
-      VcsRevisionNumber number = o.getRevisionNumber();
+    private static String toString(@NotNull VcsRevisionNumber number) {
       return number instanceof ShortVcsRevisionNumber
              ? ((ShortVcsRevisionNumber)number).toShortString()
              : number.asString();
     }
 
+    @Nullable
     @Override
-    protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
-      return object.getRevisionNumber();
+    public VcsRevisionNumber valueOf(VcsFileRevision revision) {
+      return revision.getRevisionNumber();
     }
 
+    @Nullable
     @Override
     public Comparator<VcsFileRevision> getComparator() {
       return myComparator;
-    }
-
-    public String valueOf(VcsFileRevision object) {
-      return toString(object);
     }
 
     @Override
     public String getPreferredStringValue() {
       return StringUtil.repeatSymbol('m', 10);
     }
+
+    @Nullable
+    @Override
+    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+      return myRenderer;
+    }
   }
 
-  public static class DateColumnInfo extends VcsColumnInfo<String> {
+  public static class DateColumnInfo extends ColumnInfo<VcsFileRevision, Date> {
+    @NotNull private final ColoredTableCellRenderer myRenderer;
+
     public DateColumnInfo() {
       super(VcsBundle.message("column.name.revision.date"));
+
+      myRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          setOpaque(selected);
+          Date date = (Date)value;
+          if (date != null) {
+            append(DateFormatUtil.formatPrettyDateTime(date));
+          }
+          SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
+        }
+      };
     }
 
-    @NotNull
-    static String toString(VcsFileRevision object) {
-      Date date = object.getRevisionDate();
-      if (date == null) return "";
-      return DateFormatUtil.formatPrettyDateTime(date);
+    @Nullable
+    @Override
+    public Comparator<VcsFileRevision> getComparator() {
+      return Comparator.comparing(revision -> valueOf(revision));
     }
 
-    protected String getDataOf(VcsFileRevision object) {
-      return toString(object);
-    }
-
-    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      return Comparing.compare(o1.getRevisionDate(), o2.getRevisionDate());
+    @Nullable
+    @Override
+    public Date valueOf(VcsFileRevision revision) {
+      return revision.getRevisionDate();
     }
 
     @Override
     public String getPreferredStringValue() {
       return DateFormatUtil.formatPrettyDateTime(Clock.getTime() + 1000);
+    }
+
+    @Nullable
+    @Override
+    public TableCellRenderer getRenderer(VcsFileRevision revision) {
+      return myRenderer;
     }
   }
 
@@ -750,43 +771,22 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  public static class AuthorColumnInfo extends VcsColumnInfo<String> {
+  public static class AuthorColumnInfo extends ColumnInfo<VcsFileRevision, String> {
     private final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
 
     public AuthorColumnInfo() {
       super(VcsBundle.message("column.name.revision.list.author"));
     }
 
-    static String toString(VcsFileRevision o) {
-      VcsFileRevision rev = o;
-      if (o instanceof TreeNodeOnVcsRevision) {
-        rev = ((TreeNodeOnVcsRevision)o).getRevision();
-      }
-      if (rev instanceof VcsFileRevisionEx) {
-        if (!Comparing.equal(rev.getAuthor(), ((VcsFileRevisionEx)rev).getCommitterName())) {
-          return o.getAuthor() + "*";
-        }
-      }
-      return o.getAuthor();
-    }
-
-    protected String getDataOf(VcsFileRevision object) {
-      return toString(object);
-    }
-
+    @Nullable
     @Override
     public TableCellRenderer getRenderer(VcsFileRevision revision) {
       return AUTHOR_RENDERER;
     }
 
     @Override
-    public TableCellRenderer getCustomizedRenderer(VcsFileRevision value, TableCellRenderer renderer) {
+    public TableCellRenderer getCustomizedRenderer(VcsFileRevision revision, TableCellRenderer renderer) {
       if (renderer instanceof AuthorCellRenderer) {
-        VcsFileRevision revision = value;
-        if (value instanceof TreeNodeOnVcsRevision) {
-          revision = ((TreeNodeOnVcsRevision)value).getRevision();
-        }
-
         if (revision instanceof VcsFileRevisionEx) {
           VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
           StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
@@ -802,6 +802,17 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return renderer;
     }
 
+    @Nullable
+    @Override
+    public String valueOf(VcsFileRevision revision) {
+      if (revision instanceof VcsFileRevisionEx) {
+        if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
+          return revision.getAuthor() + "*";
+        }
+      }
+      return revision.getAuthor();
+    }
+
     @Override
     @NonNls
     public String getPreferredStringValue() {
@@ -809,7 +820,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  public static class MessageColumnInfo extends VcsColumnInfo<String> {
+  public static class MessageColumnInfo extends ColumnInfo<VcsFileRevision, String> {
     private final ColoredTableCellRenderer myRenderer;
     private final IssueLinkRenderer myIssueLinkRenderer;
 
@@ -837,8 +848,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return index == -1 ? originalMessage : originalMessage.substring(0, index);
     }
 
-    protected String getDataOf(VcsFileRevision object) {
-      return getSubject(object);
+    @Nullable
+    @Override
+    public String valueOf(VcsFileRevision revision) {
+      return getSubject(revision);
     }
 
     @Override
@@ -846,7 +859,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return StringUtil.repeatSymbol('m', 80);
     }
 
-    public TableCellRenderer getRenderer(VcsFileRevision p0) {
+    @Nullable
+    @Override
+    public TableCellRenderer getRenderer(VcsFileRevision revision) {
       return myRenderer;
     }
   }
@@ -893,52 +908,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  abstract static class VcsColumnInfo<T extends Comparable<T>> extends DualViewColumnInfo<VcsFileRevision, String>
-    implements Comparator<VcsFileRevision> {
-    @NotNull private final ColoredTableCellRenderer myRenderer;
-
-    public VcsColumnInfo(String name) {
-      super(name);
-
-      myRenderer = new ColoredTableCellRenderer() {
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-          setOpaque(selected);
-          append(value.toString());
-          SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
-        }
-      };
-    }
-
-    protected abstract T getDataOf(VcsFileRevision o);
-
-    public Comparator<VcsFileRevision> getComparator() {
-      return this;
-    }
-
-    public String valueOf(VcsFileRevision object) {
-      T result = getDataOf(object);
-      return result == null ? "" : result.toString();
-    }
-
-    public int compare(VcsFileRevision o1, VcsFileRevision o2) {
-      return Comparing.compare(getDataOf(o1), getDataOf(o2));
-    }
-
-    public boolean shouldBeShownIsTheTree() {
-      return true;
-    }
-
-    public boolean shouldBeShownIsTheTable() {
-      return true;
-    }
-
-    @Nullable
-    @Override
-    public TableCellRenderer getRenderer(VcsFileRevision revision) {
-      return myRenderer;
-    }
-  }
-
   private static class MyTreeCellRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myDefaultCellRenderer;
     private final Getter<VcsHistorySession> myHistorySession;
@@ -959,13 +928,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
       final TreePath path = tree.getPathForRow(row);
       if (path == null) return result;
-      final VcsFileRevision revision = row >= 0 ? (VcsFileRevision)path.getLastPathComponent() : null;
+      TreeNodeOnVcsRevision node = row >= 0 ? ((TreeNodeOnVcsRevision)path.getLastPathComponent()) : null;
 
-      if (revision != null) {
-        if (myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
+      if (node != null) {
+        if (myHistorySession.get().isCurrentRevision(node.getRevision().getRevisionNumber())) {
           makeBold(result);
         }
-        if (!selected && myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
+        if (!selected && myHistorySession.get().isCurrentRevision(node.getRevision().getRevisionNumber())) {
           result.setBackground(new JBColor(new Color(188, 227, 231), new Color(188, 227, 231)));
         }
         ((JComponent)result).setOpaque(false);
@@ -996,8 +965,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                      int row,
                      int column,
                      Object treeNode) {
-      VcsFileRevision revision = (VcsFileRevision)treeNode;
-      if (revision == null) return;
+      VcsFileRevision revision = ((TreeNodeOnVcsRevision)treeNode).getRevision();
       if (myHistorySession.get().isCurrentRevision(revision.getRevisionNumber())) {
         makeBold(component);
       }
@@ -1031,8 +999,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
       int selectionSize = selection.size();
       if (selectionSize > 1) {
-        List<VcsFileRevision> selectedRevisions =
-          ContainerUtil.sorted(ContainerUtil.map(selection, TreeNodeOnVcsRevision::getRevision), myRevisionsInOrderComparator);
+        List<VcsFileRevision> selectedRevisions = ContainerUtil.sorted(ContainerUtil.map(selection, TreeNodeOnVcsRevision::getRevision),
+                                                                       myRevisionsInOrderComparator);
         VcsFileRevision olderRevision = selectedRevisions.get(0);
         VcsFileRevision newestRevision = selectedRevisions.get(selection.size() - 1);
         myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, olderRevision, newestRevision);

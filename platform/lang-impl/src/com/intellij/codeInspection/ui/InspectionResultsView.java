@@ -33,6 +33,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -372,7 +373,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private JComponent createLeftActionsToolbar() {
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new RerunAction(this, this));
+    group.add(new RerunAction(this));
     group.add(new CloseAction(myGlobalInspectionContext));
     final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
@@ -1094,6 +1095,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       AnalysisUIOptions.getInstance(getProject()).save(myGlobalInspectionContext.getUIOptions());
       myGlobalInspectionContext.setTreeState(getTree().getTreeState());
       myGlobalInspectionContext.doInspections(myScope);
+    } else {
+      GlobalInspectionContextImpl.NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.view.invalid.scope.message"), NotificationType.INFORMATION).notify(getProject());
     }
   }
 }

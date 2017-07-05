@@ -92,7 +92,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
                                  "  }\n" +
                                  "}");
     doTest(schema, "{\"prop\": [101, 102]}");
-    doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18.0\">16</warning>]}");
+    doTest(schema, "{\"prop\": [<warning descr=\"Less than a minimum 18\">16</warning>]}");
     doTest(schema, "{\"prop\": [<warning descr=\"Type is not allowed\">\"test\"</warning>]}");
   }
 
@@ -349,6 +349,18 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   public void testCycledSchema() throws Exception {
     String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/cycledSchema.json"));
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/testCycledSchema.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testWithRootRefCycledSchema() throws Exception {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/cycledWithRootRefSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/testCycledWithRootRefSchema.json"));
+    doTest(schemaText, inputText);
+  }
+
+  public void testCycledWithRootRefInNotSchema() throws Exception {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/cycledWithRootRefInNotSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/testCycledWithRootRefInNotSchema.json"));
     doTest(schemaText, inputText);
   }
 

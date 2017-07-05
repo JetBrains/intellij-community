@@ -337,33 +337,36 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public void testHardLinks() throws Exception {
-    if (!SystemInfo.isWindows && !SystemInfo.isUnix) {
-      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
-      return;
-    }
+    GeneralSettings settings = GeneralSettings.getInstance();
+    boolean safeWrite = settings.isUseSafeWrite();
+    SafeWriteRequestor requestor = new SafeWriteRequestor() { };
+    File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
+    byte[] testData = "hello".getBytes(CharsetToolkit.UTF8_CHARSET);
 
-    final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
-    final File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
-    final SafeWriteRequestor requestor = new SafeWriteRequestor() { };
     try {
-      GeneralSettings.getInstance().setUseSafeWrite(false);
+      settings.setUseSafeWrite(false);
 
-      final File targetFile = new File(dir, "targetFile");
+      File targetFile = new File(dir, "targetFile");
       assertTrue(targetFile.createNewFile());
-      final File hardLinkFile = IoTestUtil.createHardLink(targetFile.getAbsolutePath(), "hardLinkFile");
+      File hardLinkFile = IoTestUtil.createHardLink(targetFile.getAbsolutePath(), "hardLinkFile");
 
-      final VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
+      VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      setBinaryContent(file,"hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
+      setBinaryContent(file, testData, 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
-      final VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
+      if (SystemInfo.isWindows) {
+        byte[] bytes = FileUtil.loadFileBytes(hardLinkFile);
+        assertEquals(testData.length, bytes.length);
+      }
+
+      VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
       assertNotNull(check);
       assertEquals(file.getLength(), check.getLength());
       assertEquals("hello", VfsUtilCore.loadText(check));
     }
     finally {
-      GeneralSettings.getInstance().setUseSafeWrite(safeWrite);
+      settings.setUseSafeWrite(safeWrite);
       FileUtil.delete(dir);
     }
   }

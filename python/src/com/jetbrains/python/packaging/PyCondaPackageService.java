@@ -65,8 +65,8 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     return CONDA_PACKAGES;
   }
 
-  public Map<String, String> loadAndGetPackages() {
-    if (CONDA_PACKAGES.isEmpty()) {
+  public Map<String, String> loadAndGetPackages(boolean force) {
+    if (CONDA_PACKAGES.isEmpty() || force) {
       updatePackagesCache();
     }
     return CONDA_PACKAGES;
@@ -183,6 +183,8 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       LOG.warn(StringUtil.join(command, " "));
       return;
     }
+    CONDA_PACKAGES.clear();
+    PACKAGES_TO_RELEASES.clear();
     final List<String> lines = output.getStdoutLines();
     for (String line : lines) {
       final List<String> split = StringUtil.split(line, "\t");
@@ -227,9 +229,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final ProcessOutput output = PySdkUtil.getProcessOutput(runDirectory, new String[]{condaPython, path, "channels"});
     if (output.getExitCode() != 0) return;
     final List<String> lines = output.getStdoutLines();
-    for (String line : lines) {
-      CONDA_CHANNELS.add(line);
-    }
+    CONDA_CHANNELS.addAll(lines);
     LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 }

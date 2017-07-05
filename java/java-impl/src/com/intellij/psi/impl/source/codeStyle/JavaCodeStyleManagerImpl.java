@@ -1005,9 +1005,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return true;
   }
 
-  private static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
-                                                          @NotNull final String name,
-                                                          @NotNull Predicate<PsiVariable> canBeReused) {
+  public static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
+                                                         @NotNull final String name,
+                                                         @NotNull Predicate<PsiVariable> canBeReused) {
     PsiElement run = scope;
     while (run != null) {
       class CancelException extends RuntimeException {

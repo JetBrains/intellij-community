@@ -17,7 +17,6 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,11 +24,9 @@ import java.util.List;
 /**
  * plugin.dtd:project-components interface.
  */
-@Stubbed
 public interface ProjectComponents extends DomElement {
 
   @NotNull
-  @Stubbed
   List<Component.Project> getComponents();
 
   Component.Project addComponent();

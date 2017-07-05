@@ -16,12 +16,11 @@
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
+import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
 import com.intellij.codeInsight.daemon.JavaErrorMessages
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.jrt.JrtFileSystem
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
@@ -30,30 +29,36 @@ import com.intellij.psi.util.PsiUtil
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName() = "Java Platform Module System"
 
-  override fun isAccessible(target: PsiElement, place: PsiElement) = checkAccess(target, place, true) == null
+  override fun isAccessible(target: PsiPackage, place: PsiElement) = checkAccess(target, place, true) == null
+  override fun isAccessible(target: PsiClass, place: PsiElement) = checkAccess(target, place, true) == null
 
-  override fun checkAccess(target: PsiElement, place: PsiElement) = checkAccess(target, place, false)
+  override fun checkAccess(target: PsiPackage, place: PsiElement) = checkAccess(target, place, false)
+  override fun checkAccess(target: PsiClass, place: PsiElement) = checkAccess(target, place, false)
 
-  private fun checkAccess(target: PsiElement, place: PsiElement, quick: Boolean): Pair<String, List<IntentionAction>>? {
-    val useFile = place.containingFile
+  private fun checkAccess(target: PsiClass, place: PsiElement, quick: Boolean): ErrorWithFixes? {
+    val useFile = place.containingFile?.originalFile
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      if (target is PsiClass) {
-        val targetFile = target.containingFile
-        if (targetFile is PsiClassOwner) {
-          return checkAccess(targetFile, place, targetFile.packageName, quick)
-        }
+      val targetFile = target.containingFile
+      if (targetFile is PsiClassOwner) {
+        return checkAccess(targetFile, useFile, targetFile.packageName, quick)
       }
-      else if (target is PsiPackage && place.parent !is PsiJavaCodeReferenceElement) {
-        val useVFile = useFile.virtualFile
-        if (useVFile != null) {
-          val index = ProjectFileIndex.getInstance(useFile.project)
-          val module = index.getModuleForFile(useVFile)
-          if (module != null) {
-            val test = index.isInTestSourceContent(useVFile)
-            val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
-            if (dirs.size == 1) {
-              return checkAccess(dirs[0], place, target.qualifiedName, quick)
-            }
+    }
+
+    return null
+  }
+
+  private fun checkAccess(target: PsiPackage, place: PsiElement, quick: Boolean): ErrorWithFixes? {
+    val useFile = place.containingFile?.originalFile
+    if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
+      val useVFile = useFile.virtualFile
+      if (useVFile != null) {
+        val index = ProjectFileIndex.getInstance(useFile.project)
+        val module = index.getModuleForFile(useVFile)
+        if (module != null) {
+          val test = index.isInTestSourceContent(useVFile)
+          val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
+          if (dirs.size == 1) {
+            return checkAccess(dirs[0], useFile, target.qualifiedName, quick)
           }
         }
       }
@@ -62,14 +67,14 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return null
   }
 
-  private val ERR = Pair("-", emptyList<IntentionAction>())
+  private val ERR = ErrorWithFixes("-")
 
-  private fun checkAccess(target: PsiFileSystemItem, place: PsiElement, packageName: String, quick: Boolean): Pair<String, List<IntentionAction>>? {
+  private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
     val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
     val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
 
     if (targetModule != null) {
-      if (targetModule == useModule) {
+      if (targetModule.originalElement == useModule?.originalElement) {
         return null
       }
       if (useModule == null && targetModule.containingFile?.virtualFile?.fileSystem !is JrtFileSystem) {
@@ -77,20 +82,20 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
       if (!(targetModule is LightJavaModule || JavaModuleGraphUtil.exports(targetModule, packageName, useModule))) {
         return if (quick) ERR
-          else if (useModule == null) Pair(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetModule.name), emptyList())
-          else Pair(JavaErrorMessages.message("module.access.from.named", packageName, targetModule.name, useModule.name), emptyList())
+          else if (useModule == null) ErrorWithFixes(JavaErrorMessages.message("module.access.from.unnamed", packageName, targetModule.name))
+          else ErrorWithFixes(JavaErrorMessages.message("module.access.from.named", packageName, targetModule.name, useModule.name))
       }
       if (useModule == null) {
         return null
       }
       if (!(useModule.name == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
-        return if (quick) ERR else Pair(
+        return if (quick) ERR else ErrorWithFixes(
           JavaErrorMessages.message("module.access.does.not.read", packageName, targetModule.name, useModule.name),
           listOf(AddRequiredModuleFix(useModule, targetModule.name)))
       }
     }
     else if (useModule != null) {
-      return if (quick) ERR else Pair(JavaErrorMessages.message("module.access.to.unnamed", packageName, useModule.name), emptyList())
+      return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("module.access.to.unnamed", packageName, useModule.name))
     }
 
     return null

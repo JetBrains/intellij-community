@@ -15,7 +15,9 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -33,7 +35,7 @@ import slowCheck.Generator;
 
 import java.util.List;
 
-class InvokeIntention extends ActionOnRange {
+class InvokeIntention extends ActionOnRange implements MadTestingAction {
   private final PsiFile myFile;
   private final int myIntentionIndex;
   private IntentionAction myIntentionAction;
@@ -57,24 +59,23 @@ class InvokeIntention extends ActionOnRange {
     if (name == null) {
       name = myIntentionAction.toString();
     }
-    return "Intention: " + myFile.getVirtualFile().getPath() + ", offset " + getStartOffset() + ", invoke " + name;
+    return "InvokeIntention[" + myFile.getVirtualFile().getPath() + ", offset " + getStartOffset() + ", invoke '" + name + "']";
   }
 
-  void invokeIntention() {
+  public void performAction() {
     int offset = getStartOffset();
     if (offset < 0) return;
 
     Editor editor = FileEditorManager.getInstance(myFile.getProject()).openTextEditor(new OpenFileDescriptor(myFile.getProject(), myFile.getVirtualFile(), offset), true);
-
-    CodeInsightTestFixtureImpl.instantiateAndRun(myFile, editor, new int[0], false);
+    
+    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, myFile.getProject());
+    boolean hasErrors = infos.stream().anyMatch(i -> i.getSeverity() == HighlightSeverity.ERROR);
 
     IntentionAction intention = myIntentionAction = getRandomIntention(editor);
     if (intention == null) return;
 
-    System.out.println("apply " + this);
-    String currentFileText = myFile.getText();
-
     Document changedDocument = getDocumentToBeChanged(intention);
+    String textBefore = changedDocument == null ? null : changedDocument.getText();
 
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, myFile, editor, intention.getText());
     if (changedDocument != null) {
@@ -87,8 +88,8 @@ class InvokeIntention extends ActionOnRange {
         PsiDocumentManager.getInstance(myFile.getProject()).isDocumentBlockedByPsi(changedDocument)) {
       throw new AssertionError("Document is left blocked by PSI");
     }
-    if (myFile.textMatches(currentFileText)) {
-      throw new AssertionError("No change was performed: " + currentFileText);
+    if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
+      throw new AssertionError("No change was performed in " + changedDocument + "\n" + textBefore);
     }
 
     PsiTestUtil.checkStubsMatchText(myFile);
@@ -114,8 +115,6 @@ class InvokeIntention extends ActionOnRange {
            actionText.startsWith("Attach annotations") ||
            actionText.startsWith("Convert to string literal") ||
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
-           actionText.startsWith("Move assignment to field declaration") || // https://youtrack.jetbrains.com/issue/IDEA-174956
-           actionText.startsWith("Add on demand static import") || // https://youtrack.jetbrains.com/issue/IDEA-174965
            actionText.startsWith("Make method default") ||
            actionText.contains("to custom tags") || // changes only inspection settings
            actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template)
@@ -123,6 +122,10 @@ class InvokeIntention extends ActionOnRange {
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
+           actionText.startsWith("Add qualifier") || // in javadoc; displays a popup which isn't allowed in tests
+           actionText.startsWith("Cast to ") || // produces uncompilable code by design
+           actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
+           actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.startsWith("Unimplement");
   }
 

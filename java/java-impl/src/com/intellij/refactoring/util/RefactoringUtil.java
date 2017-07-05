@@ -357,7 +357,8 @@ public class RefactoringUtil {
 
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
-    PsiType type = getTypeByExpression(expr, factory);
+    PsiType typeByExpression = getTypeByExpression(expr, factory);
+    PsiType type = typeByExpression;
     final boolean isFunctionalType = LambdaUtil.notInferredType(type);
     final boolean isDenotable = PsiTypesUtil.isDenotableType(expr.getType());
     if (type != null && !isFunctionalType && isDenotable) {
@@ -365,6 +366,9 @@ public class RefactoringUtil {
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
     if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
+      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeInfo.getType().equals(typeByExpression))) {
+        return type;
+      }
       type = expectedTypes[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
     }

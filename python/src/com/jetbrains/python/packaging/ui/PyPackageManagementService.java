@@ -174,7 +174,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     catch (ExecutionException e) {
       throw new IOException(e);
     }
-    Collections.sort(packages, (pkg1, pkg2) -> pkg1.getName().compareTo(pkg2.getName()));
+    Collections.sort(packages, Comparator.comparing(InstalledPackage::getName));
     return new ArrayList<>(packages);
   }
 

@@ -117,26 +117,24 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   @Override
+  public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
+    if (USE_CLASS_FILTERS && !isFiltered(valueDescriptor.getType())) {
+      return true;
+    }
+    return OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
+  }
+
+  @Override
   public boolean isApplicable(Type type) {
-    if(!(type instanceof ReferenceType)) {
+    if (!(type instanceof ReferenceType)) {
       return false;
     }
 
-    if(JAVA_LANG_STRING.equals(type.name())) {
+    if (JAVA_LANG_STRING.equals(type.name())) {
       return false; // do not render 'String' objects for performance reasons
     }
 
-    if(!overridesToString(type)) {
-      return false;
-    }
-
-    if (USE_CLASS_FILTERS) {
-      if (!isFiltered(type)) {
-        return false;
-      }
-    }
-
-    return true;
+    return overridesToString(type);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

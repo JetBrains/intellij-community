@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.*;
@@ -46,6 +47,6 @@ public class PythonNoseTestConfigurationProducer extends
 
   @Override
   protected boolean isTestFunction(@NotNull final PyFunction pyFunction, @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
-    return PythonUnitTestUtil.isTestCaseFunction(pyFunction, true);
+    return PythonUnitTestUtil.isTestFunction(pyFunction, ThreeState.NO, null);
   }
 }

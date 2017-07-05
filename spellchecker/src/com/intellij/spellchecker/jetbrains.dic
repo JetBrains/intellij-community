@@ -293,6 +293,7 @@ jnilib
 jooq
 jpeg
 jpdl
+jpms
 jquery
 jsdoc
 jsessionid
@@ -457,6 +458,7 @@ openid
 openjdk
 openssl
 optnone
+osgi
 outfile
 overrider
 overriders

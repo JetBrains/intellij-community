@@ -2,7 +2,6 @@ package com.jetbrains.edu.learning.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -16,7 +15,7 @@ import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
-import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -78,7 +77,7 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   private void updateIntellijAndGTKLaf() {
-    runLater(() -> {
+    Platform.runLater(() -> {
       final URL scrollBarStyleUrl = getClass().getResource("/style/javaFXBrowserScrollBar.css");
       final URL engineStyleUrl = getClass().getResource("/style/javaFXBrowser.css");
       myPane.getStylesheets().add(scrollBarStyleUrl.toExternalForm());
@@ -89,7 +88,7 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   private void updateLafDarcula() {
-    runLater(() -> {
+    Platform.runLater(() -> {
       final URL engineStyleUrl = getClass().getResource("/style/javaFXBrowserDarcula.css");
       final URL scrollBarStyleUrl = getClass().getResource("/style/javaFXBrowserDarculaScrollBar.css");
       myEngine.setUserStyleSheetLocation(engineStyleUrl.toExternalForm());
@@ -101,7 +100,7 @@ public class StudyBrowserWindow extends JFrame {
   }
 
   private void initComponents() {
-    runLater(() -> {
+    Platform.runLater(() -> {
       myPane = new StackPane();
       myWebComponent = new WebView();
       myWebComponent.setOnDragDetected(event -> {});
@@ -136,11 +135,11 @@ public class StudyBrowserWindow extends JFrame {
     }
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator == null) {
-      runLater(() -> myEngine.loadContent(content));
+      Platform.runLater(() -> myEngine.loadContent(content));
     }
     else {
       String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator.getLanguageScriptUrl(), configurator.getDefaultHighlightingMode());
-      runLater(() -> {
+      Platform.runLater(() -> {
         updateLookWithProgressBarIfNeeded();
         myEngine.loadContent(withCodeHighlighting);
       });
@@ -291,12 +290,8 @@ public class StudyBrowserWindow extends JFrame {
     });
   }
 
-  private static void runLater(@NotNull Runnable r) {
-    ApplicationManager.getApplication().invokeLater(() -> IdeEventQueue.unsafeNonblockingExecute(() -> PlatformImpl.runLater(r)));
-  }
-
   private void addButtonsAvailabilityListeners(JButton backButton, JButton forwardButton) {
-    runLater(() -> myEngine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+    Platform.runLater(() -> myEngine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
       if (newState == Worker.State.SUCCEEDED) {
         final WebHistory history = myEngine.getHistory();
         boolean isGoBackAvailable = history.getCurrentIndex() > 0;
@@ -316,7 +311,7 @@ public class StudyBrowserWindow extends JFrame {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 1) {
-          runLater(() -> myEngine.getHistory().go(direction));
+          Platform.runLater(() -> myEngine.getHistory().go(direction));
         }
       }
     });

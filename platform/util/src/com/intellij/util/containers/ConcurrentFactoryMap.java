@@ -24,6 +24,7 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +65,11 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
         value = ConcurrencyUtil.cacheOrGet(map, k, v);
       }
     }
+    return nullize(value);
+  }
+
+  @Nullable
+  private static <T> T nullize(T value) {
     return value == FAKE_NULL() ? null : value;
   }
 
@@ -87,13 +93,13 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     K k = notNull(key);
     V v = notNull(value);
     v = myMap.put(k, v);
-    return v == FAKE_NULL() ? null : v;
+    return nullize(v);
   }
 
   @Override
   public V remove(Object key) {
     V v = myMap.remove(key);
-    return v == FAKE_NULL() ? null : v;
+    return nullize(v);
   }
 
   @NotNull
@@ -111,7 +117,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   public boolean removeValue(Object value) {
-    Object t = ObjectUtils.notNull(value, FAKE_NULL());
+    Object t = notNull(value);
     //noinspection SuspiciousMethodCalls
     return myMap.values().remove(t);
   }
@@ -149,7 +155,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     return ContainerUtil.map(myMap.values(), new Function<V, V>() {
       @Override
       public V fun(V v) {
-        return v == FAKE_NULL() ? null : v;
+        return nullize(v);
       }
     });
   }
@@ -157,7 +163,12 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return myMap.entrySet();
+    return ContainerUtil.map2Set(myMap.entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
+          @Override
+          public Entry<K,V> fun(Entry<K,V> entry) {
+            return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
+          }
+        });
   }
 
   @NotNull

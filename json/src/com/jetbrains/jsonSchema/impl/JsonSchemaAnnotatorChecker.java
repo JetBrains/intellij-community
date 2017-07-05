@@ -126,14 +126,14 @@ class JsonSchemaAnnotatorChecker {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     if (type != null) {
       JsonSchemaType schemaType = getMatchingSchemaType(schema, type);
-      if (schemaType == null && schema.hasSpecifiedType()) {
+      if (schemaType != null && !schemaType.equals(type)) {
         typeError(value.getDelegate());
       }
       else if (JsonSchemaType._boolean.equals(type)) {
         checkForEnum(value.getDelegate(), schema);
       }
       else if (JsonSchemaType._number.equals(type) || JsonSchemaType._integer.equals(type)) {
-        checkNumber(value.getDelegate(), schema, schemaType);
+        checkNumber(value.getDelegate(), schema, type);
         checkForEnum(value.getDelegate(), schema);
       }
       else if (JsonSchemaType._string.equals(type)) {
@@ -151,7 +151,15 @@ class JsonSchemaAnnotatorChecker {
     }
 
     if (schema.getNot() != null) {
-      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, new JsonSchemaResolver(schema.getNot()).detailedResolve());
+      final MatchResult result = new JsonSchemaResolver(schema.getNot()).detailedResolve();
+      if (result.mySchemas.isEmpty() && result.myExcludingSchemas.isEmpty()) return;
+
+      // if 'not' uses reference to owning schema back -> do not check, seems it does not make any sense
+      if (result.mySchemas.stream().anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject())) ||
+          result.myExcludingSchemas.stream().flatMap(Collection::stream)
+            .anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject()))) return;
+
+      final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result);
       if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate());
     }
   }
@@ -354,23 +362,23 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private static boolean areSchemaTypesCompatible(@NotNull final JsonSchemaObject schema, @NotNull final JsonSchemaType type) {
+    final JsonSchemaType matchingSchemaType = getMatchingSchemaType(schema, type);
+    if (matchingSchemaType != null) return matchingSchemaType.equals(type);
     if (schema.getEnum() != null) {
       return PRIMITIVE_TYPES.contains(type);
     }
-    final JsonSchemaType matchingSchemaType = getMatchingSchemaType(schema, type);
-    if (matchingSchemaType != null) return matchingSchemaType.equals(type);
     return true;
   }
 
   @Nullable
   private static JsonSchemaType getMatchingSchemaType(@NotNull JsonSchemaObject schema, @NotNull JsonSchemaType input) {
     if (schema.getType() != null) {
-      JsonSchemaType matchType = schema.getType();
-      if (matchType == input) {
+      final JsonSchemaType matchType = schema.getType();
+      if (matchType != null) {
+        if (JsonSchemaType._integer.equals(input) && JsonSchemaType._number.equals(matchType)) {
+          return input;
+        }
         return matchType;
-      }
-      if (input == JsonSchemaType._integer && matchType == JsonSchemaType._number) {
-        return JsonSchemaType._number;
       }
     }
     if (schema.getTypeVariants() != null) {
@@ -378,9 +386,11 @@ class JsonSchemaAnnotatorChecker {
       if (matchTypes.contains(input)) {
         return input;
       }
-      if (input == JsonSchemaType._integer && matchTypes.contains(JsonSchemaType._number)) {
-        return JsonSchemaType._number;
+      if (JsonSchemaType._integer.equals(input) && matchTypes.contains(JsonSchemaType._number)) {
+        return input;
       }
+      //nothing matches, lets return one of the list so that other heuristics does not match
+      return matchTypes.get(0);
     }
     if (!schema.getProperties().isEmpty() && JsonSchemaType._object.equals(input)) return JsonSchemaType._object;
     return null;

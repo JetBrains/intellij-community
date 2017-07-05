@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -23,6 +24,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
@@ -100,9 +102,13 @@ class ConstructorReferencesSearchHelper {
       return true;
     };
 
-    ReferencesSearch.searchOptimized(containingClass, searchScope, ignoreAccessScope, collector, true, processor1);
+    SearchScope restrictedScope = searchScope instanceof GlobalSearchScope
+                                  ? GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, JavaFileType.INSTANCE)
+                                  : searchScope;
+
+    ReferencesSearch.searchOptimized(containingClass, restrictedScope, ignoreAccessScope, collector, true, processor1);
     if (isUnder18[0]) {
-      if (!process18MethodPointers(processor, constructor, project, containingClass, searchScope)) return false;
+      if (!process18MethodPointers(processor, constructor, project, containingClass, restrictedScope)) return false;
     }
 
     // search usages like "this(..)"

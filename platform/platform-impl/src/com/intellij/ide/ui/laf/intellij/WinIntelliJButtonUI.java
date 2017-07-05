@@ -95,6 +95,10 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
                       c.hasFocus() || bm.isRollover() ? UIManager.getColor("Button.intellij.native.focusedBackgroundColor") :
                       c.getBackground();
 
+        if (!b.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
+        }
+
         g2.setColor(color);
         g2.fill(r);
 
@@ -120,6 +124,8 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     } else if (b instanceof JBOptionButton) {
       rect.x -= JBUI.scale(4);
     }
+
+    rect.y -= JBUI.scale(1); // Move one pixel up
   }
 
   @Override
@@ -145,7 +151,6 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setColor(UIManager.getColor("Button.disabledText"));
-      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
       SwingUtilities2.drawStringUnderlineCharAt(c, g2, text, -1,
                                                 textRect.x + getTextShiftOffset(),
                                                 textRect.y + metrics.getAscent() + getTextShiftOffset());

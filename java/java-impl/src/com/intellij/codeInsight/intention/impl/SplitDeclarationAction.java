@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -81,9 +82,30 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       PsiElement parent = decl.getParent();
       if (parent instanceof PsiForStatement) {
         String varName = var.getName();
-        if (varName == null || 
-            JavaPsiFacade.getInstance(decl.getProject()).getResolveHelper().resolveReferencedVariable(varName, parent.getParent()) != null) {
+        if (varName == null) {
           return false;
+        }
+
+        parent = parent.getNextSibling();
+        while (parent != null) {
+          Ref<Boolean> conflictFound = new Ref<>(false);
+          parent.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitClass(PsiClass aClass) { }
+
+            @Override
+            public void visitVariable(PsiVariable variable) {
+              super.visitVariable(variable);
+              if (varName.equals(variable.getName())) {
+                conflictFound.set(true);
+                stopWalking();
+              }
+            }
+          });
+          if (conflictFound.get()) {
+            return false;
+          }
+          parent = parent.getNextSibling();
         }
       }
       setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));

@@ -40,13 +40,10 @@ import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Initialize git repository action
- */
 public class GitInit extends DumbAwareAction {
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
@@ -60,10 +57,10 @@ public class GitInit extends DumbAwareAction {
     if (baseDir == null) {
       baseDir = project.getBaseDir();
     }
-    doInit(project, fcd, baseDir, baseDir);
+    doInit(project, fcd, baseDir);
   }
 
-  private static void doInit(final Project project, FileChooserDescriptor fcd, VirtualFile baseDir, final VirtualFile finalBaseDir) {
+  private static void doInit(@NotNull Project project, @NotNull FileChooserDescriptor fcd, VirtualFile baseDir) {
     FileChooser.chooseFile(fcd, project, baseDir, root -> {
       if (GitUtil.isUnderGit(root) && Messages.showYesNoDialog(project,
                                                                GitBundle.message("init.warning.already.under.git",
@@ -77,7 +74,7 @@ public class GitInit extends DumbAwareAction {
       if (!result.success()) {
         GitVcs vcs = GitVcs.getInstance(project);
         if (vcs != null && vcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-          VcsNotifier.getInstance(project).notifyError("Git init failed", result.getErrorOutputAsHtmlString());
+          VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
         }
         return;
       }
@@ -85,22 +82,20 @@ public class GitInit extends DumbAwareAction {
       if (project.isDefault()) {
         return;
       }
-      final String path = root.equals(finalBaseDir) ? "" : root.getPath();
       GitVcs.runInBackground(new Task.Backgroundable(project, GitBundle.getString("common.refreshing")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          refreshAndConfigureVcsMappings(project, root, path);
+          refreshAndConfigureVcsMappings(project, root, root.getPath());
         }
       });
     });
   }
 
-  public static void refreshAndConfigureVcsMappings(final Project project, final VirtualFile root, final String path) {
+  public static void refreshAndConfigureVcsMappings(@NotNull Project project, @NotNull VirtualFile root, @NotNull String path) {
     VfsUtil.markDirtyAndRefresh(false, true, false, root);
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
     manager.updateActiveVcss();
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
   }
-
 }

@@ -101,15 +101,16 @@ public class ParameterHintsUpdater {
       String oldText = info.oldText;
       String newText = info.newText;
 
-      if (oldText == null) {
+      InlayUpdateInfo.Action action = info.action();
+      if (action == InlayUpdateInfo.Action.ADD) {
         boolean useAnimation = !firstTime && !isSameHintRemovedNear(newText, infoIndex) && !isInBulkMode;
         myHintsManager.addHint(myEditor, info.offset, newText, useAnimation, false);
       }
-      else if (newText == null) {
-        boolean useAnimation = !isSameHintAddedNear(oldText, infoIndex) && !isInBulkMode;
+      else if (action == InlayUpdateInfo.Action.DELETE) {
+        boolean useAnimation = oldText != null && !isSameHintAddedNear(oldText, infoIndex) && !isInBulkMode;
         myHintsManager.deleteHint(myEditor, info.inlay, useAnimation);
       }
-      else {
+      else if (action == InlayUpdateInfo.Action.REPLACE) {
         myHintsManager.replaceHint(myEditor, info.inlay, newText);
       }
     }
@@ -153,6 +154,10 @@ public class ParameterHintsUpdater {
 
   
   private static class InlayUpdateInfo {
+    public enum Action {
+      ADD, DELETE, REPLACE, SKIP
+    }
+
     public final int offset;
     public final Inlay inlay;
     public final String newText;
@@ -163,6 +168,15 @@ public class ParameterHintsUpdater {
       this.inlay = current;
       this.newText = newText;
       this.oldText = getHintText();
+    }
+
+    public Action action() {
+      if (inlay == null) {
+        return newText != null ? Action.ADD : Action.SKIP;
+      }
+      else {
+        return newText != null ? Action.REPLACE : Action.DELETE;
+      }
     }
 
     @Nullable

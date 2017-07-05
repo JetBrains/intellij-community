@@ -172,6 +172,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncludeOnlyTypeParametersUsedInParameterTypesExcludeThoseUsedInReturnOnly() { doTest(); }
   public void testMethodREfToContainingMethodWithGenericParam() { doTest(); }
   public void testRawClassTypeOnConstructorWithVarargs() { doTest(); }
+  public void testIDEA175280() { doTest(); }
   public void testDistinguishCapturedWildcardsByDifferentParameters() throws Exception { doTest(); }
   public void testConstructorRefOnClassWithRecursiveTypeParameter() throws Exception { doTest(); }
   public void testWildcardInCheckedCompatibilityConstraints() { doTest(); }

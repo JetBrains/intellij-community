@@ -15,45 +15,49 @@
  */
 package com.intellij.java.codeInspection
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint
 import com.intellij.codeInspection.visibility.VisibilityInspection
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-class Java9AccessCanBeTightenedTest : LightJava9ModulesCodeInsightFixtureTestCase() {
+class Java9AccessCanBeTightenedTest : LightCodeInsightFixtureTestCase() {
 
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/java9AccessCanBeTightened/"
 
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
-  fun testExportedPackage() {
-    moduleInfo("module foo.bar { exports foo.bar; }")
-    doTest("foo.bar.Api", "foo.bar.Outer")
+  private lateinit var inspection: VisibilityInspection
+
+  override fun setUp() {
+    super.setUp()
+    inspection = createGlobalTool()
+
+    myFixture.enableInspections(inspection.sharedLocalInspectionTool!!)
   }
 
-  fun testNotExportedPackage() {
-    moduleInfo("module foo.bar { }")
-    doTest("foo.bar.Api", "foo.bar.Outer")
-  }
+  fun testPublicClass() = doTestClass()
+  fun testPublicClassOff() = doTestClass()
 
-  fun testDeclaredService() {
-    moduleInfo("module foo.bar { exports foo.bar; provides foo.bar.Api with foo.bar.impl.Impl; }")
-    doTest("foo.bar.Api", "foo.bar.impl.Impl")
-  }
+  fun testExportedPackage() = doTestClass()
+  fun testExportedPackageOff() = doTestClass()
 
-  fun testNotDeclaredService() {
-    moduleInfo("module foo.bar { exports foo.bar; }")
-    doTest("foo.bar.Api", "foo.bar.impl.Impl")
-  }
+  fun testDeclaredService() = doTestService()
+  fun testDeclaredServiceOff() = doTestService()
 
+  fun testUsedService() = doTestService()
+  fun testUsedServiceOff() = doTestService()
 
-  private fun doTest(vararg classNames: String) {
-    val testPath = testDataPath + getTestName(true)
-    addJavaFiles(testPath, classNames)
+  private fun doTestClass() = doTest("Public")
+  private fun doTestService() = doTest("Service")
 
-    val toolWrapper = LocalInspectionToolWrapper(createGlobalTool().sharedLocalInspectionTool!!)
-    doGlobalInspectionTest(testPath, toolWrapper)
+  private fun doTest(className: String) {
+    val testName = getTestName(true)
+    val enabled = !testName.endsWith("Off")
+
+    inspection.setEntryPointEnabled(Java9ModuleEntryPoint.ID, enabled)
+    myFixture.configureByFiles("$testName/foo/bar/$className.java", "$testName/module-info.java")
+    myFixture.checkHighlighting()
   }
 
   private fun createGlobalTool() = VisibilityInspection().apply {

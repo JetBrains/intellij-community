@@ -85,7 +85,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testPydevMonkey() {
     unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
@@ -267,7 +266,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testStepInto() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
       @Override
@@ -381,7 +379,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testRunToLine() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
@@ -644,7 +641,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testWinLongName() throws Exception {
     if (!SystemInfo.isWindows) {
       return; // Only needs to run on windows
@@ -725,7 +721,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testMultiprocessingSubprocess() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess_args.py") {
       @Override
@@ -757,7 +752,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testPyQtQThreadInheritor() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
@@ -799,7 +793,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testPyQtMoveToThread() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
@@ -842,7 +835,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
 
   @Test
-  @Staging
   public void testPyQtQRunnableInheritor() throws Exception {
     if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
       return; //Don't run under Windows
@@ -1066,7 +1058,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSuspendOneThreadPolicy() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_two_threads.py") {
       @Override
@@ -1110,7 +1101,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testResume() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_resume.py") {
@@ -1131,7 +1121,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testResumeAfterStepping() throws Exception {
     // This test case is important for frame evaluation debugging, because we reuse old tracing function for stepping and there were
@@ -1164,7 +1153,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testAddBreakWhileRunning() throws Exception {
     runPythonTest(new PyDebuggerTask("/debug", "test_resume_after_step.py") {

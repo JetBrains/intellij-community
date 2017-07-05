@@ -791,4 +791,27 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
     });
   }
+
+  public void testCompletionWithRootRef() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
+          new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false));
+        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/cycledWithRootRefSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "completionWithRootRef.json", "cycledWithRootRefSchema.json");
+        complete();
+      }
+
+      @Override
+      public void doCheck() {
+        checkCompletion("\"id\"", "\"testProp\"");
+      }
+    });
+  }
 }

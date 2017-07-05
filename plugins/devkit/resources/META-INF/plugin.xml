@@ -42,6 +42,9 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
+
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
+
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 

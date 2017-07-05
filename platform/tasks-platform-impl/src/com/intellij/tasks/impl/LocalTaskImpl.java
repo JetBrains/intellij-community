@@ -269,8 +269,10 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public Icon getIcon() {
     final String customIcon = getCustomIcon();
-    if (customIcon != null) {
-      return IconLoader.getIcon(customIcon, LocalTask.class);
+    if (customIcon != null && myRepository != null) {
+      // Load icon in the classloader of the corresponding repository implementation.
+      // Fallback to the platform icons if the repository wasn't found.
+      return IconLoader.getIcon(customIcon, myRepository.getClass());
     }
     return getIconFromType(myType, isIssue());
   }

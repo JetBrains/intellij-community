@@ -354,6 +354,15 @@ public class PathManager {
   }
 
   /**
+   * Attempts to detect classpath entry which contains given resource.
+   */
+  @Nullable
+  public static String getResourceRoot(@NotNull ClassLoader cl, String resourcePath) {
+    final URL url = cl.getResource(resourcePath);
+    return url != null ? extractRoot(url, resourcePath) : null;
+  }
+
+  /**
    * Attempts to extract classpath entry part from passed URL.
    */
   @Nullable
@@ -375,8 +384,8 @@ public class PathManager {
     }
     else if (URLUtil.JAR_PROTOCOL.equals(protocol)) {
       Pair<String, String> paths = URLUtil.splitJarUrl(resourceURL.getFile());
-      if (paths != null) {
-        resultPath = paths.first;
+      if (paths != null && paths.first != null) {
+        resultPath = FileUtil.toSystemDependentName(paths.first);
       }
     }
 

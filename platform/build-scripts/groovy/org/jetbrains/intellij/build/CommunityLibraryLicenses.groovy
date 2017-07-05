@@ -409,6 +409,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("CoverageReport"),
     jetbrainsLibrary("intellij-markdown.jar"),
     jetbrainsLibrary("JPS"),
+    jetbrainsLibrary("precompiled_jshell-frontend"),
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),

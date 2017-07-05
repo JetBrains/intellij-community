@@ -19,10 +19,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
@@ -149,6 +153,15 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @Override
   public PsiElement getNavigationElement() {
     return getNameIdentifier();
+  }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    return CachedValuesManager.getCachedValue(this, () -> {
+      JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
+      PsiJavaModule result = helper != null ? helper.getOriginalModule(this) : this;
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
   }
 
   @Override

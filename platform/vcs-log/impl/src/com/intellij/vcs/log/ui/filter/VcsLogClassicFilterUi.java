@@ -184,6 +184,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     return Pair.create(textFilter, hashFilter);
   }
 
+  /**
+   * Only VcsLogBranchFilter, VcsLogStructureFilter and null (which means resetting all filters) are currently supported.
+   */
   @Override
   public void setFilter(@Nullable VcsLogFilter filter) {
     ApplicationManager.getApplication().assertIsDispatchThread();

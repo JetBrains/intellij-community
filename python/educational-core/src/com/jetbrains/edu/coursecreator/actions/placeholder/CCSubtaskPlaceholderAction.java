@@ -21,7 +21,7 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
   }
 
   @Override
-  protected void performAnswerPlaceholderAction(@NotNull CCState state) {
+  public void performAnswerPlaceholderAction(@NotNull CCState state) {
     Editor editor = state.getEditor();
     final int offset = editor.getCaretModel().getOffset();
     TaskFile taskFile = state.getTaskFile();

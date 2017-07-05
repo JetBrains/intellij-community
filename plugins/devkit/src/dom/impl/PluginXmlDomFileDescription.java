@@ -43,6 +43,6 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
 
   @Override
   public int getStubVersion() {
-    return 7;
+    return 8;
   }
 }

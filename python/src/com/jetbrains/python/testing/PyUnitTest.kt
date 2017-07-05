@@ -44,7 +44,7 @@ class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, env
 
 
 class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
-  PyAbstractTestConfiguration(project, factory, runBareFunctions = false) { // Bare functions not supported in unittest: classes only
+  PyAbstractTestConfiguration(project, factory, PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME) { // Bare functions not supported in unittest: classes only
   @ConfigField
   var pattern: String? = null
 

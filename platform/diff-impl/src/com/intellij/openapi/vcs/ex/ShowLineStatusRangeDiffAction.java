@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,8 +60,10 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
     Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
 
     DiffContent vcsContent = createDiffContent(myLineStatusTracker.getVcsDocument(),
+                                               myLineStatusTracker.getVirtualFile(),
                                                myLineStatusTracker.getVcsTextRange(range));
     DiffContent currentContent = createDiffContent(myLineStatusTracker.getDocument(),
+                                                   myLineStatusTracker.getVirtualFile(),
                                                    myLineStatusTracker.getCurrentTextRange(range));
 
     return new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
@@ -71,9 +74,9 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   }
 
   @NotNull
-  private DiffContent createDiffContent(@NotNull Document document, @NotNull TextRange textRange) {
+  private DiffContent createDiffContent(@NotNull Document document, @Nullable VirtualFile highlightFile, @NotNull TextRange textRange) {
     final Project project = myLineStatusTracker.getProject();
-    DocumentContent content = DiffContentFactory.getInstance().create(project, document);
+    DocumentContent content = DiffContentFactory.getInstance().create(project, document, highlightFile);
     return DiffContentFactory.getInstance().createFragment(project, content, textRange);
   }
 

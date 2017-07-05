@@ -28,7 +28,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.*;
 import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -38,9 +40,9 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RootVisitor;
-import com.jetbrains.python.psi.resolve.RootVisitorHost;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
@@ -105,7 +107,8 @@ public class PyDocumentationBuilder {
     }
     else if (elementDefinition != null && outerElement instanceof PyReferenceExpression) {
       myBody.addItem(combUp("\nInferred type: "));
-      PythonDocumentationProvider.describeTypeWithLinks(context.getType((PyReferenceExpression)outerElement), context, outerElement, myBody);
+      PythonDocumentationProvider
+        .describeTypeWithLinks(context.getType((PyReferenceExpression)outerElement), context, outerElement, myBody);
     }
 
     if (elementDefinition != null) {
@@ -292,7 +295,7 @@ public class PyDocumentationBuilder {
         }
       }
       myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, TagItalic, BR, LCombUp))
-            .add(PythonDocumentationProvider.describeFunction(pyFunction, TagBold, LCombUp));
+        .add(PythonDocumentationProvider.describeFunction(pyFunction, TagBold, LCombUp));
       if (docStringExpression == null) {
         addInheritedDocString(pyFunction, pyClass);
       }
@@ -381,7 +384,8 @@ public class PyDocumentationBuilder {
         if (inheritedDoc.length() > 1) {
           myEpilog.addItem(BR).addItem(BR);
           final String ancestorName = ancestor.getName();
-          final String marker = (pyClass == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
+          final String marker =
+            (pyClass == ancestor) ? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
           final String ancestorLink =
             $().addWith(new LinkWrapper(marker + ancestorName), $(ancestorName)).toString();
           if (isFromClass) {
@@ -470,7 +474,7 @@ public class PyDocumentationBuilder {
    * Adds type and description representation from function docstring
    *
    * @param parameter parameter of a function
-   * @param context type evaluation context
+   * @param context   type evaluation context
    * @return true if type from docstring was added
    */
   private boolean addTypeAndDescriptionFromDocstring(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
@@ -573,16 +577,14 @@ public class PyDocumentationBuilder {
       myProlog.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
     }
     else {
-      final String path = file.getPath();
-      final RootFinder finder = new RootFinder(path);
-      RootVisitorHost.visitRoots(followed, finder);
-      final String rootPath = finder.getResult();
-      if (rootPath != null) {
-        final String afterPart = path.substring(rootPath.length());
-        myProlog.addWith(TagSmall, $(rootPath).addWith(TagBold, $(afterPart)));
+      QualifiedName name = QualifiedNameFinder.findShortestImportableQName(followed);
+      if (name != null) {
+        myProlog.add($("Module "))
+          .addWith(TagBold, $(ObjectUtils.chooseNotNull(QualifiedNameFinder.canonizeQualifiedName(name, null), name).toString()));
       }
       else {
-        myProlog.addWith(TagSmall, $(path));
+        String path = file.getPath();
+        myProlog.addWith(TagSpan.withAttribute("path", path), $("").addWith(TagSmall, $(path)));
       }
     }
   }

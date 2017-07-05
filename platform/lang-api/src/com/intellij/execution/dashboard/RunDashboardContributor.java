@@ -16,12 +16,15 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * In order to show run configurations of the specific configuration type in Run Dashboard tool window,
@@ -34,20 +37,21 @@ public abstract class RunDashboardContributor {
   public static final ExtensionPointName<RunDashboardContributor> EP_NAME =
     ExtensionPointName.create("com.intellij.runDashboardContributor");
 
-  private final ConfigurationType myType;
+  @NotNull private final ConfigurationType myType;
 
-  protected RunDashboardContributor(ConfigurationType type) {
+  protected RunDashboardContributor(@NotNull ConfigurationType type) {
     myType = type;
   }
 
   /**
    * @return configuration type for which contributor is registered.
    */
+  @NotNull
   public ConfigurationType getType() {
     return myType;
   }
 
-  public void updatePresentation(PresentationData presentation, DashboardNode node) {
+  public void updatePresentation(@NotNull PresentationData presentation, @NotNull DashboardNode node) {
   }
 
   /**
@@ -56,7 +60,8 @@ public abstract class RunDashboardContributor {
    * @param node dashboard node
    * @return node's status. Returned status is used for grouping nodes by status.
    */
-  public DashboardRunConfigurationStatus getStatus(DashboardRunConfigurationNode node) {
+  @NotNull
+  public DashboardRunConfigurationStatus getStatus(@NotNull DashboardRunConfigurationNode node) {
     RunContentDescriptor descriptor = node.getDescriptor();
     if (descriptor == null) {
       return DashboardRunConfigurationStatus.STOPPED;
@@ -76,22 +81,25 @@ public abstract class RunDashboardContributor {
     return DashboardRunConfigurationStatus.FAILED;
   }
 
-  public static RunDashboardContributor getContributor(ConfigurationType type) {
+  public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
+    return true;
+  }
+
+  public boolean handleDoubleClick(@NotNull RunConfiguration runConfiguration) {
+    return false;
+  }
+
+  @Nullable
+  public static RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
     if (!Registry.is("ide.run.dashboard")) {
       return null;
     }
 
-    if (type != null) {
-      for (RunDashboardContributor contributor : EP_NAME.getExtensions()) {
-        if (type.equals(contributor.getType())) {
-          return contributor;
-        }
+    for (RunDashboardContributor contributor : EP_NAME.getExtensions()) {
+      if (type.equals(contributor.getType())) {
+        return contributor;
       }
     }
     return null;
-  }
-
-  public static boolean isShowInDashboard(ConfigurationType type) {
-    return getContributor(type) != null;
   }
 }

@@ -38,6 +38,7 @@ target('update-from-sources': 'Update locally installed distribution from compil
   def options = new BuildOptions()
   options.useCompiledClassesFromProjectOutput = true
   options.buildStepsToSkip << BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP
+  options.buildStepsToSkip << BuildOptions.PROVIDED_MODULES_LIST_STEP
   options.buildStepsToSkip << BuildOptions.SOURCES_ARCHIVE_STEP
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home

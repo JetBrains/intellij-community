@@ -1116,11 +1116,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  public void runEdtSafeAction(@NotNull Runnable runnable) {
-    runnable.run();
-  }
-
-  @Override
   public void assertIsDispatchThread(@Nullable final JComponent component) {
     if (component == null) return;
 

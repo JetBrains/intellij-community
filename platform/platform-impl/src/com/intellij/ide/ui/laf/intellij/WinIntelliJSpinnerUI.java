@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +37,9 @@ import java.awt.geom.Rectangle2D;
 public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
   static final String HOVER_PROPERTY = "JSpinner.hover";
 
-  static final int BUTTON_WIDTH = 20;
-  static final int SPINNER_HEIGHT = 22;
-  static final int EDITOR_OFFSET = 3;
+  static final int BUTTON_WIDTH = 21;
+  static final int SPINNER_HEIGHT = 24;
+  static final int EDITOR_OFFSET = 5;
 
   private MouseListener editorMouseListener;
 
@@ -58,13 +58,18 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
     editorMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
-        spinner.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
-        spinner.repaint();
+        setHover(Boolean.TRUE);
       }
 
       @Override public void mouseExited(MouseEvent e) {
-        spinner.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
-        spinner.repaint();
+        setHover(Boolean.FALSE);
+      }
+
+      private void setHover(Boolean value) {
+        if (spinner.isEnabled()) {
+          spinner.putClientProperty(HOVER_PROPERTY, value);
+          spinner.repaint();
+        }
       }
     };
     spinner.addMouseListener(editorMouseListener);
@@ -88,10 +93,25 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
   @Override public void paint(Graphics g, JComponent c) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      Component parent = c.getParent();
-      g2.setColor(c.isEnabled() ? UIManager.getColor("TextField.background") :
-                  parent != null ? parent.getBackground() : UIManager.getColor("TextField.inactiveBackground"));
-      g2.fillRect(0, 0, c.getWidth(), c.getHeight());
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      Rectangle r = new Rectangle(c.getWidth(), c.getHeight());
+      Container parent = c.getParent();
+      if (c.isOpaque() && parent != null) {
+        g2.setColor(parent.getBackground());
+        g2.fill(r);
+      }
+
+      JBInsets.removeFrom(r, JBUI.insets(2, 2, 2, BUTTON_WIDTH));
+      g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
+
+      if (!c.isEnabled()) {
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+      }
+
+      g2.fill(r);
+
     } finally {
       g2.dispose();
     }
@@ -109,20 +129,20 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
           // set clip
           Area clip = new Area(g2.getClip());
-          if ((DarculaSpinnerBorder.isFocused(spinner) || spinner.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) &&
-              !bm.isPressed()){
+          if (!bm.isRollover() && !bm.isPressed()){
             clip.subtract(new Area(new Rectangle2D.Double(0, 0, bw, getHeight())));
           }
 
           if (getDirection() == SwingConstants.NORTH && prevButton.getModel().isRollover()) {
-            clip.subtract(new Area(new Rectangle2D.Double(0, getHeight() - bw, getWidth(), bw)));
+            clip.subtract(new Area(new Rectangle(0, getHeight() - bw, getWidth() - bw, bw)));
           } else if (getDirection() == SwingConstants.SOUTH && nextButton.getModel().isRollover()) {
-            clip.subtract(new Area(new Rectangle2D.Double(0, 0, getWidth(), bw)));
+            clip.subtract(new Area(new Rectangle(0, 0, getWidth() - bw, bw)));
           }
           g2.setClip(clip);
 
           // paint background
-          Rectangle2D outerRect = new Rectangle2D.Double(0, 0, getWidth(), getHeight());
+          Rectangle outerRect = new Rectangle(0, getDirection() == SwingConstants.NORTH ? bw : 0,
+                                              getWidth() - bw, getHeight() - bw);
           if (spinner.isEnabled()) {
             if (bm.isPressed()) {
               g2.setColor(UIManager.getColor("Button.intellij.native.pressedBackgroundColor"));
@@ -157,7 +177,10 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
           Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
           border.append(outerRect, false);
-          border.append(new Rectangle2D.Double(bw, bw, getWidth() - bw*2, getHeight() - bw*2), false);
+
+          Rectangle innerRect = new Rectangle(outerRect);
+          JBInsets.removeFrom(innerRect, JBUI.insets(1));
+          border.append(innerRect, false);
 
           g2.fill(border);
         } finally {
@@ -166,7 +189,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
       }
 
       @Override public Dimension getPreferredSize() {
-        return new JBDimension(BUTTON_WIDTH, (getDirection() == SwingConstants.NORTH) ? 12 : 11);
+        return new JBDimension(BUTTON_WIDTH, (getDirection() == SwingConstants.NORTH) ? 13 : 12);
       }
 
       @Override public Dimension getMaximumSize() {
@@ -179,13 +202,14 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     };
 
     button.setName(name);
-    button.setBorder(new EmptyBorder(1, 1, 1, 1));
     button.setRolloverEnabled(true);
     button.setOpaque(false);
     if (direction == SwingConstants.NORTH) {
       installNextButtonListeners(button);
+      button.setBorder(new EmptyBorder(2, 1, 1, 2));
     } else {
       installPreviousButtonListeners(button);
+      button.setBorder(new EmptyBorder(1, 1, 2, 2));
     }
     return button;
   }
@@ -220,23 +244,37 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
         Rectangle bounds = parent.getBounds();
 
         Dimension nextButtonSize = nextButton.getPreferredSize();
+        Dimension prevButtonSize = prevButton.getPreferredSize();
+
+        nextButtonSize.height = bounds.height * nextButtonSize.height / (nextButtonSize.height + prevButtonSize.height - JBUI.scale(1));
         nextButton.setBounds(bounds.width - nextButtonSize.width, 0,
                              nextButtonSize.width, nextButtonSize.height);
 
-        Dimension prevButtonSize = prevButton.getPreferredSize();
         prevButton.setBounds(bounds.width - prevButtonSize.width, nextButtonSize.height - JBUI.scale(1),
                              prevButtonSize.width, bounds.height - nextButtonSize.height + JBUI.scale(1));
 
         JComponent editor = spinner.getEditor();
         if (editor != null) {
-          layoutEditor(editor);
+          layoutEditor(bounds, editor);
         }
       }
     };
   }
 
-  @Override
-  protected void layoutEditor(@NotNull JComponent editor) {
+  @Override protected JComponent createEditor() {
+    JComponent editor = super.createEditor();
+    editor.setBorder(JBUI.Borders.empty(1, 0));
+    editor.setOpaque(false);
+    return editor;
+  }
+
+  @Override protected void replaceEditor(JComponent oldEditor, JComponent newEditor) {
+    super.replaceEditor(oldEditor, newEditor);
+    newEditor.setBorder(JBUI.Borders.empty(1, 0));
+    newEditor.setOpaque(false);
+  }
+
+  private void layoutEditor(Rectangle pBounds, @NotNull JComponent editor) {
     Rectangle bounds = editor.getBounds();
     Insets i = spinner.getInsets();
 
@@ -244,7 +282,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     editor.setBounds(bounds.x + offset,
                      bounds.y,
                      bounds.width - offset,
-                     JBUI.scale(SPINNER_HEIGHT) - (i.top + i.bottom));
+                     pBounds.height - (i.top + i.bottom));
   }
 
   @Override

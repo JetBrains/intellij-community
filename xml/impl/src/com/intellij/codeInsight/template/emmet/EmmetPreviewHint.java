@@ -105,17 +105,15 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   public void updateText(@NotNull final Producer<String> contentProducer) {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      DocumentUtil.writeInRunUndoTransparentAction(() -> {
-        if (!isDisposed) {
-          final String newText = contentProducer.produce();
-          if (StringUtil.isEmpty(newText)) {
-            hide();
-          }
-          else if (!myEditor.getDocument().getText().equals(newText)) {
-            myEditor.getDocument().setText(newText);
-          }
+      if (!isDisposed) {
+        final String newText = contentProducer.produce();
+        if (StringUtil.isEmpty(newText)) {
+          hide();
         }
-      });
+        else if (!myEditor.getDocument().getText().equals(newText)) {
+          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
+        }
+      }
     }, 100);
   }
 
@@ -179,7 +177,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       @NotNull
       @Override
       public Insets getInsets() {
-        return new Insets(1, 2, 0, 0);
+        return JBUI.insets(1, 2, 0, 0);
       }
     };
     panel.setBackground(previewEditor.getBackgroundColor());

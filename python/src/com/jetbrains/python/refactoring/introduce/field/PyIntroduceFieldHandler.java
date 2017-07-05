@@ -34,6 +34,7 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -88,7 +89,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (clazz != null && PythonUnitTestUtil.isTestCaseClass(clazz, null)) return true;
+      if (clazz != null && PythonUnitTestUtil.isTestClass(clazz, ThreeState.UNSURE, null)) return true;
     }
     return false;
   }

@@ -18,6 +18,7 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryException;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -33,6 +34,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -43,19 +45,20 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.CompilerTester;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.TestDataProvider;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import slowCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
@@ -73,18 +76,28 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return Generator.sampledFrom(allFiles);
   }
 
+  protected Generator<PsiJavaFile> psiJavaFiles() {
+    return javaFiles().map(vf -> (PsiJavaFile)PsiManager.getInstance(myProject).findFile(vf));
+  }
+
   protected static void restrictChangesToDocument(Document document, Runnable r) {
+    watchDocumentChanges(r::run, event -> {
+      Document changed = event.getDocument();
+      if (changed != document) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
+        if (file != null && file.isInLocalFileSystem()) {
+          throw new AssertionError("Unexpected document change: " + changed);
+        }
+      }
+    });
+  }
+
+  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, final Consumer<DocumentEvent> eventHandler) throws E {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-        Document changed = event.getDocument();
-        if (changed != document) {
-          VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
-          if (file != null && file.isInLocalFileSystem()) {
-            throw new AssertionError("Unexpected document change: " + changed);
-          }
-        }
+      public void documentChanged(DocumentEvent event) {
+        eventHandler.accept(event);
       }
     }, disposable);
     try {
@@ -96,24 +109,50 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected void changeAndRevert(Runnable r) {
     Label label = LocalHistory.getInstance().putUserLabel(myProject, "changeAndRevert");
+    boolean failed = false;
     try {
       r.run();
     }
+    catch (Throwable e) {
+      failed = true;
+      throw e;
+    }
     finally {
+      restoreEverything(label, failed);
+    }
+  }
+
+  private void restoreEverything(Label label, boolean failed) {
+    try {
       WriteAction.run(() -> {
-        try {
-          PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-          FileDocumentManager.getInstance().saveAllDocuments();
-          label.revert(myProject, myProject.getBaseDir());
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          assertEmpty(PsiDocumentManager.getInstance(myProject).getUncommittedDocuments());
-          assertEmpty(FileDocumentManager.getInstance().getUnsavedDocuments());
-        }
-        catch (Throwable e) {
-          e.printStackTrace();
-        }
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        new RunAll(
+          () -> PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting(),
+          () -> FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles(),
+          () -> FileDocumentManager.getInstance().saveAllDocuments(),
+          () -> revertVfs(label, documentManager),
+          () -> documentManager.commitAllDocuments(),
+          () -> assertEmpty(documentManager.getUncommittedDocuments()),
+          () -> assertEmpty(FileDocumentManager.getInstance().getUnsavedDocuments())
+        ).run();
       });
     }
+    catch (Throwable e) {
+      if (failed) {
+        LOG.info("Exceptions while restoring state", e);
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private void revertVfs(Label label, PsiDocumentManager documentManager) throws LocalHistoryException {
+    watchDocumentChanges(() -> label.revert(myProject, myProject.getBaseDir()),
+                               __ -> {
+                                 if (documentManager.getUncommittedDocuments().length > 3) {
+                                   documentManager.commitAllDocuments();
+                                 }
+                               });
   }
 
   @Override

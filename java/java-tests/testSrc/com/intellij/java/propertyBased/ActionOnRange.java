@@ -17,6 +17,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 class ActionOnRange {
-  private final RangeMarker myMarker;
+  protected final RangeMarker myMarker;
   private TextRange finalRange;
 
   ActionOnRange(Document document, int start, int end) {
@@ -34,6 +35,10 @@ class ActionOnRange {
   int getStartOffset() {
     TextRange range = getFinalRange();
     return range == null ? -1 : range.getStartOffset();
+  }
+
+  Segment getCurrentRange() {
+    return finalRange == null ? myMarker : finalRange;
   }
 
   @Nullable

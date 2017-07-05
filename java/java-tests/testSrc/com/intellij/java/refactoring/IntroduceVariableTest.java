@@ -567,6 +567,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "IA"));
   }
 
+  public void testChooseTypeExpressionWhenNotDenotable() throws Exception {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo"));
+  }
+
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);
     configureByFile(baseName + ".java");

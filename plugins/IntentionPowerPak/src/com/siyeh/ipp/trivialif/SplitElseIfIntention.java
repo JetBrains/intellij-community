@@ -15,12 +15,10 @@
  */
 package com.siyeh.ipp.trivialif;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiStatement;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +30,9 @@ public class SplitElseIfIntention extends Intention {
     return new SplitElseIfPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(PsiElement element) throws IncorrectOperationException {
     final PsiJavaToken token = (PsiJavaToken)element;
-    final PsiIfStatement parentStatement =
-      (PsiIfStatement)token.getParent();
+    final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();
     if (parentStatement == null) {
       return;
     }
@@ -44,7 +40,10 @@ public class SplitElseIfIntention extends Intention {
     if (elseBranch == null) {
       return;
     }
-    final String newStatement = '{' + elseBranch.getText() + '}';
-    PsiReplacementUtil.replaceStatement(elseBranch, newStatement);
+    Project project = element.getProject();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{}", elseBranch);
+    blockStatement.getCodeBlock().add(elseBranch);
+    CodeStyleManager.getInstance(project).reformat(elseBranch.replace(blockStatement));
   }
 }

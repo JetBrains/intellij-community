@@ -38,7 +38,7 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface TestInfo {}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public @interface MethodSource {String[] names();}");
+                        "public @interface MethodSource {String[] value();}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface EnumSource { Class<? extends Enum<?>> value();}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +

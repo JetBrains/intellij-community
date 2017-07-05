@@ -26,13 +26,11 @@ import java.util.List;
 /**
  * plugin.dtd:component interface.
  */
-@Stubbed
 public interface Component extends DomElement {
 
   @NotNull
   @Required
   @Convert(PluginPsiClassConverter.class)
-  @Stubbed
   GenericDomValue<PsiClass> getImplementationClass();
 
 

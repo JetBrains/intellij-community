@@ -157,7 +157,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
       }
 
       private fun checkMethodSource(method: PsiMethod, methodSource: PsiAnnotation) {
-        val annotationMemberValue = methodSource.findDeclaredAttributeValue("names")
+        val annotationMemberValue = methodSource.findDeclaredAttributeValue("value")
         processArrayInAnnotationParameter(annotationMemberValue, { attributeValue ->
           for (reference in attributeValue.references) {
             if (reference is MethodSourceReference) {

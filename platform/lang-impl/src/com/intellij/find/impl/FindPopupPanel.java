@@ -39,10 +39,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -63,7 +60,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -358,7 +354,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox")) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return FindSettings.getInstance().isSkipResultsWithOneUsage();
+        return myHelper.isSkipResultsWithOneUsage();
       }
 
       @Override
@@ -375,12 +371,19 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.open.in.new.tab.checkbox")) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return FindSettings.getInstance().isShowResultsInSeparateView();
+        return myHelper.isUseSeparateView();
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myHelper.setUseSeparateView(state);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
+        e.getPresentation().setVisible(myHelper.getModel().isOpenInNewTabVisible());
       }
     });
     tabResultsContextGroup.setPopup(true);
@@ -388,6 +391,12 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     tabSettingsPresentation.setIcon(AllIcons.General.SecondaryGroup);
     myTabResultsButton =
       new ActionButton(tabResultsContextGroup, tabSettingsPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myTabResultsButton.click();
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("alt DOWN"), this);
     myOKButton = new JButton(FindBundle.message("find.popup.find.button"));
     myOkActionListener = new ActionListener() {
       @Override
@@ -534,9 +543,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         if (e.getValueIsAdjusting()) return;
         int index = myResultsPreviewTable.getSelectedRow();
         if (index != -1) {
-          UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
-          myUsagePreviewPanel.updateLayout(usageInfo.isValid() ? Collections.singletonList(usageInfo) : null);
-          VirtualFile file = usageInfo.getVirtualFile();
+          UsageInfo2UsageAdapter adapter = (UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0);
+          myUsagePreviewPanel.updateLayout(adapter.isValid() ? Arrays.asList(adapter.getMergedInfos()) : null);
+          VirtualFile file = adapter.getFile();
           String path = "";
           if (file != null) {
             String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());

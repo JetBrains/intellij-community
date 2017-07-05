@@ -21,6 +21,7 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -169,7 +170,12 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         originalCallSite.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        dialog.createRefactoringProcessor().run();
+        try {
+          dialog.createRefactoringProcessor().run();
+        }
+        finally {
+          Disposer.dispose(dialog.getDisposable());
+        }
       }
       else {
         dialog.show();

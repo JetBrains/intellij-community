@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
@@ -83,6 +84,7 @@ public class InstalledPackagesPanel extends JPanel {
     myPackagesTable.setPreferredScrollableViewportSize(null);
     myPackagesTable.setStriped(true);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
+    new TableSpeedSearch(myPackagesTable);
 
     myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
       @Override
@@ -111,6 +113,7 @@ public class InstalledPackagesPanel extends JPanel {
         .addExtraAction(myUninstallButton)
         .addExtraAction(myUpgradeButton);
 
+    decorator.addExtraActions(getExtraActions());
     add(decorator.createPanel());
     myInstallButton.setEnabled(false);
     myUninstallButton.setEnabled(false);
@@ -143,6 +146,10 @@ public class InstalledPackagesPanel extends JPanel {
         return false;
       }
     }.installOn(myPackagesTable);
+  }
+
+  protected AnActionButton[] getExtraActions() {
+    return new AnActionButton[0];
   }
 
   @NotNull

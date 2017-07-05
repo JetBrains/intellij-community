@@ -19,6 +19,8 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionTargetManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ProgramRunnerUtil;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -28,6 +30,7 @@ import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -65,10 +68,27 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
         return content != null && !RunContentManagerImpl.isTerminated(content);
       });
       update(e, running);
+      e.getPresentation().setEnabled(targetNodes.stream().anyMatch(this::isValid));
     }
     else {
       Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       update(e, content != null && !RunContentManagerImpl.isTerminated(content));
+    }
+  }
+
+  private boolean isValid(DashboardRunConfigurationNode node) {
+    try {
+      node.getConfigurationSettings().checkSettings(getExecutor());
+      return true;
+    }
+    catch (IndexNotReadyException ex) {
+      return true;
+    }
+    catch (RuntimeConfigurationError ex) {
+      return false;
+    }
+    catch (RuntimeConfigurationException ex) {
+      return true;
     }
   }
 
@@ -101,6 +121,8 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
 
   @Override
   protected void doActionPerformed(DashboardRunConfigurationNode node) {
+    if (!isValid(node)) return;
+
     RunContentDescriptor descriptor = node.getDescriptor();
     ExecutionManager.getInstance(node.getProject()).restartRunProfile(node.getProject(),
                                                                       getExecutor(),

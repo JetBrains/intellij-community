@@ -546,6 +546,8 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.plugins.groovy.editor.GroovyTypeDeclarationProvider" order="first"/>
 
+    <lang.sliceProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.slicer.GroovySliceProvider"/>
+
     <!--Run/debug-->
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>

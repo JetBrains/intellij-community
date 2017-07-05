@@ -66,14 +66,15 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
         if (shortcut == TemplateSettings.DEFAULT_CHAR) {
           shortcut = TemplateSettings.getInstance().getDefaultShortcutChar();
         }
-        if (shortcut != TemplateSettings.CUSTOM_CHAR) {
-          presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
-        } else {
+        if (shortcut == TemplateSettings.CUSTOM_CHAR) {
           String shortcutText =
             KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM));
           if (StringUtil.isNotEmpty(shortcutText)) {
             presentation.setTypeText("  [" + shortcutText + "] ");
           }
+        }
+        else if (shortcut != TemplateSettings.NONE_CHAR) {
+          presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcut) + "] ");
         }
       }
       if (StringUtil.isNotEmpty(myDescription)) {

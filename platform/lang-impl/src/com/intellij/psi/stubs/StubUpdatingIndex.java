@@ -120,6 +120,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   @Override
   public DataExternalizer<Collection<Integer>> createExternalizer() {
     return new DataExternalizer<Collection<Integer>>() {
+      private volatile boolean myEnsuredStubElementTypesLoaded;
+
       @Override
       public void save(@NotNull DataOutput out, Collection<Integer> value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.iterator().next());
@@ -127,7 +129,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         DataInputOutputUtil.writeINT(out, stubIndicesValueMap != null ? stubIndicesValueMap.size() : 0);
 
         if (stubIndicesValueMap != null && stubIndicesValueMap.size() > 0) {
-          StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+          StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
 
           for(StubIndexKey stubIndexKey:stubIndicesValueMap.keySet()) {
             DataInputOutputUtil.writeINT(out, stubIndexKey.getUniqueId());
@@ -140,17 +142,21 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
       @Override
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+        if (!myEnsuredStubElementTypesLoaded) {
+          SerializationManager.getInstance().initSerializers();
+          myEnsuredStubElementTypesLoaded = true;
+        }
         int fileId = DataInputOutputUtil.readINT(in);
         StubUpdatingIndexKeys integers = new StubUpdatingIndexKeys(ContainerUtil.set(fileId));
 
         int stubIndicesValueMapSize = DataInputOutputUtil.readINT(in);
         if (stubIndicesValueMapSize > 0) {
           THashMap<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = new THashMap<>(stubIndicesValueMapSize);
-          StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+          StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
 
           for(int i = 0; i < stubIndicesValueMapSize; ++i) {
             int stubIndexId = DataInputOutputUtil.readINT(in);
-            ID<Object, ?> indexKey = (ID<Object, ?>)StubIndexKey.findById(stubIndexId);
+            ID<Object, ?> indexKey = (ID<Object, ?>)ID.findById(stubIndexId);
             if (indexKey instanceof StubIndexKey) { // indexKey can be ID in case of removed index
               StubIndexKey<Object, ?> stubIndexKey = (StubIndexKey<Object, ?>)indexKey;
               stubIndicesValueMap.put(stubIndexKey, stubIndex.deserializeIndexValue(in, stubIndexKey));

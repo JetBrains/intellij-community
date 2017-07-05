@@ -33,7 +33,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
   }
 
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(getElementPattern("org.junit.jupiter.params.provider.MethodSource", "names"), new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(getElementPattern("org.junit.jupiter.params.provider.MethodSource", "value"), new PsiReferenceProvider() {
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new MethodSourceReference[]{new MethodSourceReference((PsiLiteral)element)};

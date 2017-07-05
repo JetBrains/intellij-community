@@ -15,12 +15,27 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 
 //to be deleted in 2018
 @Deprecated
 public class TestClassConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
   public TestClassConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
+  }
+
+  @Override
+  public boolean isConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context) {
+    return super.isConfigurationFromContext(configuration, context);
+  }
+
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    return super.setupConfigurationFromContext(configuration, context, sourceElement);
   }
 }
