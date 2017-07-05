@@ -49,8 +49,11 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
   public void serializeMe(UsageInfo info, StringBuilder os) throws IOException {
     //final SmartPsiElementPointer<?> pointer = info.getSmartPointer();
     final GenericElementSignatureProvider provider = new GenericElementSignatureProvider();
-    final String signature = provider.getSignature(info.getElement());
-    append(os, info.getFile().getVirtualFile().getPath());
+    PsiElement element = info.getElement();
+    VirtualFile virtualFile = info.getVirtualFile();
+    if (element == null || virtualFile == null) throw new IOException(info + " is invalid");
+    final String signature = provider.getSignature(element);
+    append(os, virtualFile.getPath());
     os.append(separator);
     append(os, signature);
     os.append(separator);
