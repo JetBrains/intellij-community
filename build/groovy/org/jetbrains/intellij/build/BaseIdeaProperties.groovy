@@ -45,7 +45,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "debugger-impl",
     "dom-impl",
     "execution-impl",
-    "jshell-protocol",
     "external-system-impl",
     "idea-ui",
     "java-analysis-impl",
@@ -80,6 +79,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
     productLayout.additionalPlatformJars.put("aether-dependency-resolver.jar", "aether-dependency-resolver")
+    productLayout.additionalPlatformJars.put("jshell-protocol.jar", "jshell-protocol")
     productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
     productLayout.additionalPlatformJars.
