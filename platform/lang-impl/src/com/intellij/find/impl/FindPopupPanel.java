@@ -39,11 +39,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1173,32 +1175,22 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     }
   }
 
-  private class MyShowFilterPopupAction extends AnAction {
-
-    private final DefaultActionGroup mySwitchContextGroup;
+  private class MyShowFilterPopupAction extends DefaultActionGroup {
 
     public MyShowFilterPopupAction() {
-      super(FindBundle.message("find.popup.show.filter.popup"), null, AllIcons.General.Filter);
+      super(new MySwitchContextToggleAction(FindModel.SearchContext.ANY),
+            new MySwitchContextToggleAction(FindModel.SearchContext.IN_COMMENTS),
+            new MySwitchContextToggleAction(FindModel.SearchContext.IN_STRING_LITERALS),
+            new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS),
+            new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_STRING_LITERALS),
+            new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS)
+            );
+      setPopup(true);
+      getTemplatePresentation().setText(FindBundle.message("find.popup.show.filter.popup"));
+      getTemplatePresentation().setIcon(AllIcons.General.Filter);
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac
                                                                                  ? InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK
                                                                                  : InputEvent.ALT_DOWN_MASK)));
-      mySwitchContextGroup = new DefaultActionGroup();
-      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.ANY));
-      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_COMMENTS));
-      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_STRING_LITERALS));
-      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS));
-      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_STRING_LITERALS));
-      mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS));
-      mySwitchContextGroup.setPopup(true);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
-
-      ListPopup listPopup =
-        JBPopupFactory.getInstance().createActionGroupPopup(null, mySwitchContextGroup, e.getDataContext(), false, null, 10);
-      listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
 

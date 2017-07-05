@@ -115,6 +115,8 @@ public interface ActionToolbar {
 
   void setSecondaryActionsTooltip(String secondaryActionsTooltip);
 
+  void setSecondaryActionsIcon(Icon icon);
+
   @NotNull
   List<AnAction> getActions();
 
