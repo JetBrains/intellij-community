@@ -947,8 +947,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     RefactoringUtil.fixJavadocsForParams(method, newParameters, pair -> {
       final PsiParameter parameter = pair.first;
       final String oldParamName = pair.second;
-      final int idx = ArrayUtil.find(oldParameterNames, oldParamName);
-      return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
+      final int oldIdx = ArrayUtil.find(oldParameterNames, oldParamName);
+      int newIndex = method.getParameterList().getParameterIndex(parameter);
+      return oldIdx >= 0 && newIndex >= 0 && changeInfo.getNewParameters()[newIndex].getOldIndex() == oldIdx;
     }, paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0);
   }
 
