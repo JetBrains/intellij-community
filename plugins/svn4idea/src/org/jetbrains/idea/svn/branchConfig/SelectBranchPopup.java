@@ -119,7 +119,6 @@ public class SelectBranchPopup {
     @NotNull private final Project myProject;
     @NotNull private final VirtualFile myVcsRoot;
     @NotNull private final SvnBranchConfigurationNew myConfiguration;
-    private final boolean myTopLevel;
     @NotNull private final BranchSelectedCallback myCallback;
     @Nullable private final Component myComponent;
     @NotNull private final String myTrunkString;
@@ -137,7 +136,6 @@ public class SelectBranchPopup {
       myVcsRoot = vcsRoot;
       myConfiguration = configuration;
       myTrunkString = getTrunkString(configuration);
-      myTopLevel = true;
       myCallback = callback;
       myComponent = component;
       init(title, items, null);
@@ -155,7 +153,7 @@ public class SelectBranchPopup {
       if (pos < 0) {
         return value;
       }
-      if (myTopLevel && (myConfiguration.getTrunkUrl() == null || !value.startsWith(myConfiguration.getTrunkUrl()))) {
+      if (myConfiguration.getTrunkUrl() == null || !value.startsWith(myConfiguration.getTrunkUrl())) {
         return value.substring(pos + 1) + "...";
       }
       return value.substring(pos + 1);
@@ -174,7 +172,7 @@ public class SelectBranchPopup {
       else if (myTrunkString.equals(selectedValue)) {
         return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1));
       }
-      else if (!myTopLevel || selectedValue.equals(myConfiguration.getTrunkUrl())) {
+      else if (selectedValue.equals(myConfiguration.getTrunkUrl())) {
         return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1));
       }
       else {
