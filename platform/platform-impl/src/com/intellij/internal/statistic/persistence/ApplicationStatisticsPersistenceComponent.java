@@ -186,7 +186,10 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     JobScheduler.getScheduler().scheduleWithFixedDelay(ApplicationStatisticsPersistenceComponent::persistOpenedProjects, 1, 1, TimeUnit.DAYS);
   }
 
-  private static void persistOpenedProjects() {
+  /**
+   * Collects statistics from all opened projects and persists it
+   */
+  public static void persistOpenedProjects() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       UsagesCollector.doPersistProjectUsages(project);
     }
