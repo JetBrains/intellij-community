@@ -603,6 +603,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-23540
+  public void testMemberFromMetaclassWhenSuperclassMetaclassIsABCMeta() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
   // PY-23623
   public void testCachedOperatorInRecursivelyTypeInference() {
     doTest();
