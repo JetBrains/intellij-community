@@ -132,12 +132,12 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations = new ArrayList<>();
     }
 
-    protected abstract void map(@NotNull Set<Pair<VirtualFile, String>> control);
+    protected abstract void map(@NotNull Set<JsonObject> control);
     protected abstract void reduce();
 
-    public void doMap(@NotNull final Set<Pair<VirtualFile, String>> control) {
-      map(control);
-      myChildOperations.forEach(operation -> operation.doMap(control));
+    public void doMap(@NotNull final Set<JsonObject> visited) {
+      map(visited);
+      myChildOperations.forEach(operation -> operation.doMap(visited));
     }
 
     public void doReduce() {
@@ -189,16 +189,16 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
+    public void map(@NotNull final Set<JsonObject> visited) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
-        // this definition was already expanded; do not cycle
-        if (!control.add(Pair.create(current.getSchemaFile(), current.getRef()))) break;
         final JsonSchemaObject definition = getSchemaFromDefinition(current);
         if (definition == null) {
           myState = SchemaResolveState.brokenDefinition;
           return;
         }
+        // this definition was already expanded; do not cycle
+        if (!visited.add(definition.getJsonObject())) break;
         current = merge(current, definition, current);
       }
       final Operation expandOperation = createExpandOperation(current);
@@ -223,7 +223,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
+    public void map(@NotNull final Set<JsonObject> control) {
       assert mySourceNode.getAllOf() != null;
       myChildOperations.addAll(mySourceNode.getAllOf().stream()
         .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
@@ -267,7 +267,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
+    public void map(@NotNull final Set<JsonObject> visited) {
       assert mySourceNode.getOneOf() != null;
       myChildOperations.addAll(mySourceNode.getOneOf().stream()
                                  .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
@@ -293,7 +293,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @Override
-    public void map(@NotNull final Set<Pair<VirtualFile, String>> control) {
+    public void map(@NotNull final Set<JsonObject> visited) {
       assert mySourceNode.getAnyOf() != null;
       myChildOperations.addAll(mySourceNode.getAnyOf().stream()
                                  .map(ProcessDefinitionsOperation::new).collect(Collectors.toList()));
