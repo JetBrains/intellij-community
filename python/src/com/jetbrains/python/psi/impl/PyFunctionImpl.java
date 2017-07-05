@@ -20,7 +20,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -445,13 +444,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   @Override
-  public PyType getReturnTypeFromDocString() {
-    final String typeName = extractReturnType();
-    return typeName != null ? PyTypeParser.getTypeByName(this, typeName) : null;
-  }
-
-  @Nullable
-  @Override
   public String getDeprecationMessage() {
     PyFunctionStub stub = getStub();
     if (stub != null) {
@@ -524,30 +516,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
     return false;
-  }
-
-  @Nullable
-  private String extractReturnType() {
-    final String ARROW = "->";
-    final StructuredDocString structuredDocString = getStructuredDocString();
-    if (structuredDocString != null) {
-      return structuredDocString.getReturnType();
-    }
-    final String docString = getDocStringValue();
-    if (docString != null && docString.contains(ARROW)) {
-      final List<String> lines = StringUtil.split(docString, "\n");
-      while (lines.size() > 0 && lines.get(0).trim().length() == 0) {
-        lines.remove(0);
-      }
-      if (lines.size() > 1 && lines.get(1).trim().length() == 0) {
-        String firstLine = lines.get(0);
-        int pos = firstLine.lastIndexOf(ARROW);
-        if (pos >= 0) {
-          return firstLine.substring(pos + 2).trim();
-        }
-      }
-    }
-    return null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
