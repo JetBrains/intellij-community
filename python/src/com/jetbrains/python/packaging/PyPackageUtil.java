@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -290,18 +291,19 @@ public class PyPackageUtil {
    */
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
+
+    final Application app = ApplicationManager.getApplication();
+    assert ! (PythonSdkType.isRemote(sdk) && app.isDispatchThread()): "Never run this method under AWT for remote SDK";
+    assert ! (app.isWriteAccessAllowed()): "Never run this method under write action";
+
+
     final Ref<List<PyPackage>> packagesRef = Ref.create();
-    final boolean invokedUnderWriteAction = ApplicationManager.getApplication().isWriteAccessAllowed();
     @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
       try {
         final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-        if (PySdkUtil.isRemote(sdk) && invokedUnderWriteAction && manager.getPackages() == null) {
-          LOG.warn("Requesting the installed packages of a remote interpreter using PyPackageUtil#refreshAndGetPackagesModally() " +
-                   "inside a write action is going to cause network operations on EDT");
-        }
         packagesRef.set(manager.refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
