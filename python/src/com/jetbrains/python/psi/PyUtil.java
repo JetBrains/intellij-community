@@ -1820,6 +1820,31 @@ public class PyUtil {
   }
 
   /**
+   * The main idea of this method is to figure that given warning is DeprecationWarning/PendingDeprecationWarning
+   * or subclass.
+   *
+   * We assume that TypeEvalContext is not null to extract exact runtime type.
+   * If not - fallback to checking reference name since deprecation message is needed at time when there are no context.
+   *
+   * @return true if warning category is deprecation, false otherwise.
+   */
+  public static boolean isDeprecationWarning(@NotNull PyReferenceExpression warningReference, @Nullable TypeEvalContext typeEvalContext) {
+    if (typeEvalContext != null) {
+      final PyType warningType = typeEvalContext.getType(warningReference);
+      if (warningType instanceof PyClassType) {
+        final PyClass pyWarningClass = ((PyClassType)warningType).getPyClass();
+
+        return pyWarningClass.isSubclass(PyNames.DEPRECATION_WARNING, typeEvalContext) ||
+               pyWarningClass.isSubclass(PyNames.PENDING_DEPRECATION_WARNING, typeEvalContext);
+      }
+    }
+
+    final String warningReferenceName = warningReference.getReferencedName();
+    return PyNames.DEPRECATION_WARNING.equals(warningReferenceName) ||
+           PyNames.PENDING_DEPRECATION_WARNING.equals(warningReferenceName);
+  }
+
+  /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */
   public static final class StringNodeInfo {

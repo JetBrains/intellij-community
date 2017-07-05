@@ -100,4 +100,19 @@ public class PyDeprecationTest extends PyTestCase {
     assertNotParsed(file);
     
   }
+
+  // PY-21915
+  public void testWarningSubclass() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/warningSubclass.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-21915
+  public void testWarningAlias() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/warningAlias.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
 }

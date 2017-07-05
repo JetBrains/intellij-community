@@ -70,10 +70,10 @@ public class PyDeprecationInspection extends PyInspection {
       }
       String deprecationMessage = null;
       if (resolveResult instanceof PyFunction) {
-        deprecationMessage = ((PyFunction) resolveResult).getDeprecationMessage();
+        deprecationMessage = ((PyFunction) resolveResult).getDeprecationMessage(myTypeEvalContext);
       }
       else if (resolveResult instanceof PyFile) {
-        deprecationMessage = ((PyFile)resolveResult).getDeprecationMessage();
+        deprecationMessage = ((PyFile)resolveResult).getDeprecationMessage(myTypeEvalContext);
       }
       if (deprecationMessage != null) {
         ASTNode nameElement = node.getNameElement();

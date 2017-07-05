@@ -22,10 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -53,6 +50,7 @@ import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -452,18 +450,29 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   @Override
-  public String getDeprecationMessage() {
+  public String getDeprecationMessage(TypeEvalContext typeEvalContext) {
     PyFunctionStub stub = getStub();
     if (stub != null) {
       return stub.getDeprecationMessage();
     }
-    return extractDeprecationMessage();
+    return extractDeprecationMessage(typeEvalContext);
+  }
+
+  @Nullable
+  @Override
+  public String getDeprecationMessage() {
+    return getDeprecationMessage(null);
   }
 
   @Nullable
   public String extractDeprecationMessage() {
+    return extractDeprecationMessage(null);
+  }
+
+  @Nullable
+  public String extractDeprecationMessage(TypeEvalContext typeEvalContext) {
     PyStatementList statementList = getStatementList();
-    return extractDeprecationMessage(Arrays.asList(statementList.getStatements()));
+    return extractDeprecationMessage(Arrays.asList(statementList.getStatements()), typeEvalContext);
   }
 
   @Override
@@ -478,16 +487,15 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  public static String extractDeprecationMessage(List<PyStatement> statements) {
+  public static String extractDeprecationMessage(List<PyStatement> statements, TypeEvalContext typeEvalContext) {
     for (PyStatement statement : statements) {
       if (statement instanceof PyExpressionStatement) {
         PyExpressionStatement expressionStatement = (PyExpressionStatement)statement;
         if (expressionStatement.getExpression() instanceof PyCallExpression) {
           PyCallExpression callExpression = (PyCallExpression)expressionStatement.getExpression();
           if (callExpression.isCalleeText(PyNames.WARN)) {
-            PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
-            if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
-                                         PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
+            PyReferenceExpression warningReference = callExpression.getArgument(1, PyReferenceExpression.class);
+            if (warningReference != null && PyUtil.isDeprecationWarning(warningReference, typeEvalContext)) {
               return PyPsiUtils.strValue(callExpression.getArguments()[0]);
             }
           }

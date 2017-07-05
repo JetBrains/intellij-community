@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +114,11 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    *
    * @return the deprecation message or null if the function is not deprecated.
    */
+  @Nullable
   String getDeprecationMessage();
+
+  @Nullable
+  String getDeprecationMessage(TypeEvalContext typeEvalContext);
 
   /**
    * Returns the sequential list of import statements in the beginning of the file.
