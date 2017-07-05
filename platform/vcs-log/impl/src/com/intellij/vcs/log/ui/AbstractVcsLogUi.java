@@ -22,7 +22,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -172,9 +171,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     jumpTo(commitHash, GraphTableModel::getRowOfCommitByPartOfHash, future);
   }
 
-  private <T> void jumpTo(@NotNull final T commitId,
-                          @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                          @NotNull final SettableFuture<Boolean> future) {
+  protected <T> void jumpTo(@NotNull final T commitId,
+                            @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                            @NotNull final SettableFuture<Boolean> future) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
@@ -191,24 +190,13 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
     }
     else {
-
-      if (getFilters().isEmpty()) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
-      }
-      else {
-        String message = "Commit " + commitId.toString() + " does not exist or does not match active filters";
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING,
-                                                      new NamedRunnable("Reset filters and search again") {
-                                                        @Override
-                                                        public void run() {
-                                                          getFilterUi().setFilter(null);
-                                                          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
-                                                        }
-                                                      });
-      }
-
+      handleCommitNotFound(commitId, rowGetter);
       future.set(false);
     }
+  }
+
+  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
   }
 
   @Override
