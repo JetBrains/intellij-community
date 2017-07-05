@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -49,6 +50,7 @@ import java.util.List;
  * Delegates to the VcsLogManager.
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
+  private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
   public static final String TAB_NAME = "Log";
 
   @NotNull private final Project myProject;
@@ -167,6 +169,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       for (String tabName : logManager.getTabNames()) {
         if (!TAB_NAME.equals(tabName)) { // main tab is closed by the ChangesViewContentManager
           Content content = toolWindow.getContentManager().findContent(tabName);
+          LOG.assertTrue(content != null, "Could not find content for tab " + tabName);
           ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
         }
       }
