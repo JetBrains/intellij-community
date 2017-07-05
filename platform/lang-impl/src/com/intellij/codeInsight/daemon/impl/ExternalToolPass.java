@@ -93,7 +93,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     int externalAnnotatorsInRoots = 0;
     for (Language language : viewProvider.getLanguages()) {
       PsiFile psiRoot = viewProvider.getPsi(language);
-      if (highlightingManager.shouldHighlight(psiRoot)) {
+      if (highlightingManager.shouldInspect(psiRoot)) {
         List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(language, psiRoot);
         if (!annotators.isEmpty()) {
           externalAnnotatorsInRoots += annotators.size();
