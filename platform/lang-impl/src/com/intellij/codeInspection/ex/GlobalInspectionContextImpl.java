@@ -428,7 +428,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (!scope.contains(file.getVirtualFile())) {
           LOG.error(file.getName()+"; scope: "+scope);
         }
-        inspectFile(file, inspectionManager, localTools, globalSimpleTools, map);
+        inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, localTools, globalSimpleTools, map);
       })) {
         throw new ProcessCanceledException();
       }
@@ -497,7 +497,27 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     addProblemsToView(globalSimpleTools);
   }
 
+  private static TextRange getEffectiveRange(SearchScope searchScope, PsiFile file) {
+    if (searchScope instanceof LocalSearchScope) {
+      PsiElement[] scopeFileElements = Arrays.stream(((LocalSearchScope)searchScope).getScope())
+        .filter(e -> e.getContainingFile() == file)
+        .toArray(PsiElement[]::new);
+      if (scopeFileElements.length > 0) {
+        int start = -1;
+        int end = -1;
+        for (PsiElement scopeElement : scopeFileElements) {
+          TextRange elementRange = scopeElement.getTextRange();
+          start = start == -1 ? elementRange.getStartOffset() : Math.min(elementRange.getStartOffset(), start);
+          end = end == -1 ? elementRange.getEndOffset() : Math.max(elementRange.getEndOffset(), end);
+        }
+        return new TextRange(start, end);
+      }
+    }
+    return new TextRange(0, file.getTextLength());
+  }
+
   private void inspectFile(@NotNull final PsiFile file,
+                              @NotNull final TextRange range,
                               @NotNull final InspectionManager inspectionManager,
                               @NotNull List<Tools> localTools,
                               @NotNull List<Tools> globalSimpleTools,
@@ -509,8 +529,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     String url = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
     incrementJobDoneAmount(getStdJobDescriptors().LOCAL_ANALYSIS, url);
 
-    final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0,
-                                                               file.getTextLength(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
+    final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, range.getStartOffset(),
+                                                               range.getEndOffset(), LocalInspectionsPass.EMPTY_PRIORITY_RANGE, true,
                                                                HighlightInfoProcessor.getEmpty());
     try {
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
