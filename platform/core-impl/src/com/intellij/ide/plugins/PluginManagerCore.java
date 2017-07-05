@@ -511,7 +511,7 @@ public class PluginManagerCore {
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull PluginId[] pluginIds) {
     if (isUnitTestMode()) return new ClassLoader[0];
-    final List<ClassLoader> classLoaders = new ArrayList<>();
+    LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (final PluginId id : pluginIds) {
       IdeaPluginDescriptor pluginDescriptor = idToDescriptorMap.get(id);
       if (pluginDescriptor == null) {
@@ -522,9 +522,9 @@ public class PluginManagerCore {
       if (loader == null) {
         getLogger().error("Plugin class loader should be initialized for plugin " + id);
       }
-      classLoaders.add(loader);
+      loaders.add(loader);
     }
-    return classLoaders.toArray(new ClassLoader[classLoaders.size()]);
+    return loaders.toArray(new ClassLoader[loaders.size()]);
   }
 
   private static int countPlugins(@NotNull String pluginsPath) {
