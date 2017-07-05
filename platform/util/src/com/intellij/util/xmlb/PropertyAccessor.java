@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,8 +63,7 @@ class PropertyAccessor implements MutableAccessor {
     }
     catch (InvocationTargetException e) {
       Throwable exception = e.getTargetException();
-      if (exception instanceof Error) throw (Error)exception;
-      if (exception instanceof RuntimeException) throw (RuntimeException)exception;
+      ExceptionUtil.rethrowUnchecked(exception);
       throw new XmlSerializationException(e);
     }
   }

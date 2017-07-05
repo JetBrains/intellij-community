@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,9 +231,7 @@ public class PluginManager extends PluginManagerCore {
   public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
     Application app = ApplicationManager.getApplication();
     if (app != null && app.isUnitTestMode()) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
-      throw new RuntimeException(t);
+      ExceptionUtil.rethrow(t);
     }
 
     if (t instanceof StartupAbortedException) {

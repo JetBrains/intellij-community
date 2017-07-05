@@ -105,13 +105,7 @@ class EDTGuard implements InvocationHandler {
       return convert(method.invoke(myTarget, args));
     } catch (InvocationTargetException e) {
       final Throwable t = e.getTargetException();
-      if (t instanceof RuntimeException) {
-        throw (RuntimeException)t;
-      } else if (t instanceof Error) {
-        throw (Error)t;
-      } else {
-        throw t;
-      }
+      throw t;
     }
   }
 

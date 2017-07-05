@@ -155,10 +155,8 @@ public class ExceptionUtil {
   }
 
   public static void rethrowUnchecked(@Nullable Throwable t) {
-    if (t != null) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
-    }
+    if (t instanceof Error) throw (Error)t;
+    if (t instanceof RuntimeException) throw (RuntimeException)t;
   }
 
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
@@ -169,15 +167,8 @@ public class ExceptionUtil {
   }
 
   public static void rethrow(@Nullable Throwable throwable) {
-    if (throwable instanceof Error) {
-      throw (Error)throwable;
-    }
-    else if (throwable instanceof RuntimeException) {
-      throw (RuntimeException)throwable;
-    }
-    else {
-      throw new RuntimeException(throwable);
-    }
+    rethrowUnchecked(throwable);
+    throw new RuntimeException(throwable);
   }
 
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {

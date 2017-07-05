@@ -58,6 +58,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -142,8 +143,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     if (e instanceof InvocationTargetException) {
       unwrapped = e.getCause() == null ? e : e.getCause();
     }
-    if (unwrapped instanceof Error) throw (Error)unwrapped;
-    if (unwrapped instanceof RuntimeException) throw (RuntimeException)unwrapped;
+    ExceptionUtil.rethrowUnchecked(unwrapped);
     LOG.error(unwrapped);
   }
 
