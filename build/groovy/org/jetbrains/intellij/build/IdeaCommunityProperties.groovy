@@ -107,7 +107,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/communitydmg.png"
         icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
-        customJreFileName = "jbrex8u112b736.21_x64.tar.gz"
       }
 
       @Override
