@@ -21,7 +21,7 @@ import icons.EducationalCoreIcons;
 public class StudyUpdateRecommendationAction extends DumbAwareAction {
 
   public StudyUpdateRecommendationAction() {
-    super("Synchronize course", "Synchronize course", EducationalCoreIcons.StepikRefresh);
+    super("Synchronize Course", "Synchronize Course", EducationalCoreIcons.StepikRefresh);
   }
 
   @Override
