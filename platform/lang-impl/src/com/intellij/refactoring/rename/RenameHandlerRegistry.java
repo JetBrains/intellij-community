@@ -20,6 +20,7 @@ import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -47,14 +48,13 @@ import java.util.TreeMap;
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final Set<RenameHandler> myHandlers  = new HashSet<>();
-  private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
 
   public static RenameHandlerRegistry getInstance() {
-    return INSTANCE;
+    return ServiceManager.getService(RenameHandlerRegistry.class);
   }
 
-  private RenameHandlerRegistry() {
+  protected RenameHandlerRegistry() {
     // should be checked last
     myDefaultElementRenameHandler = new PsiElementRenameHandler();
   }
