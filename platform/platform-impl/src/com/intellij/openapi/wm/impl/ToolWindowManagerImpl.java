@@ -394,6 +394,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @TestOnly
   public void init() {
+    if (myToolWindowsPane != null) {
+      return;
+    }
+
     final MyUIManagerPropertyChangeListener uiManagerPropertyListener = new MyUIManagerPropertyChangeListener();
     final MyLafManagerListener lafManagerListener = new MyLafManagerListener();
 
@@ -1136,10 +1140,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         boolean canCloseContent,
                                         final boolean canWorkInDumbMode,
                                         boolean shouldBeAvailable) {
-    if (myToolWindowsPane == null) {
-      //noinspection TestOnlyProblems
-      init();
-    }
+    //noinspection TestOnlyProblems
+    init();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
