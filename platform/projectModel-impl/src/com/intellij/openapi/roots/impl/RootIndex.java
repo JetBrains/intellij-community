@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
+import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -204,7 +206,24 @@ public class RootIndex {
     }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));
-      info.excludedFromProjectSdk.addAll(ContainerUtil.filter(policy.getExcludeRootsForProjectSdk(), file -> ensureValid(file, policy)));
+
+      Function<Sdk, List<VirtualFile>> fun = policy.getExcludeSdkRootsStrategy();
+
+      if (fun != null) {
+        Set<VirtualFile> roots = new HashSet<>();
+        for (Module m : ModuleManager.getInstance(myProject).getModules()) {
+          Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
+          if (sdk != null) {
+            roots.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+          }
+        }
+
+        for (Module m : ModuleManager.getInstance(myProject).getModules()) {
+          Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
+          info.excludedFromProjectSdk
+            .addAll(ContainerUtil.filter(fun.fun(sdk), file -> ensureValid(file, policy) && !roots.contains(file)));
+        }
+      }
     }
     for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
@@ -240,7 +259,7 @@ public class RootIndex {
 
   /**
    * A reverse dependency graph of (library, jdk, module, module source) -> (module).
-   *
+   * <p>
    * <p>Each edge carries with it the associated OrderEntry that caused the dependency.
    */
   private static class OrderEntryGraph {
@@ -300,13 +319,14 @@ public class RootIndex {
         }
       };
       int dependentUnloadedModulesCacheSize = ModuleManager.getInstance(project).getModules().length / 2;
-      myDependentUnloadedModulesCache = new SynchronizedSLRUCache<Module, Set<String>>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
-        @NotNull
-        @Override
-        public Set<String> createValue(Module key) {
-          return collectDependentUnloadedModules(key);
-        }
-      };
+      myDependentUnloadedModulesCache =
+        new SynchronizedSLRUCache<Module, Set<String>>(dependentUnloadedModulesCacheSize, dependentUnloadedModulesCacheSize) {
+          @NotNull
+          @Override
+          public Set<String> createValue(Module key) {
+            return collectDependentUnloadedModules(key);
+          }
+        };
       initGraph();
       initLibraryRoots();
     }
@@ -866,7 +886,7 @@ public class RootIndex {
     VirtualFile libraryClassRoot = libraryClassRootInfo != null ? libraryClassRootInfo.first : null;
 
     boolean inProject = moduleContentRoot != null ||
-                        ( (libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromProjectSdk.contains(root));
+                        ((libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromProjectSdk.contains(root));
 
     VirtualFile nearestContentRoot;
     if (inProject) {
@@ -888,7 +908,8 @@ public class RootIndex {
 
     Module module = info.contentRootOf.get(nearestContentRoot);
     String unloadedModuleName = info.contentRootOfUnloaded.get(nearestContentRoot);
-    FileTypeAssocTable<Boolean> contentExcludePatterns = moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
+    FileTypeAssocTable<Boolean> contentExcludePatterns =
+      moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
     FileTypeAssocTable<Boolean> libraryExcludePatterns = getLibraryExclusionPatterns(librarySourceRootInfo);
 
     DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExcludePatterns != null
@@ -907,7 +928,8 @@ public class RootIndex {
     FileTypeAssocTable<Boolean> excludePatterns = null;
     if (libraryRootInfo != null) {
       for (Object library : libraryRootInfo.second) {
-        Condition<CharSequence> exclusionPredicate = library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeCondition() : null;
+        Condition<CharSequence> exclusionPredicate =
+          library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeCondition() : null;
         if (exclusionPredicate == null) continue;
         if (excludePatterns == null) {
           excludePatterns = new FileTypeAssocTable<>();
@@ -951,7 +973,7 @@ public class RootIndex {
    * An LRU cache with synchronization around the primary cache operations (get() and insertion
    * of a newly created value). Other map operations are not synchronized.
    */
-  abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K,V> {
+  abstract static class SynchronizedSLRUCache<K, V> extends SLRUMap<K, V> {
     protected final Object myLock = new Object();
 
     protected SynchronizedSLRUCache(final int protectedQueueSize, final int probationalQueueSize) {

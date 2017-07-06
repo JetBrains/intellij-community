@@ -16,9 +16,6 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -27,9 +24,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -59,22 +59,15 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public VirtualFile[] getExcludeRootsForProjectSdk() {
-    Set<VirtualFile> result = Sets.newHashSet();
+  public Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
+    return sdk -> {
+      List<VirtualFile> result = Lists.newLinkedList();
 
-    Set<VirtualFile> roots = Sets.newHashSet();
-    for (Module m : ModuleManager.getInstance(myProject).getModules()) {
-      Sdk sdk = PythonSdkType.findPythonSdk(m);
       if (sdk != null) {
-        roots.addAll(Lists.newArrayList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
-      }
-    }
+        Set<VirtualFile> roots = new HashSet<>(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
 
-    for (Module m : ModuleManager.getInstance(myProject).getModules()) {
-      Sdk sdk = PythonSdkType.findPythonSdk(m);
-      if (sdk != null) {
         for (VirtualFile dir : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
           for (String name : SITE_PACKAGES) {
             VirtualFile sitePackages = dir.findChild(name);
@@ -84,9 +77,9 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
           }
         }
       }
-    }
 
-    return result.toArray(new VirtualFile[result.size()]);
+      return result;
+    };
   }
 
   @NotNull
