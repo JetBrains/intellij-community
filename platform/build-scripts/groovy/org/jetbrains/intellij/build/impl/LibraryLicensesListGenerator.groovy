@@ -16,26 +16,25 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LibraryLicense
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
-
 /**
  * @author nik
  */
 @CompileStatic
 class LibraryLicensesListGenerator {
-  private final JpsGantProjectBuilder projectBuilder
+  private final BuildMessages messages
   private final JpsProject project
   private final List<LibraryLicense> licensesList
 
-  LibraryLicensesListGenerator(JpsGantProjectBuilder projectBuilder, JpsProject project, List<LibraryLicense> licensesList) {
-    this.projectBuilder = projectBuilder
+  LibraryLicensesListGenerator(BuildMessages messages, JpsProject project, List<LibraryLicense> licensesList) {
+    this.messages = messages
     this.project = project
     this.licensesList = licensesList
   }
@@ -45,7 +44,7 @@ class LibraryLicensesListGenerator {
     if (name.startsWith("#")) {
       if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {
         def urls = lib.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
-        projectBuilder.warning("Non-single entry module library $name: $urls");
+        messages.warning("Non-single entry module library $name: $urls");
       }
       File file = lib.getFiles(JpsOrderRootType.COMPILED)[0]
       return file.name
@@ -54,8 +53,8 @@ class LibraryLicensesListGenerator {
   }
 
   void generateLicensesTable(String filePath, Set<String> usedModulesNames) {
-    projectBuilder.info("Generating licenses table")
-    projectBuilder.info("Used modules: $usedModulesNames")
+    messages.info("Generating licenses table")
+    messages.info("Used modules: $usedModulesNames")
     Set<JpsModule> usedModules = project.modules.findAll { usedModulesNames.contains(it.name) } as Set<JpsModule>
     Map<String, String> usedLibraries = [:]
     usedModules.each { JpsModule module ->
@@ -79,14 +78,14 @@ class LibraryLicensesListGenerator {
       }
     }
 
-    projectBuilder.info("Used libraries:")
+    messages.info("Used libraries:")
     List<String> lines = []
     licenses.entrySet().each {
       LibraryLicense lib = it.key
       String moduleName = it.value
       def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
       def license = lib.libraryLicenseUrl != null ? "[$lib.license|$lib.libraryLicenseUrl]" : lib.license
-      projectBuilder.info(" $lib.name (in module $moduleName)")
+      messages.info(" $lib.name (in module $moduleName)")
       lines << "|$name| ${lib.version ?: ""}|$license|".toString()
     }
     //projectBuilder.info("Unused libraries:")
@@ -138,7 +137,7 @@ class LibraryLicensesListGenerator {
       errorMessage << "If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files"
       errorMessage << "If a library is used in tests only change its scope to 'Test'"
       errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
-      projectBuilder.error(errorMessage.join("\n"))
+      messages.error(errorMessage.join("\n"))
     }
   }
 }
