@@ -185,14 +185,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
       default:
         Balloon balloon = notifyByBalloon(notification, type, project);
         if (project == null || project.isDefault()) {
-          LOG.warn("Wrong project: " +
-                   project +
-                   " for notification: " +
-                   notification.getGroupId() +
-                   ", " +
-                   notification.getTitle() +
-                   ", " +
-                   notification.getContent());
+          LOG.warn("Wrong project: " + project +
+                   " for notification: " + notification.getGroupId() + ", " + notification.getTitle() + ", " + notification.getContent());
           return;
         }
         if (!settings.isShouldLog() || type == NotificationDisplayType.STICKY_BALLOON) {
