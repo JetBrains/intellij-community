@@ -488,7 +488,7 @@ public class PushLog extends JPanel implements DataProvider {
   private void toggleRepositoriesFromCommits() {
     LinkedHashSet<CheckedTreeNode> checkedNodes =
       getSelectedTreeNodes().stream().map(n -> n instanceof CommitNode ? n.getParent() : n).filter(CheckedTreeNode.class::isInstance)
-        .map(CheckedTreeNode.class::cast).collect(toCollection(LinkedHashSet::new));
+        .map(CheckedTreeNode.class::cast).filter(CheckedTreeNode::isEnabled).collect(toCollection(LinkedHashSet::new));
     if (checkedNodes.isEmpty()) return;
     // use new state from first lead node;
     boolean newState = !checkedNodes.iterator().next().isChecked();
