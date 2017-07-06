@@ -150,6 +150,21 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  String getModuleOutputPath(JpsModule module) {
+    return compilationContext.getModuleOutputPath(module)
+  }
+
+  @Override
+  String getModuleTestsOutputPath(JpsModule module) {
+    return compilationContext.getModuleTestsOutputPath(module)
+  }
+
+  @Override
+  List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
+    return compilationContext.getModuleRuntimeClasspath(module, forTests)
+  }
+
+  @Override
   void notifyArtifactBuilt(String artifactPath) {
     compilationContext.notifyArtifactBuilt(artifactPath)
   }

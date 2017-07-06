@@ -53,8 +53,8 @@ class TestingTasksImpl extends TestingTasks {
     setupTestingDependencies()
 
     def mainModule = options.mainModule ?: defaultMainModule
-    List<String> testsClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule(mainModule), true)
-    List<String> bootstrapClasspath = context.projectBuilder.moduleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
+    List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
+    List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
@@ -62,7 +62,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> jvmArgs = [
       "-ea",
       "-server",
-      "-Xbootclasspath/p:${context.projectBuilder.moduleOutput(context.findRequiredModule("boot"))}".toString(),
+      "-Xbootclasspath/p:${context.getModuleOutputPath(context.findRequiredModule("boot"))}".toString(),
       "-XX:+HeapDumpOnOutOfMemoryError",
       "-XX:ReservedCodeCacheSize=300m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
@@ -115,7 +115,7 @@ class TestingTasksImpl extends TestingTasks {
         !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
       }
       List<String> excludedRoots = excludedModules.collectMany {
-        [context.projectBuilder.moduleOutput(it), context.projectBuilder.moduleTestsOutput(it)]
+        [context.getModuleOutputPath(it), context.getModuleTestsOutputPath(it)]
       }
       File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
       excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
