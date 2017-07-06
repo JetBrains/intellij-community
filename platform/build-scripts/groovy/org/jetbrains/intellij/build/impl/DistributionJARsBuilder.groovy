@@ -216,7 +216,8 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
 
-    buildTasks.buildProvidedModulesList(productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+    String providedModulesFile = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+    buildTasks.buildProvidedModulesList(providedModulesFile, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
