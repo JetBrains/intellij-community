@@ -1212,7 +1212,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
               JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
                                                                  ourDumpThreadsOnLongWriteActionWaiting,
                                                                  ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
+          long t = 0;
+          if (LOG.isDebugEnabled()) {
+            t = System.currentTimeMillis();
+          }
           myLock.writeLock();
+          if (LOG.isDebugEnabled()) {
+            long elapsed = System.currentTimeMillis() - t;
+            LOG.debug("Write action wait time: " + elapsed);
+          }
           if (reportSlowWrite != null) {
             reportSlowWrite.cancel(false);
           }

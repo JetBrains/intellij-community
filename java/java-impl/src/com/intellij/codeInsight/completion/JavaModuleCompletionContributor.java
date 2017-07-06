@@ -83,11 +83,21 @@ class JavaModuleCompletionContributor {
   }
 
   private static void addModuleStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
-    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    if (isInPackageStatement(position)) {
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.TO), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+    else {
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+  }
+
+  private static boolean isInPackageStatement(PsiElement position) {
+    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(position.getParent(), PsiWhiteSpace.class, PsiComment.class);
+    return prev instanceof PsiPackageAccessibilityStatement && !PsiUtil.isJavaToken(prev.getLastChild(), JavaTokenType.SEMICOLON);
   }
 
   private static void addProvidesStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
@@ -157,7 +167,7 @@ class JavaModuleCompletionContributor {
   private static void processPackage(PsiPackage pkg, GlobalSearchScope scope, Consumer<LookupElement> result) {
     String packageName = pkg.getQualifiedName();
     if (isQualified(packageName) && !PsiUtil.isPackageEmpty(pkg.getDirectories(scope), packageName)) {
-      result.consume(new OverrideableSpace(lookupElement(pkg), TailType.SEMICOLON));
+      result.consume(new OverrideableSpace(lookupElement(pkg), TailType.NONE));
     }
     for (PsiPackage subPackage : pkg.getSubPackages(scope)) {
       processPackage(subPackage, scope, result);

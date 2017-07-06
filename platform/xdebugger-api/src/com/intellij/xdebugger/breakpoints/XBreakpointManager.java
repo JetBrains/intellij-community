@@ -46,6 +46,11 @@ public interface XBreakpointManager {
                                                                          int line,
                                                                          @Nullable T properties);
 
+  @Nullable
+  <T extends XBreakpointProperties> XLineBreakpoint<T> copyLineBreakpoint(@NotNull XLineBreakpoint<T> source,
+                                                                          @NotNull String fileUrl,
+                                                                          int line);
+
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
   @NotNull
