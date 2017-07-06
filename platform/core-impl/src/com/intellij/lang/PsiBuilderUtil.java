@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,5 +91,42 @@ public class PsiBuilderUtil {
   @NotNull
   public static CharSequence rawTokenText(PsiBuilder builder, int index) {
     return builder.getOriginalText().subSequence(builder.rawTokenTypeStart(index), builder.rawTokenTypeStart(index + 1));
+  }
+
+  /**
+   * tries to parse a code block with corresponding left and right braces.
+   * @return collapsed marker of the block or `null` if there is no code block at all.
+   */
+  @Nullable
+  public static PsiBuilder.Marker parseBlockLazy(@NotNull PsiBuilder builder,
+                                                 @NotNull IElementType leftBrace,
+                                                 @NotNull IElementType rightBrace,
+                                                 @NotNull IElementType codeBlock) {
+    if (builder.getTokenType() != leftBrace) return null;
+
+    PsiBuilder.Marker marker = builder.mark();
+
+    builder.advanceLexer();
+
+    int braceCount = 1;
+
+    while (braceCount > 0 && !builder.eof()) {
+      IElementType tokenType = builder.getTokenType();
+      if (tokenType == leftBrace) {
+        braceCount++;
+      }
+      else if (tokenType == rightBrace) {
+        braceCount--;
+      }
+      builder.advanceLexer();
+    }
+
+    marker.collapse(codeBlock);
+
+    if (braceCount > 0) {
+      marker.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
+    }
+
+    return marker;
   }
 }
