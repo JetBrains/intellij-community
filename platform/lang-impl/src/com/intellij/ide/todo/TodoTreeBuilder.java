@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -344,8 +345,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
     VirtualFile vFile = psiFile.getVirtualFile();
-    if (vFile != null) { // If PSI file isn't valid then its VirtualFile can be null
-        myDirtyFileSet.add(vFile);
+    if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
+      myDirtyFileSet.add(vFile);
     }
   }
 
