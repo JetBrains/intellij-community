@@ -308,7 +308,7 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
   return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }
 
-fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
+fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
 
@@ -318,7 +318,7 @@ fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): M
       return KQueueEventLoopGroup(workerCount, threadFactory)
     }
     catch (e: Throwable) {
-      logger<BuiltInServer>().warn("Cannot use native event loop group", e);
+      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
     }
   }
 
@@ -332,7 +332,7 @@ fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
     }
     catch (e: Throwable) {
       // error instead of warn to easy spot it
-      logger<BuiltInServer>().error("Cannot use native event loop group", e);
+      logger<BuiltInServer>().error("Cannot use native event loop group", e)
     }
   }
 
