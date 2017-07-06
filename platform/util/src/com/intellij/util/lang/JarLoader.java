@@ -19,11 +19,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -165,20 +167,12 @@ class JarLoader extends Loader {
 
     @Override
     public byte[] getBytes() throws IOException {
-      byte[] result = ArrayUtil.EMPTY_BYTE_ARRAY;
+      ZipFile file = getZipFile();
       try {
-        ZipFile file = getZipFile();
-        try {
-          result = FileUtil.loadBytes(file.getInputStream(myEntry), (int)myEntry.getSize());
-        } finally {
-          releaseZipFile(file);
-        }
+        return FileUtil.loadBytes(file.getInputStream(myEntry), (int)myEntry.getSize());
+      } finally {
+        releaseZipFile(file);
       }
-      catch (Exception e) {
-        error("file: " + myCanonicalFile, e);
-      }
-      
-      return result;
     }
 
     @Override
