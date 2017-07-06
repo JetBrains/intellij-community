@@ -33,13 +33,9 @@ import java.util.function.BiFunction
  */
 target("default": "Run tests") {
   String home = IdeaProjectLoader.guessHome(this)
-  String outputDir = "$home/out"
+  String outputDir = "$home/out/tests"
 
   def compilationOptions = new BuildOptions()
-//  compilationOptions.useCompiledClassesFromProjectOutput = true
-//  compilationOptions.incrementalCompilation = true
-
-//  def context = CompilationContextImpl.create(home, home, outputDir, this)
   GantBinding binding = (GantBinding) this.binding
   binding.includeTool << JpsGantTool
 
@@ -47,8 +43,5 @@ target("default": "Run tests") {
                                               { p, m -> outputDir } as BiFunction<JpsProject, BuildMessages, String>, compilationOptions)
 
   def testingOptions = new TestingOptions()
-//  testingOptions.setTestGroups("GUI_TESTS")
-//  testingOptions.setTestPatterns("com.intellij.testGuiFramework.tests.community.*")
-
   TestingTasks.create(context, testingOptions).runTests([], "testGuiFramework", null)
 }

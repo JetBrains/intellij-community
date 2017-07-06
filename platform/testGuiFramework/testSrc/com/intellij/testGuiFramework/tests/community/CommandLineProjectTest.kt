@@ -38,7 +38,6 @@ public class Main {
   @Test
   fun testProjectCreate() {
 
-
     welcomeFrame {
       actionLink("Create New Project").click()
       dialog("New Project") {
@@ -57,20 +56,10 @@ public class Main {
           path(project.name, "src", "com.company", "Main").doubleClick()
         }
       }
-      editor {
-        moveTo(118)
-        moveTo(121)
-      }
       val editorCode = editor.getCurrentFileContents(false)
-      assertTrue(codeText.lowerCaseNoSpace() == editorCode!!.lowerCaseNoSpace())
+      assertTrue(codeText == editorCode)
       closeProject()
     }
   }
 
-  fun String.lowerCaseNoSpace() = this.toLowerCase().removeSpaces()
-
-  fun String.removeSpaces(): String {
-    val WHITE_SPACE_PATTERN = Pattern.compile("\\s")
-    return WHITE_SPACE_PATTERN.matcher(this).replaceAll("")
-  }
 }

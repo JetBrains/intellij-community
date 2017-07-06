@@ -140,23 +140,22 @@ class CompilationContextImpl implements CompilationContext {
 
     def classesDirName = "classes"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
-    def outputProjectDir = getProjectOutputDirectory()
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchive != null) {
-      def unpackOutputDir = (options.useProjectOutputDirToBuild ? outputProjectDir.absolutePath : classesOutput) as String
-      unpackCompiledClasses(messages, ant, unpackOutputDir, options)
-      outputDirectoriesToKeep.addAll([classesOutput, outputProjectDir.name])
+      unpackCompiledClasses(messages, ant, classesOutput, options)
+      outputDirectoriesToKeep.add(classesDirName)
     }
     if (options.incrementalCompilation) {
       outputDirectoriesToKeep.add(dataDirName)
       outputDirectoriesToKeep.add(classesDirName)
     }
-    if (!options.useCompiledClassesFromProjectOutput && !options.useProjectOutputDirToBuild) {
+    if (!options.useCompiledClassesFromProjectOutput) {
       projectBuilder.targetFolder = classesOutput
     }
     else {
-      if (!outputProjectDir.exists()) {
-        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputProjectDir.absolutePath doesn't exist")
+      def outputDir = getProjectOutputDirectory()
+      if (!outputDir.exists()) {
+        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
       }
     }
 
