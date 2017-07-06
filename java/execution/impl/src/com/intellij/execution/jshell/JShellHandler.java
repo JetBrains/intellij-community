@@ -70,6 +70,7 @@ import java.util.concurrent.Future;
  */
 public class JShellHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.JShellHandler");
+  private static final int DEBUG_PORT = -1;
   public static final Key<JShellHandler> MARKER_KEY = Key.create("JShell console key");
   private static final Charset ourCharset = StandardCharsets.UTF_8;
 
@@ -215,6 +216,9 @@ public class JShellHandler {
     cmdLine.setExePath(executableFile.getAbsolutePath());
     cmdLine.setWorkDirectory(executableFile.getParent());
     cmdLine.setCharset(ourCharset);
+    if (DEBUG_PORT > 0) {
+      cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + DEBUG_PORT);
+    }
     cmdLine.addParameter("--add-modules");
     cmdLine.addParameter("java.xml.bind");
 

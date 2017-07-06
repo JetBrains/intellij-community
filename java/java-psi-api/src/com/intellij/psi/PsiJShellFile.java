@@ -18,5 +18,7 @@ package com.intellij.psi;
 import java.util.Collection;
 
 public interface PsiJShellFile extends PsiFile {
-  Collection<PsiJShellImportHolder> getSnippets();
+  PsiImportList getImportList();
+
+  Collection<PsiElement> getExecutableSnippets();
 }
