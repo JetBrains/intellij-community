@@ -265,7 +265,7 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     configureFromFileText("a.java",
                           "class Foo {\n" +
                           " void bar() {\n" +
-                          "  <selection>System.out.println();</selection>\n" +
+                          "  <selection>System.out.println()</selection>;\n" +
                           " }\n" +
                           "}");
     SelectionModel model = myEditor.getSelectionModel();
@@ -274,5 +274,19 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     assertNotNull(expr);
     assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
     assertFalse(new JavaWithCastSurrounder().isApplicable(expr));
+  }
+
+  public void testExcludeNonVoidStatements() {
+    configureFromFileText("a.java",
+                          "class Foo {\n" +
+                          " int bar() {return 1;}\n" +
+                          " {" +
+                          "   <selection>bar();</selection>\n" +
+                          " }\n" +
+                          "}");
+    SelectionModel model = myEditor.getSelectionModel();
+    PsiElement[] elements =
+      new JavaExpressionSurroundDescriptor().getElementsToSurround(myFile, model.getSelectionStart(), model.getSelectionEnd());
+    assertEmpty(elements);
   }
 }
