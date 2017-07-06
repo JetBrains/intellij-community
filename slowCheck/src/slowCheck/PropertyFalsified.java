@@ -55,7 +55,7 @@ public class PropertyFalsified extends RuntimeException {
     if (stageCount == 0) return "Couldn't minimize, tried " + exampleCount + " " + examples + "\n";
 
     String stages = stageCount == 1 ? "stage" : "stages";
-    return "Minimized in " + stageCount + " " + stages + ", by trying " + exampleCount + " " + examples;
+    return "Minimized in " + stageCount + " " + stages + ", by trying " + exampleCount + " " + examples + "\n";
   }
 
   private static boolean exceptionsDiffer(Throwable e1, Throwable e2) {
