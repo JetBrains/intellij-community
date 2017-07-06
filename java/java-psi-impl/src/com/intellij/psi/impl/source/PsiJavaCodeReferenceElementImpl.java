@@ -819,7 +819,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         break;
       case CLASS_NAME_KIND:
         filters.add(ElementClassFilter.CLASS);
-        if (isQualified()) {
+        if (isQualified() || PsiTreeUtil.getParentOfType(this, PsiJavaModule.class) != null) {
           filters.add(ElementClassFilter.PACKAGE_FILTER);
         }
         break;

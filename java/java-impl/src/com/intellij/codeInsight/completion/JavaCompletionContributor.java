@@ -30,10 +30,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -46,10 +49,13 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -173,6 +179,18 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new ExcludeFilter(loop.getIterationParameter());
     }
 
+    if (PsiTreeUtil.getParentOfType(position, PsiPackageAccessibilityStatement.class) != null) {
+      return applyScopeFilter(ElementClassFilter.PACKAGE_FILTER, position);
+    }
+
+    if (PsiTreeUtil.getParentOfType(position, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
+      ElementFilter filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
+      if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) != null) {
+        filter = applyScopeFilter(filter, position);
+      }
+      return filter;
+    }
+
     return TrueFilter.INSTANCE;
   }
 
@@ -197,6 +215,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     return new OrFilter(filters.toArray(ElementFilter.EMPTY_ARRAY));
+  }
+
+  public static ElementFilter applyScopeFilter(ElementFilter filter, PsiElement position) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(position);
+    return module != null ? new AndFilter(filter, new SearchScopeFilter(module.getModuleScope())) : filter;
   }
 
   @Override
@@ -228,12 +251,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
-
-    if (JavaModuleCompletionContributor.isModuleFile(parameters.getOriginalFile())) {
-      JavaModuleCompletionContributor.addVariants(position, result);
-      result.stopHere();
-      return;
-    }
 
     if (JavaKeywordCompletion.addWildcardExtendsSuper(result, position)) {
       return;
@@ -274,6 +291,10 @@ public class JavaCompletionContributor extends CompletionContributor {
         parameters.isExtendedCompletion() &&
         StringUtil.isNotEmpty(matcher.getPrefix())) {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
+    }
+
+    if (parent instanceof PsiJavaModuleReferenceElement) {
+      addModuleReferences(parent, result);
     }
 
     result.stopHere();
@@ -885,6 +906,26 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
+  private static void addModuleReferences(PsiElement moduleRef, CompletionResultSet result) {
+    PsiElement statement = moduleRef.getParent();
+    if (statement instanceof PsiRequiresStatement || statement instanceof PsiPackageAccessibilityStatement) {
+      PsiElement module = statement.getParent();
+      if (module != null) {
+        String moduleName = ((PsiJavaModule)module).getName();
+        Project project = moduleRef.getProject();
+        JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
+        GlobalSearchScope scope = ProjectScope.getAllScope(project);
+        for (String name : index.getAllKeys(project)) {
+          if (!name.equals(moduleName) && index.get(name, project, scope).size() == 1) {
+            LookupElement lookup = LookupElementBuilder.create(name);
+            if (statement instanceof PsiRequiresStatement) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
+            result.addElement(lookup);
+          }
+        }
+      }
+    }
+  }
+
   static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
     public IndentingDecorator(LookupElement delegate) {
       super(delegate);
@@ -898,6 +939,35 @@ public class JavaCompletionContributor extends CompletionContributor {
       int lineStartOffset = DocumentUtil.getLineStartOffset(context.getStartOffset(), document);
       PsiDocumentManager.getInstance(project).commitDocument(document);
       CodeStyleManager.getInstance(project).adjustLineIndent(context.getFile(), lineStartOffset);
+    }
+  }
+
+  private static class SearchScopeFilter implements ElementFilter {
+    private final GlobalSearchScope myScope;
+
+    public SearchScopeFilter(GlobalSearchScope scope) {
+      myScope = scope;
+    }
+
+    @Override
+    public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+      if (element instanceof PsiPackage) {
+        return ((PsiDirectoryContainer)element).getDirectories(myScope).length > 0;
+      }
+      else if (element instanceof PsiElement) {
+        PsiFile psiFile = ((PsiElement)element).getContainingFile();
+        if (psiFile != null) {
+          VirtualFile file = psiFile.getVirtualFile();
+          return file != null && myScope.contains(file);
+        }
+      }
+
+      return false;
+    }
+
+    @Override
+    public boolean isClassAcceptable(Class hintClass) {
+      return true;
     }
   }
 }

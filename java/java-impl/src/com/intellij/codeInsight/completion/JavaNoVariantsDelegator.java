@@ -42,10 +42,6 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class JavaNoVariantsDelegator extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
-    if (JavaModuleCompletionContributor.isModuleFile(parameters.getOriginalFile())) {
-      return;
-    }
-
     final JavaCompletionSession session = new JavaCompletionSession(result);
     ResultTracker tracker = new ResultTracker(result) {
       @Override

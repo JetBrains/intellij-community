@@ -290,6 +290,12 @@ public class JavaKeywordCompletion {
       return;
     }
 
+    PsiFile file = myPosition.getContainingFile();
+    if (PsiJavaModule.MODULE_INFO_FILE.equals(file.getName()) && PsiUtil.isLanguageLevel9OrHigher(file)) {
+      addModuleKeywords();
+      return;
+    }
+
     addFinal();
 
     boolean statementPosition = isStatementPosition(myPosition);
@@ -835,6 +841,41 @@ public class JavaKeywordCompletion {
       }
     }
     return false;
+  }
+
+  private void addModuleKeywords() {
+    PsiElement context = PsiTreeUtil.skipParentsOfType(myPosition.getParent(), PsiErrorElement.class);
+    PsiElement prevElement = PsiTreeUtil.skipSiblingsBackward(myPosition.getParent(), PsiWhiteSpace.class, PsiComment.class);
+
+    if (context instanceof PsiJavaFile && !(prevElement instanceof  PsiJavaModule) || context instanceof PsiImportList) {
+      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      if (myPrevLeaf == null || !myPrevLeaf.textMatches(PsiKeyword.OPEN)) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+    }
+    else if (context instanceof PsiJavaModule) {
+      if (prevElement instanceof PsiPackageAccessibilityStatement && !myPrevLeaf.textMatches(";")) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.TO), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+      else {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+    }
+    else if (context instanceof PsiRequiresStatement) {
+      if (!myPrevLeaf.textMatches(PsiKeyword.TRANSITIVE)) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+      if (!myPrevLeaf.textMatches(PsiKeyword.STATIC)) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+    }
+    else if (context instanceof PsiProvidesStatement && prevElement instanceof PsiJavaCodeReferenceElement) {
+      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
   }
 
   public static class OverridableSpace extends TailTypeDecorator<LookupElement> {
