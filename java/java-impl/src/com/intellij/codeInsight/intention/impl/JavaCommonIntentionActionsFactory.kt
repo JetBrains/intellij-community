@@ -22,7 +22,6 @@ import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.MethodInsertionInfo
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -93,12 +92,10 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     }
   }
 
-  private inline fun <reified T : PsiElement> T.javaPsi(): T {
-    assert(language == JavaLanguage.INSTANCE)
-    return when (this) {
-      is org.jetbrains.uast.UElement -> psi as T
+  private inline fun <reified T : PsiElement> T.javaPsi(): T =
+    when (this) {
+      is org.jetbrains.uast.UElement -> this.psi as T
       else -> this
-    }
   }
 
   override fun createAddBeanPropertyActions(psiClass: @JvmCommon PsiClass,
