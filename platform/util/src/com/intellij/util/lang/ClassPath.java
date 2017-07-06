@@ -270,23 +270,18 @@ public class ClassPath {
       List<Loader> loaders = null;
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
-        loaders = new SmartList<Loader>();
-        myCache.iterateLoaders(name, ourLoaderCollector, loaders, this);
-        
-        if (!name.endsWith("/")) { // avoid loader duplicates when we are requesting nondirectory name
-          boolean nameIsDirectory = name.endsWith("/");
-          Collection<Loader> loadersSet = nameIsDirectory ? new SmartList<Loader>() : new LinkedHashSet<Loader>();
-          myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
+        boolean nameIsDirectory = name.endsWith("/");
+        Collection<Loader> loadersSet = nameIsDirectory ? new SmartList<Loader>() : new LinkedHashSet<Loader>();
+        myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
 
-          if (!nameIsDirectory) {
-            myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loadersSet, this);
-          }
+        if (!nameIsDirectory) {
+          myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loadersSet, this);
+        }
 
-          if (nameIsDirectory) {
-            loaders = (List<Loader>)loadersSet;
-          } else {
-            loaders = new ArrayList<Loader>(loadersSet);
-          }
+        if (nameIsDirectory) {
+          loaders = (List<Loader>)loadersSet;
+        } else {
+          loaders = new ArrayList<Loader>(loadersSet);
         }
       }
 
