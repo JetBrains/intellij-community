@@ -118,7 +118,7 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
       children.add(nodeManager.createNode(
         descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data), evaluationContext));
     }
-    builder.setChildren(children);
+    builder.addChildren(children, !myAppendDefaultChildren);
 
     if (myAppendDefaultChildren) {
       DebugProcessImpl.getDefaultRenderer(value).buildChildren(value, builder, evaluationContext);
