@@ -66,7 +66,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, IS_PY36_OLDER, \
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, IS_PY36_OR_GREATER, \
     STATE_RUN
 
 try:
@@ -1006,7 +1006,7 @@ class InternalGetVariable(InternalThreadCommand):
                 valDict = {}
 
             keys = valDict.keys()
-            if _typeName != "OrderedDict" and not IS_PY36_OLDER:
+            if _typeName != "OrderedDict" and not IS_PY36_OR_GREATER:
                 if hasattr(keys, 'sort'):
                     keys.sort(compare_object_attrs) #Python 3.0 does not have it
                 else:
