@@ -221,7 +221,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   protected GutterDraggableObject createBreakpointDraggableObject() {
     return new GutterDraggableObject() {
       @Override
-      public boolean copy(int line, VirtualFile file) {
+      public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
           setFileUrl(file.getUrl());
           setLine(line, true);
@@ -236,7 +236,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       }
 
       @Override
-      public Cursor getCursor(int line) {
+      public Cursor getCursor(int line, int actionId) {
         return canMoveTo(line, getFile()) ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
       }
     };
