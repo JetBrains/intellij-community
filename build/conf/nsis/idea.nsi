@@ -1,6 +1,7 @@
 !verbose 2
 
 Unicode true
+ManifestDPIAware true
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
 !addincludedir "${NSIS_DIR}\Include"
 
