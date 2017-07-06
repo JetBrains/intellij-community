@@ -754,7 +754,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   private static Modifier getModifierFromStub(@NotNull PyFunctionStub stub) {
     return JBIterable
       .of(stub.getParentStub())
-      .flatMap(StubElement::getChildrenStubs)
+      .flatMap((StubElement element) -> (List<StubElement>)element.getChildrenStubs())
       .skipWhile(siblingStub -> !stub.equals(siblingStub))
       .transform(nextSiblingStub -> as(nextSiblingStub, PyTargetExpressionStub.class))
       .filter(Objects::nonNull)
