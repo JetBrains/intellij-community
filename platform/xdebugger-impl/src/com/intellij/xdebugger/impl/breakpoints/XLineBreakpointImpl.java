@@ -224,9 +224,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       @Override
       public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
-          if (isCopyAction(actionId)) {
-            final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-            WriteAction.run(() -> breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+          if (isCopyAction(actionId, breakpointManager)) {
+            WriteAction
+              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
           }
           else {
             setFileUrl(file.getUrl());
@@ -245,14 +246,16 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       @Override
       public Cursor getCursor(int line, int actionId) {
         if (canMoveTo(line, getFile())) {
-          return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
+          return isCopyAction(actionId, XDebuggerManager.getInstance(getProject()).getBreakpointManager())
+                 ? DragSource.DefaultCopyDrop
+                 : DragSource.DefaultMoveDrop;
         }
 
         return DragSource.DefaultMoveNoDrop;
       }
 
-      private boolean isCopyAction(int actionId) {
-        return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
+      private boolean isCopyAction(int actionId, XBreakpointManager breakpointManager) {
+        return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY && breakpointManager instanceof XBreakpointManagerImpl;
       }
     };
   }
