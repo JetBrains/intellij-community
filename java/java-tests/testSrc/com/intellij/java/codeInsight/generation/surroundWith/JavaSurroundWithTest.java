@@ -31,7 +31,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -257,5 +259,20 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
       String text = a.getTemplatePresentation().getText();
       return text != null && text.contains("while");
     }));
+  }
+
+  public void testExcludeVoidExpressions() {
+    configureFromFileText("a.java",
+                          "class Foo {\n" +
+                          " void bar() {\n" +
+                          "  <selection>System.out.println();</selection>\n" +
+                          " }\n" +
+                          "}");
+    SelectionModel model = myEditor.getSelectionModel();
+    PsiExpression expr =
+      IntroduceVariableBase.getSelectedExpression(myFile.getProject(), myFile, model.getSelectionStart(), model.getSelectionEnd());
+    assertNotNull(expr);
+    assertFalse(new JavaWithParenthesesSurrounder().isApplicable(expr));
+    assertFalse(new JavaWithCastSurrounder().isApplicable(expr));
   }
 }
