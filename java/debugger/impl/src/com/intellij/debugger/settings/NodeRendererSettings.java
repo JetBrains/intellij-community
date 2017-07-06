@@ -154,12 +154,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public void loadState(final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
-      myHexRenderer.setEnabled("true".equalsIgnoreCase(hexEnabled));
+      myHexRenderer.setEnabled(Boolean.parseBoolean(hexEnabled));
     }
 
     final String alternativeEnabled = JDOMExternalizerUtil.readField(root, ALTERNATIVE_COLLECTION_VIEW_ENABLED);
     if (alternativeEnabled != null) {
-      setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
+      setAlternateCollectionViewsEnabled(Boolean.parseBoolean(alternativeEnabled));
     }
 
     for (final Element elem : root.getChildren(RENDERER_TAG)) {
