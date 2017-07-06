@@ -61,7 +61,7 @@ public class GitCrlfDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    return new Action[] { getHelpAction(), getOKAction(), getCancelAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET) };
+    return new Action[] { getHelpAction(), getOKAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET), getCancelAction() };
   }
 
   @Override
