@@ -282,7 +282,7 @@ public class GroovyCompletionData {
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
     LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
-    return tail != TailType.NONE ? new JavaKeywordCompletion.OverrideableSpace(element, tail) : element;
+    return tail != TailType.NONE ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
   }
 
   private static void registerControlCompletion(PsiElement context, CompletionResultSet result) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.position.PositionElementFilter;
 
-public class ContentFilter extends PositionElementFilter{
-  public ContentFilter(ElementFilter filter){
+public class ContentFilter extends PositionElementFilter {
+  public ContentFilter(ElementFilter filter) {
     setFilter(filter);
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement scope){
+  public boolean isAcceptable(Object element, PsiElement scope) {
     if (!(element instanceof PsiElement)) return false;
-    PsiElement currentChild = ((PsiElement) element).getFirstChild();
-    while(currentChild != null){
-      if(getFilter().isAcceptable(currentChild, ((PsiElement) element))){
+    PsiElement currentChild = ((PsiElement)element).getFirstChild();
+    while (currentChild != null) {
+      if (getFilter().isAcceptable(currentChild, ((PsiElement)element))) {
         return true;
       }
       currentChild = currentChild.getNextSibling();
@@ -37,7 +36,8 @@ public class ContentFilter extends PositionElementFilter{
     return false;
   }
 
-  public String toString(){
+  @Override
+  public String toString() {
     return "content(" + getFilter().toString() + ")";
   }
 }

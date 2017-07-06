@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.position.PositionElementFilter;
 
-public class ScopeFilter extends PositionElementFilter{
-  public ScopeFilter(){}
+public class ScopeFilter extends PositionElementFilter {
+  public ScopeFilter() { }
 
-  public ScopeFilter(ElementFilter filter){
+  public ScopeFilter(ElementFilter filter) {
     setFilter(filter);
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
+  public boolean isAcceptable(Object element, PsiElement context) {
     return context != null && getFilter().isAcceptable(context, context);
   }
 
-  public String toString(){
-    return "scope(" +getFilter()+")";
+  @Override
+  public String toString() {
+    return "scope(" + getFilter() + ")";
   }
 }

@@ -49,6 +49,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -186,15 +187,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private void diagnoseUnknownParent() {
     CompositeElement parent = getTreeParent();
     IElementType i = parent.getElementType();
-    String message = "Unknown parent for java code reference: '" + parent + "'; Type: " + i + ";\n";
+    StringBuilder msg = new StringBuilder("Unknown parent for java code reference: '").append(parent).append("'; Type: ").append(i).append(";\n");
     while (parent != null && parent.getPsi() instanceof PsiExpression) {
       parent = parent.getTreeParent();
-      message += " Parent: '" + parent+"'; \n";
+      msg.append(" Parent: '").append(parent).append("'; \n");
     }
     if (parent != null) {
-      message += DebugUtil.treeToString(parent, false);
+      msg.append(DebugUtil.treeToString(parent, false));
     }
-    LOG.error(message);
+    LOG.error(msg.toString());
   }
 
   private static boolean isCodeFragmentType(IElementType type) {
@@ -334,6 +335,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText();
 
       default:
+        //noinspection ConstantConditions
         LOG.assertTrue(false);
         return null;
     }
@@ -558,6 +560,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
 
       default:
+        //noinspection ConstantConditions
         LOG.assertTrue(false);
         return null;
     }
@@ -715,6 +718,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         }
         return false;
       default:
+        //noinspection ConstantConditions
         LOG.assertTrue(false);
         return true;
     }
@@ -775,9 +779,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final ElementFilter filter;
     switch (getKind(getContainingFile())) {
       case CLASS_OR_PACKAGE_NAME_KIND:
-        filter = new OrFilter();
-        ((OrFilter)filter).addFilter(ElementClassFilter.CLASS);
-        ((OrFilter)filter).addFilter(ElementClassFilter.PACKAGE_FILTER);
+        filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
         break;
       case CLASS_NAME_KIND:
         filter = ElementClassFilter.CLASS;
@@ -787,11 +789,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         break;
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-        filter = new OrFilter();
-        ((OrFilter)filter).addFilter(ElementClassFilter.PACKAGE_FILTER);
-        if (isQualified()) {
-          ((OrFilter)filter).addFilter(ElementClassFilter.CLASS);
-        }
+        filter = isQualified() ? new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER) : ElementClassFilter.PACKAGE_FILTER;
         break;
       case CLASS_IN_QUALIFIED_NEW_KIND:
         filter = ElementClassFilter.CLASS;
@@ -809,51 +807,54 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  public void processVariants(@NotNull final PsiScopeProcessor processor) {
-    final OrFilter filter = new OrFilter();
+  public void processVariants(@NotNull PsiScopeProcessor processor) {
+    List<ElementFilter> filters = new ArrayList<>();
+
     if (isInCode() && !(getParent() instanceof PsiImportStatement) && !(getParent() instanceof PsiReferenceList)) {
-      filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
-      filter.addFilter(ElementClassFilter.VARIABLE);
+      filters.add(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter())));
+      filters.add(ElementClassFilter.VARIABLE);
     }
+
     switch (getKind(getContainingFile())) {
       case CLASS_OR_PACKAGE_NAME_KIND:
-        filter.addFilter(ElementClassFilter.CLASS);
-        filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+        filters.add(ElementClassFilter.CLASS);
+        filters.add(ElementClassFilter.PACKAGE_FILTER);
         break;
       case CLASS_NAME_KIND:
-        filter.addFilter(ElementClassFilter.CLASS);
+        filters.add(ElementClassFilter.CLASS);
         if (isQualified()) {
-          filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+          filters.add(ElementClassFilter.PACKAGE_FILTER);
         }
         break;
       case PACKAGE_NAME_KIND:
-        filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+        filters.add(ElementClassFilter.PACKAGE_FILTER);
         break;
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-        filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
+        filters.add(ElementClassFilter.PACKAGE_FILTER);
         if (isQualified()) {
-          filter.addFilter(ElementClassFilter.CLASS);
+          filters.add(ElementClassFilter.CLASS);
         }
         break;
       case CLASS_IN_QUALIFIED_NEW_KIND:
-        final PsiElement parent = getParent();
+        PsiElement parent = getParent();
         if (parent instanceof PsiNewExpression) {
           PsiExpression qualifier = ((PsiNewExpression)parent).getQualifier();
           assert qualifier != null : parent;
           PsiType type = qualifier.getType();
           PsiClass aClass = PsiUtil.resolveClassInType(type);
           if (aClass != null) {
-            aClass.processDeclarations(
-              new FilterScopeProcessor(new AndFilter(ElementClassFilter.CLASS, new ModifierFilter(PsiModifier.STATIC, false)),
-                                       processor), ResolveState.initial(), null, this);
+            AndFilter filter = new AndFilter(ElementClassFilter.CLASS, new ModifierFilter(PsiModifier.STATIC, false));
+            aClass.processDeclarations(new FilterScopeProcessor(filter, processor), ResolveState.initial(), null, this);
           }
         }
         return;
       default:
         throw new RuntimeException("Unknown reference type");
     }
-    final FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
+
+    OrFilter filter = new OrFilter(filters.toArray(ElementFilter.EMPTY_ARRAY));
+    FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
   }
 
@@ -920,6 +921,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return getNormalizedText(); // there cannot be any <...>
 
       default:
+        //noinspection ConstantConditions
         LOG.assertTrue(false);
         return null;
     }

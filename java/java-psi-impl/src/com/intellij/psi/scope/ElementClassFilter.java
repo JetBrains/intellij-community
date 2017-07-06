@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.scope;
 
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 
+/**
+ * @author max
+ */
 public class ElementClassFilter implements ElementFilter {
   public static final ElementClassFilter PACKAGE_FILTER = new ElementClassFilter(ElementClassHint.DeclarationKind.PACKAGE);
   public static final ElementClassFilter VARIABLE = new ElementClassFilter(ElementClassHint.DeclarationKind.VARIABLE);
@@ -31,7 +30,7 @@ public class ElementClassFilter implements ElementFilter {
   public static final ElementClassFilter ENUM_CONST = new ElementClassFilter(ElementClassHint.DeclarationKind.ENUM_CONST);
 
   private final ElementClassHint.DeclarationKind myKind;
-  
+
   private ElementClassFilter(ElementClassHint.DeclarationKind kind) {
     myKind = kind;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,80 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+
+import java.util.Arrays;
 
 /**
  * @author yole
  */
 public class PlainTextFilter implements ElementFilter {
   protected final String[] myValue;
-  protected boolean myCaseInsensitiveFlag = false;
 
-  public PlainTextFilter(final String value, final boolean insensitiveFlag) {
-    myCaseInsensitiveFlag = insensitiveFlag;
-    myValue = new String[1];
-    myValue[0] = value;
-  }
-
-  public PlainTextFilter(final String... values) {
+  public PlainTextFilter(String... values) {
     myValue = values;
   }
 
-  public PlainTextFilter(final String value1, final String value2) {
-    myValue = new String[2];
-    myValue[0] = value1;
-    myValue[1] = value2;
+  public PlainTextFilter(String value1, String value2) {
+    myValue = new String[]{value1, value2};
   }
 
   @Override
-  public boolean isClassAcceptable(Class hintClass){
+  public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
-    if(element != null) {
-      for (final String value : myValue) {
-        if (value == null) {
-          return true;
-        }
-        final String elementText = getTextByElement(element);
-        if (myCaseInsensitiveFlag) {
-          if (value.equalsIgnoreCase(elementText)) return true;
-        }
-        else {
-          if (value.equals(elementText)) return true;
-        }
-      }
-    }
-
-    return false;
+  public boolean isAcceptable(Object element, PsiElement context) {
+    return element != null && Arrays.stream(myValue).anyMatch(v -> v == null || v.equals(getTextByElement(element)));
   }
 
-  public String toString(){
-    String ret = "(";
-    for(int i = 0; i < myValue.length; i++){
-      ret += myValue[i];
-      if(i < myValue.length - 1){
-        ret += " | ";
-      }
-    }
-    ret += ")";
-    return ret;
-  }
-
-  protected String getTextByElement(Object element){
+  protected String getTextByElement(Object element) {
     String elementValue = null;
-    if(element instanceof PsiNamedElement){
+    if (element instanceof PsiNamedElement) {
       elementValue = ((PsiNamedElement)element).getName();
     }
     else if (element instanceof PsiElement) {
-      elementValue = ((PsiElement) element).getText();
+      elementValue = ((PsiElement)element).getText();
     }
     return elementValue;
+  }
+
+  @Override
+  public String toString() {
+    return '(' + StringUtil.join(myValue, " | ") + ')';
   }
 }

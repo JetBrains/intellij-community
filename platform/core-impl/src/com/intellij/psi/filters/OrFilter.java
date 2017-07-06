@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,66 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class OrFilter implements ElementFilter{
-  private final List<ElementFilter> myFilters = new ArrayList<>();
+public class OrFilter implements ElementFilter {
+  private final List<ElementFilter> myFilters;
 
-  public OrFilter(){}
-
-  public OrFilter(ElementFilter... filters){
-    for (ElementFilter filter : filters) {
-      addFilter(filter);
-    }
+  /** @deprecated use {@link #OrFilter(ElementFilter...)} */
+  public OrFilter() {
+    myFilters = new SmartList<>();
   }
 
-  public void addFilter(ElementFilter filter){
+  public OrFilter(ElementFilter... filters) {
+    myFilters = new SmartList<>(filters);
+  }
+
+  /** @deprecated use {@link #OrFilter(ElementFilter...)} */
+  public void addFilter(ElementFilter filter) {
     myFilters.add(filter);
   }
 
-  protected List getFilters(){
-    return myFilters;
+  @Override
+  public boolean isAcceptable(Object element, PsiElement context) {
+    return myFilters.isEmpty() || myFilters.stream().anyMatch(filter -> filter.isAcceptable(element, context));
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
-    if (myFilters.isEmpty()) return true;
-    for (ElementFilter elementFilter : myFilters) {
-      if (elementFilter.isAcceptable(element, context)) {
-        return true;
-      }
-    }
-    return false;
+  public boolean isClassAcceptable(Class elementClass) {
+    return myFilters.isEmpty() || myFilters.stream().anyMatch(filter -> filter.isClassAcceptable(elementClass));
   }
 
   @Override
-  public boolean isClassAcceptable(Class elementClass){
-    if (myFilters.isEmpty()) return true;
-    for (ElementFilter elementFilter : myFilters) {
-      if (elementFilter.isClassAcceptable(elementClass)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public String toString(){
-    String ret = "(";
-    Iterator iter = myFilters.iterator();
-    while(iter.hasNext()){
-      ret += iter.next();
-      if(iter.hasNext()){
-        ret += " | ";
-      }
-    }
-    ret += ")";
-    return ret;
+  public String toString() {
+    return '(' + StringUtil.join(myFilters, " | ") + ')';
   }
 }

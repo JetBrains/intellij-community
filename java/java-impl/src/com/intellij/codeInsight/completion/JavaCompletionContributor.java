@@ -73,11 +73,11 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 public class JavaCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaCompletionContributor");
 
-  public static final ElementPattern<PsiElement> ANNOTATION_NAME = psiElement().
-    withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
+  static final ElementPattern<PsiElement> ANNOTATION_NAME =
+    psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).afterLeaf("@");
+
   private static final PsiJavaElementPattern.Capture<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
-
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =
@@ -88,15 +88,15 @@ public class JavaCompletionContributor extends CompletionContributor {
       psiElement(PsiSwitchStatement.class).with(new PatternCondition<PsiSwitchStatement>("enumExpressionType") {
         @Override
         public boolean accepts(@NotNull PsiSwitchStatement psiSwitchStatement, ProcessingContext context) {
-          final PsiExpression expression = psiSwitchStatement.getExpression();
-          if(expression == null) return false;
+          PsiExpression expression = psiSwitchStatement.getExpression();
+          if (expression == null) return false;
           PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
           return aClass != null && aClass.isEnum();
         }
       })));
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
-    psiElement().afterLeaf(psiElement().withElementType(elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL,
-                                                                            JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
+    psiElement().afterLeaf(psiElement().withElementType(
+      elementType().oneOf(JavaTokenType.DOUBLE_LITERAL, JavaTokenType.LONG_LITERAL, JavaTokenType.FLOAT_LITERAL, JavaTokenType.INTEGER_LITERAL)));
   private static final ElementPattern<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
   private static final ElementPattern<PsiElement> CATCH_OR_FINALLY = psiElement().afterLeaf(
@@ -107,7 +107,8 @@ public class JavaCompletionContributor extends CompletionContributor {
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
     // Completion after extends in interface, type parameter and implements in class
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(
+      position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
     if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }
@@ -181,19 +182,21 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static ElementFilter createAnnotationFilter(PsiElement position) {
-    OrFilter orFilter = new OrFilter(ElementClassFilter.CLASS,
-                                   ElementClassFilter.PACKAGE_FILTER,
-                                   new AndFilter(new ClassFilter(PsiField.class),
-                                                 new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
+    List<ElementFilter> filters = ContainerUtil.newArrayList(
+      ElementClassFilter.CLASS,
+      ElementClassFilter.PACKAGE_FILTER,
+      new AndFilter(new ClassFilter(PsiField.class), new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
+
     if (psiElement().insideStarting(psiNameValuePair()).accepts(position)) {
-      orFilter.addFilter(new ClassFilter(PsiAnnotationMethod.class) {
+      filters.add(new ClassFilter(PsiAnnotationMethod.class) {
         @Override
         public boolean isAcceptable(Object element, PsiElement context) {
           return element instanceof PsiAnnotationMethod && PsiUtil.isAnnotationMethod((PsiElement)element);
         }
       });
     }
-    return orFilter;
+
+    return new OrFilter(filters.toArray(ElementFilter.EMPTY_ARRAY));
   }
 
   @Override
@@ -245,7 +248,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : referenceVariants.entrySet()) {
       session.registerBatchItems(entry.getKey(), entry.getValue());
     }
-    
+
     session.flushBatchItems();
 
     if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
@@ -334,6 +337,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     items.addAll(new JavaKeywordCompletion(parameters, session).getResults());
 
     addExpressionVariants(parameters, position, items::add);
+
     return items;
   }
 
@@ -341,13 +345,12 @@ public class JavaCompletionContributor extends CompletionContributor {
     PsiType type = assertNotNull(element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY)).getType();
     if (type instanceof PsiPrimitiveType) {
       session.registerKeyword(type.getCanonicalText(false));
-      return;
     }
-
-    PsiClass aClass =
-      type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0 ? ((PsiClassType)type).resolve() : null;
-    if (aClass != null) {
-      session.registerClass(aClass);
+    else if (type instanceof PsiClassType && ((PsiClassType)type).getParameterCount() == 0) {
+      PsiClass aClass = ((PsiClassType)type).resolve();
+      if (aClass != null) {
+        session.registerClass(aClass);
+      }
     }
   }
 
@@ -365,9 +368,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     return PsiUtilCore.findLanguageFromElement(position).isKindOf(JavaLanguage.INSTANCE);
   }
 
-  public static void addAllClasses(final CompletionParameters parameters,
-                                   final CompletionResultSet result,
-                                   final JavaCompletionSession session) {
+  public static void addAllClasses(CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
     if (!isClassNamePossible(parameters) || !mayStartClassName(result)) {
       return;
     }
@@ -378,7 +379,8 @@ public class JavaCompletionContributor extends CompletionContributor {
           result.addElement(JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition()));
         }
       });
-    } else {
+    }
+    else {
       advertiseSecondCompletion(parameters.getPosition().getProject(), result);
     }
   }
@@ -389,7 +391,9 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static MultiMap<CompletionResultSet, LookupElement> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
+  private static MultiMap<CompletionResultSet, LookupElement> addReferenceVariants(final CompletionParameters parameters,
+                                                                                   CompletionResultSet result,
+                                                                                   JavaCompletionSession session) {
     MultiMap<CompletionResultSet, LookupElement> items = MultiMap.create();
     final PsiElement position = parameters.getPosition();
     final boolean first = parameters.getInvocationCount() <= 1;
@@ -549,7 +553,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (showClasses && insertedElement.getParent() instanceof PsiReferenceExpression) {
       final Set<LookupElement> set = JavaCompletionUtil.processJavaReference(
-        insertedElement, (PsiJavaReference)insertedElement.getParent(), new ElementExtractorFilter(createAnnotationFilter(insertedElement)), JavaCompletionProcessor.Options.DEFAULT_OPTIONS, result.getPrefixMatcher(), parameters);
+        insertedElement, (PsiJavaReference)insertedElement.getParent(), new ElementExtractorFilter(createAnnotationFilter(insertedElement)),
+        JavaCompletionProcessor.Options.DEFAULT_OPTIONS, result.getPrefixMatcher(), parameters);
       for (final LookupElement element : set) {
         result.addElement(element);
       }
@@ -723,7 +728,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (element == null) return false;
     final PsiElement parent = element.getParent();
     if (parent == null) return false;
-    return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement || parent.getParent() instanceof PsiReferenceList;
+    return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement ||
+           parent.getParent() instanceof PsiReferenceList;
   }
 
   @Override
@@ -755,7 +761,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           return;
         }
 
-        final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
+        PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null && !(ref instanceof PsiReferenceExpression)) {
           if (JavaSmartCompletionContributor.AFTER_NEW.accepts(ref)) {
             final PsiReferenceParameterList paramList = ref.getParameterList();
@@ -780,7 +786,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   public static boolean semicolonNeeded(final Editor editor, PsiFile file,  final int startOffset) {
-    final PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {
         return true;
@@ -801,14 +807,16 @@ public class JavaCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.LPARENTH && PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
+    if (!iterator.atEnd() &&
+        iterator.getTokenType() == JavaTokenType.LPARENTH &&
+        PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
       // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 
-    if (!iterator.atEnd()
-        && (iterator.getTokenType() == JavaTokenType.COLON)
-        && null == PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false)) {
+    if (!iterator.atEnd() &&
+        iterator.getTokenType() == JavaTokenType.COLON &&
+        PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false) == null) {
       return true;
     }
 

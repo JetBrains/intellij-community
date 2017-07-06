@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.JavaKeywordCompletion.OverrideableSpace;
+import com.intellij.codeInsight.completion.JavaKeywordCompletion.OverridableSpace;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
@@ -74,24 +74,24 @@ class JavaModuleCompletionContributor {
   private static void addFileHeaderKeywords(PsiElement position, Consumer<LookupElement> result) {
     PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
     if (prev == null) {
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
     else if (PsiUtil.isJavaToken(prev, JavaTokenType.OPEN_KEYWORD)) {
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
   private static void addModuleStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
     if (isInPackageStatement(position)) {
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.TO), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.TO), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
     else {
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
@@ -101,13 +101,13 @@ class JavaModuleCompletionContributor {
   }
 
   private static void addProvidesStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
-    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
 
   private static void addRequiresStatementKeywords(PsiElement context, PsiElement position, Consumer<LookupElement> result) {
     if (context.getParent() instanceof PsiRequiresStatement) {
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverridableSpace(createKeywordLookupItem(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
@@ -122,7 +122,7 @@ class JavaModuleCompletionContributor {
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
           if (!name.equals(hostName) && index.get(name, project, scope).size() == 1) {
-            result.consume(new OverrideableSpace(LookupElementBuilder.create(name), TailType.SEMICOLON));
+            result.consume(new OverridableSpace(LookupElementBuilder.create(name), TailType.SEMICOLON));
           }
         }
       }
@@ -167,7 +167,7 @@ class JavaModuleCompletionContributor {
   private static void processPackage(PsiPackage pkg, GlobalSearchScope scope, Consumer<LookupElement> result) {
     String packageName = pkg.getQualifiedName();
     if (isQualified(packageName) && !PsiUtil.isPackageEmpty(pkg.getDirectories(scope), packageName)) {
-      result.consume(new OverrideableSpace(lookupElement(pkg), TailType.NONE));
+      result.consume(new OverridableSpace(lookupElement(pkg), TailType.NONE));
     }
     for (PsiPackage subPackage : pkg.getSubPackages(scope)) {
       processPackage(subPackage, scope, result);
@@ -187,7 +187,7 @@ class JavaModuleCompletionContributor {
     GlobalSearchScope _scope = scope != null ? scope : ProjectScope.getAllScope(project);
     AllClassesGetter.processJavaClasses(resultSet.getPrefixMatcher(), project, _scope, psiClass -> {
       if (isQualified(psiClass.getQualifiedName()) && filter.test(psiClass)) {
-        resultSet.addElement(new OverrideableSpace(lookupElement(psiClass), tail));
+        resultSet.addElement(new OverridableSpace(lookupElement(psiClass), tail));
       }
       return true;
     });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,20 +20,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ReflectionUtil;
 
-public class AnnotationTypeFilter
-  implements ElementFilter{
-
+public class AnnotationTypeFilter implements ElementFilter {
   @Override
-  public boolean isClassAcceptable(Class hintClass){
+  public boolean isClassAcceptable(Class hintClass) {
     return ReflectionUtil.isAssignable(PsiClass.class, hintClass);
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
+  public boolean isAcceptable(Object element, PsiElement context) {
     return element instanceof PsiClass && ((PsiClass)element).isAnnotationType();
   }
 
-  public String toString(){
+  @Override
+  public String toString() {
     return "annotationType";
   }
 }
