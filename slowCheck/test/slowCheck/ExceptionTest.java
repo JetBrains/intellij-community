@@ -1,8 +1,6 @@
 package slowCheck;
 
-import static slowCheck.Generator.from;
-import static slowCheck.Generator.integers;
-import static slowCheck.Generator.listsOf;
+import static slowCheck.Generator.*;
 
 /**
  * @author peter
@@ -71,6 +69,7 @@ public class ExceptionTest extends PropertyCheckerTestCase {
     }
     catch (PropertyFalsified e) {
       assertEquals("my exception", e.getFailure().getStoppingReason().getMessage());
+      assertTrue(StatusNotifier.printStackTrace(e).contains("my exception"));
     }
   }
 

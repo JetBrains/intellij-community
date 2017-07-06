@@ -3,6 +3,7 @@ package slowCheck;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -101,6 +102,10 @@ public final class Generator<T> {
     List<Integer> weights = new ArrayList<>(alternatives.keySet());
     IntDistribution distribution = IntDistribution.frequencyDistribution(weights);
     return from(data -> alternatives.get(weights.get(data.drawInt(distribution))).generateValue(data));
+  }
+
+  public static <A,B,C> Generator<C> zipWith(Generator<A> gen1, Generator<B> gen2, BiFunction<A,B,C> zip) {
+    return from(data -> zip.apply(gen1.generateValue(data), gen2.generateValue(data)));
   }
 
   public static Generator<Boolean> booleans() {

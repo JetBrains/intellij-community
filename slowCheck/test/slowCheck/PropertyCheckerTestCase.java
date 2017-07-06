@@ -22,7 +22,7 @@ abstract class PropertyCheckerTestCase extends TestCase {
       System.out.println(" " + getName());
       System.out.println("Value: " + e.getBreakingValue());
       System.out.println("Data: " + e.getData());
-      assertEquals(minimizationSteps, failure.getTotalMinimizationStepCount());
+      assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount());
       assertEquals(e.getBreakingValue(), generator.generateUnstructured(e.getData()));
 
       return failure;

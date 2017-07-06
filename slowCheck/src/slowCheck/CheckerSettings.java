@@ -9,15 +9,15 @@ import org.jetbrains.annotations.Nullable;
 public class CheckerSettings {
   public static final CheckerSettings DEFAULT_SETTINGS = new CheckerSettings(100, null);
   final int iterationCount;
-  @Nullable final Integer randomSeed;
+  @Nullable final Long randomSeed;
 
-  private CheckerSettings(int iterationCount, @Nullable Integer randomSeed) {
+  private CheckerSettings(int iterationCount, @Nullable Long randomSeed) {
     this.iterationCount = iterationCount;
     this.randomSeed = randomSeed;
   }
 
   @NotNull
-  public CheckerSettings withSeed(int randomSeed) {
+  public CheckerSettings withSeed(long randomSeed) {
     return new CheckerSettings(iterationCount, randomSeed);
   }
 
