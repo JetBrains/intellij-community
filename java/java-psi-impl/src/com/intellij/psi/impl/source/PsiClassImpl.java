@@ -50,7 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, PsiQualifiedNamedElement, Queryable {
+public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
