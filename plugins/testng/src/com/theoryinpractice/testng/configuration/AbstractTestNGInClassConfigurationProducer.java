@@ -15,17 +15,11 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.configurations.ConfigurationType;
 
 //to be delete in 2018
 @Deprecated
-public class AbstractTestNGInClassConfigurationProducer extends TestNGInClassConfigurationProducer {
+public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGInClassConfigurationProducer {
   @Deprecated
   public AbstractTestNGInClassConfigurationProducer() {
-  }
-
-  @Deprecated
-  public AbstractTestNGInClassConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
   }
 }
