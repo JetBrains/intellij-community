@@ -100,8 +100,8 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
     myDestination = new TextFieldWithBrowseButton();
     myMakeAvailableToAllProjectsCheckbox = new JBCheckBox(PyBundle.message("sdk.create.venv.dialog.make.available.to.all.projects"));
     if (project == null || project.isDefault() || !PlatformUtils.isPyCharm()) {
-      myMakeAvailableToAllProjectsCheckbox.setSelected(true);
-      myMakeAvailableToAllProjectsCheckbox.setVisible(false);
+      myMakeAvailableToAllProjectsCheckbox.setSelected(false);
+      myMakeAvailableToAllProjectsCheckbox.setVisible(true);
     }
 
     layoutPanel(allSdks);
