@@ -26,11 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class TestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
   private TestNGInClassConfigurationProducerDelegate myDelegate = new TestNGInClassConfigurationProducerDelegate(TestNGConfigurationType.getInstance());
   protected TestNGInClassConfigurationProducer() {
-    this(TestNGConfigurationType.getInstance());
-  }
-
-  protected TestNGInClassConfigurationProducer(final ConfigurationType configurationType) {
-    super(configurationType);
+    super(TestNGConfigurationType.getInstance());
   }
 
   @Override
