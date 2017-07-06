@@ -62,12 +62,19 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
   @NotNull
   @Override
   public VirtualFile[] getExcludeRootsForProjectSdk() {
-    List<VirtualFile> result = Lists.newArrayList();
+    Set<VirtualFile> result = Sets.newHashSet();
+
+    Set<VirtualFile> roots = Sets.newHashSet();
+    for (Module m : ModuleManager.getInstance(myProject).getModules()) {
+      Sdk sdk = PythonSdkType.findPythonSdk(m);
+      if (sdk != null) {
+        roots.addAll(Lists.newArrayList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+      }
+    }
 
     for (Module m : ModuleManager.getInstance(myProject).getModules()) {
       Sdk sdk = PythonSdkType.findPythonSdk(m);
       if (sdk != null) {
-        Set<VirtualFile> roots = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
         for (VirtualFile dir : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
           for (String name : SITE_PACKAGES) {
             VirtualFile sitePackages = dir.findChild(name);
