@@ -172,32 +172,22 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     }
     final Location location = event.location();
     final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName;
+    String locationInfo;
     try {
-      locationFileName = location.sourceName();
+      final String file = location.sourceName();
+      final int line = DebuggerUtilsEx.getLineNumber(location, false);
+      locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info", file, line);
     }
     catch (AbsentInformationException e) {
-      locationFileName = "";
+      locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info.absent");
     }
-    int locationLine = DebuggerUtilsEx.getLineNumber(location, false);
     if (threadName != null) {
-      return DebuggerBundle.message(
-        "exception.breakpoint.console.message.with.thread.info", 
-        exceptionName, 
-        threadName,
-        locationQName,
-        locationFileName,
-        locationLine
+      return DebuggerBundle.message("exception.breakpoint.console.message.with.thread.info",
+                                    exceptionName, threadName, locationQName, locationInfo
       );
     }
     else {
-      return DebuggerBundle.message(
-        "exception.breakpoint.console.message", 
-        exceptionName,
-        locationQName,
-        locationFileName,
-        locationLine
-      );
+      return DebuggerBundle.message("exception.breakpoint.console.message", exceptionName, locationQName, locationInfo);
     }
   }
 
