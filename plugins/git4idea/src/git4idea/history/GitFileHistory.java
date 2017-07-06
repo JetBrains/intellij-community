@@ -136,8 +136,8 @@ public class GitFileHistory {
   }
 
   /**
-   * Gets info of the given commit and checks if it was a RENAME.
-   * If yes, returns the older file path, which file was renamed from.
+   * Gets info of the given commit and checks if a file was renamed there.
+   * If yes, returns the older file path, which file was renamed from and a parent commit hash as a string.
    * If it's not a rename, returns null.
    */
   @Nullable
