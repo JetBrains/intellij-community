@@ -30,8 +30,10 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
 import io.netty.channel.kqueue.KQueueEventLoopGroup
+import io.netty.channel.kqueue.KQueueServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.oio.OioServerSocketChannel
 import io.netty.channel.socket.oio.OioSocketChannel
@@ -73,9 +75,16 @@ inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
 fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   val bootstrap = ServerBootstrap()
     .group(group)
-    .channel(if (group is NioEventLoopGroup) NioServerSocketChannel::class.java else OioServerSocketChannel::class.java)
+    .channel(group.serverSocketChannelClass())
   bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true)
   return bootstrap
+}
+
+private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> = when {
+  this is NioEventLoopGroup -> NioServerSocketChannel::class.java
+  this is OioEventLoopGroup -> OioServerSocketChannel::class.java
+  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
+  else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
 }
 
 inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
@@ -118,7 +127,7 @@ private fun doConnect(bootstrap: Bootstrap,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): Channel? {
   var attemptCount = 0
-  if (bootstrap.config().group() is NioEventLoopGroup) {
+  if (bootstrap.config().group() !is OioEventLoopGroup) {
     return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount)
   }
 
