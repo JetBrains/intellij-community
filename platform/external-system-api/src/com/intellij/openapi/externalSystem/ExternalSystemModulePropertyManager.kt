@@ -30,18 +30,18 @@ import com.intellij.util.xmlb.annotations.Transient
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-val EMPTY_STATE = ExternalOptionStateComponent()
+val EMPTY_STATE = ExternalStateComponent()
 
 @Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
-class ExternalSystemModulePropertyManager(private val module: Module) : PersistentStateComponent<ExternalOptionStateComponent>, ProjectModelElement {
+class ExternalSystemModulePropertyManager(private val module: Module) : PersistentStateComponent<ExternalStateComponent>, ProjectModelElement {
   override fun getExternalSource() = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
 
-  private var store = if (module.project.isExternalStorageEnabled) ExternalOptionStateComponent() else ExternalOptionStateModule(module)
+  private var store = if (module.project.isExternalStorageEnabled) ExternalStateComponent() else ExternalStateModule(module)
 
-  override fun getState() = store as? ExternalOptionStateComponent ?: EMPTY_STATE
+  override fun getState() = store as? ExternalStateComponent ?: EMPTY_STATE
 
-  override fun loadState(state: ExternalOptionStateComponent) {
+  override fun loadState(state: ExternalStateComponent) {
     store = state
   }
 
@@ -81,28 +81,30 @@ class ExternalSystemModulePropertyManager(private val module: Module) : Persiste
 
   fun swapStore() {
     val oldStore = store
-    if (oldStore is ExternalOptionStateModule) {
-      store = ExternalOptionStateComponent()
+    val isMaven = oldStore.isMavenized
+    if (oldStore is ExternalStateModule) {
+      store = ExternalStateComponent()
     }
     else {
-      store = ExternalOptionStateModule(module)
+      store = ExternalStateModule(module)
     }
 
-    store.externalSystem = oldStore.externalSystem
+    store.externalSystem = if (store is ExternalStateModule && isMaven) null else oldStore.externalSystem
+    store.isMavenized = isMaven
     store.linkedProjectId = oldStore.linkedProjectId
     store.linkedProjectPath = oldStore.linkedProjectPath
     store.rootProjectPath = oldStore.rootProjectPath
     store.externalSystemModuleGroup = oldStore.externalSystemModuleGroup
     store.externalSystemModuleVersion = oldStore.externalSystemModuleVersion
+
+    if (oldStore is ExternalStateModule) {
+      oldStore.isMavenized = false
+      oldStore.unlinkExternalOptions()
+    }
   }
 
   fun unlinkExternalOptions() {
-    store.externalSystem = null
-    store.linkedProjectId = null
-    store.linkedProjectPath = null
-    store.rootProjectPath = null
-    store.externalSystemModuleGroup = null
-    store.externalSystemModuleVersion = null
+    store.unlinkExternalOptions()
   }
 
   fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {
@@ -145,17 +147,26 @@ private interface ExternalOptionState {
   var isMavenized: Boolean
 }
 
-@Suppress("DEPRECATION")
-private class ModuleOptionDelegate(private val key: String) : ReadWriteProperty<ExternalOptionStateModule, String?> {
-  override operator fun getValue(thisRef: ExternalOptionStateModule, property: KProperty<*>) = thisRef.module.getOptionValue(key)
+private fun ExternalOptionState.unlinkExternalOptions() {
+  externalSystem = null
+  linkedProjectId = null
+  linkedProjectPath = null
+  rootProjectPath = null
+  externalSystemModuleGroup = null
+  externalSystemModuleVersion = null
+}
 
-  override operator fun setValue(thisRef: ExternalOptionStateModule, property: KProperty<*>, value: String?) {
+@Suppress("DEPRECATION")
+private class ModuleOptionDelegate(private val key: String) : ReadWriteProperty<ExternalStateModule, String?> {
+  override operator fun getValue(thisRef: ExternalStateModule, property: KProperty<*>) = thisRef.module.getOptionValue(key)
+
+  override operator fun setValue(thisRef: ExternalStateModule, property: KProperty<*>, value: String?) {
     thisRef.module.setOption(key, value)
   }
 }
 
 @Suppress("DEPRECATION")
-private class ExternalOptionStateModule(internal val module: Module) : ExternalOptionState {
+private class ExternalStateModule(internal val module: Module) : ExternalOptionState {
   override var externalSystem by ModuleOptionDelegate(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)
   override var externalSystemModuleVersion by ModuleOptionDelegate("external.system.module.version")
   override var externalSystemModuleGroup by ModuleOptionDelegate("external.system.module.group")
@@ -173,7 +184,7 @@ private class ExternalOptionStateModule(internal val module: Module) : ExternalO
     }
 }
 
-class ExternalOptionStateComponent : ExternalOptionState {
+class ExternalStateComponent : ExternalOptionState {
   @get:Attribute
   override var externalSystem: String? = null
   @get:Attribute
