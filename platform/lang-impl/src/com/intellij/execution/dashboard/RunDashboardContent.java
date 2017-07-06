@@ -472,12 +472,18 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return RunDashboardManager.getInstance(myProject).isShowConfigurations();
+      Project project = e.getProject();
+      if (project == null) return true;
+
+      return RunDashboardManager.getInstance(project).isShowConfigurations();
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      RunDashboardManager.getInstance(myProject).setShowConfigurations(state);
+      Project project = e.getProject();
+      if (project == null) return;
+
+      RunDashboardManager.getInstance(project).setShowConfigurations(state);
       updateContent(false);
     }
   }
