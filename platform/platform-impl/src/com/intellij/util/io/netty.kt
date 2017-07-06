@@ -16,8 +16,11 @@
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -26,6 +29,7 @@ import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
+import io.netty.channel.kqueue.KQueueEventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
@@ -40,12 +44,14 @@ import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.ide.PooledThreadExecutor
+import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.Socket
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 
 // used in Go
@@ -305,3 +311,30 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
+
+fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
+  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+    try {
+      return KQueueEventLoopGroup(workerCount, threadFactory)
+    }
+    catch (e: Throwable) {
+      logger<BuiltInServer>().warn("Cannot use native event loop group", e);
+    }
+  }
+
+  return NioEventLoopGroup(workerCount, threadFactory)
+}
+
+fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
+  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+    try {
+      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+    }
+    catch (e: Throwable) {
+      // error instead of warn to easy spot it
+      logger<BuiltInServer>().error("Cannot use native event loop group", e);
+    }
+  }
+
+  return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+}
