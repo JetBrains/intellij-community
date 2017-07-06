@@ -174,7 +174,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       assignment.delete();
     }
 
-    if (!myInlineThisOnly && myDeleteDeclaration) {
+    if (!myInlineThisOnly && myDeleteDeclaration && myField.isWritable()) {
       try {
         myField.delete();
       }
@@ -288,6 +288,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       return Collections.singletonList(myRefExpr);
     }
     else {
+      if (!myField.isWritable()) return Collections.emptyList();
       return super.getElementsToWrite(descriptor);
     }
   }
