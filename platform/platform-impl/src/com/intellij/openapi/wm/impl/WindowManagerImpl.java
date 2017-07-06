@@ -502,7 +502,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public final IdeFrameImpl allocateFrame(final Project project) {
+  public final IdeFrameImpl allocateFrame(@NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
     IdeFrameImpl frame = myProjectToFrame.remove(null);
