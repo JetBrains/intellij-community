@@ -245,7 +245,7 @@ public class ParametersFolder {
           if (!isMethodNameExpression(expression)) {
             expressions.add((PsiExpression)expression);
           }
-          expression = parent instanceof PsiExpression ? parent : null;
+          expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
         }
       }
       else {
