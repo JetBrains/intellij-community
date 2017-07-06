@@ -23,7 +23,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private var buffer: ByteBuf? = allocator.ioBuffer(4096)
 
   init {
-    writeHeader(buffer!!, BEGIN_REQUEST, FastCgiConstants.HEADER_LENGTH)
+    writeHeader(buffer!!, BEGIN_REQUEST, HEADER_LENGTH)
     buffer!!.writeShort(RESPONDER)
     buffer!!.writeByte(FCGI_KEEP_CONNECTION)
     // reserved[5]
@@ -128,7 +128,7 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
         // channel.write releases
         releaseContent = false
 
-        val headerBuffer = fastCgiChannel.alloc().ioBuffer(FastCgiConstants.HEADER_LENGTH, FastCgiConstants.HEADER_LENGTH)
+        val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
         writeHeader(headerBuffer, STDIN, 0)
         fastCgiChannel.write(headerBuffer)
       }

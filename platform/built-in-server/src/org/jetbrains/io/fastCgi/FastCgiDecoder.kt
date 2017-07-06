@@ -8,6 +8,8 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.util.CharsetUtil
 import org.jetbrains.io.Decoder
 
+internal const val HEADER_LENGTH = 8
+
 internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>, private val responseHandler: FastCgiService) : Decoder(), Decoder.FullMessageConsumer<Void> {
   private enum class State {
     HEADER,
@@ -52,7 +54,7 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
             }
           }
 
-          val buffer = getBufferIfSufficient(input, FastCgiConstants.HEADER_LENGTH, context) ?: return
+          val buffer = getBufferIfSufficient(input, HEADER_LENGTH, context) ?: return
 
           decodeHeader(buffer)
           state = State.CONTENT
