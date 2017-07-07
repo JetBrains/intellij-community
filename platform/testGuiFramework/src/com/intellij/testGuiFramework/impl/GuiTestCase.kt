@@ -296,7 +296,7 @@ open class GuiTestCase : GuiTestBase() {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.actionButtonByClass(actionClassName: String,
-                                                             timeout: Long = defaultTimeout): ActionButtonFixture = if (target() is Container) actionButtonByClass(
+                                                                    timeout: Long = defaultTimeout): ActionButtonFixture = if (target() is Container) actionButtonByClass(
     target() as Container, actionClassName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionButton component by action class name \"${actionClassName}\" with ${target().toString()} as a Container")
@@ -489,14 +489,16 @@ open class GuiTestCase : GuiTestBase() {
                                         foo: Class<out ComponentWithBrowseButton<out JComponent>>,
                                         timeout: Long): ComponentWithBrowseButtonFixture {
     val component = waitUntilFound(container, ComponentWithBrowseButton::class.java, timeout) {
-      component -> component.isShowing && foo.isInstance(component)
+      component ->
+      component.isShowing && foo.isInstance(component)
     }
     return ComponentWithBrowseButtonFixture(component, myRobot)
   }
 
   private fun combobox(container: Container, text: String, timeout: Long): JComboBoxFixture {
     //wait until label has appeared
-    waitUntilFound(container, Component::class.java, timeout) { component -> component.isTextComponent() && component.getComponentText() == text }
+    waitUntilFound(container, Component::class.java,
+                   timeout) { component -> component.isTextComponent() && component.getComponentText() == text }
     val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
     return JComboBoxFixture(myRobot, comboBox)
   }
@@ -536,7 +538,11 @@ open class GuiTestCase : GuiTestBase() {
       return JTextComponentFixture(myRobot, jTextField)
     }
     //wait until label has appeared
-    waitUntilFound(container, Component::class.java, timeout) { component -> component.isTextComponent() && component.getComponentText() == labelText }
+    waitUntilFound(container, Component::class.java, timeout) { component ->
+      component.isTextComponent()
+      && component.getComponentText() == labelText
+      && component.isShowing
+    }
     val jTextComponent = findBoundedComponentByText(myRobot, container, labelText!!, JTextComponent::class.java)
     return JTextComponentFixture(myRobot, jTextComponent)
   }
@@ -612,18 +618,18 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   protected fun <ComponentType : Component> waitUntilFound(container: Container?,
-                                                         componentClass: Class<ComponentType>,
-                                                         timeout: Long,
-                                                         matcher: (ComponentType) -> Boolean): ComponentType {
+                                                           componentClass: Class<ComponentType>,
+                                                           timeout: Long,
+                                                           matcher: (ComponentType) -> Boolean): ComponentType {
     return GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
       override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
     }, timeout.toFestTimeout())
   }
 
   fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
-    Pause.pause(object: Condition(condition) {
+    Pause.pause(object : Condition(condition) {
       override fun test() = testFunction()
-    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS) )
+    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
   }
 
 

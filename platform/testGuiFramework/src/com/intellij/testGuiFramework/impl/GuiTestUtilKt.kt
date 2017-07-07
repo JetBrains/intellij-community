@@ -154,7 +154,7 @@ object GuiTestUtilKt {
 
   fun findComponentByText(robot: Robot, container: Container, text: String): Component
     = robot.finder().find(container, ComponentMatcher { component ->
-    component!!.isTextComponent() && component.getComponentText() == text })
+    component!!.isTextComponent() && component.getComponentText() == text && component.isShowing })
 
   fun <BoundedComponent> findBoundedComponentByText(robot: Robot, container: Container, text: String, componentType: Class<BoundedComponent>): BoundedComponent {
     val componentWithText = findComponentByText(robot, container, text)
