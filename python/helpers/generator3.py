@@ -94,7 +94,8 @@ def is_skipped_module(path, f):
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
-            os.path.exists(os.path.join(root, d, "__init__.pyo")))
+            os.path.exists(os.path.join(root, d, "__init__.pyo")) or
+            is_valid_implicit_namespace_package_name(d))
 
 
 def walk_python_path(path):
@@ -166,7 +167,7 @@ def list_sources(paths):
 
             for root, files in walk_python_path(path):
                 for name in files:
-                    if name.endswith('.py'):
+                    if name.endswith('.py') or name.endswith('-nspkg.pth'):
                         file_path = os.path.join(root, name)
                         say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
         say('END')
