@@ -293,6 +293,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean isNullLiteral(PsiExpression qualifier) {
+    if (qualifier instanceof PsiTypeCastExpression) return isNullLiteral(((PsiTypeCastExpression)qualifier).getOperand());
     return qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null;
   }
 
