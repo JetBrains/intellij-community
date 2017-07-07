@@ -60,15 +60,7 @@ public class SaveAsTemplateAction extends AnAction {
 
     final TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(),
                                               editor.getSelectionModel().getSelectionEnd());
-    PsiElement current = file.findElementAt(selection.getStartOffset());
     int startOffset = selection.getStartOffset();
-    while (current instanceof PsiWhiteSpace) {
-      current = current.getNextSibling();
-      if (current == null) break;
-      startOffset = current.getTextRange().getStartOffset();
-    }
-
-    if (startOffset >= selection.getEndOffset()) startOffset = selection.getStartOffset();
 
     final PsiElement[] psiElements = PsiTreeUtil.collectElements(file, new PsiElementFilter() {
       @Override
@@ -137,7 +129,7 @@ public class SaveAsTemplateAction extends AnAction {
       }
     }.execute();
 
-    final TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText(), TemplateSettings.USER_GROUP_NAME);
+    TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText().trim(), TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);
 
     OffsetKey startKey = OffsetKey.create("pivot");
