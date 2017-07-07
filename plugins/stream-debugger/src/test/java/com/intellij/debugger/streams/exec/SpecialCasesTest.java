@@ -27,6 +27,10 @@ public class SpecialCasesTest extends TraceExecutionTestCase {
     doTest(false);
   }
 
+  public void testShortCircuitingAfterSorted() {
+    doTest(false);
+  }
+
   public void testParallelStream() {
     doTest(false);
   }
