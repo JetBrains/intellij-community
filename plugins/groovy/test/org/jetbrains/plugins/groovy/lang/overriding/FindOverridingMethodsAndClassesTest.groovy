@@ -15,8 +15,10 @@
  */
 
 package org.jetbrains.plugins.groovy.lang.overriding
+
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -68,5 +70,13 @@ class FindOverridingMethodsAndClassesTest extends LightCodeInsightFixtureTestCas
     myFixture.addFileToProject("a.groovy", "interface I { void foo(); }; class C { static void bar(I i) {}}")
     myFixture.addFileToProject("a.java", "class D {{  C.bar(() -> {}); }")
     assertSize(1, FunctionalExpressionSearch.search(myFixture.findClass("I")).findAll())
+  }
+
+  void "test find groovy inheritor in local scope"() {
+    def superClass = myFixture.addClass("class Super {}");
+    def file = myFixture.addFileToProject("a.groovy", "class Foo extends Super {}")
+    
+    assert ClassInheritorsSearch.search(superClass).findAll().size() == 1
+    assert ClassInheritorsSearch.search(superClass, new LocalSearchScope(file), true).findAll().size() == 1
   }
 }
