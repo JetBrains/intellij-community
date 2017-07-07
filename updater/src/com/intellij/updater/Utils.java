@@ -24,7 +24,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -56,28 +55,20 @@ public class Utils {
     return File.createTempFile("temp", null, myTempDir);
   }
 
-  private static File findUniqueName(String path) throws IOException {
-    int index = 0;
-    File myTempFile;
-    do {
-      myTempFile = new File(path + ".tmp." + index++);
+  private static File getTempDir() throws IOException {
+    if (myTempDir == null) {
+      myTempDir = Files.createTempDirectory(Paths.get(Runner.getDir(REQUIRED_FREE_SPACE)), "idea.updater.files").toFile();
+      Runner.logger().info("created working directory: " + myTempDir);
     }
-    while (myTempFile.exists());
-    return myTempFile;
+    return myTempDir;
   }
 
   public static File getTempFile(String name) throws IOException {
-    if (myTempDir == null) {
-      myTempDir = findUniqueName(Runner.getDir(REQUIRED_FREE_SPACE) + "/idea.updater.files");
-      if (!myTempDir.mkdirs()) throw new IOException("Cannot create working directory: " + myTempDir);
-      Runner.logger().info("created working directory: " + myTempDir);
-    }
-    return findUniqueName(myTempDir.getPath() + '/' + name);
+    return Files.createTempFile(getTempDir().toPath(), "temp", name).toFile();
   }
 
   public static File createTempDir() throws IOException {
-    File tempDir = getTempFile("temp");
-    if (!tempDir.mkdir()) throw new IOException("Cannot create temp directory: " + tempDir);
+    File tempDir = Files.createTempDirectory(getTempDir().toPath(), "temp").toFile();
     Runner.logger().info("created temp directory: " + tempDir.getPath());
     return tempDir;
   }
