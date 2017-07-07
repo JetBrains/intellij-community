@@ -255,4 +255,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testPromotingBytearrayToBytes() {
     doTest();
   }
+
+  // PY-25045
+  public void testUnionOfIntAndFloatShouldBeConsideredAsDividable() {
+    doTest();
+  }
 }
