@@ -59,6 +59,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 public class PushLog extends JPanel implements DataProvider {
 
@@ -348,15 +349,12 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
-    List<CommitNode> nodes = ContainerUtil.newArrayList();
-    for (DefaultMutableTreeNode node : selectedNodes) {
-      if (node instanceof RepositoryNode) {
-        nodes.addAll(getChildNodesByType(node, CommitNode.class, true));
-      }
-      else if (node instanceof CommitNode && !nodes.contains(node)) {
-        nodes.add((CommitNode)node);
-      }
-    }
+    //addAll Commit nodes from selected Repository nodes;
+    List<CommitNode> nodes = selectedNodes.stream().filter(RepositoryNode.class::isInstance)
+      .flatMap(node -> getChildNodesByType(node, CommitNode.class, true).stream()).collect(toList());
+    // add all others selected Commit nodes;
+    nodes.addAll(selectedNodes.stream().filter(node -> node instanceof CommitNode && !nodes.contains(node)).map(CommitNode.class::cast)
+                   .collect(toList()));
     return nodes;
   }
 
