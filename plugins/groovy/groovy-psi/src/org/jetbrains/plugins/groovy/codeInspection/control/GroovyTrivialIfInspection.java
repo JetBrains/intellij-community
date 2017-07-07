@@ -45,12 +45,6 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     return "Redundant 'if' statement";
   }
 
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
   @NotNull
   @Override
   public BaseInspectionVisitor buildVisitor() {

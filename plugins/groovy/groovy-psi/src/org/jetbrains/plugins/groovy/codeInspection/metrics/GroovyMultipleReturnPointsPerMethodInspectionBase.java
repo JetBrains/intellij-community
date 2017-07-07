@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -25,12 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMethodMetricInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return METHOD_METRICS;
-  }
 
   @Override
   @NotNull

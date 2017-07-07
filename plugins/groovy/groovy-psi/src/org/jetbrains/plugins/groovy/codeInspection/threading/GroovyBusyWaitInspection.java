@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.codeInspection.threading;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -27,13 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class GroovyBusyWaitInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return THREADING_ISSUES;
-  }
 
   @Override
   @NotNull
