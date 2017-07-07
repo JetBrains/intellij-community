@@ -162,7 +162,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       // but some VFS listeners receive the same events before that and ask PsiFile.isValid
       return false;
     }
-    if (myOriginalFile != null && !myOriginalFile.isValid()) {
+    if (myOriginalFile != null && myOriginalFile != this && !myOriginalFile.isValid()) {
       return false;
     }
     return !myInvalidated;
