@@ -33,11 +33,7 @@ public class RightMarginEditorCustomization extends SimpleEditorCustomization {
 
   @Override
   public void customize(@NotNull EditorEx editor) {
-    if (isEnabled()) {
-      editor.getSettings().setRightMarginShown(true);
-      editor.getSettings().setRightMargin(getRightMarginColumns());
-    } else {
-      editor.getSettings().setRightMarginShown(false);
-    }
+    editor.getSettings().setRightMarginShown(isEnabled());
+    editor.getSettings().setRightMargin(getRightMarginColumns());
   }
 }
