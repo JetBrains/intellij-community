@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -60,6 +61,68 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     }
     finally {
       UISettings.getInstance().setEditorTabLimit(limit);
+    }
+  }
+
+  public void testSingleTabLimit() throws Exception {
+    int limit = UISettings.getInstance().getEditorTabLimit();
+    try {
+      UISettings.getInstance().setEditorTabLimit(1);
+      openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
+      assertOpenFiles("3.txt");
+
+      myManager.closeAllFiles();
+
+      openFiles(STRING);
+      // note that foo.xml is pinned
+      assertOpenFiles("foo.xml");
+      myManager.openFile(getFile("/src/3.txt"), true);
+      assertOpenFiles("3.txt", "foo.xml");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
+
+      myManager.closeAllFiles();
+
+      myManager.openFile(getFile("/src/3.txt"), true);
+      myManager.openFile(getFile("/src/foo.xml"), true);
+      assertOpenFiles("foo.xml");
+      callTrimToSize();
+      assertOpenFiles("foo.xml");
+    }
+    finally {
+      UISettings.getInstance().setEditorTabLimit(limit);
+    }
+  }
+
+  public void testReuseNotModifiedTabs() {
+    int limit = UISettings.getInstance().getEditorTabLimit();
+    boolean reuse = UISettings.getInstance().getReuseNotModifiedTabs();
+    try {
+      UISettings.getInstance().setEditorTabLimit(2);
+      UISettings.getInstance().setReuseNotModifiedTabs(false);
+
+      myManager.openFile(getFile("/src/3.txt"), true);
+      myManager.openFile(getFile("/src/foo.xml"), true);
+      assertOpenFiles("3.txt","foo.xml");
+      UISettings.getInstance().setEditorTabLimit(1);
+      callTrimToSize();
+      assertOpenFiles("foo.xml");
+      UISettings.getInstance().setEditorTabLimit(2);
+
+      myManager.closeAllFiles();
+
+      UISettings.getInstance().setReuseNotModifiedTabs(true);
+      myManager.openFile(getFile("/src/3.txt"), true);
+      assertOpenFiles("3.txt");
+      myManager.openFile(getFile("/src/foo.xml"), true);
+      assertOpenFiles("foo.xml");
+    } finally {
+      UISettings.getInstance().setEditorTabLimit(limit);
+      UISettings.getInstance().setReuseNotModifiedTabs(reuse);
+    }
+  }
+
+  private void callTrimToSize() {
+    for (EditorsSplitters each: myManager.getAllSplitters()) {
+      each.trimToSize(UISettings.getInstance().getEditorTabLimit());
     }
   }
 

@@ -382,7 +382,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void trimToSize(final int editor_tab_limit) {
     for (final EditorWindow window : myWindows) {
-      window.trimToSize(editor_tab_limit, null, true);
+      window.trimToSize(editor_tab_limit, window.getSelectedFile(), true);
     }
   }
 
