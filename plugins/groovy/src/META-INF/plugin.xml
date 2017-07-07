@@ -979,10 +979,6 @@
                      groupName="Potentially confusing code constructs"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyConditionalInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GrFieldAlreadyDefined"
-                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="field.already.defined" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrFieldAlreadyDefinedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingGetters"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
