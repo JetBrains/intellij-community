@@ -218,6 +218,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
         String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile));
         String content = (!configurationPart.isEmpty() ? configurationPart + lineSeparator : "") +
                          (!existingText.isEmpty() ? existingText + lineSeparator : "") +
+                         lineSeparator +
                          StringUtil.convertLineSeparators(buildScriptDataBuilder.buildMainPart(), lineSeparator);
         VfsUtil.saveText(buildScriptFile, content);
       }
