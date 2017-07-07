@@ -20,6 +20,8 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -241,7 +243,17 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     throws InvalidSdkException, IOException {
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
-    return PyTestSdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
+    final Sdk sdk = PyTestSdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
+    // We use gradle script to create environment. This script utilizes Conda.
+    // Conda supports 2 types of package installation: conda native and pip. We use pip.
+    // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)
+    // So we need to either fix gradle (PythonEnvsPlugin.groovy on github) or use helper instead of "conda list" to get all packages
+    // We do the latter.
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+    if (packageManager instanceof PyCondaPackageManagerImpl) {
+      ((PyCondaPackageManagerImpl)packageManager).useConda = false;
+    }
+    return sdk;
   }
 
 
