@@ -776,6 +776,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void processReferenceNode(final Element element, final PluginId pluginId) {
     final AnAction action = processReferenceElement(element, pluginId);
+    if (action == null) return;
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
