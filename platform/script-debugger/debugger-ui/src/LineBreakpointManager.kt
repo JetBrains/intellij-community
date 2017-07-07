@@ -41,7 +41,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
 
   open fun isAnyFirstLineBreakpoint(breakpoint: Breakpoint) = false
 
-  private val breakpointResolvedListenerAdded = ContainerUtil.newConcurrentSet<Vm>()
+  private val breakpointResolvedListenerAdded = ContainerUtil.createConcurrentWeakMap<Vm, Unit>()
 
   fun setBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>) {
     val target = synchronized (lock) { IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.get(breakpoint) }
@@ -138,7 +138,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
   }
 
   protected fun doSetBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean, promiseRef: Ref<Promise<out Breakpoint>>? = null): Breakpoint? {
-    if (breakpointResolvedListenerAdded.add(vm)) {
+    if (breakpointResolvedListenerAdded.put(vm, kotlin.Unit) == null) {
       vm.breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
           synchronized (lock) { vmToIdeBreakpoints[breakpoint] }?.let {
