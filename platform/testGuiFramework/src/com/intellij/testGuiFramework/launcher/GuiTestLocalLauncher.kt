@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
@@ -24,6 +25,7 @@ import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -49,6 +51,9 @@ object GuiTestLocalLauncher {
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher")
 
   var process: Process? = null
+
+  var cachedGuiTestFrameworkModule: JpsModule? = null
+  var cachedModulesList: MutableList<JpsModule> = ArrayList<JpsModule>()
 
   fun killProcessIfPossible() {
     try {
@@ -102,7 +107,8 @@ object GuiTestLocalLauncher {
       if (process!!.exitValue() != 1) {
         println("${ide.ideType} process completed successfully")
         LOG.info("${ide.ideType} process completed successfully")
-      } else {
+      }
+      else {
         System.err.println("${ide.ideType} process execution error:")
         val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
         System.err.println(collectedError)
@@ -158,7 +164,6 @@ object GuiTestLocalLauncher {
       .plus(path) //path to exec
       .plus("--args")
       .plus(GuiTestStarter.COMMAND_NAME)
-      .plus("-Didea.additional.classpath=/Users/jetbrains/IdeaProjects/idea-ultimate/out/classes/test/testGuiFramework/")
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
     LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
@@ -166,9 +171,9 @@ object GuiTestLocalLauncher {
 
 
   private fun getDefaultVmOptions(ide: Ide,
-                                  configPath: String = "./config",
-                                  systemPath: String = "./system",
-                                  bootClasspath: String = "./out/classes/production/boot",
+                                  configPath: String = "../config",
+                                  systemPath: String = "../system",
+                                  bootClasspath: String = "../out/classes/production/boot",
                                   encoding: String = "UTF-8",
                                   isInternal: Boolean = true,
                                   useMenuScreenBar: Boolean = true,
@@ -230,12 +235,14 @@ object GuiTestLocalLauncher {
    * return union of classpaths for @moduleName and testGuiFramework modules
    */
   private fun getExtendedClasspath(moduleName: String): MutableSet<File> {
-    val modules = getModulesList()
+    // here we trying to analyze output path for project from classloader path and from modules classpath.
+    // If they didn't match than change it to output path from classpath
+    changeProjectOutputIfNeeded()
     val resultSet = LinkedHashSet<File>()
-    val module = modules.module(moduleName)!!
+    val module = getModulesList().module(moduleName)!!
     resultSet.addAll(module.getClasspath())
-    val testGuiFrameworkModule = modules.module("testGuiFramework")!!
-    resultSet.addAll(testGuiFrameworkModule.getClasspath())
+    val testGuiFrameworkModule = getTestGuiFrameworkModule()
+    resultSet.addAll(testGuiFrameworkModule!!.getClasspath())
     return resultSet
   }
 
@@ -245,18 +252,60 @@ object GuiTestLocalLauncher {
   private fun JpsModule.getClasspath(): MutableCollection<File> =
     JpsJavaExtensionService.dependencies(this).productionOnly().runtimeOnly().recursively().classes().roots
 
+
+  private fun getClassloaderOutputDir(): File? {
+    val pathFromClassloader = PathManager.getJarPathForClass(GuiTestLocalLauncher::class.java)
+    return File(pathFromClassloader).parentFile.parentFile
+  }
+
+  private fun getModuleOutputDir(): File {
+    val testGuiFrameworkModule = getTestGuiFrameworkModule()
+    return testGuiFrameworkModule!!.getClasspath().filter { it.path.contains(testGuiFrameworkModule.name) }.first().parentFile.parentFile
+  }
+
+  private fun getRelativeClassloaderOutputPath(): String? =
+    FileUtilRt.getRelativePath(File(PathManager.getHomePath()), getClassloaderOutputDir())
+
+  private fun getRelativeModuleOutputPath(): String? =
+    FileUtilRt.getRelativePath(File(PathManager.getHomePath()), getModuleOutputDir())
+
+  /**
+   * @return true if classloader's output path is the same to module's output path (and also same to project)
+   */
+  private fun isClassloaderOutputSame(): Boolean =
+    (getRelativeClassloaderOutputPath() == getRelativeModuleOutputPath())
+
+
+  private fun changeProjectOutputIfNeeded() {
+    if (!isClassloaderOutputSame()) {
+      val project = getProject()
+      val projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project)
+      projectExtension!!.outputUrl = getClassloaderOutputDir()!!.toURI().toURL().toString()
+    }
+  }
+
   private fun getModulesList(): MutableList<JpsModule> {
+    if (cachedModulesList.isNotEmpty()) return cachedModulesList
     val home = PathManager.getHomePath()
     val model = JpsElementFactory.getInstance().createModel()
 
     val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
     JpsProjectLoader.loadProject(model.project, pathVariables, home)
 
-    return model.project.modules
+    cachedModulesList.addAll(model.project.modules)
+    return cachedModulesList
   }
+
+  private fun getTestGuiFrameworkModule(): JpsModule? {
+    if (cachedGuiTestFrameworkModule != null) return cachedGuiTestFrameworkModule
+    cachedGuiTestFrameworkModule = getModulesList().module("testGuiFramework")
+    return cachedGuiTestFrameworkModule
+  }
+
+  private fun getProject(): JpsProject =
+    getTestGuiFrameworkModule()!!.project
 }
 
 fun main(args: Array<String>) {
   GuiTestLocalLauncher.firstStartIdeLocally(Ide(ideType = IdeType.WEBSTORM, version = 0, build = 0))
-//  GuiTestLocalLauncher.firstStartIdeByPath("/Users/jetbrains/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/172.2300/IntelliJ IDEA 2017.2 EAP.app")
 }

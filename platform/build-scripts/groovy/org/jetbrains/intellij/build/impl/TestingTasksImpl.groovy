@@ -147,7 +147,11 @@ class TestingTasksImpl extends TestingTasks {
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
     }
-    runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
+    if (isBootstrapSuiteDefault())
+      runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
+     else
+      //run other suites instead of BootstrapTests
+      runJUnitTask(jvmArgs, systemProperties, testsClasspath)
   }
 
   @CompileDynamic
@@ -170,7 +174,7 @@ class TestingTasksImpl extends TestingTasks {
         }
       }
 
-      test(name: 'com.intellij.tests.BootstrapTests')
+      test(name: options.bootstrapSuite)
     }
   }
   
@@ -198,5 +202,9 @@ class TestingTasksImpl extends TestingTasks {
     pathJUnit.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-junit4.jar"))
     ant.project.addReference(junitTaskLoaderRef, new AntClassLoader(ant.project.getClass().getClassLoader(), ant.project, pathJUnit))
     ant.taskdef(name: "junit", classname: "org.apache.tools.ant.taskdefs.optional.junit.JUnitTask", loaderRef: junitTaskLoaderRef)
+  }
+
+  private boolean isBootstrapSuiteDefault() {
+    return options.bootstrapSuite == TestingOptions.BOOTSTRAP_SUITE_DEFAULT
   }
 }
