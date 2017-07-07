@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,5 +41,9 @@ class AddReturnTypeFixTest extends GrIntentionTestCase {
 
   void testReturn() {
     doTextTest('def foo() {re<caret>turn "2"}', 'def String foo() {re<caret>turn "2"}')
+  }
+
+  void 'test at the end of header range'() {
+    doTextTest 'def f5()<caret> { def d = 10 }', 'def void f5() { def d = 10 }'
   }
 }
