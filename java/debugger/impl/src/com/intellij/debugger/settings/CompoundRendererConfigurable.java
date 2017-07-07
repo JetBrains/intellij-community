@@ -367,6 +367,7 @@ class CompoundRendererConfigurable extends JPanel {
     if (myRenderer.isBaseRenderer(labelRenderer)) {
       myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myRbDefaultLabel.setSelected(true);
+      myOnDemandCheckBox.setSelected(false);
     }
     else {
       myRbExpressionLabel.setSelected(true);
