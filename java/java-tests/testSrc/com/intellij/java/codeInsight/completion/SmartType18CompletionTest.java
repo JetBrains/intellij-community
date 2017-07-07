@@ -255,4 +255,7 @@ public void testConvertToObjectStream() {
     myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
   }
 
+  public void testNewHashMapTypeArguments() { doTest(false); }
+  public void testNewMapTypeArguments() { doTest(false); }
+
 }

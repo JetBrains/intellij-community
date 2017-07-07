@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.AllClassesGetter;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -340,11 +337,12 @@ public class CodeInsightUtil {
     PsiManager manager = context.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper resolveHelper = facade.getResolveHelper();
+    PsiElementFactory factory = facade.getElementFactory();
 
     return inheritor -> {
       ProgressManager.checkCanceled();
 
-      if (!facade.getResolveHelper().isAccessible(inheritor, context, null)) {
+      if (!resolveHelper.isAccessible(inheritor, context, null)) {
         return true;
       }
 
@@ -357,57 +355,71 @@ public class CodeInsightUtil {
 
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
       if (superSubstitutor == null) return true;
-      if (getRawSubtypes) {
-        result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-        return true;
-      }
 
-      PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
-      for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
-        for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
-          final PsiType substituted = superSubstitutor.substitute(baseParameter);
-          PsiClass inheritorCandidateParameter = PsiUtil.resolveClassInType(substituted);
-          if (inheritorCandidateParameter instanceof PsiTypeParameter &&
-              ((PsiTypeParameter)inheritorCandidateParameter).getOwner() == inheritor &&
-               inheritorCandidateParameter != inheritorParameter) {
-            continue;
-          }
-          PsiType arg = baseSubstitutor.substitute(baseParameter);
-          if (arg instanceof PsiWildcardType) {
-            PsiType bound = ((PsiWildcardType)arg).getBound();
-            arg = bound != null ? bound : ((PsiWildcardType)arg).getExtendsBound();
-          }
-          PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
-                                                                               substituted,
-                                                                               arg,
-                                                                               true,
-                                                                               PsiUtil.getLanguageLevel(context));
-          if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
-          if (substitution == null) {
-            result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-            return true;
-          }
-          inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
-          break;
-        }
-      }
-
-      PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
+      List<PsiType> typeArgs = getRawSubtypes ? null : getExpectedTypeArgs(context, inheritor, Arrays.asList(inheritor.getTypeParameters()), baseType);
+      PsiClassType inheritorType = typeArgs == null || typeArgs.contains(null)
+                                   ? factory.createType(inheritor, factory.createRawSubstitutor(inheritor))
+                                   : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
+      PsiType toAdd = addArrayDimensions(arrayDim, inheritorType);
       if (baseType.isAssignableFrom(toAdd)) {
         result.consume(toAdd);
       }
+
       return true;
     };
   }
 
-  private static PsiType createType(PsiClass cls,
-                             PsiSubstitutor currentSubstitutor,
-                             int arrayDim) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(cls.getProject()).getElementFactory();
-    PsiType newType = elementFactory.createType(cls, currentSubstitutor);
+  private static PsiType addArrayDimensions(int arrayDim, PsiType newType) {
     for(int i = 0; i < arrayDim; i++){
       newType = newType.createArrayType();
     }
     return newType;
+  }
+
+  @NotNull
+  public static List<PsiType> getExpectedTypeArgs(PsiElement context,
+                                                  PsiTypeParameterListOwner paramOwner,
+                                                  Iterable<PsiTypeParameter> typeParams, PsiClassType expectedType) {
+    if (paramOwner instanceof PsiClass) {
+      PsiClassType.ClassResolveResult resolve = expectedType.resolveGenerics();
+      PsiClass expectedClass = resolve.getElement();
+
+      if (!InheritanceUtil.isInheritorOrSelf((PsiClass)paramOwner, expectedClass, true)) {
+        return ContainerUtil.map(typeParams, p -> (PsiType)null);
+      }
+
+      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(expectedClass, (PsiClass)paramOwner, PsiSubstitutor.EMPTY);
+      assert substitutor != null;
+
+      return ContainerUtil.map(typeParams, p -> getExpectedTypeArg(context, resolve, substitutor, p));
+    }
+
+    PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor((PsiMethod)paramOwner, expectedType);
+    return ContainerUtil.map(typeParams, substitutor::substitute);
+  }
+
+  @Nullable
+  private static PsiType getExpectedTypeArg(PsiElement context,
+                                            PsiClassType.ClassResolveResult expectedType,
+                                            PsiSubstitutor superClassSubstitutor, PsiTypeParameter typeParam) {
+    PsiClass expectedClass = expectedType.getElement();
+    assert expectedClass != null;
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(expectedClass)) {
+      PsiType paramSubstitution = superClassSubstitutor.substitute(parameter);
+      PsiClass inheritorCandidateParameter = PsiUtil.resolveClassInType(paramSubstitution);
+      if (inheritorCandidateParameter instanceof PsiTypeParameter &&
+          ((PsiTypeParameter)inheritorCandidateParameter).getOwner() == typeParam.getOwner() &&
+          inheritorCandidateParameter != typeParam) {
+        continue;
+      }
+
+      PsiType argSubstitution = expectedType.getSubstitutor().substitute(parameter);
+      PsiType substitution = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper()
+        .getSubstitutionForTypeParameter(typeParam, paramSubstitution, argSubstitution, false, PsiUtil.getLanguageLevel(context));
+      if (substitution != null && substitution != PsiType.NULL) {
+        return substitution;
+      }
+    }
+    return null;
   }
 }

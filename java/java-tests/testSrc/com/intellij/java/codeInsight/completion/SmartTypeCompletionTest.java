@@ -1262,4 +1262,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
   }
 
+  public void testNewHashMapTypeArguments() { doTest(); }
+  public void testNewMapTypeArguments() { doTest(); }
+
 }
