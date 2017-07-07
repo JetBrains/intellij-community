@@ -115,11 +115,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         i == JavaDocElementType.DOC_METHOD_OR_FIELD_REF ||
         i == JavaDocElementType.DOC_TAG_VALUE_ELEMENT ||
         i == JavaElementType.REFERENCE_PARAMETER_LIST ||
-        i == JavaElementType.ANNOTATION) {
-      if (isQualified()) {
-        return CLASS_OR_PACKAGE_NAME_KIND;
-      }
-      return CLASS_NAME_KIND;
+        i == JavaElementType.ANNOTATION ||
+        i == JavaElementType.USES_STATEMENT ||
+        i == JavaElementType.PROVIDES_STATEMENT ||
+        i == JavaElementType.PROVIDES_WITH_LIST) {
+      return isQualified() ? CLASS_OR_PACKAGE_NAME_KIND : CLASS_NAME_KIND;
     }
     if (i == JavaElementType.NEW_EXPRESSION) {
       final ASTNode qualifier = treeParent.findChildByRole(ChildRole.QUALIFIER);
@@ -175,9 +175,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (isCodeFragmentType(i)) {
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
-    }
-    if (i == JavaElementType.USES_STATEMENT || i == JavaElementType.PROVIDES_STATEMENT || i == JavaElementType.PROVIDES_WITH_LIST) {
-      return CLASS_NAME_KIND;
     }
 
     diagnoseUnknownParent();
