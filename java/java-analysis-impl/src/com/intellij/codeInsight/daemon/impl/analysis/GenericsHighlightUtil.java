@@ -265,8 +265,8 @@ public class GenericsHighlightUtil {
     }
 
     final PsiClassType[] bounds = classParameter.getSuperTypes();
-    for (PsiClassType type1 : bounds) {
-      PsiType bound = substitutor.substitute(type1);
+    for (PsiType bound : bounds) {
+      bound = substitutor.substitute(bound);
       if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && GenericsUtil.checkNotInBounds(type, bound, referenceParameterList)) {
         PsiClass boundClass = bound instanceof PsiClassType ? ((PsiClassType)bound).resolve() : null;
 
