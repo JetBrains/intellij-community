@@ -86,7 +86,7 @@ public class RestTitle extends RestElement {
   public String getUnderline() {
     final String text = getNode().getText().trim();
     if (text.length() < 2) return null;
-    final char adorn = text.charAt(text.length()-2);
+    final char adorn = text.charAt(text.length()-1);
     final CharacterIterator it = new StringCharacterIterator(text);
     int start = 0;
     for (char ch = it.last(); ch != CharacterIterator.DONE; ch = it.previous()) {
