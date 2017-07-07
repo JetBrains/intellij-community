@@ -44,13 +44,14 @@ class CompilationTasksImpl extends CompilationTasks {
     ensureKotlinCompilerAddedToClassPath()
 
     context.messages.progress("Compiling project")
+    JpsCompilationRunner runner = new JpsCompilationRunner(context)
     try {
       if (moduleNames == null) {
         if (includingTestsInModules == null) {
-          context.projectBuilder.buildAll()
+          runner.buildAll()
         }
         else {
-          context.projectBuilder.buildProduction()
+          runner.buildProduction()
         }
       }
       else {
@@ -58,12 +59,12 @@ class CompilationTasksImpl extends CompilationTasks {
         if (!invalidModules.empty) {
           context.messages.warning("The following modules won't be compiled: $invalidModules")
         }
-        context.projectBuilder.buildModules(moduleNames.collect { context.findModule(it) }.findAll { it != null })
+        runner.buildModules(moduleNames.collect { context.findModule(it) }.findAll { it != null })
       }
 
       if (includingTestsInModules != null) {
         for (String moduleName : includingTestsInModules) {
-          context.projectBuilder.makeModuleTests(context.findModule(moduleName))
+          runner.buildModuleTests(context.findModule(moduleName))
         }
       }
     }

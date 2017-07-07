@@ -22,7 +22,9 @@ import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.gant.JpsGantTool
+import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
+import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
@@ -46,7 +48,9 @@ class CompilationContextImpl implements CompilationContext {
   final BuildPaths paths
   final JpsProject project
   final JpsGlobal global
+  final JpsModel projectModel
   final JpsGantProjectBuilder projectBuilder
+  JpsCompilationData compilationData
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
@@ -54,12 +58,11 @@ class CompilationContextImpl implements CompilationContext {
     GantBinding binding = (GantBinding) gantScript.binding
     binding.includeTool << JpsGantTool
     //noinspection GroovyAssignabilityCheck
-    return create(binding.ant, binding.projectBuilder, binding.project, binding.global, communityHome, projectHome,
+    return create(binding.ant, binding.projectBuilder, communityHome, projectHome,
                    { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
    }
 
-  static CompilationContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                       String communityHome, String projectHome,
+  static CompilationContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     def messages = BuildMessagesImpl.create(projectBuilder, ant.project)
     communityHome = toCanonicalPath(communityHome)
@@ -76,28 +79,22 @@ class CompilationContextImpl implements CompilationContext {
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
 
-    if (project.modules.isEmpty()) {
-      loadProject(projectHome, jdk8Home, kotlinHome, project, global, messages)
-    }
-    else {
-      //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
-      messages.info("Skipping loading project because it's already loaded")
-    }
-
-    def context = new CompilationContextImpl(ant, gradle, projectBuilder, project, global, communityHome, projectHome, jdk8Home, kotlinHome, messages,
+    def model = loadProject(projectHome, jdk8Home, kotlinHome, messages)
+    def context = new CompilationContextImpl(ant, gradle, projectBuilder, model, communityHome, projectHome, jdk8Home, kotlinHome, messages,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     return context
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsGantProjectBuilder projectBuilder, JpsProject project, 
-                                 JpsGlobal global, String communityHome, String projectHome, String jdk8Home, String kotlinHome, 
+  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsGantProjectBuilder projectBuilder, JpsModel model,
+                                 String communityHome, String projectHome, String jdk8Home, String kotlinHome,
                                  BuildMessages messages, BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, 
                                  BuildOptions options) {
     this.ant = ant
     this.gradle = gradle
-    this.project = project
-    this.global = global
+    this.projectModel = model
+    this.project = model.project
+    this.global = model.global
     this.options = options
     this.projectBuilder = projectBuilder
     this.messages = messages
@@ -107,20 +104,21 @@ class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, gradle, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome, 
+    return new CompilationContextImpl(ant, gradle, projectBuilder, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       paths.kotlinHome, messages, buildOutputRootEvaluator, options)
   }
 
-  private static void loadProject(String projectHome, String jdkHome, String kotlinHome, JpsProject project, JpsGlobal global, 
-                                  BuildMessages messages) {
-    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
+  private static JpsModel loadProject(String projectHome, String jdkHome, String kotlinHome, BuildMessages messages) {
+    def model = JpsElementFactory.instance.createModel()
+    JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global).addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
 
-    JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
-    JdkUtils.defineJdk(global, "1.8", jdkHome)
+    JdkUtils.defineJdk(model.global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
+    JdkUtils.defineJdk(model.global, "1.8", jdkHome)
 
-    def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global)
-    JpsProjectLoader.loadProject(project, pathVariables, projectHome)
-    messages.info("Loaded project $projectHome: ${project.modules.size()} modules, ${project.libraryCollection.libraries.size()} libraries")
+    def pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+    JpsProjectLoader.loadProject(model.project, pathVariables, projectHome)
+    messages.info("Loaded project $projectHome: ${model.project.modules.size()} modules, ${model.project.libraryCollection.libraries.size()} libraries")
+    model
   }
 
   static boolean dependenciesInstalled
@@ -133,12 +131,11 @@ class CompilationContextImpl implements CompilationContext {
 
   void prepareForBuild() {
     checkCompilationOptions()
-    projectBuilder.buildIncrementally = options.incrementalCompilation
     def dataDirName = options.incrementalCompilation ? ".jps-build-data-incremental" : ".jps-build-data"
-    projectBuilder.dataStorageRoot = new File(paths.buildOutputRoot, dataDirName)
     def logDir = new File(paths.buildOutputRoot, "log")
     FileUtil.delete(logDir)
-    projectBuilder.setupAdditionalLogging(new File("$logDir/compilation.log"), System.getProperty("intellij.build.debug.logging.categories", ""))
+    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
+                                             System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
     def classesDirName = "classes"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
@@ -152,7 +149,7 @@ class CompilationContextImpl implements CompilationContext {
       outputDirectoriesToKeep.add(classesDirName)
     }
     if (!options.useCompiledClassesFromProjectOutput) {
-      projectBuilder.targetFolder = classesOutput
+      projectOutputDirectory = classesOutput
     }
     else {
       def outputDir = getProjectOutputDirectory()
@@ -162,12 +159,26 @@ class CompilationContextImpl implements CompilationContext {
     }
 
     suppressWarnings(project)
-    projectBuilder.exportModuleOutputProperties()
+    exportModuleOutputProperties()
     cleanOutput(outputDirectoriesToKeep)
   }
 
   File getProjectOutputDirectory() {
-    JpsPathUtil.urlToFile(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl)
+    JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)
+  }
+
+  void setProjectOutputDirectory(String outputDirectory) {
+    String url = "file://${FileUtil.toSystemIndependentName(outputDirectory)}"
+    JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl = url
+  }
+
+
+  void exportModuleOutputProperties() {
+    for (JpsModule module : project.modules) {
+      for (boolean test : [true, false]) {
+        ant.project.setProperty("module.${module.name}.output.${test ? "test" : "main"}", getOutputPath(module, test))
+      }
+    }
   }
 
   void cleanOutput(List<String> outputDirectoriesToKeep) {

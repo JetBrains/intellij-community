@@ -43,7 +43,6 @@ class IdeaCommunityBuilder {
   }
 
   void buildIntelliJCore() {
-    buildContext.projectBuilder.targetFolder = buildContext.options.outputRootPath
     def builder = new IntelliJCoreArtifactsBuilder(buildContext)
     builder.compileModules()
     builder.layoutIntelliJCore()

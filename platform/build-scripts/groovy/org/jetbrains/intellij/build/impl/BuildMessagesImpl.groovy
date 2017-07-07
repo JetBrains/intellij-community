@@ -100,6 +100,11 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
+  void compilationError(String compilerName, String message) {
+    processMessage(new LogMessage(LogMessage.Kind.COMPILATION_ERROR, "$compilerName:$message"))
+  }
+
+  @Override
   void progress(String message) {
     if (parentInstance != null) {
       //progress messages should be shown immediately, there are no problems with that since they aren't organized into groups
@@ -124,6 +129,11 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   void artifactBuild(String relativeArtifactPath) {
     processMessage(new LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
+  }
+
+  @Override
+  void reportStatisticValue(String key, String value) {
+    processMessage(new LogMessage(LogMessage.Kind.STATISTICS, "$key=$value"))
   }
 
   void processMessage(LogMessage message) {

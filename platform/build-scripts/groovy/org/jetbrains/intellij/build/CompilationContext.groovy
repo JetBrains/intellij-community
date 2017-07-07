@@ -16,7 +16,9 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
+import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -31,7 +33,14 @@ interface CompilationContext {
   BuildMessages getMessages()
   BuildPaths getPaths()
   JpsProject getProject()
+  JpsModel getProjectModel()
+
+  /**
+   * @deprecated use {@link CompilationTasks} instead
+   */
   JpsGantProjectBuilder getProjectBuilder()
+
+  JpsCompilationData getCompilationData()
 
   JpsModule findRequiredModule(String name)
 

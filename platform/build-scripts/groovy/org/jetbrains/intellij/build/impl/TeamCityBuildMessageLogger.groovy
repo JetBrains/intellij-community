@@ -60,6 +60,20 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
       case LogMessage.Kind.ARTIFACT_BUILT:
         printTeamCityMessage("publishArtifacts", false, "'${escape(message.text)}'")
         break
+      case LogMessage.Kind.STATISTICS:
+        int index = message.text.indexOf('=')
+        String key = escape(message.text.substring(0, index))
+        String value = escape(message.text.substring(index + 1))
+        printTeamCityMessage("buildStatisticValue", false, "key='$key' value='$value'")
+        break
+      case LogMessage.Kind.COMPILATION_ERROR:
+        int index = message.text.indexOf(':')
+        String compiler = escape(message.text.substring(0, index))
+        String messageText = escape(message.text.substring(index + 1))
+        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']");
+        printTeamCityMessage("message", false, "text='$messageText' status='ERROR']");
+        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
+        break
     }
   }
 
