@@ -296,7 +296,6 @@ public class GitLogProvider implements VcsLogProvider {
     Set<VcsRef> refs = ContainerUtil.newHashSet();
     Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
-
       DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk)));
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
@@ -336,13 +335,13 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast) throws VcsException {
     if (!isRepositoryReady(root)) {
       return;
     }
 
-
-        GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, fast);
   }
 
   @NotNull

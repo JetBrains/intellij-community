@@ -136,6 +136,14 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public void readFullDetails(@NotNull VirtualFile root,
+                              @NotNull List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast) throws VcsException {
+    throw new UnsupportedOperationException();
+  }
+
   private void assertRoot(@NotNull VirtualFile root) {
     assertEquals("Requested data for unknown root", myRoot, root);
   }
