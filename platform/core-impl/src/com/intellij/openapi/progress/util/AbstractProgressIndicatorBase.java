@@ -131,17 +131,17 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void checkCanceled() {
     if (isCanceled() && isCancelable()) {
-      throw new ProcessCanceledException(getDisposeTrace());
+      throw new ProcessCanceledException(getCancellationTrace());
     }
     if (CoreProgressManager.runCheckCanceledHooks(this)) {
       if (isCanceled() && isCancelable()) {
-        throw new ProcessCanceledException(getDisposeTrace());
+        throw new ProcessCanceledException(getCancellationTrace());
       }
     }
   }
 
   @Nullable
-  private Throwable getDisposeTrace() {
+  protected Throwable getCancellationTrace() {
     if (this instanceof Disposable) {
       return ObjectUtils.tryCast(Disposer.getTree().getDisposalInfo((Disposable)this), Throwable.class);
     }
