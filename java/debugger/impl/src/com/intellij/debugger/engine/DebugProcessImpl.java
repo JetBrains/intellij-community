@@ -1018,8 +1018,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         try {
           try {
             if (LOG.isDebugEnabled()) {
-              final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
-              virtualMachineProxy.logThreads();
+              // Android Studio: This causes ConcurrentModificationException in testing the native debugger.
+              // See https://youtrack.jetbrains.com/issue/IDEA-175529
+              //final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
+              //virtualMachineProxy.logThreads();
               LOG.debug("Invoke in " + thread.name());
               assertThreadSuspended(thread, context);
             }
