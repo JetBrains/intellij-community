@@ -23,6 +23,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -522,6 +523,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
       }
     }, myFixture.getTestRootDisposable());
     doTest();
+  }
+
+  public void testNoNonSensicalFixesOnCastedNull() {
+    doTest();
+    assertEmpty(ContainerUtil.findAll(myFixture.getAvailableIntentions(), i -> i.getText().contains("null")));
   }
 
 }
