@@ -133,6 +133,10 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     }
   }
 
+  /**
+   * @return packages installed using 'conda' manager only.
+   * Use 'useConda' flag to retrieve 'pip' packages
+   */
   @NotNull
   @Override
   protected List<PyPackage> collectPackages() throws ExecutionException {
