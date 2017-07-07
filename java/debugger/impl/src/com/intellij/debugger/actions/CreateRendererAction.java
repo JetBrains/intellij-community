@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Type;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,11 @@ public class CreateRendererAction extends AnAction {
             };
           SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
           if (name != null) {
-            NodeRenderer renderer = NodeRendererSettings.getInstance().createCompoundTypeRenderer(name, name, null, null);
+            NodeRenderer renderer = NodeRendererSettings.getInstance().createCompoundTypeRenderer(
+              StringUtil.getShortName(name),
+              name,
+              null,
+              null);
             renderer.setEnabled(true);
             ui.addRenderer(renderer);
           }
