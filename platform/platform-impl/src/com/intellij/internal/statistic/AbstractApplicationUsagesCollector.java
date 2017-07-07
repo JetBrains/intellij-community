@@ -70,7 +70,11 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         }
       }
     }
+    return toUsageDescriptors(result);
+  }
 
+  @NotNull
+  private static Set<UsageDescriptor> toUsageDescriptors(@NotNull ObjectIntHashMap<String> result) {
     if (result.isEmpty()){
       return Collections.emptySet();
     }
@@ -84,6 +88,29 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         }
       });
       return descriptors;
+    }
+  }
+
+  @NotNull
+  public static Set<UsageDescriptor> merge(@NotNull Set<UsageDescriptor> first, @NotNull Set<UsageDescriptor> second) {
+    if (first.isEmpty()) {
+      return second;
+    }
+
+    if (second.isEmpty()) {
+      return first;
+    }
+
+    final ObjectIntHashMap<String> merged = new ObjectIntHashMap<>();
+    addAll(merged, first);
+    addAll(merged, second);
+    return toUsageDescriptors(merged);
+  }
+
+  private static void addAll(@NotNull ObjectIntHashMap<String> result, @NotNull Set<UsageDescriptor> usages) {
+    for (UsageDescriptor usage : usages) {
+      final String key = usage.getKey();
+      result.put(key, result.get(key, 0) + usage.getValue());
     }
   }
 
