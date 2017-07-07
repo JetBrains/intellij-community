@@ -50,6 +50,11 @@ public class IdentityResolver implements ValuesOrderResolver {
       final Object value = TraceUtil.extractKey(element);
 
       final List<TraceElement> elements = grouped.get(value);
+      if (elements == null || elements.isEmpty()) {
+        direct.put(element, Collections.emptyList());
+        continue;
+      }
+
       final TraceElement afterItem = elements.get(0);
 
       direct.put(element, Collections.singletonList(afterItem));
