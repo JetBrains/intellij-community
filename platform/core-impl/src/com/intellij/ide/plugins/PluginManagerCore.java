@@ -157,14 +157,14 @@ public class PluginManagerCore {
   public static List<String> getDisabledPlugins() {
     if (ourDisabledPlugins == null) {
       ourDisabledPlugins = new ArrayList<>();
+
       if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
         loadDisabledPlugins(PathManager.getConfigPath(), ourDisabledPlugins);
+      }
 
-        // Android Studio: we do not bundle the Maven plugin, but include it anyway when running from the IDE.
-        // Currently the Kotlin plugin fails to load due to broken dependencies if the Maven support is enabled.
-        if (ApplicationManager.getApplication().isInternal() && PlatformUtils.isAndroidStudio()) {
-          ourDisabledPlugins.add("org.jetbrains.idea.maven");
-        }
+      // Android Studio: we do not bundle the Maven plugin, and its presence on the classpath prevents the Kotlin plugin from loading.
+      if (PlatformUtils.isAndroidStudio()) {
+        ourDisabledPlugins.add("org.jetbrains.idea.maven");
       }
     }
     return ourDisabledPlugins;
@@ -470,7 +470,8 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isUnitTestMode()) return null;
+    // Android Studio: we run unit tests with a prebuilt Kotlin plugin, so it's always safe to load it in its separate classloader.
+    if (isUnitTestMode() && !"org.jetbrains.kotlin".equals(pluginId.getIdString())) return null;
 
     try {
       final List<URL> urls = new ArrayList<>(classPath.length);

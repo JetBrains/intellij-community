@@ -156,12 +156,11 @@ abstract class BaseIdeaProperties extends ProductProperties {
     }
 
     if ("true".equalsIgnoreCase(System.getProperty("bundle.kotlin.plugin"))) {
-      def currentVersion = "kotlin-plugin-1.1.3-release-Studio3.0-2.zip"
-      context.ant.unzip(
-        src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/$currentVersion",
-        dest: "$targetDirectory/plugins")
+      context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
+        fileset(dir: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin")
+      }
 
-       // Gradle plugin
+      // Gradle plugin
       def currentGradleVersion = "kotlin-m2repository.zip"
       context.ant.unzip(
         src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-gradle-plugin/$currentGradleVersion",
