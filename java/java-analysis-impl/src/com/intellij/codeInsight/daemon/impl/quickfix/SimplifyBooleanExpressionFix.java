@@ -189,8 +189,15 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     PsiElement parent = orig.getParent();
     if (parent == null) return;
 
+    PsiElement grandParent = parent.getParent();
     if (parent instanceof PsiCodeBlock && blockAlwaysReturns(statement)) {
       removeFollowingStatements(orig, (PsiCodeBlock)parent);
+    }
+    else if (grandParent instanceof PsiCodeBlock && parent instanceof PsiIfStatement) {
+      PsiIfStatement ifStmt = (PsiIfStatement)parent;
+      if (ifStmt.getElseBranch() == orig && blockAlwaysReturns(ifStmt.getThenBranch()) && blockAlwaysReturns(statement)) {
+        removeFollowingStatements(ifStmt, (PsiCodeBlock)grandParent);
+      }
     }
 
     if (parent instanceof PsiCodeBlock) {
@@ -246,7 +253,8 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     orig.delete();
   }
 
-  private static boolean blockAlwaysReturns(@NotNull PsiStatement statement) {
+  private static boolean blockAlwaysReturns(@Nullable PsiStatement statement) {
+    if (statement == null) return false;
     try {
       return ControlFlowUtil.returnPresent(HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(statement));
     }
