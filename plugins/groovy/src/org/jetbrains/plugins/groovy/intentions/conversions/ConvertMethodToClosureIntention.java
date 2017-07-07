@@ -151,7 +151,7 @@ public class ConvertMethodToClosureIntention extends Intention {
         if (((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
         method = (GrMethod)parent;
       }
-      return method.getBlock() != null && method.getParent() instanceof GrTypeDefinitionBody;
+      return !method.isConstructor() && method.getBlock() != null && method.getParent() instanceof GrTypeDefinitionBody;
 //      return element instanceof GrMethod && ((GrMethod)element).getBlock() != null && element.getParent() instanceof GrTypeDefinitionBody;
     }
   }
