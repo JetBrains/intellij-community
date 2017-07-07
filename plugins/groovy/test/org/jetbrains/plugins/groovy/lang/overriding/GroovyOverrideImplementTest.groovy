@@ -17,15 +17,13 @@ package org.jetbrains.plugins.groovy.lang.overriding
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.search.SearchScope
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 /**
  * @author peter
  */
@@ -262,19 +260,4 @@ class A implements T {
     return JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)).findMethodsByName(methodName, false)[0]
   }
 
-  void 'test find sub classes works even in local scope'() {
-    def t = myFixture.addFileToProject('x/T.groovy', 'package x; trait T {}')
-    def t2 = myFixture.addFileToProject('x/T2.groovy', 'package x; class T2 implements T {}')
-
-    PsiClass classT = ((GroovyFile)t).classes[0]
-    PsiClass classT2 = ((GroovyFile)t2).classes[0]
-    PsiClass superClass = classT2.getSuperClass()
-    assertTrue(Arrays.asList(classT2.getSupers()).contains(classT))
-
-    PsiElement[] files = [t, t2]
-    SearchScope scope = new LocalSearchScope(files)
-    Collection<PsiClass> subClasses = DirectClassInheritorsSearch.search(classT, scope).findAll()
-    PsiClass subClass = assertOneElement(subClasses)
-    assertEquals("T2", subClass.getName())
-  }
 }
