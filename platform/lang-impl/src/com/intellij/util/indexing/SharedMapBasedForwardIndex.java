@@ -50,7 +50,7 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
           SharedIndicesData.associateFileData(inputId, (ID<Key, ?>)myIndexId, keysFromInputsIndex, mySnapshotIndexExternalizer);
           if (keys != null) {
             DebugAssertions.error(
-              "Unexpected indexing diff " + myIndexId + ", file:" + IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
+              "Unexpected indexing diff " + myIndexId.getName() + ", file:" + IndexInfrastructure.findFileById(PersistentFS.getInstance(), inputId)
               + "," + keysFromInputsIndex + "," + keys);
           }
           keys = keysFromInputsIndex;
