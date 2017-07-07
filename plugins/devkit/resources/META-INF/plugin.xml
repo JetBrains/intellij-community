@@ -11,6 +11,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 

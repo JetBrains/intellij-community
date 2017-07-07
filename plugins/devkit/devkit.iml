@@ -40,5 +40,7 @@
     <orderEntry type="module" module-name="devkit-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="images" />
     <orderEntry type="module" module-name="uast-common" />
+    <orderEntry type="module" module-name="gradle" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
 </module>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
                                   @NotNull ModifiableModelsProvider modifiableModelsProvider,
                                   @NotNull BuildScriptDataBuilder buildScriptData);
 
+  public JComponent createComponent() {
+    return null;
+  }
+
   @NotNull
   @Override
   public FrameworkSupportInModuleConfigurable createConfigurable(@NotNull FrameworkSupportModel model) {
@@ -50,7 +54,7 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
       @Nullable
       @Override
       public JComponent createComponent() {
-        return null;
+        return GradleFrameworkSupportProvider.this.createComponent();
       }
 
       @Override
