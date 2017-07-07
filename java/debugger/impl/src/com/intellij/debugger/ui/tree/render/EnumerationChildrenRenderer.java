@@ -27,7 +27,6 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.sun.jdi.Value;
@@ -42,17 +41,18 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 
   private boolean myAppendDefaultChildren;
-  private List<Pair<String, TextWithImports>> myChildren;
+  private List<ChildInfo> myChildren;
 
   public static final @NonNls String APPEND_DEFAULT_NAME = "AppendDefault";
   public static final @NonNls String CHILDREN_EXPRESSION = "ChildrenExpression";
   public static final @NonNls String CHILD_NAME = "Name";
+  public static final @NonNls String CHILD_ONDEMAND = "OnDemand";
 
   public EnumerationChildrenRenderer() {
     this(new ArrayList<>());
   }
 
-  public EnumerationChildrenRenderer(List<Pair<String, TextWithImports>> children) {
+  public EnumerationChildrenRenderer(List<ChildInfo> children) {
     super();
     myChildren = children;
   }
@@ -84,8 +84,9 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
     for (Element item : children) {
       String name = item.getAttributeValue(CHILD_NAME);
       TextWithImports text = DebuggerUtils.getInstance().readTextWithImports(item.getChildren().get(0));
+      boolean onDemand = Boolean.parseBoolean(item.getAttributeValue(CHILD_ONDEMAND));
 
-      myChildren.add(Pair.create(name, text));
+      myChildren.add(new ChildInfo(name, text, onDemand));
     }
   }
 
@@ -96,10 +97,13 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
       JDOMExternalizerUtil.writeField(element, APPEND_DEFAULT_NAME, "true");
     }
 
-    for (Pair<String, TextWithImports> pair : myChildren) {
+    for (ChildInfo childInfo : myChildren) {
       Element child = new Element(CHILDREN_EXPRESSION);
-      child.setAttribute(CHILD_NAME, pair.getFirst());
-      child.addContent(DebuggerUtils.getInstance().writeTextWithImports(pair.getSecond()));
+      child.setAttribute(CHILD_NAME, childInfo.myName);
+      if (childInfo.myOnDemand) {
+        child.setAttribute(CHILD_ONDEMAND, "true");
+      }
+      child.addContent(DebuggerUtils.getInstance().writeTextWithImports(childInfo.myExpression));
 
       element.addContent(child);
     }
@@ -111,12 +115,17 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
 
     List<DebuggerTreeNode> children = new ArrayList<>();
     int idx = 0;
-    for (Pair<String, TextWithImports> pair : myChildren) {
-      UserExpressionData data =
-        new UserExpressionData((ValueDescriptorImpl)builder.getParentDescriptor(), getClassName(), pair.getFirst(), pair.getSecond());
+    for (ChildInfo childInfo : myChildren) {
+      UserExpressionData data = new UserExpressionData((ValueDescriptorImpl)builder.getParentDescriptor(),
+                                                       getClassName(),
+                                                       childInfo.myName,
+                                                       childInfo.myExpression);
       data.setEnumerationIndex(idx++);
-      children.add(nodeManager.createNode(
-        descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data), evaluationContext));
+      UserExpressionDescriptor descriptor = descriptorFactory.getUserExpressionDescriptor(builder.getParentDescriptor(), data);
+      if (childInfo.myOnDemand) {
+        descriptor.putUserData(OnDemandRenderer.ON_DEMAND_CALCULATED, false);
+      }
+      children.add(nodeManager.createNode(descriptor, evaluationContext));
     }
     builder.addChildren(children, !myAppendDefaultChildren);
 
@@ -134,11 +143,11 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
            (myAppendDefaultChildren && DebugProcessImpl.getDefaultRenderer(value).isExpandable(value, evaluationContext, parentDescriptor));
   }
 
-  public List<Pair<String, TextWithImports>> getChildren() {
+  public List<ChildInfo> getChildren() {
     return myChildren;
   }
 
-  public void setChildren(List<Pair<String, TextWithImports>> children) {
+  public void setChildren(List<ChildInfo> children) {
     myChildren = children;
   }
 
@@ -153,5 +162,17 @@ public final class EnumerationChildrenRenderer extends TypeRenderer implements C
       }
     }
     return null;
+  }
+
+  public static class ChildInfo implements Cloneable {
+    public String myName;
+    public TextWithImports myExpression;
+    public boolean myOnDemand;
+
+    public ChildInfo(String name, TextWithImports expression, boolean onDemand) {
+      myName = name;
+      myExpression = expression;
+      myOnDemand = onDemand;
+    }
   }
 }
