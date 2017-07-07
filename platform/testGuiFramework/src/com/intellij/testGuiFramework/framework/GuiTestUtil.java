@@ -98,8 +98,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public final class
-GuiTestUtil {
+public final class GuiTestUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil");
 
