@@ -374,7 +374,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     ParamsGroup exeGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
     if (exeGroup != null && !myConsoleSettings.getInterpreterOptions().isEmpty()) {
-      exeGroup.addParameter(myConsoleSettings.getInterpreterOptions());
+      exeGroup.addParametersString(myConsoleSettings.getInterpreterOptions());
     }
 
     ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
