@@ -483,7 +483,7 @@ public class Py3TypeTest extends PyTestCase {
 
   public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-    doTest("Union[D2, D1]",
+    doTest("Union[D1, D2]",
            "class D1(object):\n" +
            "    pass\n" +
            "class D2(object):\n" +
