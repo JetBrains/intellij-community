@@ -277,7 +277,7 @@ class CompilationContextImpl implements CompilationContext {
     if (file.isDirectory()) {
       relativePath += "=>" + file.name
     }
-    messages.artifactBuild(relativePath)
+    messages.artifactBuilt(relativePath)
   }
 
   private static String toCanonicalPath(String path) {

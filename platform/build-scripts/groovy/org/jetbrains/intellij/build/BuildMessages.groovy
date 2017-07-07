@@ -39,7 +39,7 @@ interface BuildMessages {
 
   def <V> V block(String blockName, Closure<V> body)
 
-  void artifactBuild(String relativeArtifactPath)
+  void artifactBuilt(String relativeArtifactPath)
 
   void reportStatisticValue(String key, String value)
 
