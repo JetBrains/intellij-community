@@ -165,7 +165,7 @@ public abstract class AppIcon {
 
 
   @SuppressWarnings("UseJBColor")
-  private static class MacAppIcon extends BaseIcon {
+  static class MacAppIcon extends BaseIcon {
     private BufferedImage myAppImage;
     private Map<Object, AppImage> myProgressImagesCache = new HashMap<>();
 
@@ -359,7 +359,7 @@ public abstract class AppIcon {
       }
     }
 
-    private static void setDockIcon(BufferedImage image) {
+    static void setDockIcon(BufferedImage image) {
       try {
         getAppMethod("setDockIconImage", Image.class).invoke(getApp(), image);
       }

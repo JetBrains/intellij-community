@@ -35,8 +35,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NonNls;
@@ -68,15 +70,26 @@ public class AppUIUtil {
     window.setIconImages(getAppIconImages());
   }
 
+  public static void updateAppIcon() {
+    // Forcedly set app-icon for the debug IDE on macOS.
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    if (SystemInfo.isMac && appInfo.getBuild().isSnapshot()) {
+      Image bigIcon = getBigAppIcon();
+      if (bigIcon != null) {
+        MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(bigIcon));
+      }
+    }
+  }
+
   @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"})
   private static List<Image> getAppIconImages() {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
     if (SystemInfo.isUnix) {//MacOS is Unix too
-      String bigIconUrl = appInfo.getBigIconUrl();
-      if (bigIconUrl != null) {
-        images.add(com.intellij.util.ImageLoader.loadFromResource(bigIconUrl));
+      Image bigIcon = getBigAppIcon();
+      if (bigIcon != null) {
+        images.add(bigIcon);
       }
     }
 
@@ -89,6 +102,15 @@ public class AppUIUtil {
       }
     }
     return images;
+  }
+
+  private static Image getBigAppIcon() {
+    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    String bigIconUrl = appInfo.getBigIconUrl();
+    if (bigIconUrl != null) {
+      return ImageLoader.loadFromResource(bigIconUrl);
+    }
+    return null;
   }
 
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
