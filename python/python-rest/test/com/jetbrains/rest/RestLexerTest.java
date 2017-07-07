@@ -123,6 +123,15 @@ public class RestLexerTest extends TestCase {
     );
   }
 
+  public void testShortHeading() throws IOException {
+    doTest("DSF\n" +
+           "===",
+           "[DSF, LINE]",
+           "[\n, WHITESPACE]",
+           "[===, LINE]"
+    );
+  }
+
   public void testInterpreted() throws IOException {
     doTest(":kbd:`1`\n" +
            "\n" +
