@@ -83,7 +83,7 @@ NOT_BACKQUOTE = [^`]
 
 "http"s?"://"[^\n\r ]+                              {return DIRECT_HYPERLINK;}
 
-"`"[^`\n\r ][^`\n\r]*[^`\n\r ]"`"                   { return INTERPRETED;}
+"`"[^`\n\r ][^`\n\r]*"`"                            { return INTERPRETED;}
 "`"{NOT_BACKQUOTE}+"`_""_"?{SEPARATOR}              {yypushback(1); return REFERENCE_NAME;}
 [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?{SEPARATOR}                  {yypushback(1); return REFERENCE_NAME;}
 //"["([0-9]* | #?[0-9A-Za-z]* | "*")"]_"{SEPARATOR}   {yypushback(1); return REFERENCE_NAME;}
