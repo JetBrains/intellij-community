@@ -37,7 +37,7 @@ public class FindUIHelper implements Disposable {
    FindModel myPreviousModel;
   @NotNull private Runnable myOkHandler;
 
-  private FindUI myUI;
+  FindUI myUI;
 
   public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
@@ -128,6 +128,9 @@ public class FindUIHelper implements Disposable {
 
   @Override
   public void dispose() {
+    if (myUI != null && !Disposer.isDisposed(myUI.getDisposable())) {
+      Disposer.dispose(myUI.getDisposable());
+    }
     myUI = null;
   }
 

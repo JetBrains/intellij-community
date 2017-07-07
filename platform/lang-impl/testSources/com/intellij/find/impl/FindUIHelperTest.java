@@ -17,14 +17,16 @@ package com.intellij.find.impl;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 public class FindUIHelperTest extends LightPlatformTestCase {
   private static final Runnable STUB = () -> {
   };
-  
+
   private FindUIHelper myHelper;
   private FindManagerImpl myFindManager;
+  private FindUI myUICopy;
 
   @Override
   protected void setUp() throws Exception {
@@ -32,11 +34,25 @@ public class FindUIHelperTest extends LightPlatformTestCase {
     myFindManager = ((FindManagerImpl)FindManager.getInstance(getProject()));
     FindModel findModel = FindManager.getInstance(getProject()).getFindInProjectModel();
     myHelper = new FindUIHelper(getProject(), findModel, STUB);
+    myUICopy = myHelper.myUI;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Disposer.dispose(myHelper);
+      assertTrue(Disposer.isDisposed(myUICopy.getDisposable()));
+      assertNull(myHelper.myUI);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testBasic() {
     assertFalse(myHelper.getModel().isOpenInNewTabEnabled());
     boolean initialSeparateViewState = myHelper.isUseSeparateView();
+    boolean initialSkipResultsWithOneUsage = myHelper.isSkipResultsWithOneUsage();
     try {
       myHelper.setUseSeparateView(!initialSeparateViewState);
       fail("There should be an exception");
@@ -50,17 +66,18 @@ public class FindUIHelperTest extends LightPlatformTestCase {
     myHelper.setUseSeparateView(initialSeparateViewState);
     assertSame(initialSeparateViewState, myHelper.isUseSeparateView());
 
-    boolean initialSkipResultsWithOneUsage = myHelper.isSkipResultsWithOneUsage();
     myHelper.setSkipResultsWithOneUsage(!initialSkipResultsWithOneUsage);
-    assertNotSame(initialSeparateViewState, myHelper.isSkipResultsWithOneUsage());
+    assertNotSame(initialSkipResultsWithOneUsage, myHelper.isSkipResultsWithOneUsage());
+
     myHelper.setSkipResultsWithOneUsage(initialSkipResultsWithOneUsage);
-    assertSame(initialSeparateViewState, myHelper.isSkipResultsWithOneUsage());
+    assertSame(initialSkipResultsWithOneUsage, myHelper.isSkipResultsWithOneUsage());
 
     myFindManager.changeGlobalSettings(myHelper.getModel());
 
     FindModel findModel = FindManager.getInstance(getProject()).getFindInProjectModel();
-    myHelper = new FindUIHelper(getProject(), findModel, STUB);
+    myHelper.setModel(findModel);
+    
     assertSame(initialSeparateViewState, myHelper.isUseSeparateView());
-    assertSame(initialSeparateViewState, myHelper.isSkipResultsWithOneUsage());
+    assertSame(initialSkipResultsWithOneUsage, myHelper.isSkipResultsWithOneUsage());
   }
 }
