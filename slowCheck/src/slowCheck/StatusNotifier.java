@@ -45,6 +45,7 @@ class StatusNotifier {
   }
 
   private int lastReportedStage = -1;
+  private String lastReportedTrace = null;
   void shrinkAttempt(PropertyFailure<?> failure) {
     if (shouldPrint()) {
       int stage = failure.getMinimizationStageCount();
@@ -58,7 +59,11 @@ class StatusNotifier {
 
         Throwable exceptionCause = failure.getMinimalCounterexample().getExceptionCause();
         if (exceptionCause != null) {
-          System.err.println(" Reason: " + shortenStackTrace(exceptionCause));
+          String trace = shortenStackTrace(exceptionCause);
+          if (!trace.equals(lastReportedTrace)) {
+            lastReportedTrace = trace;
+            System.err.println(" Reason: " + trace);
+          }
         }
         System.err.println();
       }
