@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("ProjectViewStatistics")
+
 package com.intellij.ide.projectView.impl
 
 import com.intellij.internal.statistic.UsageTrigger
@@ -20,7 +22,7 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil.ensureProperKey
 
 private val prefix = "project.view.pane"
 
-internal fun triggerProjectViewPane(id: String?, subId: String?) {
+internal fun recordProjectViewPaneUsage(id: String?, subId: String?) {
   if (id == null) return
   val featureString = if (subId == null) "$prefix.$id" else "$prefix.$id.$subId"
   val key = ensureProperKey(featureString)
