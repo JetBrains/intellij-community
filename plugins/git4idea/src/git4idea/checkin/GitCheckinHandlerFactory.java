@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -301,17 +300,19 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
       final String title;
       final String message;
-      final CharSequence rootPath = StringUtil.last(detachedRoot.myRoot.getPresentableUrl(), 50, true);
-      final String messageCommonStart = "The Git repository <code>" + rootPath + "</code>";
+      final CharSequence rootPath = detachedRoot.myRoot.getPresentableUrl();
+      final String messageCommonStart = "The Git repository at the following path";
       if (detachedRoot.myRebase) {
-        title = "Unfinished rebase process";
-        message = messageCommonStart + " <br/> has an <b>unfinished rebase</b> process. <br/>" +
+        title = "Unfinished Rebase Process";
+        message = messageCommonStart + " has an <b>unfinished rebase</b> process: <br/>" +
+                  "<b>" + rootPath + "</b><br>" +
                   "You probably want to <b>continue rebase</b> instead of committing. <br/>" +
                   "Committing during rebase may lead to the commit loss. <br/>" +
                   readMore("http://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase");
       } else {
-        title = "Commit in detached HEAD may be dangerous";
-        message = messageCommonStart + " is in the <b>detached HEAD</b> state. <br/>" +
+        title = "Commit in Detached HEAD";
+        message = messageCommonStart + " is in the <b>detached HEAD</b> state: <br/>" +
+                  "<b>" + rootPath + "</b><br>" +
                   "You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work. <br/>" +
                   "Otherwise you risk losing your changes. <br/>" +
                   readMore("http://gitolite.com/detached-head.html", "Read more about detached HEAD");
