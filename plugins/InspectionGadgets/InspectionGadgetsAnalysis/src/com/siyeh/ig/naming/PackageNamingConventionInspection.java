@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiPackageStatement;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -120,13 +119,11 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     if (m_maxLength > 0 && length > m_maxLength) {
       return false;
     }
-    if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
-      return true;
-    }
     final Matcher matcher = m_regexPattern.matcher(name);
     return matcher.matches();
   }
 
+  @Override
   @Nullable
   public LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalPackageNamingConventionInspection(this);
@@ -176,7 +173,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
             index = text.indexOf('.', start);
           }
           final String lastName = text.substring(start);
-          if (!mySettingsDelegate.isValid(lastName)) {
+          if (!lastName.isEmpty() && !mySettingsDelegate.isValid(lastName)) {
             registerErrorAtOffset(reference, start, lastName.length(), lastName);
           }
         }
