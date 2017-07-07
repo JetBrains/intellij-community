@@ -370,7 +370,7 @@ public class DaemonListeners implements Disposable {
     if (project != null && project != myProject) return false;
     // cached is essential here since we do not want to create PSI file in alien project
     PsiFile psiFile = myPsiDocumentManager.getCachedPsiFile(document);
-    return psiFile != null && psiFile.getOriginalFile() == psiFile;
+    return psiFile != null && psiFile.isPhysical() && psiFile.getOriginalFile() == psiFile;
   }
 
   @Override
