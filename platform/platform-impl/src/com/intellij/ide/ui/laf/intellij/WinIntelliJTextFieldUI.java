@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.components.panels.Wrapper;
@@ -111,7 +112,8 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
 
   @Override public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    size.height = Math.max(JBUI.scale(24), size.height);
+    int maxHeight = JBUI.scale(DarculaEditorTextFieldBorder.isComboBoxEditor(c) ? 18 : 24);
+    size.height = Math.max(maxHeight, size.height);
     return size;
   }
 

@@ -44,7 +44,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
@@ -1823,9 +1822,13 @@ public class Messages {
       }
 
       myField = createTextFieldComponent();
-      messagePanel.add(myField, BorderLayout.SOUTH);
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.SOUTH);
 
       return messagePanel;
+    }
+
+    protected JComponent createScrollableTextComponent() {
+      return myField;
     }
 
     protected JComponent createTextComponent() {
@@ -1880,6 +1883,11 @@ public class Messages {
     protected JTextComponent createTextFieldComponent() {
       return new JTextArea(7, 50);
     }
+
+    @Override
+    protected JComponent createScrollableTextComponent() {
+      return new JBScrollPane(myField);
+    }
   }
 
   protected static class PasswordInputDialog extends InputDialog {
@@ -1930,7 +1938,7 @@ public class Messages {
       }
 
       myField = createTextFieldComponent();
-      messagePanel.add(myField, BorderLayout.CENTER);
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
 
       myCheckBox = new JCheckBox();
       messagePanel.add(myCheckBox, BorderLayout.SOUTH);

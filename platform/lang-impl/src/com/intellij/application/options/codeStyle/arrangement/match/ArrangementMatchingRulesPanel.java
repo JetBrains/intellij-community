@@ -26,8 +26,10 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +54,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     super(new GridBagLayout());
     
     JBScrollPane scrollPane = new JBScrollPane();
+    scrollPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
     final JViewport viewport = scrollPane.getViewport();
     ArrangementSectionRulesControl.RepresentationCallback callback = new ArrangementSectionRulesControl.RepresentationCallback() {
       @Override

@@ -655,6 +655,7 @@ public abstract class ChooseByNameBase {
 
     myListScrollPane = ScrollPaneFactory.createScrollPane(myList);
     myListScrollPane.setViewportBorder(JBUI.Borders.empty());
+    myListScrollPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
     myTextFieldPanel.setBorder(JBUI.Borders.empty(5));
 

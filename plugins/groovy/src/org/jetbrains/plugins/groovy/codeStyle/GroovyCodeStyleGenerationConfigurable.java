@@ -46,9 +46,9 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
   public JComponent createComponent() {
     JPanel panel = ToolbarDecorator.createDecorator(myMembersOrderList)
       .disableAddAction().disableRemoveAction().createPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members"), true, new JBInsets(0, 10, 10, 10)));
 
     JPanel wholePanel = new JPanel(new BorderLayout());
+    wholePanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members"), true, new JBInsets(0, 10, 10, 10)));
     wholePanel.add(panel, BorderLayout.NORTH);
     return wholePanel;
   }

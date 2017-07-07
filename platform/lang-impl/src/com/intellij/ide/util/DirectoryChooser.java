@@ -20,7 +20,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.gotoByName.ChooseByNamePanel;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopupComponent;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -40,6 +43,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -141,6 +145,8 @@ public class DirectoryChooser extends DialogWrapper {
     //noinspection HardCodedStringLiteral
     int prototypeWidth = component.getFontMetrics(component.getFont()).stringWidth("X:\\1234567890\\1234567890\\com\\company\\system\\subsystem");
     jScrollPane.setPreferredSize(new Dimension(Math.max(300, prototypeWidth),300));
+    jScrollPane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+
 
     installEnterAction(component);
     panel.add(jScrollPane, BorderLayout.CENTER);

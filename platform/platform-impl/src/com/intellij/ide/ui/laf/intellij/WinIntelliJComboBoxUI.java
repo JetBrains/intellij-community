@@ -146,18 +146,14 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
                     arrowButton.getWidth() - i.right: arrowButton.getWidth() - i.left;
     }
 
+    int vOffset = JBUI.scale(comboBox.isEditable() ? 0 : 1);
     Rectangle rect = (comboBox.getComponentOrientation().isLeftToRight()) ?
-      new Rectangle(i.left, i.top - JBUI.scale(1),
+      new Rectangle(i.left, i.top - vOffset,
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom)) :
-      new Rectangle(i.left + buttonWidth, i.top - JBUI.scale(1),
+      new Rectangle(i.left + buttonWidth, i.top - vOffset,
                            w - (i.left + i.right + buttonWidth),
                            h - (i.top + i.bottom));
-
-    if (editor instanceof JComponent) {
-      JBInsets.removeFrom(rect, ((JComponent)editor).getInsets());
-    }
-
     return rect;
   }
 
@@ -541,7 +537,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
         }
 
-        if (editor != null) {
+        if (comboBox.isEditable() && editor != null) {
           Rectangle er = rectangleForCurrentValue();
           editor.setBounds(er);
         }
