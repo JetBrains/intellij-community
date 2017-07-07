@@ -58,7 +58,9 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
 
   void testClosureWithDefaultParameters() { doTest() }
 
-  void testClosureCallMethodWithInapplicableArguments() { doTest() }
+  void testClosureApplicability() { doTest() }
+
+  void testSingleParameterMethodApplicability() { doTest() }
 
   void testCallIsNotApplicable() { doTest() }
 

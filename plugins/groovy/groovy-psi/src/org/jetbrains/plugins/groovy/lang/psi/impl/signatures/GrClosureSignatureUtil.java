@@ -350,20 +350,6 @@ public class GrClosureSignatureUtil {
     return mapParametersToArguments(signature, args, FunctionUtil.id(), context, partial);
   }
 
-  private static class ArgWrapper<Arg> {
-    PsiType type;
-    @Nullable Arg arg;
-
-    private ArgWrapper(PsiType type, @Nullable Arg arg) {
-      this.type = type;
-      this.arg = arg;
-    }
-  }
-
-  private static <Arg> Function<ArgWrapper<Arg>, PsiType> ARG_WRAPPER_COMPUTER() {
-    return argWrapper -> argWrapper.type;
-  }
-
   @Nullable
   private static <Arg> ArgInfo<Arg>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                                @NotNull Arg[] args,
@@ -375,12 +361,12 @@ public class GrClosureSignatureUtil {
     if (checkForOnlyMapParam(signature, args.length)) return ArgInfo.empty_array();
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs() && !partial) return null;
-    int optional = getOptionalParamCount(signature, false);
+    int optional = getOptionalParamCount(signature);
     int notOptional = params.length - optional;
     if (signature.isVarargs()) notOptional--;
     if (notOptional > args.length && !partial) return null;
 
-    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context, false);
+    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context, optional, false);
     if (map != null) return map;
 
     if (signature.isVarargs()) {
@@ -389,7 +375,7 @@ public class GrClosureSignatureUtil {
 
     if (!partial) return null;
 
-    return mapSimple(params, args, typeComputer, context, true);
+    return mapSimple(params, args, typeComputer, context, optional, true);
   }
 
   private static boolean checkForOnlyMapParam(@NotNull GrClosureSignature signature, final int argCount) {
@@ -405,11 +391,11 @@ public class GrClosureSignatureUtil {
                                                 @NotNull Arg[] args,
                                                 @NotNull Function<Arg, PsiType> typeComputer,
                                                 @NotNull PsiElement context,
+                                                int optional,
                                                 boolean partial) {
     if (args.length > params.length && !partial) return null;
 
     ArgInfo<Arg>[] map = new ArgInfo[params.length];
-    int optional = getOptionalParamCount(params, false);
     int notOptional = params.length - optional;
     int optionalArgs = args.length - notOptional;
 
@@ -569,16 +555,11 @@ public class GrClosureSignatureUtil {
     }
   }
 
-  public static int getOptionalParamCount(GrClosureSignature signature, boolean hasNamedArgs) {
-    return getOptionalParamCount(signature.getParameters(), hasNamedArgs);
-  }
-
-  public static int getOptionalParamCount(GrClosureParameter[] parameters, boolean hasNamedArgs) {
+  private static int getOptionalParamCount(@NotNull GrClosureSignature signature) {
+    GrClosureParameter[] parameters = signature.getParameters();
+    if (parameters.length == 1 && !(parameters[0].getType() instanceof PsiPrimitiveType) && !signature.isCurried()) return 1;
     int count = 0;
-    int i = 0;
-    if (hasNamedArgs) i++;
-    for (; i < parameters.length; i++) {
-      GrClosureParameter parameter = parameters[i];
+    for (GrClosureParameter parameter : parameters) {
       if (parameter.isOptional()) count++;
     }
     return count;
@@ -940,9 +921,6 @@ public class GrClosureSignatureUtil {
     if (args.length < params.length) return null;
 
     if (args.length > params.length && !signature.isVarargs()) return null;
-
-    int optional = getOptionalParamCount(params, false);
-    assert optional == 0;
 
     int errorCount = 0;
     ArgInfo<Arg>[] map = new ArgInfo[params.length];
