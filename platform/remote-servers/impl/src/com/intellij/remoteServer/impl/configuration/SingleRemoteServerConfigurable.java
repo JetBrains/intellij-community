@@ -31,9 +31,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author nik
  */
 public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
-  private static final String HELP_TOPIC_ID = "reference.settings.clouds";
-
-
   private final RemoteServerConfigurable myConfigurable;
   private final RemoteServer<?> myServer;
   private String myServerName;
