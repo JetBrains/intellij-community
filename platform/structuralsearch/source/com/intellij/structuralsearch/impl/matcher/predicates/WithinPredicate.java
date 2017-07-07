@@ -36,7 +36,8 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class WithinPredicate extends MatchPredicate {
-  private static final Set<String> recursionGuard = new HashSet<>();
+  @SuppressWarnings("SSBasedInspection")
+  private static final ThreadLocal<Set<String>> ourRecursionGuard = ThreadLocal.withInitial(() -> new HashSet<>());
   private final MatchOptions myMatchOptions;
   private final Matcher matcher;
 
@@ -50,7 +51,8 @@ public class WithinPredicate extends MatchPredicate {
       matcher = new Matcher(project, myMatchOptions);
     }
     else {
-      if (!recursionGuard.add(within)) {
+      final Set<String> set = ourRecursionGuard.get();
+      if (!set.add(within)) {
         throw new MalformedPatternException("Pattern recursively contained within itself");
       }
       try {
@@ -61,7 +63,11 @@ public class WithinPredicate extends MatchPredicate {
         myMatchOptions = configuration.getMatchOptions();
         matcher = new Matcher(project, myMatchOptions);
       } finally {
-        recursionGuard.remove(within);
+        set.remove(within);
+        if (set.isEmpty()) {
+          // we're finished with this thread local
+          ourRecursionGuard.remove();
+        }
       }
     }
   }

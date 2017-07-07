@@ -1472,41 +1472,46 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   @Nullable
-  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+  private static PsiElement getSurroundingMethodOrLambdaBody(@NotNull PsiVariable variable) {
     if (variable instanceof PsiLocalVariable || variable instanceof PsiParameter) {
       final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiLambdaExpression.class);
-      PsiElement methodOrLambdaBody = null;
       if (methodOrLambda instanceof PsiMethod) {
-        methodOrLambdaBody = ((PsiMethod)methodOrLambda).getBody();
+        return ((PsiMethod)methodOrLambda).getBody();
       }
       else if (methodOrLambda instanceof PsiLambdaExpression) {
-        methodOrLambdaBody = ((PsiLambdaExpression)methodOrLambda).getBody();
-      }
-      if (methodOrLambdaBody instanceof PsiCodeBlock) {
-        final PsiReferenceExpression firstReadUsage = findFirstReadUsageAt(variable, startElement);
-        if (firstReadUsage != null) {
-          final Nullness nullness = DfaUtil.checkNullness(variable, firstReadUsage, methodOrLambdaBody);
-          return nullness == Nullness.NOT_NULL;
-        }
+        return ((PsiLambdaExpression)methodOrLambda).getBody();
       }
     }
     return null;
   }
 
   @Nullable
-  private static PsiReferenceExpression findFirstReadUsageAt(@NotNull PsiVariable variable, PsiElement startElement) {
+  private static Boolean isNotNullAt(@NotNull PsiVariable variable, PsiElement startElement) {
+    final PsiElement methodOrLambdaBody = getSurroundingMethodOrLambdaBody(variable);
+    if (methodOrLambdaBody instanceof PsiCodeBlock) {
+      final Set<PsiReferenceExpression> firstReadUsages = findFirstReadUsagesAt(variable, startElement);
+      return firstReadUsages != null &&
+             firstReadUsages.stream()
+               .map(firstReadUsage -> DfaUtil.checkNullness(variable, firstReadUsage, methodOrLambdaBody))
+               .allMatch(nullness -> nullness == Nullness.NOT_NULL);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Set<PsiReferenceExpression> findFirstReadUsagesAt(@NotNull PsiVariable variable, PsiElement startElement) {
     final PsiCodeBlock closestCodeBlock = PsiTreeUtil.getParentOfType(startElement, PsiCodeBlock.class);
     if (closestCodeBlock != null) {
       try {
         final ControlFlow controlFlow = ControlFlowFactory.getInstance(closestCodeBlock.getProject())
           .getControlFlow(closestCodeBlock, AllVariablesControlFlowPolicy.getInstance(), false, false);
 
-        final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow);
-        for (PsiReferenceExpression referenceExpression : readBeforeWrite) {
-          if (referenceExpression.isReferenceTo(variable)) {
-            return referenceExpression;
-          }
-        }
+        final int startOffset = controlFlow.getStartOffset(startElement);
+        final List<PsiReferenceExpression> readBeforeWrite = ControlFlowUtil.getReadBeforeWrite(controlFlow, startOffset);
+        final Set<PsiReferenceExpression> result = StreamEx.of(readBeforeWrite)
+          .filter(referenceExpression -> referenceExpression.isReferenceTo(variable))
+          .toSet();
+        return !result.isEmpty() ? result : null;
       }
       catch (AnalysisCanceledException e) {
         return null;

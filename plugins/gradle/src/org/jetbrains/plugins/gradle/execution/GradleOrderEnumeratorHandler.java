@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.openapi.roots.OrderRootType;
@@ -62,15 +62,21 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
   }
 
   public static class FactoryImpl extends Factory {
+    private static final ExtensionPointName<FactoryImpl> EP_NAME =
+      ExtensionPointName.create("org.jetbrains.plugins.gradle.orderEnumerationHandlerFactory");
+
     @Override
     public boolean isApplicable(@NotNull Module module) {
-      CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-      if (compilerModuleExtension != null && compilerModuleExtension.isCompilerOutputPathInherited()) return false;
       return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module);
     }
 
     @Override
-    public OrderEnumerationHandler createHandler(@NotNull Module module) {
+    public GradleOrderEnumeratorHandler createHandler(@NotNull Module module) {
+      for (FactoryImpl factory : EP_NAME.getExtensions()) {
+        if (factory.isApplicable(module)) {
+          return factory.createHandler(module);
+        }
+      }
       return new GradleOrderEnumeratorHandler(module);
     }
   }

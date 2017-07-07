@@ -3,11 +3,7 @@ package slowCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -30,19 +26,21 @@ public class PropertyChecker<T> {
   private Generator<T> generator;
   private Predicate<T> property;
   private final Set<Integer> generatedHashes = new HashSet<>();
-  private int seed;
-  private Random random;
+  private final long seed;
+  private final Random random;
+  private final StatusNotifier notifier;
 
   private PropertyChecker(Generator<T> generator, Predicate<T> property, CheckerSettings settings) {
     this.generator = generator;
     this.property = property;
 
-    Integer seed = settings.randomSeed;
+    Long seed = settings.randomSeed;
     if (seed == null) {
-      seed = new Random().nextInt();
+      seed = new Random().nextLong();
     }
     this.seed = seed;
     random = new Random(seed);
+    notifier = new StatusNotifier(settings.iterationCount, this.seed);
   }
 
   public static <T> void forAll(Generator<T> gen, Predicate<T> property) {
@@ -54,25 +52,16 @@ public class PropertyChecker<T> {
   }
 
   private void forAll(int iterationCount) {
-    long lastPrint = System.currentTimeMillis();
     for (int i = 1; i <= iterationCount; i++) {
-      if (System.currentTimeMillis() - lastPrint > 5_000) {
-        lastPrint = System.currentTimeMillis();
-        System.out.println(formatCurrentTime() + ": iteration " + i + " of " + iterationCount + "...");
-      }
+      notifier.iterationStarted(i);
 
       CounterExampleImpl<T> example = findCounterExample(i);
       if (example != null) {
-        System.err.println(formatCurrentTime() + ": failed on iteration " + i + ", shrinking...");
+        notifier.counterExampleFound();
         PropertyFailureImpl failure = new PropertyFailureImpl(example, i);
         throw new PropertyFalsified(seed, failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, failure.sizeHint));
       }
     }
-  }
-
-  @NotNull
-  private static String formatCurrentTime() {
-    return LocalTime.now().format(DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).withLocale(Locale.getDefault()));
   }
 
   @Nullable
@@ -97,6 +86,7 @@ public class PropertyChecker<T> {
     private final CounterExampleImpl<T> initial;
     private CounterExampleImpl<T> minimized;
     private int totalSteps;
+    private int successfulSteps;
     private int sizeHint;
     private Throwable stoppingReason;
 
@@ -131,8 +121,13 @@ public class PropertyChecker<T> {
     }
 
     @Override
-    public int getTotalMinimizationStepCount() {
+    public int getTotalMinimizationExampleCount() {
       return totalSteps;
+    }
+
+    @Override
+    public int getMinimizationStageCount() {
+      return successfulSteps;
     }
 
     private void shrink() {
@@ -140,6 +135,8 @@ public class PropertyChecker<T> {
       while (true) {
         CounterExampleImpl<T> shrank = shrinkRunner.findShrink(minimized.data, node -> {
           if (!generatedHashes.add(node.hashCode())) return null;
+
+          notifier.shrinkAttempt(this);
           
           try {
             T value = generator.generateUnstructured(new ReplayDataStructure(node, sizeHint));
@@ -152,6 +149,7 @@ public class PropertyChecker<T> {
         });
         if (shrank != null) {
           minimized = shrank;
+          successfulSteps++;
         } else {
           break;
         }

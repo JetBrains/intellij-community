@@ -27,6 +27,8 @@
   <depends optional="true" config-file="groovy-byte-code-viewer.xml">ByteCodeViewer</depends>
   <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
 
+  <resource-bundle>org.jetbrains.plugins.groovy.GroovyBundle</resource-bundle>
+
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
@@ -235,7 +237,7 @@
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrEnumConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerTypeConverter"/>
-    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureToSamConverter"/>
+    <typeConverter implementation="org.jetbrains.plugins.groovy.lang.sam.ClosureToSamConverter"/>
     <typeConverter implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrContainerConverter"/>
 
     <typeConverter implementation="org.jetbrains.plugins.groovy.gpp.GppTypeConverter"/>
@@ -715,38 +717,38 @@
                      groupPath="Groovy"
                      shortName="GroovyAssignabilityCheck"
                      displayName="Incompatible type assignments"
-                     groupName="Assignment issues"
+                     groupKey="inspection.assignment.issues"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyResultOfAssignmentUsed" displayName="Result of assignment used"
-                     groupName="Assignment issues"
+                     groupKey="inspection.assignment.issues"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignmentCanBeOperatorAssignment"
                      displayName="Assignment replaceable with operator assignment"
-                     groupName="Assignment issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.assignment.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentCanBeOperatorAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignmentToForLoopParameter"
                      displayName="Assignment to for-loop parameter"
-                     groupName="Assignment issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.assignment.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentToForLoopParameterInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignmentToMethodParameter"
                      displayName="Assignment to method parameter"
-                     groupName="Assignment issues" enabledByDefault="false" level="WARNING"
+                     groupKey="inspection.assignment.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentToMethodParameterInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedAssignment" displayName="Nested assignment"
-                     groupName="Assignment issues"
+                     groupKey="inspection.assignment.issues"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyNestedAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySillyAssignment" displayName="Silly assignment"
-                     groupName="Assignment issues" enabledByDefault="true"
+                     groupKey="inspection.assignment.issues" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovySillyAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUncheckedAssignmentOfMemberOfRawType"
                      displayName="Unchecked assignment from members of raw type"
-                     groupName="Assignment issues" enabledByDefault="true" level="WARNING"
+                     groupKey="inspection.assignment.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyContinueOrBreakFromFinallyBlock"
                      displayName="'continue' or 'break' inside 'finally' block"

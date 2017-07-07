@@ -666,7 +666,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       if (myContent == null) return true;
 
       final boolean canClose = closeQuery(true);
-      if (canClose) {
+      // Content could be removed during close query
+      if (canClose && myContent != null) {
         myContent.getManager().removeContent(myContent, true);
         myContent = null;
       }

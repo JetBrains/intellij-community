@@ -213,8 +213,14 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     try {
       if (buildScriptDataBuilder != null) {
         buildScriptFile = buildScriptDataBuilder.getBuildScriptFile();
-        final String text = buildScriptDataBuilder.build();
-        appendToFile(buildScriptFile, "\n" + text);
+        String lineSeparator = lineSeparator(buildScriptFile);
+        String configurationPart = StringUtil.convertLineSeparators(buildScriptDataBuilder.buildConfigurationPart(), lineSeparator);
+        String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile));
+        String content = (!configurationPart.isEmpty() ? configurationPart + lineSeparator : "") +
+                         (!existingText.isEmpty() ? existingText + lineSeparator : "") +
+                         lineSeparator +
+                         StringUtil.convertLineSeparators(buildScriptDataBuilder.buildMainPart(), lineSeparator);
+        VfsUtil.saveText(buildScriptFile, content);
       }
     }
     catch (IOException e) {
@@ -445,14 +451,20 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   public static void appendToFile(@NotNull VirtualFile file, @NotNull String text) throws IOException {
-    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    if (lineSeparator == null) {
-      lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
-    }
+    String lineSeparator = lineSeparator(file);
     final String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(file));
     String content = (StringUtil.isNotEmpty(existingText) ? existingText + lineSeparator : "") +
                      StringUtil.convertLineSeparators(text, lineSeparator);
     VfsUtil.saveText(file, content);
+  }
+
+  @NotNull
+  private static String lineSeparator(@NotNull VirtualFile file) {
+    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
+    if (lineSeparator == null) {
+      lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+    }
+    return lineSeparator;
   }
 
   @Nullable

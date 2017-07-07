@@ -245,14 +245,14 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
     public ContentState(Element element) {
       myType = element.getAttributeValue("type");
-      myMinimized = "true".equalsIgnoreCase(element.getAttributeValue("minimized"));
-      myMaximized = "true".equalsIgnoreCase(element.getAttributeValue("maximized"));
+      myMinimized = Boolean.parseBoolean(element.getAttributeValue("minimized"));
+      myMaximized = Boolean.parseBoolean(element.getAttributeValue("maximized"));
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
         mySplitProportion = Double.valueOf(split);
       }
-      myDetached = "true".equalsIgnoreCase(element.getAttributeValue("detached"));
+      myDetached = Boolean.parseBoolean(element.getAttributeValue("detached"));
       myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));
     }
 

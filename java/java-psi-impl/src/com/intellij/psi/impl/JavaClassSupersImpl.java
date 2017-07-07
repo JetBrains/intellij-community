@@ -129,7 +129,12 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     Map<PsiTypeParameter, PsiType> innerMap = inner.getSubstitutionMap();
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(onClass)) {
       if (outerMap.containsKey(parameter) || innerMap.containsKey(parameter)) {
-        answer = answer.put(parameter, outer.substitute(inner.substitute(parameter)));
+        PsiType innerType = inner.substitute(parameter);
+        PsiClass paramCandidate = PsiCapturedWildcardType.isCapture() ? PsiUtil.resolveClassInClassTypeOnly(innerType) : null;
+        PsiType targetType = paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter
+                             ? outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate)
+                             : outer.substitute(innerType);
+        answer = answer.put(parameter, targetType);
       }
     }
     return answer;

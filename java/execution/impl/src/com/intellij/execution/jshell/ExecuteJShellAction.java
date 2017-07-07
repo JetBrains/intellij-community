@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -31,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
  * Date: 06-Jun-17
  */
 class ExecuteJShellAction extends AnAction{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.ExecuteJShellAction");
   private static final AnAction ourInstance = new ExecuteJShellAction();
+  private boolean myIsExecuteContextElement = false;
 
   private ExecuteJShellAction() {
     super(AllIcons.Toolwindows.ToolWindowRun);
@@ -62,24 +62,6 @@ class ExecuteJShellAction extends AnAction{
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final Document document = editor.getDocument();
-    final TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
-    String code = null;
-    if (selectedRange.isEmpty()) {
-      final PsiElement snippet = getSnippetFromContext(project, e);
-      if (snippet != null) {
-        code = snippet.getText();
-      }
-    }
-    else {
-      code = document.getText(selectedRange);
-    }
-
-    if (StringUtil.isEmptyOrSpaces(code))  {
-      JShellDiagnostic.notifyInfo("Nothing to execute", project);
-      return;
-    }
-
     try {
       JShellHandler handler = JShellHandler.getAssociatedHandler(vFile);
       if (handler == null) {
@@ -87,7 +69,27 @@ class ExecuteJShellAction extends AnAction{
       }
       if (handler != null) {
         handler.toFront();
-        handler.evaluate(code);
+        boolean hasDataToEvaluate = false;
+
+        final Document document = editor.getDocument();
+        final TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
+        if (selectedRange.isEmpty()) {
+          final PsiElement snippet = getSnippetFromContext(project, e);
+          if (snippet instanceof PsiJShellFile) {
+            for (PsiElement element : ((PsiJShellFile)snippet).getExecutableSnippets()) {
+              hasDataToEvaluate |= scheduleEval(handler, element.getText());
+            }
+          }
+          else if (snippet != null){
+            hasDataToEvaluate = scheduleEval(handler, snippet.getText());
+          }
+        }
+        else {
+          hasDataToEvaluate = scheduleEval(handler, document.getText(selectedRange));
+        }
+        if (!hasDataToEvaluate) {
+          JShellDiagnostic.notifyInfo("Nothing to execute", project);
+        }
       }
     }
     catch (Exception ex) {
@@ -95,30 +97,40 @@ class ExecuteJShellAction extends AnAction{
     }
   }
 
+  private static boolean scheduleEval(@NotNull JShellHandler handler, final String code) {
+    if (!StringUtil.isEmptyOrSpaces(code)) {
+      handler.evaluate(code.trim());
+      return true;
+    }
+    return false;
+  }
+
   @Nullable
-  private static PsiElement getSnippetFromContext(Project project, AnActionEvent e) {
+  private PsiElement getSnippetFromContext(Project project, AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file instanceof PsiJShellFile) {
 
-        final PsiElement context = getContextElement(file, editor.getDocument(), editor.getCaretModel().getOffset());
-        for (PsiElement element = context; element != null; element = element.getParent()) {
-          if (element instanceof PsiJShellImportHolder || element instanceof PsiJShellHolderMethod) {
-            return element;
-          }
-          if (element instanceof PsiMember && ((PsiMember)element).getContainingClass() instanceof PsiJShellRootClass) {
-            return element;
-          }
-          if (element instanceof PsiClass) {
-            final PsiClass containingClass = ((PsiClass)element).getContainingClass();
-            if (containingClass == null || containingClass instanceof PsiJShellRootClass) {
-              return element;
+        PsiElement element = myIsExecuteContextElement? getContextElement(file, editor.getDocument(), editor.getCaretModel().getOffset()) : null;
+        while (element != null) {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiJShellHolderMethod && element instanceof PsiEmptyStatement) {
+            element = parent.getPrevSibling();  // skipping empty statements and
+            if (element instanceof PsiJShellSyntheticElement) {
+              element = element.getFirstChild();
+              break;
             }
+          }
+          else {
+            if (parent instanceof PsiJShellSyntheticElement || parent instanceof PsiJShellFile) {
+              break;
+            }
+            element = parent;
           }
         }
         
-        return file;
+        return element != null? element : file;
       }
     }
     return null;
@@ -126,30 +138,13 @@ class ExecuteJShellAction extends AnAction{
 
   private static PsiElement getContextElement(PsiFile file, final Document doc, final int offset) {
     final int begin = DocumentUtil.getLineStartOffset(offset, doc);
-    final int end = DocumentUtil.getLineEndOffset(offset, doc);
     PsiElement result = null;
-    for (int off = begin; off <= end; off++) {
+    for (int off = offset; off >= begin; off--) {
       result = file.findElementAt(off);
-      if (result != null) {
+      if (result != null && !(result instanceof PsiWhiteSpace)) {
         break;
       }
     }
-    while (result instanceof PsiWhiteSpace) {
-      final PsiElement next = result.getNextSibling();
-      if (next == null || next.getTextOffset() > end) {
-        break;
-      }
-      result = next;
-    }
-
-    while (result != null) {
-      final PsiElement parent = result.getParent();
-      if (parent instanceof PsiJShellSyntheticElement) {
-        break;
-      }
-      result = parent;
-    }
-
     return result;
   }
 

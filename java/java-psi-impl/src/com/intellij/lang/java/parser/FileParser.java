@@ -34,7 +34,7 @@ import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
 
 public class FileParser {
-  private static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
+  protected static final TokenSet IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
     ElementType.MODIFIER_BIT_SET,
     TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
 

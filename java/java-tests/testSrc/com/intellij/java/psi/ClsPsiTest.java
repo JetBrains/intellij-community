@@ -16,6 +16,7 @@
 package com.intellij.java.psi;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -460,5 +461,24 @@ public class ClsPsiTest extends LightIdeaTestCase {
     GCUtil.tryGcSoftlyReachableObjects();
     LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
     assertFalse(hash1 == ((ClsClassImpl)dbl).getMirror().hashCode());
+  }
+
+  public void testMirrorBecomesInvalidTogetherWithCls() throws IOException {
+    File testFile = IoTestUtil.createTestFile("TestClass.class");
+    File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
+    FileUtil.copy(file1, testFile);
+    VirtualFile copyVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
+    
+    ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(getProject()).findFile(copyVFile);
+    PsiElement mirror = clsFile.getMirror();
+
+    assertTrue(clsFile.isValid());
+    assertTrue(mirror.isValid());
+
+    WriteAction.run(() -> copyVFile.delete(this));
+    assertFalse(clsFile.isValid());
+    assertFalse(mirror.isValid());
+    assertTrue(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)
+                 .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile)));
   }
 }

@@ -91,17 +91,16 @@ class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  void buildProvidedModulesList(List<String> modules, List<String> pathsToLicenses) {
+  void buildProvidedModulesList(String targetFilePath, List<String> modules, List<String> pathsToLicenses) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
       buildContext.messages.progress("Building provided modules list for modules $modules")
-      String targetFile = "${buildContext.paths.artifacts}/builtinModules.json"
-      FileUtil.delete(new File(targetFile))
+      FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
-      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFile])
-      if (!new File(targetFile).exists()) {
-        buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFilePath])
+      if (!new File(targetFilePath).exists()) {
+        buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
       }
-      buildContext.notifyArtifactBuilt(targetFile)
+      buildContext.notifyArtifactBuilt(targetFilePath)
     })
   }
 
@@ -123,7 +122,7 @@ class BuildTasksImpl extends BuildTasks {
   }
 
   private void runApplicationStarter(String tempDir, List<String> modules, List<String> pathsToLicenses, List<String> arguments) {
-    def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
+    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("java-runtime"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
     }
@@ -137,14 +136,14 @@ class BuildTasksImpl extends BuildTasks {
     }
   
     def ideClasspath = new LinkedHashSet<String>()
-    modules.collectMany(ideClasspath) { buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findModule(it), false) }
+    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findModule(it), false) }
 
     String classpathFile = "$tempDir/classpath.txt"
     new File(classpathFile).text = ideClasspath.join("\n")
 
     buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx500m")
-      jvmarg(value: "-Xbootclasspath/a:${buildContext.projectBuilder.moduleOutput(buildContext.findModule("boot"))}")
+      jvmarg(value: "-Xbootclasspath/a:${buildContext.getModuleOutputPath(buildContext.findModule("boot"))}")
       sysproperty(key: "java.awt.headless", value: true)
       sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
       sysproperty(key: "idea.system.path", value: systemPath)
@@ -297,7 +296,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre')
+      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()

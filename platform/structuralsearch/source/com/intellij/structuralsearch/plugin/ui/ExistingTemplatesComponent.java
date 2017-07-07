@@ -115,9 +115,9 @@ public class ExistingTemplatesComponent {
             return;
           }
           final String configurationName = configuration.getName();
-          for (Configuration configuration1 : ConfigurationManager.getInstance(project).getConfigurations()) {
+          for (Configuration otherConfiguration : ConfigurationManager.getInstance(project).getConfigurations()) {
             final MatchVariableConstraint constraint =
-              configuration1.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
+              otherConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME);
             if (constraint == null) {
               continue;
             }
@@ -125,7 +125,7 @@ public class ExistingTemplatesComponent {
             if (configurationName.equals(within)) {
               if (Messages.CANCEL == Messages.showOkCancelDialog(
                 project,
-                SSRBundle.message("template.in.use.message", configurationName, configuration1.getName()),
+                SSRBundle.message("template.in.use.message", configurationName, otherConfiguration.getName()),
                 SSRBundle.message("template.in.use.title", configurationName),
                 CommonBundle.message("button.remove"),
                 Messages.CANCEL_BUTTON,

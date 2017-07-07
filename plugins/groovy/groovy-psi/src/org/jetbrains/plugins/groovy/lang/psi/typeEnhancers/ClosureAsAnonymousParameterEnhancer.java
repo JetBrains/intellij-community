@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.sam.SamConversionKt;
 
 import java.util.Iterator;
 import java.util.List;
@@ -35,10 +37,10 @@ import java.util.List;
  * @author Max Medvedev
  */
 public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParameterEnhancer {
+
   @Nullable
   @Override
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-
     List<PsiType> expectedTypes;
 
     if (closure.getParent() instanceof GrSafeCastExpression) {
@@ -64,16 +66,28 @@ public class ClosureAsAnonymousParameterEnhancer extends AbstractClosureParamete
     }
 
     for (PsiType constraint : expectedTypes) {
-      final PsiType suggestion = GppClosureParameterTypeProvider.getSingleMethodParameterType(constraint, index, closure);
-      if (suggestion != null) {
-        if (GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) {
-          if (suggestion instanceof PsiWildcardType && ((PsiWildcardType)suggestion).isSuper()) {
-            return ((PsiWildcardType)suggestion).getBound();
-          }
-        }
+      if (!(constraint instanceof PsiClassType)) continue;
 
-        return TypesUtil.substituteAndNormalizeType(suggestion, PsiSubstitutor.EMPTY, null, closure);
+      PsiClassType.ClassResolveResult result = ((PsiClassType)constraint).resolveGenerics();
+      PsiClass resolved = result.getElement();
+      if (resolved == null) continue;
+
+      MethodSignature sam = SamConversionKt.findSingleAbstractSignature(resolved);
+      if (sam == null) continue;
+
+      PsiType[] parameterTypes = sam.getParameterTypes();
+      if (index >= parameterTypes.length) continue;
+
+      final PsiType suggestion = result.getSubstitutor().substitute(parameterTypes[index]);
+      if (suggestion == null) continue;
+
+      if (GroovyConfigUtils.getInstance().isVersionAtLeast(closure, GroovyConfigUtils.GROOVY2_3)) {
+        if (suggestion instanceof PsiWildcardType && ((PsiWildcardType)suggestion).isSuper()) {
+          return ((PsiWildcardType)suggestion).getBound();
+        }
       }
+
+      return TypesUtil.substituteAndNormalizeType(suggestion, result.getSubstitutor(), null, closure);
     }
 
     return null;

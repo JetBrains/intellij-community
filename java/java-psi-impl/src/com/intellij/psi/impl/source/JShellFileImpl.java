@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JShellFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JShellLanguage;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JShellElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -34,7 +35,7 @@ import java.util.List;
  */
 public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile {
   public JShellFileImpl(FileViewProvider viewProvider) {
-    super(JShellElementType.FILE, JShellElementType.ROOT_CLASS, viewProvider);
+    super(JShellElementType.FILE, JShellElementType.FILE, viewProvider);
   }
 
   @Override
@@ -58,15 +59,35 @@ public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile
   }
 
   @Override
-  public Collection<PsiJShellImportHolder> getSnippets() {
-    final List<PsiJShellImportHolder> result = new SmartList<>();
-    PsiElement child = getFirstChild();
-    while (child != null) {
-      if (child instanceof PsiJShellImportHolder) {
-        result.add((PsiJShellImportHolder)child);
-      }
-      child = child.getNextSibling();
-    }
+  public Collection<PsiElement> getExecutableSnippets() {
+    final List<PsiElement> result = new SmartList<>();
+    collectExecutableSnippets(this, result);
     return result;
+  }
+
+  private static void collectExecutableSnippets(PsiElement container, Collection<PsiElement> result) {
+    for (PsiElement child = container.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiJShellRootClass) {
+        collectExecutableSnippets(child, result);
+      }
+      else {
+        if (isExecutable(child)) {
+          result.add(child);
+        }
+      }
+    }
+  }
+
+  private static final Condition<PsiElement> EXECUTABLE_PREDICATE = elem -> elem != null && !(elem instanceof PsiWhiteSpace || elem instanceof PsiEmptyStatement || elem instanceof PsiComment);
+  private static boolean isExecutable(PsiElement element) {
+    if (element instanceof PsiJShellHolderMethod) {
+      for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (EXECUTABLE_PREDICATE.value(child)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return EXECUTABLE_PREDICATE.value(element);
   }
 }

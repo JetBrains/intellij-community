@@ -22,12 +22,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   private final String m_shortName = InspectionProfileEntry.getShortName(getClass().getSimpleName());
 
-  public static final String ASSIGNMENT_ISSUES = "Assignment issues";
+  @Deprecated public static final String ASSIGNMENT_ISSUES = GroovyBundle.message("inspection.assignment.issues");
   public static final String CONFUSING_CODE_CONSTRUCTS = "Potentially confusing code constructs";
   public static final String CONTROL_FLOW = "Control Flow";
   public static final String PROBABLE_BUGS = "Probable bugs";

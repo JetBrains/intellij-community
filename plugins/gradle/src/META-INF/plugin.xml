@@ -61,6 +61,8 @@
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"/>
     <extensionPoint name="artifactBuildTasksProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleArtifactBuildTasksProvider"/>
     <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider"/>
+    <extensionPoint name="orderEnumerationHandlerFactory"
+                    interface="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">

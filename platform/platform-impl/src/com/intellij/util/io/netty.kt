@@ -16,8 +16,11 @@
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -26,8 +29,11 @@ import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
+import io.netty.channel.kqueue.KQueueEventLoopGroup
+import io.netty.channel.kqueue.KQueueServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.oio.OioServerSocketChannel
 import io.netty.channel.socket.oio.OioSocketChannel
@@ -40,12 +46,14 @@ import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.ide.PooledThreadExecutor
+import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.Socket
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 
 // used in Go
@@ -67,9 +75,16 @@ inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
 fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   val bootstrap = ServerBootstrap()
     .group(group)
-    .channel(if (group is NioEventLoopGroup) NioServerSocketChannel::class.java else OioServerSocketChannel::class.java)
+    .channel(group.serverSocketChannelClass())
   bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true)
   return bootstrap
+}
+
+private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> = when {
+  this is NioEventLoopGroup -> NioServerSocketChannel::class.java
+  this is OioEventLoopGroup -> OioServerSocketChannel::class.java
+  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
+  else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
 }
 
 inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
@@ -112,7 +127,7 @@ private fun doConnect(bootstrap: Bootstrap,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): Channel? {
   var attemptCount = 0
-  if (bootstrap.config().group() is NioEventLoopGroup) {
+  if (bootstrap.config().group() !is OioEventLoopGroup) {
     return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount)
   }
 
@@ -302,6 +317,33 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
   return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }
 
-fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
+fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
+
+fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
+  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+    try {
+      return KQueueEventLoopGroup(workerCount, threadFactory)
+    }
+    catch (e: Throwable) {
+      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
+    }
+  }
+
+  return NioEventLoopGroup(workerCount, threadFactory)
+}
+
+fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
+  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+    try {
+      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+    }
+    catch (e: Throwable) {
+      // error instead of warn to easy spot it
+      logger<BuiltInServer>().error("Cannot use native event loop group", e)
+    }
+  }
+
+  return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+}

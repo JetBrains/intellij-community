@@ -27,6 +27,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -337,7 +338,10 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         createPopup().
         showInBestPositionFor(editor);
     } else {
-      onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom.length == 0 ? "" : namespacesToChooseFrom[0]);
+      WriteAction.run(() -> {
+        String attrName = namespacesToChooseFrom.length == 0 ? "" : namespacesToChooseFrom[0];
+        onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(attrName);
+      });
     }
   }
 

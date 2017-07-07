@@ -54,6 +54,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
+import java.util.Objects;
+
 /**
  * @author ilyas
  */
@@ -339,5 +341,11 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   @Override
   public boolean isTopControlFlowOwner() {
     return !(getParent() instanceof GrStringInjection);
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getLBrace() {
+    return Objects.requireNonNull(super.getLBrace());
   }
 }

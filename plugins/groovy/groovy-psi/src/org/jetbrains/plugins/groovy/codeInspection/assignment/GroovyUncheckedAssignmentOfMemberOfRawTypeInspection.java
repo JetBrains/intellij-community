@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -45,12 +44,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Maxim.Medvedev
  */
 public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return ASSIGNMENT_ISSUES;
-  }
 
   @Override
   protected String buildErrorString(Object... args) {
@@ -68,13 +61,6 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
   @NotNull
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Unchecked assignment from members of raw type";
   }
 
   private static class Visitor extends BaseInspectionVisitor {

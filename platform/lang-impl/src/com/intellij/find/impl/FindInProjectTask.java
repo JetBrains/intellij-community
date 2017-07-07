@@ -167,10 +167,11 @@ class FindInProjectTask {
   }
 
   private static void logStats(@NotNull Collection<VirtualFile> otherFiles, long time) {
-    String topExtensions = otherFiles.stream()
-      .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(), Collectors.counting()))
+    Map<String, Long> extensionToCount = otherFiles.stream()
+      .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(Locale.ENGLISH), Collectors.counting()));
+    String topExtensions = extensionToCount
       .entrySet().stream()
-      .sorted(Comparator.comparingInt((Map.Entry<String, Long> entry) -> entry.getValue().intValue()).reversed())
+      .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
       .map(entry -> entry.getKey() + "(" + entry.getValue() + ")")
       .limit(10)
       .collect(Collectors.joining(", "));

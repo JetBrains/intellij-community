@@ -37,5 +37,11 @@ interface CompilationContext {
 
   JpsModule findModule(String name)
 
+  String getModuleOutputPath(JpsModule module)
+
+  String getModuleTestsOutputPath(JpsModule module)
+
+  List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests)
+
   void notifyArtifactBuilt(String artifactPath)
 }

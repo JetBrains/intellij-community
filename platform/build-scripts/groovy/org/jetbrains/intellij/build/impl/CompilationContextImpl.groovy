@@ -24,6 +24,8 @@ import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
@@ -226,6 +228,31 @@ class CompilationContextImpl implements CompilationContext {
   JpsModule findModule(String name) {
     project.modules.find { it.name == name }
   }
+
+  @Override
+  String getModuleOutputPath(JpsModule module) {
+    getOutputPath(module, false)
+  }
+
+  @Override
+  String getModuleTestsOutputPath(JpsModule module) {
+    getOutputPath(module, true)
+  }
+
+  private String getOutputPath(JpsModule module, boolean forTests) {
+    File outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(module, forTests)
+    if (outputDirectory == null) {
+      messages.error("Output directory for '$module.name' isn't set")
+    }
+    return outputDirectory.absolutePath
+  }
+
+  @Override
+  List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests))
+    return enumerator.classes().roots.collect { it.absolutePath }
+  }
+
 
   @Override
   void notifyArtifactBuilt(String artifactPath) {

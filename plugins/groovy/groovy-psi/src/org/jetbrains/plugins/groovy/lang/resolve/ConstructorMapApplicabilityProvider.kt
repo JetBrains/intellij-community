@@ -42,9 +42,6 @@ open class ConstructorMapApplicabilityProvider : GroovyApplicabilityProvider() {
     if (parameters.isEmpty() && argumentTypes.size == 1) {
       return if (isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP)) applicable else inapplicable
     }
-    if (parameters.size == 1 && argumentTypes.isEmpty() && isInheritor(parameters[0].type, CommonClassNames.JAVA_UTIL_MAP)) {
-      return inapplicable
-    }
     return null
   }
 }

@@ -224,9 +224,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       @Override
       public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
+          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
           if (isCopyAction(actionId)) {
-            final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-            WriteAction.run(() -> breakpointManager.copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+            WriteAction
+              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
           }
           else {
             setFileUrl(file.getUrl());

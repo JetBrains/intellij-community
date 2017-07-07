@@ -1,6 +1,7 @@
 task setupJbre {}
 
 def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net/intellij-jdk' : 'https://dl.bintray.com/jetbrains/intellij-jdk'
+def targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
 
 jrePlatformsToDownload(targetOs).each { platform ->
   archToDownload(platform).each { arch ->
