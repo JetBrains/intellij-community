@@ -336,12 +336,13 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast) throws VcsException {
     if (!isRepositoryReady(root)) {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, fast);
   }
 
   @NotNull

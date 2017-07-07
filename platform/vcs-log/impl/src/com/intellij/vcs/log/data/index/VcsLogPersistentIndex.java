@@ -595,7 +595,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       VcsLogProvider provider = myProviders.get(root);
       try {
         List<String> hashes = TroveUtil.map(commits, value -> myStorage.getCommitId(value).getHash().asString());
-        provider.readFullDetails(root, hashes, VcsLogPersistentIndex.this::storeDetail);
+        provider.readFullDetails(root, hashes, VcsLogPersistentIndex.this::storeDetail, true);
       }
       catch (VcsException e) {
         LOG.error(e);

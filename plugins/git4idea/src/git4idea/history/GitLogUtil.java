@@ -185,7 +185,7 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      readRecords(project, root, true, false, record -> commits.add(converter.fun(record)), parameters);
+      readRecords(project, root, true, false, false, record -> commits.add(converter.fun(record)), parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -257,7 +257,7 @@ public class GitLogUtil {
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
-    readRecords(project, root, false, true, recordCollector, parameters);
+    readRecords(project, root, false, true, true, recordCollector, parameters);
     recordCollector.finish();
   }
 
@@ -265,9 +265,10 @@ public class GitLogUtil {
                                   @NotNull VirtualFile root,
                                   boolean withRefs,
                                   boolean withChanges,
+                                  boolean fast,
                                   @NotNull Consumer<GitLogRecord> converter,
                                   String... parameters) throws VcsException {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(withChanges));
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(withChanges, fast));
     readRecordsFromHandler(project, root, withRefs, withChanges, converter, handler, parameters);
   }
 
@@ -345,7 +346,7 @@ public class GitLogUtil {
                                               @NotNull VirtualFile root,
                                               @NotNull GitVcs vcs,
                                               @NotNull Consumer<? super GitCommit> commitConsumer,
-                                              @NotNull List<String> hashes) throws VcsException {
+                                              @NotNull List<String> hashes, boolean fast) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
@@ -357,7 +358,7 @@ public class GitLogUtil {
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true));
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true, fast));
 
     String separator = getSeparator(vcs);
     Ref<Exception> inputError = new Ref<>();
@@ -398,8 +399,14 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean withChanges) {
-    return Registry.is("git.diff.renameLimit.infinity") && withChanges ?
-           Collections.singletonList("diff.renameLimit=0") : Collections.emptyList();
+  private static List<String> createConfigParameters(boolean withChanges, boolean fast) {
+    if (!withChanges) return Collections.emptyList();
+    return Registry.is("git.diff.renameLimit.infinity") ?
+           renameLimit(0) : (fast ? renameLimit(1000) : Collections.emptyList());
+  }
+
+  @NotNull
+  private static List<String> renameLimit(int limit) {
+    return Collections.singletonList("diff.renameLimit=" + limit);
   }
 }
