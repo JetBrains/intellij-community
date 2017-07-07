@@ -59,10 +59,12 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
 
   @Override
   protected void elementFinished(@NotNull PsiElement element) {
-    Object value = getCached(element);
+    if (!(element instanceof PsiExpression)) return;
+
+    Object value = getCached((PsiExpression)element);
     if (value == null) {
       Object result = myConstantExpressionVisitor.handle(element);
-      cache(element, result);
+      cache((PsiExpression)element, result);
     }
     else {
       myConstantExpressionVisitor.store(element, value == NO_VALUE ? null : value);
@@ -71,7 +73,12 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
 
   @Override
   public void visitElement(PsiElement element) {
-    Object value = getCached(element);
+    if (!(element instanceof PsiExpression)) {
+      super.visitElement(element);
+      return;
+    }
+
+    Object value = getCached((PsiExpression)element);
     if (value == null) {
       super.visitElement(element);
       // will cache back in elementFinished()
@@ -86,15 +93,11 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
     return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
   };
 
-  private Object getCached(@NotNull PsiElement element) {
+  private Object getCached(@NotNull PsiExpression element) {
     return map().get(element);
   }
-  private Object cache(@NotNull PsiElement element, @Nullable Object value) {
-    value = ConcurrencyUtil.cacheOrGet(map(), element, value == null ? NO_VALUE : value);
-    if (value == NO_VALUE) {
-      value = null;
-    }
-    return value;
+  private void cache(@NotNull PsiExpression element, @Nullable Object value) {
+    ConcurrencyUtil.cacheOrGet(map(), element, value == null ? NO_VALUE : value);
   }
 
   @NotNull
@@ -122,7 +125,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
       // in case of compiled elements we are not allowed to use PSI walking
       // but really in Cls there are only so many cases to handle
       if (expression instanceof PsiPrefixExpression) {
-        PsiElement operand = ((PsiPrefixExpression)expression).getOperand();
+        PsiExpression operand = ((PsiPrefixExpression)expression).getOperand();
         if (operand == null) return null;
         Object value = evaluator.myConstantExpressionVisitor.handle(operand);
         evaluator.myConstantExpressionVisitor.store(operand, value);
