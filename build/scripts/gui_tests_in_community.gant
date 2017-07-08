@@ -33,7 +33,7 @@ target("default": "Run tests") {
 
   def compilationOptions = new BuildOptions()
   GantBinding binding = (GantBinding) this.binding
-  def context = CompilationContextImpl.create(binding.ant as AntBuilder,
+  def context = CompilationContextImpl.create(binding.ant as AntBuilder, home, home,
                                               { p, m -> outputDir } as BiFunction<JpsProject, BuildMessages, String>, compilationOptions)
 
   def testingOptions = new TestingOptions()
