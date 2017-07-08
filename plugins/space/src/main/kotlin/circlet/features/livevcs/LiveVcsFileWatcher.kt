@@ -1,6 +1,5 @@
 package circlet.features.livevcs
 
-import circlet.*
 import circlet.components.*
 import circlet.utils.*
 import com.intellij.codeInsight.daemon.impl.*

@@ -15,8 +15,8 @@ import runtime.reactive.*
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
     this.getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
 
-inline fun <reified T : Any> component(): T = application.getComponent<T>()
-inline fun <reified T : Any> Project.component(): T = this.getComponent<T>()
+inline fun <reified T : Any> component(): T = application.getComponent()
+inline fun <reified T : Any> Project.component(): T = this.getComponent()
 
 val DataContext.Editor: Editor?
     get() = CommonDataKeys.EDITOR.getData(this)
