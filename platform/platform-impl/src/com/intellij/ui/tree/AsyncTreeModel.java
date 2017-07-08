@@ -17,6 +17,7 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.concurrency.Command;
@@ -41,7 +42,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -364,7 +364,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return emptyList();
   }
 
-  private static abstract class ObsolescentCommand implements Obsolescent, Command<Node>, Function<Object, Node> {
+  private abstract class ObsolescentCommand implements Obsolescent, Command<Reference<Node>> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
     final String name;
     final Object object;
@@ -376,6 +376,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       LOG.debug("create command: ", this);
     }
 
+    abstract Node getNode(Object object);
+
+    abstract void setNode(Node node);
+
     boolean isPending() {
       return Promise.State.PENDING == promise.getState();
     }
@@ -386,10 +390,28 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
 
     @Override
-    public Node get() {
+    public Reference<Node> get() {
       started = true;
       LOG.debug("background command: ", this);
-      return isObsolete() ? null : apply(object);
+      return Reference.create(() -> getNode(object));
+    }
+
+    @Override
+    public void accept(Reference<Node> reference) {
+      if (isObsolete()) {
+        LOG.debug("obsolete command: ", this);
+      }
+      else if (reference == null) {
+        LOG.debug("failed command: ", this);
+      }
+      else if (reference.isValid()) {
+        LOG.debug("foreground command: ", this);
+        setNode(reference.get());
+      }
+      else {
+        LOG.debug("restart command: ", this);
+        processor.process(this); // restart command
+      }
     }
   }
 
@@ -405,20 +427,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
 
     @Override
-    public Node apply(Object object) {
+    Node getNode(Object object) {
       if (object == null) object = model.getRoot();
       if (object == null || isObsolete()) return null;
       return new Node(object, model.isLeaf(object));
     }
 
     @Override
-    public void accept(Node loaded) {
-      if (isObsolete()) {
-        LOG.debug("obsolete command: ", this);
-        return;
-      }
-      LOG.debug("foreground command: ", this);
-
+    void setNode(Node loaded) {
       Node root = tree.root;
       if (root == null && loaded == null) {
         LOG.debug("no root");
@@ -478,13 +494,11 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
     @Override
     public boolean isObsolete() {
-      if (this == node.queue.get()) return false;
-      LOG.debug("obsolete command: ", this);
-      return true;
+      return this != node.queue.get();
     }
 
     @Override
-    public Node apply(Object object) {
+    Node getNode(Object object) {
       Node loaded = new Node(object, model.isLeaf(object));
       if (loaded.leaf) return loaded;
 
@@ -492,7 +506,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         //noinspection unchecked
         ChildrenProvider<Object> provider = (ChildrenProvider)model;
         List<Object> children = provider.getChildren(object);
-        if (children == null) return null; // cancel this command
+        if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
       }
       else {
@@ -525,11 +539,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
 
     @Override
-    public void accept(Node loaded) {
-      if (isObsolete()) {
-        LOG.debug("obsolete command: ", this);
-        return;
-      }
+    void setNode(Node loaded) {
       if (loaded == null || loaded.isLoadingRequired()) {
         LOG.debug("cancelled command: ", this);
         return;
@@ -539,8 +549,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         LOG.warn("ignore removed node: " + node.object);
         return;
       }
-      LOG.debug("foreground command: ", this);
-
       List<Node> oldChildren = node.getChildren();
       List<Node> newChildren = loaded.getChildren();
       if (oldChildren.isEmpty() && newChildren.isEmpty()) {

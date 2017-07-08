@@ -16,6 +16,7 @@
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -417,6 +418,11 @@ public final class AsyncTreeModelTest {
     }
 
     private void pause() {
+      if (this instanceof InvokerSupplier && .9 < Math.random()) {
+        // sometimes throw an exception to cancel current operation
+        if (PRINT) System.out.println("interrupt access to model:" + toString());
+        throw new ProcessCanceledException();
+      }
       if (delay > 0) {
         try {
           Thread.sleep(delay);
