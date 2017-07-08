@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.find.editorHeaderActions.ShowMoreOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -175,7 +176,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         .setResizable(true)
         .setMayBeParent(true)
         .setCancelOnClickOutside(true)
-        .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
@@ -358,7 +358,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox")) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return FindSettings.getInstance().isSkipResultsWithOneUsage();
+        return myHelper.isSkipResultsWithOneUsage();
       }
 
       @Override
@@ -375,12 +375,19 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.open.in.new.tab.checkbox")) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return FindSettings.getInstance().isShowResultsInSeparateView();
+        return myHelper.isUseSeparateView();
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myHelper.setUseSeparateView(state);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
+        e.getPresentation().setVisible(myHelper.getModel().isOpenInNewTabVisible());
       }
     });
     tabResultsContextGroup.setPopup(true);
@@ -388,6 +395,12 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     tabSettingsPresentation.setIcon(AllIcons.General.SecondaryGroup);
     myTabResultsButton =
       new ActionButton(tabResultsContextGroup, tabSettingsPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myTabResultsButton.click();
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("alt DOWN"), this);
     myOKButton = new JButton(FindBundle.message("find.popup.find.button"));
     myOkActionListener = new ActionListener() {
       @Override
@@ -1165,14 +1178,16 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   }
 
   private class MyShowFilterPopupAction extends AnAction {
-
     private final DefaultActionGroup mySwitchContextGroup;
 
     public MyShowFilterPopupAction() {
       super(FindBundle.message("find.popup.show.filter.popup"), null, AllIcons.General.Filter);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac
-                                                                                 ? InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK
-                                                                                 : InputEvent.ALT_DOWN_MASK)));
+      LayeredIcon icon = JBUI.scale(new LayeredIcon(2));
+      icon.setIcon(AllIcons.General.Filter, 0);
+      icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
+      getTemplatePresentation().setIcon(icon);
+
+      setShortcutSet(new CustomShortcutSet(ShowMoreOptions.SHORT_CUT));
       mySwitchContextGroup = new DefaultActionGroup();
       mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.ANY));
       mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_COMMENTS));
