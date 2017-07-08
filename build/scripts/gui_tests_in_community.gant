@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
 import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
-import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.idea.IdeaProjectLoader
 import org.jetbrains.jps.model.JpsProject
 
 import java.util.function.BiFunction
-
 /**
  * Compiles the sources and runs tests from 'community' project. Look at org.jetbrains.intellij.build.TestingOptions to see which options are
  * supported.
@@ -37,9 +33,7 @@ target("default": "Run tests") {
 
   def compilationOptions = new BuildOptions()
   GantBinding binding = (GantBinding) this.binding
-  binding.includeTool << JpsGantTool
-
-  def context = CompilationContextImpl.create(binding.ant as AntBuilder, binding.projectBuilder, binding.project, binding.global, home, home,
+  def context = CompilationContextImpl.create(binding.ant as AntBuilder,
                                               { p, m -> outputDir } as BiFunction<JpsProject, BuildMessages, String>, compilationOptions)
 
   def testingOptions = new TestingOptions()
