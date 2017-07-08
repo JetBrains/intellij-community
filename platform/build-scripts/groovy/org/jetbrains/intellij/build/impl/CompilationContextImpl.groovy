@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
 import org.jetbrains.jps.model.JpsElementFactory
@@ -51,15 +52,15 @@ class CompilationContextImpl implements CompilationContext {
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot) {
+  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot, Script gantScript) {
+    GantBinding binding = (GantBinding) gantScript.binding
     //noinspection GroovyAssignabilityCheck
-    return create(communityHome, projectHome,
-                  { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
+    return create(binding.ant, communityHome, projectHome,
+                   { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
    }
 
-  static CompilationContextImpl create(String communityHome, String projectHome,
+  static CompilationContextImpl create(AntBuilder ant, String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
-    AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
     if (["platform/build-scripts", "bin/log.xml", "build.txt"].any { !new File(communityHome, it).exists() }) {

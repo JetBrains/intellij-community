@@ -36,7 +36,8 @@ class PythonCommunityPluginBuilder {
   def build() {
     def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
     def options = new BuildOptions(targetOS: BuildOptions.OS_NONE, buildNumber: pluginBuildNumber, outputRootPath: "$home/out/pycharmCE")
-    def buildContext = BuildContext.createContext(home, home, new PythonCommunityPluginProperties(), ProprietaryBuildTools.DUMMY, options)
+    def buildContext = BuildContext.createContext(binding.ant, home, home, new PythonCommunityPluginProperties(),
+                                                  ProprietaryBuildTools.DUMMY, options)
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.buildDistributions()
     def pluginsPaths = new File("$buildContext.paths.buildOutputRoot/plugins-paths.txt")

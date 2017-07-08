@@ -86,20 +86,20 @@ abstract class BuildContext implements CompilationContext {
 
   abstract boolean shouldBuildDistributionForOS(String os)
 
-  static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
+  static BuildContext createContext(AntBuilder ant, String communityHome, String projectHome, ProductProperties productProperties,
                                     ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                     BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
+    return BuildContextImpl.create(ant, communityHome, projectHome, productProperties, proprietaryBuildTools, options)
   }
 
   /**
-   * @deprecated use {@link #createContext(String, String, ProductProperties, ProprietaryBuildTools, BuildOptions)} instead
+   * @deprecated use {@link #createContext(AntBuilder, String, String, ProductProperties, ProprietaryBuildTools, BuildOptions)} instead
    */
   static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                    String communityHome, String projectHome, ProductProperties productProperties,
-                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                                    BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
+                                           String communityHome, String projectHome, ProductProperties productProperties,
+                                           ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                           BuildOptions options = new BuildOptions()) {
+    return BuildContextImpl.create(ant, communityHome, projectHome, productProperties, proprietaryBuildTools, options)
   }
 
   /**
