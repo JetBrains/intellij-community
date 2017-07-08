@@ -10,7 +10,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class ShowMoreOptions extends AnAction implements DumbAware {
-  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), null);
+  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK), null);
 
   private final ActionToolbarImpl myToolbarComponent;
 
