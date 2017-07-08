@@ -16,8 +16,6 @@
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
-import org.jetbrains.jps.gant.JpsGantTool
-
 /**
  * @author nik
  */
@@ -27,9 +25,7 @@ class IdeaCommunityBuilder {
 
   IdeaCommunityBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions(), String projectHome = home) {
     this.binding = binding
-    binding.includeTool << JpsGantTool
-    buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, projectHome,
-                                              new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
+    buildContext = BuildContext.createContext(binding.ant, home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
                                               options)
   }
 

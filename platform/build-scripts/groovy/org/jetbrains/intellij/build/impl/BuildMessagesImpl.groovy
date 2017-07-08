@@ -23,10 +23,6 @@ import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
-import org.jetbrains.jps.gant.BuildInfoPrinter
-import org.jetbrains.jps.gant.DefaultBuildInfoPrinter
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
-import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 
 import java.util.function.BiFunction
 /**
@@ -42,14 +38,12 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<LogMessage> delayedMessages = []
   private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
 
-  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject) {
+  static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"
     def registered = antProject.getReference(key)
     if (registered != null) return registered as BuildMessagesImpl
 
     boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
-    BuildInfoPrinter buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
-    builder.buildInfoPrinter = buildInfoPrinter
     disableAntLogging(antProject)
     BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
     def antTaskLogger = new AntTaskLogger(antProject)

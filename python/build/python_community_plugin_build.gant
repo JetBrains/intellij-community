@@ -1,8 +1,5 @@
 import org.jetbrains.intellij.build.impl.BuildUtils
-import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.idea.IdeaProjectLoader
-
-includeTool << JpsGantTool
 
 target("default": "Default") {
   String home = new File(IdeaProjectLoader.guessHome(this)).absolutePath

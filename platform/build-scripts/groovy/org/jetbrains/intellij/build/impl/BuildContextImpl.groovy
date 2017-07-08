@@ -37,14 +37,13 @@ class BuildContextImpl extends BuildContext {
   private final JpsGlobal global
   private final CompilationContextImpl compilationContext
 
-  static BuildContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                 String communityHome, String projectHome, ProductProperties productProperties,
+  static BuildContextImpl create(AntBuilder ant, String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
     WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
 
-    def compilationContext = CompilationContextImpl.create(ant, projectBuilder, communityHome, projectHome,
+    def compilationContext = CompilationContextImpl.create(ant, communityHome, projectHome,
                                                            createBuildOutputRootEvaluator(projectHome, productProperties), options)
     def context = new BuildContextImpl(compilationContext, productProperties,
                                        windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,

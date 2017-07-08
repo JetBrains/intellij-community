@@ -21,7 +21,6 @@ import groovy.transform.CompileStatic
 import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.gant.JpsGantProjectBuilder
-import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
@@ -35,7 +34,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.function.BiFunction
-
 /**
  * @author nik
  */
@@ -56,15 +54,14 @@ class CompilationContextImpl implements CompilationContext {
   @CompileDynamic
   static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot, Script gantScript) {
     GantBinding binding = (GantBinding) gantScript.binding
-    binding.includeTool << JpsGantTool
     //noinspection GroovyAssignabilityCheck
-    return create(binding.ant, binding.projectBuilder, communityHome, projectHome,
+    return create(binding.ant, communityHome, projectHome,
                    { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
    }
 
-  static CompilationContextImpl create(AntBuilder ant, JpsGantProjectBuilder projectBuilder, String communityHome, String projectHome,
+  static CompilationContextImpl create(AntBuilder ant, String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
-    def messages = BuildMessagesImpl.create(projectBuilder, ant.project)
+    def messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
     if (["platform/build-scripts", "bin/log.xml", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
@@ -80,23 +77,22 @@ class CompilationContextImpl implements CompilationContext {
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, projectBuilder, model, communityHome, projectHome, jdk8Home, kotlinHome, messages,
+    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdk8Home, kotlinHome, messages,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     return context
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsGantProjectBuilder projectBuilder, JpsModel model,
-                                 String communityHome, String projectHome, String jdk8Home, String kotlinHome,
-                                 BuildMessages messages, BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, 
-                                 BuildOptions options) {
+  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
+                                 String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
+                                 BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
     this.gradle = gradle
     this.projectModel = model
     this.project = model.project
     this.global = model.global
     this.options = options
-    this.projectBuilder = projectBuilder
+    this.projectBuilder = new JpsGantProjectBuilder(ant.project, projectModel)
     this.messages = messages
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
     this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home, kotlinHome)
@@ -104,7 +100,7 @@ class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, gradle, projectBuilder, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
+    return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       paths.kotlinHome, messages, buildOutputRootEvaluator, options)
   }
 
