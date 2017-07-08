@@ -46,7 +46,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
@@ -71,6 +70,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
@@ -83,7 +83,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
-  public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
   private boolean mySomeSchemesDeleted = false;
@@ -203,7 +202,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);
       }
       if (defaultScheme != null && scheme instanceof AbstractColorsScheme) {
-        return !((AbstractColorsScheme)scheme).settingsEqual(defaultScheme);
+        return !((AbstractColorsScheme)scheme)
+          .settingsEqual(defaultScheme, colorKey -> !colorKey.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX));
       }
     }
     return false;
@@ -502,7 +502,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     });
     result.addAll(extensions);
 
-    result.add(new FileStatusColorsPageFactory());
     result.add(new ScopeColorsPageFactory());
 
     return result;
@@ -579,10 +578,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private static void initScheme(@NotNull MyColorScheme scheme) {
     List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<>();
     initPluggedDescriptions(descriptions, scheme);
-    EditorColorsScheme original = scheme.getOriginal();
-    if (original != null && original instanceof  DefaultColorsScheme) {
-      initFileStatusDescriptors(descriptions, scheme);
-    }
     initScopesDescriptors(descriptions, scheme);
 
     scheme.setDescriptors(descriptions.toArray(new EditorSchemeAttributeDescriptor[descriptions.size()]));
@@ -623,20 +618,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  private static void initFileStatusDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
 
-    FileStatus[] statuses = FileStatusFactory.getInstance().getAllFileStatuses();
-
-    for (FileStatus fileStatus : statuses) {
-      addEditorSettingDescription(descriptions,
-                                  fileStatus.getText(),
-                                  FILE_STATUS_GROUP,
-                                  null,
-                                  fileStatus.getColorKey(),
-                                  scheme);
-
-    }
-  }
   private static void initScopesDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
     Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new THashSet<>(new TObjectHashingStrategy<Pair<NamedScope, NamedScopesHolder>>() {
       @Override
@@ -1083,6 +1065,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private String                            myName;
     private boolean myIsNew = false;
     private RainbowColorsInSchemeState myRainbowState;
+    private final static Predicate<ColorKey> FILE_STATUS_COLORS =
+      input -> input != null && input.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX);
+
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme);
@@ -1243,10 +1228,20 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       if (myParentScheme instanceof AbstractColorsScheme) {
         AbstractColorsScheme originalScheme = ((AbstractColorsScheme)myParentScheme).getOriginal();
         if (originalScheme != null) {
-          originalScheme.copyTo((AbstractColorsScheme)myParentScheme);
-          ((AbstractColorsScheme)myParentScheme).setSaveNeeded(true);
+          copyPreservingFileStatusColors(originalScheme, (AbstractColorsScheme)myParentScheme);
         }
       }
+    }
+
+    private static void copyPreservingFileStatusColors(@NotNull AbstractColorsScheme source,
+                                                       @NotNull AbstractColorsScheme target) {
+      Map<ColorKey, Color> fileStatusColors = target.getColors(FILE_STATUS_COLORS);
+      source.copyTo(target);
+      target.clearColors(FILE_STATUS_COLORS);
+      for (ColorKey key : fileStatusColors.keySet()) {
+        target.setColor(key, fileStatusColors.get(key));
+      }
+      target.setSaveNeeded(true);
     }
   }
 

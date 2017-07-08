@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 
@@ -113,8 +114,12 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  protected boolean colorsEqual(AbstractColorsScheme otherScheme) {
-    return compareColors(otherScheme, new ArrayList<>());
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
+    Collection<Predicate<ColorKey>> filters = new ArrayList<>();
+    if (colorKeyFilter != null) {
+      filters.add(colorKeyFilter);
+    }
+    return compareColors(otherScheme, filters);
   }
 
   private boolean compareAttributes(@NotNull AbstractColorsScheme otherScheme,
@@ -141,18 +146,15 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
   
   private boolean compareColors(@NotNull AbstractColorsScheme otherScheme,
-                                    @NotNull Collection<Function<ColorKey, Boolean>> filters) {
+                                @NotNull Collection<Predicate<ColorKey>> filters) {
     for (ColorKey key : myColorsMap.keySet()) {
       Color thisColor = getColor(key);
       Color otherColor = otherScheme.getColor(key);
-      if (thisColor == null) {
-        if (otherColor != null) return false;
-      }
-      else if (!isColorKeyIgnored(filters, key) && !thisColor.equals(otherColor)) {
+      if (isColorKeyAccepted(filters, key) && !Comparing.equal(thisColor, otherColor)) {
         return false;
       }
     }
-    filters.add(key -> myColorsMap.containsKey(key));
+    filters.add(key -> !myColorsMap.containsKey(key));
     if (myParentScheme instanceof EditorColorsSchemeImpl &&
         !((EditorColorsSchemeImpl)myParentScheme).compareColors(otherScheme, filters)) {
       return false;
@@ -160,10 +162,10 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     return true;
   }
 
-  private static boolean isColorKeyIgnored(@NotNull Collection<Function<ColorKey, Boolean>> filters, ColorKey key) {
-    for (Function<ColorKey,Boolean> filter : filters) {
-      if (filter.apply(key)) return true;
+  private static boolean isColorKeyAccepted(@NotNull Collection<Predicate<ColorKey>> filters, @NotNull ColorKey key) {
+    for (Predicate<ColorKey> filter : filters) {
+      if (!filter.test(key)) return false;
     }
-    return false;
+    return true;
   }
 }

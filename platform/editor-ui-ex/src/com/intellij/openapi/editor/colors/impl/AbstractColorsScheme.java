@@ -45,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 import static com.intellij.openapi.editor.colors.EditorColors.*;
@@ -183,6 +184,24 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     newScheme.myAttributesMap = new THashMap<>(myAttributesMap);
     newScheme.myColorsMap = new HashMap<>(myColorsMap);
     newScheme.myVersion = myVersion;
+  }
+
+  public void clearColors(@NotNull Predicate<ColorKey> predicate) {
+    Iterator<ColorKey> iterator = myColorsMap.keySet().iterator();
+    while (iterator.hasNext()) {
+      ColorKey key = iterator.next();
+      if (predicate.test(key)) iterator.remove();
+    }
+  }
+
+  public Map<ColorKey,Color> getColors(@NotNull Predicate<ColorKey> predicate) {
+    Map<ColorKey,Color> colorMap = ContainerUtilRt.newHashMap();
+    for (ColorKey key : myColorsMap.keySet()) {
+      if (predicate.test(key)) {
+        colorMap.put(key, myColorsMap.get(key));
+      }
+    }
+    return colorMap;
   }
 
   @Override
@@ -909,6 +928,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean settingsEqual(Object other) {
+    return settingsEqual(other, null);
+  }
+
+  public boolean settingsEqual(Object other, @Nullable Predicate<ColorKey> colorKeyFilter) {
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
     
@@ -935,7 +958,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return areDelegatingOrEqual(myFontPreferences, otherScheme.getFontPreferences()) &&
            areDelegatingOrEqual(myConsoleFontPreferences, otherScheme.getConsoleFontPreferences()) &&
            attributesEqual(otherScheme) &&
-           colorsEqual(otherScheme);
+           colorsEqual(otherScheme, colorKeyFilter);
   }
 
   protected static boolean areDelegatingOrEqual(@NotNull FontPreferences preferences1, @NotNull FontPreferences preferences2) {
@@ -948,7 +971,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return myAttributesMap.equals(otherScheme.myAttributesMap);
   }
 
-  protected boolean colorsEqual(AbstractColorsScheme otherScheme) {
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
     return myColorsMap.equals(otherScheme.myColorsMap);
   }
 
