@@ -20,13 +20,17 @@ import org.codehaus.gant.GantBinding
  * @author nik
  */
 class IdeaCommunityBuilder {
+  private final GantBinding binding
   private final BuildContext buildContext
 
   IdeaCommunityBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions(), String projectHome = home) {
-    buildContext = BuildContext.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
+    this.binding = binding
+    buildContext = BuildContext.createContext(binding.ant, home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
+                                              options)
   }
 
   IdeaCommunityBuilder(GantBinding binding, BuildContext buildContext) {
+    this.binding = binding
     this.buildContext = buildContext
   }
 
