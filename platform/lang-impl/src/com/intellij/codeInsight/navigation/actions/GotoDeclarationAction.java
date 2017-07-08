@@ -136,7 +136,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
     if (element != null) {
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
       return true;
     }
     return false;

@@ -905,8 +905,8 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             myCodePreviewComponent.setVisible(occurrences > 0);
             StringBuilder stringBuilder = new StringBuilder();
             if (occurrences > 0) {
-              stringBuilder.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
-              boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+              stringBuilder.append(Math.min(ShowUsagesAction.getUsagesPageSize(), occurrences));
+              boolean foundAllUsages = occurrences < ShowUsagesAction.getUsagesPageSize();
               if (!foundAllUsages) {
                 stringBuilder.append("+");
               }
@@ -921,7 +921,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             mySearchTextArea.setInfoText(stringBuilder.toString());
           }, state);
 
-          boolean continueSearch = resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
+          boolean continueSearch = resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
           if (!continueSearch) {
             onStop(hash);
           }

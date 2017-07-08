@@ -49,6 +49,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -99,7 +100,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
   public static final String ID = "ShowUsages";
-  public static final int USAGES_PAGE_SIZE = 100;
+
+  public static int getUsagesPageSize() {
+    return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
+  }
 
   static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
   static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
@@ -207,14 +211,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, element -> {
-        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+        startFindUsages(element, popupPosition, editor, getUsagesPageSize());
         return false;
       });
     }
     else if (ArrayUtil.getFirstElement(usageTargets) instanceof PsiElementUsageTarget) {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
       if (element != null) {
-        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+        startFindUsages(element, popupPosition, editor, getUsagesPageSize());
       }
     }
   }
@@ -1072,7 +1076,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                 int maxUsages,
                                 @NotNull FindUsagesOptions options) {
     TransactionGuard.submitTransaction(handler.getProject(), () ->
-      showElementUsages(editor, popupPosition, handler, maxUsages + USAGES_PAGE_SIZE, options));
+      showElementUsages(editor, popupPosition, handler, maxUsages + getUsagesPageSize(), options));
   }
 
   private static void addUsageNodes(@NotNull GroupNode root, @NotNull final UsageViewImpl usageView, @NotNull List<UsageNode> outNodes) {

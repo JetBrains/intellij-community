@@ -53,7 +53,6 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -512,7 +511,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
               if (isCancelled()) return;
               model.addRow(new Object[]{usage});
             }, state);
-            return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
+            return resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
           }, processPresentation, filesToScanInitially);
 
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
@@ -522,7 +521,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
                 int occurrences = resultsCount.get();
                 int filesWithOccurrences = resultsFilesCount.get();
                 if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-                boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+                boolean foundAllUsages = occurrences < ShowUsagesAction.getUsagesPageSize();
 
                 myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX,
                                      PREVIEW_TITLE +
