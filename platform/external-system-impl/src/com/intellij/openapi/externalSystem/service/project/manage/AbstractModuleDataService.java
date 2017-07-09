@@ -36,6 +36,9 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
@@ -95,6 +98,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
         setLanguageLevel(modifiableRootModel, node.getData());
+        setSdk(modifiableRootModel, node.getData());
       }
     }
 
@@ -395,6 +399,19 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
       catch (IllegalArgumentException e) {
         LOG.debug(e);
+      }
+    }
+  }
+
+  private void setSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
+    String skdName = data.getSdkName();
+    if (skdName != null) {
+      ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
+      Sdk sdk = projectJdkTable.findJdk(skdName);
+      if (sdk != null) {
+        modifiableRootModel.setSdk(sdk);
+      } else {
+        modifiableRootModel.setInvalidSdk(skdName, JavaSdk.getInstance().getName());
       }
     }
   }
