@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,32 +264,32 @@ public class ConfigurableExtensionPointUtil {
   public static Map<String, List<Configurable>> groupConfigurables(@NotNull List<Configurable> configurables) {
     Map<String, Node<ConfigurableWrapper>> tree = ContainerUtil.newHashMap();
     for (Configurable configurable : configurables) {
-      if (configurable instanceof ConfigurableWrapper) {
-        ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
-        String id = wrapper.getId();
-        Node<ConfigurableWrapper> node = Node.get(tree, id);
-        if (node.myValue != null) {
-          LOG.warn("ignore configurable with duplicated id: " + id);
-        }
-        else {
-          String parentId = wrapper.getParentId();
-          String groupId = wrapper.getExtensionPoint().groupId;
-          if (groupId != null) {
-            if (parentId != null) {
-              LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
-            }
-            else {
-              //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
-              parentId = groupId;
-            }
-          }
-          parentId = Node.cyclic(tree, parentId, "other", id, node);
-          node.myParent = Node.add(tree, parentId, node);
-          node.myValue = wrapper;
-        }
+      if (!(configurable instanceof ConfigurableWrapper)) {
+        Node.add(tree, "other", configurable);
+        continue;
+      }
+
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      String id = wrapper.getId();
+      Node<ConfigurableWrapper> node = Node.get(tree, id);
+      if (node.myValue != null) {
+        LOG.warn("ignore configurable with duplicated id: " + id);
       }
       else {
-        Node.add(tree, "other", configurable);
+        String parentId = wrapper.getParentId();
+        String groupId = wrapper.getExtensionPoint().groupId;
+        if (groupId != null) {
+          if (parentId != null) {
+            LOG.warn("ignore deprecated groupId: " + groupId + " for id: " + id);
+          }
+          else {
+            //TODO:LOG.warn("use deprecated groupId: " + groupId + " for id: " + id);
+            parentId = groupId;
+          }
+        }
+        parentId = Node.cyclic(tree, parentId, "other", id, node);
+        node.myParent = Node.add(tree, parentId, node);
+        node.myValue = wrapper;
       }
     }
     Map<String, List<Configurable>> map = ContainerUtil.newHashMap();
