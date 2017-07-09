@@ -80,9 +80,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   public static Document getDocumentToBeUsedFor(final PsiFile file) {
     final Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) {
-      return file.getViewProvider().getDocument();
-    };
+    if (document == null) return null;
     if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
     PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getSynchronizer();
     if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
