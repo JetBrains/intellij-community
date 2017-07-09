@@ -170,6 +170,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final ModuleData mainModuleData = mainModuleNode.getData();
     final String mainModuleConfigPath = mainModuleData.getLinkedExternalProjectPath();
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
+    final String jdkName = gradleModule.getJdkName();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
@@ -195,6 +196,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
         sourceSetData.setSourceCompatibility(sourceSet.getSourceCompatibility());
         sourceSetData.setTargetCompatibility(sourceSet.getTargetCompatibility());
+        sourceSetData.setSdkName(jdkName);
 
         final Set<File> artifacts = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY);
         if ("main".equals(sourceSet.getName())) {
@@ -240,6 +242,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             mainModuleData.setTargetCompatibility(languageSettings.getTargetBytecodeVersion().toString());
           }
         }
+        mainModuleData.setSdkName(jdkName);
       }
       catch (UnsupportedMethodException ignore) {
         // org.gradle.tooling.model.idea.IdeaModule.getJavaLanguageSettings method supported since Gradle 2.11

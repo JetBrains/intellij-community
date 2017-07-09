@@ -32,6 +32,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String[] myIdeModuleGroup;
   @Nullable  private String mySourceCompatibility;
   @Nullable private String myTargetCompatibility;
+  @Nullable private String mySdkName;
   @Nullable private String myProductionModuleId;
 
   private boolean myInheritProjectCompileOutputPath = true;
@@ -202,6 +203,15 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     myTargetCompatibility = targetCompatibility;
   }
 
+  @Nullable
+  public String getSdkName() {
+    return mySdkName;
+  }
+
+  public void setSdkName(@Nullable String sdkName) {
+    mySdkName = sdkName;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ModuleData)) return false;
@@ -214,6 +224,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
     if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
+    if (mySdkName != null ? !mySdkName.equals(that.mySdkName) : that.mySdkName != null) return false;
 
     return true;
   }
@@ -226,6 +237,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
     result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
+    result = 31 * result + (mySdkName != null ? mySdkName.hashCode() : 0);
     return result;
   }
 
