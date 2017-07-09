@@ -52,7 +52,6 @@ import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,21 +158,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    PyClassAttributesIndex.findAttributes(referencedName, project, scope).forEach(classAttribute -> {
-      ret.add(new ImplicitResolveResult(classAttribute, getImplicitResultRate(classAttribute, imports)));
+    PyClassAttributesIndex.findClassAtrributes(referencedName, project, scope).forEach(classAttr -> {
+      ret.add(new ImplicitResolveResult(classAttr, getImplicitResultRate(classAttr, imports)));
     });
 
-
-    final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, scope);
-    for (Object attribute : attributes) {
-      if (!(attribute instanceof PyTargetExpression)) {
-        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                     new Throwable(
-                                                       "found non-target expression object " + attribute + " in target expression list"));
-        break;
-      }
-      ret.add(new ImplicitResolveResult((PyTargetExpression)attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
-    }
+    PyClassAttributesIndex.findInstanceAttributes(referencedName, project, scope).forEach(instanceAttr -> {
+      ret.add(new ImplicitResolveResult(instanceAttr, getImplicitResultRate(instanceAttr, imports)));
+    });
   }
 
   private static List<QualifiedName> collectImports(PyFile containingFile) {

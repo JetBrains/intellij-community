@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Mikhail Golubev
@@ -33,11 +34,27 @@ public class PyClassAttributesIndex extends StringStubIndexExtension<PyClass> {
     return StubIndex.getElements(KEY, name, project, GlobalSearchScope.allScope(project), PyClass.class);
   }
 
-  public static Collection<PyTargetExpression> findAttributes(@NotNull String name, @NotNull Project project, GlobalSearchScope scope) {
+  public static Collection<PyTargetExpression> findClassAtrributes(@NotNull String name,
+                                                                   @NotNull Project project,
+                                                                   GlobalSearchScope scope) {
+    return findAtttributes(name, project, scope, clazz -> clazz.findClassAttribute(name, false, null));
+  }
+
+  public static Collection<PyTargetExpression> findInstanceAttributes(@NotNull String name,
+                                                                   @NotNull Project project,
+                                                                   GlobalSearchScope scope) {
+    return findAtttributes(name, project, scope, clazz -> clazz.findInstanceAttribute(name, false));
+  }
+
+  private static Collection<PyTargetExpression> findAtttributes(
+    @NotNull String name,
+    @NotNull Project project,
+    GlobalSearchScope scope,
+    Function<PyClass, PyTargetExpression> attrGetter) {
     List<PyTargetExpression> ret = new ArrayList<>();
     StubIndex.getInstance().processElements(KEY, name, project, scope, PyClass.class, clazz -> {
       ProgressManager.checkCanceled();
-      PyTargetExpression attr = clazz.findClassAttribute(name, false, null);
+      PyTargetExpression attr = attrGetter.apply(clazz);
       if (attr != null) {
         ret.add(attr);
       }
