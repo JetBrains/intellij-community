@@ -32,7 +32,7 @@ public class RunnerMediatedCommandLineTest extends GeneralCommandLineTest {
   @NotNull
   @Override
   protected GeneralCommandLine postProcessCommandLine(@NotNull GeneralCommandLine commandLine) {
-    boolean injected = RunnerMediator.injectRunnerCommand(super.postProcessCommandLine(commandLine));
+    boolean injected = RunnerMediator.injectRunnerCommand(super.postProcessCommandLine(commandLine), false);
     assumeTrue("runner mediator not found", injected);
     return commandLine;
   }
