@@ -1924,6 +1924,9 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyDirectory" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.directory.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.packaging.issues" enabledByDefault="false"
                       level="WARNING" implementationClass="com.siyeh.ig.packaging.EmptyDirectoryInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="ExceptionPackage" bundle="com.siyeh.InspectionGadgetsBundle"
+                      key="exception.package.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.packaging.issues"
+                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.packaging.ExceptionPackageInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="PackageInMultipleModules" bundle="com.siyeh.InspectionGadgetsBundle"
                       key="package.in.multiple.modules.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.packaging.issues" enabledByDefault="false" level="WARNING"
