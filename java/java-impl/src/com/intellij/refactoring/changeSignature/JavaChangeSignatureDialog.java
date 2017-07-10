@@ -55,6 +55,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -99,9 +100,19 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
+                                                              final PsiMethod method,
+                                                              final List<ParameterInfoImpl> parameterInfos,
+                                                              final boolean allowDelegation,
+                                                              final PsiReferenceExpression refExpr) {
+    return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
+  }
+
+  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
                                                                 final PsiMethod method,
                                                                 final List<ParameterInfoImpl> parameterInfos,
-                                                                final boolean allowDelegation, final PsiReferenceExpression refExpr) {
+                                                                final boolean allowDelegation,
+                                                                final PsiReferenceExpression refExpr,
+                                                                final Consumer<List<ParameterInfoImpl>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -112,6 +123,29 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           }
         }
         return super.getSelectedIdx();
+      }
+
+      @Override
+      protected BaseRefactoringProcessor createRefactoringProcessor() {
+        final List<ParameterInfoImpl> parameters = getParameters();
+        return new ChangeSignatureProcessor(myProject,
+                                            myMethod.getMethod(),
+                                            isGenerateDelegate(),
+                                            getVisibility(),
+                                            getMethodName(),
+                                            getReturnType(),
+                                            parameters.toArray(new ParameterInfoImpl[parameters.size()]),
+                                            getExceptions(),
+                                            myMethodsToPropagateParameters,
+                                            myMethodsToPropagateExceptions) {
+          @Override
+          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+            super.performRefactoring(usages);
+            if (callback != null) {
+              callback.consume(getParameters());
+            }
+          }
+        };
       }
     };
   }

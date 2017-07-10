@@ -48,6 +48,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -176,7 +177,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
 
     final List<ParameterInfoImpl> parameterInfos =
-      performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false);
+      performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false, null);
     if (parameterInfos != null) {
       myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
     }
@@ -189,7 +190,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                       final int minUsagesNumber,
                                                       final ParameterInfoImpl[] newParametersInfo,
                                                       final boolean changeAllUsages,
-                                                      final boolean allowDelegation) {
+                                                      final boolean allowDelegation,
+                                                      @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
@@ -227,6 +229,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         protected void performRefactoring(@NotNull UsageInfo[] usages) {
           CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
           super.performRefactoring(usages);
+          if (callback  != null) {
+            callback.consume(Arrays.asList(newParametersInfo));
+          }
         }
       };
       processor.run();
@@ -238,7 +243,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                      ? new ArrayList<>(Arrays.asList(newParametersInfo))
                                                      : new ArrayList<>();
       final PsiReferenceExpression refExpr = JavaTargetElementEvaluator.findReferenceExpression(editor);
-      JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr);
+      JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, callback);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
       return dialog.isOK() ? dialog.getParameters() : null;
