@@ -181,9 +181,9 @@ fi
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo "$OS_TYPE" | "$TR" '[:upper:]' '[:lower:]'`
-  AGENT_LIB="yjpagent-$OS_NAME$BITS"
-  if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
-    AGENT="-agentlib:$AGENT_LIB=disablealloc,delay=10000,probe_disable=*,sessionname=@@system_selector@@"
+  AGENT_PATH="$IDE_BIN_HOME/libyjpagent-$OS_NAME$BITS.so"
+  if [ -r "$AGENT_PATH" ]; then
+    AGENT="-agentpath:$AGENT_PATH=disablealloc,delay=10000,probe_disable=*,sessionname=@@system_selector@@"
   fi
 fi
 
@@ -196,7 +196,7 @@ fi
 # Run the IDE.
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
+"$JAVA_BIN" \
   ${AGENT} \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
