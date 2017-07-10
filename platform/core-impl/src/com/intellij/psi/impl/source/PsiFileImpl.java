@@ -67,6 +67,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
   private static final AtomicFieldUpdater<PsiFileImpl, FileTrees> ourTreeUpdater =
     AtomicFieldUpdater.forFieldOfType(PsiFileImpl.class, FileTrees.class);
+  private static final Key<PsiLock> PSI_LOCK_KEY = Key.create("PER_VIEW_PROVIDER_PSI_LOCK");
 
   private IElementType myElementType;
   protected IElementType myContentElementType;
@@ -81,7 +82,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private final ThreadLocal<FileElement> myFileElementBeingLoaded = new ThreadLocal<>();
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
-  private final PsiLock myPsiLock = new PsiLock();
+  private final PsiLock myPsiLock;
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
     this(provider);
@@ -92,6 +93,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myManager = (PsiManagerEx)provider.getManager();
     myViewProvider = provider;
     myRefToPsi = new AstPathPsiMap(getProject());
+    myPsiLock = obtainPsiLock();
+  }
+
+  private PsiLock obtainPsiLock() {
+    PsiLock lock = myViewProvider.getUserData(PSI_LOCK_KEY);
+    return lock == null ? myViewProvider.putUserDataIfAbsent(PSI_LOCK_KEY, new PsiLock()) : lock;
   }
 
   public void setContentElementType(final IElementType contentElementType) {
