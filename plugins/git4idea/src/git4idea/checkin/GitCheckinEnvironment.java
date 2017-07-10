@@ -783,6 +783,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
         GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
         h.addParameters("--max-count=1");
+        h.addParameters("--encoding=UTF-8");
         String formatPattern;
         if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
           formatPattern = "%B";

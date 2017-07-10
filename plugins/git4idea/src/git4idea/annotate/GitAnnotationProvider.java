@@ -155,6 +155,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t", "-w");
+    h.addParameters("--encoding=UTF-8");
     if (revision == null) {
       h.addParameters("HEAD");
     }
