@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.jdom.Element;
@@ -120,4 +121,12 @@ public abstract class RefManager {
 
   @NotNull
   public abstract PsiManager getPsiManager();
+
+  /**
+   * @return false if no {@link com.intellij.codeInspection.lang.RefManagerExtension} was registered for language and is not covered by default implementation for PsiClassOwner
+   * true, otherwise
+   */
+  public boolean isInGraph(VirtualFile file) {
+    return true;
+  }
 }

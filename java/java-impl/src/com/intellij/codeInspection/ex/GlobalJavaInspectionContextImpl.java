@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -194,9 +195,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     final AnalysisScope scope = refManager.getScope();
 
     final SearchScope searchScope = new GlobalSearchScope(refManager.getProject()) {
+      private final boolean processedReferences = Registry.is("batch.inspections.process.by.default.jvm.languages");
+
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        return scope != null && !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
+        if (scope != null && !scope.contains(file)) {
+          return true;
+        }
+        return !(processedReferences ? refManager.isInGraph(file) : file.getFileType() == StdFileTypes.JAVA);
       }
 
       @Override

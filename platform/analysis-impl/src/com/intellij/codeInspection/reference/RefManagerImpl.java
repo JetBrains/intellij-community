@@ -44,8 +44,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,6 +71,8 @@ public class RefManagerImpl extends RefManager {
   private AnalysisScope myScope;
   private RefProject myRefProject;
 
+  private final BitSet myUnprocessedFiles = new BitSet();
+  private final boolean processJVMClasses = Registry.is("batch.inspections.process.by.default.jvm.languages");
   private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<PsiElement, RefElement> myPsiToRefTable = ContainerUtil.newConcurrentMap(); // replacement of myRefTable
 
@@ -398,6 +402,15 @@ public class RefManagerImpl extends RefManager {
     return myPsiManager;
   }
 
+  @Override
+  public synchronized boolean isInGraph(VirtualFile file) {
+    return !myUnprocessedFiles.get(((VirtualFileWithId)file).getId());
+  }
+
+  private synchronized void registerUnprocessed(VirtualFileWithId virtualFile) {
+    myUnprocessedFiles.set(virtualFile.getId());
+  }
+
   void removeReference(@NotNull RefElement refElem) {
     final PsiElement element = refElem.getElement();
     final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
@@ -451,6 +464,37 @@ public class RefManagerImpl extends RefManager {
       final RefManagerExtension extension = getExtension(element.getLanguage());
       if (extension != null) {
         extension.visitElement(element);
+      }
+      else if (processJVMClasses) {
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile instanceof PsiClassOwner) {
+          RefElement refFile = getReference(containingFile);
+          LOG.assertTrue(refFile != null, containingFile);
+          for (PsiReference reference : element.getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve != null) {
+              fireNodeMarkedReferenced(resolve, containingFile);
+              RefElement refWhat = getReference(resolve);
+              if (refWhat == null) {
+                PsiFile targetContainingFile = resolve.getContainingFile();
+                //no logic to distinguish different elements in the file anyway
+                if (containingFile == targetContainingFile) continue;
+                refWhat = getReference(targetContainingFile);
+              }
+
+              if (refWhat != null) {
+                ((RefElementImpl)refWhat).addInReference(refFile);
+                ((RefElementImpl)refFile).addOutReference(refWhat);
+              }
+            }
+          }
+        }
+        else if (element instanceof PsiFile) {
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+          if (virtualFile instanceof VirtualFileWithId) {
+            registerUnprocessed((VirtualFileWithId)virtualFile);
+          }
+        }
       }
       for (PsiElement aChildren : element.getChildren()) {
         aChildren.accept(this);
