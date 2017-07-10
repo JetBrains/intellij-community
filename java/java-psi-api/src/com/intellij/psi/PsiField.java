@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmField;
+import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.PsiJvmConversionHelper.toJvmType;
+
 /**
  * Represents a Java field or enum constant.
  */
-public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
+public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, JvmField {
   /**
    * The empty array of PSI fields which can be reused to avoid unnecessary allocations.
    */
@@ -43,4 +47,16 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
 
   @Override
   @NotNull PsiIdentifier getNameIdentifier();
+
+  @Nullable
+  @Override
+  default PsiField getPsiElement() {
+    return this;
+  }
+
+  @NotNull
+  @Override
+  default JvmType fieldType() {
+    return toJvmType(getType());
+  }
 }

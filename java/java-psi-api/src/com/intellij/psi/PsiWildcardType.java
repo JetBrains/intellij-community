@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.types.JvmType;
+import com.intellij.lang.jvm.types.JvmWildcardType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -22,12 +24,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.PsiJvmConversionHelper.toJvmType;
+
 /**
  * Represents a wildcard type, with bounds.
  *
  * @author dsl
  */
-public class PsiWildcardType extends PsiType.Stub {
+public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   public static final String EXTENDS_PREFIX = "? extends ";
   public static final String SUPER_PREFIX = "? super ";
 
@@ -75,7 +79,9 @@ public class PsiWildcardType extends PsiType.Stub {
     return new PsiWildcardType(manager, false, bound);
   }
 
-  /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  /**
+   * @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18)
+   */
   public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
     return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
   }
@@ -193,7 +199,7 @@ public class PsiWildcardType extends PsiType.Stub {
    * Returns whether this is a lower bound ({@code ? extends XXX}).
    *
    * @return {@code true} for {@code extends} wildcards, {@code false} for {@code super}
-   *         and unbounded wildcards.
+   * and unbounded wildcards.
    */
   public boolean isExtends() {
     return myBound != null && myIsExtending;
@@ -203,7 +209,7 @@ public class PsiWildcardType extends PsiType.Stub {
    * Returns whether this is an upper bound ({@code ? super XXX}).
    *
    * @return {@code true} for {@code super} wildcards, {@code false} for {@code extends}
-   *         and unbounded wildcards.
+   * and unbounded wildcards.
    */
   public boolean isSuper() {
     return myBound != null && !myIsExtending;
@@ -249,5 +255,17 @@ public class PsiWildcardType extends PsiType.Stub {
   @NotNull
   public PsiType getSuperBound() {
     return myBound == null || myIsExtending ? NULL : myBound;
+  }
+
+  @NotNull
+  @Override
+  public JvmType upperBound() {
+    return toJvmType(getExtendsBound());
+  }
+
+  @NotNull
+  @Override
+  public JvmType lowerBound() {
+    return toJvmType(getSuperBound());
   }
 }

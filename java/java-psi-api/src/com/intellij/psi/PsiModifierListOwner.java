@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmModifiersOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.PsiJvmConversionHelper.getModifiers;
 
 /**
  * Represents a PSI element which has a list of modifiers (public/private/protected/etc.)
  * and annotations.
  */
-public interface PsiModifierListOwner extends PsiElement {
+public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
   /**
    * Returns the list of modifiers for the element.
    *
@@ -41,4 +45,23 @@ public interface PsiModifierListOwner extends PsiElement {
    * @return true if the element has the modifier, false otherwise
    */
   boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name);
+
+  @NotNull
+  @Override
+  default PsiAnnotation[] getAnnotations() {
+    PsiModifierList list = getModifierList();
+    return list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
+  }
+
+  @NotNull
+  @Override
+  default Iterable<JvmModifier> modifiers() {
+    return getModifiers(this);
+  }
+
+  @Nullable
+  @Override
+  default PsiElement getPsiElement() {
+    return this;
+  }
 }
