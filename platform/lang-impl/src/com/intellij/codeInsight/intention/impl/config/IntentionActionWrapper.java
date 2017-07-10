@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +112,14 @@ public class IntentionActionWrapper implements IntentionAction, ShortcutProvider
 
   @Override
   public String toString() {
-    return "Intention: ("+getDelegate().getClass()+"): '" + getText()+"'";
+    String text;
+    try {
+      text = getText();
+    }
+    catch (PsiInvalidElementAccessException e) {
+      text = e.getMessage();
+    }
+    return "Intention: (" + getDelegate().getClass() + "): '" + text + "'";
   }
 
   @Override

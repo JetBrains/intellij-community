@@ -18,6 +18,7 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,11 +55,22 @@ class InvokeIntention extends ActionOnRange implements MadTestingAction {
 
   @Override
   public String toString() {
-    String name = myIntentionAction == null ? "index " + String.valueOf(myIntentionIndex) : myIntentionAction.getText();
-    if (name == null) {
-      name = myIntentionAction.toString();
+    return "InvokeIntention[" + myFile.getVirtualFile().getPath() + ", offset " + getStartOffset() +
+           ", invoke '" + ReadAction.compute(() -> getIntentionText()) + "']";
+  }
+
+  private String getIntentionText() {
+    if (myIntentionAction == null) {
+      return "index " + String.valueOf(myIntentionIndex);
     }
-    return "InvokeIntention[" + myFile.getVirtualFile().getPath() + ", offset " + getStartOffset() + ", invoke '" + name + "']";
+
+    String name = null;
+    try {
+      name = myIntentionAction.getText();
+    }
+    catch (PsiInvalidElementAccessException ignore) {
+    }
+    return name == null ? myIntentionAction.toString() : name;
   }
 
   public void performAction() {

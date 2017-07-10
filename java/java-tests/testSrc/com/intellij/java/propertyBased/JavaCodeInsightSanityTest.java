@@ -52,8 +52,13 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
   private static Generator<FileWithActions> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                   FileFilter fileFilter,
                                                                   Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
-    FileFilter childFilter = child -> child.isDirectory() ? !"out".equals(child.getName()) && !".git".equals(child.getName())
-                                                          : fileFilter.accept(child) && child.length() < 500_000;
+    FileFilter childFilter = child -> {
+      String name = child.getName();
+      if (name.startsWith(".")) return false;
+
+      return child.isDirectory() ? shouldGoInsiderDir(name)
+                                 : fileFilter.accept(child) && child.length() < 500_000;
+    };
     Generator<File> randomFiles =
       Generator.from(new FileGenerator(new File(rootPath), childFilter)).suchThat(Objects::nonNull).noShrink();
     return randomFiles.flatMap(ioFile -> {
@@ -63,6 +68,10 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
       }
       return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
     });
+  }
+
+  private static boolean shouldGoInsiderDir(String name) {
+    return !"out".equals(name) && !name.endsWith("system") && !name.endsWith("config");
   }
 
   @NotNull
