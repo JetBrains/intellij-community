@@ -1876,7 +1876,6 @@
     <java.elementFinder implementation="com.intellij.psi.impl.PsiElementFinderImpl" id="java" order="first"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
     <java.elementFinder implementation="com.intellij.psi.impl.migration.MigrationElementFinder"/>
-    <jvm.elementProvider implementation="com.intellij.lang.jvm.facade.JavaElementProvider" id="java"/>
 
     <projectService serviceImplementation="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.ProjectSettingsService"
