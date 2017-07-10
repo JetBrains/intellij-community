@@ -976,6 +976,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Field assignment can be moved to initializer"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
+    <localInspection language="JAVA" shortName="JavaModuleNaming" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
+                     bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
+                     implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
