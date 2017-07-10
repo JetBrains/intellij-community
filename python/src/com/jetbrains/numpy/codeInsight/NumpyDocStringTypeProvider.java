@@ -114,7 +114,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     }
 
     if (docString != null) {
-      final NumpyDocString parsed = (NumpyDocString)DocStringUtil.parseDocString(DocStringFormat.NUMPY, docString);
+      final NumpyDocString parsed = (NumpyDocString)DocStringUtil.parseDocStringContent(DocStringFormat.NUMPY, docString);
       if (parsed.getReturnFields().isEmpty() && parsed.getParameterFields().isEmpty()) {
         return null;
       }
