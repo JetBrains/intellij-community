@@ -261,6 +261,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   @NotNull
   private List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+    qualifier = PsiUtil.deparenthesizeExpression(qualifier);
+
     final List<LocalQuickFix> fixes = new SmartList<>();
     if (qualifier == null || expression == null) return fixes;
 
@@ -293,8 +295,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static boolean isNullLiteral(PsiExpression qualifier) {
-    if (qualifier instanceof PsiTypeCastExpression) return isNullLiteral(((PsiTypeCastExpression)qualifier).getOperand());
-    if (qualifier instanceof PsiParenthesizedExpression) return isNullLiteral(((PsiParenthesizedExpression)qualifier).getExpression());
     return qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null;
   }
 
