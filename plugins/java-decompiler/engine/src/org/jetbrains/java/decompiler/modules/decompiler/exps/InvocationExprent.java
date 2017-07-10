@@ -267,6 +267,12 @@ public class InvocationExprent extends Exprent {
         else if (instance != null) {
           TextBuffer res = instance.toJava(indent, tracer);
 
+          if (isUnboxingCall()) {
+            // we don't print the unboxing call - no need to bother with the instance wrapping / casting
+            buf.append(res);
+            return buf;
+          }
+
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
 
@@ -360,11 +366,7 @@ public class InvocationExprent extends Exprent {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
 
-        Exprent param = lstParameters.get(i);
-        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
-        if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
-          param = ((InvocationExprent)param).lstParameters.get(0);
-        }
+        Exprent param = unboxIfNeeded(lstParameters.get(i));
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
         ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
 
@@ -383,6 +385,14 @@ public class InvocationExprent extends Exprent {
     buf.append(")");
 
     return buf;
+  }
+
+  public static Exprent unboxIfNeeded(Exprent param) {
+    // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+    if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
+      param = ((InvocationExprent)param).lstParameters.get(0);
+    }
+    return param;
   }
 
   private boolean isVarArgCall() {
@@ -409,6 +419,15 @@ public class InvocationExprent extends Exprent {
 
       // special handling for ambiguous types
       if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+        // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
+        // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
+        // so we check the type family instead
+        if (lstParameters.get(0).getExprType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+          if (classname.equals("java/lang/Integer")) {
+            return true;
+          }
+        }
+
         if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
           if (classname.equals("java/lang/Character")) {
             return true;
@@ -445,6 +464,24 @@ public class InvocationExprent extends Exprent {
         return "java/lang/Double";
     }
     return null;
+  }
+
+  private static final Map<String, String> UNBOXING_METHODS;
+
+  static {
+    UNBOXING_METHODS = new HashMap<>();
+    UNBOXING_METHODS.put("booleanValue", "java/lang/Boolean");
+    UNBOXING_METHODS.put("byteValue", "java/lang/Byte");
+    UNBOXING_METHODS.put("shortValue", "java/lang/Short");
+    UNBOXING_METHODS.put("intValue", "java/lang/Integer");
+    UNBOXING_METHODS.put("longValue", "java/lang/Long");
+    UNBOXING_METHODS.put("floatValue", "java/lang/Float");
+    UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
+    UNBOXING_METHODS.put("charValue", "java/lang/Character");
+  }
+
+  private boolean isUnboxingCall() {
+    return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));
   }
 
   private BitSet getAmbiguousParameters() {
