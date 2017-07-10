@@ -58,12 +58,12 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testExportsToUnambiguous() = complete("module M { exports pkg.other to M<caret> }", "module M { exports pkg.other to M2<caret> }")
 
   fun testUsesPrefixed() = complete("module M { uses p<caret> }", "module M { uses pkg.<caret> }")
-  fun testUsesQualified1() = variants("module M { uses pkg.<caret> }", "main", "other", "empty", "lib2")
+  fun testUsesQualified1() = variants("module M { uses pkg.<caret> }", "main", "other", "empty")
   fun testUsesQualified2() = variants("module M { uses pkg.main.<caret> }", "MyAnno", "MySvc")
   fun testUsesUnambiguous() = complete("module M { uses pkg.main.MS<caret> }", "module M { uses pkg.main.MySvc<caret> }")
 
   fun testProvidesPrefixed() = complete("module M { provides p<caret> }", "module M { provides pkg.<caret> }")
-  fun testProvidesQualified1() = variants("module M { provides pkg.<caret> }", "main", "other", "empty", "lib2")
+  fun testProvidesQualified1() = variants("module M { provides pkg.<caret> }", "main", "other", "empty")
   fun testProvidesQualified2() = variants("module M { provides pkg.main.<caret> }", "MyAnno", "MySvc")
   fun testProvidesUnambiguous() = complete("module M { provides pkg.main.MS<caret> }", "module M { provides pkg.main.MySvc<caret> }")
   fun testProvidesWith() = complete("module M { provides pkg.main.MySvc <caret> }", "module M { provides pkg.main.MySvc with <caret> }")

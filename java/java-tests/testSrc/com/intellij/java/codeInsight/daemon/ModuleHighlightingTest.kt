@@ -216,10 +216,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
+    addFile("pkg/sub/C2X.java", "package pkg.sub;\npublic class C2X { }", M2)
+    addFile("pkg/unreachable/C3.java", "package pkg.unreachable;\npublic class C3 { }", M3)
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
     addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
     highlight("test.java", """
@@ -230,6 +233,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
         import <error descr="Package 'pkg.m5' is declared in module 'M5', but module 'M' does not read it">pkg.m5</error>.C5;
         import pkg.m7.C7;
+        import <error descr="Package 'pkg.sub' is declared in module 'M2', which does not export it to module 'M'">pkg.sub</error>.*;
+        import <error descr="Package not found: pkg.unreachable">pkg.unreachable</error>.*;
 
         import pkg.lib1.LC1;
         import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.LC1Impl;

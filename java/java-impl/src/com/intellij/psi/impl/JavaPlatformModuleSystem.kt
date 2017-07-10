@@ -57,9 +57,13 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         if (module != null) {
           val test = index.isInTestSourceContent(useVFile)
           val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
-          if (dirs.size == 1) {
-            return checkAccess(dirs[0], useFile, target.qualifiedName, quick)
+          if (dirs.isEmpty()) {
+            return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("package.not.found", target.qualifiedName))
           }
+          val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
+          return if (error == null ||
+                     dirs.size > 1 && dirs.asSequence().drop(1).any { checkAccess(it, useFile, target.qualifiedName, true) == null }) null
+                 else error
         }
       }
     }
