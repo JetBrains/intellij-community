@@ -15,7 +15,10 @@
  */
 package com.jetbrains.python.testing
 
+import com.intellij.navigation.NavigationItem
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.QNameResolveContext
@@ -23,6 +26,7 @@ import com.jetbrains.extenstions.getRelativeNameTo
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
+import java.util.*
 
 /**
  * Utilities to find which part of [com.intellij.psi.util.QualifiedName] resolves to file and which one to the element
@@ -59,8 +63,9 @@ internal data class QualifiedNameParts(val fileName: QualifiedName, val elementN
  * @return null if no file part found
  */
 internal fun PyQualifiedNameOwner.tryResolveAndSplit(context: QNameResolveContext): QualifiedNameParts? {
-  val name = this.qualifiedName ?: return null
-  val qualifiedName = QualifiedName.fromDottedString(name)
+  val qualifiedNameDottedString = this.qualifiedName ?: return getEmulatedQNameParts()
+
+  val qualifiedName = QualifiedName.fromDottedString(qualifiedNameDottedString)
   val parts = qualifiedName.tryResolveAndSplit(context)
   if (parts != null) {
     return parts
@@ -69,6 +74,28 @@ internal fun PyQualifiedNameOwner.tryResolveAndSplit(context: QNameResolveContex
   val fileQName = pyFile.getQName() ?: return null
   val relativePath = qualifiedName.getRelativeNameTo(fileQName) ?: return null
   return QualifiedNameParts(fileQName, relativePath, pyFile)
+}
+
+/**
+ * For element containing dashes [PyQualifiedNameOwner.getQualifiedName] does not work.
+ * this method creates [QualifiedNameParts] with file and qname path inside of it so even files with dashes could be supported
+ * by test runners
+ */
+private fun PyQualifiedNameOwner.getEmulatedQNameParts(): QualifiedNameParts? {
+  val ourFile = this.containingFile as? PyFile ?: return null
+  val result = ArrayList<String>()
+  var element: PsiElement = this
+  while (element !is PsiFile) {
+    if (element is NavigationItem) {
+      val name = element.name
+      if (name != null) {
+        result.add(name)
+      }
+    }
+    element = element.parent
+  }
+  return QualifiedNameParts(QualifiedName.fromComponents(ourFile.virtualFile.nameWithoutExtension),
+                            QualifiedName.fromComponents(result.reversed()), ourFile)
 }
 
 /**
