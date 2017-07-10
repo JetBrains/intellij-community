@@ -607,11 +607,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         if (newIndex == null) {
           LOG.warn("intersection failed");
         }
-        else if (!deep) {
-          contained.put(object, newIndex);
-        }
         else {
-          reload.add(object);
+          contained.put(object, newIndex);
+          if (deep) reload.add(object);
         }
       }
 
