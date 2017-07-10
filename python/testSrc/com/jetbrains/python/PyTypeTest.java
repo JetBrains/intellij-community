@@ -17,6 +17,7 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
@@ -1971,6 +1972,25 @@ public class PyTypeTest extends PyTestCase {
            "    def __init__(self) -> None:\n" +
            "        self.other = \"other\"\n" +
            "expr = MyIterator()");
+  }
+
+  // PY-24923
+  public void testEmptyNumpyFunctionDocstring() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () ->
+      doTest("Any",
+             "def f(param):\n" +
+             "    \"\"\"\"\"\"\n" +
+             "    expr = param"));
+  }
+
+  // PY-24923
+  public void testEmptyNumpyClassDocstring() {
+    runWithDocStringFormat(DocStringFormat.NUMPY, () ->
+      doTest("Any",
+             "class C:\n" +
+             "    \"\"\"\"\"\"\n" +
+             "    def __init__(self, param):\n" +
+             "        expr = param"));
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
