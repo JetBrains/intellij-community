@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -218,6 +219,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
       return;
     }
+
+    if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
+      replaceChildInternal(child, PsiReferenceExpressionImpl.createEmptyRefParameterList(getProject()));
+      return;
+    }
+
 
     super.deleteChildInternal(child);
   }

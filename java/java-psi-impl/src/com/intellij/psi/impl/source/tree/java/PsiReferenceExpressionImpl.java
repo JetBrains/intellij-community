@@ -686,9 +686,17 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       super.deleteChildInternal(child);
       deleteChildInternal(dot);
     }
+    else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
+      replaceChildInternal(child, createEmptyRefParameterList(getProject()));
+    }
     else {
       super.deleteChildInternal(child);
     }
+  }
+
+  public static TreeElement createEmptyRefParameterList(Project project) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    return (TreeElement)Objects.requireNonNull(factory.createReferenceFromText("foo", null).getParameterList()).getNode();
   }
 
   @Override
