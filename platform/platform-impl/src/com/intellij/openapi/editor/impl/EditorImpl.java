@@ -1709,6 +1709,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     myHeaderPanel.revalidate();
+    myHeaderPanel.repaint();
   }
 
   @Override
