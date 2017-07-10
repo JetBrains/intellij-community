@@ -4,6 +4,7 @@ import junit.framework.TestCase;
 
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,10 +29,16 @@ public class JShellMessageMarshallingTest extends TestCase {
 
     final Request request = new Request(UUID.randomUUID().toString(), Request.Command.EVAL,
                                         "System.out.println(\"Hello, World!\");\n int var = 7 + 7;");
+    request.addClasspathItem("C:/work/path1");
+    request.addClasspathItem("C:/work/path2");
+    final List<String> requestClasspath = request.getClassPath();
+
     clientWriter.send(request);
     final Request receivedRequest = serverReader.receive(s -> {});
     assertEquals(request.getUid(), receivedRequest.getUid());
     assertEquals(request.getCodeText(), receivedRequest.getCodeText());
+    final List<String> receivedClasspath = receivedRequest.getClassPath();
+    assertEquals(requestClasspath, receivedClasspath);
 
     final CodeSnippet snippet = new CodeSnippet("code-snippet-id", CodeSnippet.Kind.EXPRESSION, CodeSnippet.SubKind.OTHER_EXPRESSION_SUBKIND, "a+b", "expression:a+b");
     final Event event1 = new Event(null, null, CodeSnippet.Status.UNKNOWN, CodeSnippet.Status.NONEXISTENT, null);

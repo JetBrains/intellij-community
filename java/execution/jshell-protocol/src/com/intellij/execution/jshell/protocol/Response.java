@@ -23,7 +23,6 @@ public class Response extends Message{
     Collections.addAll(myEvents = new ArrayList<>(), events);
   }
 
-  @XmlElement
   public List<Event> getEvents() {
     return myEvents;
   }

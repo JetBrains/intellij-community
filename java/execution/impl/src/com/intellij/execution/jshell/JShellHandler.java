@@ -57,12 +57,11 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
@@ -84,6 +83,7 @@ public class JShellHandler {
   private final MessageReader<Response> myMessageReader;
   private final MessageWriter<Request> myMessageWriter;
   private final ExecutorService myTaskQueue = new SequentialTaskExecutor("JShell Command Queue", PooledThreadExecutor.INSTANCE);
+  private final AtomicReference<Collection<String>> myEvalClasspathRef = new AtomicReference<>(null);
 
   private JShellHandler(@NotNull Project project,
                         RunContentDescriptor descriptor,
@@ -145,13 +145,28 @@ public class JShellHandler {
     return contentFile != null? contentFile.getUserData(MARKER_KEY) : null;
   }
 
-  public static JShellHandler create(@NotNull final Project project, @NotNull final VirtualFile contentFile, @Nullable Module module) throws Exception{
-    final OSProcessHandler processHandler = launchProcess(project, module);
+  public static JShellHandler create(@NotNull final Project project,
+                                     @NotNull final VirtualFile contentFile,
+                                     @Nullable Module module,
+                                     @Nullable Sdk alternateSdk) throws Exception{
+    final OSProcessHandler processHandler = launchProcess(project, module, alternateSdk);
+
     final String title = "JShell " + contentFile.getNameWithoutExtension();
 
     final ConsoleViewImpl consoleView = new MyConsoleView(project);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
     final JShellHandler jshellHandler = new JShellHandler(project, descriptor, consoleView, contentFile, processHandler);
+
+    // init classpath for evaluation
+    final Set<String> cp = new LinkedHashSet<>();
+    final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
+                                                                       : () -> ProjectRootManager.getInstance(project).orderEntries();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      cp.addAll(orderEnumerator.compute().librariesOnly().recursively().withoutSdk().getPathsList().getPathList());
+    });
+    if (!cp.isEmpty()) {
+      jshellHandler.myEvalClasspathRef.set(cp);
+    }
 
     // must call getComponent before createConsoleActions()
     final JComponent consoleViewComponent = consoleView.getComponent();
@@ -186,8 +201,12 @@ public class JShellHandler {
 
   // todo: do we need to include project's compiled classes into the classpath or libraries only?
   // todo: if we include project classes, make sure they are compiled
-  private static OSProcessHandler launchProcess(@NotNull Project project, @Nullable Module module) throws Exception{
-    final Sdk sdk = module != null? ModuleRootManager.getInstance(module).getSdk() : ProjectRootManager.getInstance(project).getProjectSdk();
+  private static OSProcessHandler launchProcess(@NotNull Project project,
+                                                @Nullable Module module,
+                                                @Nullable Sdk alternateSdk) throws Exception{
+    final Sdk sdk = alternateSdk != null? alternateSdk :
+                    module != null? ModuleRootManager.getInstance(module).getSdk() :
+                    ProjectRootManager.getInstance(project).getProjectSdk();
     if (sdk == null || !(sdk.getSdkType() instanceof JavaSdkType)) {
       throw new ExecException(
         (sdk != null ? "Expected Java SDK" : " SDK is not configured") +
@@ -232,17 +251,41 @@ public class JShellHandler {
       cmdLine.addParameter(launchCp.toString());
     }
     cmdLine.addParameter("com.intellij.execution.jshell.frontend.Main");
-    final Set<File> cp = new LinkedHashSet<>();
-    final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
-                                                                       : () -> ProjectRootManager.getInstance(project).orderEntries();
-    ApplicationManager.getApplication().runReadAction(() -> {
-      for (String s : orderEnumerator.compute().librariesOnly().recursively().withoutSdk().getPathsList().getPathList()) {
-        cp.add(new File(s));
-      }
-    });
-    cmdLine.addParameter("--class-path");
-    cmdLine.addParameter(StringUtil.join(cp, File.pathSeparator));
-    return new OSProcessHandler(cmdLine);
+
+    // init classpath for evaluation
+    //final Set<String> cp = new LinkedHashSet<>();
+    //final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
+    //                                                                   : () -> ProjectRootManager.getInstance(project).orderEntries();
+    //ApplicationManager.getApplication().runReadAction(() -> {
+    //  cp.addAll(orderEnumerator.compute().librariesOnly().recursively().withoutSdk().getPathsList().getPathList());
+    //});
+
+    //final File cpFile;
+    //if (!cp.isEmpty()) {
+    //  cpFile = FileUtilRt.createTempFile("_jshell_classpath_", "", true);
+    //  try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(cpFile), StandardCharsets.UTF_8))) {
+    //    for (String path : cp) {
+    //      writer.write(path);
+    //      writer.newLine();
+    //    }
+    //  }
+    //  cmdLine.addParameter("--@class-path");
+    //  cmdLine.addParameter(cpFile.getAbsolutePath());
+    //}
+    //else {
+    //  cpFile = null;
+    //}
+
+    final OSProcessHandler processHandler = new OSProcessHandler(cmdLine);
+    //if (cpFile != null) {
+    //  processHandler.addProcessListener(new ProcessAdapter() {
+    //    @Override
+    //    public void processTerminated(ProcessEvent event) {
+    //      FileUtil.delete(cpFile);
+    //    }
+    //  });
+    //}
+    return processHandler;
   }
 
   private static String findFrontEndLibrary() {
@@ -280,6 +323,13 @@ public class JShellHandler {
   private Response sendInput(final Request request) {
     final boolean alive = !myProcess.isProcessTerminating() && !myProcess.isProcessTerminated();
     if (alive) {
+      // consume evaluation classpath, if any
+      final Collection<String> cp = myEvalClasspathRef.getAndSet(null);
+      if (cp != null) {
+        for (String path : cp) {
+          request.addClasspathItem(path);
+        }
+      }
       myConsoleView.performWhenNoDeferredOutput(() -> {
         try {
           myMessageWriter.send(request);

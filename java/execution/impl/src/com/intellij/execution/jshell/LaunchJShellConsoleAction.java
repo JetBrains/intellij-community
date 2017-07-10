@@ -19,9 +19,11 @@ import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
@@ -46,8 +48,18 @@ public class LaunchJShellConsoleAction extends AnAction{
     );
     assert contentFile != null;
     try {
-      FileEditorManager.getInstance(project).openFile(contentFile, true);
-      JShellHandler.create(project, contentFile, e.getData(LangDataKeys.MODULE));
+      final FileEditor[] editors = FileEditorManager.getInstance(project).openFile(contentFile, true);
+      Sdk alternateSdk = null;
+      Module module = null;
+      for (FileEditor editor : editors) {
+        final SnippetEditorDecorator.ConfigurationPane config = SnippetEditorDecorator.getJShellConfiguration(editor);
+        if (config != null) {
+          alternateSdk = config.getRuntimeSdk();
+          module = config.getContextModule();
+          break;
+        }
+      }
+      JShellHandler.create(project, contentFile, module, alternateSdk);
     }
     catch (Exception ex) {
       JShellDiagnostic.notifyError(ex, project);

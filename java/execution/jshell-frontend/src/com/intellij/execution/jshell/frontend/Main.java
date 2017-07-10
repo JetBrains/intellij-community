@@ -3,9 +3,8 @@ package com.intellij.execution.jshell.frontend;
 import com.intellij.execution.jshell.protocol.*;
 import jdk.jshell.*;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -20,6 +19,7 @@ import java.util.function.Consumer;
  */
 public class Main {
   private static final String ARG_CLASSPATH = "--class-path";
+  private static final String ARG_CLASSPATH_FILE = "--@class-path";
   private static final Consumer<String> NULL_CONSUMER = s -> {};
 
   //private static Request createTestRequest() {
@@ -47,6 +47,14 @@ public class Main {
         response.setUid(request.getUid());
 
         try {
+          // first, handle eval classpath if any
+          final List<String> cp = request.getClassPath();
+          if (cp != null && !cp.isEmpty()) {
+            for (String path : cp) {
+              shell.addToClasspath(path);
+            }
+          }
+          
           if (command == Request.Command.DROP_STATE) {
             shell.snippets().forEach(snippet -> exportEvents(shell, shell.drop(snippet), response));
           }
@@ -124,18 +132,31 @@ public class Main {
     }
   }
 
-  private static void configureJShell(String[] args, JShell shell) {
+  private static void configureJShell(String[] args, JShell shell) throws IOException {
     // todo: add more parameters if needed
     boolean cpFound = false;
+    boolean cpFileFound = false;
     for (String arg : args) {
       if (ARG_CLASSPATH.equals(arg)) {
         cpFound = true;
+      }
+      else if (ARG_CLASSPATH_FILE.equals(arg)) {
+        cpFileFound = true;
       }
       else {
         if (cpFound) {
           cpFound = false;
           for (String path : arg.split(File.pathSeparator)) {
             shell.addToClasspath(path);
+          }
+        }
+        else if (cpFileFound) {
+          cpFileFound = false;
+          final File cpFile = new File(arg);
+          try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(cpFile), StandardCharsets.UTF_8))) {
+            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+              shell.addToClasspath(line);
+            }
           }
         }
       }

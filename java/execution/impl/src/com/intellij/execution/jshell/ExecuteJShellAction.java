@@ -19,12 +19,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,10 @@ class ExecuteJShellAction extends AnAction{
     try {
       JShellHandler handler = JShellHandler.getAssociatedHandler(vFile);
       if (handler == null) {
-        handler = JShellHandler.create(project, vFile, e.getData(LangDataKeys.MODULE));
+        final SnippetEditorDecorator.ConfigurationPane config = SnippetEditorDecorator.getJShellConfiguration(e.getDataContext());
+        final Module module = config != null ? config.getContextModule() : null;
+        final Sdk sdk = config != null ? config.getRuntimeSdk() : null;
+        handler = JShellHandler.create(project, vFile, module, sdk);
       }
       if (handler != null) {
         handler.toFront();
