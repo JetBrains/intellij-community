@@ -312,14 +312,19 @@ public class CharsetToolkit {
     return charBuffer.toString();
   }
 
-  @NotNull
-  public static String tryDecodeString(@NotNull byte[] bytes, @NotNull final Charset charset) throws CharacterCodingException {
-    int bomLength = getBOMLength(bytes, charset);
-    ByteBuffer buffer = ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength);
-    CharsetDecoder decoder = charset.newDecoder()
-      .onMalformedInput(CodingErrorAction.REPORT)
-      .onUnmappableCharacter(CodingErrorAction.REPORT);
-    return decoder.decode(buffer).toString();
+  @Nullable
+  public static String tryDecodeString(@NotNull byte[] bytes, @NotNull final Charset charset) {
+    try {
+      int bomLength = getBOMLength(bytes, charset);
+      ByteBuffer buffer = ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength);
+      CharsetDecoder decoder = charset.newDecoder()
+        .onMalformedInput(CodingErrorAction.REPORT)
+        .onUnmappableCharacter(CodingErrorAction.REPORT);
+      return decoder.decode(buffer).toString();
+    }
+    catch (CharacterCodingException e) {
+      return null;
+    }
   }
 
   public enum GuessedEncoding {

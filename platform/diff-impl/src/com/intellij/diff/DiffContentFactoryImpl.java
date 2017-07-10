@@ -52,7 +52,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
@@ -409,11 +408,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (isBOM) charset = bomCharset;
 
     boolean malformedContent = false;
-    String text;
-    try {
-      text = CharsetToolkit.tryDecodeString(content, charset);
-    }
-    catch (CharacterCodingException e) {
+    String text = CharsetToolkit.tryDecodeString(content, charset);
+    if (text == null) {
       text = CharsetToolkit.decodeString(content, charset);
       malformedContent = true;
     }

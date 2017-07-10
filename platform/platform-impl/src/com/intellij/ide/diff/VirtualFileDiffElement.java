@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -149,6 +151,17 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   @Override
   public boolean isOperationsEnabled() {
     return myFile.getFileSystem() instanceof LocalFileSystem;
+  }
+
+  @NotNull
+  @Override
+  public Charset getCharset() {
+    return myFile.getCharset();
+  }
+
+  @Override
+  public FileType getFileType() {
+    return myFile.getFileType();
   }
 
   @Override
