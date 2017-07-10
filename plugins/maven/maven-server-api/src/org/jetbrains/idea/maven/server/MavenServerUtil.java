@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -43,7 +43,7 @@ public class MavenServerUtil {
 
       if (isMagicalProperty(key)) continue;
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         key = key.toUpperCase();
       }
 
