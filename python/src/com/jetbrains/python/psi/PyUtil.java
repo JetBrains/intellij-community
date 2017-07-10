@@ -580,7 +580,7 @@ public class PyUtil {
         return name;
       }
     }
-    return element.getNode().getText();
+    return element.getNode() != null ? element.getNode().getText() : element.getText();
   }
 
   public static boolean isOwnScopeComprehension(@NotNull PyComprehensionElement comprehension) {
