@@ -220,6 +220,19 @@ public class PsiTestUtil {
     Assert.assertEquals(reparsedTree, originalTree);
   }
 
+  public static void checkPsiMatchesTextIgnoringWhitespace(PsiFile file) throws IncorrectOperationException {
+    String originalTree = DebugUtil.psiTreeToString(file, true);
+    PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
+    String reparsedTree = DebugUtil.psiTreeToString(dummyFile, true);
+    Assert.assertEquals(reparsedTree, originalTree);
+
+    Document document = file.getViewProvider().getDocument();
+    if (document != null && !PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) {
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+      checkPsiMatchesTextIgnoringWhitespace(file);
+    }
+  }
+
   public static void addLibrary(Module module, String libPath) {
     File file = new File(libPath);
     String libName = file.getName();
