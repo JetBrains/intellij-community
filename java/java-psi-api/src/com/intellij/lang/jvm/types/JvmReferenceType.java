@@ -16,6 +16,7 @@
 package com.intellij.lang.jvm.types;
 
 import com.intellij.lang.jvm.JvmTypeDeclarator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
  * Such types appear in throws and bounds.
  */
 public interface JvmReferenceType extends JvmType {
+
+  @NotNull
+  String getName();
 
   @Nullable
   default JvmTypeDeclarator resolve() {

@@ -42,6 +42,9 @@ public class PsiJvmConversionHelper {
         result.add(jvmModifier);
       }
     }
+    if (modifierListOwner.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      result.add(JvmModifier.PACKAGE_LOCAL);
+    }
     return result;
   }
 
@@ -55,11 +58,13 @@ public class PsiJvmConversionHelper {
 
   @Nullable
   public static JvmClassType getClassSuperType(@NotNull PsiClass psiClass) {
+    // TODO
     throw new RuntimeException("not implemented");
   }
 
   @NotNull
   public static Iterable<JvmClassType> getClassInterfaces(@NotNull PsiClass psiClass) {
+    // TODO
     throw new RuntimeException("not implemented");
   }
 
@@ -112,17 +117,18 @@ public class PsiJvmConversionHelper {
     }
   }
 
-  @Nullable
-  public static JvmReferenceType toJvmReferenceTypeOrNull(@Nullable PsiType type) {
-    return type instanceof PsiClassType ? toJvmReferenceType(((PsiClassType)type)) : null;
-  }
-
   private static class PsiJvmReferenceType implements JvmReferenceType {
 
     protected final @NotNull PsiClassType myPsiClassType;
 
     private PsiJvmReferenceType(@NotNull PsiClassType type) {
       myPsiClassType = type;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myPsiClassType.getClassName();
     }
 
     @Nullable

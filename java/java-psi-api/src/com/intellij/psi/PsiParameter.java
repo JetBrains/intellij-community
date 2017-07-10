@@ -55,12 +55,6 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
   @Nullable
   PsiTypeElement getTypeElement();
 
-  @Nullable
-  @Override
-  default PsiElement getPsiElement() {
-    return this;
-  }
-
   @NotNull
   @Override
   default JvmType parameterType() {

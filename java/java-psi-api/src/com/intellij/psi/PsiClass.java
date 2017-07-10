@@ -361,12 +361,6 @@ public interface PsiClass
 
   @NotNull
   @Override
-  default PsiClass getPsiElement() {
-    return this;
-  }
-
-  @NotNull
-  @Override
   default JvmClassKind classKind() {
     return getJvmClassKind(this);
   }

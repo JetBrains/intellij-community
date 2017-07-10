@@ -48,12 +48,6 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, Jv
   @Override
   @NotNull PsiIdentifier getNameIdentifier();
 
-  @Nullable
-  @Override
-  default PsiField getPsiElement() {
-    return this;
-  }
-
   @NotNull
   @Override
   default JvmType fieldType() {

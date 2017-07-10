@@ -204,12 +204,6 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull
   @Override
-  default PsiMethod getPsiElement() {
-    return this;
-  }
-
-  @NotNull
-  @Override
   default JvmType returnType() {
     return PsiJvmConversionHelper.getMethodReturnType(this);
   }
