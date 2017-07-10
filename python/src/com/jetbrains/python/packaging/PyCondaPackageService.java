@@ -117,9 +117,15 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   public static String getCondaExecutable(VirtualFile sdkPath) {
     final VirtualFile bin = sdkPath.getParent();
-    final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+    String condaName = "conda";
+    if (SystemInfo.isWindows) {
+      condaName = bin.findChild("envs") != null ? "conda.exe" : "conda.bat";
+    }
     final VirtualFile conda = bin.findChild(condaName);
     if (conda != null) return conda.getPath();
+    final VirtualFile condaFolder = bin.getParent();
+    final String condaPath = findExecutable(condaName, condaFolder);
+    if (condaPath != null) return condaPath;
     return getSystemCondaExecutable();
   }
 
@@ -154,11 +160,6 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       final VirtualFile bin = condaFolder.findChild(SystemInfo.isWindows ? "Scripts" : "bin");
       if (bin != null) {
         String directoryPath = bin.getPath();
-        if (!SystemInfo.isWindows) {
-          final VirtualFile[] children = bin.getChildren();
-          if (children.length == 0) return null;
-          directoryPath = children[0].getPath();
-        }
         final String executableFile = PythonSdkType.getExecutablePath(directoryPath, condaName);
         if (executableFile != null) {
           return executableFile;
