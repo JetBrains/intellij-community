@@ -16,14 +16,12 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.LinkedHashSet;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -38,21 +36,6 @@ public class Utils {
 
   public static boolean isZipFile(String fileName) {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
-  }
-
-  @SuppressWarnings({"SSBasedInspection"})
-  public static File createTempFile() throws IOException {
-    if (myTempDir == null) {
-      long requiredFreeSpace = 1000000000;
-      // Create a (regular) file using the createTempFile api. This is used as a marker to indicate the existence of the
-      // corresponding directory, since there's no atomic API that guarantees creation of new directories.
-      File tempFileBase = File.createTempFile("idea.updater.files", "marker", new File(Runner.getDir(requiredFreeSpace)));
-      myTempDir = new File(tempFileBase.getPath().replaceAll("marker$", ""));
-      delete(myTempDir);
-      myTempDir.mkdirs();
-      Runner.logger().info("created temp file: " + myTempDir.getPath());
-    }
-    return File.createTempFile("temp", null, myTempDir);
   }
 
   private static File getTempDir() throws IOException {
@@ -294,14 +277,6 @@ public class Utils {
 
   public static InputStream newFileInputStream(File file, boolean normalize) throws IOException {
     return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
-  }
-
-  protected static boolean isSymlink(File file) throws IOException {
-    return Files.isSymbolicLink(Paths.get(file.toURI()));
-  }
-
-  protected static String getSymlinkTarget(File file) throws IOException {
-    return Files.readSymbolicLink(Paths.get(file.toURI())).toString();
   }
 
   private static class NormalizedZipInputStream extends InputStream {

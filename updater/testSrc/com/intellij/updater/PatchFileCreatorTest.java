@@ -344,9 +344,9 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
     Patch patch = PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
 
-    File unexpectedDir = new File(myOlderDir, "unexpected_newdir");
+    File unexpectedDir = new File(myOlderDir, "unexpected_new_dir");
     unexpectedDir.mkdirs();
-    File unexpected = new File(myOlderDir, "unexpected_newdir/unexpected.txt");
+    File unexpected = new File(myOlderDir, "unexpected_new_dir/unexpected.txt");
     FileUtil.writeToFile(unexpected, "bye!");
 
     File newDir = new File(myOlderDir, "newDir");

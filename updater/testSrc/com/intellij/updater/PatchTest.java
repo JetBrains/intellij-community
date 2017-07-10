@@ -46,6 +46,7 @@ public class PatchTest extends PatchTestCase {
       new DeleteAction(patch, "bin/idea.bat", CHECKSUMS.IDEA_BAT),
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
+      new CreateAction(patch, "newDir2/"),
       new CreateAction(patch, "newDir2/link"),
       new UpdateAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
       new UpdateZipAction(patch, "lib/annotations.jar",
@@ -71,6 +72,7 @@ public class PatchTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
+      new CreateAction(patch, "newDir2/"),
       new CreateAction(patch, "newDir2/link"),
       new UpdateZipAction(patch, "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
@@ -138,13 +140,7 @@ public class PatchTest extends PatchTestCase {
                            bootstrap,
                            ValidationResult.Action.UPDATE,
                            ValidationResult.ABSENT_MESSAGE,
-                           ValidationResult.Option.IGNORE),
-      new ValidationResult(ValidationResult.Kind.CONFLICT,
-                           "bin/idea.bat",
-                           idea,
-                           ValidationResult.Action.DELETE,
-                           ValidationResult.MODIFIED_MESSAGE,
-                           ValidationResult.Option.DELETE, ValidationResult.Option.KEEP));
+                           ValidationResult.Option.IGNORE));
   }
 
   @Test

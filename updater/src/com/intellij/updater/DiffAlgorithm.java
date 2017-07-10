@@ -22,6 +22,9 @@ import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public abstract class DiffAlgorithm {
   private static final byte RAW = 0;
@@ -147,7 +150,15 @@ public abstract class DiffAlgorithm {
 
     @Override
     public void applyDiff(InputStream patchInput, InputStream oldFileIn, OutputStream toFileOut) throws IOException {
-      throw new UnsupportedOperationException("XDelta can only apply diffs to files.");
+      Path temp = null;
+      try {
+        temp = Files.createTempFile("updater", "diff");
+        Files.copy(oldFileIn, temp, StandardCopyOption.REPLACE_EXISTING);
+        applyDiff(patchInput, temp.toFile(), toFileOut);
+      }
+      finally {
+        Files.delete(temp);
+      }
     }
 
     @Override
