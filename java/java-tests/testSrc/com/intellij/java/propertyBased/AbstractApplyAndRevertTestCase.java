@@ -44,6 +44,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
@@ -107,8 +109,8 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     }
   }
 
-  protected void changeAndRevert(Runnable r) {
-    Label label = LocalHistory.getInstance().putUserLabel(myProject, "changeAndRevert");
+  protected static void changeAndRevert(Project project, Runnable r) {
+    Label label = LocalHistory.getInstance().putUserLabel(project, "changeAndRevert");
     boolean failed = false;
     try {
       r.run();
@@ -118,19 +120,19 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
       throw e;
     }
     finally {
-      restoreEverything(label, failed);
+      restoreEverything(label, failed, project);
     }
   }
 
-  private void restoreEverything(Label label, boolean failed) {
+  private static void restoreEverything(Label label, boolean failed, Project project) {
     try {
       WriteAction.run(() -> {
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
         new RunAll(
-          () -> PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting(),
-          () -> FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles(),
+          () -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(),
+          () -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles(),
           () -> FileDocumentManager.getInstance().saveAllDocuments(),
-          () -> revertVfs(label, documentManager),
+          () -> revertVfs(label, project),
           () -> documentManager.commitAllDocuments(),
           () -> assertEmpty(documentManager.getUncommittedDocuments()),
           () -> assertEmpty(FileDocumentManager.getInstance().getUnsavedDocuments())
@@ -146,9 +148,10 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     }
   }
 
-  private void revertVfs(Label label, PsiDocumentManager documentManager) throws LocalHistoryException {
-    watchDocumentChanges(() -> label.revert(myProject, myProject.getBaseDir()),
+  private static void revertVfs(Label label, Project project) throws LocalHistoryException {
+    watchDocumentChanges(() -> label.revert(project, project.getBaseDir()),
                                __ -> {
+                                 PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
                                  if (documentManager.getUncommittedDocuments().length > 3) {
                                    documentManager.commitAllDocuments();
                                  }
@@ -229,4 +232,19 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
       .collect(Collectors.toList());
   }
 
+  public static void enableAllInspections(Project project, Disposable disposable) {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+    InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
+    profile.enableAllTools(project);
+    
+    ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
+    manager.addProfile(profile);
+    InspectionProfileImpl prev = manager.getCurrentProfile();
+    manager.setCurrentProfile(profile);
+    Disposer.register(disposable, () -> {
+      InspectionProfileImpl.INIT_INSPECTIONS = false;
+      manager.setCurrentProfile(prev);
+      manager.deleteProfile(profile);
+    });
+  }
 }

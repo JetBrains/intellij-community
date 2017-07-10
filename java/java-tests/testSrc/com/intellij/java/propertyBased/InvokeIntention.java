@@ -30,7 +30,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.DataStructure;
 import slowCheck.Generator;
 
 import java.util.List;
@@ -47,10 +46,9 @@ class InvokeIntention extends ActionOnRange implements MadTestingAction {
   }
 
   @NotNull
-  static InvokeIntention generate(@NotNull PsiFile psiFile, @NotNull DataStructure data) {
-    return new InvokeIntention(psiFile,
-                               Generator.integers(0, psiFile.getTextLength()).generateValue(data),
-                               Generator.integers(0, 100).generateValue(data));
+  static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile) {
+    return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), Generator.integers(0, 100),
+                             (offset, index) -> new InvokeIntention(psiFile, offset, index)).noShrink();
   }
 
   @Override
@@ -89,7 +87,7 @@ class InvokeIntention extends ActionOnRange implements MadTestingAction {
       throw new AssertionError("Document is left blocked by PSI");
     }
     if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
-      throw new AssertionError("No change was performed in " + changedDocument + "\n" + textBefore);
+      throw new AssertionError("No change was performed in the document");
     }
 
     PsiTestUtil.checkStubsMatchText(myFile);
@@ -112,11 +110,14 @@ class InvokeIntention extends ActionOnRange implements MadTestingAction {
 
   private static boolean shouldSkipIntention(String actionText) {
     return actionText.startsWith("Flip") ||
-           actionText.startsWith("Attach annotations") ||
-           actionText.startsWith("Convert to string literal") ||
+           actionText.startsWith("Attach annotations") || // changes project model
+           actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
            actionText.startsWith("Make method default") ||
+           actionText.startsWith("Convert to project line separators") || // changes VFS, not document
            actionText.contains("to custom tags") || // changes only inspection settings
+           actionText.contains("to 'Ignore if annotated by' list") || // changes only inspection settings
+           actionText.startsWith("Allow these suppressions") || // changes only inspection settings
            actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template)
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)

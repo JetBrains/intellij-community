@@ -85,7 +85,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
         return new CompletionInvocation(document, offset, itemIndex, c);
       });
       PropertyChecker.forAll(settings.withIterationCount(10), Generator.listsOf(genInvocation), list -> {
-        changeAndRevert(() -> restrictChangesToDocument(document, () -> {
+        changeAndRevert(myProject, () -> restrictChangesToDocument(document, () -> {
           for (int i = 0; i < list.size(); i++) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             CompletionInvocation invocation = list.get(i);
