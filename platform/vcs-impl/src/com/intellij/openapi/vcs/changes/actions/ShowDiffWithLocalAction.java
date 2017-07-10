@@ -35,16 +35,16 @@ import java.util.List;
 import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.showDiffForChange;
 
 public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
-  private final boolean myBeforeWithLocal;
+  private final boolean myUseBeforeVersion;
 
   public ShowDiffWithLocalAction() {
     this(false);
     getTemplatePresentation().setIcon(AllIcons.Actions.DiffWithCurrent);
   }
 
-  public ShowDiffWithLocalAction(boolean beforeWithLocal) {
-    myBeforeWithLocal = beforeWithLocal;
-    ActionUtil.copyFrom(this, beforeWithLocal ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
+  public ShowDiffWithLocalAction(boolean useBeforeVersion) {
+    myUseBeforeVersion = useBeforeVersion;
+    ActionUtil.copyFrom(this, useBeforeVersion ? "Vcs.ShowDiffWithLocal.Before" : "Vcs.ShowDiffWithLocal");
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -79,7 +79,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
 
   @Nullable
   private Change getChangeWithLocal(@NotNull Change c) {
-    ContentRevision revision = myBeforeWithLocal ? c.getBeforeRevision() : c.getAfterRevision();
+    ContentRevision revision = myUseBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
     if (!isValidRevision(revision)) return null;
 
     ContentRevision contentRevision = CurrentContentRevision.create(revision.getFile());
