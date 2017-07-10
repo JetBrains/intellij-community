@@ -84,7 +84,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
       if (visibleGraph instanceof VisibleGraphImpl) {
         int row = getCurrentRow(dataPack, visibleGraph, namesData);
         if (row >= 0) {
-          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl)visibleGraph, namesData);
+          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl<Integer>)visibleGraph, namesData);
           if (refiner.refine(row, myFilePath)) {
             // creating a vg is the most expensive task, so trying to avoid that when unnecessary
             visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
