@@ -108,7 +108,9 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
 
     if (delegate.getCurrentOffset() > myShrunkSequence.get(myLexPosition).realStart) {
       LOG.error("delegate is ahead of my builder!",
-                new Attachment("offset = " + delegate.getCurrentOffset(), getOriginalText().toString()));
+                new Attachment("offset = " + delegate.getCurrentOffset(), getOriginalText().toString()),
+                new Attachment("myShrunkSequence", myShrunkSequence.toString())
+      );
       return;
     }
 
