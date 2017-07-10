@@ -153,18 +153,21 @@ public class DTree {
         tree.setType(DiffType.SOURCE);
       } else {
         assert src != null;
-        DiffType dtype = src.getSize() == trg.getSize() ? DiffType.EQUAL : DiffType.CHANGED;
-        if (dtype == DiffType.EQUAL) {
-          switch (settings.compareMode) {
-            case CONTENT:
-              dtype = isEqual(src, trg) ? DiffType.EQUAL : DiffType.CHANGED;
-              break;
-            case TIMESTAMP:
-              dtype = Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy ? DiffType.EQUAL : DiffType.CHANGED;
-              break;
-          }
+        boolean equals;
+        switch (settings.compareMode) {
+          case CONTENT:
+            equals = isEqualContents(src, trg);
+            break;
+          case SIZE:
+            equals = isEqualSizes(src, trg);
+            break;
+          case TIMESTAMP:
+            equals = isEqualTimestamps(src, trg, settings);
+            break;
+          default:
+            throw new IllegalStateException(settings.compareMode.name());
         }
-        tree.setType(dtype);
+        tree.setType(equals ? DiffType.EQUAL : DiffType.CHANGED);
       }
       tree.update(settings);
     }
@@ -234,7 +237,16 @@ public class DTree {
     }
   }
 
-  private static boolean isEqual(DiffElement file1, DiffElement file2) {
+  private static boolean isEqualSizes(DiffElement<?> file1, DiffElement<?> file2) {
+    return file1.getSize() == file2.getSize();
+  }
+
+  private static boolean isEqualTimestamps(DiffElement<?> src, DiffElement<?> trg, DirDiffSettings settings) {
+    if (src.getSize() != trg.getSize()) return false;
+    return Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy;
+  }
+
+  private static boolean isEqualContents(DiffElement<?> file1, DiffElement<?> file2) {
     if (file1.isContainer() || file2.isContainer()) return false;
     if (file1.getSize() != file2.getSize()) return false;
     try {
