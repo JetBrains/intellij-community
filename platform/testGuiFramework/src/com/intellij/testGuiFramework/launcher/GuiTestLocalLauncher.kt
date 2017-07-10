@@ -169,31 +169,30 @@ object GuiTestLocalLauncher {
     return resultingArgs
   }
 
-
-  private fun getDefaultVmOptions(ide: Ide,
-                                  configPath: String = "../config",
-                                  systemPath: String = "../system",
-                                  bootClasspath: String = "../out/classes/production/boot",
-                                  encoding: String = "UTF-8",
-                                  isInternal: Boolean = true,
-                                  useMenuScreenBar: Boolean = true,
-                                  debugPort: Int = 5009,
-                                  suspendDebug: String = "n"): List<String> =
-    listOf<String>()
-      .plus("-ea")
-      .plus("-Xbootclasspath/p:$bootClasspath")
-      .plus("-Dsun.awt.disablegrab=true")
-      .plus("-Dsun.io.useCanonCaches=false")
-      .plus("-Djava.net.preferIPv4Stack=true")
-      .plus("-Dapple.laf.useScreenMenuBar=${useMenuScreenBar.toString()}")
-      .plus("-Didea.is.internal=${isInternal.toString()}")
-      .plus("-Didea.config.path=$configPath")
-      .plus("-Didea.system.path=$systemPath")
-      .plus("-Dfile.encoding=$encoding")
-      .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
-      .plus("-Xdebug")
-      .plus(
-        "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendDebug,address=$debugPort") //todo: add System.getProperty(...) to customize debug port
+  /**
+   * Default VM options to start IntelliJ IDEA (or IDEA-based IDE). To customize options use com.intellij.testGuiFramework.launcher.GuiTestOptions
+   */
+  private fun getDefaultVmOptions(ide: Ide) : List<String> {
+    return listOf<String>()
+        .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
+        .plus("-XX:ReservedCodeCacheSize=150m")
+        .plus("-XX:+UseConcMarkSweepGC")
+        .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
+        .plus("-XX:MaxJavaStackTraceDepth=10000")
+        .plus("-ea")
+        .plus("-Xbootclasspath/p:${GuiTestOptions.getBootClasspath()}")
+        .plus("-Dsun.awt.disablegrab=true")
+        .plus("-Dsun.io.useCanonCaches=false")
+        .plus("-Djava.net.preferIPv4Stack=true")
+        .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar().toString()}")
+        .plus("-Didea.is.internal=${GuiTestOptions.isInternal().toString()}")
+        .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
+        .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
+        .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
+        .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+        .plus("-Xdebug")
+        .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
+  }
 
   private fun getCurrentJavaExec(): String {
     return PathUtils.getJreBinPath()

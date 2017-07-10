@@ -15,6 +15,9 @@
  */
 package com.intellij.testGuiFramework.tests.community
 
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.comparison.ComparisonUtil
+import com.intellij.openapi.ui.MultiLineLabelUI
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.impl.GuiTestCase
@@ -33,7 +36,8 @@ public class Main {
   public static void main(String[] args) {
     // write your code here
   }
-}"""
+}
+"""
 
   @Test
   fun testProjectCreate() {
@@ -62,8 +66,14 @@ public class Main {
         moveTo(1)
       }
       val editorCode = editor.getCurrentFileContents(false)
-      assertTrue(StringUtil.convertLineSeparators(codeText) == StringUtil.convertLineSeparators(editorCode!!))
+      assertTrue(ComparisonUtil.isEquals(codeText.unifyCode(),
+                                         editorCode!!.unifyCode(),
+                                         ComparisonPolicy.TRIM_WHITESPACES))
       closeProject()
     }
   }
+
+  fun String.unifyCode(): String =
+    MultiLineLabelUI.convertTabs(StringUtil.convertLineSeparators(this), 2)
+
 }
