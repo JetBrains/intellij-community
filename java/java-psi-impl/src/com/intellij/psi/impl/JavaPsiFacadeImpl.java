@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.facade.JvmFacade;
+import com.intellij.lang.jvm.facade.JvmFacadeImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
@@ -28,6 +31,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
+import com.intellij.psi.impl.jvm2psi.JvmPsiConversionHelper;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.JavaDummyHolderFactory;
@@ -57,6 +61,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
+  private final JvmFacadeImpl myJvmFacade;
+  private final JvmPsiConversionHelper myConversionHelper;
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManager psiManager,
@@ -65,6 +71,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myProject = project;
     myFileManager = javaFileManager;
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
+    myJvmFacade = (JvmFacadeImpl)JvmFacade.getInstance(project);
+    myConversionHelper = new JvmPsiConversionHelper(psiManager);
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
 
@@ -161,6 +169,11 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    return findClasses(qualifiedName, scope, true);
+  }
+
+  @NotNull
+  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, boolean askJvmFacade) {
     if (shouldUseSlowResolve()) {
       return findClassesInDumbMode(qualifiedName, scope);
     }
@@ -174,6 +187,15 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       if (finderClasses.length != 0) {
         if (result == null) result = new ArrayList<>(finderClasses.length);
         filterClassesAndAppend(finder, classesFilter, finderClasses, result);
+      }
+    }
+
+    if (askJvmFacade) {
+      List<? extends JvmClass> jvmClasses = myJvmFacade.findClasses(qualifiedName, scope, false);
+      List<PsiClass> jvmPsiClasses = ContainerUtil.map(jvmClasses, it -> myConversionHelper.toPsiClass(it));
+      if (!jvmPsiClasses.isEmpty()) {
+        if (result == null) result = new ArrayList<>(jvmPsiClasses.size());
+        result.addAll(jvmPsiClasses);
       }
     }
 
