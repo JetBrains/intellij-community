@@ -307,6 +307,13 @@ public class DiffUtil {
     return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
   }
 
+  public static void moveCaretToLineRangeIfNeeded(@NotNull Editor editor, int startLine, int endLine) {
+    int caretLine = editor.getCaretModel().getLogicalPosition().line;
+    if (!isSelectedByLine(caretLine, startLine, endLine)) {
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(startLine, 0));
+    }
+  }
+
   //
   // Icons
   //

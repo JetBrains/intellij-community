@@ -75,6 +75,8 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     assert editor != null || range != null;
 
     if (range != null) {
+      if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
+
       doRollback(tracker, range);
       return;
     }
