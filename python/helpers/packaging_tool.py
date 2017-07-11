@@ -161,6 +161,14 @@ def mkdtemp_ifneeded():
 
 
 def main():
+    try:
+        # As a workaround for #885 in setuptools, don't expose other helpers
+        # in sys.path so as not no confuse it with possible combination of
+        # namespace/ordinary packages
+        sys.path.remove(os.path.dirname(__file__))
+    except ValueError:
+        pass
+
     retcode = 0
     try:
         if len(sys.argv) < 2:
