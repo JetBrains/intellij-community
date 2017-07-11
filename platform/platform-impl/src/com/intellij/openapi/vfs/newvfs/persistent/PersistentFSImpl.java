@@ -837,7 +837,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     for (Map.Entry<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> entry : deletions.entrySet()) {
       VirtualDirectoryImpl parent = entry.getKey();
       Collection<VFileDeleteEvent> deleteEvents = entry.getValue();
-      if (parent == null) {
+      // no valid containing directory, apply events the old way - one by one
+      if (parent == null || !parent.isValid()) {
         deleteEvents.forEach(this::applyEvent);
         return;
       }
