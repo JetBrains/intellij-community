@@ -158,13 +158,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    PyClassAttributesIndex.findClassAtrributes(referencedName, project, scope).forEach(classAttr -> {
-      ret.add(new ImplicitResolveResult(classAttr, getImplicitResultRate(classAttr, imports)));
+    PyClassAttributesIndex.findClassAndInstanceAttributes(referencedName, project, scope).forEach((PyTargetExpression attribute) -> {
+      ret.add(new ImplicitResolveResult(attribute, getImplicitResultRate(attribute, imports)));
     });
 
-    PyClassAttributesIndex.findInstanceAttributes(referencedName, project, scope).forEach(instanceAttr -> {
-      ret.add(new ImplicitResolveResult(instanceAttr, getImplicitResultRate(instanceAttr, imports)));
-    });
+
   }
 
   private static List<QualifiedName> collectImports(PyFile containingFile) {
