@@ -40,8 +40,7 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
 
   public void testRandomIntentions() {
     AbstractApplyAndRevertTestCase.enableAllInspections(getProject(), getTestRootDisposable());
-    FileFilter fileFilter = f -> f.getName().endsWith(".java") &&
-                                 !f.getName().endsWith("Lexer.java"); // https://youtrack.jetbrains.com/issue/IDEA-175404
+    FileFilter fileFilter = f -> f.getName().endsWith(".java");
     Generator<FileWithActions> actions = actionsOnFileContents(myFixture, PathManager.getHomePath(), fileFilter,
                                                                file -> Generator.anyOf(InvokeIntention.randomIntentions(file),
                                                                                        DeleteRange.deletePsiRange(file)));
@@ -70,8 +69,10 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
     });
   }
 
-  private static boolean shouldGoInsiderDir(String name) {
-    return !"out".equals(name) && !name.endsWith("system") && !name.endsWith("config");
+  private static boolean shouldGoInsiderDir(@NotNull String name) {
+    return !name.equals("out") &&
+           !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
+           !name.endsWith("system") && !name.endsWith("config");
   }
 
   @NotNull
