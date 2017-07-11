@@ -38,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +153,7 @@ public class JavaKeywordCompletion {
   private static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
     psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
       not(
-        or(psiElement(PsiTypeCastExpression.class),
+        or(
            psiElement(PsiSwitchLabelStatement.class),
            psiElement(PsiExpressionStatement.class),
            psiElement(PsiPrefixExpression.class)
@@ -193,10 +194,14 @@ public class JavaKeywordCompletion {
     mySession = session;
     myPrefix = session.getMatcher().getPrefix();
     myPosition = parameters.getPosition();
-    myPrevLeaf = PsiTreeUtil.prevVisibleLeaf(myPosition);
+    myPrevLeaf = prevSignificantLeaf(myPosition);
 
     addKeywords();
     addEnumCases();
+  }
+
+  private static PsiElement prevSignificantLeaf(PsiElement position) {
+    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> e instanceof PsiComment).first();
   }
 
   private void addKeyword(LookupElement element) {
@@ -617,7 +622,7 @@ public class JavaKeywordCompletion {
       return false;
     }
 
-    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    PsiElement prev = prevSignificantLeaf(position);
     if (prev == null) {
       return true;
     }
