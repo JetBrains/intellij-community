@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,5 +245,41 @@ public class ClassUtils {
     final PsiJavaCodeReferenceElement reference = aClass.getBaseClassReference();
     if (reference.resolve() == null) return null;
     return initializer;
+  }
+
+  public static boolean isFinalClassWithDefaultEquals(@Nullable PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !hasOnlyPrivateConstructors(aClass)) {
+      return false;
+    }
+    final PsiMethod[] methods = aClass.findMethodsByName("equals", true);
+    for (PsiMethod method : methods) {
+      if (!MethodUtils.isEquals(method)) {
+        continue;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean hasOnlyPrivateConstructors(PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return false;
+    }
+    for (PsiMethod constructor : constructors) {
+      if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

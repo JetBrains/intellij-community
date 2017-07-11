@@ -80,12 +80,6 @@
 -->
 
     <intentionAction>
-      <className>com.siyeh.ipp.equality.ReplaceEqualsWithEqualityIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.boolean</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
       <className>com.siyeh.ipp.trivialif.ExpandBooleanIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.boolean</categoryKey>

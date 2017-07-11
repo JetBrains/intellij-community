@@ -2016,6 +2016,10 @@
                      key="object.allocation.in.loop.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ObjectAllocationInLoopInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObjectEqualsCanBeEquality" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="object.equals.can.be.equality.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.performance.ObjectEqualsCanBeEqualityInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectInstantiationInEqualsHashCode" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="object.instantiation.inside.equals.or.hashcode.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
