@@ -93,13 +93,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-
-public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
+public class FindPopupPanel extends JBPanel implements FindUI {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
 
-  private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
-  private static final KeyStroke OK_FIND = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
+  private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+  private static final KeyStroke ENTER_WITH_MODIFIERS =
+    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
 
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
@@ -347,12 +346,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         }
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
-    registerPostProcessor(IdeActions.ACTION_EDIT_SOURCE, this, () -> {
-      if (myBalloon != null && !myBalloon.isDisposed()) {
-        myBalloon.cancel();
-      }
-    });
-    //myFilterContextButton.setFocusable(true);
 
     DefaultActionGroup tabResultsContextGroup = new DefaultActionGroup();
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox")) {
@@ -429,30 +422,48 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       }
     };
     myOKButton.addActionListener(myOkActionListener);
-    registerKeyboardAction(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (!myHelper.isReplaceState()) {
-          navigateToSelectedUsage();
-          return;
-        }
-        myOkActionListener.actionPerformed(e);
-      }
-    }, NEW_LINE, WHEN_IN_FOCUSED_WINDOW);
-    ActionListener okActionListener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myHelper.isReplaceState()) return;
-        myOkActionListener.actionPerformed(e);
-      }
-    };
-    registerKeyboardAction(okActionListener, OK_FIND, WHEN_IN_FOCUSED_WINDOW);
+    boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
+
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        okActionListener.actionPerformed(null);
+        if (enterAsOK || myHelper.isReplaceState()) {
+          myOkActionListener.actionPerformed(null);
+        } else {
+          navigateToSelectedUsage();
+        }
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getViewSource(), this);
+    }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myHelper.isReplaceState()) return;
+        if (enterAsOK) {
+          navigateToSelectedUsage();
+        } else {
+          myOkActionListener.actionPerformed(null);
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
+    
+    List<Shortcut> navigationKeyStrokes = ContainerUtil.newArrayList();
+    KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
+    if (viewSourceKeyStroke != null && !Comparing.equal(viewSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(viewSourceKeyStroke, ENTER)) {
+      navigationKeyStrokes.add(new KeyboardShortcut(viewSourceKeyStroke, null));
+    }
+    KeyStroke editSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getEditSource());
+    if (editSourceKeyStroke != null && !Comparing.equal(editSourceKeyStroke, ENTER_WITH_MODIFIERS) && !Comparing.equal(editSourceKeyStroke, ENTER)) {
+      navigationKeyStrokes.add(new KeyboardShortcut(editSourceKeyStroke, null));
+    }
+    if (!navigationKeyStrokes.isEmpty()) {
+      new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          navigateToSelectedUsage();
+        }
+      }.registerCustomShortcutSet(new CustomShortcutSet(navigationKeyStrokes.toArray(Shortcut.EMPTY_ARRAY)), this);
+    }
+
     mySearchComponent = new JTextArea();
     mySearchComponent.setColumns(25);
     mySearchComponent.setRows(1);
@@ -524,8 +535,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myFileMaskField);
-    UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, NEW_LINE);
-    UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myResultsPreviewTable, NEW_LINE);
     ActionListener helpAction = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         HelpManager.getInstance().invokeHelp("reference.dialogs.findinpath");
@@ -585,7 +594,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 2, gap 0"));
     bottomPanel.add(myTabResultsButton);
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
-    myOKHintLabel = new JBLabel(KeymapUtil.getShortcutsText(new Shortcut[]{new KeyboardShortcut(OK_FIND, null)}));
+    myOKHintLabel = new JBLabel("");
     myOKHintLabel.setEnabled(false);
     bottomPanel.add(myOKHintLabel, "gapright 10");
     bottomPanel.add(myOKButton);
@@ -734,7 +743,11 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myTitleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myCbPreserveCase.setVisible(isReplaceState);
-    myOKHintLabel.setVisible(!isReplaceState);
+    if (Registry.is("ide.find.enter.as.ok", false) || isReplaceState) {
+      myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER));
+    } else {
+      myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
+    }
     myOKButton.setText(FindBundle.message(isReplaceState ? "find.popup.replace.button" : "find.popup.find.button"));
   }
 
@@ -1085,15 +1098,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   }
 
   @Nullable
-  @Override
-  public Object getData(String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getSelectedUsages();
-    }
-    return null;
-  }
-
-  @Nullable
   private Usage[] getSelectedUsages() {
     int[] rows = myResultsPreviewTable.getSelectedRows();
     List<Usage> usages = null;
@@ -1207,25 +1211,4 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
-
-  private static boolean registerPostProcessor(@NotNull String actionId,
-                                              @NotNull JComponent component,
-                                              @NotNull Runnable postProcessor) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
-    if (action == null || shortcuts.length == 0) return false;
-    AnAction wrapper = new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        action.beforeActionPerformedUpdate(e);
-        if (e.getPresentation().isEnabled()) {
-          action.actionPerformed(e);
-          postProcessor.run();
-        }
-      }
-    };
-    wrapper.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), component);
-    return true;
-  }
-
 }
