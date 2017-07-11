@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
@@ -38,6 +39,7 @@ import slowCheck.PropertyChecker
 /**
  * @author peter
  */
+@SkipSlowTestLocally
 class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
 
   fun testFuzzActions() {
@@ -91,7 +93,7 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
     val project = fixture.project!!
     var docClassName = "Foo"
     var psiClassName = "Foo"
-    
+
     fun findPsiFile() = PsiManager.getInstance(project).findFile(vFile) as PsiJavaFile
     fun findPsiClass() = JavaPsiFacade.getInstance(project).findClass(psiClassName, GlobalSearchScope.allScope(project))!!
     fun getDocument() = FileDocumentManager.getInstance().getDocument(vFile)!!
@@ -207,13 +209,10 @@ class PsiIndexConsistencyTest: LightCodeInsightFixtureTestCase() {
   }
 
   internal enum class RefKind(val loadRef: (Model) -> Any) {
-    ClassRef({ it.findPsiClass() }), 
-    PsiFileRef({ it.findPsiFile()}), 
-    AstRef({ it.findPsiClass().node }), 
-    DocumentRef({ it.getDocument() }), 
+    ClassRef({ it.findPsiClass() }),
+    PsiFileRef({ it.findPsiFile()}),
+    AstRef({ it.findPsiClass().node }),
+    DocumentRef({ it.getDocument() }),
     DirRef({ it.findPsiFile().containingDirectory })
   }
-
 }
-
-
