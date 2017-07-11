@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hints;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -42,7 +43,8 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     long currentStamp = getCurrentModificationStamp(file);
     Long savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP);
     if (savedStamp != null && savedStamp == currentStamp) return null;
-    return new ParameterHintsPass(file, editor);
+    Language language = file.getLanguage();
+    return new ParameterHintsPass(file, editor, MethodInfoBlacklistFilter.forLanguage(language));
   }
 
   public static long getCurrentModificationStamp(@NotNull PsiFile file) {

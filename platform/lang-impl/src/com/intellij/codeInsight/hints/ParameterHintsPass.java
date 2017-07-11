@@ -17,10 +17,6 @@ package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hints.filtering.Matcher;
-import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
-import com.intellij.codeInsight.hints.settings.Diff;
-import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
@@ -35,22 +31,23 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurrentPsiModificationStamp;
-
 
 public class ParameterHintsPass extends EditorBoundHighlightingPass {
   private final TIntObjectHashMap<String> myHints = new TIntObjectHashMap<>();
   private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
   private final SyntaxTraverser<PsiElement> myTraverser;
   private final PsiElement myRootElement;
+  private final HintInfoFilter myHintInfoFilter;
 
-  public ParameterHintsPass(@NotNull PsiElement element, @NotNull Editor editor) {
+  public ParameterHintsPass(@NotNull PsiElement element,
+                            @NotNull Editor editor,
+                            @NotNull HintInfoFilter hintsFilter) {
     super(editor, element.getContainingFile(), true);
     myRootElement = element;
     myTraverser = SyntaxTraverser.psiTraverser(element);
+    myHintInfoFilter = hintsFilter;
   }
 
   @Override
@@ -63,53 +60,18 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) return;
 
-    List<Matcher> matchers = getBlackListMatchers(language);
-
-    myTraverser.forEach(element -> process(element, provider, matchers));
-  }
-
-  public static List<Matcher> getBlackListMatchers(Language language) {
-    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    Set<String> blackList = getBlackList(language);
-    Language dependentLanguage = provider.getBlackListDependencyLanguage();
-    if (dependentLanguage != null) {
-      blackList.addAll(getBlackList(dependentLanguage));
-    }
-
-    return blackList
-      .stream()
-      .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
-      .filter((e) -> e != null)
-      .collect(Collectors.toList());
-  }
-
-  public static Set<String> getBlackList(Language language) {
-    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    if (provider != null) {
-      ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
-      Diff diff = settings.getBlackListDiff(language);
-      return diff.applyOn(provider.getDefaultBlackList());
-    }
-    return ContainerUtil.newHashOrEmptySet(ContainerUtil.emptyIterable());
+    myTraverser.forEach(element -> process(element, provider));
   }
 
   private static boolean isEnabled() {
     return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
   }
 
-  private static boolean isMatchedByAny(HintInfo info, List<Matcher> matchers) {
-    if (info instanceof HintInfo.MethodInfo) {
-      HintInfo.MethodInfo methodInfo = (HintInfo.MethodInfo)info;
-      return matchers.stream().anyMatch((e) -> e.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
-    }
-    return false;
-  }
-
-  private void process(PsiElement element, InlayParameterHintsProvider provider, List<Matcher> blackListMatchers) {
+  private void process(PsiElement element, InlayParameterHintsProvider provider) {
     List<InlayInfo> hints = provider.getParameterHints(element);
     if (hints.isEmpty()) return;
     HintInfo info = provider.getHintInfo(element);
-    if (info == null || !isMatchedByAny(info, blackListMatchers)) {
+    if (info == null || myHintInfoFilter.showHint(info)) {
       hints.forEach((hint) -> {
         String presentation = provider.getInlayPresentation(hint.getText());
         int offset = hint.getOffset();
