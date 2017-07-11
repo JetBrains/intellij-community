@@ -20,6 +20,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.lexer.PythonLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +63,15 @@ public class PyStringLiteralUtil {
       return TextRange.create(quotes.getFirst().length(), s.length() - quotes.getSecond().length());
     }
     return TextRange.allOf(s);
+  }
+
+  /**
+   * @return whether the given text is recognized as a valid string literal token by Python lexer
+   */
+  public static boolean isStringLiteralToken(@NotNull String text) {
+    final PythonLexer lexer = new PythonLexer();
+    lexer.start(text);
+    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd();
   }
 
   /**
