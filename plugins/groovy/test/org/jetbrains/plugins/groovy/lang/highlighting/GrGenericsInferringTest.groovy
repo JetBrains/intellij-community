@@ -279,31 +279,23 @@ class GrGenericsInferringTest extends GrHighlightingTestBase {
   '''
   }
 
-  void testBoundedGenericsCompileStatic() {
-    testHighlighting '''
-import groovy.transform.CompileStatic
+  void testEnumGenerics() {
+    testHighlighting '''\
+enum MyEnum { ONE, TWO }
 
-@CompileStatic
-class Foo {
-    static <T extends List<Integer>> void bar(T a) {
-    }
-
-    static void method() {
-        bar<error>([''])</error>
-    }
+@groovy.transform.CompileStatic
+void compare() {
+    assert MyEnum.ONE < MyEnum.TWO
 }
 '''
   }
 
-  void testBoundedGenerics() {
-    testHighlighting '''
-class Foo {
-    static <T extends List<Integer>> void bar(T a) {
-    }
-
-    static void method() {
-        bar([''])
-    }
+  void testInjectGenerics() {
+    testHighlighting '''\
+@groovy.transform.CompileStatic
+void printList() {
+  List<String> list = ['1', '2']
+  assert list.inject('0') { old, i -> old + i } == '012'
 }
 '''
   }
