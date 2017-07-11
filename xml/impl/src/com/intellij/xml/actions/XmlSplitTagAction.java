@@ -17,7 +17,6 @@ package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -112,7 +111,7 @@ public class XmlSplitTagAction implements IntentionAction {
 
           final String filetext = buildNewText(xmlTag, first, second);
 
-          final XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.xml", XMLLanguage.INSTANCE,
+          final XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("dummy.xml", xmlTag.getLanguage(),
                                                                                                filetext);
           final PsiElement parent2 = containingTag.getParent();
           final XmlTag tag = xmlFile.getDocument().getRootTag();
