@@ -72,7 +72,7 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return myProject == null ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
-  protected Generator<VirtualFile> javaFiles() {
+  private Generator<VirtualFile> javaFiles() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<VirtualFile> allFiles = new ArrayList<>(FilenameIndex.getAllFilesByExt(myProject, "java", projectScope));
     return Generator.sampledFrom(allFiles);
