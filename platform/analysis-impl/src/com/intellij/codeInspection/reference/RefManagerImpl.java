@@ -466,38 +466,42 @@ public class RefManagerImpl extends RefManager {
         extension.visitElement(element);
       }
       else if (processJVMClasses) {
-        PsiFile containingFile = element.getContainingFile();
-        if (containingFile instanceof PsiClassOwner) {
-          RefElement refFile = getReference(containingFile);
-          LOG.assertTrue(refFile != null, containingFile);
-          for (PsiReference reference : element.getReferences()) {
-            PsiElement resolve = reference.resolve();
-            if (resolve != null) {
-              fireNodeMarkedReferenced(resolve, containingFile);
-              RefElement refWhat = getReference(resolve);
-              if (refWhat == null) {
-                PsiFile targetContainingFile = resolve.getContainingFile();
-                //no logic to distinguish different elements in the file anyway
-                if (containingFile == targetContainingFile) continue;
-                refWhat = getReference(targetContainingFile);
-              }
-
-              if (refWhat != null) {
-                ((RefElementImpl)refWhat).addInReference(refFile);
-                ((RefElementImpl)refFile).addOutReference(refWhat);
-              }
-            }
-          }
-        }
-        else if (element instanceof PsiFile) {
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-          if (virtualFile instanceof VirtualFileWithId) {
-            registerUnprocessed((VirtualFileWithId)virtualFile);
-          }
-        }
+        processElementNoExtension(element);
       }
       for (PsiElement aChildren : element.getChildren()) {
         aChildren.accept(this);
+      }
+    }
+
+    private void processElementNoExtension(PsiElement element) {
+      PsiFile containingFile = element.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        RefElement refFile = getReference(containingFile);
+        LOG.assertTrue(refFile != null, containingFile);
+        for (PsiReference reference : element.getReferences()) {
+          PsiElement resolve = reference.resolve();
+          if (resolve != null) {
+            fireNodeMarkedReferenced(resolve, containingFile);
+            RefElement refWhat = getReference(resolve);
+            if (refWhat == null) {
+              PsiFile targetContainingFile = resolve.getContainingFile();
+              //no logic to distinguish different elements in the file anyway
+              if (containingFile == targetContainingFile) continue;
+              refWhat = getReference(targetContainingFile);
+            }
+
+            if (refWhat != null) {
+              ((RefElementImpl)refWhat).addInReference(refFile);
+              ((RefElementImpl)refFile).addOutReference(refWhat);
+            }
+          }
+        }
+      }
+      else if (element instanceof PsiFile) {
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+        if (virtualFile instanceof VirtualFileWithId) {
+          registerUnprocessed((VirtualFileWithId)virtualFile);
+        }
       }
     }
 
