@@ -206,7 +206,12 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   private void setOutputStateInCell(boolean isCollapsed) {
     final Map<String, Object> metadata = myCell.getMetadata();
-    metadata.put("collapsed", isCollapsed);
+    if (!metadata.containsKey(COLLAPSED_METADATA) && !isCollapsed) {
+      return;
+    }
+
+    metadata.put(COLLAPSED_METADATA, isCollapsed);
+
   }
 
   private JPanel createToggleBar(OnePixelSplitter splitter) {
