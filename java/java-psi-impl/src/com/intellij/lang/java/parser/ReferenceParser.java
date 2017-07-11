@@ -214,7 +214,7 @@ public class ReferenceParser {
     if (parameterList) {
       typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
-    else {
+    else if (!isStaticImport) {
       emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
     }
 
