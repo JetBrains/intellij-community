@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
+
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
 
@@ -1026,7 +1028,7 @@ public class PsiTreeUtil {
   }
 
   public static boolean hasErrorElements(@NotNull PsiElement element) {
-    return !SyntaxTraverser.psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
+    return !psiTraverser(element).traverse().filter(PsiErrorElement.class).isEmpty();
   }
 
   @NotNull
@@ -1132,31 +1134,6 @@ public class PsiTreeUtil {
     return res;
   }
 
-  @NotNull
-  public static <T extends PsiElement> Iterator<T> childIterator(@NotNull final PsiElement element, @NotNull final Class<T> aClass) {
-    return new Iterator<T>() {
-      private T next = getChildOfType(element, aClass);
-
-      @Override
-      public boolean hasNext() {
-        return next != null;
-      }
-
-      @Override
-      public T next() {
-        if (next == null) throw new NoSuchElementException();
-        T current = next;
-        next = getNextSiblingOfType(current, aClass);
-        return current;
-      }
-
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
   @Nullable
   public static PsiElement getDeepestVisibleFirst(@NotNull PsiElement psiElement) {
     PsiElement first = getDeepestFirst(psiElement);
@@ -1174,4 +1151,12 @@ public class PsiTreeUtil {
     }
     return last;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** use {@link SyntaxTraverser#psiTraverser()} (to be removed in IDEA 2019) */
+  @Deprecated
+  public static <T extends PsiElement> Iterator<T> childIterator(@NotNull PsiElement element, @NotNull Class<T> aClass) {
+    return psiTraverser().children(element).filter(aClass).iterator();
+  }
+  //</editor-fold>
 }
