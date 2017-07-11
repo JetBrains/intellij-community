@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,6 +154,38 @@ public class HgCommandExecutor {
     }
   }
 
+  public void executeInCurrentThread(@Nullable VirtualFile repo,
+                                     @NotNull String operation,
+                                     @Nullable List<String> arguments,
+                                     @NotNull HgLineProcessListener listener) {
+    executeInCurrentThreadAndLog(repo, operation, arguments, listener);
+    if (HgErrorUtil.isUnknownEncodingError(StringUtil.split(listener.getErrorOutput().toString(), SystemProperties.getLineSeparator()))) {
+      setCharset(Charset.forName("utf8"));
+      executeInCurrentThreadAndLog(repo, operation, arguments, listener);
+    }
+  }
+
+  public void executeInCurrentThreadAndLog(@Nullable VirtualFile repo,
+                                           @NotNull String operation,
+                                           @Nullable List<String> arguments,
+                                           @NotNull HgLineProcessListener listener) {
+    if (myProject == null || myProject.isDisposed() || myVcs == null) return;
+
+    ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments, false);
+    try {
+      long startTime = System.currentTimeMillis();
+      LOG.debug(String.format("hg %s started", operation));
+      shellCommand.execute(myShowOutput, listener);
+      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
+    }
+    catch (ShellCommandException e) {
+      processError(e);
+    }
+    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
+      LOG.info(e.getMessage(), e);
+    }
+  }
+
   private void processError(@NotNull ShellCommandException e) {
     if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
       // if the problem was not with invalid executable - show error.
@@ -203,7 +236,7 @@ public class HgCommandExecutor {
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
-    String str = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+    String str = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
     //remove password from path before log
     final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
     // log command

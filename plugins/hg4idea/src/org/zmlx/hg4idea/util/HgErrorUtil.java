@@ -122,7 +122,10 @@ public final class HgErrorUtil {
     if (result == null) {
       return false;
     }
-    List<String> errorLines = result.getErrorLines();
+    return isUnknownEncodingError(result.getErrorLines());
+  }
+
+  public static boolean isUnknownEncodingError(@NotNull List<String> errorLines) {
     if (errorLines.isEmpty()) {
       return false;
     }

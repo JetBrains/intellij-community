@@ -90,4 +90,40 @@ public final class ShellCommand {
       throw new ShellCommandException(e);
     }
   }
+
+  public void execute(boolean showTextOnIndicator, @NotNull HgLineProcessListener listener)
+    throws ShellCommandException, InterruptedException {
+    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    try {
+      OSProcessHandler processHandler = new OSProcessHandler(myCommandLine);
+      ProcessAdapter outputAdapter = new ProcessAdapter() {
+        @Override
+        public void onTextAvailable(ProcessEvent event, Key outputType) {
+          for (String line : LineHandlerHelper.splitText(event.getText())) {
+            if (ProcessOutputTypes.STDOUT == outputType && indicator != null && showTextOnIndicator) {
+              indicator.setText2(line);
+            }
+            listener.onLineAvailable(line, outputType);
+          }
+        }
+
+        @Override
+        public void processTerminated(ProcessEvent event) {
+          listener.setExitCode(event.getExitCode());
+        }
+      };
+      processHandler.addProcessListener(outputAdapter);
+      processHandler.startNotify();
+      while (!processHandler.waitFor(300)) {
+        if (indicator != null && indicator.isCanceled()) {
+          processHandler.destroyProcess();
+          listener.setExitCode(255);
+          break;
+        }
+      }
+    }
+    catch (ExecutionException e) {
+      throw new ShellCommandException(e);
+    }
+  }
 }

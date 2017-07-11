@@ -35,20 +35,21 @@ import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.util.HgVersion;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.zmlx.hg4idea.log.HgHistoryUtil.getObjectsFactoryWithDisposeCheck;
+import static org.zmlx.hg4idea.log.HgHistoryUtil.getOriginalHgFile;
 import static org.zmlx.hg4idea.util.HgUtil.HEAD_REFERENCE;
 import static org.zmlx.hg4idea.util.HgUtil.TIP_REFERENCE;
 
@@ -103,18 +104,25 @@ public class HgLogProvider implements VcsLogProvider {
     // parameter fast is currently not used
     // since this method is not called from index yet, fast always is false
     // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when fast = true
-    // also we'll need to process commits one by one
-    
+
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;
-    final HgVersion version = hgvcs.getVersion();
-    final String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
+    String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, hgvcs.getVersion());
+    VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(myProject);
+    if (factory == null) {
+      return;
+    }
 
-    HgCommandResult logResult = HgHistoryUtil.getLogResult(myProject, root, version, -1,
-                                                           HgHistoryUtil.prepareHashes(hashes), HgChangesetUtil.makeTemplate(templates));
-    if (logResult == null) return;
-    if (!logResult.getErrorLines().isEmpty()) throw new VcsException(logResult.getRawError());
-    HgHistoryUtil.createFullCommitsFromResult(myProject, root, logResult, version, false).forEach(commitConsumer::consume);
+    HgFileRevisionLogParser parser = new HgFileRevisionLogParser(myProject, getOriginalHgFile(myProject, root), hgvcs.getVersion());
+    HgHistoryUtil.readLog(myProject, root, hgvcs.getVersion(), -1,
+                          HgHistoryUtil.prepareHashes(hashes),
+                          HgChangesetUtil.makeTemplate(templates),
+                          stringBuilder -> {
+                            HgFileRevision revision = parser.convert(stringBuilder.toString());
+                            if (revision != null) {
+                              commitConsumer.consume(HgHistoryUtil.createDetails(myProject, root, factory, revision));
+                            }
+                          });
   }
 
   @NotNull
@@ -122,12 +130,6 @@ public class HgLogProvider implements VcsLogProvider {
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
     return HgHistoryUtil.readMiniDetails(myProject, root, hashes);
-  }
-
-  @NotNull
-  @Override
-  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    return HgHistoryUtil.history(myProject, root, -1, HgHistoryUtil.prepareHashes(hashes));
   }
 
   @NotNull
