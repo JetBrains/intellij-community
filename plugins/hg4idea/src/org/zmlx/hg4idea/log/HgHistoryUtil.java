@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgLineProcessListener;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
@@ -165,19 +166,30 @@ public class HgHistoryUtil {
       parentsHash.add(factory.createHash(parent.getChangeset()));
     }
 
-    final Collection<Change> changes = new ArrayList<>();
+    Collection<Change> firstParentChanges = new ArrayList<>();
     for (String file : revision.getModifiedFiles()) {
-      changes.add(createChange(project, root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
+      firstParentChanges.add(createChange(project, root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
     }
     for (String file : revision.getAddedFiles()) {
-      changes.add(createChange(project, root, null, null, file, vcsRevisionNumber, FileStatus.ADDED));
+      firstParentChanges.add(createChange(project, root, null, null, file, vcsRevisionNumber, FileStatus.ADDED));
     }
     for (String file : revision.getDeletedFiles()) {
-      changes.add(createChange(project, root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
+      firstParentChanges.add(createChange(project, root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
     }
     for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
-      changes.add(createChange(project, root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber,
+      firstParentChanges.add(createChange(project, root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber,
                                HgChangeProvider.RENAMED));
+    }
+
+    List<Collection<Change>> changes = ContainerUtil.newArrayList();
+    changes.add(firstParentChanges);
+
+    for (int index = 1; index < parents.size(); index++) {
+      HgRevisionNumber parent = parents.get(index);
+      HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true).baseRevision(parent)
+        .targetRevision(vcsRevisionNumber).build(project);
+      Set<HgChange> hgChanges = status.executeInCurrentThread(root);
+      changes.add(HgUtil.createChanges(project, root, vcsRevisionNumber, parent, hgChanges));
     }
 
     return factory.createFullDetails(factory.createHash(vcsRevisionNumber.getChangeset()), parentsHash,
@@ -186,7 +198,7 @@ public class HgHistoryUtil {
                                      vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail(),
                                      vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getName(),
                                      vcsRevisionNumber.getEmail(), revision.getRevisionDate().getTime(),
-                                     () -> Collections.singletonList(changes));
+                                     () -> changes);
   }
 
 
