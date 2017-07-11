@@ -862,10 +862,6 @@
       <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
     </action>
-
-    <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
-    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
