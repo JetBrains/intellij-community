@@ -46,6 +46,8 @@ abstract class JvmCommonIntentionActionsFactory {
 
   open fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> = emptyList()
 
+  open fun createGenerateFieldFromUsageActions(info: CreateFromUsage.FieldInfo): List<IntentionAction> = emptyList()
+
   open fun createAddBeanPropertyActions(psiClass: @JvmCommon PsiClass,
                                         propertyName: String,
                                         @PsiModifier.ModifierConstant visibilityModifier: String,
@@ -77,6 +79,20 @@ abstract class JvmCommonIntentionActionsFactory {
                                         getterRequired: Boolean): List<IntentionAction> = emptyList()
 
 
+}
+
+@ApiStatus.Experimental
+object CreateFromUsage {
+  // type constraint is a language-specific object (e.g. ExpectedTypeInfo for Java)
+  class TypeInfo(val typeConstraints: List<Any>)
+
+  class FieldInfo(
+      val targetClass: @JvmCommon PsiClass,
+      val name: String,
+      @PsiModifier.ModifierConstant
+      val modifiers: List<String> = emptyList(),
+      val returnType: TypeInfo
+  )
 }
 
 @ApiStatus.Experimental

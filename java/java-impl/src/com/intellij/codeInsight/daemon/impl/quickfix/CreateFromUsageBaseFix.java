@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
@@ -75,7 +76,11 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isAvailableImpl(int offset);
 
-  protected abstract void invokeImpl(PsiClass targetClass);
+  protected void invokeImpl(PsiClass targetClass) {}
+
+  protected void invokeImpl(PsiClass targetClass, Editor editor) {
+    invokeImpl(targetClass);
+  }
 
   protected abstract boolean isValidElement(PsiElement result);
 
@@ -98,23 +103,25 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     if (targetClasses.isEmpty()) return;
 
     if (targetClasses.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      doInvoke(project, targetClasses.get(0));
+      doInvoke(project, targetClasses.get(0), editor);
     } else {
       chooseTargetClass(targetClasses, editor);
     }
   }
 
   protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
-    return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
+    return ContainerUtil.filter(getTargetClasses(element), psiClass ->
+      JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null
+      || JvmCommonIntentionActionsFactory.forLanguage(psiClass.getLanguage()) != null);
   }
 
-  private void doInvoke(Project project, final PsiClass targetClass) {
+  private void doInvoke(Project project, final PsiClass targetClass, Editor editor) {
     if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass));
+    ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(targetClass, editor));
   }
 
   @Nullable
@@ -141,7 +148,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       if (index < 0) return;
       final PsiClass aClass = (PsiClass) list.getSelectedValue();
       AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, firstClass);
-      CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass), getText(), null);
+      CommandProcessor.getInstance().executeCommand(project, () -> doInvoke(project, aClass, editor), getText(), null);
     };
 
     builder.

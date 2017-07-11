@@ -17,8 +17,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
+import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,6 +31,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import kotlin.collections.ArraysKt;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -67,7 +74,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, Editor editor) {
     final Project project = myReferenceExpression.getProject();
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (factory == null) factory = JavaPsiFacade.getElementFactory(project);
@@ -103,11 +110,29 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       }
     }
 
-    field = CreateFieldFromUsageHelper.insertField(targetClass, field, myReferenceExpression);
+    JvmCommonIntentionActionsFactory actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(targetClass.getLanguage());
+    if (actionsFactory != null && !(actionsFactory instanceof JavaCommonIntentionActionsFactory)) {
+      CreateFromUsage.FieldInfo fieldInfo = new CreateFromUsage.FieldInfo(
+        targetClass,
+        fieldName,
+        ArraysKt.filter(PsiModifier.MODIFIERS, (modifier) -> field.getModifierList().hasModifierProperty(modifier)),
+        new CreateFromUsage.TypeInfo(ArraysKt.toList(expectedTypes))
+      );
 
-    setupVisibility(parentClass, targetClass, field.getModifierList());
+      IntentionAction action = CollectionsKt.firstOrNull(actionsFactory.createGenerateFieldFromUsageActions(fieldInfo));
+      if (action == null) return;
 
-    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, createConstantField(), myReferenceExpression);
+      Editor targetEditor = EditorHelper.openInEditor(targetClass);
+      action.invoke(project, targetEditor, targetClass.getContainingFile());
+
+      return;
+    }
+
+    PsiField fieldInPlace = CreateFieldFromUsageHelper.insertField(targetClass, field, myReferenceExpression);
+
+    setupVisibility(parentClass, targetClass, fieldInPlace.getModifierList());
+
+    createFieldFromUsageTemplate(targetClass, project, expectedTypes, fieldInPlace, createConstantField(), myReferenceExpression);
   }
 
   public static void createFieldFromUsageTemplate(final PsiClass targetClass,
