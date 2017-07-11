@@ -22,8 +22,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,15 @@ public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
   }
 
   private static boolean isMainClauseOnTopLevel(@NotNull PsiElement element) {
-    return element instanceof PyIfStatement && element.getParent() instanceof PsiFile && PyUtil.isIfNameEqualsMain(((PyIfStatement)element));
+    if (element.getNode().getElementType() == PyTokenTypes.IF_KEYWORD) {
+      element = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
+
+      return element != null &&
+             element.getParent() instanceof PsiFile &&
+             PyUtil.isIfNameEqualsMain(((PyIfStatement)element));
+    }
+    else {
+      return false;
+    }
   }
 }
