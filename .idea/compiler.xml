@@ -39,7 +39,7 @@
       </profile>
       <profile name="blaze" enabled="true">
         <processorPath useClasspath="false">
-          <entry name="$PROJECT_DIR$/../vendor/google3/blaze/third_party/auto_value/auto-value-1.3.jar" />
+          <entry name="$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/bazel/plugin/third_party/auto_value/auto-value-1.3.jar" />
         </processorPath>
         <module name="blaze-base" />
       </profile>
