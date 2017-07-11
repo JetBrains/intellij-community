@@ -44,6 +44,8 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     Long savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP);
     if (savedStamp != null && savedStamp == currentStamp) return null;
     Language language = file.getLanguage();
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (provider == null) return null;
     return new ParameterHintsPass(file, editor, MethodInfoBlacklistFilter.forLanguage(language));
   }
 

@@ -38,7 +38,8 @@ public class MethodInfoBlacklistFilter implements HintInfoFilter {
       .collect(Collectors.toList());
   }
 
-  public static MethodInfoBlacklistFilter forLanguage(Language language) {
+  @NotNull
+  public static MethodInfoBlacklistFilter forLanguage(@NotNull Language language) {
     Set<String> list = fullBlacklist(language);
     return new MethodInfoBlacklistFilter(list);
   }
@@ -69,7 +70,7 @@ public class MethodInfoBlacklistFilter implements HintInfoFilter {
   }
 
   @NotNull
-  private static Set<String> blacklist(Language language) {
+  private static Set<String> blacklist(@NotNull Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider != null) {
       ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();
