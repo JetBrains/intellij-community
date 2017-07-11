@@ -168,17 +168,9 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       if (stub.getParentStub() instanceof PyFileStub) {
         sink.occurrence(PyVariableNameIndex.KEY, name);
       }
-      else if (isInstanceAttributeStub(stub)) {
-        sink.occurrence(PyInstanceAttributeIndex.KEY, name);
-      }
     }
     for (CustomTargetExpressionStubType stubType : getCustomStubTypes()) {
       stubType.indexStub(stub, sink);
     }
-  }
-
-  private static boolean isInstanceAttributeStub(PyTargetExpressionStub stub) {
-    final StubElement parent = stub.getParentStub();
-    return parent instanceof PyFunctionStub;   // otherwise we wouldn't create the stub (see shouldCreateStub() implementation)
   }
 }
