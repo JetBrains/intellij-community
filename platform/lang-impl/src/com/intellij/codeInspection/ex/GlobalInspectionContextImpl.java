@@ -425,8 +425,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (!file.isValid()) {
           return;
         }
-        if (!scope.contains(file.getVirtualFile())) {
-          LOG.error(file.getName()+"; scope: "+scope);
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (!scope.contains(virtualFile)) {
+          LOG.error(file.getName()+"; scope: "+scope+"; "+virtualFile);
         }
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, localTools, globalSimpleTools, map);
       })) {
