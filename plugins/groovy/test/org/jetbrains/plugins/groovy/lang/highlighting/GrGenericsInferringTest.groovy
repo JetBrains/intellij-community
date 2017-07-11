@@ -299,4 +299,24 @@ void printList() {
 }
 '''
   }
+
+  void testBoundedGenericsCompileStatic() {
+    testHighlighting '''\
+@groovy.transform.CompileStatic
+class Foo {
+  static <T extends List<Integer>> void extInteger(T a) {}
+
+  static <T extends List<? extends CharSequence>> void extCS(T a) {}
+
+  static <T extends List<Object>> void extObj(T a) {
+    extCS<error descr="'extCS' in 'Foo' cannot be applied to '(T)'">(a)</error>
+  }
+
+  static void foo() {
+    extObj([new Object()])
+    extInteger<error descr="'extInteger' in 'Foo' cannot be applied to '([java.lang.String])'">([''])</error>
+  }
+}
+'''
+  }
 }

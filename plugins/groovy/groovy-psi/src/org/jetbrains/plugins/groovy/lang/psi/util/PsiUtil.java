@@ -93,6 +93,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 
 import java.util.*;
 
+import static com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_INSTANCE_EXTENSIONS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_STATIC_EXTENSIONS;
 
@@ -188,7 +189,8 @@ public class PsiUtil {
     if (result != null) return result;
 
    result = GrClosureSignatureUtil.isSignatureApplicableConcrete(signature, argumentTypes, place);
-    if (result != GrClosureSignatureUtil.ApplicabilityResult.inapplicable) {
+    if (result != GrClosureSignatureUtil.ApplicabilityResult.inapplicable &&
+        isTypeArgumentsApplicable(method.getTypeParameters(), substitutor, place)) {
       return result;
     }
 
