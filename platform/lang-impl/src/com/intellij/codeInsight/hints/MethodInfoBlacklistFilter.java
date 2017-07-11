@@ -56,6 +56,10 @@ public class MethodInfoBlacklistFilter implements HintInfoFilter {
   @NotNull
   private static Set<String> fullBlacklist(Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (provider == null) {
+      return ContainerUtil.newHashOrEmptySet(ContainerUtil.emptyIterable());
+    }
+
     Set<String> blackList = blacklist(language);
     Language dependentLanguage = provider.getBlackListDependencyLanguage();
     if (dependentLanguage != null) {
