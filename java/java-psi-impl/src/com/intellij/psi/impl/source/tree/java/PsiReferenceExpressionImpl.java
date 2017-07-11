@@ -53,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
+public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
   private volatile String myCachedQName;
@@ -169,6 +169,12 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   public PsiElement getQualifier() {
     return getQualifierExpression();
+  }
+
+  @Override
+  public String getReferenceName() {
+    PsiElement element = getReferenceNameElement();
+    return element != null ? element.getText() : null;
   }
 
   @Override
@@ -456,6 +462,18 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return element.getManager().areElementsEquivalent(element, advancedResolve(true).getElement());
   }
 
+  @NotNull
+  @Override
+  public Object[] getVariants() {
+    // this reference's variants are rather obtained with processVariants()
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
+  }
+
   @Override
   public void processVariants(@NotNull PsiScopeProcessor processor) {
     DelegatingScopeProcessor filterProcessor = new DelegatingScopeProcessor(processor) {
@@ -500,6 +518,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
     };
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
+  }
+
+  @NotNull
+  @Override
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    JavaResolveResult[] results = multiResolve(incompleteCode);
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
   }
 
   /* see also HighlightMethodUtil.checkStaticInterfaceMethodCallQualifier() */
@@ -569,6 +594,18 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   public PsiElement getReferenceNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
+  }
+
+  @Override
+  public PsiReferenceParameterList getParameterList() {
+    return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getTypeParameters() {
+    PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
   }
 
   @Override
@@ -750,6 +787,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @Override
+  public PsiReference getReference() {
+    return this;
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceExpression(this);
@@ -759,8 +801,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
   }
 
-  public String toString() {
-    return "PsiReferenceExpression:" + getText();
+  @Override
+  public PsiElement getElement() {
+    return this;
   }
 
   @Override
@@ -774,6 +817,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       return new TextRange(dot.getStartOffsetInParent() + dot.getTextLength(), getTextLength());
     }
     return new TextRange(nameChild.getStartOffsetInParent(), getTextLength());
+  }
+
+  @Override
+  public PsiElement resolve() {
+    return advancedResolve(false).getElement();
   }
 
   @Override
@@ -795,11 +843,21 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
   }
 
+  @Override
+  public String getQualifiedName() {
+    return getCanonicalText();
+  }
+
   private String getCachedNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
       myCachedNormalizedText = whiteSpaceAndComments = JavaSourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiReferenceExpression:" + getText();
   }
 }
