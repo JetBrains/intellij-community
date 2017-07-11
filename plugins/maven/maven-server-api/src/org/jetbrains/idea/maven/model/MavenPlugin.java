@@ -37,6 +37,7 @@ public class MavenPlugin implements Serializable {
   private final String myVersion;
 
   private final boolean myDefault;
+  private final boolean myExtensions;
 
   private final Element myConfiguration;
   private final List<Execution> myExecutions;
@@ -47,6 +48,7 @@ public class MavenPlugin implements Serializable {
                      String artifactId,
                      String version,
                      boolean aDefault,
+                     boolean extensions,
                      Element configuration,
                      List<Execution> executions,
                      List<MavenId> dependencies) {
@@ -54,6 +56,7 @@ public class MavenPlugin implements Serializable {
     myArtifactId = artifactId;
     myVersion = version;
     myDefault = aDefault;
+    myExtensions = extensions;
     myConfiguration = configuration;
     myExecutions = executions;
     myDependencies = dependencies;
@@ -77,6 +80,10 @@ public class MavenPlugin implements Serializable {
 
   public boolean isDefault() {
     return myDefault;
+  }
+
+  public boolean isExtensions() {
+    return myExtensions;
   }
 
   @Nullable
@@ -136,6 +143,7 @@ public class MavenPlugin implements Serializable {
     MavenPlugin that = (MavenPlugin)o;
 
     if (myDefault != that.myDefault) return false;
+    if (myExtensions != that.myExtensions) return false;
     if (myGroupId != null ? !myGroupId.equals(that.myGroupId) : that.myGroupId != null) return false;
     if (myArtifactId != null ? !myArtifactId.equals(that.myArtifactId) : that.myArtifactId != null) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
@@ -149,6 +157,7 @@ public class MavenPlugin implements Serializable {
   @Override
   public int hashCode() {
     int result = myDefault ? 1 : 0;
+    result = 31 * result + (myExtensions ? 1 : 0);
     result = 31 * result + (myGroupId != null ? myGroupId.hashCode() : 0);
     result = 31 * result + (myArtifactId != null ? myArtifactId.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
