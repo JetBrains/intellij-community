@@ -33,6 +33,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable  private String mySourceCompatibility;
   @Nullable private String myTargetCompatibility;
   @Nullable private String myProductionModuleId;
+  @Nullable private ProjectCoordinate myPublication;
 
   private boolean myInheritProjectCompileOutputPath = true;
 
@@ -146,6 +147,15 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   public void setGroup(@Nullable String group) {
     this.myGroup = group;
+  }
+
+  @Nullable
+  public ProjectCoordinate getPublication() {
+    return myPublication;
+  }
+
+  public void setPublication(@Nullable ProjectCoordinate publication) {
+    myPublication = publication;
   }
 
   @Nullable

@@ -109,6 +109,9 @@ public class GradleProjectResolverUtil {
       moduleData.setDescription(externalProject.getDescription());
       if (!resolverCtx.isResolveModulePerSourceSet()) {
         moduleData.setArtifacts(externalProject.getArtifacts());
+        moduleData.setPublication(new ProjectId(externalProject.getGroup(),
+                                                externalProject.getName(),
+                                                externalProject.getVersion()));
       }
     }
 
@@ -583,6 +586,9 @@ public class GradleProjectResolverUtil {
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryLevel level = StringUtil.isNotEmpty(libraryName) ? LibraryLevel.PROJECT : LibraryLevel.MODULE;
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        library.setArtifactId(mergedDependency.getId().getName());
+        library.setGroup(mergedDependency.getId().getGroup());
+        library.setVersion(mergedDependency.getId().getVersion());
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());
@@ -607,6 +613,9 @@ public class GradleProjectResolverUtil {
         final LibraryLevel level = LibraryLevel.MODULE;
         String libraryName = mergedDependency.getId().getPresentableName();
         final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName);
+        library.setArtifactId(mergedDependency.getId().getName());
+        library.setGroup(mergedDependency.getId().getGroup());
+        library.setVersion(mergedDependency.getId().getVersion());
         LibraryDependencyData libraryDependencyData = new LibraryDependencyData(ownerModule, library, level);
         libraryDependencyData.setScope(dependencyScope);
         libraryDependencyData.setOrder(mergedDependency.getClasspathOrder());

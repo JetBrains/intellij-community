@@ -190,6 +190,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           moduleId, moduleExternalName, moduleInternalName, mainModuleFileDirectoryPath, mainModuleConfigPath);
 
         sourceSetData.setGroup(externalProject.getGroup());
+        if ("main".equals(sourceSet.getName())) {
+          sourceSetData.setPublication(new ProjectId(externalProject.getGroup(),
+                                                     externalProject.getName(),
+                                                     externalProject.getVersion()));
+        }
         sourceSetData.setVersion(externalProject.getVersion());
         sourceSetData.setIdeModuleGroup(moduleGroup);
 
@@ -967,6 +972,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
+    if(moduleVersion != null) {
+      library.setGroup(moduleVersion.getGroup());
+      library.setArtifactId(moduleVersion.getName());
+      library.setVersion(moduleVersion.getVersion());
+    }
+
     if (!unresolved) {
       library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
     }

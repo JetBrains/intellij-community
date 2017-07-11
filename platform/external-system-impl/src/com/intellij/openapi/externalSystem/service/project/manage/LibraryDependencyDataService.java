@@ -33,12 +33,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -146,8 +147,14 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
             break;
           }
           LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(projectLib);
-          orderEntryDataMap.put(orderEntry, dependencyData);
           setLibraryScope(orderEntry, projectLib, module, dependencyData);
+          ModuleOrderEntry substitutionEntry = modelsProvider.trySubstitute(module, orderEntry, libraryData);
+          if (substitutionEntry != null) {
+            orderEntryDataMap.put(substitutionEntry, dependencyData);
+          }
+          else {
+            orderEntryDataMap.put(orderEntry, dependencyData);
+          }
       }
     }
   }
@@ -201,10 +208,15 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         String libraryName = libraryOrderEntry.getLibraryName();
         LibraryDependencyData existing = projectLibrariesToImport.remove(libraryName + libraryOrderEntry.getScope().name());
         if (existing != null) {
-          toImport.remove(existing);
-          orderEntryDataMap.put(entry, existing);
-          libraryOrderEntry.setExported(existing.isExported());
-          libraryOrderEntry.setScope(existing.getScope());
+          String module = modelsProvider.findModuleByPublication(existing.getTarget());
+          if(module == null) {
+            toImport.remove(existing);
+            orderEntryDataMap.put(entry, existing);
+            libraryOrderEntry.setExported(existing.isExported());
+            libraryOrderEntry.setScope(existing.getScope());
+          } else {
+            moduleRootModel.removeOrderEntry(entry);
+          }
         }
         else if (!hasUnresolvedLibraries) {
           // There is a possible case that a project has been successfully imported from external model and after
