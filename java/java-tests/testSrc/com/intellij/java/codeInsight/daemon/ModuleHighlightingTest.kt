@@ -211,8 +211,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
   }
 
-  fun testPackageAccessibility() {
-    addFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
+  fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)
+  fun testPackageAccessibilityInNonModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = false)
+  fun testPackageAccessibilityInModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = true)
+
+  private fun doTestPackageAccessibility(moduleFileInTests: Boolean = false, checkFileInTests: Boolean = false) {
+    val moduleFileText = "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }"
+    if (moduleFileInTests) addTestFile("module-info.java", moduleFileText) else addFile("module-info.java", moduleFileText)
+
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
@@ -225,7 +231,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-    highlight("test.java", """
+
+    var checkFileText = """
         import pkg.m2.C2;
         import pkg.m2.*;
         import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl;
@@ -261,92 +268,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           Supplier<C2> s1 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>::make;
           Supplier<C2> s2 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl::make;
         }}
-        """.trimIndent())
-  }
-
-  fun testPackageAccessibilityInNonModularTest() {
-    addFile("module-info.java", "module M { }")
-    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
-    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
-    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
-    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
-    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
-    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
-    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-    highlight("test.java", """
-        import pkg.m2.C2;
-        import pkg.m2.*;
-        import pkg.m2.impl.C2Impl;
-        import pkg.m2.impl.*;
-        import pkg.m4.C4;
-        import pkg.m5.C5;
-        import pkg.m7.C7;
-
-        import pkg.lib1.LC1;
-        import pkg.lib1.impl.LC1Impl;
-        import pkg.lib1.impl.*;
-
-        import pkg.lib2.LC2;
-        import pkg.lib2.impl.LC2Impl;
-
-        import static pkg.m2.impl.C2Impl.make;
-
-        /** See also {@link C2Impl#make} */
-        class C {{
-          C2Impl.make();
-          pkg.m2.impl.C2Impl.make();
-        }}
-        """.trimIndent(), true)
-  }
-
-  fun testPackageAccessibilityInModularTest() {
-    addTestFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
-    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
-    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
-    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
-    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
-    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
-    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
-    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
-    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-    highlight("test.java", """
-        import pkg.m2.C2;
-        import pkg.m2.*;
-        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl;
-        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.*;
-        import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
-        import <error descr="Package 'pkg.m5' is declared in module 'M5', but module 'M' does not read it">pkg.m5</error>.C5;
-        import pkg.m7.C7;
-
-        import pkg.lib1.LC1;
-        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.LC1Impl;
-        import <error descr="Package 'pkg.lib1.impl' is declared in module 'lib.named', which does not export it to module 'M'">pkg.lib1.impl</error>.*;
-
-        import pkg.lib2.LC2;
-        import pkg.lib2.impl.LC2Impl;
-
-        import static <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make;
-
-        import java.util.List;
-        import java.util.function.Supplier;
-
-        /** See also {@link C2Impl#I} and {@link C2Impl#make} */
-        class C {{
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.I = 0;
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>.make();
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.I = 1;
-          <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl.make();
-
-          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>> l1 = null;
-          List<<error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl> l2 = null;
-
-          Supplier<C2> s1 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">C2Impl</error>::make;
-          Supplier<C2> s2 = <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M'">pkg.m2.impl</error>.C2Impl::make;
-        }}
-        """.trimIndent(), true)
+        """.trimIndent()
+    if (moduleFileInTests != checkFileInTests) {
+      checkFileText = Regex("(<error [^>]+>)([^<]+)(</error>)").replace(checkFileText, {
+        if (it.value.contains("unreachable")) it.value else it.groups[2]!!.value
+      })
+    }
+    highlight("test.java", checkFileText, checkFileInTests)
   }
 
   fun testLinearModuleGraphBug() {
