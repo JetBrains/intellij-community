@@ -80,6 +80,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
     addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
     highlight("""
+        import pkg.main.C;
         module M {
           requires M2;
           <error descr="Duplicate 'requires': M2">requires M2;</error>
@@ -87,19 +88,29 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           <error descr="Duplicate 'exports': pkg.main">exports pkg. main;</error>
           opens pkg.main;
           <error descr="Duplicate 'opens': pkg.main">opens pkg. main;</error>
-          uses pkg.main.C;
+          uses C;
           <error descr="Duplicate 'uses': pkg.main.C">uses pkg. main . /*...*/ C;</error>
           provides pkg .main .C with pkg.main.Impl;
-          <error descr="Duplicate 'provides': pkg.main.C">provides pkg.main.C with pkg. main. Impl;</error>
+          <error descr="Duplicate 'provides': pkg.main.C">provides C with pkg. main. Impl;</error>
         }""".trimIndent())
   }
 
-  fun testUnusedStatements() {
-    addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
-    addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
+  fun testUnusedServices() {
+    addFile("pkg/main/C1.java", "package pkg.main;\npublic class C1 { }")
+    addFile("pkg/main/C2.java", "package pkg.main;\npublic class C2 { }")
+    addFile("pkg/main/C3.java", "package pkg.main;\npublic class C3 { }")
+    addFile("pkg/main/Impl1.java", "package pkg.main;\npublic class Impl1 extends C1 { }")
+    addFile("pkg/main/Impl2.java", "package pkg.main;\npublic class Impl2 extends C2 { }")
+    addFile("pkg/main/Impl3.java", "package pkg.main;\npublic class Impl3 extends C3 { }")
     highlight("""
+        import pkg.main.C2;
+        import pkg.main.C3;
         module M {
-          provides pkg.main.<warning descr="Service interface provided but not exported or used">C</warning> with pkg.main.Impl;
+          uses C2;
+          uses pkg.main.C3;
+          provides pkg.main.<warning descr="Service interface provided but not exported or used">C1</warning> with pkg.main.Impl1;
+          provides pkg.main.C2 with pkg.main.Impl2;
+          provides C3 with pkg.main.Impl3;
         }""".trimIndent())
   }
 
@@ -178,6 +189,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m2/C.java", "package pkg.m2;\npublic class C { }", M2)
     addFile("pkg/m2/Impl.java", "package pkg.m2;\npublic class Impl extends C { }", M2)
     highlight("""
+        import pkg.main.Impl6;
         module M {
           requires M2;
           provides pkg.main.C with pkg.main.<error descr="Cannot resolve symbol 'NoImpl'">NoImpl</error>;
@@ -186,7 +198,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           provides pkg.main.C with pkg.main.<error descr="The service implementation is an abstract class: Impl3">Impl3</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a public default constructor: Impl4">Impl4</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a public default constructor: Impl5">Impl5</error>;
-          provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
+          provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">Impl6</error>;
           provides pkg.main.C with pkg.main.<error descr="The 'provider' method return type must be a subtype of the service interface type: Impl7">Impl7</error>;
           provides pkg.main.C with pkg.main.Impl8;
           provides pkg.main.C with pkg.main.Impl9.<error descr="The service implementation is an inner class: Inner">Inner</error>;

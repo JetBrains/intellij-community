@@ -180,13 +180,13 @@ public class ModuleHighlightUtil {
 
     checkDuplicateRefs(
       module.getUses(),
-      st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::refText),
+      st -> Optional.ofNullable(st.getClassReference()).map(ModuleHighlightUtil::qName),
       "module.duplicate.uses",
       results);
 
     checkDuplicateRefs(
       module.getProvides(),
-      st -> Optional.ofNullable(st.getInterfaceReference()).map(ModuleHighlightUtil::refText),
+      st -> Optional.ofNullable(st.getInterfaceReference()).map(ModuleHighlightUtil::qName),
       "module.duplicate.provides",
       results);
 
@@ -215,7 +215,7 @@ public class ModuleHighlightUtil {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     Set<String> exports = JBIterable.from(module.getExports()).map(st -> refText(st.getPackageReference())).filter(Objects::nonNull).toSet();
-    Set<String> uses = JBIterable.from(module.getUses()).map(st -> refText(st.getClassReference())).filter(Objects::nonNull).toSet();
+    Set<String> uses = JBIterable.from(module.getUses()).map(st -> qName(st.getClassReference())).filter(Objects::nonNull).toSet();
 
     Module host = findModule(module);
     if (host != null) {
@@ -224,7 +224,7 @@ public class ModuleHighlightUtil {
         if (ref != null) {
           PsiElement target = ref.resolve();
           if (target instanceof PsiClass && findModule(target) == host) {
-            String className = refText(ref), packageName = StringUtil.getPackageName(className);
+            String className = qName(ref), packageName = StringUtil.getPackageName(className);
             if (!exports.contains(packageName) && !uses.contains(className)) {
               String message = JavaErrorMessages.message("module.service.unused");
               results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
@@ -239,6 +239,10 @@ public class ModuleHighlightUtil {
 
   private static String refText(PsiJavaCodeReferenceElement ref) {
     return ref != null ? PsiNameHelper.getQualifiedClassName(ref.getText(), true) : null;
+  }
+
+  private static String qName(PsiJavaCodeReferenceElement ref) {
+    return ref != null ? ref.getQualifiedName() : null;
   }
 
   @Nullable
@@ -377,7 +381,7 @@ public class ModuleHighlightUtil {
 
     Set<String> filter = ContainerUtil.newTroveSet();
     for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
-      String refText = refText(implRef);
+      String refText = implRef.getQualifiedName();
       if (!filter.add(refText)) {
         String message = JavaErrorMessages.message("module.duplicate.impl", refText);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(implRef).descriptionAndTooltip(message).create();
