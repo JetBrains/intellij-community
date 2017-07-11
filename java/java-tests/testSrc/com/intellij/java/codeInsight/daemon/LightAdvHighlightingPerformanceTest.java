@@ -40,6 +40,7 @@ import java.util.List;
 @SkipSlowTestLocally
 public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTestCase {
   private final Disposable my = Disposer.newDisposable();
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -60,17 +61,23 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(my);
-    super.tearDown();
+    try {
+      Disposer.dispose(my);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private static class BlockExtensions<T> implements Disposable {
     private final ExtensionPoint<T> myEp;
     private T[] myExtensions;
+
     public BlockExtensions(ExtensionPoint<T> extensionPoint) {
       myEp = extensionPoint;
       block();
     }
+
     void block() {
       myExtensions = myEp.getExtensions();
       for (T extension : myExtensions) {
@@ -84,28 +91,29 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
       }
       myExtensions = null;
     }
+
     @Override
     public void dispose() {
       unblock();
     }
+
     public static <T> BlockExtensions<T> create(ExtensionPoint<T> extensionPoint) {
       return new BlockExtensions<>(extensionPoint);
     }
   }
 
-  private String getFilePath(final String suffix) {
+  private String getFilePath(String suffix) {
     return LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(true) + suffix + ".java";
   }
 
-  private List<HighlightInfo> doTest(final int maxMillis) throws Exception {
+  private List<HighlightInfo> doTest(int maxMillis) {
     configureByFile(getFilePath(""));
-
     return startTest(maxMillis);
   }
 
   private List<HighlightInfo> startTest(int maxMillis) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    getFile().getText(); //to load text
+    assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
 
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> {
@@ -116,7 +124,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return highlightErrors();
   }
 
-  public void testAThinlet() throws Exception {
+  public void testAThinlet() {
     List<HighlightInfo> errors = doTest(1000);
     if (1170 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
@@ -124,7 +132,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     }
   }
 
-  public void testAClassLoader() throws Exception {
+  public void testAClassLoader() {
     List<HighlightInfo> errors = doTest(150);
     if (92 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
@@ -132,15 +140,11 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     }
   }
 
-  public void testDuplicateMethods() throws Exception {
-    StringBuilder text = new StringBuilder("class X {\n");
+  public void testDuplicateMethods() {
     int N = 1000;
-    for (int i=0;i<N;i++) {
-      text.append("public void visit(C" + i + " param) {}\n");
-    }
-    for (int i=0;i<N;i++) {
-      text.append("class C" + i + " {}\n");
-    }
+    StringBuilder text = new StringBuilder("class X {\n");
+    for (int i = 0; i < N; i++) text.append("public void visit(C").append(i).append(" param) {}\n");
+    for (int i = 0; i < N; i++) text.append("class C").append(i).append(" {}\n");
     text.append("}");
     configureFromFileText("x.java", text.toString());
 

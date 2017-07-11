@@ -1,17 +1,17 @@
 /*
 	Thinlet GUI toolkit - www.thinlet.com
 	Copyright (C) 2002 Robert Bajzat (robert.bajzat@thinlet.com)
-	
+
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
 	License as published by the Free Software Foundation; either
 	version 2.1 of the License, or (at your option) any later version.
-	
+
 	This library is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 	Lesser General Public License for more details.
-	
+
 	You should have received a copy of the GNU Lesser General Public
 	License along with this library; if not, write to the Free Software
 	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -20,7 +20,6 @@
 //package thinlet; //java
 //midp package thinlet.midp;
 
-import java.applet.*; //java
 import java.awt.*; //java
 import java.awt.datatransfer.*; //java
 import java.awt.image.*; //java
@@ -81,10 +80,10 @@ public class Thinlet extends Container //java
 	private transient Object tooltipowner;
 	//private transient int pressedkey;
 
-	//java>	
+	//java>
 	private static final int DRAG_ENTERED = AWTEvent.RESERVED_ID_MAX + 1;
 	private static final int DRAG_EXITED = AWTEvent.RESERVED_ID_MAX + 2;
-	
+
 	private static long WHEEL_MASK = 0;
 	private static int MOUSE_WHEEL = 0;
 	private static Method wheelrotation = null;
@@ -198,7 +197,7 @@ public class Thinlet extends Container //java
 				height - fm.getLeading() + 2, 0, 0);
 			scrollToVisible(component, caretx, carety,
 				2, fm.getAscent() + fm.getDescent() + 2);
-		} 
+		}
 		else if ("tabbedpane" == classname) {
 			Rectangle bounds = getRectangle(component, "bounds");
 			String placement = getString(component, "placement", "top");
@@ -353,7 +352,7 @@ public class Thinlet extends Container //java
 					horizontal ? bounds.height : (bounds.height - 5 - divider));
 				doLayout(comp2);
 			}
-		} 
+		}
 		else if (("list" == classname) ||
 				("table" == classname) || ("tree" == classname)) {
 			int width = 0;
@@ -408,7 +407,7 @@ public class Thinlet extends Container //java
 			}
 			layoutScrollPane(component, width, y - 1, 0, columnheight);
 		}
-		else if ("menubar" == classname) { 
+		else if ("menubar" == classname) {
 			Rectangle bounds = getRectangle(component, "bounds");
 			int x = 0;
 			for (Object menu = get(component, "menu");
@@ -636,7 +635,7 @@ public class Thinlet extends Container //java
 			off = caret - width + 4;
 		}
 		off = Math.max(0, Math.min(off, (hidden ? (fm.charWidth('*') *
-			text.length()) : fm.stringWidth(text)) - width + 4)); 
+			text.length()) : fm.stringWidth(text)) - width + 4));
 		if (off != offset) {
 			setInteger(component, "offset", off, 0);
 		}
@@ -686,7 +685,7 @@ public class Thinlet extends Container //java
 			view.x = vx; view.y = vy;
 		}
 	}
-	
+
 	/**
 	 *
 	 */
@@ -707,10 +706,10 @@ public class Thinlet extends Container //java
 		//System.out.println("classname: " + classname);
 		if ("label" == classname) {
 			return getSize(component, 0, 0, "left");
-		} 
+		}
 		if ("button" == classname) {
 			return getSize(component, 12, 6, "center");
-		} 
+		}
 		if ("checkbox" == classname) {
 			Dimension d = getSize(component, 0, 0, "left");
 			d.width = d.width + block + 3;
@@ -748,7 +747,7 @@ public class Thinlet extends Container //java
 		if ("tabbedpane" == classname) {
 			String placement = getString(component, "placement", "top");
 			boolean horizontal = ((placement == "top") || (placement == "bottom"));
-			int tabsize = 0;	
+			int tabsize = 0;
 			int contentwidth = 0; int contentheight = 0;
 			for (Object comp = get(component, "tab");
 					comp != null; comp = get(comp, ":next")) {
@@ -832,7 +831,7 @@ public class Thinlet extends Container //java
 		if ("separator" == classname) {
 			return new Dimension(1, 1);
 		}
-		if ("menubar" == classname) { 
+		if ("menubar" == classname) {
 			Dimension size = new Dimension(0, 0);
 			for (Object menu = get(component, "menu");
 					menu != null; menu = get(menu, ":next")) {
@@ -879,7 +878,7 @@ public class Thinlet extends Container //java
 			int colspan = ((columns != 0) && (columns < count)) ?
 				Math.min(getInteger(comp, "colspan", 1), columns) : 1;
 			int rowspan = (columns != 1) ? getInteger(comp, "rowspan", 1) : 1;
-			
+
 			for (int j = 0; j < colspan; j++) {
 				if ((columns != 0) && (x + colspan > columns)) {
 					x = 0; y++; j = -1;
@@ -915,7 +914,7 @@ public class Thinlet extends Container //java
 				if ((nextsize == 0) || (colspan < nextsize)) { nextsize = colspan; }
 			}
 			if (rowspan == 1) {
-				grid[1][y] = Math.max(grid[1][y], d.height); // rowheights 
+				grid[1][y] = Math.max(grid[1][y], d.height); // rowheights
 				grid[3][y] = Math.max(grid[3][y], weighty); // rowweights
 			}
 			else {
@@ -928,7 +927,7 @@ public class Thinlet extends Container //java
 			grid[5][i] = y; //gridy
 			grid[6][i] = colspan; //gridwidth
 			grid[7][i] = rowspan; //gridheight
-			
+
 			x += colspan;
 			i++;
 		}
@@ -1055,7 +1054,7 @@ public class Thinlet extends Container //java
 	/**
 	 *
 	 */
-	public void paint(Graphics g) { 
+	public void paint(Graphics g) {
 		//g.setColor(Color.orange);
 		//g.fillRect(0, 0, getSize().width, getSize().height);
 		//long time = System.currentTimeMillis();
@@ -1106,7 +1105,7 @@ public class Thinlet extends Container //java
 			((mousepressed == null) || pressed);
 		boolean focus = focusinside && (focusowner == component);
 		enabled = getBoolean(component, "enabled", true); //enabled &&
-		g.translate(bounds.x, bounds.y); 
+		g.translate(bounds.x, bounds.y);
 		//g.setClip(0, 0, bounds.width, bounds.height);
 
 		if ("label" == classname) {
@@ -1340,7 +1339,7 @@ public class Thinlet extends Container //java
 					horizontal ? (bounds.height - last.height) : bounds.height,
 					enabled ? c_border : c_disable, c_bg,
 					(placement != "top"), (placement != "left"),
-					(placement != "bottom"), (placement != "right"));					
+					(placement != "bottom"), (placement != "right"));
 			}
 			Object tabcontent = getItemImpl(component, "component", selected);
 			if (tabcontent != null) {
@@ -1379,7 +1378,7 @@ public class Thinlet extends Container //java
 				g.setColor(c_text);
 				g.drawString(text, r.x + 2, r.y + g.getFontMetrics().getAscent() + 2); //java
 				//midp g.drawString(text, r.x + 2, r.y + (r.height - font.getHeight()) / 2, Graphics.LEFT | Graphics.TOP);
-			}			
+			}
 		}
 		else if ("spinbox" == classname) {
 			paintField(g, clipx, clipy, clipwidth, clipheight, component,
@@ -1699,8 +1698,8 @@ public class Thinlet extends Container //java
 		FontMetrics fm = g.getFontMetrics(); //java
 
 		int caret = 0;
-		if (focus) { 
-			int start = getInteger(component, "start", 0); 
+		if (focus) {
+			int start = getInteger(component, "start", 0);
 			int end = getInteger(component, "end", 0);
 			caret = hidden ? (fm.charWidth('*') * end) :
 				fm.stringWidth(text.substring(0, end)); //java
@@ -1812,7 +1811,7 @@ public class Thinlet extends Container //java
 		}
 		return false;
 	}
-		
+
 	/**
 	 *
 	 */
@@ -2075,7 +2074,7 @@ public class Thinlet extends Container //java
 		boolean same = (previnside == mouseinside) && (prevpart == insidepart);
 		boolean isin = (mousepressed == mouseinside) && (pressedpart == insidepart);
 		boolean wasin = (mousepressed == previnside) && (pressedpart == prevpart);
-		
+
 		if (wasin && !isin) {
 			handleMouseEvent(x, y, 1, false, false, false,
 				MouseEvent.MOUSE_EXITED, mousepressed, pressedpart);
@@ -2127,7 +2126,7 @@ public class Thinlet extends Container //java
 	protected void keyRepeated(int keyCode) {
 		keyPressed(keyCode);
 	}
-	
+
 	private static final Command nextcommand = new Command("Next", Command.SCREEN, 0);
 	//private static final Command prevcommand = new Command("Previous", Command.SCREEN, 0);
 	{
@@ -2135,7 +2134,7 @@ public class Thinlet extends Container //java
 		//addCommand(prevcommand);
 		setCommandListener(this);
 	}
-	
+
 	public void commandAction(Command command, Displayable displayable) {
 		if (command == nextcommand) {
 			setNextFocusable(focusowner, false);
@@ -2215,7 +2214,7 @@ public class Thinlet extends Container //java
 				boolean same = (previnside == mouseinside) && (prevpart == insidepart);
 				boolean isin = (mousepressed == mouseinside) && (pressedpart == insidepart);
 				boolean wasin = (mousepressed == previnside) && (pressedpart == prevpart);
-				
+
 				if (wasin && !isin) {
 					handleMouseEvent(x, y, clickcount, shiftdown, controldown, popuptrigger,
 						MouseEvent.MOUSE_EXITED, mousepressed, pressedpart);
@@ -2253,13 +2252,13 @@ public class Thinlet extends Container //java
 		else if (id == MOUSE_WHEEL) {
 			Rectangle port = getRectangle(mouseinside, ":port");
 			if (port != null) { // is scrollable
-				Rectangle bounds = getRectangle(mouseinside, "bounds");	
+				Rectangle bounds = getRectangle(mouseinside, "bounds");
 				try { // mouse wheel is supported since 1.4 thus it use reflection
 					if (wheelrotation == null) {
 						wheelrotation = e.getClass().getMethod("getWheelRotation", null);
 					}
 					int rotation = ((Integer) wheelrotation.invoke(e, null)).intValue();
-					
+
 					if (port.x + port.width < bounds.width) { // has vertical scrollbar
 						processScroll(mouseinside, (rotation > 0) ? "down" : "up");
 					}
@@ -2425,7 +2424,7 @@ public class Thinlet extends Container //java
 						set(combolist, "inside", next);
 						Rectangle r = getRectangle(next, "bounds");
 						scrollToVisible(combolist, r.x, r.y, 0, r.height);
-						if (selected != null) { repaint(combolist, "combolist", selected); } 
+						if (selected != null) { repaint(combolist, "combolist", selected); }
 						repaint(combolist, "combolist", next);
 					}
 				}
@@ -2445,7 +2444,7 @@ public class Thinlet extends Container //java
 				keychar, keycode, false, ("passwordfield" == classname));
 		}
 		else if ("textarea" == classname) {
-			String text = getString(component, "text", ""); 
+			String text = getString(component, "text", "");
 			int start = getInteger(component, "start", 0);
 			int end = getInteger(component, "end", 0);
 
@@ -2510,11 +2509,11 @@ public class Thinlet extends Container //java
 				boolean increase = (keycode == KeyEvent.VK_RIGHT) || (keycode == KeyEvent.VK_DOWN);
 				int newvalue = selected;
 				int n = increase ? getItemCountImpl(component, "tab") : 0;
-				int d = (increase ? 1 : -1);						
+				int d = (increase ? 1 : -1);
 				for (int i = selected + d; increase ? (i < n)  : (i >= 0); i += d) {
 					if (getBoolean(getItemImpl(component, "tab", i), "enabled", true)) {
 						newvalue = i; break;
-					}	
+					}
 				}
 				if (newvalue != selected) {
 					setInteger(component, "selected", newvalue, 0);
@@ -2573,7 +2572,7 @@ public class Thinlet extends Container //java
 					(keycode == KeyEvent.VK_RIGHT) || (keycode == KeyEvent.VK_DOWN)) {
 				boolean horizontal = ("vertical" != get(component, "orientation"));
 				Rectangle bounds = getRectangle(component, "bounds");
-				int max = (horizontal ? bounds.width : bounds.height) - 5;				
+				int max = (horizontal ? bounds.width : bounds.height) - 5;
 				d = max - divider;
 				if (keycode != KeyEvent.VK_END) {
 					d = Math.min(d, 10);
@@ -2764,7 +2763,7 @@ public class Thinlet extends Container //java
 	private boolean processField(Object component,
 			boolean shiftdown, boolean controldown, int modifiers,
 			int keychar, int keycode, boolean multiline, boolean hidden) {
-		String text = getString(component, "text", ""); 
+		String text = getString(component, "text", "");
 		int start = getInteger(component, "start", 0);
 		int end = getInteger(component, "end", 0);
 		boolean editable = getBoolean(component, "editable", true);
@@ -2797,7 +2796,7 @@ public class Thinlet extends Container //java
 			if (controldown) {
 				for (int i = 0; i < 2; i++) {
 					while ((iend > 0) && ((i != 0) ==
-						Character.isLetterOrDigit(text.charAt(iend - 1)))) { iend--; }	
+						Character.isLetterOrDigit(text.charAt(iend - 1)))) { iend--; }
 				}
 			} else {
 				iend -= 1;
@@ -2848,7 +2847,7 @@ public class Thinlet extends Container //java
 					systemclipboard.getClass().getMethod("setContents", new Class[] {
 							Class.forName("java.awt.datatransfer." + "Transferable"),
 							Class.forName("java.awt.datatransfer." + "ClipboardOwner") }).
-						invoke(systemclipboard, new Object[] { selection, null });*/					
+						invoke(systemclipboard, new Object[] { selection, null });*/
 					getToolkit().getSystemClipboard().setContents(
 						new StringSelection(clipboard), null);
 				} catch (Exception exc) {}
@@ -3082,7 +3081,7 @@ public class Thinlet extends Container //java
 		System.out.println("repaint(" + x + ", " + y + ", " + width + ", " + height + ")");
 		super.repaint(x, y, width, height);
 	}*/
-			
+
 	/**
 	 *
 	 */
@@ -3300,7 +3299,7 @@ public class Thinlet extends Container //java
 				if (((id == MouseEvent.MOUSE_PRESSED)||
 						((id == MouseEvent.MOUSE_DRAGGED) &&
 							!shiftdown && !controldown)) &&
-						!popuptrigger) { // e.getClickCount() 
+						!popuptrigger) { // e.getClickCount()
 					Rectangle view = getRectangle(component, ":view");
 					Rectangle viewport = getRectangle(component, ":port");
 					int my = mousey + view.y - referencey;
@@ -3487,7 +3486,7 @@ public class Thinlet extends Container //java
 		}
 		return next;
 	}
-	
+
 	/**
 	 *
 	 */
@@ -3573,7 +3572,7 @@ public class Thinlet extends Container //java
 			y -= fm.getHeight();
 		}
 	}
-	
+
 	/**
 	 *
 	 */
@@ -3713,7 +3712,7 @@ public class Thinlet extends Container //java
 	/*public void setEventHandler(Object component, Object eventhandler) {
 		set(component, ":handler", eventhandler);
 	}*/
-	
+
 	/**
 	 *
 	 */
@@ -3812,7 +3811,7 @@ public class Thinlet extends Container //java
 			insidepart = (x <= bounds.width - block) ? null :
 				((y <= bounds.height / 2) ? "up" : "down");
 		}
-		else if ("splitpane" == classname) { 
+		else if ("splitpane" == classname) {
 			Object comp1 = get(component, "component");
 			if (comp1 != null) {
 				if (!findComponent(comp1, x, y)) {
@@ -3951,7 +3950,7 @@ public class Thinlet extends Container //java
 			}
 		}
 	}
-	
+
 	/**
 	 *
 	 */
@@ -3960,7 +3959,7 @@ public class Thinlet extends Container //java
 		Rectangle bounds = getRectangle(component, "bounds");
 		bounds.width = -1 * Math.abs(bounds.width);
 	}
-	
+
 	/**
 	 *
 	 */
@@ -3985,7 +3984,7 @@ public class Thinlet extends Container //java
 
 	/*private void clip(Graphics g,
 			Rectangle clip, int x, int y, int width, int height) {
-		int x1 = Math.max(clip.x, x); 
+		int x1 = Math.max(clip.x, x);
 		int y1 = Math.max(clip.y, y);
 		int x2 = Math.min(clip.x + clip.width, x + width);
 		int y2 = Math.min(clip.y + clip.height, y + height);
@@ -4021,7 +4020,7 @@ public class Thinlet extends Container //java
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @return next focusable component is found (not the first of the desktop/dialog)
 	 */
@@ -4064,7 +4063,7 @@ public class Thinlet extends Container //java
 		}
 		return false;
 	}
-	
+
 	/**
 	 * For the starting component search its parent direction for a focusable component, and then
 	 * its next component (if not search backward from the component).<br>
@@ -4098,7 +4097,7 @@ public class Thinlet extends Container //java
 		return previous;
 	}
 	//<java
-	
+
 	/**
 	 *
 	 */
@@ -4148,7 +4147,7 @@ public class Thinlet extends Container //java
 		}
 		throw new IllegalArgumentException("unknown " + classname);
 	}
-	
+
 	/**
 	 * @return classname
 	 */
@@ -4169,7 +4168,7 @@ public class Thinlet extends Container //java
 	private Object createImpl(String classname) {
 		return new Object[] { ":class", classname, null };
 	}
-	
+
 	/**
 	 *
 	 */
@@ -4224,7 +4223,7 @@ public class Thinlet extends Container //java
 	public int getCount(Object component, String key) {
 		return getItemCountImpl(component, getComponentName(component, key));
 	}
-	
+
 	/**
 	 *
 	 */
@@ -4281,7 +4280,7 @@ public class Thinlet extends Container //java
 	public Object getItem(Object component, int index) {
 		return getItem(component, null, index);
 	}
-	
+
 	/**
 	 *
 	 */
@@ -4515,7 +4514,7 @@ public class Thinlet extends Container //java
 			} catch (IllegalArgumentException exc) {}
 		}
 		return xml.toString();
-	}*/	
+	}*/
 
 	/**
 	 *
@@ -4729,11 +4728,11 @@ public class Thinlet extends Container //java
 					text.append((char) c);
 				}
 				c = reader.read();
-			} 
+			}
 		}
 		throw new IllegalArgumentException();
 	}
-	
+
 	/**
 	 * Convert entities.
 	 */
@@ -5141,7 +5140,7 @@ public class Thinlet extends Container //java
 	/**
 	 *
 	 */
-	private boolean getBoolean(Object component, 
+	private boolean getBoolean(Object component,
 			String key, boolean defaultvalue) {
 		Object value = get(component, key);
 		return (value == null) ? defaultvalue : ((Boolean) value).booleanValue();
@@ -5236,7 +5235,7 @@ public class Thinlet extends Container //java
 				mediatracker.waitForID(1, 50);
 			} catch (InterruptedException ie) { }
 			//imagepool.put(path, image);
-		} 
+		}
 		//<java
 		return image;
 	}
@@ -5389,5 +5388,5 @@ public class Thinlet extends Container //java
 				{ "bean", "bean", "", null }
 			}
 		};
-	}	
+	}
 }
