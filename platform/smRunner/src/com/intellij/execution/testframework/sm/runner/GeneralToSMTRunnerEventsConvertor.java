@@ -128,6 +128,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       for (SMTRunnerEventsListener adapter : myListenerAdapters) {
         adapter.onSuiteTreeNodeAdded(testProxy);
       }
+      //ensure root node gets the flag when merged with a single child
+      currentSuite.setTreeBuildBeforeStart();
     });
   }
 
