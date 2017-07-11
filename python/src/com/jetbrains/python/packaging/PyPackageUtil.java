@@ -285,16 +285,18 @@ public class PyPackageUtil {
    * Refresh the list of installed packages inside the specified SDK if it hasn't been updated yet
    * displaying modal progress bar in the process, return cached packages otherwise.
    * <p>
-   * Note that it's unsafe to call this method from a write action AND for for a remote SDK, since such modal 
-   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited 
+   * Note that <strong>you shall never call this method from a write action</strong>, since such modal
+   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited
    * (see the implementation of ApplicationImpl#runProcessWithProgressSynchronously() for details).
    */
   @Nullable
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
 
     final Application app = ApplicationManager.getApplication();
-    assert ! (PythonSdkType.isRemote(sdk) && app.isDispatchThread()): "Never run this method under AWT for remote SDK";
-    assert ! (app.isWriteAccessAllowed()): "Never run this method under write action";
+    assert !(app.isWriteAccessAllowed()) :
+      "This method can't be called on WriteAction because " +
+      "refreshAndGetPackages would be called on AWT thread in this case (see runProcessWithProgressSynchronously)" +
+      "and may lead to freeze";
 
 
     final Ref<List<PyPackage>> packagesRef = Ref.create();
@@ -322,7 +324,7 @@ public class PyPackageUtil {
   /**
    * Run unconditional update of the list of packages installed in SDK. Normally only one such of updates should run at time.
    * This behavior in enforced by the parameter isUpdating.
-   * 
+   *
    * @param manager    package manager for SDK
    * @param isUpdating flag indicating whether another refresh is already running
    * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
@@ -345,7 +347,7 @@ public class PyPackageUtil {
     }
     return true;
   }
-  
+
 
   @Nullable
   public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
