@@ -22,17 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 
 public interface EditorEventMulticasterEx extends EditorEventMulticaster{
-  void addErrorStripeListener(@NotNull ErrorStripeListener listener);
   void addErrorStripeListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parentDisposable);
-  void removeErrorStripeListener(@NotNull ErrorStripeListener listener);
 
-  void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
-  void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
+  void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener, @NotNull Disposable parentDisposable);
 
-  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
-  void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
 
-  void addFocusChangeListner(@NotNull FocusChangeListener listener);
   void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable);
-  void removeFocusChangeListner(@NotNull FocusChangeListener listener);
 }
