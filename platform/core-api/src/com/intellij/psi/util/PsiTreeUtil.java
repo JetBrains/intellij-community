@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ public class PsiTreeUtil {
 
   private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
+  private static final Class[] WS = {PsiWhiteSpace.class};
+  private static final Class[] WS_COMMENTS = {PsiWhiteSpace.class, PsiComment.class};
 
   /**
    * Checks whether one element in the psi tree is under another.
@@ -702,6 +704,18 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesForward(@Nullable PsiElement element) {
+    return skipSiblingsForward(element, WS);
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesAndCommentsForward(@Nullable PsiElement element) {
+    return skipSiblingsForward(element, WS_COMMENTS);
+  }
+
+  @Nullable
   @Contract("null, _ -> null")
   public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
     if (element == null) return null;
@@ -711,6 +725,18 @@ public class PsiTreeUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesBackward(@Nullable PsiElement element) {
+    return skipSiblingsBackward(element, WS);
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  public static PsiElement skipWhitespacesAndCommentsBackward(@Nullable PsiElement element) {
+    return skipSiblingsBackward(element, WS_COMMENTS);
   }
 
   @Nullable
