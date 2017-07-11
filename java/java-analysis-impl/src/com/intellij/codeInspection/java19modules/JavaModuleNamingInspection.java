@@ -19,10 +19,9 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiJavaModule;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,14 +35,26 @@ public class JavaModuleNamingInspection extends BaseJavaLocalInspectionTool {
       @Override
       public void visitModule(PsiJavaModule module) {
         super.visitModule(module);
-        psiTraverser().children(module.getNameIdentifier()).filter(PsiIdentifier.class).forEach(id -> {
+
+        PsiJavaModuleReferenceElement name = module.getNameIdentifier();
+        Ref<String> newName = Ref.create();
+        psiTraverser().children(name).filter(PsiIdentifier.class).forEach(id -> {
           String text = id.getText();
           if (text.length() > 0 && Character.isDigit(text.charAt(text.length() - 1))) {
             String message = InspectionsBundle.message("inspection.java.module.naming.terminal.digits", text);
-            holder.registerProblem(id, message, QuickFixFactory.getInstance().createRenameElementFix(module));
+            if (newName.isNull()) {
+              newName.set(StringUtil.join(psiTraverser().children(name).filter(PsiIdentifier.class).map(i -> trimDigits(i.getText())), "."));
+            }
+            holder.registerProblem(id, message, QuickFixFactory.getInstance().createRenameElementFix(module, newName.get()));
           }
         });
       }
     };
+  }
+
+  private static String trimDigits(String text) {
+    int p = text.length();
+    while (p > 0 && Character.isDigit(text.charAt(p - 1))) p--;
+    return text.substring(0, p);
   }
 }

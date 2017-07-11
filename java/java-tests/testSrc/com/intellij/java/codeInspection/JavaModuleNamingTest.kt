@@ -28,6 +28,12 @@ class JavaModuleNamingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testDevanagariDigitsAreBannedToo() = highlighting("""module <warning descr="Module name component 'foo१' should avoid terminal digits">foo१</warning>.bar { }""")
   fun testMiddleDigitsAllowed() = highlighting("""module f0o.b4r { }""")
 
+  fun testFix() {
+    myFixture.configureByText("module-info.java", "module <caret>f0o123.b4r१ { }")
+    myFixture.launchAction(myFixture.findSingleIntention("Rename"))
+    myFixture.checkResult("module-info.java", "module f0o.b4r { }", false)
+  }
+
   private fun highlighting(text: String) {
     myFixture.configureByText("module-info.java", text)
     myFixture.checkHighlighting()
