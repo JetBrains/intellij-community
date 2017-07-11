@@ -1101,22 +1101,6 @@ java_library(
 )
 
 java_library(
-    name = "uast",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/uast:1.0/uast-common-1.0",
-        "//prebuilts/tools/common/uast:1.0/uast-java-1.0",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/uast:1.0/uast-common-1.0",
-        "//prebuilts/tools/common/uast:1.0/uast-java-1.0",
-    ],
-)
-
-java_library(
     name = "jediterm-pty",
     tags = ["managed"],
     visibility = ["//visibility:public"],
