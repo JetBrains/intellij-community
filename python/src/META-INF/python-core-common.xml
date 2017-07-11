@@ -120,7 +120,6 @@
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyFunctionNameIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PySuperClassIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyVariableNameIndex"/>
-    <stubIndex implementation="com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyDecoratorStubIndex"/>
     <stubIndex implementation="com.jetbrains.python.psi.stubs.PyClassAttributesIndex"/>
     <fileBasedIndex implementation="com.jetbrains.python.psi.stubs.PyModuleNameIndex"/>
