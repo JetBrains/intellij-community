@@ -45,7 +45,6 @@ import java.util.*;
 public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
 
-  private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
   private static final Class[] WS = {PsiWhiteSpace.class};
   private static final Class[] WS_COMMENTS = {PsiWhiteSpace.class, PsiComment.class};
@@ -103,28 +102,30 @@ public class PsiTreeUtil {
   }
 
   @Nullable
+  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
     if (elements.isEmpty()) return null;
+
     PsiElement toReturn = null;
     for (PsiElement element : elements) {
       if (element == null) continue;
       toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
       if (toReturn == null) return null;
     }
-
     return toReturn;
   }
 
   @Nullable
+  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0) return null;
+
     PsiElement toReturn = null;
     for (PsiElement element : elements) {
       if (element == null) continue;
       toReturn = toReturn == null ? element : findCommonParent(toReturn, element);
       if (toReturn == null) return null;
     }
-
     return toReturn;
   }
 
@@ -140,15 +141,15 @@ public class PsiTreeUtil {
 
     PsiElement parent1 = element1;
     PsiElement parent2 = element2;
-    while(depth1 > depth2) {
+    while (depth1 > depth2) {
       parent1 = parent1.getParent();
       depth1--;
     }
-    while(depth2 > depth1) {
+    while (depth2 > depth1) {
       parent2 = parent2.getParent();
       depth2--;
     }
-    while(parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+    while (parent1 != null && parent2 != null && !parent1.equals(parent2)) {
       parent1 = parent1.getParent();
       parent2 = parent2.getParent();
     }
@@ -839,54 +840,6 @@ public class PsiTreeUtil {
       if (!processElements(element, processor)) return false;
     }
     return true;
-  }
-
-  @NotNull
-  public static PsiElement[] copyElements(@NotNull PsiElement[] elements) {
-    ArrayList<PsiElement> roots = new ArrayList<>();
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement rootCandidate = elements[i];
-      boolean failed = false;
-      for (int j = 0; j < elements.length; j++) {
-        PsiElement element = elements[j];
-        if (i != j && isAncestor(element, rootCandidate, true)) {
-          failed = true;
-          break;
-        }
-      }
-      if (!failed) {
-        roots.add(rootCandidate);
-      }
-    }
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      element.putCopyableUserData(INDEX, i);
-    }
-    PsiElement[] newRoots = new PsiElement[roots.size()];
-    for (int i = 0; i < roots.size(); i++) {
-      PsiElement root = roots.get(i);
-      newRoots[i] = root.copy();
-    }
-
-    final PsiElement[] result = new PsiElement[elements.length];
-    for (PsiElement newRoot : newRoots) {
-      decodeIndices(newRoot, result);
-    }
-    return result;
-  }
-
-  private static void decodeIndices(@NotNull PsiElement element, @NotNull PsiElement[] result) {
-    final Integer data = element.getCopyableUserData(INDEX);
-    if (data != null) {
-      element.putCopyableUserData(INDEX, null);
-      int index = data.intValue();
-      result[index] = element;
-    }
-    PsiElement child = element.getFirstChild();
-    while (child != null) {
-      decodeIndices(child, result);
-      child = child.getNextSibling();
-    }
   }
 
   public static void mark(@NotNull PsiElement element, @NotNull Object marker) {
