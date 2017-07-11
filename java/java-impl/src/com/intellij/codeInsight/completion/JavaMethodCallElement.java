@@ -21,10 +21,9 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.codeInsight.hints.MethodInfoBlacklistFilter;
 import com.intellij.codeInsight.hints.HintInfo;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
-import com.intellij.codeInsight.hints.ParameterHintsPass;
-import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
@@ -311,8 +310,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     if (parametersCount == 1) {
       HintInfo.MethodInfo methodInfo = JavaInlayParameterHintsProvider.Companion.getInstance().getMethodInfo(method);
       if (methodInfo != null) {
-        List<Matcher> matchers = ParameterHintsPass.getBlackListMatchers(JavaLanguage.INSTANCE);
-        showHints = matchers.stream().noneMatch(m -> m.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
+        showHints = MethodInfoBlacklistFilter.forLanguage(JavaLanguage.INSTANCE).showHint(methodInfo);
       }
     }
 
