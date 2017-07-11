@@ -323,12 +323,13 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
     if (undo) {
       myUndoingMove = true;
-      createRevertAction(vcs, dst, true).execute();
+      boolean isCaseOnlyMove = FileUtil.filesEqual(src, dst);
+      createRevertAction(vcs, isCaseOnlyMove ? src : dst, true).execute();
       copyUnversionedMembersOfDirectory(src, dst);
       if (isUnversioned(srcStatus)) {
         FileUtil.delete(src);
       } else {
-        createRevertAction(vcs, src, true).execute();
+        createRevertAction(vcs, isCaseOnlyMove ? dst : src, true).execute();
       }
       restoreFromUndoStorage(dst);
     } else {
