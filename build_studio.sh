@@ -82,13 +82,6 @@ export PATH=$JDK_18_x64/bin:$PATH
 
 $ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.release.plugin=true -Dbundle.kotlin.plugin=true
 
-# Temp: figure out how to preserve symlinks
-cd "$OUT/artifacts"
-unzip -q android-studio-*.mac.zip
-cd Android*.app/Contents/jre/jdk/Contents/MacOS && ln -fs ../Home/jre/lib/jli/libjli.dylib && cd ../../../../../../
-zip --symlinks -r android-studio-$BNUM.mac.zip Android*.app/Contents/jre/jdk/Contents/MacOS
-cd ../../
-
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/

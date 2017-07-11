@@ -16,6 +16,10 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
+import org.apache.commons.compress.archivers.zip.UnixStat
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -241,8 +245,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      def tmpTargetPath = targetPath + ".tmp.zip"
       buildContext.messages.progress("Building zip archive for Mac OS")
-      buildContext.ant.zip(zipfile: targetPath) {
+      buildContext.ant.zip(zipfile: tmpTargetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
             exclude(name: "bin/*.sh")
@@ -297,6 +302,28 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
         zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
+
+      // Fix libjli symlink
+      def inFile = new File(tmpTargetPath)
+      def fis = new ZipArchiveInputStream(new FileInputStream(inFile))
+      def fos = new ZipArchiveOutputStream(new File(targetPath))
+      ZipArchiveEntry ze;
+      while ((ze = fis.getNextZipEntry()) != null) {
+        if (ze.getName() == zipRoot + "/jre/jdk/Contents/MacOS/libjli.dylib") {
+          def link = new ZipArchiveEntry(ze.getName())
+          link.setUnixMode(UnixStat.DEFAULT_LINK_PERM | UnixStat.LINK_FLAG)
+          fos.putArchiveEntry(link)
+          fos << "../Home/jre/lib/jli/libjli.dylib"
+        } else {
+          fos.putArchiveEntry(ze)
+          fos << fis
+        }
+        fos.closeArchiveEntry()
+      }
+      fos.close()
+      fis.close()
+      inFile.delete()
+
       return targetPath
     }
   }

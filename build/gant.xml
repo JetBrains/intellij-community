@@ -51,6 +51,7 @@
        <include name="xml-apis.jar"/>
        <include name="xml-apis-ext.jar"/>
        <include name="xercesImpl.jar"/>
+       <include name="commons-compress-1.10.jar"/>
     </fileset>
   </path>
 
