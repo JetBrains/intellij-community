@@ -272,8 +272,8 @@ public class PsiTreeUtil {
     };
 
     processElements(element, processor);
-    //noinspection unchecked
-    return (T)processor.getFoundElement();
+    @SuppressWarnings("unchecked") T t = (T)processor.getFoundElement();
+    return t;
   }
 
   @NotNull
@@ -316,8 +316,8 @@ public class PsiTreeUtil {
     if (element == null) return null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -373,8 +373,8 @@ public class PsiTreeUtil {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
         if (result == null) result = new SmartList<>();
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
@@ -389,8 +389,8 @@ public class PsiTreeUtil {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (instanceOf(child, classes)) {
         if (result == null) result = ContainerUtil.newSmartList();
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     if (result == null) {
@@ -406,8 +406,8 @@ public class PsiTreeUtil {
     List<T> result = new SmartList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     return result;
@@ -423,8 +423,8 @@ public class PsiTreeUtil {
     for (StubElement childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -442,8 +442,8 @@ public class PsiTreeUtil {
     for (StubElement childStub : stub.getChildrenStubs()) {
       PsiElement child = childStub.getPsi();
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        result.add((T)child);
+        @SuppressWarnings("unchecked") T t = (T)child;
+        result.add(t);
       }
     }
     return result;
@@ -474,8 +474,8 @@ public class PsiTreeUtil {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       for (Class<? extends T> aClass : classes) {
         if (aClass.isInstance(child)) {
-          //noinspection unchecked
-          return (T)child;
+          @SuppressWarnings("unchecked") T t = (T)child;
+          return t;
         }
       }
     }
@@ -488,8 +488,8 @@ public class PsiTreeUtil {
     if (sibling == null) return null;
     for (PsiElement child = sibling.getNextSibling(); child != null; child = child.getNextSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -501,8 +501,8 @@ public class PsiTreeUtil {
     if (sibling == null) return null;
     for (PsiElement child = sibling.getPrevSibling(); child != null; child = child.getPrevSibling()) {
       if (aClass.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
+        @SuppressWarnings("unchecked") T t = (T)child;
+        return t;
       }
     }
     return null;
@@ -535,7 +535,6 @@ public class PsiTreeUtil {
     if (element instanceof StubBasedPsiElement) {
       StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
       if (stub != null) {
-        //noinspection unchecked
         final StubElement parentStub = stub.getParentStub();
         return parentStub != null ? parentStub.getPsi() : null;
       }
@@ -549,8 +548,8 @@ public class PsiTreeUtil {
     if (element instanceof StubBasedPsiElement) {
       StubBase stub = (StubBase)((StubBasedPsiElement)element).getStub();
       if (stub != null) {
-        //noinspection unchecked
-        return (E)stub.getParentStubOfType(parentClass);
+        @SuppressWarnings("unchecked") E e = (E)stub.getParentStubOfType(parentClass);
+        return e;
       }
     }
     return getParentOfType(element, parentClass);
@@ -573,8 +572,8 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    //noinspection unchecked
-    return (T)element;
+    @SuppressWarnings("unchecked") T t = (T)element;
+    return t;
   }
 
   @Nullable
@@ -606,8 +605,8 @@ public class PsiTreeUtil {
       element = element.getContext();
     }
 
-    //noinspection unchecked
-    return (T)element;
+    @SuppressWarnings("unchecked") T t = (T)element;
+    return t;
   }
 
   @Nullable
@@ -631,8 +630,8 @@ public class PsiTreeUtil {
 
     while (element != null && (minStartOffset == -1 || element.getNode().getStartOffset() >= minStartOffset)) {
       if (aClass.isInstance(element)) {
-        //noinspection unchecked
-        return (T)element;
+        @SuppressWarnings("unchecked") T t = (T)element;
+        return t;
       }
       if (element instanceof PsiFile) {
         return null;
@@ -662,8 +661,8 @@ public class PsiTreeUtil {
       element = element.getParent();
     }
 
-    //noinspection unchecked
-    return (T)element;
+    @SuppressWarnings("unchecked") T t = (T)element;
+    return t;
   }
 
   @Nullable
@@ -771,8 +770,8 @@ public class PsiTreeUtil {
     PsiElement run = element;
     while (run != null) {
       if (instanceOf(run, classes)) {
-        //noinspection unchecked
-        return (T)run;
+        @SuppressWarnings("unchecked") T t = (T)run;
+        return t;
       }
       if (run instanceof PsiFile) break;
       run = run.getParent();
