@@ -202,7 +202,9 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         if (scope != null && !scope.contains(file)) {
           return true;
         }
-        return !(processedReferences ? refManager.isInGraph(file) : file.getFileType() == StdFileTypes.JAVA);
+        //e.g. xml files were not included in the graph, so usages there should be processed as external
+        boolean inGraph = processedReferences ? refManager.isInGraph(file) : file.getFileType() == StdFileTypes.JAVA;
+        return !inGraph;
       }
 
       @Override
