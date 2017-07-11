@@ -126,7 +126,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (JavaKeywordCompletion.DECLARATION_START.getValue().accepts(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position)) {
-      return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
+      return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
     if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
@@ -180,11 +180,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (PsiTreeUtil.getParentOfType(position, PsiPackageAccessibilityStatement.class) != null) {
-      return applyScopeFilter(ElementClassFilter.PACKAGE_FILTER, position);
+      return applyScopeFilter(ElementClassFilter.PACKAGE, position);
     }
 
     if (PsiTreeUtil.getParentOfType(position, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
-      ElementFilter filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
+      ElementFilter filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
       if (PsiTreeUtil.getParentOfType(position, PsiReferenceList.class) != null) {
         filter = applyScopeFilter(filter, position);
       }
@@ -202,7 +202,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static ElementFilter createAnnotationFilter(PsiElement position) {
     List<ElementFilter> filters = ContainerUtil.newArrayList(
       ElementClassFilter.CLASS,
-      ElementClassFilter.PACKAGE_FILTER,
+      ElementClassFilter.PACKAGE,
       new AndFilter(new ClassFilter(PsiField.class), new ModifierFilter(PsiModifier.STATIC, PsiModifier.FINAL)));
 
     if (psiElement().insideStarting(psiNameValuePair()).accepts(position)) {

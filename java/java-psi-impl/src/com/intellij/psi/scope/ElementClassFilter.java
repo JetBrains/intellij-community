@@ -22,7 +22,7 @@ import com.intellij.psi.filters.ElementFilter;
  * @author max
  */
 public class ElementClassFilter implements ElementFilter {
-  public static final ElementClassFilter PACKAGE_FILTER = new ElementClassFilter(ElementClassHint.DeclarationKind.PACKAGE);
+  public static final ElementClassFilter PACKAGE = new ElementClassFilter(ElementClassHint.DeclarationKind.PACKAGE);
   public static final ElementClassFilter VARIABLE = new ElementClassFilter(ElementClassHint.DeclarationKind.VARIABLE);
   public static final ElementClassFilter METHOD = new ElementClassFilter(ElementClassHint.DeclarationKind.METHOD);
   public static final ElementClassFilter CLASS = new ElementClassFilter(ElementClassHint.DeclarationKind.CLASS);
@@ -64,4 +64,10 @@ public class ElementClassFilter implements ElementFilter {
   public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** use {@linkplain #PACKAGE} (to be removed in IDEA 2018) */
+  @Deprecated
+  public static final ElementClassFilter PACKAGE_FILTER = PACKAGE;
+  //</editor-fold>
 }

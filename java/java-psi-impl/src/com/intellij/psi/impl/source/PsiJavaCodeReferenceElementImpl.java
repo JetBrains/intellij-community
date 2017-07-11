@@ -783,17 +783,17 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final ElementFilter filter;
     switch (getKind(getContainingFile())) {
       case CLASS_OR_PACKAGE_NAME_KIND:
-        filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
+        filter = new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
         break;
       case CLASS_NAME_KIND:
         filter = ElementClassFilter.CLASS;
         break;
       case PACKAGE_NAME_KIND:
-        filter = ElementClassFilter.PACKAGE_FILTER;
+        filter = ElementClassFilter.PACKAGE;
         break;
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-        filter = isQualified() ? new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER) : ElementClassFilter.PACKAGE_FILTER;
+        filter = isQualified() ? new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE) : ElementClassFilter.PACKAGE;
         break;
       case CLASS_IN_QUALIFIED_NEW_KIND:
         filter = ElementClassFilter.CLASS;
@@ -822,20 +822,20 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     switch (getKind(getContainingFile())) {
       case CLASS_OR_PACKAGE_NAME_KIND:
         filters.add(ElementClassFilter.CLASS);
-        filters.add(ElementClassFilter.PACKAGE_FILTER);
+        filters.add(ElementClassFilter.PACKAGE);
         break;
       case CLASS_NAME_KIND:
         filters.add(ElementClassFilter.CLASS);
         if (isQualified() || PsiTreeUtil.getParentOfType(this, PsiJavaModule.class) != null) {
-          filters.add(ElementClassFilter.PACKAGE_FILTER);
+          filters.add(ElementClassFilter.PACKAGE);
         }
         break;
       case PACKAGE_NAME_KIND:
-        filters.add(ElementClassFilter.PACKAGE_FILTER);
+        filters.add(ElementClassFilter.PACKAGE);
         break;
       case CLASS_FQ_NAME_KIND:
       case CLASS_FQ_OR_PACKAGE_NAME_KIND:
-        filters.add(ElementClassFilter.PACKAGE_FILTER);
+        filters.add(ElementClassFilter.PACKAGE);
         if (isQualified()) {
           filters.add(ElementClassFilter.CLASS);
         }
