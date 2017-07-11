@@ -186,7 +186,7 @@ public class HgHistoryUtil {
                                      vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail(),
                                      vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getName(),
                                      vcsRevisionNumber.getEmail(), revision.getRevisionDate().getTime(),
-                                     () -> changes);
+                                     () -> Collections.singletonList(changes));
   }
 
 

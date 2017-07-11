@@ -59,7 +59,7 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
                                                 @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                 @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
                                                 long authorTime,
-                                                @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
+                                                @NotNull ThrowableComputable<List<Collection<Change>>, ? extends Exception> changesGetter) {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
     return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime,

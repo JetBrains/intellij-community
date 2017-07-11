@@ -37,12 +37,12 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
 
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
 
-  @NotNull protected final ThrowableComputable<Collection<Change>, ? extends Exception> myChangesGetter;
+  @NotNull protected final ThrowableComputable<List<Collection<Change>>, ? extends Exception> myChangesGetter;
 
   public VcsChangesLazilyParsedDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                                        @NotNull String subject, @NotNull VcsUser author, @NotNull String message,
                                        @NotNull VcsUser committer, long authorTime,
-                                       @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
+                                       @NotNull ThrowableComputable<List<Collection<Change>>, ? extends Exception> changesGetter) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myChangesGetter = changesGetter;
   }
@@ -50,8 +50,15 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   @NotNull
   @Override
   public Collection<Change> getChanges() {
+    // todo this is going to be changed later
+    return getChanges(0);
+  }
+
+  @NotNull
+  @Override
+  public Collection<Change> getChanges(int parent) {
     try {
-      return myChangesGetter.compute();
+      return myChangesGetter.compute().get(parent);
     }
     catch (Exception e) {
       LOG.error("Error happened when parsing changes", e);
