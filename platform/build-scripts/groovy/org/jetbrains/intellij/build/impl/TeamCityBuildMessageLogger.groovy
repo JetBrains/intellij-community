@@ -31,13 +31,16 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
   public static final BiFunction<String, AntTaskLogger, BuildMessageLogger> FACTORY = { String taskName, AntTaskLogger antLogger ->
     new TeamCityBuildMessageLogger(taskName, antLogger)
   } as BiFunction<String, AntTaskLogger, BuildMessageLogger>
+  private static final String ANT_OUTPUT_PREFIX = "###<<<>>>###:" //copied from jetbrains.buildServer.agent.ant.ServiceMessageBuildProgressLogger
   private static final PrintStream out = BuildUtils.realSystemOut
   private final String parallelTaskId
   private AntTaskLogger antTaskLogger
+  private boolean isTeamCityListenerRegistered
 
   TeamCityBuildMessageLogger(String parallelTaskId, AntTaskLogger antTaskLogger) {
     this.parallelTaskId = parallelTaskId
     this.antTaskLogger = antTaskLogger
+    isTeamCityListenerRegistered = antTaskLogger.antProject.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }
   }
 
   @Override
@@ -83,17 +86,29 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
       printTeamCityMessage("message", true, "text='${escape(message.text)}'$status")
     }
     else {
-      antTaskLogger.logMessageToOtherLoggers(message.text, Project.MSG_INFO)
-      out.println message.text
+      printMessageText(message.text)
     }
   }
 
   private void printTeamCityMessage(String messageId, boolean includeFlowId, String messageArguments) {
     String flowArg = includeFlowId && parallelTaskId != null ? " flowId='${escape(parallelTaskId)}'" : ""
     String message = "##teamcity[$messageId$flowArg $messageArguments]"
-    //TeamCity reads messages from Ant-based builds via BuildListener so we need to send it to listeners
-    antTaskLogger.logMessageToOtherLoggers(message, Project.MSG_INFO)
-    out.println(message)
+    printMessageText(message)
+  }
+
+  private void printMessageText(String message) {
+    if (isTeamCityListenerRegistered) {
+      //notify TeamCity via its BuildListener
+      antTaskLogger.logMessageToOtherLoggers(message, Project.MSG_INFO)
+      out.println(message)
+    }
+    else if (message.contains(ANT_OUTPUT_PREFIX)) {
+      out.println(message)
+    }
+    else {
+      //TeamCity will ignore an output line if it doesn't contain the prefix so we need to add it manually
+      out.println("$ANT_OUTPUT_PREFIX$message")
+    }
   }
 
   private static char escapeChar(char c) {

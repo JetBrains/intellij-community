@@ -161,6 +161,8 @@ class TestingTasksImpl extends TestingTasks {
     String junitTemp = "$context.paths.temp/junit"
     context.ant.mkdir(dir: junitTemp)
 
+    List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
+
     context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
@@ -168,6 +170,17 @@ class TestingTasksImpl extends TestingTasks {
           sysproperty(key: key, value: value)
         }
       }
+
+      if (teamCityFormatterClasspath != null) {
+        classpath {
+          teamCityFormatterClasspath.each {
+            pathelement(location: it)
+          }
+        }
+        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
+        context.messages.info("Added TeamCity's formatter to JUnit task")
+      }
+
       classpath {
         bootstrapClasspath.each {
           pathelement(location: it)
@@ -177,7 +190,44 @@ class TestingTasksImpl extends TestingTasks {
       test(name: options.bootstrapSuite)
     }
   }
-  
+
+  /**
+   * In simple cases when JUnit tests are started from Ant scripts TeamCity will automatically add its formatter to JUnit task. However it
+   * doesn't work if JUnit task is called from Groovy code via a new instance of AntBuilder, so in such cases we need to add the formatter
+   * explicitly.
+   * @return classpath for TeamCity's JUnit formatter or {@code null} if the formatter shouldn't be added
+   */
+  private List<String> createTeamCityFormatterClasspath() {
+    if (!isUnderTeamCity()) return null
+
+    if (context.ant.project.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }) {
+      context.messages.info("TeamCity's BuildListener is registered in the Ant project so its formatter will be added to JUnit task automatically.")
+      return null
+    }
+
+    String agentHomeDir = System.getProperty("agent.home.dir")
+    if (agentHomeDir == null) {
+      context.messages.error("'agent.home.dir' system property isn't set, cannot add TeamCity JARs to classpath.")
+    }
+    List<String> classpath = [
+      "$agentHomeDir/lib/runtime-util.jar",
+      "$agentHomeDir/lib/serviceMessages.jar",
+      "$agentHomeDir/plugins/antPlugin/ant-runtime.jar",
+      "$agentHomeDir/plugins/junitPlugin/junit-runtime.jar",
+      "$agentHomeDir/plugins/junitPlugin/junit-support.jar"
+    ].collect {it.toString()}
+    classpath.each {
+      if (!new File(it).exists()) {
+        context.messages.error("Cannot add required JARs from $agentHomeDir to classpath: $it doesn't exist")
+      }
+    }
+    return classpath
+  }
+
+  private static boolean isUnderTeamCity() {
+    System.getProperty("teamcity.buildType.id") != null
+  }
+
   static boolean dependenciesInstalled
   private def setupTestingDependencies() {
     if (!dependenciesInstalled) {
