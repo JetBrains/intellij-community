@@ -72,6 +72,7 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
     }
   }
 
+  @NotNull
   @Override
   public LineMarkerRendererEx.Position getPosition() {
     return LineMarkerRendererEx.Position.CUSTOM;
