@@ -218,15 +218,17 @@ public class ModuleHighlightUtil {
     Set<String> uses = JBIterable.from(module.getUses()).map(st -> refText(st.getClassReference())).filter(Objects::nonNull).toSet();
 
     Module host = findModule(module);
-    for (PsiProvidesStatement statement : module.getProvides()) {
-      PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
-      if (ref != null) {
-        PsiElement target = ref.resolve();
-        if (target instanceof PsiClass && findModule(target) == host) {
-          String className = refText(ref), packageName = StringUtil.getPackageName(className);
-          if (!exports.contains(packageName) && !uses.contains(className)) {
-            String message = JavaErrorMessages.message("module.service.unused");
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
+    if (host != null) {
+      for (PsiProvidesStatement statement : module.getProvides()) {
+        PsiJavaCodeReferenceElement ref = statement.getInterfaceReference();
+        if (ref != null) {
+          PsiElement target = ref.resolve();
+          if (target instanceof PsiClass && findModule(target) == host) {
+            String className = refText(ref), packageName = StringUtil.getPackageName(className);
+            if (!exports.contains(packageName) && !uses.contains(className)) {
+              String message = JavaErrorMessages.message("module.service.unused");
+              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message).create());
+            }
           }
         }
       }
