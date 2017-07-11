@@ -92,7 +92,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       if (useModule == null) {
         return null
       }
-      if (!(useModule.name == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
+      if (!(targetModule.name == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
         return if (quick) ERR else ErrorWithFixes(
           JavaErrorMessages.message("module.access.does.not.read", packageName, targetModule.name, useModule.name),
           listOf(AddRequiredModuleFix(useModule, targetModule.name)))
