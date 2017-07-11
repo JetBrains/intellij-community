@@ -66,6 +66,6 @@ class DeleteRange extends ActionOnRange implements MadTestingAction {
       .deleteString(range.getStartOffset(), range.getEndOffset()));
 
     PsiUtilCore.ensureValid(myFile);
-    PsiTestUtil.checkStubsMatchText(myFile);
+    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
   }
 }

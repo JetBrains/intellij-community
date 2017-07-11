@@ -103,7 +103,7 @@ class InvokeIntention extends ActionOnRange implements MadTestingAction {
       throw new AssertionError("No change was performed in the document");
     }
 
-    PsiTestUtil.checkStubsMatchText(myFile);
+    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
   }
 
   @Nullable

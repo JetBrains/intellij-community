@@ -37,7 +37,7 @@ abstract class FilePsiMutation implements MadTestingAction {
   @Override
   public void performAction() {
     WriteCommandAction.runWriteCommandAction(myFile.getProject(), this::performMutation);
-    PsiTestUtil.checkStubsMatchText(myFile);
+    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
   }
 
   protected abstract void performMutation();

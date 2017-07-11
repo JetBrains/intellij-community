@@ -56,6 +56,7 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
@@ -225,12 +226,6 @@ public class PsiTestUtil {
     PsiFile dummyFile = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), file.getText());
     String reparsedTree = DebugUtil.psiTreeToString(dummyFile, true);
     Assert.assertEquals(reparsedTree, originalTree);
-
-    Document document = file.getViewProvider().getDocument();
-    if (document != null && !PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) {
-      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-      checkPsiMatchesTextIgnoringWhitespace(file);
-    }
   }
 
   public static void addLibrary(Module module, String libPath) {
@@ -428,13 +423,6 @@ public class PsiTestUtil {
     if (!fromText.equals(fromPsi)) {
       Assert.assertEquals("Re-created from text:\n" + fromText, "Stubs from PSI structure:\n" + fromPsi);
     }
-
-    Document document = file.getViewProvider().getDocument();
-    assert document != null;
-    if (!PsiDocumentManager.getInstance(project).isCommitted(document)) {
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      checkStubsMatchText(file);
-    }
   }
 
   @Nullable
@@ -444,5 +432,15 @@ public class PsiTestUtil {
 
     StubTree tree = ((PsiFileImpl)file).getStubTree();
     return tree != null ? tree : ((PsiFileImpl)file).calcStubTree();
+  }
+
+  public static void checkPsiStructureWithCommit(@NotNull PsiFile psiFile, Consumer<PsiFile> checker) {
+    checker.accept(psiFile);
+    Document document = psiFile.getViewProvider().getDocument();
+    Project project = psiFile.getProject();
+    if (document != null && PsiDocumentManager.getInstance(project).isUncommited(document)) {
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      checker.accept(psiFile);
+    }
   }
 }

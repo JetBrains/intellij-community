@@ -201,6 +201,7 @@ class Foo {
 """) as PsiJavaFile
     WriteCommandAction.runWriteCommandAction(project) { 
       file.viewProvider.document.insertString(file.text.indexOf('call'), 'char ')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
       PsiTestUtil.checkStubsMatchText(file)
     }
   }
