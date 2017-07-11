@@ -789,15 +789,13 @@ public class PsiTreeUtil {
 
   @SafeVarargs
   @NotNull
-  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable final PsiElement element,
-                                                                           @NotNull final Class<T>... classes) {
+  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element, @NotNull Class<T>... classes) {
     CollectFilteredElements<T> processor = new CollectFilteredElements<>(element1 -> {
       for (Class<T> clazz : classes) {
         if (clazz.isInstance(element1)) {
           return true;
         }
       }
-
       return false;
     });
     processElements(element, processor);
@@ -805,7 +803,7 @@ public class PsiTreeUtil {
   }
 
   @Contract("null, _ -> true")
-  public static boolean processElements(@Nullable PsiElement element, @NotNull final PsiElementProcessor processor) {
+  public static boolean processElements(@Nullable PsiElement element, @NotNull PsiElementProcessor processor) {
     if (element == null) return true;
     if (element instanceof PsiCompiledElement || !element.isPhysical()) { // DummyHolders cannot be visited by walking visitors because children/parent relationship is broken there
       //noinspection unchecked
