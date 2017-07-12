@@ -31,6 +31,7 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurrentPsiModificationStamp;
 
@@ -71,18 +72,24 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     List<InlayInfo> hints = provider.getParameterHints(element);
     if (hints.isEmpty()) return;
     HintInfo info = provider.getHintInfo(element);
-    if (info == null || myHintInfoFilter.showHint(info)) {
-      hints.forEach((hint) -> {
-        String presentation = provider.getInlayPresentation(hint.getText());
-        int offset = hint.getOffset();
-        if (hint.isShowOnlyIfExistedBefore()) {
-          myShowOnlyIfExistedBeforeHints.put(offset, presentation);
-        }
-        else {
-          myHints.put(offset, presentation);
-        }
-      });
+
+    boolean showHints = info == null || info instanceof HintInfo.OptionInfo || myHintInfoFilter.showHint(info);
+
+    Stream<InlayInfo> inlays = hints.stream();
+    if (!showHints) {
+      inlays = inlays.filter((inlayInfo -> !inlayInfo.isFilterByBlacklist()));
     }
+
+    inlays.forEach((hint) -> {
+      String presentation = provider.getInlayPresentation(hint.getText());
+      int offset = hint.getOffset();
+      if (hint.isShowOnlyIfExistedBefore()) {
+        myShowOnlyIfExistedBeforeHints.put(offset, presentation);
+      }
+      else {
+        myHints.put(offset, presentation);
+      }
+    });
   }
 
   @Override
