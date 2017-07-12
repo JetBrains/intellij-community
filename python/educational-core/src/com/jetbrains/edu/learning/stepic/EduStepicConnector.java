@@ -200,11 +200,11 @@ public class EduStepicConnector {
   }
 
   private static void setCourseLanguage(RemoteCourse info) {
-    if (info.isAdaptive()) {
-      info.setLanguage("Python"); // adaptive courses available only in PyCharm now
+    String courseType = info.getType();
+    if (info.isAdaptive() && StringUtil.isEmptyOrSpaces(courseType)) {
+      info.setLanguage("Python");
       return;
     }
-    String courseType = info.getType();
     final int separator = courseType.indexOf(" ");
     assert separator != -1;
     final String language = courseType.substring(separator + 1);
