@@ -227,26 +227,27 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
                                                                                                       @SignatureData.IteratorKind byte iteratorKind) {
     try {
       myReadDataLock.lock();
-      if (myReader == null) throw new ReferenceIndexUnavailableException();
       try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
         if (type == 0) return Collections.emptySortedSet();
         return Stream.of(new SignatureData(type, iteratorKind, true), new SignatureData(type, iteratorKind, false))
           .flatMap(sd -> myReader.getMembersFor(sd)
-          .stream()
-          .filter(r -> r instanceof LightRef.JavaLightMethodRef)
-          .map(r -> (LightRef.JavaLightMethodRef) r)
-          .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
-            return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
-          })
-          .distinct()
-          .map(r -> {
-            int count = myReader.getOccurrenceCount(r);
-            return count <= 1 ? null : new SignatureAndOccurrences(
-              new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
-              count);
-          }))
+            .stream()
+            .filter(r -> r instanceof LightRef.JavaLightMethodRef)
+            .map(r -> (LightRef.JavaLightMethodRef)r)
+            .flatMap(r -> {
+              LightRef.NamedLightRef[] hierarchy =
+                myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
+              return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
+            })
+            .distinct()
+            .map(r -> {
+              int count = myReader.getOccurrenceCount(r);
+              return count <= 1 ? null : new SignatureAndOccurrences(
+                new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+                count);
+            }))
           .filter(Objects::nonNull)
           .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
@@ -254,12 +255,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .map(e -> new SignatureAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
-      catch (Exception e) {
-        onException(e, "find methods");
-        return Collections.emptySortedSet();
+      finally {
+        myReadDataLock.unlock();
       }
-    } finally {
-      myReadDataLock.unlock();
+    }
+    catch (Exception e) {
+      onException(e, "find methods");
+      return Collections.emptySortedSet();
     }
   }
 
@@ -272,8 +274,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   public boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold) {
     try {
       myReadDataLock.lock();
-      if (myReader == null) throw new ReferenceIndexUnavailableException();
       try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
         final TIntHashSet ids1 = myReader.getAllContainingFileIds(qualifier);
         final TIntHashSet ids2 = myReader.getAllContainingFileIds(base);
         final TIntHashSet intersection = intersection(ids1, ids2);
@@ -283,76 +285,89 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         }
         return false;
       }
-      catch (Exception e) {
-        onException(e, "conditional probability");
-        return false;
+      finally {
+        myReadDataLock.unlock();
       }
-    } finally {
-      myReadDataLock.unlock();
+    }
+    catch (Exception e) {
+      onException(e, "conditional probability");
+      return false;
     }
   }
 
   @NotNull
   @Override
   public String getName(int idx) throws ReferenceIndexUnavailableException {
-    myReadDataLock.lock();
     try {
-      if (myReader == null) throw new ReferenceIndexUnavailableException();
-      return myReader.getNameEnumerator().getName(idx);
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        return myReader.getNameEnumerator().getName(idx);
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
     } catch (Exception e) {
-        onException(e, "find methods");
-        throw new ReferenceIndexUnavailableException();
-    } finally {
-      myReadDataLock.unlock();
+      onException(e, "find methods");
+      throw new ReferenceIndexUnavailableException();
     }
   }
 
   @Override
   public int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException {
-    myReadDataLock.lock();
     try {
-      if (myReader == null) throw new ReferenceIndexUnavailableException();
-      int id;
+      myReadDataLock.lock();
       try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        int id;
         id = myReader.getNameEnumerator().tryEnumerate(name);
+
+        return id;
       }
-      catch (Exception e) {
-        onException(e, "get name-id");
-        throw new ReferenceIndexUnavailableException();
+      finally {
+        myReadDataLock.unlock();
       }
-      return id;
-    } finally {
-      myReadDataLock.unlock();
+    }
+    catch (Exception e) {
+      onException(e, "get name-id");
+      throw new ReferenceIndexUnavailableException();
     }
   }
 
   @NotNull
   @Override
   public LightRef.LightClassHierarchyElementDef[] getDirectInheritors(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
-    myReadDataLock.lock();
     try {
-      if (myReader == null) throw new ReferenceIndexUnavailableException();
-      return myReader.getDirectInheritors(baseClass);
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        return myReader.getDirectInheritors(baseClass);
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
     } catch (Exception e) {
       onException(e, "find methods");
       throw new ReferenceIndexUnavailableException();
-    } finally {
-      myReadDataLock.unlock();
     }
   }
 
   @Override
   public int getInheritorCount(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
-    myReadDataLock.lock();
     try {
-      if (myReader == null) throw new ReferenceIndexUnavailableException();
-      LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
-      return hierarchy == null ? -1 : hierarchy.length;
-    } catch (Exception e) {
+      myReadDataLock.lock();
+      try {
+        if (myReader == null) throw new ReferenceIndexUnavailableException();
+        LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
+        return hierarchy == null ? -1 : hierarchy.length;
+      }
+      finally {
+        myReadDataLock.unlock();
+      }
+    }
+    catch (Exception e) {
       onException(e, "inheritor count");
       throw new ReferenceIndexUnavailableException();
-    } finally {
-      myReadDataLock.unlock();
     }
   }
 
