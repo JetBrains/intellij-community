@@ -149,14 +149,14 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
       List<Range.InnerRange> innerRanges = range.getInnerRanges();
       if (innerRanges == null) return;
 
-      int last = range.getLine1();
+      int last = 0;
       for (Range.InnerRange innerRange : innerRanges) {
         assertEquals(innerRange.getLine1() == innerRange.getLine2(), innerRange.getType() == Range.DELETED);
 
         assertEquals(last, innerRange.getLine1());
         last = innerRange.getLine2();
       }
-      assertEquals(last, range.getLine2());
+      assertEquals(last, range.getLine2() - range.getLine1());
 
       List<String> lines1 = DiffUtil.getLines(myUpToDateDocument, range.getVcsLine1(), range.getVcsLine2());
       List<String> lines2 = DiffUtil.getLines(myDocument, range.getLine1(), range.getLine2());
@@ -166,7 +166,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
         if (innerRange.getType() != Range.EQUAL) continue;
 
         for (int i = innerRange.getLine1(); i < innerRange.getLine2(); i++) {
-          String line = lines2.get(i - range.getLine1());
+          String line = lines2.get(i);
           List<String> searchSpace = lines1.subList(start, lines1.size());
           int index = ContainerUtil.<String>indexOf(searchSpace, (it) -> StringUtil.equalsIgnoreWhitespaces(it, line));
           assertTrue(index != -1);

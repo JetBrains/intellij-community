@@ -160,7 +160,7 @@ public class RangesBuilder {
           Boolean equals = pair.second;
 
           byte type = equals ? Range.EQUAL : getChangeType(range.start1, range.end1, range.start2, range.end2);
-          result.add(new InnerRange(range.start2 + blockRange.start2, range.end2 + blockRange.start2,
+          result.add(new InnerRange(range.start2 , range.end2 ,
                                     type));
         }
         result.trimToSize();

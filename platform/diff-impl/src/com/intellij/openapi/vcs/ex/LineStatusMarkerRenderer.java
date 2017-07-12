@@ -165,8 +165,8 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
         for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() == Range.DELETED) continue;
 
-          int start = lineToY(editor, innerRange.getLine1());
-          int end = lineToY(editor, innerRange.getLine2());
+          int start = lineToY(editor, myRange.getLine1() + innerRange.getLine1());
+          int end = lineToY(editor, myRange.getLine1() + innerRange.getLine2());
 
           paintRect(g, getGutterColor(innerRange, editor), null, x, start, endX, end);
         }
@@ -176,7 +176,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
         for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() != Range.DELETED) continue;
 
-          int start = lineToY(editor, innerRange.getLine1());
+          int start = lineToY(editor, myRange.getLine1() + innerRange.getLine1());
 
           paintTriangle(g, getGutterColor(innerRange, editor), borderColor, x, endX, start);
         }

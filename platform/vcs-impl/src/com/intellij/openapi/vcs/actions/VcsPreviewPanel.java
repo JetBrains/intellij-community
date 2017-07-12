@@ -105,7 +105,7 @@ class VcsPreviewPanel implements PreviewPanel {
   private static Range createModifiedRange(int currentLine, byte... inner) {
     List<InnerRange> innerRanges = new ArrayList<>();
 
-    int currentInnerLine = currentLine;
+    int currentInnerLine = 0;
     for (byte type : inner) {
       switch (type) {
         case Range.EQUAL:
@@ -120,7 +120,7 @@ class VcsPreviewPanel implements PreviewPanel {
       }
     }
 
-    return new Range(currentLine, currentInnerLine, 0, 1, innerRanges);
+    return new Range(currentLine, currentLine + currentInnerLine, 0, 1, innerRanges);
   }
 
   private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {

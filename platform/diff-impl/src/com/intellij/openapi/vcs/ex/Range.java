@@ -100,12 +100,6 @@ public class Range {
   public void shift(int shift) {
     myLine1 += shift;
     myLine2 += shift;
-
-    if (myInnerRanges != null) {
-      for (InnerRange range : myInnerRanges) {
-        range.shift(shift);
-      }
-    }
   }
 
   public void vcsShift(int shift) {
@@ -152,8 +146,8 @@ public class Range {
   }
 
   public static class InnerRange {
-    private int myLine1;
-    private int myLine2;
+    private final int myLine1;
+    private final int myLine2;
     private final byte myType;
 
     public InnerRange(int line1, int line2, byte type) {
@@ -172,11 +166,6 @@ public class Range {
 
     public byte getType() {
       return myType;
-    }
-
-    public void shift(int shift) {
-      myLine1 += shift;
-      myLine2 += shift;
     }
 
     @Override
