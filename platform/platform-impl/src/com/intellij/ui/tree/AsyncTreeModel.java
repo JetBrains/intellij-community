@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Command;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -41,7 +42,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -79,7 +79,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         processor.process(new CmdGetRoot("Update root", object));
         return;
       }
-      processor.foreground.invokeLaterIfNeeded(() -> {
+      onValidThread(() -> {
         Node node = tree.map.get(object);
         if (node == null || node.isLoadingRequired()) {
           LOG.debug("ignore updating of nonexistent node: ", object);
@@ -152,14 +152,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   @NotNull
   public Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    processor.foreground.invokeLaterIfNeeded(() -> resolve(async, path, entry -> async.setResult(path)));
+    onValidThread(() -> resolve(async, path, entry -> async.setResult(path)));
     return async;
   }
 
   private Promise<TreePath> resolve(Promise<TreePath> promise) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    promise.rejected(error -> processor.foreground.invokeLaterIfNeeded(() -> async.setError(error)));
-    promise.done(path -> processor.foreground.invokeLaterIfNeeded(() -> resolve(async, path, entry -> async.setResult(path))));
+    promise.rejected(onValidThread(async::setError));
+    promise.done(onValidThread(path -> resolve(async, path, entry -> async.setResult(path))));
     return async;
   }
 
@@ -193,7 +193,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     Node node = tree.map.get(path.getLastPathComponent());
     if (node == null || !node.paths.contains(path)) return false;
     LOG.debug("path resolved: ", path);
-    consumer.accept(node);
+    consumer.consume(node);
     return true;
   }
 
@@ -249,6 +249,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     if (processor.foreground.isValidThread()) return true;
     LOG.warn("AsyncTreeModel is used from unexpected thread");
     return false;
+  }
+
+  private void onValidThread(Runnable runnable) {
+    processor.foreground.invokeLaterIfNeeded(runnable);
+  }
+
+  @NotNull
+  private <T> Consumer<T> onValidThread(Consumer<T> consumer) {
+    return value -> onValidThread(() -> consumer.consume(value));
   }
 
   @NotNull
