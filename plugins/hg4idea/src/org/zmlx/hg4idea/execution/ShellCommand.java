@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.Iterator;
 import java.util.List;
 
 public final class ShellCommand {
@@ -51,51 +50,17 @@ public final class ShellCommand {
   }
 
   @NotNull
-  public HgCommandResult execute(final boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException, InterruptedException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    try {
-      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new OSProcessHandler(myCommandLine);
-      CapturingProcessAdapter outputAdapter = new CapturingProcessAdapter() {
-
-        @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          Iterator<String> lines = LineHandlerHelper.splitText(event.getText()).iterator();
-          if (ProcessOutputTypes.STDOUT == outputType) {
-            while (lines.hasNext()) {
-              String line = lines.next();
-              if (indicator != null && showTextOnIndicator) {
-                indicator.setText2(line);
-              }
-              addToOutput(line, ProcessOutputTypes.STDOUT);
-            }
-          }
-          else {
-            super.onTextAvailable(event, outputType);
-          }
-        }
-      };
-      processHandler.addProcessListener(outputAdapter);
-      processHandler.startNotify();
-      while (!processHandler.waitFor(300)) {
-        if (indicator != null && indicator.isCanceled()) {
-          processHandler.destroyProcess();
-          outputAdapter.getOutput().setExitCode(255);
-          break;
-        }
-      }
-      ProcessOutput output = outputAdapter.getOutput();
-      return isBinary ? new HgCommandResult(output, ((BinaryOSProcessHandler)processHandler).getOutput()) : new HgCommandResult(output);
-    }
-    catch (ExecutionException e) {
-      throw new ShellCommandException(e);
-    }
+  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException, InterruptedException {
+    CommandResultCollector listener = new CommandResultCollector(isBinary);
+    execute(showTextOnIndicator, isBinary, listener);
+    return listener.getResult();
   }
 
-  public void execute(boolean showTextOnIndicator, @NotNull HgLineProcessListener listener)
+  public void execute(boolean showTextOnIndicator, boolean isBinary, @NotNull HgLineProcessListener listener)
     throws ShellCommandException, InterruptedException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      OSProcessHandler processHandler = new OSProcessHandler(myCommandLine);
+      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new OSProcessHandler(myCommandLine);
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
         public void onTextAvailable(ProcessEvent event, Key outputType) {
@@ -121,9 +86,43 @@ public final class ShellCommand {
           break;
         }
       }
+      if (isBinary) {
+        listener.setBinaryOutput(((BinaryOSProcessHandler)processHandler).getOutput());
+      }
     }
     catch (ExecutionException e) {
       throw new ShellCommandException(e);
+    }
+  }
+
+  public static class CommandResultCollector extends HgLineProcessListener {
+    @NotNull private final ProcessOutput myOutput;
+    private final boolean myIsBinary;
+
+    public CommandResultCollector(boolean binary) {
+      myIsBinary = binary;
+      myOutput = new ProcessOutput();
+    }
+
+    @Override
+    protected void processOutputLine(@NotNull String line) {
+      myOutput.appendStdout(line);
+    }
+
+    @Override
+    protected void processErrorLine(@NotNull String line) {
+      super.processErrorLine(line);
+      myOutput.appendStderr(line);
+    }
+
+    @Override
+    public void setExitCode(int exitCode) {
+      super.setExitCode(exitCode);
+      myOutput.setExitCode(exitCode);
+    }
+
+    public HgCommandResult getResult() {
+      return myIsBinary ? new HgCommandResult(myOutput, getBinaryOutput()) : new HgCommandResult(myOutput);
     }
   }
 }

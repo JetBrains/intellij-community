@@ -175,7 +175,7 @@ public class HgCommandExecutor {
     try {
       long startTime = System.currentTimeMillis();
       LOG.debug(String.format("hg %s started", operation));
-      shellCommand.execute(myShowOutput, listener);
+      shellCommand.execute(myShowOutput, myIsBinary, listener);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
     }
     catch (ShellCommandException e) {
