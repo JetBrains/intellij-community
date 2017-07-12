@@ -24,6 +24,7 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -57,6 +58,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -601,6 +603,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UiNotifyConnector.doWhenFirstShown(myPanel, () -> startLoadingRemoteTemplates(chooseTemplateStep));
+    }
+    else {
+      startLoadingRemoteTemplates(chooseTemplateStep);
+    }
+  }
+
+  private void startLoadingRemoteTemplates(ChooseTemplateStep chooseTemplateStep) {
     myTemplatesList.setPaintBusy(true);
     chooseTemplateStep.getTemplateList().setPaintBusy(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
