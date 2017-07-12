@@ -191,7 +191,9 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                     holder.registerProblem(attributeValue,
                                            "Method source \'$providerName\' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]")
                   }
-                  else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType) && !componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+                  else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType) &&
+                           !componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+                           !componentType.deepComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
                     holder.registerProblem(attributeValue, "Multiple parameters have to be wrapped in Arguments")
                   }
                 }
