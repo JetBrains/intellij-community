@@ -23,9 +23,10 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,14 +54,14 @@ public class GitChangesParser {
   }
 
   private static List<GitRevisionNumber> prepareParentRevisions(List<String> parentsHashes) {
-    final List<AbstractHash> parents = new ArrayList<>(parentsHashes.size());
+    final List<Hash> parents = new ArrayList<>(parentsHashes.size());
     for (String parentsShortHash : parentsHashes) {
-      parents.add(AbstractHash.create(parentsShortHash));
+      parents.add(HashImpl.build(parentsShortHash));
     }
 
     final List<GitRevisionNumber> parentRevisions = new ArrayList<>(parents.size());
-    for (AbstractHash parent : parents) {
-      parentRevisions.add(new GitRevisionNumber(parent.getString()));
+    for (Hash parent : parents) {
+      parentRevisions.add(new GitRevisionNumber(parent.asString()));
     }
     return parentRevisions;
   }
