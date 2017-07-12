@@ -8,8 +8,8 @@ import java.util.List;
 @interface N {}
 
 class a {
- List<@N String> f() {
-   return ;
+  List<@N String> f() {
+   return;
  }
 }
 

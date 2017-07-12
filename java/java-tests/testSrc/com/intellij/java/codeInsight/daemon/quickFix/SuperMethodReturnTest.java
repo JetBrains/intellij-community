@@ -15,17 +15,13 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
 public class SuperMethodReturnTest extends LightQuickFixParameterizedTestCase {
-
-  public void test() throws Exception {doAllTests();}
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/superMethodReturn";
   }
-
 }
-
