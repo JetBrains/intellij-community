@@ -515,10 +515,6 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     public void visitServiceMessage(@NotNull final ServiceMessage msg) {
       final String name = msg.getMessageName();
 
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(msg.asString());
-      }
-
       if (KEY_TESTS_COUNT.equals(name)) {
         processTestCountInSuite(msg);
       }
