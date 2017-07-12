@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.pycharm
 
-import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
@@ -25,12 +24,10 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
  * @author vlan
  */
 class PythonCommunityPluginBuilder {
-  private final GantBinding binding
   private final String home
 
-  PythonCommunityPluginBuilder(String home, GantBinding binding) {
+  PythonCommunityPluginBuilder(String home) {
     this.home = home
-    this.binding = binding
   }
 
   def build() {
