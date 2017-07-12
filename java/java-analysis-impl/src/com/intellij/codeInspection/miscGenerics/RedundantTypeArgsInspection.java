@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,15 +155,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     }
   }
 
-  private static PsiMethodReferenceExpression createMethodReference(PsiMethodReferenceExpression expression,
-                                                                    PsiTypeElement typeElement) {
-    final PsiType type = typeElement.getType();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-    final PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)expression.copy();
-    copy.getQualifierType().replace(elementFactory.createTypeElement(((PsiClassType)type).rawType()));
-    return copy;
-  }
-
   private static class MyQuickFixAction implements LocalQuickFix {
     @Override
     @NotNull
@@ -201,7 +192,15 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiTypeElement.class);
       final PsiMethodReferenceExpression expression = PsiTreeUtil.getParentOfType(typeElement, PsiMethodReferenceExpression.class);
       if (expression != null) {
-        expression.replace(createMethodReference(expression, typeElement));
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+        final PsiClass aClass = ((PsiClassType)typeElement.getType()).resolve();
+        if (aClass != null) {
+          final PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)expression.copy();
+          final PsiTypeElement qualifier = copy.getQualifierType();
+          assert qualifier != null;
+          qualifier.replace(elementFactory.createReferenceExpression(aClass));
+          expression.replace(copy);
+        }
       }
     }
   }
