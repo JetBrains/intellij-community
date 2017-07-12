@@ -70,9 +70,19 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
-    return !name.equals("out") &&
-           !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
-           !name.endsWith("system") && !name.endsWith("config");
+    return !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
+           !name.equals("reports") && // no idea what this is
+           !name.equals("android") && // no 'android' repo on agents in some builds
+           !containsBinariesOnly(name) &&
+           !name.endsWith("system") && !name.endsWith("config"); // temporary stuff from tests or debug IDE
+  }
+
+  private static boolean containsBinariesOnly(@Nullable String name) {
+    return name.equals("jdk") ||
+           name.equals("jre") ||
+           name.equals("lib") ||
+           name.equals("bin") ||
+           name.equals("out");
   }
 
   @NotNull
@@ -114,6 +124,7 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
         }
 
         List<File> toChoose = preferDirs(data, children);
+        Collections.sort(toChoose);
         int index = data.drawInt(IntDistribution.uniform(0, toChoose.size() - 1));
         File generated = generateRandomFile(data, toChoose.get(index), exhausted);
         if (generated != null) {
