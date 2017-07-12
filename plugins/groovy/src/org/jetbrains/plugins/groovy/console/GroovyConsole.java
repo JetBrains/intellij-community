@@ -27,7 +27,10 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -39,7 +42,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -216,12 +218,7 @@ public class GroovyConsole {
 
   private static JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner
-      .configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true);
-    PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, res, true, res.getClassPath());
-    if (list != null) {
-      res.getClassPath().addAll(list.getPathList());
-    }
+    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
     res.setWorkingDirectory(ModuleRootManager.getInstance(module).getContentRoots()[0].getPath());
     res.setUseDynamicClasspath(true);
