@@ -1,14 +1,13 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.CutProvider;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.PasteProvider;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,12 +31,10 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.Alarm;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbToggleLineNumbersAction;
@@ -120,9 +117,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       setFocusable(true);
     }, 10, ModalityState.stateForComponent(this));
     myParent.loaded();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
     myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myBusConnection.subscribe(ProjectEx.ProjectSaved.TOPIC,
                               new ProjectEx.ProjectSaved() {
@@ -189,7 +184,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   private void layoutFile() {
-    addWarningIfNeeded();
     final List<IpnbCell> cells = myIpnbFile.getCells();
     for (IpnbCell cell : cells) {
       addCellToPanel(cell);
@@ -205,35 +199,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         myParent.updateScrollPosition(mySelectedCellPanel);
       }
     });
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-    });
-  }
-
-  private void addWarningIfNeeded() {
-    if (IpnbUtils.hasFx()) return;
-    final String text;
-    final String href;
-    if (PlatformUtils.isPyCharm()) {
-      href = "https://www.jetbrains.com/pycharm/download/";
-      text = "<html><a href=\"https://www.jetbrains.com/pycharm/download/\">Download PyCharm</a> with bundled JDK for better " +
-             "Markdown cell rendering</html>";
-    }
-    else {
-      href = "https://confluence.jetbrains.com/display/PYH/Pycharm+2016.1+Jupyter+Notebook+rendering";
-      text =
-        "<html>Follow instructions <a href=\"https://confluence.jetbrains.com/display/PYH/Pycharm+2016.1+Jupyter+Notebook+rendering\">" +
-        "here</a> for better Markdown cell rendering</html>";
-    }
-    final JLabel warning = new JLabel(text, SwingConstants.CENTER);
-    warning.setForeground(JBColor.RED);
-    warning.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        BrowserUtil.browse(href);
-      }
-    });
-    add(warning);
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
   }
 
   private void addCellToPanel(IpnbCell cell) {
@@ -665,6 +631,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
+  @SuppressWarnings("unused")
   public void selectNextOrPrev(@NotNull IpnbEditablePanel cell) {
     int index = myIpnbPanels.indexOf(cell);
     if (index < myIpnbPanels.size() - 1) {
@@ -684,9 +651,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       IpnbEditablePanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
       if (ipnbPanel != null) {
         ipnbPanel.setEditing(false);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(this, true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
         setSelectedCell(ipnbPanel, true);
       }
     }
