@@ -207,26 +207,26 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
 
-      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
-      if (modifierList != null) {
-        ASTNode ref = findChildByRole(ChildRole.REFERENCE_NAME);
-        assert ref != null : this;
-        PsiElement lastChild = ref.getPsi().getPrevSibling();
-        if (lastChild != null) {
+      ASTNode ref = findChildByRole(ChildRole.REFERENCE_NAME);
+      assert ref != null : this;
+      PsiElement lastChild = ref.getPsi().getPrevSibling();
+      if (lastChild != null) {
+        PsiElement modifierList = PsiImplUtil.findNeighbourModifierList(this);
+        if (modifierList != null) {
           modifierList.addRange(getFirstChild(), lastChild);
-          deleteChildRange(getFirstChild(), lastChild);
         }
+        else {
+          getParent().addRangeBefore(getFirstChild(), lastChild, this);
+        }
+        deleteChildRange(getFirstChild(), lastChild);
       }
-      return;
     }
-
-    if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
+    else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
       replaceChildInternal(child, PsiReferenceExpressionImpl.createEmptyRefParameterList(getProject()));
-      return;
     }
-
-
-    super.deleteChildInternal(child);
+    else {
+      super.deleteChildInternal(child);
+    }
   }
 
   @Override
