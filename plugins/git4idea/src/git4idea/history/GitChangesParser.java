@@ -23,8 +23,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -44,26 +43,13 @@ public class GitChangesParser {
                                    @NotNull Date date,
                                    @NotNull List<String> parentsHashes) throws VcsException {
     GitRevisionNumber thisRevision = new GitRevisionNumber(hash, date);
-    List<GitRevisionNumber> parentRevisions = prepareParentRevisions(parentsHashes);
+    List<GitRevisionNumber> parentRevisions = ContainerUtil.map(parentsHashes, GitRevisionNumber::new);
 
     List<Change> result = new ArrayList<>();
     for (GitLogStatusInfo statusInfo : statusInfos) {
       result.add(parseChange(project, root, parentRevisions, statusInfo, thisRevision));
     }
     return result;
-  }
-
-  private static List<GitRevisionNumber> prepareParentRevisions(List<String> parentsHashes) {
-    final List<Hash> parents = new ArrayList<>(parentsHashes.size());
-    for (String parentsShortHash : parentsHashes) {
-      parents.add(HashImpl.build(parentsShortHash));
-    }
-
-    final List<GitRevisionNumber> parentRevisions = new ArrayList<>(parents.size());
-    for (Hash parent : parents) {
-      parentRevisions.add(new GitRevisionNumber(parent.asString()));
-    }
-    return parentRevisions;
   }
 
   private static Change parseChange(final Project project, final VirtualFile vcsRoot, final List<GitRevisionNumber> parentRevisions,
@@ -116,5 +102,4 @@ public class GitChangesParser {
     }
     return new Change(before, after, status);
   }
-
 }
