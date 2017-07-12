@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -178,14 +179,25 @@ public class CreateFromUsageUtils {
                                    QuickFixBundle.message("new.method.body.template.error.title")));
         return;
       }
-      PsiCodeBlock oldBody = method.getBody();
-      PsiCodeBlock newBody = m.getBody();
+
+      PsiElement newBody = m.getBody();
       LOG.assertTrue(newBody != null);
+
+      PsiElement oldBody = method.getBody();
+      if (oldBody == null) {
+        PsiElement last = method.getLastChild();
+        if (last instanceof PsiErrorElement &&
+            JavaErrorMessages.message("expected.lbrace.or.semicolon").equals(((PsiErrorElement)last).getErrorDescription())) {
+          oldBody = last;
+        }
+      }
       if (oldBody != null) {
         oldBody.replace(newBody);
-      } else {
-        method.addBefore(newBody, null);
       }
+      else {
+        method.add(newBody);
+      }
+
       csManager.reformat(method);
     }
   }
