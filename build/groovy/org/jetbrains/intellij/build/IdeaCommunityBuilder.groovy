@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 package org.jetbrains.intellij.build
-
-import org.codehaus.gant.GantBinding
 /**
  * @author nik
  */
 class IdeaCommunityBuilder {
   private final BuildContext buildContext
 
-  IdeaCommunityBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions(), String projectHome = home) {
+  IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
     buildContext = BuildContext.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
   }
 
-  IdeaCommunityBuilder(GantBinding binding, BuildContext buildContext) {
+  IdeaCommunityBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
   }
 
