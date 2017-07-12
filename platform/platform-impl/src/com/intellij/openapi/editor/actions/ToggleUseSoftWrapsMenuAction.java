@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   @Override
   public void update(@NotNull AnActionEvent e){
     super.update(e);
-    if (!ActionPlaces.isToolbarPlace(e.getPlace())) {
+    if (!e.isActionToolbar()) {
       e.getPresentation().setIcon(null);
     }
     if (ActionPlaces.UNKNOWN.equals(e.getPlace())) {

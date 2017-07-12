@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovycOutputParser;
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil;
-import org.jetbrains.plugins.groovy.grape.GrabDependencies;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -63,7 +62,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner());
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner(), true);
 
     //addClasspathFromRootModel(module, tests, params, true);
 
@@ -85,7 +84,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests) throws CantRunException {
-    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
+    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true, true);
   }
 
   public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
@@ -93,7 +92,8 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests,
-                                                  boolean addClasspathToRunner) throws CantRunException {
+                                                  boolean addClasspathToRunner,
+                                                  boolean addClassPathToStarter) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
       params.getClassPath().add(GroovyFacetUtil.getBundledGroovyJar());
@@ -127,7 +127,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().add("--main");
     params.getProgramParametersList().add(mainClass);
 
-    if (!GrabDependencies.GRAPE_RUNNER.equals(mainClass)) {
+    if (addClassPathToStarter) {
       addClasspathFromRootModel(module, tests, params, true);
     }
 

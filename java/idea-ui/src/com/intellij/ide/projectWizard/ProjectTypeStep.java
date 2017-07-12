@@ -24,6 +24,7 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -596,7 +597,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
-    UiNotifyConnector.doWhenFirstShown(myPanel, () -> startLoadingRemoteTemplates(chooseTemplateStep));
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UiNotifyConnector.doWhenFirstShown(myPanel, () -> startLoadingRemoteTemplates(chooseTemplateStep));
+    }
+    else {
+      startLoadingRemoteTemplates(chooseTemplateStep);
+    }
   }
 
   private void startLoadingRemoteTemplates(ChooseTemplateStep chooseTemplateStep) {

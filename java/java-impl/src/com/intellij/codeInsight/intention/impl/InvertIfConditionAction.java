@@ -47,6 +47,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     if (ifStatement == null) return false;
     final PsiExpression condition = ifStatement.getCondition();
     if (condition == null) return false;
+    if (condition instanceof PsiPrefixExpression && ((PsiPrefixExpression)condition).getOperand() == null) return false;
     if (ifStatement.getThenBranch() == null) return false;
     if (element instanceof PsiKeyword) {
       PsiKeyword keyword = (PsiKeyword) element;
