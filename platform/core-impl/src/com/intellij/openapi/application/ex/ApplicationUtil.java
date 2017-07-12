@@ -26,7 +26,10 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -88,5 +91,17 @@ public class ApplicationUtil {
   }
 
   public static class CannotRunReadActionException extends ProcessCanceledException {
+    public CannotRunReadActionException() {
+    }
+
+    // NB. When &@$ing ForkJoinTask joins task which was exceptionally completed from the other thread
+    // it tries to re-create that exception (by reflection) and sets its cause to the original exception.
+    // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().
+    // To prevent creation of unneeded wrapped exception we supply this method as a bait which stupid ForkJoinTask calls and immediately poisons itself,
+    // causing the original exception to be used unwrapped. (see ForkJoinTask.getThrowableException())
+    @Override
+    public synchronized Throwable initCause(Throwable cause) {
+      throw this;
+    }
   }
 }
