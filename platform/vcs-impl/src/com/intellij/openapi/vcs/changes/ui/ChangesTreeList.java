@@ -385,14 +385,9 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     toggleChanges(getSelectedChanges());
   }
 
-  /**
-   * TODO: This method does not respect T type parameter while filling the result - just "Change" class is used
-   * TODO: ("ChangesBrowserNode.getAllChangesUnder()").
-   */
   @NotNull
   public List<T> getChanges() {
-    //noinspection unchecked
-    return ((ChangesBrowserNode)getRoot()).getAllChangesUnder();
+    return getSelectedObjects(getRoot());
   }
 
   @NotNull
@@ -500,7 +495,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   @NotNull
   public Collection<T> getIncludedChanges() {
-    return myIncludedChanges;
+    return ContainerUtil.filter(getChanges(), change -> myIncludedChanges.contains(change));
   }
 
   public void expandAll() {
