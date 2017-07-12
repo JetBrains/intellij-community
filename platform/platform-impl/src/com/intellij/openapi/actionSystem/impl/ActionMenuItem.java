@@ -86,7 +86,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
 
-    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
+    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0, true, false);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
 
@@ -212,7 +212,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   public void updateContext(@NotNull DataContext context) {
     myContext = context;
-    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0);
+    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0, true, false);
   }
 
   private void updateIcon(AnAction action) {
@@ -300,7 +300,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       fm.runOnOwnContext(myContext, () -> {
         final AnActionEvent event = new AnActionEvent(
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
-          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
+          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
         final AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {

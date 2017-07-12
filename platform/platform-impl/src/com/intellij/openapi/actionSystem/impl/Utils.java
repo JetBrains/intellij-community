@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ public class Utils{
     expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, transparentOnly, hideDisabled);
   }
 
+
   /**
    * @param list this list contains expanded actions.
    * @param actionManager manager
@@ -149,6 +150,25 @@ public class Utils{
                                        ActionManager actionManager,
                                        boolean transparentOnly,
                                        boolean hideDisabled) {
+    expandActionGroup(isInModalContext , group, list, presentationFactory, context,
+                      place, actionManager, transparentOnly, hideDisabled, false, false);
+  }
+
+  /**
+   * @param list this list contains expanded actions.
+   * @param actionManager manager
+   */
+  public static void expandActionGroup(boolean isInModalContext,
+                                       @NotNull ActionGroup group,
+                                       List<AnAction> list,
+                                       PresentationFactory presentationFactory,
+                                       DataContext context,
+                                       @NotNull String place,
+                                       ActionManager actionManager,
+                                       boolean transparentOnly,
+                                       boolean hideDisabled,
+                                       boolean isContextMenuAction,
+                                       boolean isToolbarAction) {
     Presentation presentation = presentationFactory.getPresentation(group);
     AnActionEvent e = new AnActionEvent(
       null,
@@ -156,7 +176,9 @@ public class Utils{
       place,
       presentation,
       actionManager,
-      0
+      0,
+      isContextMenuAction,
+      isToolbarAction
     );
     if (!doUpdate(isInModalContext, group, e, presentation)) return;
 
@@ -173,7 +195,7 @@ public class Utils{
       }
 
       presentation = presentationFactory.getPresentation(child);
-      AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0);
+      AnActionEvent e1 = new AnActionEvent(null, context, place, presentation, actionManager, 0, isContextMenuAction, isToolbarAction);
       e1.setInjectedContext(child.isInInjectedContext());
 
       if (transparentOnly && child.isTransparentUpdate() || !transparentOnly) {
@@ -338,7 +360,7 @@ public class Utils{
     final boolean checked = group instanceof CheckedActionGroup;
 
     final ArrayList<AnAction> list = new ArrayList<>();
-    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, ActionManager.getInstance());
+    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, ActionManager.getInstance(), false, group instanceof CompactActionGroup, true, false);
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();

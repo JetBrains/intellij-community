@@ -972,7 +972,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     DataContext dataContext = getDataContext();
 
     Utils.expandActionGroup(LaterInvocator.isInModalContext(), myActionGroup, newVisibleActions, myPresentationFactory, dataContext,
-                            myPlace, myActionManager, transparentOnly);
+                            myPlace, myActionManager, transparentOnly, false, false, true);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();

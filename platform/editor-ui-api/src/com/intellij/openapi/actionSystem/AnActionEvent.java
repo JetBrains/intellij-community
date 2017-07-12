@@ -45,7 +45,8 @@ public class AnActionEvent implements PlaceProvider<String> {
   private boolean myWorksInInjected;
   @NonNls private static final String ourInjectedPrefix = "$injected$.";
   private static final Map<String, String> ourInjectedIds = new HashMap<>();
-  private boolean myIsToolbarAction;
+  private final boolean myIsContextMenuAction;
+  private final boolean myIsActionToolbar;
 
   /**
    * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
@@ -59,6 +60,23 @@ public class AnActionEvent implements PlaceProvider<String> {
                        @NotNull Presentation presentation,
                        @NotNull ActionManager actionManager,
                        @JdkConstants.InputEventMask int modifiers) {
+    this(inputEvent, dataContext, place, presentation, actionManager, modifiers, false, false);
+  }
+
+  /**
+   * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
+   * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
+   *
+   * @see ActionManager#getInstance()
+   */
+  public AnActionEvent(InputEvent inputEvent,
+                       @NotNull DataContext dataContext,
+                       @NotNull @NonNls String place,
+                       @NotNull Presentation presentation,
+                       @NotNull ActionManager actionManager,
+                       @JdkConstants.InputEventMask int modifiers,
+                       boolean isContextMenuAction,
+                       boolean isActionToolbar) {
     // TODO[vova,anton] make this constructor package-private. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
@@ -66,7 +84,10 @@ public class AnActionEvent implements PlaceProvider<String> {
     myPlace = place;
     myPresentation = presentation;
     myModifiers = modifiers;
+    myIsContextMenuAction = isContextMenuAction;
+    myIsActionToolbar = isActionToolbar;
   }
+
 
   @Deprecated
   @NotNull
@@ -100,7 +121,7 @@ public class AnActionEvent implements PlaceProvider<String> {
                                                    @NotNull String place,
                                                    @NotNull Presentation presentation,
                                                    @NotNull DataContext dataContext) {
-    return createFromInputEvent(event, place, presentation, dataContext, false);
+    return createFromInputEvent(event, place, presentation, dataContext, false, false);
   }
 
   @NotNull
@@ -108,11 +129,10 @@ public class AnActionEvent implements PlaceProvider<String> {
                                                    @NotNull String place,
                                                    @NotNull Presentation presentation,
                                                    @NotNull DataContext dataContext,
+                                                   boolean isContextMenuAction,
                                                    boolean isToolbarAction) {
-    AnActionEvent e = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
-                                             event == null ? 0 : event.getModifiers());
-    e.myIsToolbarAction = isToolbarAction;
-    return e;
+    return new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
+                             event == null ? 0 : event.getModifiers(), isContextMenuAction, isToolbarAction);
   }
 
   /**
@@ -220,8 +240,12 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myPlace;
   }
 
-  public boolean isToolbarAction() {
-    return myIsToolbarAction;
+  public boolean isActionToolbar() {
+    return myIsActionToolbar;
+  }
+
+  public boolean isContextMenu() {
+    return myIsContextMenuAction;
   }
 
   /**
