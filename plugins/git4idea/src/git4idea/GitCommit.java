@@ -178,7 +178,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
 
     @NotNull
     private ParsedChanges parseChanges() throws VcsException {
-      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), ContainerUtil.map(getParents(), Hash::asString));
+      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), 0);
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
       myChanges.compareAndSet(this, parsedChanges);
@@ -230,17 +230,19 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
       else {
         List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
-          List<GitLogStatusInfo> statusInfos = myChangesOutput.get(i);
-          changes.add(parseStatusInfo(statusInfos, Collections.singletonList(getParents().get(i).asString())));
+          changes.add(parseStatusInfo(myChangesOutput.get(i), i));
         }
         return changes;
       }
     }
 
     @NotNull
-    private List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes,
-                                         @NotNull List<String> parentHashes) throws VcsException {
-      return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHashes);
+    private List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes, int parentIndex) throws VcsException {
+      String parentHash = null;
+      if (parentIndex < getParents().size()) {
+        parentHash = getParents().get(parentIndex).asString();
+      }
+      return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHash);
     }
 
     /*

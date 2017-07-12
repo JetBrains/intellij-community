@@ -40,9 +40,9 @@ public class GitChangesParser {
                                    @NotNull List<GitLogStatusInfo> statusInfos,
                                    @NotNull String hash,
                                    @NotNull Date date,
-                                   @NotNull List<String> parentsHashes) throws VcsException {
+                                   @Nullable String parentsHash) throws VcsException {
     GitRevisionNumber thisRevision = new GitRevisionNumber(hash, date);
-    GitRevisionNumber parentRevision = parentsHashes.isEmpty() ? null : new GitRevisionNumber(parentsHashes.get(0));
+    GitRevisionNumber parentRevision = parentsHash == null ? null : new GitRevisionNumber(parentsHash);
 
     List<Change> result = new ArrayList<>();
     for (GitLogStatusInfo statusInfo : statusInfos) {
