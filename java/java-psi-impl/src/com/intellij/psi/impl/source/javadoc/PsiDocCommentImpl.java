@@ -142,17 +142,14 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) return;
 
     CharTable charTable = SharedImplUtil.findCharTableByTree(tag);
-    TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, "\n", 0, 1, charTable, manager);
-    tag.addChild(newLine, null);
-
-    TreeElement leadingWhitespaceAnchor = null;
     if (JavaCodeStyleSettingsFacade.getInstance(project).isJavaDocLeadingAsterisksEnabled()) {
-      TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, charTable, manager);
-      leadingWhitespaceAnchor = tag.addInternal(leadingAsterisk, leadingAsterisk, null, Boolean.TRUE);
+      tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, manager));
+      tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", charTable, manager));
+      tag.addChild(Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, manager));
     }
-
-    TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, manager);
-    tag.addInternal(commentData, commentData, leadingWhitespaceAnchor, Boolean.TRUE);
+    else {
+      tag.addChild(Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, manager));
+    }
   }
 
   @Override
@@ -178,18 +175,20 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
             !docTagEndsWithLineFeedAndAsterisks(first)) {
           CharTable charTable = SharedImplUtil.findCharTableByTree(this);
           PsiManager psiManager = getManager();
-          TreeElement newLine = Factory.createSingleLeafElement(DOC_COMMENT_DATA, "\n", 0, 1, charTable, psiManager);
-          TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", 0, 1, charTable, psiManager);
-          TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, psiManager);
-          TreeElement indentWS = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", 0, 1, charTable, psiManager);
 
-          newLine.getTreeParent().addChild(indentWS);
-          newLine.getTreeParent().addChild(leadingAsterisk);
-          newLine.getTreeParent().addChild(commentData);
-
-          super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
-
-          anchor = commentData;
+          if (JavaCodeStyleSettingsFacade.getInstance(getProject()).isJavaDocLeadingAsterisksEnabled()) {
+            TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, psiManager);
+            TreeElement leadingAsterisk = Factory.createSingleLeafElement(DOC_COMMENT_LEADING_ASTERISKS, "*", charTable, psiManager);
+            TreeElement commentData = Factory.createSingleLeafElement(DOC_COMMENT_DATA, " ", charTable, psiManager);
+            newLine.getTreeParent().addChild(leadingAsterisk);
+            newLine.getTreeParent().addChild(commentData);
+            super.addInternal(newLine, commentData, anchor, Boolean.FALSE);
+            anchor = commentData;
+          }
+          else {
+            TreeElement newLine = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n ", charTable, psiManager);
+            anchor = super.addInternal(newLine, newLine, anchor, Boolean.FALSE);
+          }
           before = Boolean.FALSE;
         }
       }
