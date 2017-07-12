@@ -17,7 +17,8 @@ package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
@@ -52,8 +53,23 @@ object GuiTestLocalLauncher {
 
   var process: Process? = null
 
-  var cachedGuiTestFrameworkModule: JpsModule? = null
-  var cachedModulesList: MutableList<JpsModule> = ArrayList<JpsModule>()
+  val TEST_GUI_FRAMEWORK_MODULE_NAME = "testGuiFramework"
+
+  val project: JpsProject by lazy {
+    val home = PathManager.getHomePath()
+    val model = JpsElementFactory.getInstance().createModel()
+    val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
+    val jpsProject = model.project
+    JpsProjectLoader.loadProject(jpsProject, pathVariables, home)
+    jpsProject.changeOutputIfNeeded()
+    jpsProject
+  }
+  val modulesList: List<JpsModule> by lazy {
+    project.modules
+  }
+  val testGuiFrameworkModule: JpsModule by lazy {
+    modulesList.module(TEST_GUI_FRAMEWORK_MODULE_NAME) ?: throw Exception("Unable to find module '$TEST_GUI_FRAMEWORK_MODULE_NAME'")
+  }
 
   fun killProcessIfPossible() {
     try {
@@ -236,12 +252,10 @@ object GuiTestLocalLauncher {
   private fun getExtendedClasspath(moduleName: String): MutableSet<File> {
     // here we trying to analyze output path for project from classloader path and from modules classpath.
     // If they didn't match than change it to output path from classpath
-    changeProjectOutputIfNeeded()
     val resultSet = LinkedHashSet<File>()
-    val module = getModulesList().module(moduleName)!!
+    val module = modulesList.module(moduleName) ?: throw Exception("Unable to find module with name: $moduleName")
     resultSet.addAll(module.getClasspath())
-    val testGuiFrameworkModule = getTestGuiFrameworkModule()
-    resultSet.addAll(testGuiFrameworkModule!!.getClasspath())
+    resultSet.addAll(testGuiFrameworkModule.getClasspath())
     return resultSet
   }
 
@@ -252,57 +266,30 @@ object GuiTestLocalLauncher {
     JpsJavaExtensionService.dependencies(this).productionOnly().runtimeOnly().recursively().classes().roots
 
 
-  private fun getClassloaderOutputDir(): File? {
+  private fun getOutputRootFromClassloader(): File {
     val pathFromClassloader = PathManager.getJarPathForClass(GuiTestLocalLauncher::class.java)
-    return File(pathFromClassloader).parentFile.parentFile
+    val productionDir = File(pathFromClassloader).parentFile
+    assert(productionDir.isDirectory)
+    val outputDir = productionDir.parentFile
+    assert(outputDir.isDirectory)
+    return outputDir
   }
-
-  private fun getModuleOutputDir(): File {
-    val testGuiFrameworkModule = getTestGuiFrameworkModule()
-    return testGuiFrameworkModule!!.getClasspath().filter { it.path.contains(testGuiFrameworkModule.name) }.first().parentFile.parentFile
-  }
-
-  private fun getRelativeClassloaderOutputPath(): String? =
-    FileUtilRt.getRelativePath(File(PathManager.getHomePath()), getClassloaderOutputDir())
-
-  private fun getRelativeModuleOutputPath(): String? =
-    FileUtilRt.getRelativePath(File(PathManager.getHomePath()), getModuleOutputDir())
 
   /**
    * @return true if classloader's output path is the same to module's output path (and also same to project)
    */
-  private fun isClassloaderOutputSame(): Boolean =
-    (getRelativeClassloaderOutputPath() == getRelativeModuleOutputPath())
+  private fun needToChangeProjectOutput(project: JpsProject): Boolean =
+      JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ==
+          getOutputRootFromClassloader().path
 
 
-  private fun changeProjectOutputIfNeeded() {
-    if (!isClassloaderOutputSame()) {
-      val project = getProject()
-      val projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project)
-      projectExtension!!.outputUrl = getClassloaderOutputDir()!!.toURI().toURL().toString()
+  private fun JpsProject.changeOutputIfNeeded() {
+    if (!needToChangeProjectOutput(this)) {
+      val projectExtension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(this)
+      projectExtension.outputUrl = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getOutputRootFromClassloader().path))
     }
   }
 
-  private fun getModulesList(): MutableList<JpsModule> {
-    if (cachedModulesList.isNotEmpty()) return cachedModulesList
-    val home = PathManager.getHomePath()
-    val model = JpsElementFactory.getInstance().createModel()
-
-    val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-    JpsProjectLoader.loadProject(model.project, pathVariables, home)
-
-    cachedModulesList.addAll(model.project.modules)
-    return cachedModulesList
-  }
-
-  private fun getTestGuiFrameworkModule(): JpsModule? {
-    if (cachedGuiTestFrameworkModule != null) return cachedGuiTestFrameworkModule
-    cachedGuiTestFrameworkModule = getModulesList().module("testGuiFramework")
-    return cachedGuiTestFrameworkModule
-  }
-
-  private fun getProject(): JpsProject =
-    getTestGuiFrameworkModule()!!.project
 }
 
 fun main(args: Array<String>) {

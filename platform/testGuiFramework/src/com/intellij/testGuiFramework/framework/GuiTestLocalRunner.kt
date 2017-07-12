@@ -102,6 +102,7 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }
     catch (e: Exception) {
+      SERVER_LOG.error(e)
       notifier.fireTestIgnored(description)
       Assert.fail(e.message)
       cdl.countDown()
@@ -140,19 +141,26 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       }
     }
 
-    notifier.addListener(runListener)
+    try {
 
-    LOG.info("Starting test: '${testClass.name}.${method.name}'")
-    if (GuiTestUtil.doesIdeHaveFatalErrors()) {
-      notifier.fireTestIgnored(describeChild(method))
-      LOG.error("Skipping test '${method.name}': a fatal error has occurred in the IDE")
-      notifier.pleaseStop()
-    }
-    else {
-      if (!GuiTestStarter.isGuiTestThread())
-        runIdeLocally()
-      else
-        super.runChild(method, notifier)
+
+      notifier.addListener(runListener)
+
+      LOG.info("Starting test: '${testClass.name}.${method.name}'")
+      if (GuiTestUtil.doesIdeHaveFatalErrors()) {
+        notifier.fireTestIgnored(describeChild(method))
+        LOG.error("Skipping test '${method.name}': a fatal error has occurred in the IDE")
+        notifier.pleaseStop()
+      }
+      else {
+        if (!GuiTestStarter.isGuiTestThread())
+          runIdeLocally()
+        else
+          super.runChild(method, notifier)
+      }
+    } catch (e: Exception) {
+      LOG.error(e)
+      throw e
     }
   }
 
