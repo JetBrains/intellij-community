@@ -20,8 +20,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import org.jetbrains.annotations.NotNull;
 
-
-public class RedundantTypeArgsInspectionTest extends LightQuickFixParameterizedTestCase {
+public class RedundantTypeArgsInspectionFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
