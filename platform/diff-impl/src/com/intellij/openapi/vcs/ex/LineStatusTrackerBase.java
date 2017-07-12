@@ -92,8 +92,9 @@ public abstract class LineStatusTrackerBase {
   // Abstract
   //
 
+  @Nullable
   @CalledInAwt
-  protected abstract void createHighlighter(@NotNull Range range);
+  protected abstract RangeHighlighter createHighlighter(@NotNull Range range);
 
   @CalledInAwt
   protected boolean isDetectWhitespaceChangedLines() {
@@ -149,7 +150,7 @@ public abstract class LineStatusTrackerBase {
       try {
         myRanges = RangesBuilder.createRanges(myDocument, myVcsDocument, isDetectWhitespaceChangedLines());
         for (final Range range : myRanges) {
-          createHighlighter(range);
+          installHighlighter(range);
         }
 
         if (myRanges.isEmpty()) {
@@ -189,6 +190,23 @@ public abstract class LineStatusTrackerBase {
     if (!myAnathemaThrown) return;
     myAnathemaThrown = false;
     destroyNotification();
+  }
+
+  @CalledInAwt
+  private void installHighlighter(@NotNull Range range) {
+    myApplication.assertIsDispatchThread();
+    if (range.getHighlighter() != null) {
+      LOG.error("Multiple highlighters registered for the same Range");
+      return;
+    }
+
+    try {
+      RangeHighlighter highlighter = createHighlighter(range);
+      range.setHighlighter(highlighter);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @CalledInAwt
@@ -332,7 +350,7 @@ public abstract class LineStatusTrackerBase {
         disposeHighlighter(range);
       }
       for (Range range : myToBeInstalledRanges) {
-        createHighlighter(range);
+        installHighlighter(range);
       }
       myToBeDestroyedRanges.clear();
       myToBeInstalledRanges.clear();

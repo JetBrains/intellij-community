@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -142,17 +143,11 @@ public class LineStatusTracker extends LineStatusTrackerBase {
     }
   }
 
+  @Nullable
   @Override
   @CalledInAwt
-  protected void createHighlighter(@NotNull Range range) {
-    myApplication.assertIsDispatchThread();
-
-    if (range.getHighlighter() != null) {
-      LOG.error("Multiple highlighters registered for the same Range");
-      return;
-    }
-
-    if (myMode == Mode.SILENT) return;
+  protected RangeHighlighter createHighlighter(@NotNull Range range) {
+    if (myMode == Mode.SILENT) return null;
 
     int first =
       range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
@@ -168,7 +163,7 @@ public class LineStatusTracker extends LineStatusTrackerBase {
 
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
 
-    range.setHighlighter(highlighter);
+    return highlighter;
   }
 
   @Override

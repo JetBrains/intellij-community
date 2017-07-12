@@ -1286,14 +1286,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         super(project, document);
       }
 
+      @Nullable
       @Override
-      protected void createHighlighter(@NotNull final Range range) {
-        myApplication.assertIsDispatchThread();
-        if (range.getHighlighter() != null) {
-          LOG.error("Multiple highlighters registered for the same Range");
-          return;
-        }
-
+      protected RangeHighlighter createHighlighter(@NotNull Range range) {
         int first = range.getLine1() < getLineCount(myDocument) ?
                     myDocument.getLineStartOffset(range.getLine1()) :
                     myDocument.getTextLength();
@@ -1306,7 +1301,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
         highlighter.setLineMarkerRenderer(new MyLineStatusMarkerRenderer(range));
 
-        range.setHighlighter(highlighter);
+        return highlighter;
       }
 
       @Nullable
