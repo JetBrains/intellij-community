@@ -678,6 +678,10 @@ public class ListUtils {
     configure()
     assert myFixture.lookupElementStrings == ['boolean', 'byte']
   }
+  void testNoExpectedVoidReturnTypeDuplication() {
+    configure()
+    assert myFixture.lookupElementStrings == ['void']
+  }
 
   void testMethodReturnType() throws Throwable {
     doTest()
