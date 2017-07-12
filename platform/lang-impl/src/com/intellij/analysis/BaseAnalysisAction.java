@@ -202,7 +202,8 @@ public abstract class BaseAnalysisAction extends AnAction {
     InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);
     if (inspectionView != null) {
       AnalysisScope scope = inspectionView.getScope();
-      if (scope.isValid()) {
+      int type = scope.getScopeType();
+      if (type != AnalysisScope.MODULE && type != AnalysisScope.PROJECT && scope.isValid()) {
         return scope;
       }
     }
