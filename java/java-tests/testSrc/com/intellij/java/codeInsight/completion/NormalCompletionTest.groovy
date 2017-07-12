@@ -683,6 +683,11 @@ public class ListUtils {
     assert myFixture.lookupElementStrings == ['void']
   }
 
+  void testNoExpectedArrayTypeDuplication() {
+    configure()
+    assert myFixture.lookupElementStrings == ['char']
+  }
+
   void testMethodReturnType() throws Throwable {
     doTest()
   }

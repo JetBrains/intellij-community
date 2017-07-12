@@ -308,10 +308,22 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       session.flushBatchItems();
-      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, session::addClassItem);
+      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, lookupElement -> {
+        if (!isSuggestedByKeywordCompletion(lookupElement)) {
+          session.addClassItem(lookupElement);
+        }
+      });
     }
 
     suggestSmartCast(parameters, session, false, result);
+  }
+
+  private static boolean isSuggestedByKeywordCompletion(LookupElement lookupElement) {
+    if (lookupElement instanceof PsiTypeLookupItem) {
+      PsiType type = ((PsiTypeLookupItem)lookupElement).getType();
+      return type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType() instanceof PsiPrimitiveType;
+    }
+    return false;
   }
 
   private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<LookupElement> result) {
