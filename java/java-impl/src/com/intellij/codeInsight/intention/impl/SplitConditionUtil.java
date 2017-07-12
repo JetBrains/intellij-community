@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class SplitConditionUtil {
   }
 
   public static PsiExpression getROperands(PsiPolyadicExpression expression, PsiJavaToken separator) throws IncorrectOperationException {
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(separator, PsiWhiteSpace.class, PsiComment.class);
+    PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(separator);
     final int offsetInParent;
     if (next == null) {
       offsetInParent = separator.getStartOffsetInParent() + separator.getTextLength();

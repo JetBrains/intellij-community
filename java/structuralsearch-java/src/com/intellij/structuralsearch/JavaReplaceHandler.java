@@ -405,7 +405,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
             }
             final PsiElement lastElement = unmatchedElements.get(unmatchedElements.size() - 1);
             if (lastElement instanceof PsiCodeBlock) {
-              final PsiElement finallyKeyword = PsiTreeUtil.skipSiblingsBackward(lastElement, PsiWhiteSpace.class);
+              final PsiElement finallyKeyword = PsiTreeUtil.skipWhitespacesBackward(lastElement);
               assert finallyKeyword != null;
               final PsiElement finallyAnchor = tryStatement.getLastChild();
               addElementAfterAnchor(tryStatement, lastElement, finallyAnchor);
@@ -498,8 +498,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         }
         else if (element instanceof PsiField) {
           while (PsiUtil.isJavaToken(nextSibling, JavaTokenType.COMMA)) {
-            lastToDelete = PsiTreeUtil.skipSiblingsForward(nextSibling, PsiWhiteSpace.class);
-            nextSibling = PsiTreeUtil.skipSiblingsForward(lastToDelete, PsiWhiteSpace.class);
+            lastToDelete = PsiTreeUtil.skipWhitespacesForward(nextSibling);
+            nextSibling = PsiTreeUtil.skipWhitespacesForward(lastToDelete);
           }
         }
 

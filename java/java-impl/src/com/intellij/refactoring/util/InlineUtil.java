@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,13 +217,13 @@ public class InlineUtil {
           lastInitializerSibling = nextSibling;
         }
         if (lastInitializerSibling instanceof PsiWhiteSpace) {
-          lastInitializerSibling = PsiTreeUtil.skipSiblingsBackward(lastInitializerSibling, PsiWhiteSpace.class);
+          lastInitializerSibling = PsiTreeUtil.skipWhitespacesBackward(lastInitializerSibling);
         }
         if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
           lastInitializerSibling = lastInitializerSibling.getPrevSibling();
         }
         PsiElement firstElement = initializers[0];
-        final PsiElement leadingComment = PsiTreeUtil.skipSiblingsBackward(firstElement, PsiWhiteSpace.class);
+        final PsiElement leadingComment = PsiTreeUtil.skipWhitespacesBackward(firstElement);
         if (leadingComment instanceof PsiComment) {
           firstElement = leadingComment;
         }

@@ -117,7 +117,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
 
   @Nullable
   protected List<? extends PsiElement> getCommentsFor(@NotNull final PsiElement container) {
-    final PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, PsiWhiteSpace.class);
+    final PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(container);
     if (prev == null) {
       return null;
     }

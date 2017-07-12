@@ -163,7 +163,7 @@ public class JavaSuppressionUtil {
   static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment == null && owner.getParent() instanceof PsiDeclarationStatement) {
-      final PsiElement el = PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
+      final PsiElement el = PsiTreeUtil.skipWhitespacesBackward(owner.getParent());
       if (el instanceof PsiDocComment) {
         docComment = (PsiDocComment)el;
       }

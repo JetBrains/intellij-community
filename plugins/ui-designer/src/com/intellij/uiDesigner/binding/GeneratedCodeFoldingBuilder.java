@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     }
 
     private void addFoldingData(final PsiElement element) {
-      PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+      PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(element);
       synchronized (myFoldingData) {
         if (myLastElement == null || prevSibling != myLastElement) {
           myFoldingData.add(new FoldingDescriptor(element, element.getTextRange()));

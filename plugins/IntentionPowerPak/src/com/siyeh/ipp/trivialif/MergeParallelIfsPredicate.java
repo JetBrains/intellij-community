@@ -40,8 +40,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate {
     }
     final PsiIfStatement ifStatement = (PsiIfStatement)parent;
     final PsiElement nextStatement =
-      PsiTreeUtil.skipSiblingsForward(ifStatement,
-                                      PsiWhiteSpace.class);
+      PsiTreeUtil.skipWhitespacesForward(ifStatement);
     if (!(nextStatement instanceof PsiIfStatement)) {
       return false;
     }

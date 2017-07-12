@@ -400,7 +400,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {
     PsiTypeParameterList typeParameterList = PsiTreeUtil.findChildOfType(method, PsiTypeParameterList.class);
     if (typeParameterList != null) {
-      PsiElement nextNonWsElem = PsiTreeUtil.skipSiblingsForward(typeParameterList, PsiWhiteSpace.class);
+      PsiElement nextNonWsElem = PsiTreeUtil.skipWhitespacesForward(typeParameterList);
       if (nextNonWsElem != null) {
         return nextNonWsElem.getTextRange().getStartOffset();
       }

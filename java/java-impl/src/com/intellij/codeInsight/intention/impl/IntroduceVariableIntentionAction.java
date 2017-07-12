@@ -73,7 +73,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
       new IntroduceEmptyVariableHandler().invoke(editor, element.getContainingFile(), type);
       return;
     }
-    
+
     final PsiExpressionStatement statement = detectExpressionStatement(element);
     if (statement == null){
       return;
@@ -94,7 +94,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
   }
 
   private static PsiExpressionStatement detectExpressionStatement(@NotNull PsiElement element) {
-    final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(element);
     return prevSibling instanceof PsiExpressionStatement ? (PsiExpressionStatement)prevSibling
                                                          : PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class);
   }

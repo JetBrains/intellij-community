@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class RncCompletionContributor extends CompletionContributor {
 
 
   private static String[] getKeywords(PsiElement context) {
-    final PsiElement next = PsiTreeUtil.skipSiblingsForward(context, PsiWhiteSpace.class);
+    final PsiElement next = PsiTreeUtil.skipWhitespacesForward(context);
     if (next != null && EscapeUtil.unescapeText(next).equals("=")) {
       return new String[]{ "start" };
     }

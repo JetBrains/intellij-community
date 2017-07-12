@@ -184,7 +184,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     PsiElement i = statement.getNextSibling();
     while (i != null && i != stopAt) {
       PsiElement child = i;
-      i = PsiTreeUtil.skipSiblingsForward(i, PsiWhiteSpace.class, PsiComment.class);
+      i = PsiTreeUtil.skipWhitespacesAndCommentsForward(i);
 
       if (!(child instanceof PsiDeclarationStatement)) continue;
 

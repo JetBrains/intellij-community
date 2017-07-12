@@ -161,7 +161,7 @@ class CollectMigration extends BaseStreamApiMigration {
       Arrays.asList(SortingTerminal::tryWrap, ToArrayTerminal::tryWrap, NewListTerminal::tryWrap);
     PsiElement nextStatement = loop;
     while (true) {
-      nextStatement = PsiTreeUtil.skipSiblingsForward(nextStatement, PsiComment.class, PsiWhiteSpace.class);
+      nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(nextStatement);
       CollectTerminal wrapped = null;
       for (BiFunction<CollectTerminal, PsiElement, CollectTerminal> wrapper : wrappers) {
         wrapped = wrapper.apply(terminal, nextStatement);
@@ -640,7 +640,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     static PsiMethodCallExpression getAfterLoopAppend(PsiLoopStatement loop, PsiVariable target) {
-      PsiElement next = PsiTreeUtil.skipSiblingsForward(loop, PsiComment.class, PsiWhiteSpace.class);
+      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(loop);
       if (!(next instanceof PsiExpressionStatement)) return null;
       PsiExpression expression = ((PsiExpressionStatement)next).getExpression();
       if (!(expression instanceof PsiMethodCallExpression)) return null;

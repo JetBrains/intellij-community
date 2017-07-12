@@ -163,7 +163,7 @@ public class InplaceChangeSignature implements DocumentListener {
 
       if (element instanceof PsiWhiteSpace) {
         PsiElement method = myStableChange.getMethod();
-        if (PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class) == method) {
+        if (PsiTreeUtil.skipWhitespacesForward(element) == method) {
           return;
         }
       }

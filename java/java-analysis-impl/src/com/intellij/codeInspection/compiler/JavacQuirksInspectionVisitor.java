@@ -62,7 +62,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   @Override
   public void visitAnnotationArrayInitializer(final PsiArrayInitializerMemberValue initializer) {
     if (PsiUtil.isLanguageLevel7OrHigher(initializer)) return;
-    final PsiElement lastElement = PsiTreeUtil.skipSiblingsBackward(initializer.getLastChild(), PsiWhiteSpace.class, PsiComment.class);
+    final PsiElement lastElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(initializer.getLastChild());
     if (lastElement != null && PsiUtil.isJavaToken(lastElement, JavaTokenType.COMMA)) {
       final String message = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.problem");
       final String fixName = InspectionsBundle.message("inspection.compiler.javac.quirks.anno.array.comma.fix");
@@ -120,7 +120,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     super.visitVariable(variable);
     final PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
-      final PsiElement assignmentToken = PsiTreeUtil.skipSiblingsBackward(initializer, PsiWhiteSpace.class);
+      final PsiElement assignmentToken = PsiTreeUtil.skipWhitespacesBackward(initializer);
       if (assignmentToken != null) {
         checkIntersectionType(variable.getType(), initializer.getType(), assignmentToken);
       }

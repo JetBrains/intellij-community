@@ -138,7 +138,7 @@ public class DuplicateConditionInspection extends BaseInspection {
         if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
           return;
         }
-        PsiElement next = PsiTreeUtil.skipSiblingsForward(statement, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
         if(next instanceof PsiIfStatement) {
           collectConditionsForIfStatement((PsiIfStatement)next, conditions, depth + 1);
         }

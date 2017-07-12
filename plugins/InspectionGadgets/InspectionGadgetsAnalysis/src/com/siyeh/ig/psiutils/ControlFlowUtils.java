@@ -605,7 +605,7 @@ public class ControlFlowUtils {
           } else break;
         } else break;
       }
-      PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class);
+      PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(cur);
       if(nextElement instanceof PsiReturnStatement) {
         return EquivalenceChecker.getCanonicalPsiEquivalence()
           .expressionsAreEquivalent(returnValue, ((PsiReturnStatement)nextElement).getReturnValue());
@@ -833,7 +833,7 @@ public class ControlFlowUtils {
     if(declaration instanceof PsiDeclarationStatement) {
       PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
       if (ArrayUtil.getLastElement(elements) == var && nextStatement.equals(
-        PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
+        PsiTreeUtil.skipWhitespacesAndCommentsForward(declaration))) {
         return true;
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,7 +352,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         result.put(memberContainer, inaccessibleReferenced);
         for (PsiMember member : referencedElements) {
           if (PsiTreeUtil.isAncestor(elementToInline, member, false)) continue;
-          if (elementToInline instanceof PsiClass && 
+          if (elementToInline instanceof PsiClass &&
               InheritanceUtil.isInheritorOrSelf((PsiClass)elementToInline, member.getContainingClass(), true)) continue;
           PsiElement resolveScope = usageElement instanceof PsiReferenceExpression
                                     ? ((PsiReferenceExpression)usageElement).advancedResolve(false).getCurrentFileResolveScope()
@@ -662,7 +662,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       int first = 0;
       if (first <= last) {
         final PsiElement rBraceOrReturnStatement =
-          PsiTreeUtil.skipSiblingsForward(statements[last], PsiWhiteSpace.class, PsiComment.class);
+          PsiTreeUtil.skipWhitespacesAndCommentsForward(statements[last]);
         LOG.assertTrue(rBraceOrReturnStatement != null);
         final PsiElement beforeRBraceStatement = rBraceOrReturnStatement.getPrevSibling();
         LOG.assertTrue(beforeRBraceStatement != null);

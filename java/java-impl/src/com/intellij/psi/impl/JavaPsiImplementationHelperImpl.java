@@ -277,7 +277,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   private static PsiElement skipWhitespaces(PsiClass aClass, PsiElement anchor) {
-    if (anchor != null && PsiTreeUtil.skipSiblingsForward(anchor, PsiWhiteSpace.class) == aClass.getRBrace()) {
+    if (anchor != null && PsiTreeUtil.skipWhitespacesForward(anchor) == aClass.getRBrace()) {
       // Given member should be inserted as the last child.
       return aClass.getRBrace();
     }

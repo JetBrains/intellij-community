@@ -213,7 +213,7 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
       List<PsiAssignmentExpression> assignments = new ArrayList<>();
       if (!isInitializedWithSameExpression(field, assignment, assignments)) return;
 
-      PsiElement prev = PsiTreeUtil.skipSiblingsBackward(assignment.getParent(), PsiComment.class, PsiWhiteSpace.class);
+      PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(assignment.getParent());
       String comments = prev == null ? null : CommentTracker.commentsBetween(prev, assignment);
 
       PsiExpression initializer = assignment.getRExpression();

@@ -104,8 +104,7 @@ public class MergeIfOrIntention extends Intention {
     final PsiIfStatement parentStatement =
       (PsiIfStatement)token.getParent();
     final PsiIfStatement childStatement =
-      (PsiIfStatement)PsiTreeUtil.skipSiblingsForward(parentStatement,
-                                                      PsiWhiteSpace.class);
+      (PsiIfStatement)PsiTreeUtil.skipWhitespacesForward(parentStatement);
     assert childStatement != null;
     final PsiExpression childCondition = childStatement.getCondition();
     if (childCondition == null) {

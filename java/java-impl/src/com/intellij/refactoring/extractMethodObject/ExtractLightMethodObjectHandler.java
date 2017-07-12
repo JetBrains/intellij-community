@@ -105,7 +105,7 @@ public class ExtractLightMethodObjectHandler {
     if (originalAnchor == null) {
       final PsiElement elementAt = copy.findElementAt(range.getStartOffset());
       if (elementAt != null && elementAt.getClass() == originalContext.getClass()) {
-        originalAnchor = PsiTreeUtil.skipSiblingsForward(elementAt, PsiWhiteSpace.class);
+        originalAnchor = PsiTreeUtil.skipWhitespacesForward(elementAt);
       }
     }
 
@@ -241,7 +241,7 @@ public class ExtractLightMethodObjectHandler {
                              originalAnchor);
   }
 
-  @Nullable 
+  @Nullable
   private static PsiElement[] completeToStatementArray(PsiCodeFragment fragment, PsiElementFactory elementFactory) {
     PsiExpression expression = CodeInsightUtil.findExpressionInRange(fragment, 0, fragment.getTextLength());
     if (expression != null) {
@@ -251,8 +251,8 @@ public class ExtractLightMethodObjectHandler {
         if (initializers.length > 0) {
           final PsiType type = initializers[0].getType();
           if (type != null) {
-            completeExpressionText = "new " + type.getCanonicalText() + "[]" + expression.getText(); 
-          } 
+            completeExpressionText = "new " + type.getCanonicalText() + "[]" + expression.getText();
+          }
         }
       } else {
         completeExpressionText = expression.getText();

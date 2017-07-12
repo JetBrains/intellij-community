@@ -291,7 +291,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myOutputVariable = myOutputVariables.length > 0 ? myOutputVariables[0] : null;
     if (myNotNullConditionalCheck) {
-      myReturnType = returnStatementType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)returnStatementType).getBoxedType(myCodeFragmentMember) 
+      myReturnType = returnStatementType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)returnStatementType).getBoxedType(myCodeFragmentMember)
                                                                      : returnStatementType;
     } else if (myHasReturnStatementOutput) {
       myReturnType = returnStatementType;
@@ -333,10 +333,10 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private PsiType getExpectedReturnType() {
-    return myCodeFragmentMember instanceof PsiMethod 
+    return myCodeFragmentMember instanceof PsiMethod
                                         ? ((PsiMethod)myCodeFragmentMember).getReturnType()
-                                        : myCodeFragmentMember instanceof PsiLambdaExpression 
-                                          ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember) 
+                                        : myCodeFragmentMember instanceof PsiLambdaExpression
+                                          ? LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myCodeFragmentMember)
                                           : null;
   }
 
@@ -665,8 +665,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       return new PsiExpression[] {myExpression};
     }
     if (myOutputVariable != null) {
-      final PsiElement scope = myOutputVariable instanceof PsiLocalVariable 
-                               ? RefactoringUtil.getVariableScope((PsiLocalVariable)myOutputVariable) 
+      final PsiElement scope = myOutputVariable instanceof PsiLocalVariable
+                               ? RefactoringUtil.getVariableScope((PsiLocalVariable)myOutputVariable)
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
@@ -733,7 +733,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private String getNameByComment() {
-    PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(myElements[0], PsiWhiteSpace.class);
+    PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(myElements[0]);
     if (prevSibling instanceof PsiComment && ((PsiComment)prevSibling).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
       final String text = StringUtil.decapitalize(StringUtil.capitalizeWords(prevSibling.getText().trim().substring(2), true)).replaceAll(" ", "");
       if (PsiNameHelper.getInstance(myProject).isIdentifier(text) && text.length() < 20) {
@@ -929,7 +929,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         else if (myGenerateConditionalExit) {
           if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
             ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
-          } 
+          }
           else {
             ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
           }
@@ -1374,7 +1374,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       newMethod = myElementFactory.createConstructor();
     }
     else {
-      newMethod = context != null ? myElementFactory.createMethod(methodName, myReturnType, context) 
+      newMethod = context != null ? myElementFactory.createMethod(methodName, myReturnType, context)
                                   : myElementFactory.createMethod(methodName, myReturnType);
       PsiUtil.setModifierProperty(newMethod, PsiModifier.STATIC, isStatic());
     }
@@ -1963,7 +1963,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public PsiVariable[] getOutputVariables() {
     return myOutputVariables;
   }
-  
+
   public void setMethodVisibility(String methodVisibility) {
     myMethodVisibility = methodVisibility;
   }

@@ -570,7 +570,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           }
           break;
         case UNKNOWN:
-          PsiElement prevStatement = PsiTreeUtil.skipSiblingsBackward(declaration, PsiWhiteSpace.class, PsiComment.class);
+          PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(declaration);
           PsiExpression prevAssignment = ExpressionUtils.getAssignmentTo(prevStatement, variable);
           if (prevAssignment != null) {
             ct.replace(builderInitializer, generateNewStringBuilder(prevAssignment, ct));

@@ -193,8 +193,8 @@ public class CreateFromUsageUtils {
   public static void setupEditor(PsiMethod method, final Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
-      PsiElement l = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class);
-      PsiElement r = PsiTreeUtil.skipSiblingsBackward(body.getRBrace(), PsiWhiteSpace.class);
+      PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
+      PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
       if (l != null && r != null) {
         int start = l.getTextRange().getStartOffset();
         int end = r.getTextRange().getEndOffset();

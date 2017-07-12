@@ -186,12 +186,12 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
 
     @Nullable
     private static PsiElement skipForwardWhiteSpacesAndComments(PsiElement element) {
-      return PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
+      return PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
     }
 
     @Nullable
     private static PsiElement skipBackwardWhiteSpacesAndComments(PsiElement element) {
-      return PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class, PsiComment.class);
+      return PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
     }
 
     @Override

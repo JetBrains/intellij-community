@@ -137,7 +137,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
   @NonNls private static final String REFACTORING_ID = "refactoring.extractVariable";
-  
+
   protected static final String REFACTORING_NAME = RefactoringBundle.message("introduce.variable.title");
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
   private JavaVariableInplaceIntroducer myInplaceIntroducer;
@@ -206,7 +206,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     return true;
   }
-  
+
   public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
     TextRange range = statementsInRange[0].getTextRange();
     if (statementsInRange[0] instanceof PsiExpressionStatement) {
@@ -356,7 +356,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     PsiElement elementAtStart = file.findElementAt(startOffset);
     if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
-      final PsiElement element = PsiTreeUtil.skipSiblingsForward(elementAtStart, PsiWhiteSpace.class, PsiComment.class);
+      final PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsForward(elementAtStart);
       if (element != null) {
         startOffset = element.getTextOffset();
         elementAtStart = file.findElementAt(startOffset);
@@ -372,7 +372,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
     if (elementAtEnd == null || elementAtEnd instanceof PsiWhiteSpace || elementAtEnd instanceof PsiComment) {
-      elementAtEnd = PsiTreeUtil.skipSiblingsBackward(elementAtEnd, PsiWhiteSpace.class, PsiComment.class);
+      elementAtEnd = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementAtEnd);
       if (elementAtEnd == null) return null;
       endOffset = elementAtEnd.getTextRange().getEndOffset();
     }
@@ -388,7 +388,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (containingExpression != null && containingExpression == elementAtEnd && startOffset == containingExpression.getTextOffset()) {
       return containingExpression;
     }
-    
+
     if (containingExpression == null || containingExpression instanceof PsiLambdaExpression) {
       if (injectedLanguageManager.isInjectedFragment(file)) {
         return getSelectionFromInjectedHost(project, file, injectedLanguageManager, startOffset, endOffset);
@@ -888,7 +888,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       tempDeleteSelf &= replaceSelf;
     }
     final boolean deleteSelf = tempDeleteSelf;
-    final boolean replaceLoop = isInsideLoop ? exprParent instanceof PsiExpressionStatement 
+    final boolean replaceLoop = isInsideLoop ? exprParent instanceof PsiExpressionStatement
                                              : container instanceof PsiLambdaExpression && exprParent == container;
 
 
@@ -1131,7 +1131,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     return parent instanceof PsiStatement ? factory.createStatementFromText(text, parent) :
-                                            parent instanceof PsiCodeBlock ? factory.createCodeBlockFromText(text, parent) 
+                                            parent instanceof PsiCodeBlock ? factory.createCodeBlockFromText(text, parent)
                                                                            : factory.createExpressionFromText(text, parent);
   }
 

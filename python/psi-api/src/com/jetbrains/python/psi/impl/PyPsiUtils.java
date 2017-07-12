@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static PsiElement getPrevNonWhitespaceSibling(@Nullable PsiElement element) {
-    return PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    return PsiTreeUtil.skipWhitespacesBackward(element);
   }
 
   /**
@@ -96,7 +96,7 @@ public class PyPsiUtils {
     if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
       return start;
     }
-    return PsiTreeUtil.skipSiblingsBackward(start, PsiWhiteSpace.class, PsiComment.class);
+    return PsiTreeUtil.skipWhitespacesAndCommentsBackward(start);
   }
 
   /**
@@ -113,11 +113,11 @@ public class PyPsiUtils {
    */
   @Nullable
   public static PsiElement getNextNonWhitespaceSibling(@Nullable PsiElement element) {
-    return PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+    return PsiTreeUtil.skipWhitespacesForward(element);
   }
 
   /**
-   * Finds first non-whitespace sibling after given PSI element but stops at first whitespace containing line feed.  
+   * Finds first non-whitespace sibling after given PSI element but stops at first whitespace containing line feed.
    */
   @Nullable
   public static PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
@@ -133,7 +133,7 @@ public class PyPsiUtils {
     }
     return null;
   }
-  
+
   /**
    * Finds first non-whitespace sibling after given AST node.
    */
@@ -151,7 +151,7 @@ public class PyPsiUtils {
     if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
       return start;
     }
-    return PsiTreeUtil.skipSiblingsForward(start, PsiWhiteSpace.class, PsiComment.class);
+    return PsiTreeUtil.skipWhitespacesAndCommentsForward(start);
   }
 
   /**

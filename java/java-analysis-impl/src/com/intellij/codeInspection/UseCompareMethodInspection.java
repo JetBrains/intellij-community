@@ -127,7 +127,7 @@ public class UseCompareMethodInspection extends BaseJavaBatchLocalInspectionTool
     if (branch != null) return branch;
     PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
     if (!(thenBranch instanceof PsiReturnStatement)) return null;
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiComment.class, PsiWhiteSpace.class);
+    PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement);
     return tryCast(next, PsiStatement.class);
   }
 

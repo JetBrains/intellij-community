@@ -132,7 +132,7 @@ public class IteratorDeclaration {
 
   @Nullable
   private static IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
-    PsiElement previous = PsiTreeUtil.skipSiblingsBackward(statement, PsiComment.class, PsiWhiteSpace.class);
+    PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);
     if (declaration == null || !declaration.isHasNextCall(statement.getCondition())) return null;

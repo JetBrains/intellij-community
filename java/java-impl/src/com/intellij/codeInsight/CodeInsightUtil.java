@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,9 +61,9 @@ public class CodeInsightUtil {
       }
     }
     if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
-      PsiElement element = PsiTreeUtil.skipSiblingsBackward(file.findElementAt(endOffset), PsiWhiteSpace.class);
+      PsiElement element = PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(endOffset));
       if (element != null) {
-        element = PsiTreeUtil.skipSiblingsBackward(element.getLastChild(), PsiWhiteSpace.class, PsiComment.class);
+        element = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element.getLastChild());
         if (element != null) {
           final int newEndOffset = element.getTextRange().getEndOffset();
           if (newEndOffset < endOffset) {
@@ -255,7 +255,7 @@ public class CodeInsightUtil {
     final PsiElement lBrace = psiClass.getLBrace();
     return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
   }
-  
+
   public static Editor positionCursor(final Project project, PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, "element: " + element + "; valid: " + element.isValid());

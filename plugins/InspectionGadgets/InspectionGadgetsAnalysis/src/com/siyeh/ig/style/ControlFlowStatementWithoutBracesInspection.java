@@ -155,7 +155,7 @@ public class ControlFlowStatementWithoutBracesInspection
     protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
       if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
         final PsiElement lastChild = body.getLastChild();
-        return Pair.create(PsiTreeUtil.skipSiblingsBackward(body, PsiWhiteSpace.class, PsiComment.class),
+        return Pair.create(PsiTreeUtil.skipWhitespacesAndCommentsBackward(body),
                            PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON) ? lastChild : null);
       }
       return null;

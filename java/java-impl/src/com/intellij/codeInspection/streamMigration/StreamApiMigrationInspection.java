@@ -108,7 +108,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   @Nullable
   static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
-    PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class, PsiComment.class);
+    PsiElement nextStatement = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
     if(nextStatement instanceof PsiReturnStatement) return (PsiReturnStatement)nextStatement;
     PsiElement parent = statement.getParent();
     if(parent instanceof PsiCodeBlock) {

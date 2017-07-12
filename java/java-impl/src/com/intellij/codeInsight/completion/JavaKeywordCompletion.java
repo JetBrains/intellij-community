@@ -850,7 +850,7 @@ public class JavaKeywordCompletion {
 
   private void addModuleKeywords() {
     PsiElement context = PsiTreeUtil.skipParentsOfType(myPosition.getParent(), PsiErrorElement.class);
-    PsiElement prevElement = PsiTreeUtil.skipSiblingsBackward(myPosition.getParent(), PsiWhiteSpace.class, PsiComment.class);
+    PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myPosition.getParent());
 
     if (context instanceof PsiJavaFile && !(prevElement instanceof  PsiJavaModule) || context instanceof PsiImportList) {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));

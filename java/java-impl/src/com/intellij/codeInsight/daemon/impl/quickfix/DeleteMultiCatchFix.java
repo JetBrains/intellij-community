@@ -66,13 +66,13 @@ public class DeleteMultiCatchFix implements IntentionAction {
 
     final PsiElement first;
     final PsiElement last;
-    final PsiElement right = PsiTreeUtil.skipSiblingsForward(myTypeElement, PsiWhiteSpace.class, PsiComment.class);
+    final PsiElement right = PsiTreeUtil.skipWhitespacesAndCommentsForward(myTypeElement);
     if (PsiUtil.isJavaToken(right, JavaTokenType.OR)) {
       first = myTypeElement;
       last = right;
     }
     else if (right == null) {
-      final PsiElement left = PsiTreeUtil.skipSiblingsBackward(myTypeElement, PsiWhiteSpace.class, PsiComment.class);
+      final PsiElement left = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myTypeElement);
       if (!(left instanceof PsiJavaToken)) return;
       final IElementType leftType = ((PsiJavaToken)left).getTokenType();
       if (leftType != JavaTokenType.OR) return;

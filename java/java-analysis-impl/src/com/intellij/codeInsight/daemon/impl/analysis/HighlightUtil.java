@@ -2534,7 +2534,7 @@ public class HighlightUtil extends HighlightUtilBase {
   static HighlightInfo checkStatementPrependedWithCaseInsideSwitch(@NotNull PsiSwitchStatement statement) {
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
-      PsiElement first = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class, PsiComment.class);
+      PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
       if (first != null && !(first instanceof PsiSwitchLabelStatement) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
         String description = JavaErrorMessages.message("statement.must.be.prepended.with.case.label");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(first).descriptionAndTooltip(description).create();

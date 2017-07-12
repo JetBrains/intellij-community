@@ -137,7 +137,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if (statement == null) {
       PsiStatement thenStatement = extractThenStatement(ifStatement, false);
       if (thenStatement instanceof PsiReturnStatement) {
-        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(ifStatement);
         if (nextElement instanceof PsiStatement) {
           statement = ControlFlowUtils.stripBraces((PsiStatement)nextElement);
         }

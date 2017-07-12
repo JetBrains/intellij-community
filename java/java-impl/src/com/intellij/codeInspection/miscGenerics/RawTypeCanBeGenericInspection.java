@@ -48,7 +48,7 @@ public class RawTypeCanBeGenericInspection extends BaseJavaBatchLocalInspectionT
             final String message =
               InspectionsBundle.message("inspection.raw.variable.type.can.be.generic.quickfix", variable.getName(), typeText);
             final PsiElement beforeInitializer =
-              PsiTreeUtil.skipSiblingsBackward(variable.getInitializer(), PsiWhiteSpace.class, PsiComment.class);
+              PsiTreeUtil.skipWhitespacesAndCommentsBackward(variable.getInitializer());
             final ProblemDescriptor descriptor =
               holder.getManager().createProblemDescriptor(variableTypeElement,
                                                           beforeInitializer != null ? beforeInitializer : variableTypeElement,
