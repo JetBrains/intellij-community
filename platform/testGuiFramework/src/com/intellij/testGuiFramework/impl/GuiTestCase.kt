@@ -472,7 +472,7 @@ open class GuiTestCase : GuiTestBase() {
       if (containingItem == null) true //if were searching for any jList()
       else {
         val elements = (0..jList.model.size - 1).map { it -> extCellReader.valueAt(jList, it) }
-        elements.any { it.toString() == containingItem }
+        elements.any { it.toString() == containingItem }  && jList.isShowing
       }
     }
     val jListFixture = JListFixture(myRobot, myJList)
