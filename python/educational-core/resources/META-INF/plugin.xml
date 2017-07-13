@@ -1,9 +1,9 @@
 <!--suppress XmlUnboundNsPrefix -->
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>com.jetbrains.edu.interactivelearning</id>
   <name>Educational plugin core</name>
-  <version>2.0.4</version>
-  <idea-version since-build="162.75"/>
+  <version>4.1-IJ2017.3-1</version>
+  <idea-version since-build="173.1" until-build="173.*" />
   <description><![CDATA[
       Educational plugin core for students. 
       ]]></description>
