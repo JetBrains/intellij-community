@@ -170,12 +170,12 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       catch (Exception ignore) {
       }
     }
-    final Location location = event.location();
-    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
+    Location location = event.location();
+    String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationInfo;
     try {
-      final String file = location.sourceName();
-      final int line = DebuggerUtilsEx.getLineNumber(location, false);
+      String file = location.sourceName();
+      int line = DebuggerUtilsEx.getLineNumber(location, false);
       locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info", file, line);
     }
     catch (AbsentInformationException e) {
