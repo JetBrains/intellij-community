@@ -260,8 +260,9 @@ public class GitBranchUtil {
   @Nullable
   public static GitNewBranchOptions getNewBranchNameFromUser(@NotNull Project project,
                                                              @NotNull Collection<GitRepository> repositories,
-                                                             @NotNull String dialogTitle) {
-    return new GitNewBranchDialog(project, dialogTitle, GitNewBranchNameValidator.newInstance(repositories)).showAndGetOptions();
+                                                             @NotNull String dialogTitle,
+                                                             @Nullable String initialName) {
+    return new GitNewBranchDialog(project, dialogTitle, initialName, GitNewBranchNameValidator.newInstance(repositories)).showAndGetOptions();
   }
 
   /**

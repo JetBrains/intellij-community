@@ -28,8 +28,8 @@ import javax.swing.JComponent
 
 internal data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
 
-internal class GitNewBranchDialog(project: Project, dialogTitle: String, validator: GitNewBranchNameValidator) :
-  Messages.InputDialog(project, "New branch name:", dialogTitle, null, "", validator) {
+internal class GitNewBranchDialog(project: Project, dialogTitle: String, initialName: String?, validator: GitNewBranchNameValidator) :
+  Messages.InputDialog(project, "New branch name:", dialogTitle, null, initialName, validator) {
 
   private lateinit var checkoutCheckbox : JBCheckBox
 
