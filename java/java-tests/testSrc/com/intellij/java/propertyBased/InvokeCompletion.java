@@ -164,10 +164,14 @@ class InvokeCompletion extends ActionOnRange {
         return null;
       }
       if (leaf instanceof PsiIdentifier) return null; // it's not a ref, just some name
-      if (leaf instanceof PsiKeyword &&
-          leaf.getParent() instanceof PsiClassObjectAccessExpression &&
-          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getType()) == null) {
-        return null;
+      if (leaf instanceof PsiKeyword) {
+        if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
+            PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getType()) == null) {
+          return null;
+        }
+        if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
+          return null; // boolean literal presence depends on expected types, which can be missing in red files
+        }
       }
     }
     return leafText;
