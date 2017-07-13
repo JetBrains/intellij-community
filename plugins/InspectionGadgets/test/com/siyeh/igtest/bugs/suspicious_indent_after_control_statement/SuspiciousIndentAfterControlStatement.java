@@ -26,4 +26,12 @@ public class SuspiciousIndentAfterControlStatement {
             <warning descr="'System.out.println(\"great\")' statement has suspicious indentation">System.out.println("great")</warning>;
 
     }
+
+    public int get(Class baseClass) {
+        // "interesting" parse tree.
+        if (baseClass.equals(<error descr="')' expected"><error descr="Expression expected">.</error></error><error descr="')' expected"><error descr="Identifier expected">c</error></error>lass<error descr="Identifier expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">)</error> {
+            return 1;
+        }
+        return 0;
+    }
 }
