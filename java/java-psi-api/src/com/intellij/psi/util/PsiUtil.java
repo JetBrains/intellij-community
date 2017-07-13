@@ -1209,7 +1209,11 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean isFromDefaultPackage(PsiClass aClass) {
-    final PsiFile containingFile = aClass.getContainingFile();
+    return isFromDefaultPackage((PsiElement)aClass);
+  }
+
+  public static boolean isFromDefaultPackage(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
     return containingFile instanceof PsiClassOwner && StringUtil.isEmpty(((PsiClassOwner)containingFile).getPackageName());
   }
 

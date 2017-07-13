@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
+  public static final String BASE_TEXT = "Import static constant";
+
   protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
 
   public StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
@@ -40,7 +42,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   @NotNull
   @Override
   protected String getBaseText() {
-    return "Import static constant";
+    return BASE_TEXT;
   }
 
   @NotNull
@@ -64,7 +66,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
         element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element) {
+    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element, showMembersFromDefaultPackage()) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
         final PsiType expectedType = getExpectedType();
@@ -104,5 +106,10 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   protected PsiElement resolveRef() {
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
     return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
+  }
+
+  @Override
+  protected boolean showMembersFromDefaultPackage() {
+    return false;
   }
 }

@@ -36,10 +36,12 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<>();
 
   private final PsiElement myPlace;
+  private final boolean myShowMembersFromDefaultPackage;
   private PsiType myExpectedType;
 
-  protected StaticMembersProcessor(PsiElement place) {
+  protected StaticMembersProcessor(@NotNull PsiElement place, boolean showMembersFromDefaultPackage) {
     myPlace = place;
+    myShowMembersFromDefaultPackage = showMembersFromDefaultPackage && PsiUtil.isFromDefaultPackage(place);
     myExpectedType = PsiType.NULL;
   }
 
@@ -94,10 +96,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
     }
 
-    PsiFile file = member.getContainingFile();
-    if (file instanceof PsiJavaFile
-        //do not show methods from default package
-        && !((PsiJavaFile)file).getPackageName().isEmpty()) {
+    if (myShowMembersFromDefaultPackage || !PsiUtil.isFromDefaultPackage(member)) {
       mySuggestions.putValue(containingClass, member);
     }
     return processCondition();
