@@ -20,9 +20,10 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -30,9 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module
@@ -121,17 +120,32 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   public void restoreOriginalModule(final Module originalModule) {
-    if (originalModule == null) {
-      return;
-    }
-
-    Set<Module> modules = new THashSet<>();
-    for (Module classModule : getModules()) {
-      ModuleUtilCore.collectModulesDependsOn(classModule, modules);
-    }
-    if (modules.contains(originalModule)) {
+    if (canRestoreOriginalModule(originalModule, getModules())) {
       setModule(originalModule);
     }
+  }
+
+  public static boolean canRestoreOriginalModule(Module originalModule, Module[] configModules) {
+    if (originalModule == null || configModules.length == 0) {
+      return false;
+    }
+
+    Deque<Module> queue = new ArrayDeque<>();
+    queue.addLast(originalModule);
+    Set<Module> modules = new THashSet<>();
+    while (!queue.isEmpty()) {
+      Module module = queue.removeFirst();
+      //configModules contains 1 element
+      if (ArrayUtil.contains(module, configModules)) {
+        return true;
+      }
+
+      for (Module next : ModuleRootManager.getInstance(module).getModuleDependencies(true)) {
+        if (!modules.add(next)) continue;
+        queue.addLast(next);
+      }
+    }
+    return false;
   }
 
   public void onNewConfigurationCreated() {
