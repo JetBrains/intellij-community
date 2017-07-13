@@ -54,6 +54,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -234,20 +235,43 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     protected boolean applyFix(@NotNull final RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
-      final PsiElement[] psiElements = Arrays
-        .stream(refElements)
-        .filter((obj) -> obj instanceof RefJavaElement && getFilter().accepts((RefJavaElement)obj))
-        .map(e -> ((RefElement) e).getElement())
-        .filter(e -> e != null)
-        .toArray(PsiElement[]::new);
-      if (psiElements.length == 0) return false;
+
+      //filter only elements applicable to be deleted (exclude entry points)
+      RefElement[] filteredRefElements = Arrays.stream(refElements)
+        .filter(entry -> entry instanceof RefJavaElement && getFilter().accepts((RefJavaElement)entry))
+        .toArray(RefElement[]::new);
+
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
-        SafeDeleteHandler.invoke(project, psiElements, false,
+        List<PsiElement> psiElements = new ArrayList<>();
+        Set<PsiClass> classes = new THashSet<>();
+        for (RefEntity obj : filteredRefElements) {
+          PsiElement e = ((RefElement)obj).getElement();
+          if (e != null) {
+            psiElements.add(e);
+            if (e instanceof PsiClass) {
+              classes.add((PsiClass)e);
+            }
+          }
+        }
+
+        if (psiElements.size() == 0) return;
+
+        //filter out elements inside classes to be deleted
+        PsiElement[] elements = psiElements.stream().filter(e -> {
+          if (e instanceof PsiMember) {
+            PsiClass containingClass = ((PsiMember)e).getContainingClass();
+            if (containingClass != null && classes.contains(containingClass)) {
+              return false;
+            }
+          }
+          return true;
+        }).toArray(PsiElement[]::new);
+        SafeDeleteHandler.invoke(project, elements, false,
                                  () -> {
-                                   removeElements(refElements, project, myToolWrapper);
-                                   for (RefEntity ref : refElements) {
+                                   removeElements(filteredRefElements, project, myToolWrapper);
+                                   for (RefEntity ref : filteredRefElements) {
                                      myFixedElements.put(ref, UnusedDeclarationHint.DELETE);
                                    }
                                  });

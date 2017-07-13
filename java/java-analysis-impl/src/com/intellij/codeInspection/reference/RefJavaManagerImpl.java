@@ -246,15 +246,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void removeReference(@NotNull final RefElement refElement) {
-    if (refElement instanceof RefMethod) {
-      RefMethod refMethod = (RefMethod)refElement;
-      RefParameter[] params = refMethod.getParameters();
-      for (RefParameter param : params) {
-        myRefManager.removeReference(param);
-      }
-    }
-  }
+  public void removeReference(@NotNull final RefElement refElement) { }
 
   @Override
   @Nullable

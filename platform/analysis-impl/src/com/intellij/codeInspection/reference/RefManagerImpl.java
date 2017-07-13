@@ -381,7 +381,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @NotNull
-  List<RefElement> getSortedElements() {
+  public List<RefElement> getSortedElements() {
     List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
@@ -682,7 +682,12 @@ public class RefManagerImpl extends RefManager {
 
     ((RefManagerImpl)refElement.getRefManager()).removeReference(refElement);
     ((RefElementImpl)refElement).referenceRemoved();
-    if (!deletedRefs.contains(refElement)) deletedRefs.add(refElement);
+    if (!deletedRefs.contains(refElement)) {
+      deletedRefs.add(refElement);
+    }
+    else {
+      LOG.error("deleted second time");
+    }
   }
 
   boolean isValidPointForReference() {

@@ -490,11 +490,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     for (RefMethod subMethod : getDerivedMethods()) {
       subMethod.getSuperMethods().remove(this);
     }
-
-    ArrayList<RefElement> deletedRefs = new ArrayList<>();
-    for (RefParameter parameter : getParameters()) {
-      getRefManager().removeRefElement(parameter, deletedRefs);
-    }
   }
 
   @Override
