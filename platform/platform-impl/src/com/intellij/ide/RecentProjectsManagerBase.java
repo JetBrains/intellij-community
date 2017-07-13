@@ -450,10 +450,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
 
         private int getGroupIndex(ProjectGroup group) {
-          int index = -1;
+          int index = Integer.MAX_VALUE;
           for (String path : group.getProjects()) {
             final int i = projectPaths.indexOf(path);
-            if (index >= 0 && index > i) {
+            if (i >= 0 && index > i) {
               index = i;
             }
           }
