@@ -38,10 +38,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -414,6 +411,23 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       checkContains(classPath, outputs[i][0]);
       checkContains(classPath, outputs[i][1]);
     }
+  }
+
+  public void testOriginalModule() throws Exception {
+    ModuleRootModificationUtil.addDependency(getModule1(), getModule2(), DependencyScope.TEST, true);
+    ModuleRootModificationUtil.addDependency(getModule2(), getModule3(), DependencyScope.TEST, false);
+    assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule2()}));
+    assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule3()}));
+
+    //not exported but on the classpath
+    addModule("module4");
+    ModuleRootModificationUtil.addDependency(getModule3(), getModule4(), DependencyScope.TEST, false);
+    assertTrue(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule4()}));
+
+    addModule("module5");
+    assertFalse(ModuleBasedConfiguration.canRestoreOriginalModule(getModule1(), new Module[] {getModule(4)}));
+
+    assertFalse(ModuleBasedConfiguration.canRestoreOriginalModule(getModule2(), new Module[] {getModule1()}));
   }
 
   private void assignJdk(Module module) {
