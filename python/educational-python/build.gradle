@@ -112,7 +112,7 @@ project(':Edu-Python') {
 
   afterEvaluate {
     tasks.getByName('buildPlugin') {
-      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+      archiveName = "$intellij.pluginName-$version.zip"
     }
   }
 
