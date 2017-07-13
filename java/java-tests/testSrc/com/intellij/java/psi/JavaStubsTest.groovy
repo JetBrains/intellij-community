@@ -20,21 +20,16 @@ import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.PsiAnnotationMethod
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiReferenceExpression
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection
 
 import java.util.concurrent.Callable
 
@@ -190,6 +185,14 @@ import java.lang.annotation.*;
     PsiTestUtil.checkStubsMatchText(file)
   }
 
+  void "test removing import in broken code does not cause stub AST mismatch"() {
+    def file = myFixture.addFileToProject("a.java", "import foo..module.SomeClass; class Foo {}") as PsiJavaFile
+    WriteCommandAction.runWriteCommandAction(project) { 
+      file.importList.importStatements[0].delete()
+    }
+    PsiTestUtil.checkStubsMatchText(file)
+  }
+  
   void "test adding type before method call does not cause stub AST mismatch"() {
     def file = myFixture.addFileToProject("a.java", """
 class Foo {

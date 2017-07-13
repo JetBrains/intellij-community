@@ -58,44 +58,38 @@ public class FileParser {
     Boolean firstDeclarationOk = null;
     PsiBuilder.Marker firstDeclaration = null;
 
-    PsiBuilder.Marker module = myParser.getModuleParser().parse(builder);
-    if (module != null) {
-      firstDeclarationOk = true;
-      firstDeclaration = module;
-    }
-    else {
-      PsiBuilder.Marker invalidElements = null;
-      while (!builder.eof()) {
-        if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
-          builder.advanceLexer();
-          continue;
-        }
-
-        final PsiBuilder.Marker declaration = parseInitial(builder);
-        if (declaration != null) {
-          if (invalidElements != null) {
-            invalidElements.errorBefore(error(bundle, errorMessageKey), declaration);
-            invalidElements = null;
-          }
-          if (firstDeclarationOk == null) {
-            firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
-            if (firstDeclarationOk) {
-              firstDeclaration = declaration;
-            }
-          }
-          continue;
-        }
-
-        if (invalidElements == null) {
-          invalidElements = builder.mark();
-        }
+    PsiBuilder.Marker invalidElements = null;
+    while (!builder.eof()) {
+      if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
         builder.advanceLexer();
-        if (firstDeclarationOk == null) firstDeclarationOk = false;
+        continue;
       }
 
-      if (invalidElements != null) {
-        invalidElements.error(error(bundle, errorMessageKey));
+      PsiBuilder.Marker declaration = myParser.getModuleParser().parse(builder);
+      if (declaration == null) declaration = parseInitial(builder);
+      if (declaration != null) {
+        if (invalidElements != null) {
+          invalidElements.errorBefore(error(bundle, errorMessageKey), declaration);
+          invalidElements = null;
+        }
+        if (firstDeclarationOk == null) {
+          firstDeclarationOk = exprType(declaration) != JavaElementType.MODIFIER_LIST;
+          if (firstDeclarationOk) {
+            firstDeclaration = declaration;
+          }
+        }
+        continue;
       }
+
+      if (invalidElements == null) {
+        invalidElements = builder.mark();
+      }
+      builder.advanceLexer();
+      if (firstDeclarationOk == null) firstDeclarationOk = false;
+    }
+
+    if (invalidElements != null) {
+      invalidElements.error(error(bundle, errorMessageKey));
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
