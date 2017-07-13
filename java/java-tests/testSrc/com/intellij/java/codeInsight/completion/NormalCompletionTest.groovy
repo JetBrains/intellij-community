@@ -1785,4 +1785,10 @@ class Bar {
     doTest('<')
   }
 
+  void testDuplicateGenericMethodSuggestionWhenInheritingFromRawType() {
+    CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
+    configure()
+    assert myFixture.lookupElementStrings == ['indexOf']
+  }
+
 }
