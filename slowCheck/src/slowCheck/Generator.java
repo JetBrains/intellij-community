@@ -39,7 +39,12 @@ public final class Generator<T> {
   }
   
   public <V> Generator<V> flatMap(@NotNull Function<T,Generator<V>> fun) {
-    return from(data -> fun.apply(generateValue(data)).generateValue(data));
+    return from(data -> {
+      T value = generateValue(data);
+      Generator<V> result = fun.apply(value);
+      if (result == null) throw new NullPointerException(fun + " returned null on " + value);
+      return result.generateValue(data);
+    });
   }
   
   public Generator<T> noShrink() {
