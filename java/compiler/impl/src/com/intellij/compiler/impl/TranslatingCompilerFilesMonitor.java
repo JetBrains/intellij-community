@@ -187,7 +187,7 @@ public class TranslatingCompilerFilesMonitor {
 
     @Override
     public void beforeFileMovement(@NotNull final VirtualFileMoveEvent event) {
-      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesChanged);
+      collectPathsAndNotify(event.getFile(), TranslatingCompilerFilesMonitor::notifyFilesDeleted);
     }
   }
 
