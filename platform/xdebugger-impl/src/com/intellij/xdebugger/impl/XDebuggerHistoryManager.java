@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 /**
  * @author nik
  */
-@State(name = "debuggerHistoryManager", storages = @Storage(value = "debugger-history.xml"))
+@State(name = "debuggerHistoryManager", storages = @Storage(value = "debuggerHistory.xml"))
 public class XDebuggerHistoryManager implements PersistentStateComponent<Element> {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
   private static final SerializationFilter SERIALIZATION_FILTER = new SkipDefaultsSerializationFilter();
