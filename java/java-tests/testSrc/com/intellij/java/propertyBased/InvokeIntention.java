@@ -36,7 +36,7 @@ import slowCheck.Generator;
 
 import java.util.List;
 
-class InvokeIntention extends ActionOnRange implements MadTestingAction {
+class InvokeIntention extends ActionOnRange {
   private final PsiFile myFile;
   private final int myIntentionIndex;
   private IntentionAction myIntentionAction;

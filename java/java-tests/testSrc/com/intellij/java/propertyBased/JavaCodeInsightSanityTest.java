@@ -16,15 +16,19 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.PsiBinaryFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.*;
+import slowCheck.DataStructure;
+import slowCheck.Generator;
+import slowCheck.IntDistribution;
+import slowCheck.PropertyChecker;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -38,13 +42,25 @@ import java.util.function.Function;
 @SkipSlowTestLocally
 public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testRandomIntentions() {
+  public void testRandomActivity() {
     AbstractApplyAndRevertTestCase.enableAllInspections(getProject(), getTestRootDisposable());
-    FileFilter fileFilter = f -> f.getName().endsWith(".java");
-    Generator<FileWithActions> actions = actionsOnFileContents(myFixture, PathManager.getHomePath(), fileFilter,
-                                                               file -> Generator.anyOf(InvokeIntention.randomIntentions(file),
-                                                                                       DeleteRange.deletePsiRange(file)));
-    PropertyChecker.forAll(actions, FileWithActions::runActions);
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
+      Generator.anyOf(InvokeIntention.randomIntentions(file),
+                      InvokeCompletion.completions(file),
+                      DeleteRange.psiRangeDeletions(file));
+    PropertyChecker.forAll(actionsOnJavaFiles(fileActions), FileWithActions::runActions);
+  }
+
+  @NotNull
+  private Generator<FileWithActions> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+    return actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+  }
+
+  public void testReparse() {
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file -> 
+      Generator.anyOf(DeleteRange.psiRangeDeletions(file), 
+                      InsertString.asciiInsertions(file));
+    PropertyChecker.forAll(actionsOnJavaFiles(fileActions), FileWithActions::checkIncrementalReparse);
   }
 
   @NotNull
@@ -62,9 +78,6 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
       Generator.from(new FileGenerator(new File(rootPath), childFilter)).suchThat(Objects::nonNull).noShrink();
     return randomFiles.flatMap(ioFile -> {
       PsiFile file = copyFileToProject(ioFile, fixture, rootPath);
-      if (file == null || file instanceof PsiBinaryFile || file.getTextLength() == 0) {
-        return Generator.constant(new FileWithActions(file, Collections.emptyList()));
-      }
       return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
     });
   }
@@ -90,6 +103,11 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
     //todo strip test data markup
     try {
       String path = FileUtil.getRelativePath(rootPath, ioFile.getPath(), '/');
+      VirtualFile existing = fixture.findFileInTempDir(path);
+      if (existing != null) {
+        WriteAction.run(() -> existing.delete(fixture));
+      }
+
       return fixture.addFileToProject(path, FileUtil.loadFile(ioFile));
     }
     catch (IOException e) {

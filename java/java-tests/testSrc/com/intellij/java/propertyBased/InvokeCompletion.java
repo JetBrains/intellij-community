@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +51,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-class InvokeCompletion extends ActionOnRange implements MadTestingAction {
+class InvokeCompletion extends ActionOnRange {
   final int itemIndexRaw;
   LookupElement selectedItem;
   final char completionChar;
@@ -163,6 +164,11 @@ class InvokeCompletion extends ActionOnRange implements MadTestingAction {
         return null;
       }
       if (leaf instanceof PsiIdentifier) return null; // it's not a ref, just some name
+      if (leaf instanceof PsiKeyword &&
+          leaf.getParent() instanceof PsiClassObjectAccessExpression &&
+          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getType()) == null) {
+        return null;
+      }
     }
     return leafText;
   }

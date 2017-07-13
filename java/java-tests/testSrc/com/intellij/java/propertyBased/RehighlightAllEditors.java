@@ -54,6 +54,7 @@ class RehighlightAllEditors implements MadTestingAction {
 
   @NotNull
   static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false);
   }

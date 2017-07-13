@@ -16,6 +16,7 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -36,6 +37,7 @@ abstract class FilePsiMutation implements MadTestingAction {
 
   @Override
   public void performAction() {
+    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myFile.getViewProvider().getDocument());
     WriteCommandAction.runWriteCommandAction(myFile.getProject(), this::performMutation);
     PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
   }

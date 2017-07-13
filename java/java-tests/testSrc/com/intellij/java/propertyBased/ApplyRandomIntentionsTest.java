@@ -55,7 +55,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
       }
 
       changeAndRevert(myProject, () -> {
-        MadTestingAction.runActions(list, myProject);
+        MadTestingAction.runActions(list);
         
         if (tracker.getModificationCount() != startModCount) {
           checkCompiles(myCompilerTester.make());
@@ -69,7 +69,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS.withIterationCount(50);
     Generator<List<MadTestingAction>> genActionGroup = psiJavaFiles().flatMap(
       file -> {
-        Generator<MadTestingAction> mutation = Generator.anyOf(DeleteRange.deletePsiRange(file),
+        Generator<MadTestingAction> mutation = Generator.anyOf(DeleteRange.psiRangeDeletions(file),
                                                                Generator.constant(new AddNullArgument(file)),
                                                                Generator.constant(new DeleteForeachInitializers(file)),
                                                                Generator.constant(new DeleteSecondArgument(file)),
@@ -83,7 +83,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     PropertyChecker.forAll(settings, Generator.listsOf(genActionGroup).map(ContainerUtil::flatten), list -> {
       changeAndRevert(myProject, () -> {
         //System.out.println(list);
-        MadTestingAction.runActions(list, myProject);
+        MadTestingAction.runActions(list);
       });
       return true;
     });

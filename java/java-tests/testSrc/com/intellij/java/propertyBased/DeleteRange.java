@@ -20,15 +20,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 import slowCheck.Generator;
 import slowCheck.IntDistribution;
 
 import java.util.Objects;
 
-class DeleteRange extends ActionOnRange implements MadTestingAction {
+class DeleteRange extends ActionOnRange {
   private final PsiFile myFile;
 
   private DeleteRange(PsiFile file, int startOffset, int endOffset) {
@@ -37,7 +35,7 @@ class DeleteRange extends ActionOnRange implements MadTestingAction {
     myFile = file;
   }
 
-  static Generator<DeleteRange> deletePsiRange(@NotNull PsiFile psiFile) {
+  static Generator<DeleteRange> psiRangeDeletions(@NotNull PsiFile psiFile) {
     return Generator.from(data -> {
       if (psiFile.getTextLength() == 0) return new DeleteRange(psiFile, 0, 0);
 
@@ -64,8 +62,5 @@ class DeleteRange extends ActionOnRange implements MadTestingAction {
 
     WriteCommandAction.runWriteCommandAction(myFile.getProject(), () -> myFile.getViewProvider().getDocument()
       .deleteString(range.getStartOffset(), range.getEndOffset()));
-
-    PsiUtilCore.ensureValid(myFile);
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
   }
 }

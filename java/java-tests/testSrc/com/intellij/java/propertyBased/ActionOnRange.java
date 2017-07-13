@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-class ActionOnRange {
+abstract class ActionOnRange implements MadTestingAction {
   protected final RangeMarker myMarker;
   private TextRange finalRange;
 

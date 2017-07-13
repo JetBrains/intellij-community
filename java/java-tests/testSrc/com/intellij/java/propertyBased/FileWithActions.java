@@ -19,6 +19,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
 
 import java.util.List;
@@ -46,7 +47,15 @@ class FileWithActions {
 
   boolean runActions() {
     Project project = myFile.getProject();
-    new RunAll(() -> AbstractApplyAndRevertTestCase.changeAndRevert(project, () -> MadTestingAction.runActions(myActions, project)),
+    new RunAll(() -> AbstractApplyAndRevertTestCase.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
+               () -> WriteAction.run(() -> myFile.getVirtualFile().delete(this))).run();
+    return true;
+  }
+
+  boolean checkIncrementalReparse() {
+    Project project = myFile.getProject();
+    new RunAll(() -> AbstractApplyAndRevertTestCase.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
+               () -> PsiTestUtil.checkPsiStructureWithCommit(getPsiFile(), PsiTestUtil::checkFileStructure),
                () -> WriteAction.run(() -> myFile.getVirtualFile().delete(this))).run();
     return true;
   }

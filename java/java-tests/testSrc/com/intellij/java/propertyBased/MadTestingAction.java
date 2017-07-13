@@ -16,8 +16,6 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 
 import java.util.List;
 
@@ -28,14 +26,13 @@ interface MadTestingAction {
   
   void performAction();
 
-  static void runActions(List<? extends MadTestingAction> list, Project project) {
+  static void runActions(List<? extends MadTestingAction> list) {
     for (int i = 0; i < list.size(); i++) {
       MadTestingAction action = list.get(i);
       if (i > 0 && action == list.get(i - 1)) continue;
 
       FileDocumentManager.getInstance().saveAllDocuments();
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      
+
       action.performAction();
     }
   }
