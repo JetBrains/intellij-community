@@ -135,7 +135,7 @@ public class DfaExpressionFactory {
         if (constValue != null) return constValue;
       }
 
-      if (DfaValueFactory.isEffectivelyUnqualified(refExpr)) {
+      if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
         if (isFieldDereferenceBeforeInitialization(refExpr)) {
           return myFactory.getConstFactory().getNull();
         }
@@ -151,6 +151,16 @@ public class DfaExpressionFactory {
 
     PsiType type = refExpr.getType();
     return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, var));
+  }
+
+  private static boolean isStaticFinalConstantWithoutInitializationHacks(PsiModifierListOwner var) {
+    if (var instanceof PsiField && var.hasModifierProperty(PsiModifier.FINAL) && var.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass containingClass = ((PsiField)var).getContainingClass();
+      if (containingClass != null && !System.class.getName().equals(containingClass.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isFieldDereferenceBeforeInitialization(PsiReferenceExpression ref) {
