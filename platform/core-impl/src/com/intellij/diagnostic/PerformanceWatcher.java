@@ -254,7 +254,7 @@ public class PerformanceWatcher implements Disposable, ApplicationComponent {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
-      pathPrefix = THREAD_DUMPS_PREFIX + "-" + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
+      pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
     }
     else if (!pathPrefix.startsWith(THREAD_DUMPS_PREFIX)) {
       pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix;
