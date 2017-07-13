@@ -132,6 +132,30 @@ public class RestLexerTest extends TestCase {
     );
   }
 
+  public void testSubstitutions() throws IOException {
+    doTest(".. |end-user| replace:: :term:`user`\n" +
+           ".. |PNS ID| replace:: :term:`user`\n" +
+           ".. |PNS.ID| replace:: :term:`user`",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[|end-user|, SUBSTITUTION]",
+           "[ , WHITESPACE]",
+           "[replace::, DIRECTIVE]",
+           "[ :term:`user`, LINE]",
+           "[\n, WHITESPACE]",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[|PNS ID|, SUBSTITUTION]",
+           "[ , WHITESPACE]",
+           "[replace::, DIRECTIVE]",
+           "[ :term:`user`, LINE]",
+           "[\n, WHITESPACE]",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[|PNS.ID|, SUBSTITUTION]",
+           "[ , WHITESPACE]",
+           "[replace::, DIRECTIVE]",
+           "[ :term:`user`, LINE]"
+           );
+  }
+
   public void testInterpreted() throws IOException {
     doTest(":kbd:`1`\n" +
            "\n" +

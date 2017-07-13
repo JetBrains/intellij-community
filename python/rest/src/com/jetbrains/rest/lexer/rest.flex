@@ -58,7 +58,7 @@ NOT_BACKQUOTE = [^`]
 
 %%
 <YYINITIAL> {
-":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[ `\n]        { yypushback(1); return FIELD;}
+":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[ `\n]   { yypushback(1); return FIELD;}
 .                                                   { yypushback(1); yybegin(INIT); }
 }
 
@@ -88,7 +88,7 @@ NOT_BACKQUOTE = [^`]
 [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?{SEPARATOR}                  {yypushback(1); return REFERENCE_NAME;}
 //"["([0-9]* | #?[0-9A-Za-z]* | "*")"]_"{SEPARATOR}   {yypushback(1); return REFERENCE_NAME;}
 
-":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[`]       { yypushback(1); yybegin(INIT); return FIELD;}
+":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[`]      { yypushback(1); yybegin(INIT); return FIELD;}
 {CRLF}                                              { yybegin(IN_LINEBEGIN); return WHITESPACE;}
 .                                                   { yypushback(1); yybegin(IN_LINE); }
 {SPACE}+                                            { yybegin(IN_LINEBEGIN); return WHITESPACE;}
@@ -99,7 +99,7 @@ NOT_BACKQUOTE = [^`]
 {SPACE}                                             { return LINE;}
 {CRLF}                                              { return WHITESPACE;}
 "__"                                                { yybegin(IN_VALUE); return ANONYMOUS_HYPERLINK;}
-":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[ `\n]    { yypushback(1); yybegin(INIT); return FIELD;}
+":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[ `\n]   { yypushback(1); yybegin(INIT); return FIELD;}
 .                                                   { yypushback(1); yybegin(INIT);}
 }
 
@@ -164,7 +164,7 @@ NOT_BACKQUOTE = [^`]
 {USUAL_TYPES}"::"                                   { yybegin(IN_VALUE); return DIRECTIVE;}
 {HIGHLIGHT_TYPES}"::"                               { yybegin(IN_HIGHLIGHT); return CUSTOM_DIRECTIVE;}
 [0-9A-Za-z\-:]*"::"                                 { yybegin(IN_VALUE); return CUSTOM_DIRECTIVE;}
-"|"[0-9A-Za-z_]*"|"                                 { return SUBSTITUTION;}
+"|"[^|]*"|"                                         { return SUBSTITUTION;}
 [0-9A-Za-z_\[|.]+                                   { yybegin(IN_COMMENT); return COMMENT;}
 {CRLF}{2}                                           { yybegin(INIT); return COMMENT;}
 {SPACE}*{CRLF}+                                     { return WHITESPACE; }
@@ -179,7 +179,7 @@ NOT_BACKQUOTE = [^`]
 <IN_HIGHLIGHT> {
 {SPACE}+                                            { return WHITESPACE;}
 {CRLF}                                              { yybegin(INIT); return WHITESPACE; }
-[A-Za-z+]+{CRLF}{CRLF}                               { String value = yytext().toString().trim();
+[A-Za-z+]+{CRLF}{CRLF}                              { String value = yytext().toString().trim();
                                                       if ("python".equalsIgnoreCase(value)) {
                                                         myState = 1;
                                                         yybegin(IN_INLINE);
