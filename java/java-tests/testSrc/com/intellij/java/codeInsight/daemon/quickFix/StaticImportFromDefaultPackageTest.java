@@ -31,7 +31,7 @@ public class StaticImportFromDefaultPackageTest extends LightCodeInsightFixtureT
 
   public void testMethodCallFromDefaultPackage() {
     myFixture.configureByText("Main.java", "class Main { void m () {" +
-                                           " staticMeht<caret>od();" +
+                                           " staticMeth<caret>od();" +
                                            "}}");
     assertFixForMethodIsNotAvailable();
   }
@@ -39,7 +39,7 @@ public class StaticImportFromDefaultPackageTest extends LightCodeInsightFixtureT
   public void testMethodCallFromNonDefaultPackage() {
     myFixture.configureByText("Main.java", "package org;" +
                                            "class Main { void m () {" +
-                                           " staticMeht<caret>od();" +
+                                           " staticMeth<caret>od();" +
                                            "}}");
     assertFixForMethodIsNotAvailable();
   }
