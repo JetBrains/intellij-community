@@ -16,21 +16,15 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
-import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import junit.framework.Assert;
-
-import java.io.IOException;
 
 /**
  * @author oleg
@@ -253,18 +247,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   private static void check(final String fullPath, final ControlFlow flow) {
-    final StringBuffer buffer = new StringBuffer();
-    final Instruction[] instructions = flow.getInstructions();
-    for (Instruction instruction : instructions) {
-      buffer.append(instruction).append("\n");
-    }
-    final VirtualFile vFile = PyTestCase.getVirtualFileByName(fullPath);
-    try {
-      final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-      Assert.assertEquals(fileText.trim(), buffer.toString().trim());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    final String actualCFG = StringUtil.join(flow.getInstructions(), Object::toString, "\n");
+    UsefulTestCase.assertSameLinesWithFile(fullPath, actualCFG, true);
   }
 }
