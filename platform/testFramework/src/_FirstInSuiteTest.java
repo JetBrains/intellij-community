@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,12 @@ import java.util.prefs.Preferences;
  */
 @SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
 public class _FirstInSuiteTest extends TestCase {
-  public static long suiteStarted;
-  public static boolean nothingIsCalled;
+  private static long suiteStarted;
+  private static boolean nothingIsCalled;
+
+  public static long getSuiteStartTime() {
+    return suiteStarted;
+  }
 
   public void testReportClassLoadingProblems() {
     List<Throwable> problems = TestAll.getLoadingClassProblems();
@@ -73,6 +77,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     String tempDirectory = FileUtilRt.getTempDirectory();
     String[] list = new File(tempDirectory).list();
+    assert list != null;
     System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " (" + list.length + " files)");
 
     Preferences.userRoot(); // starts (anonymous!) timer deep in JDK bowels. helps against thread leaks
