@@ -151,9 +151,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
     MessageBusConnection connection = messageBus.connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      connection.subscribe(ProjectManager.TOPIC, new MyProjectListener());
-    }
+    connection.subscribe(ProjectManager.TOPIC, new MyProjectListener());
   }
 
   @Override
@@ -562,7 +560,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       if (path != null) {
         markPathRecent(path);
       }
-      SystemDock.updateMenu();
+      updateUI();
+    }
+
+    private void updateUI() {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        SystemDock.updateMenu();
+      }
     }
 
     @Override
@@ -585,7 +589,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           markPathRecent(path);
         }
       }
-      SystemDock.updateMenu();
+      updateUI();
     }
   }
 
