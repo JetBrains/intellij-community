@@ -868,6 +868,8 @@
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
 
+    <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider"/>
+
     <extensionPoint name="projectStructure.sourceRootEditHandler"
                     interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
 

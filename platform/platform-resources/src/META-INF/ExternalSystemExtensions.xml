@@ -18,6 +18,7 @@
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager"/>
     <externalSystemNotificationExtension implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl" />
 
+    <module.workingDirectoryProvider implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
