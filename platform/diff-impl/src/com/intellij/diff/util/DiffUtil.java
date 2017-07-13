@@ -25,7 +25,7 @@ import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DiffPsiFileSupport;
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.fragments.DiffFragment;
@@ -248,7 +248,7 @@ public class DiffUtil {
   public static boolean canNavigateToFile(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || project.isDefault()) return false;
     if (file == null || !file.isValid()) return false;
-    if (DiffPsiFileSupport.isDiffFile(file)) return false;
+    if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
   }
