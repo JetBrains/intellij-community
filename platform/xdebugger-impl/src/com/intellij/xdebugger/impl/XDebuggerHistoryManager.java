@@ -16,10 +16,7 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SerializationFilter;
@@ -43,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * @author nik
  */
-@State(name = "debuggerHistoryManager", storages = @Storage(value = "debuggerHistory.xml"))
+@State(name = "debuggerHistoryManager", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE))
 public class XDebuggerHistoryManager implements PersistentStateComponent<Element> {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
   private static final SerializationFilter SERIALIZATION_FILTER = new SkipDefaultsSerializationFilter();
