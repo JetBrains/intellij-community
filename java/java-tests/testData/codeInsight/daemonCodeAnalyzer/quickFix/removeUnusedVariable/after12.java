@@ -5,7 +5,8 @@ class a {
     int k;
 
     private int run() {
-        /*ddddd*/ Object oo = (Object) new Integer(0);
+        /*ddddd*/
+        Object oo = (Object) new Integer(0);
         return 0;
     }
 }

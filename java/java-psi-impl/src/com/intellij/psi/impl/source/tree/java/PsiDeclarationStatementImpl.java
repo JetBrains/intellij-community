@@ -77,6 +77,17 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     }
 
     super.deleteChildInternal(child);
+
+    TreeElement first = getFirstChildNode();
+    if (first != null && !DECLARED_ELEMENT_BIT_SET.contains(first.getElementType())) {
+      TreeElement last = first;
+      while (true) {
+        TreeElement next = last.getTreeNext();
+        if (next == null || DECLARED_ELEMENT_BIT_SET.contains(next.getElementType())) break;
+        last = next;
+      }
+      getTreeParent().addInternal(first, last, this, Boolean.TRUE);
+    }
   }
 
   private void removeCommaBefore(ASTNode child) {
