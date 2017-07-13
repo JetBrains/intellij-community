@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -59,6 +60,7 @@ import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -232,21 +234,21 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
         if (type == 0) return Collections.emptySortedSet();
         return Stream.of(new SignatureData(type, iteratorKind, true), new SignatureData(type, iteratorKind, false))
-          .flatMap(sd -> myReader.getMembersFor(sd)
-          .stream()
-          .filter(r -> r instanceof LightRef.JavaLightMethodRef)
-          .map(r -> (LightRef.JavaLightMethodRef) r)
-          .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
-            return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
-          })
-          .distinct()
-          .map(r -> {
-            int count = myReader.getOccurrenceCount(r);
-            return count <= 1 ? null : new SignatureAndOccurrences(
-              new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
-              count);
-          }))
+          .flatMap(sd -> StreamEx.of(myReader.getMembersFor(sd))
+            .peek(r -> ProgressManager.checkCanceled())
+            .select (LightRef.JavaLightMethodRef.class)
+            .flatMap(r -> {
+              LightRef.NamedLightRef[] hierarchy =
+                myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
+              return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
+            })
+            .distinct()
+            .map(r -> {
+              int count = myReader.getOccurrenceCount(r);
+              return count <= 1 ? null : new SignatureAndOccurrences(
+                new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+                count);
+            }))
           .filter(Objects::nonNull)
           .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
