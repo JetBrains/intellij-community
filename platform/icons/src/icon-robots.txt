@@ -1,2 +1,3 @@
 skip: diff_frame*
+skip: icon_small.png
 deprecated: diff/Diff.png
