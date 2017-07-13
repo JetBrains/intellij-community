@@ -40,20 +40,8 @@ public class FileParserTest extends JavaParsingTestCase {
   public void testUnclosedImport3() { doParserTest("import static a"); }
   public void testImportBrokenFromBeginning() { doParserTest("xx import a;"); }
 
-  public void testExtraSemicolons() {
-    doParserTest(
-      "package p;;\n" +
-      "import a;;\n" +
-      "class C{};");
-  }
-
-  public void testFileWithClass() {
-    doParserTest(
-      "package a;\n" +
-      "import b;\n" +
-      "public class C { }\n" +
-      "class D { }");
-  }
+  public void testExtraSemicolons() { doParserTest("package p;;\nimport a;;\nclass C{};"); }
+  public void testFileWithClass() { doParserTest("package a;\nimport b;\npublic class C { }\nclass D { }"); }
 
   public void testBindBefore0() { doParserTest("class A{\n  // comment\n  int field;\n}"); }
   public void testBindBefore1() { doParserTest("class A{\n  // comment\n\n  int field;\n}"); }
