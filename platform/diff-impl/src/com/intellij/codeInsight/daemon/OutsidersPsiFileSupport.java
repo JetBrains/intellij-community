@@ -29,6 +29,14 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * We want to highlight some files, that do not belong to the project (ex: previous revisions from VCS).
+ * To do so we need some context - SDK, the rest of the project, etc.
+ * We can't get "real" context, but local state is often a good enough approximation.
+ * <p>
+ * This helper is used to disable error highlighting and inspections in such files,
+ * as they tend to be false-positive due to context differences.
+ */
 public class OutsidersPsiFileSupport {
   public static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
 

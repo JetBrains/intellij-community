@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.vfs;
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +43,8 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       myParent = new VcsVirtualFolder(file.getParent(), this, myFileSystem);
     else
       myParent = null;
+
+    OutsidersPsiFileSupport.markFile(this);
   }
 
   @Override
