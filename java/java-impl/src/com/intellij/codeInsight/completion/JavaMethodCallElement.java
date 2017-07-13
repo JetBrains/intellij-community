@@ -21,9 +21,9 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
-import com.intellij.codeInsight.hints.MethodInfoBlacklistFilter;
 import com.intellij.codeInsight.hints.HintInfo;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
+import com.intellij.codeInsight.hints.MethodInfoBlacklistFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -72,6 +73,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
   private boolean myMayNeedExplicitTypeParameters;
   private String myForcedQualifier = "";
+  @Nullable private String myPresentableTypeArgs;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
     this(method, method.getName());
@@ -112,6 +114,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   public void setInferenceSubstitutor(@NotNull final PsiSubstitutor substitutor, PsiElement place) {
     myInferenceSubstitutor = substitutor;
     myMayNeedExplicitTypeParameters = mayNeedTypeParameters(place);
+    myPresentableTypeArgs = shouldInsertTypeParameters() ? getTypeParamsText(true, myMethod, substitutor) : null;
+    if (myPresentableTypeArgs != null && myPresentableTypeArgs.length() > 10) {
+      myPresentableTypeArgs = myPresentableTypeArgs.substring(0, 10) + "...>";
+    }
   }
 
   public JavaMethodCallElement setQualifierSubstitutor(@NotNull PsiSubstitutor qualifierSubstitutor) {
@@ -149,14 +155,16 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     if (this == o) return true;
     if (!(o instanceof JavaMethodCallElement)) return false;
     if (!super.equals(o)) return false;
+    if (!Objects.equals(myPresentableTypeArgs, ((JavaMethodCallElement)o).myPresentableTypeArgs)) return false;
 
-    return myInferenceSubstitutor.equals(((JavaMethodCallElement)o).myInferenceSubstitutor);
+    return myQualifierSubstitutor.equals(((JavaMethodCallElement)o).myQualifierSubstitutor);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myInferenceSubstitutor.hashCode();
+    result = 31 * result + (myPresentableTypeArgs == null ? 0 : myPresentableTypeArgs.hashCode());
+    result = 31 * result + myQualifierSubstitutor.hashCode();
     return result;
   }
 
@@ -491,22 +499,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       presentation.setItemText(myForcedQualifier + presentation.getItemText());
     }
 
-    if (shouldInsertTypeParameters()) {
-      String typeParamsText = getTypeParamsText(true, getObject(), getInferenceSubstitutor());
-      if (typeParamsText != null) {
-        if (typeParamsText.length() > 10) {
-          typeParamsText = typeParamsText.substring(0, 10) + "...>";
-        }
-
-        String itemText = presentation.getItemText();
-        assert itemText != null;
-        int i = itemText.indexOf('.');
-        if (i > 0) {
-          presentation.setItemText(itemText.substring(0, i + 1) + typeParamsText + itemText.substring(i + 1));
-        }
+    if (myPresentableTypeArgs != null) {
+      String itemText = presentation.getItemText();
+      assert itemText != null;
+      int i = itemText.indexOf('.');
+      if (i > 0) {
+        presentation.setItemText(itemText.substring(0, i + 1) + myPresentableTypeArgs + itemText.substring(i + 1));
       }
     }
-    
   }
 
   private static class AutoPopupCompletion extends Expression {

@@ -1786,9 +1786,13 @@ class Bar {
   }
 
   void testDuplicateGenericMethodSuggestionWhenInheritingFromRawType() {
-    CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
     configure()
     assert myFixture.lookupElementStrings == ['indexOf']
+  }
+
+  void testDuplicateEnumValueOf() {
+    configure()
+    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement(it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
   }
 
 }
