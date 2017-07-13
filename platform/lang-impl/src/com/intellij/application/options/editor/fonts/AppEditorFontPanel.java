@@ -20,6 +20,7 @@ import com.intellij.application.options.colors.FontEditorPreview;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,10 +45,17 @@ public class AppEditorFontPanel implements Disposable {
       new ColorAndFontSettingsListener.Abstract() {
         @Override
         public void fontChanged() {
-          myPreview.updateView();
+          updatePreview();
         }
       }
     );
+  }
+
+  public void updatePreview() {
+    if (myPreviewScheme instanceof EditorFontCache) {
+      ((EditorFontCache)myPreviewScheme).reset();
+    }
+    myPreview.updateView();
   }
 
   @Override
