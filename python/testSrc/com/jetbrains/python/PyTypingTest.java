@@ -16,13 +16,9 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -955,6 +951,21 @@ public class PyTypingTest extends PyTestCase {
            "    return myid(x), myid(y), myid(z)\n" +
            "\n" +
            "expr = f(True, 1, 'foo')\n");
+  }
+
+  // PY-24260
+  public void testGenericClassParameterTakenFromGenericClassObject() {
+    doTest("MyClass[TypeVar('T')]",
+           "from typing import TypeVar, Generic, Type\n" +
+           "\n" +
+           "T = TypeVar(\"T\")\n" +
+           "\n" +
+           "class MyClass(Generic[T]):\n" +
+           "    def __init__(self, type: Type[T]):\n" +
+           "        pass\n" +
+           "\n" +
+           "def f(x: Type[T]):\n" +
+           "    expr = MyClass(x)\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

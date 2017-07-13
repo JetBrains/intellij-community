@@ -435,12 +435,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     UIUtil.addUndoRedoActions(textComponent);
 
-    if (UIUtil.isUnderWindowsLookAndFeel()) {
-      textComponent.setFont(UIManager.getFont("TextField.font"));
-    } else {
-      Utils.setSmallerFont(textComponent);
-    }
-
     textComponent.putClientProperty("AuxEditorComponent", Boolean.TRUE);
     textComponent.setBackground(UIUtil.getTextFieldBackground());
     textComponent.addFocusListener(new FocusListener() {

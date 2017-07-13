@@ -80,6 +80,7 @@ public class AppEditorFontConfigurable implements SearchableConfigurable, NoScro
     AppEditorFontOptionsPanel optionsPanel = getFontPanel().getOptionsPanel();
     optionsPanel.updateWarning();
     optionsPanel.updateOptionsList();
+    getFontPanel().updatePreview();
   }
 
   @NotNull

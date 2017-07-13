@@ -225,8 +225,8 @@ abstract class FirstStart(val ideType: IdeType) {
 class IdeaCommunityFirstStart : FirstStart(ideType = IdeType.IDEA_COMMUNITY) {
 
   override fun completeFirstStart() {
-    acceptAgreement()
     completeInstallation()
+    acceptAgreement()
     customizeIntellijIdea()
     waitWelcomeFrameAndClose()
   }
@@ -235,8 +235,8 @@ class IdeaCommunityFirstStart : FirstStart(ideType = IdeType.IDEA_COMMUNITY) {
 class IdeaUltimateFirstStart : FirstStart(ideType = IdeType.IDEA_ULTIMATE) {
 
   override fun completeFirstStart() {
-    acceptAgreement()
     completeInstallation()
+    acceptAgreement()
     customizeIntellijIdea()
     waitWelcomeFrameAndClose()
   }
@@ -247,8 +247,8 @@ class IdeaUltimateFirstStart : FirstStart(ideType = IdeType.IDEA_ULTIMATE) {
 class WebStormFirstStart : FirstStart(ideType = IdeType.WEBSTORM) {
 
   override fun completeFirstStart() {
-    acceptAgreement()
     completeInstallation()
+    acceptAgreement()
     waitWelcomeFrame()
     webStormInitialConfiguration()
     waitWelcomeFrameAndClose()

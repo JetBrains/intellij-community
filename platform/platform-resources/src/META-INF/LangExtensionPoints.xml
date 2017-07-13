@@ -567,6 +567,7 @@
     </extensionPoint>
 
     <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
+    <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider"/>
 
     <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
     <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>

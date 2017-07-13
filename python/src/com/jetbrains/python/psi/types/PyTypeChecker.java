@@ -470,7 +470,7 @@ public class PyTypeChecker {
             }
           }
         }
-        if (substitution instanceof PyGenericType && substitution != type) {
+        if (substitution instanceof PyGenericType && !typeVar.equals(substitution)) {
           final PyType recursive = substitute(substitution, substitutions, context);
           if (recursive != null) {
             return recursive;

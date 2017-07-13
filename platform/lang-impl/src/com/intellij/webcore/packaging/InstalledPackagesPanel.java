@@ -15,10 +15,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.IconUtil;
@@ -92,7 +89,7 @@ public class InstalledPackagesPanel extends JPanel {
         upgradeAction();
       }
     };
-    myInstallButton = new AnActionButton("Install", IconUtil.getAddIcon()) {
+    myInstallButton = new DumbAwareActionButton("Install", IconUtil.getAddIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myPackageManagementService != null) {

@@ -1701,6 +1701,7 @@
     <nameSuggestionProvider implementation="com.intellij.refactoring.rename.JavaNameSuggestionProvider" id="java"/>
 
     <vetoRenameCondition implementation="com.intellij.refactoring.rename.JavaVetoRenameCondition"/>
+    <renameFileActionProvider implementation="com.intellij.refactoring.actions.ClassAwareRenameFileProvider"/>
 
     <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.JavaReadWriteAccessDetector" id="java"/>
     <elementDescriptionProvider implementation="com.intellij.codeInsight.highlighting.JavaHighlightUsagesDescriptionProvider"/>
