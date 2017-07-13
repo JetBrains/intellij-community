@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
@@ -59,6 +60,10 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     final PsiElement element = location.getPsiElement();
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof GroovyFile)) {
+      return null;
+    }
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (GroovyConsoleStateService.getInstance(element.getProject()).isProjectConsole(virtualFile)) {
       return null;
     }
 
