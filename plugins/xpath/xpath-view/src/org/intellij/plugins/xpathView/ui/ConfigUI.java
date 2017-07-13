@@ -15,11 +15,10 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.ui.IdeBorderFactory;
-import org.intellij.plugins.xpathView.Config;
-
 import com.intellij.ui.ColorPanel;
-
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
+import org.intellij.plugins.xpathView.Config;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -94,23 +93,29 @@ public class ConfigUI extends JPanel {
         c.add(c = new JPanel(new BorderLayout()), BorderLayout.SOUTH);
         c.add(colors, BorderLayout.NORTH);
 
-        final GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
+        Insets emptyInsets = JBUI.emptyInsets();
+        Insets cpInsets = JBUI.insetsLeft(8);
+
+        GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, emptyInsets, 0, 0);
 
         colors.add(new JLabel("Highlight color:"), constraints);
         constraints.gridx = 1;
         constraints.weightx = 1;
 
         chooseHighlight = new ColorPanel();
+        constraints.insets = cpInsets;
         colors.add(chooseHighlight, constraints);
 
         constraints.gridx = 0;
         constraints.gridy = 1;
         constraints.weightx = 0;
+        constraints.insets = emptyInsets;
         colors.add(new JLabel("Context node color:"), constraints);
 
         constraints.gridx = 1;
         constraints.gridy = 1;
         constraints.weightx = 1;
+        constraints.insets = cpInsets;
 
         chooseContext = new ColorPanel();
         colors.add(chooseContext, constraints);

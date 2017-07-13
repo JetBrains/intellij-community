@@ -50,7 +50,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SequentialModalProgressTask;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -331,7 +330,6 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
     panel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
     panel.add(button);
-    panel.add(Box.createHorizontalStrut(JBUI.scale(3)));
     return panel;
   }
 

@@ -28,6 +28,7 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -96,6 +97,7 @@ public abstract class IntentionSettingsTree {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myNorthPanel = new JPanel(new BorderLayout());
     myNorthPanel.add(myFilter, BorderLayout.CENTER);
+    myNorthPanel.setBorder(JBUI.Borders.emptyBottom(2));
 
     final DefaultActionGroup group = new DefaultActionGroup();
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
@@ -194,7 +196,7 @@ public abstract class IntentionSettingsTree {
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
       Boolean b = myIntentionToCheckStatus.get(metaData);
-      boolean enabled = b == null ? false : b.booleanValue();
+      boolean enabled = b == Boolean.TRUE;
       root.setChecked(enabled);
       return enabled;
     }
