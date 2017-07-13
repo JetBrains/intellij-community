@@ -90,7 +90,7 @@ class InvokeCompletion extends ActionOnRange {
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
         performCompletion(editor);
-        PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkFileStructure);
+        PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);
