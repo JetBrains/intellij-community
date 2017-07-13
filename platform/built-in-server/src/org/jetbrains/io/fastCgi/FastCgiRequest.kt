@@ -1,7 +1,6 @@
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.writeUtf8
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -10,6 +9,7 @@ import io.netty.handler.codec.http.FullHttpRequest
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
+import java.nio.CharBuffer
 import java.util.*
 
 private val PARAMS = 4
@@ -20,15 +20,7 @@ private val STDIN = 5
 private val VERSION = 1
 
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
-  private var buffer: ByteBuf? = allocator.ioBuffer(4096)
-
-  init {
-    writeHeader(buffer!!, BEGIN_REQUEST, HEADER_LENGTH)
-    buffer!!.writeShort(RESPONDER)
-    buffer!!.writeByte(FCGI_KEEP_CONNECTION)
-    // reserved[5]
-    buffer!!.writeZero(5)
-  }
+  private val params = allocator.ioBuffer(4096)
 
   fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
     val root = pathInfo.root
@@ -37,37 +29,39 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
 
-  fun addHeader(key: String, value: CharSequence?) {
+  private fun addHeader(key: String, value: CharSequence?) {
     if (value == null) {
       return
     }
 
+    val valBytes = (value as? String)?.toByteArray()
+    val valBuffer = if (value is String) null else Charsets.UTF_8.encode(CharBuffer.wrap(value))
+
     val keyLength = key.length
-    val valLength = value.length
-    writeHeader(buffer!!, PARAMS, keyLength + valLength + (if (keyLength < 128) 1 else 4) + (if (valLength < 128) 1 else 4))
+    val valLength = valBytes?.size ?: valBuffer!!.limit()
 
-    if (keyLength < 128) {
-      buffer!!.writeByte(keyLength)
+    writeParamLength(keyLength)
+    writeParamLength(valLength)
+
+    ByteBufUtil.writeAscii(params, key)
+    if (valBuffer == null) {
+      params.writeBytes(valBytes)
     }
     else {
-      buffer!!.writeByte(128 or (keyLength shr 24))
-      buffer!!.writeByte(keyLength shr 16)
-      buffer!!.writeByte(keyLength shr 8)
-      buffer!!.writeByte(keyLength)
+      params.writeBytes(valBuffer)
     }
+  }
 
-    if (valLength < 128) {
-      buffer!!.writeByte(valLength)
+  private fun writeParamLength(l: Int) {
+    if (l < 128) {
+      params.writeByte(l)
     }
     else {
-      buffer!!.writeByte(128 or (valLength shr 24))
-      buffer!!.writeByte(valLength shr 16)
-      buffer!!.writeByte(valLength shr 8)
-      buffer!!.writeByte(valLength)
+      params.writeByte(128 or (l shr 24))
+      params.writeByte(l shr 16)
+      params.writeByte(l shr 8)
+      params.writeByte(l)
     }
-
-    ByteBufUtil.writeAscii(buffer, key)
-    buffer!!.writeUtf8(value)
   }
 
   fun writeHeaders(request: FullHttpRequest, clientChannel: Channel) {
@@ -101,12 +95,13 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     addHeader("CONTENT_LENGTH", request.content().readableBytes().toString())
 
     for ((key, value) in request.headers().iteratorAsString()) {
-      if (!key.equals("keep-alive", ignoreCase = true)) {
+      if (!key.equals("keep-alive", ignoreCase = true) && !key.equals("connection", ignoreCase = true)) {
         addHeader("HTTP_${key.replace('-', '_').toUpperCase(Locale.ENGLISH)}", value)
       }
     }
   }
 
+  // https://stackoverflow.com/questions/27457543/php-cgi-post-empty
   fun writeToServerChannel(content: ByteBuf?, fastCgiChannel: Channel) {
     if (fastCgiChannel.pipeline().first() == null) {
       throw IllegalStateException("No handler in the pipeline")
@@ -114,14 +109,23 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
     var releaseContent = content != null
     try {
-      writeHeader(buffer!!, PARAMS, 0)
+      val buffer = fastCgiChannel.alloc().ioBuffer(4096)
+      writeHeader(buffer, BEGIN_REQUEST, HEADER_LENGTH)
+      buffer.writeShort(RESPONDER)
+      buffer.writeByte(FCGI_KEEP_CONNECTION)
+      // reserved[5]
+      buffer.writeZero(5)
+
+      writeHeader(buffer, PARAMS, params.readableBytes())
+      buffer.writeBytes(params)
+
+      writeHeader(buffer, PARAMS, 0)
 
       if (content != null) {
-        writeHeader(buffer!!, STDIN, content.readableBytes())
+        writeHeader(buffer, STDIN, content.readableBytes())
       }
 
       fastCgiChannel.write(buffer)
-      buffer = null
 
       if (content != null) {
         fastCgiChannel.write(content)
