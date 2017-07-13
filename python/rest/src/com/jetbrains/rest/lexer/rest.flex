@@ -20,10 +20,11 @@ SPACE=[\ \t]
 
 ADORNMENT_SYMBOL="="|"-"|"`"|":"|"."|"'"|\"|"~"|"^"|"_"|"*"|"+"|"#"|">"
 ADORNMENT=("="+|"-"+|"`"+|":"+|"."+|"'"+|\"+|"~"+|"^"+|"_"+|"*"+|"+"+|"#"+)" "*{CRLF}
-SEPARATOR=[\n .:,()\{\}\[\]\-]
+SEPARATOR=[\n .:,()\{\}\[\]\-;!\\/'\"]
 USUAL_TYPES="attention"|"caution"|"danger"|"error"|"hint"|"important"|"note"|"tip"|"warning"|"admonition"|"image"|"figure"|"topic"|"sidebar"|"parsed-literal"|"rubric"|"epigraph"|"highlights"|"pull-quote"|"compound"|"container"|"table"|"csv-table"|"list-table"|"contents"|"sectnum"|"section-autonumbering"|"header"|"footer"|"target-notes"|"footnotes"|"citations"|"meta"|"replace"|"unicode"|"date"|"include"|"raw"|"class"|"role"|"default-role"|"title"|"restructuredtext-test-directive"
 HIGHLIGHT_TYPES= "highlight" | "sourcecode" | "code-block"
 NOT_BACKQUOTE = [^`]
+LINK = [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?
 
 %state IN_EXPLISIT_MARKUP
 %state IN_COMMENT
@@ -85,8 +86,8 @@ NOT_BACKQUOTE = [^`]
 
 "`"[^`\n\r ][^`\n\r]*"`"                            { return INTERPRETED;}
 "`"{NOT_BACKQUOTE}+"`_""_"?{SEPARATOR}              {yypushback(1); return REFERENCE_NAME;}
-[0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?{SEPARATOR}                  {yypushback(1); return REFERENCE_NAME;}
-//"["([0-9]* | #?[0-9A-Za-z]* | "*")"]_"{SEPARATOR}   {yypushback(1); return REFERENCE_NAME;}
+{LINK}{SEPARATOR}                                   {yypushback(1); return REFERENCE_NAME;}
+[\"']{LINK}[\"']                                    {yypushback(yylength()-1); return LINE;}
 
 ":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[`]      { yypushback(1); yybegin(INIT); return FIELD;}
 {CRLF}                                              { yybegin(IN_LINEBEGIN); return WHITESPACE;}

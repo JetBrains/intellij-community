@@ -155,6 +155,31 @@ public class RestLexerTest extends TestCase {
            "[ :term:`user`, LINE]"
            );
   }
+  public void testLinks() throws IOException {
+    doTest("link_/\n" +
+           "link_!\n" +
+           "\"link_\"\n" +
+           "'link_'\n" +
+           "link_;\n",
+           "[link_, REFERENCE_NAME]",
+           "[/, LINE]",
+           "[\n, WHITESPACE]",
+           "[link_, REFERENCE_NAME]",
+           "[!, LINE]",
+           "[\n, WHITESPACE]",
+           "[\", LINE]",
+           "[link_, REFERENCE_NAME]",
+           "[\", LINE]",
+           "[\n, WHITESPACE]",
+           "[', LINE]",
+           "[link_, REFERENCE_NAME]",
+           "[', LINE]",
+           "[\n, WHITESPACE]",
+           "[link_, REFERENCE_NAME]",
+           "[;, LINE]",
+           "[\n, WHITESPACE]"
+           );
+  }
 
   public void testInterpreted() throws IOException {
     doTest(":kbd:`1`\n" +
