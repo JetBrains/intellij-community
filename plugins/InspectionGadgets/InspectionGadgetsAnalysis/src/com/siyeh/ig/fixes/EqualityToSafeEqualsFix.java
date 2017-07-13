@@ -19,48 +19,40 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class EqualityToEqualsFix extends InspectionGadgetsFix {
+public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
 
   private final boolean myNegated;
 
-  private EqualityToEqualsFix(boolean negated) {
+  private EqualityToSafeEqualsFix(boolean negated) {
     myNegated = negated;
   }
 
   @Nullable
-  public static EqualityToEqualsFix buildFix(PsiBinaryExpression expression) {
+  public static EqualityToSafeEqualsFix buildFix(PsiBinaryExpression expression) {
     final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
-    if (lhs instanceof PsiReferenceExpression) {
+    if ((lhs instanceof PsiReferenceExpression)) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
       final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiModifierListOwner) {
+      if ((target instanceof PsiModifierListOwner)) {
         NullableNotNullManager.getInstance(expression.getProject());
-        if (NullableNotNullManager.isNullable((PsiModifierListOwner)target)) {
+        if (NullableNotNullManager.isNotNull((PsiModifierListOwner)target)) {
           return null;
         }
       }
     }
-    return new EqualityToEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
-  }
-
-  @NotNull
-  public static InspectionGadgetsFix[] buildEqualityFixes(PsiBinaryExpression expression) {
-    final List<InspectionGadgetsFix> result = new ArrayList<>(2);
-    ContainerUtil.addIfNotNull(result, buildFix(expression));
-    ContainerUtil.addIfNotNull(result, EqualityToSafeEqualsFix.buildFix(expression));
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return new EqualityToSafeEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
   }
 
   @Nls
@@ -68,14 +60,14 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   @Override
   public String getName() {
     return myNegated
-           ? InspectionGadgetsBundle.message("inequality.to.not.equals.quickfix")
-           : InspectionGadgetsBundle.message("equality.to.equals.quickfix");
+           ? InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")
+           : InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message("equality.to.equals.quickfix");
+    return InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix");
   }
 
   @Override
@@ -88,20 +80,31 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     final PsiBinaryExpression expression = (PsiBinaryExpression)parent;
     final PsiExpression lhs = ParenthesesUtils.stripParentheses(expression.getLOperand());
     final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getROperand());
-    if (lhs == null || rhs == null) {
+    if (lhs == null ||  rhs == null) {
       return;
     }
-    final StringBuilder newExpression = new StringBuilder();
-    if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
-      newExpression.append('!');
-    }
-    if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      newExpression.append('(').append(lhs.getText()).append(')');
+    final String lhsText = lhs.getText();
+    final String rhsText = rhs.getText();
+    @NonNls final StringBuilder newExpression = new StringBuilder();
+    if (PsiUtil.isLanguageLevel7OrHigher(expression) && ClassUtils.findClass("java.util.Objects", expression) != null) {
+      if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
+        newExpression.append('!');
+      }
+      newExpression.append("java.util.Objects.equals(").append(lhsText).append(',').append(rhsText).append(')');
     }
     else {
-      newExpression.append(lhs.getText());
+      newExpression.append(lhsText).append("==null?").append(rhsText).append(expression.getOperationSign().getText()).append(" null:");
+      if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
+        newExpression.append('!');
+      }
+      if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+        newExpression.append('(').append(lhsText).append(')');
+      }
+      else {
+        newExpression.append(lhsText);
+      }
+      newExpression.append(".equals(").append(rhsText).append(')');
     }
-    newExpression.append(".equals(").append(rhs.getText()).append(')');
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString());
   }
 }
