@@ -1,3 +1,4 @@
 skip: diff_frame*
 skip: icon_small.png
+skip: icon_CEsmall.png
 deprecated: diff/Diff.png
