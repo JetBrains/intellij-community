@@ -37,7 +37,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +52,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+
+import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
 
 public class GroovyConsole {
 
@@ -220,7 +221,7 @@ public class GroovyConsole {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
     DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
-    res.setWorkingDirectory(ModuleRootManager.getInstance(module).getContentRoots()[0].getPath());
+    res.setWorkingDirectory(getWorkingDirectory(module));
     res.setUseDynamicClasspath(true);
     return res;
   }
