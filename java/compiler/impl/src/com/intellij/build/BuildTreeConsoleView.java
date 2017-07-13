@@ -18,11 +18,13 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -41,11 +43,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -56,10 +62,6 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
   @NonNls private static final String TREE = "tree";
   private final JPanel myPanel = new JPanel();
-  private final CardLayout myCardLayout;
-  private final JPanel myContentPanel = new JPanel();
-
-  private final TreeTable myTreeTable;
   private final SimpleTreeBuilder myBuilder;
   private final Map<Object, ExecutionNode> nodesMap = ContainerUtil.newConcurrentMap();
   private final ExecutionNodeProgressAnimator myProgressAnimator;
@@ -104,7 +106,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       }
     };
 
-    myTreeTable = new TreeTable(model) {
+    TreeTable treeTable = new TreeTable(model) {
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         if (column == 1) {
@@ -113,9 +115,9 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
         return super.getCellRenderer(row, column);
       }
     };
-    myTreeTable.setTableHeader(null);
+    treeTable.setTableHeader(null);
 
-    final TableColumn timeColumn = myTreeTable.getColumnModel().getColumn(1);
+    final TableColumn timeColumn = treeTable.getColumnModel().getColumn(1);
     final long duration = TimeUnit.HOURS.toMillis(10) + TimeUnit.MINUTES.toMillis(10) + 11111L;
     int timeColumnWidth = new JLabel("Running for " + StringUtil.formatDuration(duration), SwingConstants.RIGHT).getPreferredSize().width;
     timeColumn.setPreferredWidth(timeColumnWidth);
@@ -123,7 +125,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     timeColumn.setMaxWidth(timeColumnWidth);
     timeColumn.setResizable(false);
 
-    TreeTableTree tree = myTreeTable.getTree();
+    TreeTableTree tree = treeTable.getTree();
     tree.setRootVisible(false);
     tree.setShowsRootHandles(true);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
@@ -137,11 +139,16 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     myProgressAnimator = new ExecutionNodeProgressAnimator(myBuilder);
     myProgressAnimator.setCurrentNode(rootNode);
 
+    JPanel myContentPanel = new JPanel();
+    myContentPanel.setLayout(new CardLayout());
+    myContentPanel.add(ScrollPaneFactory.createScrollPane(treeTable), TREE);
+
     myPanel.setLayout(new BorderLayout());
-    myPanel.add(myContentPanel, BorderLayout.CENTER);
-    myCardLayout = new CardLayout();
-    myContentPanel.setLayout(myCardLayout);
-    myContentPanel.add(ScrollPaneFactory.createScrollPane(myTreeTable), TREE);
+    ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter();
+    Disposer.register(this, myThreeComponentsSplitter);
+    myThreeComponentsSplitter.setFirstComponent(myContentPanel);
+    myThreeComponentsSplitter.setLastComponent(new DetailsHandler(myProject, tree, myThreeComponentsSplitter).getComponent());
+    myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
   }
 
   private ExecutionNode getRootElement() {
@@ -284,6 +291,69 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
     if (event instanceof FinishBuildEvent) {
       myProgressAnimator.stopMovie();
+    }
+  }
+
+  private static class DetailsHandler {
+    private final ThreeComponentsSplitter mySplitter;
+    @Nullable
+    private ExecutionNode myExecutionNode;
+    private final ConsoleView myConsole;
+
+    public DetailsHandler(Project project,
+                          TreeTableTree tree,
+                          ThreeComponentsSplitter threeComponentsSplitter) {
+      myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+      mySplitter = threeComponentsSplitter;
+      myConsole.getComponent().setVisible(false);
+      tree.addTreeSelectionListener(new TreeSelectionListener() {
+        @Override
+        public void valueChanged(TreeSelectionEvent e) {
+          TreePath path = tree.getSelectionPath();
+          setNode(path != null ? (DefaultMutableTreeNode)path.getLastPathComponent() : null);
+        }
+      });
+
+      Disposer.register(threeComponentsSplitter, myConsole);
+    }
+
+    public void setNode(@Nullable DefaultMutableTreeNode node) {
+      if (node == null || node.getUserObject() == myExecutionNode) return;
+      if (node.getUserObject() instanceof ExecutionNode) {
+        myExecutionNode = (ExecutionNode)node.getUserObject();
+        EventResult eventResult = ((ExecutionNode)node.getUserObject()).getResult();
+        if (eventResult instanceof FailureResult) {
+          List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
+          if (!failures.isEmpty()) {
+            Failure failure = failures.get(0);
+            String text = failure.getDescription();
+            if (text == null && failure.getError() != null) {
+              text = failure.getError().getMessage();
+            }
+
+            if (text != null) {
+              myConsole.clear();
+              myConsole.print(text, ConsoleViewContentType.ERROR_OUTPUT);
+              int firstSize = mySplitter.getFirstSize();
+              int lastSize = mySplitter.getLastSize();
+
+              if (firstSize == 0 && lastSize == 0) {
+                int width = Math.round(mySplitter.getWidth() / 2f);
+                mySplitter.setFirstSize(width);
+              }
+              myConsole.getComponent().setVisible(true);
+              return;
+            }
+          }
+        }
+      }
+
+      myExecutionNode = null;
+      myConsole.getComponent().setVisible(false);
+    }
+
+    public JComponent getComponent() {
+      return myConsole.getComponent();
     }
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.build.SyncViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
+import com.intellij.build.events.FailureImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
@@ -98,6 +99,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -568,7 +570,11 @@ public class ExternalSystemUtil {
       final EventResult eventResult;
       final OperationResult operationResult = ((ExternalSystemFinishEvent)progressEvent).getOperationResult();
       if (operationResult instanceof FailureResult) {
-        eventResult = new FailureResultImpl(null);
+        List<com.intellij.build.events.Failure> failures = new SmartList<>();
+        for (Failure failure : ((FailureResult)operationResult).getFailures()) {
+          failures.add(convert(failure));
+        }
+        eventResult = new FailureResultImpl(failures);
       }
       else if (operationResult instanceof SkippedResult) {
         eventResult = new SkippedResultImpl();
@@ -593,6 +599,14 @@ public class ExternalSystemUtil {
     String hint = progressEvent.getDescriptor().getHint();
     buildEvent.setHint(hint);
     return buildEvent;
+  }
+
+  private static com.intellij.build.events.Failure convert(Failure failure) {
+    List<com.intellij.build.events.Failure> causes = new SmartList<>();
+    for (Failure cause : failure.getCauses()) {
+      causes.add(convert(cause));
+    }
+    return new FailureImpl(failure.getMessage(), failure.getDescription(), causes);
   }
 
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,

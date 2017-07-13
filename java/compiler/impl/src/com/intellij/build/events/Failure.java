@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.model.task.event;
+package com.intellij.build.events;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/2/2015
  */
-public class FailureResultImpl extends DefaultOperationResult implements FailureResult {
+public interface Failure {
+  @Nullable
+  String getMessage();
 
-  private final List<? extends Failure> myFailures;
+  @Nullable
+  String getDescription();
 
-  public FailureResultImpl(long startTime, long endTime, List<? extends Failure> failures) {
-    super(startTime, endTime);
-    myFailures = failures;
-  }
+  @Nullable
+  Throwable getError();
 
-  @Override
-  public List<? extends Failure> getFailures() {
-    return myFailures;
-  }
+  List<? extends Failure> getCauses();
 }

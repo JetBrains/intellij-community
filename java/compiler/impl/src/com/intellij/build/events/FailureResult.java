@@ -15,8 +15,11 @@
  */
 package com.intellij.build.events;
 
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  */
 public interface FailureResult extends EventResult {
+  List<? extends Failure> getFailures();
 }

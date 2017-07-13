@@ -31,6 +31,9 @@ import org.gradle.tooling.events.test.JvmTestOperationDescriptor;
 import org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  * @since 12/17/2015
@@ -117,7 +120,12 @@ public class GradleProgressEventConverter {
   @NotNull
   private static OperationResult convert(org.gradle.tooling.events.OperationResult operationResult) {
     if (operationResult instanceof FailureResult) {
-      return new FailureResultImpl(operationResult.getStartTime(), operationResult.getEndTime());
+      FailureResult failureResult = (FailureResult)operationResult;
+      List<Failure> myFailures = new ArrayList<>();
+      for (org.gradle.tooling.Failure failure : failureResult.getFailures()) {
+        myFailures.add(convert(failure));
+      }
+      return new FailureResultImpl(failureResult.getStartTime(), failureResult.getEndTime(), myFailures);
     }
     else if (operationResult instanceof SkippedResult) {
       return new SkippedResultImpl(operationResult.getStartTime(), operationResult.getEndTime());
@@ -126,5 +134,13 @@ public class GradleProgressEventConverter {
       final boolean isUpToDate = operationResult instanceof TaskSuccessResult && ((TaskSuccessResult)operationResult).isUpToDate();
       return new SuccessResultImpl(operationResult.getStartTime(), operationResult.getEndTime(), isUpToDate);
     }
+  }
+
+  private static Failure convert(org.gradle.tooling.Failure failure) {
+    List<Failure> causes = new ArrayList<>();
+    for (org.gradle.tooling.Failure cause : failure.getCauses()) {
+      causes.add(convert(cause));
+    }
+    return new FailureImpl(failure.getMessage(), failure.getDescription(), causes);
   }
 }

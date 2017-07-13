@@ -13,38 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.events.impl;
+package com.intellij.openapi.externalSystem.model.task.event;
 
-import com.intellij.build.events.Failure;
-import com.intellij.build.events.FailureImpl;
-import com.intellij.build.events.FailureResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
-public class FailureResultImpl implements FailureResult {
+public class FailureImpl implements Failure {
+  private final String myMessage;
+  private final String myDescription;
+  private final List<? extends Failure> myCauses;
 
-  private final List<Failure> myFailures;
-
-  public FailureResultImpl(@Nullable Throwable error) {
-    this(null, error);
+  public FailureImpl(String message,
+                     String description,
+                     List<? extends Failure> causes) {
+    myMessage = message;
+    myDescription = description;
+    myCauses = causes;
   }
 
-  public FailureResultImpl(@Nullable String message, @Nullable Throwable error) {
-    myFailures = new ArrayList<>();
-    myFailures.add(new FailureImpl(message, error));
+  @Nullable
+  @Override
+  public String getMessage() {
+    return myMessage;
   }
 
-  public FailureResultImpl(List<Failure> failures) {
-    myFailures = failures;
+  @Nullable
+  @Override
+  public String getDescription() {
+    return myDescription;
   }
 
   @Override
-  public List<? extends Failure> getFailures() {
-    return myFailures;
+  public List<? extends Failure> getCauses() {
+    return myCauses;
   }
 }
