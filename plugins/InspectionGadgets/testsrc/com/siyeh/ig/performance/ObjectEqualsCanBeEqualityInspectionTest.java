@@ -17,7 +17,6 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,6 +37,18 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightInspectionTest
            "  boolean m(Object o1, Object o2) {" +
            "    return o1.equals(o2);" +
            "  }" +
+           "}");
+  }
+
+  public void testEnum() {
+    // should not warn, this is reported by the "'equals()' called on Enum value" inspection
+    doTest("class X {" +
+           "  boolean m(E e1, E e2) {" +
+           "    return e1.equals(e2);" +
+           "  }" +
+           "}" +
+           "enum E {" +
+           "  A,B,C" +
            "}");
   }
 
