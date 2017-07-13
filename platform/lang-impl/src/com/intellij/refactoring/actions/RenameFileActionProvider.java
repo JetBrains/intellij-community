@@ -15,13 +15,17 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.psi.PsiClassOwner;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassAwareRenameFileAction extends RenameFileAction {
-  @Override
-  protected boolean enabledInProjectView(@NotNull PsiFile file) {
-    return file instanceof PsiClassOwner;
+public interface RenameFileActionProvider {
+  ExtensionPointName<RenameFileActionProvider> EP_NAME = ExtensionPointName.create("com.intellij.renameFileActionProvider");
+
+  /*
+   * Check whether 'Rename File Action' is available for current psi file in the Project View or not
+   */
+  default boolean enabledInProjectView(@NotNull PsiFile file) {
+    return false;
   }
 }

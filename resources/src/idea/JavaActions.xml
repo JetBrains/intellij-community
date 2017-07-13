@@ -83,9 +83,8 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceFunctionalParameter"/>
     </action>
 
-    <action id="RenameFile" class="com.intellij.refactoring.actions.ClassAwareRenameFileAction">
+    <action id="RefactoringMenuRenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
-      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
     </action>
 
     <group id="RefactoringMenu4">

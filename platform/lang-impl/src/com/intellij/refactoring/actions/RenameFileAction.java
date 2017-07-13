@@ -16,6 +16,7 @@
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,6 +61,10 @@ public class RenameFileAction extends AnAction implements DumbAware {
   }
 
   protected boolean enabledInProjectView(@NotNull PsiFile file) {
-    return true;
+    for (RenameFileActionProvider provider : Extensions.getExtensions(RenameFileActionProvider.EP_NAME)) {
+      if (provider.enabledInProjectView(file)) return true;
+    }
+
+    return false;
   }
 }

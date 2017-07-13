@@ -1034,5 +1034,9 @@
       <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
               use-shortcut-of="$Delete"/>
     </group>
+
+    <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
+    </action>
   </actions>
 </idea-plugin>
