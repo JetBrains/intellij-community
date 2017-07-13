@@ -80,7 +80,7 @@ public class FontPreferences {
    * @param fontSize        target font size
    * @param fallbackScheme  colors scheme to use for fallback fonts retrieval (if necessary);
    * @return                fallback font family to use if font family with the given name is not registered at current environment;
-   *                        <code>null</code> if font family with the given name is registered at the current environment
+   *                        {@code null} if font family with the given name is registered at the current environment
    */
   @Nullable
   public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {

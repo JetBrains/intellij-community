@@ -440,7 +440,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   /**
    * Updates LAF of all windows. The method also updates font of components
-   * as it's configured in <code>UISettings</code>.
+   * as it's configured in {@code UISettings}.
    */
   @Override
   public void updateUI() {

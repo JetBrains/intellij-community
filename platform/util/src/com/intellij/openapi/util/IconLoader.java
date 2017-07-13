@@ -292,7 +292,7 @@ public final class IconLoader {
   /**
    * Gets (creates if necessary) disabled icon based on the passed one.
    *
-   * @return <code>ImageIcon</code> constructed from disabled image of passed icon.
+   * @return {@code ImageIcon} constructed from disabled image of passed icon.
    */
   @Nullable
   public static Icon getDisabledIcon(Icon icon) {

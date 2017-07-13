@@ -35,7 +35,7 @@ final class SideStack {
   }
 
   /**
-   * Pushes <code>info</code> into the stack. The method stores cloned copy of original <code>info</code>.
+   * Pushes {@code info} into the stack. The method stores cloned copy of original {@code info}.
    */
   void push(final WindowInfoImpl info) {
     LOG.assertTrue(info.isDocked());
@@ -54,8 +54,8 @@ final class SideStack {
   }
 
   /**
-   * @return <code>true</code> if and only if there is window in the state with the same
-   *         <code>anchor</code> as the specified <code>info</code>.
+   * @return {@code true} if and only if there is window in the state with the same
+   *         {@code anchor} as the specified {@code info}.
    */
   boolean isEmpty(final ToolWindowAnchor anchor) {
     for (int i = myStack.size() - 1; i > -1; i--) {
@@ -68,7 +68,7 @@ final class SideStack {
   }
 
   /**
-   * Removes all <code>WindowInfo</code>s with the specified <code>id</code>.
+   * Removes all {@code WindowInfo}s with the specified {@code id}.
    */
   void remove(final String id) {
     for (Iterator i = myStack.iterator(); i.hasNext();) {

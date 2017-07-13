@@ -170,7 +170,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
    *
    * @param newData new data to merge
    * @param oldData old data to merge
-   * @return merge result of the given data if possible; <code>null</code> otherwise
+   * @return merge result of the given data if possible; {@code null} otherwise
    * @throws IOException                as defined by {@link Transferable#getTransferData(DataFlavor)}
    * @throws UnsupportedFlavorException as defined by {@link Transferable#getTransferData(DataFlavor)}
    */

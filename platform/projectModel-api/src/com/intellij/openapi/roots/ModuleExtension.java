@@ -44,9 +44,9 @@ public abstract class ModuleExtension implements Disposable {
    *   }
    * </pre>
    * The point is that call to commit() on CompilerModuleExtension obtained like
-   * <code>'CompilerModuleExtension.getInstance(module).getModifiableModel(true)'</code> doesn't dispose the model.
+   * {@code 'CompilerModuleExtension.getInstance(module).getModifiableModel(true)'} doesn't dispose the model.
    * <p/>
-   * Call to <code>ModifiableRootModel.commit()</code> not only commits linked extensions but disposes them as well.
+   * Call to {@code ModifiableRootModel.commit()} not only commits linked extensions but disposes them as well.
    * 
    * @param writable  flag which identifies if resulting model is writable
    * @return          extension model

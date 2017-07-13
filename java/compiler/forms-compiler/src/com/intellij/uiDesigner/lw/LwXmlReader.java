@@ -27,14 +27,14 @@ public final class LwXmlReader {
   }
 
   /**
-   * @return can be <code>null</code>.
+   * @return can be {@code null}.
    */
   public static Element getChild(final Element element, final String childName) {
     return element.getChild(childName, element.getNamespace());
   }
 
   /**
-   * @return never <code>null</code>.
+   * @return never {@code null}.
    */
   public static Element getRequiredChild(final Element element, final String childName) {
     final Element child = getChild(element, childName);
@@ -45,7 +45,7 @@ public final class LwXmlReader {
   }
 
   /**
-   * @return <code>null</code> or trimmed attribute value.
+   * @return {@code null} or trimmed attribute value.
    */
   public static String getString(final Element element, final String attributeName){
     final String value = element.getAttributeValue(attributeName);
@@ -53,7 +53,7 @@ public final class LwXmlReader {
   }
 
   /**
-   * @return never <code>null</code> trimmed attribute value.
+   * @return never {@code null} trimmed attribute value.
    */
   public static String getRequiredString(final Element element, final String attributeName) {
     final String value = getString(element, attributeName);

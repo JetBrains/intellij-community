@@ -18,9 +18,9 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * Designates a system-independent path, with <code>/</code> separators.
+ * Designates a system-independent path, with {@code /} separators.
  * <p>
- * Corresponding bytecode instrumentation is added by <code>SystemIndependentInstrumentingBuilder</code>.<p>
+ * Corresponding bytecode instrumentation is added by {@code SystemIndependentInstrumentingBuilder}.<p>
  *
  * @see PathUtil#toSystemIndependentName(String)
  * @see PathUtil#toSystemDependentName(String)

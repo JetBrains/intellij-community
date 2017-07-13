@@ -53,7 +53,7 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   /**
    * Allows to postpone first start of validation
    *
-   * @return <code>false</code> if start validation in {@link ProjectSettingsStepBase#registerValidators()} method
+   * @return {@code false} if start validation in {@link ProjectSettingsStepBase#registerValidators()} method
    */
   public boolean postponeValidation() {
     return true;

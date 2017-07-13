@@ -31,7 +31,7 @@ public interface ColorPickerListener {
 
   /**
    * Dialog was closed
-   * @param color resulting color or <code>null</code> if dialog was cancelled
+   * @param color resulting color or {@code null} if dialog was cancelled
    */
   void closed(@Nullable Color color);
 }

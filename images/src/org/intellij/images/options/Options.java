@@ -47,7 +47,7 @@ public interface Options extends Cloneable {
      *
      * @param name  Name of option
      * @param value Value
-     * @return <code>true</code> if option is matched and setted.
+     * @return {@code true} if option is matched and setted.
      */
     boolean setOption(String name, Object value);
 }

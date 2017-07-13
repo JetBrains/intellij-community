@@ -256,7 +256,7 @@ public class EditorTestUtil {
   }
 
   /**
-   * Equivalent to <code>extractCaretAndSelectionMarkers(document, true)</code>.
+   * Equivalent to {@code extractCaretAndSelectionMarkers(document, true)}.
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
@@ -269,7 +269,7 @@ public class EditorTestUtil {
    * Removes &lt;caret&gt;, &lt;selection&gt; and &lt;/selection&gt; tags from document and returns a list of caret positions and selection
    * ranges for each caret. Both caret positions and selection ranges can be null in the returned data.
    *
-   * @param processBlockSelection if <code>true</code>, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
+   * @param processBlockSelection if {@code true}, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
   @NotNull
   public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {

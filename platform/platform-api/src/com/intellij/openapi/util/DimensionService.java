@@ -79,11 +79,11 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   /**
    * @param key a String key to perform a query for.
-   * @return point stored under the specified <code>key</code>. The method returns
-   * <code>null</code> if there is no stored value under the <code>key</code>. If point
-   * is outside of current screen bounds then the method returns <code>null</code>. It
+   * @return point stored under the specified {@code key}. The method returns
+   * {@code null} if there is no stored value under the {@code key}. If point
+   * is outside of current screen bounds then the method returns {@code null}. It
    * properly works in multi-monitor configuration.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   @Nullable
   public synchronized Point getLocation(String key) {
@@ -106,12 +106,12 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   /**
-   * Store specified <code>point</code> under the <code>key</code>. If <code>point</code> is
-   * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * Store specified {@code point} under the {@code key}. If {@code point} is
+   * {@code null} then the value stored under {@code key} will be removed.
    *
    * @param key   a String key to store location for.
    * @param point location to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
@@ -132,9 +132,9 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   /**
    * @param key a String key to perform a query for.
-   * @return point stored under the specified <code>key</code>. The method returns
-   * <code>null</code> if there is no stored value under the <code>key</code>.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @return point stored under the specified {@code key}. The method returns
+   * {@code null} if there is no stored value under the {@code key}.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
@@ -154,12 +154,12 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   /**
-   * Store specified <code>size</code> under the <code>key</code>. If <code>size</code> is
-   * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * Store specified {@code size} under the {@code key}. If {@code size} is
+   * {@code null} then the value stored under {@code key} will be removed.
    *
    * @param key  a String key to to save size for.
    * @param size a Size to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());

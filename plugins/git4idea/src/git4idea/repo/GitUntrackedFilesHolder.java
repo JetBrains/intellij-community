@@ -46,7 +46,7 @@ import java.util.*;
  * <p>
  *   This class is used by {@link git4idea.status.GitNewChangesCollector}.
  *   By keeping track of unversioned files in the Git repository we may invoke
- *   <code>'git status --porcelain --untracked-files=no'</code> which gives a significant speed boost: the command gets more than twice
+ *   {@code 'git status --porcelain --untracked-files=no'} which gives a significant speed boost: the command gets more than twice
  *   faster, because it doesn't need to seek for untracked files.
  * </p>
  *
@@ -198,7 +198,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   /**
-   * @return <code>true</code> if untracked files list is initialized and being kept up-to-date, <code>false</code> if full refresh is needed.
+   * @return {@code true} if untracked files list is initialized and being kept up-to-date, {@code false} if full refresh is needed.
    */
   private boolean isReady() {
     synchronized (LOCK) {

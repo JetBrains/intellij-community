@@ -89,7 +89,7 @@ public class GradleInstallationManager {
    * Allows to get file handles for the gradle binaries to use.
    *
    * @param gradleHome gradle sdk home
-   * @return file handles for the gradle binaries; <code>null</code> if gradle is not discovered
+   * @return file handles for the gradle binaries; {@code null} if gradle is not discovered
    */
   @Nullable
   public Collection<File> getAllLibraries(@Nullable File gradleHome) {
@@ -231,7 +231,7 @@ public class GradleInstallationManager {
   /**
    * Tries to deduce gradle location from current environment.
    *
-   * @return gradle home deduced from the current environment (if any); <code>null</code> otherwise
+   * @return gradle home deduced from the current environment (if any); {@code null} otherwise
    */
   @Nullable
   public File getAutodetectedGradleHome() {
@@ -267,7 +267,7 @@ public class GradleInstallationManager {
    *
    * @param module  target module that can have gradle home as a dependency
    * @param project target project which gradle home setting should be used if module-specific gradle location is not defined
-   * @return gradle home derived from the settings of the given entities (if any); <code>null</code> otherwise
+   * @return gradle home derived from the settings of the given entities (if any); {@code null} otherwise
    */
   @Nullable
   public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project, @NotNull String linkedProjectPath) {
@@ -283,7 +283,7 @@ public class GradleInstallationManager {
   /**
    * Tries to discover gradle installation path from the configured system path
    *
-   * @return file handle for the gradle directory if it's possible to deduce from the system path; <code>null</code> otherwise
+   * @return file handle for the gradle directory if it's possible to deduce from the system path; {@code null} otherwise
    */
   @Nullable
   public File getGradleHomeFromPath() {
@@ -333,7 +333,7 @@ public class GradleInstallationManager {
    * Does the same job as {@link #isGradleSdkHome(File)} for the given virtual file.
    *
    * @param file gradle installation home candidate
-   * @return <code>true</code> if given file points to the gradle installation; <code>false</code> otherwise
+   * @return {@code true} if given file points to the gradle installation; {@code false} otherwise
    */
   public boolean isGradleSdkHome(@Nullable VirtualFile file) {
     if (file == null) {
@@ -346,8 +346,8 @@ public class GradleInstallationManager {
    * Allows to answer if given virtual file points to the gradle installation root.
    *
    * @param file gradle installation root candidate
-   * @return <code>true</code> if we consider that given file actually points to the gradle installation root;
-   * <code>false</code> otherwise
+   * @return {@code true} if we consider that given file actually points to the gradle installation root;
+   * {@code false} otherwise
    */
   public boolean isGradleSdkHome(@Nullable File file) {
     if (file == null) {
@@ -374,8 +374,8 @@ public class GradleInstallationManager {
    * Allows to answer if given virtual file points to the gradle installation root.
    *
    * @param file gradle installation root candidate
-   * @return <code>true</code> if we consider that given file actually points to the gradle installation root;
-   * <code>false</code> otherwise
+   * @return {@code true} if we consider that given file actually points to the gradle installation root;
+   * {@code false} otherwise
    */
   public boolean isGradleSdkHome(String gradleHomePath) {
     return isGradleSdkHome(new File(gradleHomePath));
@@ -385,7 +385,7 @@ public class GradleInstallationManager {
    * Allows to answer if given files contain the one from gradle installation.
    *
    * @param files files to process
-   * @return <code>true</code> if one of the given files is from the gradle installation; <code>false</code> otherwise
+   * @return {@code true} if one of the given files is from the gradle installation; {@code false} otherwise
    */
   public boolean isGradleSdk(@Nullable VirtualFile... files) {
     if (files == null) {
@@ -436,7 +436,7 @@ public class GradleInstallationManager {
    *
    * @param project target project to use for gradle home retrieval
    * @return classpath roots of the classes that are additionally provided by the gradle integration (if any);
-   * <code>null</code> otherwise
+   * {@code null} otherwise
    */
   @Nullable
   public List<VirtualFile> getClassRoots(@Nullable Project project) {

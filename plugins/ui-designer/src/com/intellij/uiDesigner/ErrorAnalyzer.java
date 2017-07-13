@@ -352,7 +352,7 @@ public final class ErrorAnalyzer {
 
   /**
    * @return first ErrorInfo for the specified component. If component doesn't contain
-   * any error then the method returns <code>null</code>.
+   * any error then the method returns {@code null}.
    */
   @Nullable
   public static ErrorInfo getErrorForComponent(@NotNull final IComponent component){

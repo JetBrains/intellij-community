@@ -129,9 +129,9 @@ public class PathUtil {
   }
 
   /**
-   * Ensures that the given argument doesn't contain <code>\</code> separators.
+   * Ensures that the given argument doesn't contain {@code \} separators.
    * <p>
-   * The violations are reported via the <code>LOG.error</code>.
+   * The violations are reported via the {@code LOG.error}.
    * <p>
    * TODO SystemIndependentInstrumentingBuilder now embeds assertions directly, so we can remove this method.
    *

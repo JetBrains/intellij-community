@@ -83,7 +83,7 @@ public class GitImpl implements Git {
    *    ignored files checker.</p>
    *
    * @param files files that are to be checked for the unversioned files among them.
-   *              <b>Pass <code>null</code> to query the whole repository.</b>
+   *              <b>Pass {@code null} to query the whole repository.</b>
    * @return Unversioned not ignored files from the given scope.
    */
   @Override

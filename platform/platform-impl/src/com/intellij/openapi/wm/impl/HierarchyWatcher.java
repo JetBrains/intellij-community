@@ -59,7 +59,7 @@ public abstract class HierarchyWatcher implements ContainerListener{
 
   /**
    * Override this method to get notifications abot changes in component hierarchy.
-   * <code>HierarchyWatcher</code> invokes this method each time one of the populated container changes.
+   * {@code HierarchyWatcher} invokes this method each time one of the populated container changes.
    * @param e event which describes the changes.
    */
   protected abstract void hierarchyChanged(ContainerEvent e);

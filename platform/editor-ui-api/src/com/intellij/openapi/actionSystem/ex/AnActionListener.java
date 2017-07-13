@@ -28,7 +28,7 @@ public interface AnActionListener {
   void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
   /**
-   * Note that using <code>dataContext</code> in implementing methods is unsafe - it could have been invalidated by the performed action.
+   * Note that using {@code dataContext} in implementing methods is unsafe - it could have been invalidated by the performed action.
    */
   default void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
   }

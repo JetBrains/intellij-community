@@ -434,7 +434,7 @@ public final class EditorUtil {
   }
 
   /**
-   * Allows to answer what width in pixels is required to draw fragment of the given char array from <code>[start; end)</code> interval
+   * Allows to answer what width in pixels is required to draw fragment of the given char array from {@code [start; end)} interval
    * at the given editor.
    * <p/>
    * Tabulation symbols is processed specially, i.e. it's ta
@@ -447,9 +447,9 @@ public final class EditorUtil {
    * @param start     offset within the given char array that points to target text start (inclusive)
    * @param end       offset within the given char array that points to target text end (exclusive)
    * @param fontType  font type to use for target text representation
-   * @param x         <code>'x'</code> coordinate that should be used as a starting point for target text representation.
+   * @param x         {@code 'x'} coordinate that should be used as a starting point for target text representation.
    *                  It's necessity is implied by the fact that IDEA editor may represent tabulation symbols in any range
-   *                  from <code>[1; tab size]</code> (check {@link #nextTabStop(int, Editor)} for more details)
+   *                  from {@code [1; tab size]} (check {@link #nextTabStop(int, Editor)} for more details)
    * @return          width in pixels required for target text representation
    */
   public static int textWidth(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x) {

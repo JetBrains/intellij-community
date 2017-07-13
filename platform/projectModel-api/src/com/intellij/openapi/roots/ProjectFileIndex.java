@@ -104,19 +104,19 @@ public interface ProjectFileIndex extends FileIndex {
   String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
 
   /**
-   * Returns true if <code>file</code> is a file which belongs to the classes (not sources) of some library which is included into dependencies
+   * Returns true if {@code file} is a file which belongs to the classes (not sources) of some library which is included into dependencies
    * of some module.
    */
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from production/test sources of some module or sources of some library which is included into dependencies
+   * Returns true if {@code fileOrDir} is a file or directory from production/test sources of some module or sources of some library which is included into dependencies
    * of some module.
    */
   boolean isInSource(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> belongs to classes of some library which is included into dependencies of some module.
+   * Returns true if {@code fileOrDir} belongs to classes of some library which is included into dependencies of some module.
    */
   boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir);
 
@@ -127,7 +127,7 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isInLibrary(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from sources of some library which is included into dependencies
+   * Returns true if {@code fileOrDir} is a file or directory from sources of some library which is included into dependencies
    * of some module.
    */
   boolean isInLibrarySource(@NotNull VirtualFile fileOrDir);
@@ -144,7 +144,7 @@ public interface ProjectFileIndex extends FileIndex {
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is
    * either excluded from the project or ignored by {@link FileTypeRegistry#isFileIgnored(VirtualFile)}).
    *
-   * @return true if <code>file</code> is excluded or ignored, false otherwise.
+   * @return true if {@code file} is excluded or ignored, false otherwise.
    */
   boolean isExcluded(@NotNull VirtualFile file);
 
@@ -152,7 +152,7 @@ public interface ProjectFileIndex extends FileIndex {
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored
    * by {@link FileTypeRegistry#isFileIgnored(VirtualFile)}).
    *
-   * @return true if <code>file</code> is ignored, false otherwise.
+   * @return true if {@code file} is ignored, false otherwise.
    */
   boolean isUnderIgnored(@NotNull VirtualFile file);
 }

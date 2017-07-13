@@ -97,7 +97,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
    * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
    *
    * @param breakpoint   breakpoint
-   * @param icon         icon (<code>null</code> if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
+   * @param icon         icon ({@code null} if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
    * @param errorMessage an error message if breakpoint isn't successfully registered
    */
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
@@ -110,7 +110,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
    * @param breakpoint             reached breakpoint
    * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpression()} evaluated in the current context
    * @param suspendContext         context
-   * @return <code>true</code> if the debug process should be suspended
+   * @return {@code true} if the debug process should be suspended
    */
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint,
                             @Nullable String evaluatedLogExpression,

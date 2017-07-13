@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * It allows to add them into the TOP, CENTER, or BOTTOM group, which are aligned separately.
  * Every group can contain any amount of components. The specified gap is added between components,
  * and the double gap is added between groups of components.
- * <p><b>NB!: this class must be modified together with the <code>HorizontalLayout</code> class accordingly</b></p>
+ * <p><b>NB!: this class must be modified together with the {@code HorizontalLayout} class accordingly</b></p>
  *
  * @author Sergey.Malenkov
  * @see HorizontalLayout

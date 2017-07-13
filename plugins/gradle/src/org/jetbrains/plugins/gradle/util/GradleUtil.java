@@ -81,7 +81,7 @@ public class GradleUtil {
    *
    * @param gradleProjectPath  target gradle project config (*.gradle) path or config file's directory path.
    * @return                   gradle wrapper settings should be used with gradle wrapper for the gradle project located at the given path
-   *                           if any; <code>null</code> otherwise
+   *                           if any; {@code null} otherwise
    */
   @Nullable
   public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {

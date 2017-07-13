@@ -63,8 +63,8 @@ public abstract class PyClassRefactoringTest extends PyTestCase {
 
   /**
    * @param className  class where member should be found
-   * @param memberName member that starts with dot (<code>.</code>) is treated as method.
-   *                   member that starts with dash (<code>#</code>) is treated as attribute.
+   * @param memberName member that starts with dot ({@code .}) is treated as method.
+   *                   member that starts with dash ({@code #}) is treated as attribute.
    *                   It is treated parent class otherwise
    * @return member or null if not found
    */

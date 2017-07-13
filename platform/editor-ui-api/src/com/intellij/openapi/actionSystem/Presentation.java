@@ -268,7 +268,7 @@ public final class Presentation implements Cloneable {
   /**
    * Returns the state of this action.
    *
-   * @return <code>true</code> if action is enabled, <code>false</code> otherwise
+   * @return {@code true} if action is enabled, {@code false} otherwise
    */
   public boolean isEnabled() {
     return myEnabled;
@@ -279,7 +279,7 @@ public final class Presentation implements Cloneable {
    * won't be called. In case when action represents a button or a menu item, the
    * representing button or item will be greyed out.
    *
-   * @param enabled <code>true</code> if you want to enable action, <code>false</code> otherwise
+   * @param enabled {@code true} if you want to enable action, {@code false} otherwise
    */
   public void setEnabled(boolean enabled) {
     boolean oldEnabled = myEnabled;

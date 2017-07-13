@@ -207,7 +207,7 @@ public abstract class AbstractExternalSystemConfigurable<
    * 
    * @param settings  target system settings
    * @return          a control for managing given system-level settings;
-   *                  <code>null</code> if current external system doesn't have system-level settings (only project-level settings)
+   *                  {@code null} if current external system doesn't have system-level settings (only project-level settings)
    */
   @Nullable
   protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);

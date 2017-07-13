@@ -90,12 +90,12 @@ import java.util.List;
  * <p>The evalutation can be performed relatively to a context node: When the option "Use node at cursor as context node"
  * is turned on, all XPath expressions are evaluted relatively to this node. This node (which can actually only be a tag
  * element), is then highlighted to give a visual indication when entering the expression. This does not affect
- * expressions that start with <code>/</code> or <code>//</code>.</p>
+ * expressions that start with {@code /} or {@code //}.</p>
  *
  * <p><b>Limitations:</b></p>
  * <ul>
  *  <li>Namespaces: Although queries containing namespace-prefixes are supported, the XPath namespace-axis
- *      (<code>namespace::</code>) is currently unsupported.<br>
+ *      ({@code namespace::}) is currently unsupported.<br>
  * <li>Matching for text(): Such queries will currently also highlight whitespace <em>inside</em> a start/end tag.<br>
  *      This is due the tree-structure of the PSI. Further investigation is needed here.
  * <li>String values with string(): Whitespace handling for the string() function is far from being correctly
@@ -328,7 +328,7 @@ public class XPathEvalAction extends XPathAction {
     /**
      * Opens an input box to input an XPath expression. The box will have a history dropdown from which
      * previously entered expressions can be selected.
-     * @return The expression or <code>null</code> if the user hits the cancel button
+     * @return The expression or {@code null} if the user hits the cancel button
      * @param project The project to take the history from
      */
     @Nullable
@@ -356,8 +356,8 @@ public class XPathEvalAction extends XPathAction {
 
     /**
      * <p>Process the result of an XPath query.</p>
-     * <p>If the result is a <code>java.util.List</code> object, iterate over all elements and
-     * add a highlighter object in the editor if the element is of type <code>PsiElement</code>.
+     * <p>If the result is a {@code java.util.List} object, iterate over all elements and
+     * add a highlighter object in the editor if the element is of type {@code PsiElement}.
      * <p>If the result is a primitive value (String, Number, Boolean) a message box displaying
      * the value will be displayed. </p>
      *

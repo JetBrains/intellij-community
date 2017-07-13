@@ -75,7 +75,7 @@ public interface CaretModel {
   void moveToVisualPosition(@NotNull VisualPosition pos);
 
   /**
-   * Short hand for calling {@link #moveToOffset(int, boolean)} with <code>'false'</code> as a second argument.
+   * Short hand for calling {@link #moveToOffset(int, boolean)} with {@code 'false'} as a second argument.
    *
    * @param offset      the offset to move to
    */
@@ -100,7 +100,7 @@ public interface CaretModel {
    * <p/>
    * Current method allows to check that.
    *
-   * @return    <code>true</code> if caret position is up-to-date for now; <code>false</code> otherwise
+   * @return    {@code true} if caret position is up-to-date for now; {@code false} otherwise
    */
   boolean isUpToDate();
 
@@ -192,13 +192,13 @@ public interface CaretModel {
   List<Caret> getAllCarets();
 
   /**
-   * Returns a caret at the given position in the document, or <code>null</code>, if there's no caret there.
+   * Returns a caret at the given position in the document, or {@code null}, if there's no caret there.
    */
   @Nullable
   Caret getCaretAt(@NotNull VisualPosition pos);
 
   /**
-   * Same as {@link #addCaret(VisualPosition, boolean)} with <code>true</code> as a <code>makePrimary</code> boolean parameter value.
+   * Same as {@link #addCaret(VisualPosition, boolean)} with {@code true} as a {@code makePrimary} boolean parameter value.
    */
   @Nullable
   Caret addCaret(@NotNull VisualPosition pos);
@@ -206,16 +206,16 @@ public interface CaretModel {
   /**
    * Adds a new caret at the given position, and returns corresponding {@link Caret} instance. Locations outside of possible values
    * for the given document are trimmed automatically.
-   * Newly added caret will become a primary caret if and only if <code>makePrimary</code> value is <code>true</code>.
+   * Newly added caret will become a primary caret if and only if {@code makePrimary} value is {@code true}.
    * Does nothing if multiple carets are not supported, a caret already exists at specified location or selection of existing caret
-   * includes the specified location, <code>null</code> is returned in this case.
+   * includes the specified location, {@code null} is returned in this case.
    */
   @Nullable
   Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary);
 
   /**
-   * Removes a given caret if it's recognized by the model and is not the only existing caret in the document, returning <code>true</code>.
-   * <code>false</code> is returned if any of the above condition doesn't hold, and the removal cannot happen.
+   * Removes a given caret if it's recognized by the model and is not the only existing caret in the document, returning {@code true}.
+   * {@code false} is returned if any of the above condition doesn't hold, and the removal cannot happen.
    */
   boolean removeCaret(@NotNull Caret caret);
 
@@ -244,7 +244,7 @@ public interface CaretModel {
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
    * System selection will be updated, if such feature is supported by current editor
-   * and corresponding invocation parameter is set to <code>true</code>.
+   * and corresponding invocation parameter is set to {@code true}.
    *
    * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
    * support multiple carets
@@ -267,7 +267,7 @@ public interface CaretModel {
   List<CaretState> getCaretsAndSelections();
 
   /**
-   * Same as {@link #runForEachCaret(CaretAction, boolean)} with <code>reverseOrder</code> set to <code>false</code>
+   * Same as {@link #runForEachCaret(CaretAction, boolean)} with {@code reverseOrder} set to {@code false}
    */
   void runForEachCaret(@NotNull CaretAction action);
 
@@ -277,8 +277,8 @@ public interface CaretModel {
    * At the end, merging of carets and selections is performed, so that no two carets will occur at the same logical position and
    * no two selection will overlap after this method is finished.
    * <p>
-   * Carets are iterated in position order (top-to-bottom) if <code>reverseOrder</code> is <code>false</code>, and in reverse order
-   * if it's <code>true</code>.
+   * Carets are iterated in position order (top-to-bottom) if {@code reverseOrder} is {@code false}, and in reverse order
+   * if it's {@code true}.
    */
   void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder);
 

@@ -44,7 +44,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   private ToolWindowAnchor myAnchor = ToolWindowAnchor.LEFT;
   private boolean myAutoHide;
   /**
-   * Bounds of window in "floating" mode. It equals to <code>null</code> if
+   * Bounds of window in "floating" mode. It equals to {@code null} if
    * floating bounds are undefined.
    */
   private Rectangle myFloatingBounds;
@@ -60,7 +60,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   @NotNull private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
   /**
    * Defines order of tool window button inside the stripe.
-   * The default value is <code>-1</code>.
+   * The default value is {@code -1}.
    */
   private int myOrder = -1;
   @NonNls private static final String ID_ATTR = "id";
@@ -81,7 +81,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   private boolean myWasRead;
 
   /**
-   * Creates <code>WindowInfo</code> for tool window with specified <code>ID</code>.
+   * Creates {@code WindowInfo} for tool window with specified {@code ID}.
    */
   WindowInfoImpl(@NotNull String id) {
     myId = id;
@@ -89,7 +89,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   }
 
   /**
-   * Creates copy of <code>WindowInfo</code> object.
+   * Creates copy of {@code WindowInfo} object.
    */
   @NotNull
   public WindowInfoImpl copy() {
@@ -106,7 +106,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   }
 
   /**
-   * Copies all data from the passed <code>WindowInfo</code> into itself.
+   * Copies all data from the passed {@code WindowInfo} into itself.
    */
   void copyFrom(@NotNull WindowInfoImpl info){
     myActive = info.myActive;
@@ -152,7 +152,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   }
 
   /**
-   * @return <code>ID</code> of the tool window.
+   * @return {@code ID} of the tool window.
    */
   @NotNull
   String getId(){
@@ -162,7 +162,7 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
    * window can be in floating mode, but this method has sense if you want to know what type
-   * tool window had when it was internal one. The method never returns <code>null</code>.
+   * tool window had when it was internal one. The method never returns {@code null}.
    */
   @NotNull
   ToolWindowType getInternalType(){

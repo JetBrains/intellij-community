@@ -106,10 +106,10 @@ public class RenameDialogFixture extends IdeaDialogFixture<RenameDialog> {
   /**
    * Allows to check if a warning exists at the target 'rename dialog'
    *
-   * @param warningText  <code>null</code> as a wildcard to match any non-empty warning text;
+   * @param warningText  {@code null} as a wildcard to match any non-empty warning text;
    *                     non-null text which is evaluated to be a part of the target dialog's warning text
-   * @return             <code>true</code> if the target 'rename dialog' has a warning and given text matches it according to the
-   *                     rules described above; <code>false</code> otherwise
+   * @return             {@code true} if the target 'rename dialog' has a warning and given text matches it according to the
+   *                     rules described above; {@code false} otherwise
    */
   public boolean warningExists(@Nullable final String warningText) {
     //noinspection ConstantConditions

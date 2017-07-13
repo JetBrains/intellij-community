@@ -25,7 +25,7 @@ public class ContentRootData extends AbstractExternalEntityData {
   @NotNull private final String myRootPath;
 
   /**
-   * Creates new <code>GradleContentRootImpl</code> object.
+   * Creates new {@code GradleContentRootImpl} object.
    *
    * @param rootPath  path to the root directory
    */

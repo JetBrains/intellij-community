@@ -21,8 +21,8 @@ package com.intellij.ide.dnd;
 public interface DnDTargetChecker {
   /**
    * @param event Drag-n-Drop event
-   * @return <code>true</code> - if this target is unable to handle the event and parent component should be asked to process it.
-   *         <code>false</code> - if this target is unable to handle the event and parent component should NOT be asked to process it.
+   * @return {@code true} - if this target is unable to handle the event and parent component should be asked to process it.
+   *         {@code false} - if this target is unable to handle the event and parent component should NOT be asked to process it.
    *
    * @see DnDEvent#setDropPossible(boolean, String)
    * @see DnDEvent#setDropPossible(String, DropActionHandler)

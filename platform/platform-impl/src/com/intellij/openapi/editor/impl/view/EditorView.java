@@ -307,7 +307,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   /**
-   * If <code>quickEvaluationListener</code> is provided, quick approximate size evaluation becomes enabled, listener will be invoked
+   * If {@code quickEvaluationListener} is provided, quick approximate size evaluation becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
   int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
@@ -400,7 +400,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   /**
-   * Offset of nearest boundary (not equal to <code>offset</code>) on the same line is returned. <code>-1</code> is returned if 
+   * Offset of nearest boundary (not equal to {@code offset}) on the same line is returned. {@code -1} is returned if
    * corresponding boundary is not found.
    */
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {

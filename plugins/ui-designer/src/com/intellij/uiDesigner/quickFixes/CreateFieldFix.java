@@ -58,7 +58,7 @@ public final class CreateFieldFix extends QuickFix{
   }
 
   /**
-   * @param showErrors if <code>true</code> the error messages will be shown to the
+   * @param showErrors if {@code true} the error messages will be shown to the
    * @param undoGroupId the group used to undo the action together with some other action.
    */
   public static void runImpl(@NotNull final Project project,

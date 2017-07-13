@@ -170,7 +170,7 @@ final class BindToExistingBeanStep extends StepAdapter{
     }
 
     /**
-     * @return whether it's possible to convert <code>type1</code> into <code>type2</code>
+     * @return whether it's possible to convert {@code type1} into {@code type2}
      * and vice versa.
      */
     private boolean canConvert(@NonNls final String type1, @NonNls final String type2){

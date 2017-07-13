@@ -222,7 +222,7 @@ public class CheckboxTreeBase extends Tree {
      * Should be implemented by concrete implementations.
      * This method is invoked only for customization of component.
      * All component attributes are cleared when this method is being invoked.
-     * Note that in general case <code>value</code> is not an instance of CheckedTreeNode.
+     * Note that in general case {@code value} is not an instance of CheckedTreeNode.
      */
     public void customizeRenderer(JTree tree,
                                   Object value,

@@ -57,16 +57,16 @@ public final class ComponentPtr{
   }
 
   /**
-   * @return <code>RadComponent</code> which was calculated by the last
-   * <code>validate</code> method.
+   * @return {@code RadComponent} which was calculated by the last
+   * {@code validate} method.
    */
   public RadComponent getComponent(){
     return myComponent;
   }
 
   /**
-   * @return <code>true</code> if and only if the pointer is valid.
-   * It means that last <code>validate</code> call was successful and
+   * @return {@code true} if and only if the pointer is valid.
+   * It means that last {@code validate} call was successful and
    * pointer refers to live component.
    */
   public boolean isValid(){

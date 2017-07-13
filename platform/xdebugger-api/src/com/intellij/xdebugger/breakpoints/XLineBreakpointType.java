@@ -53,7 +53,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * Return <code>true<code> if breakpoint can be put on <code>line</code> in <code>file</code>
+   * Return <code>true<code> if breakpoint can be put on {@code line} in {@code file}
    */
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
     return false;

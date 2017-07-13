@@ -430,9 +430,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   /**
-   * Returns true if <code>mouseX</code> falls
+   * Returns true if {@code mouseX} falls
    * in the area of row that is used to expand/collapse the node and
-   * the node at <code>row</code> does not represent a leaf.
+   * the node at {@code row} does not represent a leaf.
    */
   protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
     if (path == null) return false;

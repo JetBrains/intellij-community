@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Major difference between the parent class and <code>JBSplitter</code> is an ability to save proportion
+ * Major difference between the parent class and {@code JBSplitter} is an ability to save proportion
  *
  * @author Konstantin Bulenkov
  * @see Splitter
@@ -79,7 +79,7 @@ public class JBSplitter extends Splitter {
   /**
    * Splitter proportion unique key
    *
-   * @return non empty unique String or <code>null</code> if splitter does not require proportion saving
+   * @return non empty unique String or {@code null} if splitter does not require proportion saving
    */
   @Nullable
   public final String getSplitterProportionKey() {
@@ -89,7 +89,7 @@ public class JBSplitter extends Splitter {
   /**
    * Sets proportion key
    *
-   * @param key non empty unique String or <code>null</code> if splitter does not require proportion saving
+   * @param key non empty unique String or {@code null} if splitter does not require proportion saving
    */
   public final void setSplitterProportionKey(@Nullable String key) {
     mySplitterProportionKey = key;

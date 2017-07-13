@@ -55,9 +55,9 @@ public class TabbedPaneWrapper  {
   /**
    * Creates tabbed pane wrapper with specified tab placement
    *
-   * @param tabPlacement tab placement. It one of the <code>SwingConstants.TOP</code>,
-   * <code>SwingConstants.LEFT</code>, <code>SwingConstants.BOTTOM</code> or
-   * <code>SwingConstants.RIGHT</code>.
+   * @param tabPlacement tab placement. It one of the {@code SwingConstants.TOP},
+   * {@code SwingConstants.LEFT}, {@code SwingConstants.BOTTOM} or
+   * {@code SwingConstants.RIGHT}.
    */
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parentDisposable) {
     final TabFactory factory;

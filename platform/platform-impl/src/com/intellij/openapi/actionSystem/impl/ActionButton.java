@@ -240,7 +240,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   /**
    * @return button's icon. Icon depends on action's state. It means that the method returns
-   *         disabled icon if action is disabled. If the action's icon is <code>null</code> then it returns
+   *         disabled icon if action is disabled. If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
   public Icon getIcon() {

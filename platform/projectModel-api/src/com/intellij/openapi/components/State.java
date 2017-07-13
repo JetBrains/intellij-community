@@ -39,7 +39,7 @@ public @interface State {
    * ({@code *.ipr} file for file-based and
    * {@code .idea/misc.xml} for directory-based).</p>
    *
-   * <p>Module-level: optional, corresponding module file will be used (<code>*.iml</code>).</p>
+   * <p>Module-level: optional, corresponding module file will be used ({@code *.iml}).</p>
    */
   Storage[] storages() default {};
 

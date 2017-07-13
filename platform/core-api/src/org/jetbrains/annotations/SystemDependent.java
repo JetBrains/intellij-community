@@ -18,7 +18,7 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * Designates a system-dependent path, which can contain <code>\</code> separators.
+ * Designates a system-dependent path, which can contain {@code \} separators.
  * <p>
  * This annotation doesn't add any bytecode instrumentation.
  *

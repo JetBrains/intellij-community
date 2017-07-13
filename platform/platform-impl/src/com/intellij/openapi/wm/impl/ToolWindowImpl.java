@@ -388,8 +388,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   /**
-   * @return <code>true</code> if the component passed into constructor is not instance of
-   *         <code>ContentManager</code> class. Otherwise it delegates the functionality to the
+   * @return {@code true} if the component passed into constructor is not instance of
+   *         {@code ContentManager} class. Otherwise it delegates the functionality to the
    *         passed content manager.
    */
   @Override

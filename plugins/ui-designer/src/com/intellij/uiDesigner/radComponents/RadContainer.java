@@ -70,7 +70,7 @@ public class RadContainer extends RadComponent implements IContainer {
   @NotNull private BorderType myBorderType;
   /**
    * Border's title. If border doesn't have any title then
-   * this member is <code>null</code>.
+   * this member is {@code null}.
    */
   @Nullable private StringDescriptor myBorderTitle;
   private int myBorderTitleJustification;
@@ -201,9 +201,9 @@ public class RadContainer extends RadComponent implements IContainer {
   /**
    * @param component component to be added.
    * @throws java.lang.IllegalArgumentException
-   *          if <code>component</code> is <code>null</code>
+   *          if {@code component} is {@code null}
    * @throws java.lang.IllegalArgumentException
-   *          if <code>component</code> already exist in the
+   *          if {@code component} already exist in the
    *          container
    */
   public final void addComponent(@NotNull final RadComponent component, int index) {
@@ -234,17 +234,17 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   /**
-   * Removes specified <code>component</code> from the container.
+   * Removes specified {@code component} from the container.
    * This method also removes component's delegee from the
    * container's delegee. Client code is responsible for revalidation
    * of invalid Swing hierarchy.
    *
    * @param component component to be removed.
    * @throws java.lang.IllegalArgumentException
-   *          if <code>component</code>
-   *          is <code>null</code>
+   *          if {@code component}
+   *          is {@code null}
    * @throws java.lang.IllegalArgumentException
-   *          if <code>component</code>
+   *          if {@code component}
    *          doesn't exist in the container
    */
   public final void removeComponent(@NotNull final RadComponent component) {
@@ -341,8 +341,8 @@ public class RadContainer extends RadComponent implements IContainer {
 
   /**
    * @throws java.lang.IllegalArgumentException
-   *          if <code>type</code>
-   *          is <code>null</code>
+   *          if {@code type}
+   *          is {@code null}
    * @see com.intellij.uiDesigner.shared.BorderType
    */
   public final void setBorderType(@NotNull final BorderType type) {
@@ -355,7 +355,7 @@ public class RadContainer extends RadComponent implements IContainer {
 
   /**
    * @return border's title. If the container doesn't have any title then the
-   *         method returns <code>null</code>.
+   *         method returns {@code null}.
    */
   @Nullable
   public final StringDescriptor getBorderTitle() {
@@ -363,7 +363,7 @@ public class RadContainer extends RadComponent implements IContainer {
   }
 
   /**
-   * @param title new border's title. <code>null</code> means that
+   * @param title new border's title. {@code null} means that
    *              the containr doesn't have have titled border.
    */
   public final void setBorderTitle(final StringDescriptor title) {

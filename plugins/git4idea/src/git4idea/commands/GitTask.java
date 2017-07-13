@@ -99,9 +99,9 @@ public class GitTask {
 
   /**
    * The most general execution method.
-   * @param sync  Set to <code>true</code> to make the calling thread wait for the task execution.
-   * @param modal If <code>true</code>, the task will be modal with a modal progress dialog. If false, the task will be executed in
-   * background. <code>modal</code> implies <code>sync</code>, i.e. if modal then sync doesn't matter: you'll wait anyway.
+   * @param sync  Set to {@code true} to make the calling thread wait for the task execution.
+   * @param modal If {@code true}, the task will be modal with a modal progress dialog. If false, the task will be executed in
+   * background. {@code modal} implies {@code sync}, i.e. if modal then sync doesn't matter: you'll wait anyway.
    * @param resultHandler Handle the result.
    * @see #execute(boolean)
    */

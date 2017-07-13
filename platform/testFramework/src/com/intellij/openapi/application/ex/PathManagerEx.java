@@ -48,7 +48,7 @@ public class PathManagerEx {
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>
-   *   <li>files that are contained at <code>'community'</code> directory;</li>
+   *   <li>files that are contained at {@code 'community'} directory;</li>
    *   <li>all other files;</li>
    * </ul>
    * <p/>
@@ -74,35 +74,35 @@ public class PathManagerEx {
    */
   public enum TestDataLookupStrategy {
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'ultimate'</code> project level assuming
-     * that it's used from the test running in context of <code>'ultimate'</code> project as well.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'ultimate'} project level assuming
+     * that it's used from the test running in context of {@code 'ultimate'} project as well.
      * <p/>
-     * Is assumed to be default strategy for all <code>'ultimate'</code> tests.
+     * Is assumed to be default strategy for all {@code 'ultimate'} tests.
      */
     ULTIMATE,
 
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'community'</code> project level assuming
-     * that it's used from the test running in context of <code>'community'</code> project as well.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'community'} project level assuming
+     * that it's used from the test running in context of {@code 'community'} project as well.
      * <p/>
-     * Is assumed to be default strategy for all <code>'community'</code> tests.
+     * Is assumed to be default strategy for all {@code 'community'} tests.
      */
     COMMUNITY,
 
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'community'</code> project level assuming
-     * that it's used from the test running in context of <code>'ultimate'</code> project.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'community'} project level assuming
+     * that it's used from the test running in context of {@code 'ultimate'} project.
      */
     COMMUNITY_FROM_ULTIMATE
   }
 
   /**
-   * It's assumed that test data location for both <code>community</code> and <code>ultimate</code> tests follows the same template:
+   * It's assumed that test data location for both {@code community} and {@code ultimate} tests follows the same template:
    * <code>'<IDEA_HOME>/<RELATIVE_PATH>'</code>.
    * <p/>
-   * <code>'IDEA_HOME'</code> here stands for path to IDEA installation; <code>'RELATIVE_PATH'</code> defines a path to
-   * test data relative to IDEA installation path. That relative path may be different for <code>community</code>
-   * and <code>ultimate</code> tests.
+   * {@code 'IDEA_HOME'} here stands for path to IDEA installation; {@code 'RELATIVE_PATH'} defines a path to
+   * test data relative to IDEA installation path. That relative path may be different for {@code community}
+   * and {@code ultimate} tests.
    * <p/>
    * This collection contains mappings from test group type to relative paths to use, i.e. it's possible to define more than one
    * relative path for the single test group. It's assumed that path definition algorithm iterates them and checks if
@@ -149,8 +149,8 @@ public class PathManagerEx {
    * <b>Note:</b> this method receives explicit class argument in order to solve the following limitation - we analyze calling
    * stack trace in order to guess test data lookup strategy ({@link #guessTestDataLookupStrategyOnClassLocation()}). However,
    * there is a possible case that super-class method is called on sub-class object. Stack trace shows super-class then.
-   * There is a possible situation that actual test is <code>'ultimate'</code> but its abstract super-class is
-   * <code>'community'</code>, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
+   * There is a possible situation that actual test is {@code 'ultimate'} but its abstract super-class is
+   * {@code 'community'}, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
    * base test class if its concrete sub-classes doesn't explicitly occur at stack trace.
    *
    *
@@ -419,7 +419,7 @@ public class PathManagerEx {
    * Tries to check test data lookup strategy by target test data directories availability.
    * <p/>
    * Such an approach has a drawback that it doesn't work correctly at number of scenarios, e.g. when
-   * <code>'community'</code> test is executed under <code>'ultimate'</code> project.
+   * {@code 'community'} test is executed under {@code 'ultimate'} project.
    *
    * @return    test data lookup strategy based on target test data directories availability
    */

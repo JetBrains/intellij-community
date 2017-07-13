@@ -128,10 +128,10 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   }
 
   /**
-   * This is the "rule" method constructs <code>ID</code> of the action for activating tool window
-   * with specified <code>ID</code>.
+   * This is the "rule" method constructs {@code ID} of the action for activating tool window
+   * with specified {@code ID}.
    *
-   * @param id <code>id</code> of tool window to be activated.
+   * @param id {@code id} of tool window to be activated.
    */
   @NonNls
   public static String getActionIdForToolWindow(String id) {
@@ -140,7 +140,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
   /**
    * @return mnemonic for action if it has Alt+digit/Meta+digit shortcut.
-   * Otherwise the method returns <code>-1</code>. Meta mask is OK for
+   * Otherwise the method returns {@code -1}. Meta mask is OK for
    * Mac OS X user, because Alt+digit types strange characters into the
    * editor.
    */

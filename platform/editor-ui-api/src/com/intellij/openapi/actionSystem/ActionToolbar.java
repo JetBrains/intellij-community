@@ -70,7 +70,7 @@ public interface ActionToolbar {
   void setLayoutPolicy(int layoutPolicy);
 
   /**
-   * If the value is <code>true</code> then the all button on toolbar are
+   * If the value is {@code true} then the all button on toolbar are
    * the same size. It very useful when you create "Outlook" like toolbar.
    * Currently this method can be considered as hot fix.
    */
@@ -81,8 +81,8 @@ public interface ActionToolbar {
    * at toolbar has 25x25 pixels size.
    *
    * @throws IllegalArgumentException
-   *          if <code>size</code>
-   *          is <code>null</code>
+   *          if {@code size}
+   *          is {@code null}
    */
   void setMinimumButtonSize(@NotNull Dimension size);
 

@@ -34,7 +34,7 @@ public abstract class ImageFileTypeManager extends FileTypeFactory {
      * Check that file is image.
      *
      * @param file File to check
-     * @return Return <code>true</code> if image file is file with Images file type
+     * @return Return {@code true} if image file is file with Images file type
      */
     public abstract boolean isImage(VirtualFile file);
 

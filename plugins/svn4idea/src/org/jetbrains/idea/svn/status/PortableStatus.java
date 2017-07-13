@@ -225,7 +225,7 @@ public class PortableStatus extends Status {
   /**
    * Returns a tree conflict description.
    *
-   * @return tree conflict description; <code>null</code> if no conflict
+   * @return tree conflict description; {@code null} if no conflict
    *         description exists on this item
    * @since 1.3
    */

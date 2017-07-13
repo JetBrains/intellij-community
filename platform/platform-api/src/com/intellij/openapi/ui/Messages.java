@@ -903,7 +903,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(@Nls String message, @Nls(capitalization = Nls.Capitalization.Title) String title) {
@@ -911,7 +911,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(Project project, @Nls String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon) {
@@ -919,7 +919,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(@Nullable Project project,
@@ -938,7 +938,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showInputDialog(@Nullable Project project, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon) {
@@ -946,7 +946,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showInputDialog(@NotNull Component parent, String message, @Nls(capitalization = Nls.Capitalization.Title) String title, @Nullable Icon icon) {

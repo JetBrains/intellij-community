@@ -160,7 +160,7 @@ public class HgChangeProvider implements ChangeProvider {
 
   /**
    * Finds modified but unsaved files in the given list of dirty files and notifies the builder about MODIFIED changes.
-   * Changes contained in <code>alreadyProcessed</code> are skipped - they have already been processed as modified, or else.
+   * Changes contained in {@code alreadyProcessed} are skipped - they have already been processed as modified, or else.
    */
   public void processUnsavedChanges(ChangelistBuilder builder, Set<FilePath> dirtyFiles, Collection<HgChange> alreadyProcessed) {
     // exclude already processed

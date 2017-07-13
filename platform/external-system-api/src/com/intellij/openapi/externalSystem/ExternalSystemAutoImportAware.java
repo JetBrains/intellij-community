@@ -51,7 +51,7 @@ public interface ExternalSystemAutoImportAware {
    * 
    * @param changedFileOrDirPath  changed file/dir path
    * @param project               current project
-   * @return                      <code>null</code> if target change should not trigger external project refresh;
+   * @return                      {@code null} if target change should not trigger external project refresh;
    *                              path to config file of an external project which should be refreshed
    */
   @Nullable

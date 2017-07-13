@@ -51,7 +51,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static java.util.Arrays.asList;
 
 /**
- * Handles <code>git pull</code> via merge.
+ * Handles {@code git pull} via merge.
  */
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);

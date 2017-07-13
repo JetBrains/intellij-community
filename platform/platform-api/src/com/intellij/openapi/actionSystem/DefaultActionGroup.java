@@ -33,7 +33,7 @@ import java.util.List;
  * cases you will be using this implementation but note that there are
  * cases (for example "Recent files" dialog) where children are determined
  * on rules different than just positional constraints, that's when you need
- * to implement your own <code>ActionGroup</code>.
+ * to implement your own {@code ActionGroup}.
  *
  * @see Constraints
  *
@@ -279,7 +279,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Copies content from <code>group</code>.
+   * Copies content from {@code group}.
    * @param other group to copy from
    */
   public void copyFromGroup(@NotNull DefaultActionGroup other) {

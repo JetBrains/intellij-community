@@ -31,10 +31,10 @@ public interface ImageComponentDecorator {
   boolean isTransparencyChessboardVisible();
 
   /**
-   * Return <code>true</code> if this decorator is enabled for this action place.
+   * Return {@code true} if this decorator is enabled for this action place.
    *
    * @param place Action place
-   * @return <code>true</code> is decorator is enabled
+   * @return {@code true} is decorator is enabled
    */
   boolean isEnabledForActionPlace(String place);
 

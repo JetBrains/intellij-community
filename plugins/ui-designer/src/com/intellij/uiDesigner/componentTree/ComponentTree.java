@@ -195,7 +195,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   /**
    * TODO[vova] should return pair <RadComponent, TreePath>
    *
-   * @return first selected component. The method returns <code>null</code>
+   * @return first selected component. The method returns {@code null}
    *         if there is no selection in the tree.
    */
   @Nullable

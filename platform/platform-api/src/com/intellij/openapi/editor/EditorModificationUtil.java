@@ -317,7 +317,7 @@ public class EditorModificationUtil {
   }
 
   /**
-   * Inserts given string at each caret's position. Effective caret shift will be equal to <code>caretShift</code> for each caret.
+   * Inserts given string at each caret's position. Effective caret shift will be equal to {@code caretShift} for each caret.
    */
   public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode, final int caretShift)
     throws ReadOnlyFragmentModificationException

@@ -164,7 +164,7 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   /**
-   * @param y <code>y</code> coordinate in layered pane coordinate system.
+   * @param y {@code y} coordinate in layered pane coordinate system.
    */
   @Nullable
   public static LightweightHint showEditorFragmentHintAt(Editor editor,
