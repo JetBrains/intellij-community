@@ -17,12 +17,16 @@ package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.AbstractFontOptionsPanel;
 import com.intellij.application.options.colors.ColorAndFontOptions;
+import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.ui.HoverHyperlinkLabel;
@@ -34,14 +38,20 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
   private final EditorColorsScheme myScheme;
   private JPanel myWarningPanel;
   private JLabel myEditorFontLabel;
+  private JButton myRestoreButton;
+  private FontPreferences myDefaultPreferences;
 
   protected AppEditorFontOptionsPanel(EditorColorsScheme scheme) {
     myScheme = scheme;
+    myDefaultPreferences = new FontPreferencesImpl();
+    AppEditorFontOptions.initDefaults((ModifiableFontPreferences)myDefaultPreferences);
     updateOptionsList();
   }
 
@@ -57,7 +67,42 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
     topPanel.add(myWarningPanel, c);
     c.gridy = 1;
     topPanel.add(createFontSettingsPanel(), c);
+    c.insets = JBUI.insets(5, 0, 0, 0);
+    c.fill = GridBagConstraints.HORIZONTAL;
+    c.gridy = 2;
+    topPanel.add(new JSeparator(), c);
+    c.gridy = 3;
+    c.fill = GridBagConstraints.NONE;
+    myRestoreButton = new JButton(ApplicationBundle.message("settings.editor.font.restored.defaults"));
+    myRestoreButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        restoreDefaults();
+      }
+    });
+    addListener(new ColorAndFontSettingsListener.Abstract() {
+      @Override
+      public void fontChanged() {
+        updateWarning();
+        updateRestoreButtonState();
+      }
+    });
+    topPanel.add(myRestoreButton, c);
     return topPanel;
+  }
+
+  private void restoreDefaults() {
+    AppEditorFontOptions.initDefaults((ModifiableFontPreferences)getFontPreferences());
+    updateOnChangedFont();
+  }
+
+  public void updateOnChangedFont() {
+    updateOptionsList();
+    fireFontChanged();
+  }
+
+  private void updateRestoreButtonState() {
+    myRestoreButton.setEnabled(!myDefaultPreferences.equals(getFontPreferences()));
   }
 
   private JPanel createMessagePanel() {
