@@ -33,6 +33,7 @@ public class PyFindUsagesOptions extends FindUsagesOptions implements Persistent
   public PyFindUsagesOptions(@NotNull Project project) {
     super(project);
     isUsages = true;
+    isSearchForTextOccurrences = false;
   }
 
   public static PyFindUsagesOptions getInstance(Project project) {
