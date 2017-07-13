@@ -16,7 +16,6 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportConstantFix;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class StaticImportFromDefaultPackageTest extends LightCodeInsightFixtureTestCase {
@@ -64,6 +63,6 @@ public class StaticImportFromDefaultPackageTest extends LightCodeInsightFixtureT
   }
 
   private void assertFixForFieldIsNotAvailable() {
-    assertEmpty(myFixture.filterAvailableIntentions(StaticImportConstantFix.BASE_TEXT));
+    assertEmpty(myFixture.filterAvailableIntentions(QuickFixBundle.message("static.import.constant.text")));
   }
 }

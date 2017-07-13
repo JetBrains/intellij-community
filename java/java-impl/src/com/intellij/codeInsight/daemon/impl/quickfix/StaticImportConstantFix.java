@@ -31,8 +31,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
-  public static final String BASE_TEXT = "Import static constant";
-
   protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
 
   public StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
@@ -42,7 +40,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   @NotNull
   @Override
   protected String getBaseText() {
-    return BASE_TEXT;
+    return QuickFixBundle.message("static.import.constant.text");
   }
 
   @NotNull
