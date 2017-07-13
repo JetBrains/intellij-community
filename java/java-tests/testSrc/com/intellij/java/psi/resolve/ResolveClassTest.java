@@ -244,7 +244,7 @@ public class ResolveClassTest extends ResolveTestCase {
     }
 
     ensureIndexUpToDate();
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> assertNull(ref.resolve()))
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 800, () -> assertNull(ref.resolve()))
       .attempts(1).assertTiming();
   }
 
