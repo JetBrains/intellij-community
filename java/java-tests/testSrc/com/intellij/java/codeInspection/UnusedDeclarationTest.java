@@ -198,4 +198,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testReferenceFromReflection() {
     doTest();
   }
+
+  public void testReferenceFromGroovy() {
+    doTest();
+  }
 }
