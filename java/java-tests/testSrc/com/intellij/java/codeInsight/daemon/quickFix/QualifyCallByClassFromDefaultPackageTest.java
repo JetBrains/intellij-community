@@ -34,7 +34,9 @@ public class QualifyCallByClassFromDefaultPackageTest extends LightCodeInsightFi
     myFixture.configureByText("Main.java", "class Main {" +
                                            " void m() { staticMeth<caret>od(); }" +
                                            "}");
-    assertOneElement(myFixture.filterAvailableIntentions(QUALIFY_METHOD_FIX_TEXT));
+    assertFixAvailable(QUALIFY_METHOD_FIX_TEXT, "class Main {" +
+                                               " void m() { Util.staticMethod(); }" +
+                                               "}");
   }
 
   public void testMethodCallFromNonDefaultPackage() {
@@ -49,7 +51,14 @@ public class QualifyCallByClassFromDefaultPackageTest extends LightCodeInsightFi
     myFixture.configureByText("Main.java", "class Main {" +
                                            " void m() { STATIC_FIE<caret>LD; }" +
                                            "}");
-    assertOneElement(myFixture.filterAvailableIntentions(QUALIFY_CONST_FIX_TEXT));
+    assertFixAvailable(QUALIFY_CONST_FIX_TEXT, "class Main {" +
+                                               " void m() { Util.STATIC_FIELD; }" +
+                                               "}");
+  }
+
+  protected void assertFixAvailable(String hint, String afterText) {
+    myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(hint)));
+    myFixture.checkResult(afterText);
   }
 
   public void testFieldCallFromNonDefaultPackage() {
