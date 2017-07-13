@@ -201,4 +201,31 @@ javax.transaction.xa.XAException
     assert threads.size() <= 1
   }
 
+  void "test yourkit threads with indented names"() { 
+    String text = '''
+
+
+ Stacks at 2017-07-13 07:15:35 AM (uptime 1d 2h 59m 6 sec) Threads shown: 3 of 55
+
+
+ ApplicationImpl pooled thread 1007 [RUNNABLE] [DAEMON]
+org.iq80.snappy.SnappyDecompressor.decompressAllTags(byte[], int, int, byte[], int) SnappyDecompressor.java:182
+org.iq80.snappy.SnappyDecompressor.uncompress(byte[], int, int) SnappyDecompressor.java:47
+org.iq80.snappy.Snappy.uncompress(byte[], int, int) Snappy.java:85
+com.intellij.util.CompressionUtil.readCompressedWithoutOriginalBufferLength(DataInput) CompressionUtil.java:111
+
+
+ AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1 [WAITING]
+java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+com.intellij.openapi.application.impl.ReadMostlyRWLock.writeLock() ReadMostlyRWLock.java:192
+com.intellij.openapi.application.impl.ApplicationImpl.startWrite(Class) ApplicationImpl.java:1219
+com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction(Runnable) ApplicationImpl.java:1027
+
+
+'''
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['ApplicationImpl pooled thread 1007', 
+                                           'AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1']
+  }
+
 }
