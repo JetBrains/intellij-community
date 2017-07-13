@@ -41,6 +41,8 @@ LINK = [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?
 %state IN_VALUE
 %state IN_FOOTNOTE
 %state IN_LINEBEGIN
+%state FIELD_IN_INLINE
+%state FIELD_LINE
 %state INIT
 
 %{
@@ -123,10 +125,21 @@ LINK = [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?
 //Two posibilities -- quoted-block, indented block
 
 {CRLF}                                              { return WHITESPACE;}
+{SPACE}+":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[ `\n]        { yypushback(yylength()-1); yybegin(FIELD_IN_INLINE); return WHITESPACE;}
+
 {SPACE}+                                            { yybegin(PRE_INDENTED); myIndent = yylength(); return chooseType();}
 {ADORNMENT_SYMBOL}                                  { yybegin(PRE_QUOTED); return SPEC_SYMBOL;}
 
 //{CRLF}{2}~{CRLF}{2}                                 { yybegin(INIT); return LINE;}
+}
+
+<FIELD_IN_INLINE> {
+{SPACE}+                                            { return WHITESPACE;}
+":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[ `\n]   {yypushback(1); yybegin(FIELD_LINE); return FIELD;}
+}
+
+<FIELD_LINE> {
+.*                                                  {yybegin(IN_INLINE); return LINE;}
 }
 
 <PRE_QUOTED> {
@@ -180,7 +193,7 @@ LINK = [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?
 <IN_HIGHLIGHT> {
 {SPACE}+                                            { return WHITESPACE;}
 {CRLF}                                              { yybegin(INIT); return WHITESPACE; }
-[A-Za-z+]+{CRLF}{CRLF}                              { String value = yytext().toString().trim();
+[A-Za-z+]+{CRLF}                                    { String value = yytext().toString().trim();
                                                       if ("python".equalsIgnoreCase(value)) {
                                                         myState = 1;
                                                         yybegin(IN_INLINE);
