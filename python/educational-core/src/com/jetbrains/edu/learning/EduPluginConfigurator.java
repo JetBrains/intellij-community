@@ -38,6 +38,10 @@ public interface EduPluginConfigurator {
   @NotNull
   String getTestFileName();
 
+  /**
+   * Default language name used to publish submissions to stepik
+   * @return
+   */
   @NotNull
   default String getStepikDefaultLanguage() {
     return "";

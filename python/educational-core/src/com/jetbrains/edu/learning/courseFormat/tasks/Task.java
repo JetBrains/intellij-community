@@ -32,6 +32,7 @@ import java.util.Map;
  * To implement new task there are 3 steps to be done:
  * - extend Task class
  * - go to Lesson and update elementTypes in taskList AbstractCollection. Needed for proper xml serialization
+ * - update com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector#typeSupported(java.lang.String)
  * - Update TaskSerializer and TaskDeserializer in StudySerializationUtil to handle json serialization
  */
 public abstract class Task implements StudyItem {

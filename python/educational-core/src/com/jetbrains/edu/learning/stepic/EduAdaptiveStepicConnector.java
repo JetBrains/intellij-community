@@ -506,6 +506,7 @@ public class EduAdaptiveStepicConnector {
       }
     }
     else {
+      //TODO: to be moved
       if (language.isKindOf("Python") && step.options.samples != null) {
         createTestFileFromSamples(task, step.options.samples);
       }
