@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -24,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface InstructionTypeCallback {
+  /**
+   * @return null if this instruction adds no types to the resulting union, e.g. if the only type was excluded by type assertion
+   */
   @Nullable
-  PyType getType(TypeEvalContext context, @Nullable PsiElement anchor);
+  Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor);
 }
