@@ -1206,24 +1206,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ActivityTracker.getInstance().inc();
       fireBeforeWriteActionStart(clazz);
 
-      if (!myLock.isWriteLocked()) {
-        if (!myLock.tryWriteLock()) {
-          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
-              JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-                                                                 ourDumpThreadsOnLongWriteActionWaiting,
-                                                                 ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
-          long t = 0;
-          if (LOG.isDebugEnabled()) {
-            t = System.currentTimeMillis();
-          }
-          myLock.writeLock();
-          if (LOG.isDebugEnabled()) {
-            long elapsed = System.currentTimeMillis() - t;
-            LOG.debug("Write action wait time: " + elapsed);
-          }
-          if (reportSlowWrite != null) {
-            reportSlowWrite.cancel(false);
-          }
+      if (!myLock.isWriteLocked() && !myLock.tryWriteLock()) {
+        Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
+                                    JobScheduler.getScheduler()
+                                      .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+                                                              ourDumpThreadsOnLongWriteActionWaiting,
+                                                              ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
+        long t = LOG.isDebugEnabled() ? System.currentTimeMillis() : 0;
+        myLock.writeLock();
+        if (LOG.isDebugEnabled()) {
+          long elapsed = System.currentTimeMillis() - t;
+          LOG.debug("Write action wait time: " + elapsed);
+        }
+        if (reportSlowWrite != null) {
+          reportSlowWrite.cancel(false);
         }
       }
     }
