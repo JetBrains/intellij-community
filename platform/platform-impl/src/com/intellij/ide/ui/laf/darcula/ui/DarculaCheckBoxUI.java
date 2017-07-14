@@ -123,12 +123,29 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
         g.drawRoundRect(0, 0, w, h - 1, R, R);
       }
 
-      if (b.getModel().isSelected()) {
+      if (isIndeterminate(b)) {
+        paintIndeterminateSign(g, enabled, w, h);
+      } else if (b.getModel().isSelected()) {
         paintCheckSign(g, enabled, w, h);
       }
       g.translate(-x, -y);
       config.restore();
     }
+  }
+
+  protected void paintIndeterminateSign(Graphics2D g, boolean enabled, int w, int h) {
+    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+    g.setStroke(new BasicStroke(1 * JBUI.scale(2.0f), BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+
+    int off = JBUI.scale(4);
+    int x1 = off;
+    int y1 = h / 2;
+    g.setColor(getShadowColor(enabled, true));
+    GraphicsConfig c = new GraphicsConfig(g).paintWithAlpha(.8f);
+    g.drawLine(x1, y1 + JBUI.scale(1), w - off + JBUI.scale(1), y1 + JBUI.scale(1));
+    c.restore();
+    g.setColor(getCheckSignColor(enabled, true));
+    g.drawLine(x1, y1, w - off + JBUI.scale(1), y1);
   }
 
   protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
