@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -61,7 +62,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
-  private final JvmFacadeImpl myJvmFacade;
+  private final NotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
 
   public JavaPsiFacadeImpl(Project project,
@@ -71,7 +72,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     myProject = project;
     myFileManager = javaFileManager;
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
-    myJvmFacade = (JvmFacadeImpl)JvmFacade.getInstance(project);
+    myJvmFacade = NotNullLazyValue.createValue(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
     myConversionHelper = new JvmPsiConversionHelper(psiManager);
 
     final PsiModificationTracker modificationTracker = psiManager.getModificationTracker();
@@ -169,15 +170,38 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   @NotNull
   public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return findClasses(qualifiedName, scope, true);
+    List<PsiClass> allClasses = findClassesWithJvmFacade(qualifiedName, scope);
+    return allClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : allClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull
-  public PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, boolean askJvmFacade) {
-    if (shouldUseSlowResolve()) {
-      return findClassesInDumbMode(qualifiedName, scope);
+  private List<PsiClass> findClassesWithJvmFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    List<PsiClass> result = null;
+
+    final List<PsiClass> ownClasses = findClassesWithoutJvmFacade(qualifiedName, scope);
+    if (!ownClasses.isEmpty()) {
+      result = new ArrayList<>(ownClasses);
     }
 
+    final List<JvmClass> jvmClasses = myJvmFacade.getValue().findClassesWithoutJavaFacade(qualifiedName, scope);
+    if (!jvmClasses.isEmpty()) {
+      final List<PsiClass> jvmPsiClasses = ContainerUtil.map(jvmClasses, it -> myConversionHelper.toPsiClass(it));
+      if (result == null) {
+        result = new ArrayList<>(jvmPsiClasses);
+      }
+      else {
+        result.addAll(jvmPsiClasses);
+      }
+    }
+
+    return result == null ? Collections.emptyList() : result;
+  }
+
+  @NotNull
+  public List<PsiClass> findClassesWithoutJvmFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (shouldUseSlowResolve()) {
+      return Arrays.asList(findClassesInDumbMode(qualifiedName, scope));
+    }
     List<PsiElementFinder> finders = finders();
     Condition<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
@@ -190,16 +214,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
     }
 
-    if (askJvmFacade) {
-      List<? extends JvmClass> jvmClasses = myJvmFacade.findClasses(qualifiedName, scope, false);
-      List<PsiClass> jvmPsiClasses = ContainerUtil.map(jvmClasses, it -> myConversionHelper.toPsiClass(it));
-      if (!jvmPsiClasses.isEmpty()) {
-        if (result == null) result = new ArrayList<>(jvmPsiClasses.size());
-        result.addAll(jvmPsiClasses);
-      }
-    }
-
-    return result == null || result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result == null ? Collections.emptyList() : result;
   }
 
   private static Condition<PsiClass> getFilterFromFinders(@NotNull GlobalSearchScope scope, @NotNull List<PsiElementFinder> finders) {

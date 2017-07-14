@@ -57,26 +57,40 @@ public class JvmFacadeImpl implements JvmFacade {
   @Override
   @NotNull
   public List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return findClasses(qualifiedName, scope, true);
-  }
-
-  @NotNull
-  public List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, boolean askJavaFacade) {
-    if (myDumbService.isDumb() || !askJavaFacade) {
-      return doFindClasses(qualifiedName, scope, askJavaFacade); // don't cache
+    if (myDumbService.isDumb()) {
+      return doFindClassesWithJavaFacade(qualifiedName, scope); // don't cache
     }
     Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> ContainerUtil.createConcurrentWeakValueMap());
-    return map.computeIfAbsent(qualifiedName, fqn -> doFindClasses(fqn, scope, askJavaFacade));
+    return map.computeIfAbsent(qualifiedName, fqn -> doFindClassesWithJavaFacade(fqn, scope));
   }
 
+  private List<JvmClass> doFindClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    return sortByScope(findClassesWithJavaFacade(qualifiedName, scope), scope);
+  }
 
-  @NotNull
-  private List<JvmClass> doFindClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, boolean askJavaFacade) {
-    return sortByScope(doGetClassesFromProviders(qualifiedName, scope, askJavaFacade), scope);
+  private List<JvmClass> findClassesWithJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    List<JvmClass> result = null;
+
+    final List<JvmClass> ownClasses = findClassesWithoutJavaFacade(qualifiedName, scope);
+    if (!ownClasses.isEmpty()) {
+      result = new ArrayList<>(ownClasses);
+    }
+
+    final List<PsiClass> javaClasses = myJavaPsiFacade.findClassesWithoutJvmFacade(qualifiedName, scope);
+    if (!javaClasses.isEmpty()) {
+      if (result == null) {
+        result = new ArrayList<>(javaClasses);
+      }
+      else {
+        result.addAll(javaClasses);
+      }
+    }
+
+    return result == null ? Collections.emptyList() : result;
   }
 
   @NotNull
-  private List<JvmClass> doGetClassesFromProviders(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, boolean askJavaFacade) {
+  public List<JvmClass> findClassesWithoutJavaFacade(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     List<JvmClass> result = null;
     for (JvmElementProvider provider : filteredProviders()) {
       List<? extends JvmClass> providedClasses = provider.getClasses(qualifiedName, scope);
@@ -87,17 +101,6 @@ public class JvmFacadeImpl implements JvmFacade {
       }
       else {
         result.addAll(providedClasses);
-      }
-    }
-    if (askJavaFacade) {
-      PsiClass[] javaClasses = myJavaPsiFacade.findClasses(qualifiedName, scope, false);
-      if (javaClasses.length != 0) {
-        if (result == null) {
-          result = ContainerUtil.newArrayList(javaClasses);
-        }
-        else {
-          ContainerUtil.addAll(result, javaClasses);
-        }
       }
     }
     return result == null ? Collections.emptyList() : result;
