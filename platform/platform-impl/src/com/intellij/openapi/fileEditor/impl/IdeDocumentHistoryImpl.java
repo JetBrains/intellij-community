@@ -296,6 +296,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return VfsUtilCore.toVirtualFileArray(files);
   }
 
+  public boolean isRecentlyChanged(@NotNull VirtualFile file) {
+    return myRecentlyChangedFiles.CHANGED_PATHS.contains(file.getPath());
+  }
+
   @Override
   public final void clearHistory() {
     myBackPlaces.clear();
