@@ -34,4 +34,10 @@ public class SuspiciousIndentAfterControlStatement {
         }
         return 0;
     }
+
+    void m() {
+        if (true)
+            System.out.println();
+            <warning descr="'class' statement has suspicious indentation">class</warning><error descr="Identifier expected"> </error> ;
+    }
 }

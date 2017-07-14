@@ -55,11 +55,8 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     }
   }
 
-  protected final void registerMethodCallError(
-    @NotNull PsiMethodCallExpression expression,
-    @NonNls Object... infos) {
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
+  protected final void registerMethodCallError(@NotNull PsiMethodCallExpression expression, @NonNls Object... infos) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     final PsiElement nameToken = methodExpression.getReferenceNameElement();
     if (nameToken == null) {
       registerError(expression, infos);
@@ -69,10 +66,9 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     }
   }
 
-  protected final void registerStatementError(@NotNull PsiStatement statement,
-                                              Object... infos) {
+  protected final void registerStatementError(@NotNull PsiStatement statement, Object... infos) {
     final PsiElement statementToken = statement.getFirstChild();
-    if (statementToken == null) {
+    if (statementToken == null || statementToken.getText().length() == 0) {
       registerError(statement, infos);
     }
     else {
@@ -85,14 +81,11 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     registerError(identifier, infos);
   }
 
-  protected final void registerClassError(@NotNull PsiClass aClass,
-                                          Object... infos) {
-    PsiElement nameIdentifier;
+  protected final void registerClassError(@NotNull PsiClass aClass, Object... infos) {
+    final PsiElement nameIdentifier;
     if (aClass instanceof PsiEnumConstantInitializer) {
-      final PsiEnumConstantInitializer enumConstantInitializer =
-        (PsiEnumConstantInitializer)aClass;
-      final PsiEnumConstant enumConstant =
-        enumConstantInitializer.getEnumConstant();
+      final PsiEnumConstantInitializer enumConstantInitializer = (PsiEnumConstantInitializer)aClass;
+      final PsiEnumConstant enumConstant = enumConstantInitializer.getEnumConstant();
       nameIdentifier = enumConstant.getNameIdentifier();
     }
     else if (aClass instanceof PsiAnonymousClass) {
