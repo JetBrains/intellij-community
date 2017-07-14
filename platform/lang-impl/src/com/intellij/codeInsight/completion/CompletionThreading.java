@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -102,11 +103,9 @@ class AsyncCompletion extends CompletionThreadingBase {
     startSemaphore.down();
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
       try {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          startSemaphore.up();
-          ProgressManager.checkCanceled();
-          runnable.run();
-        });
+        startSemaphore.up();
+        ProgressManager.checkCanceled();
+        runnable.run();
       } catch (ProcessCanceledException ignored) {
       }
     }, progressIndicator));
@@ -124,7 +123,7 @@ class AsyncCompletion extends CompletionThreadingBase {
           while (true) {
             Computable<Boolean> next = myQueue.poll(30, TimeUnit.MILLISECONDS);
             if (next != null && !next.compute()) {
-              indicator.addDelayedMiddleMatches();
+              ReadAction.run(() -> indicator.addDelayedMiddleMatches());
               return;
             }
             indicator.checkCanceled();
@@ -155,7 +154,7 @@ class AsyncCompletion extends CompletionThreadingBase {
         }
         else {
           myQueue.offer(() -> {
-            indicator.addItem(result);
+            ReadAction.run(() -> indicator.addItem(result));
             return true;
           });
         }
@@ -168,11 +167,12 @@ class AsyncCompletion extends CompletionThreadingBase {
     myBatchList.clear();
 
     myQueue.offer(() -> {
+      ReadAction.run(() ->
       indicator.withSingleUpdate(() -> {
         for (CompletionResult result : batchListCopy) {
           indicator.addItem(result);
         }
-      });
+      }));
       return true;
     });
   }
