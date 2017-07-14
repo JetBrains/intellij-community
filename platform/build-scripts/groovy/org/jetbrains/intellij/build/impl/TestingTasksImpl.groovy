@@ -94,7 +94,6 @@ class TestingTasksImpl extends TestingTasks {
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
-      "intellij.test.jre"                      : System.getProperty("intellij.test.jre"),
       "bootstrap.testcases"                    : "com.intellij.AllTests",
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
@@ -137,6 +136,9 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     context.messages.info("Starting ${options.testGroups != null ? "test from groups '$options.testGroups'" : "all tests"}")
+    if (options.customJrePath != null) {
+      context.messages.info("JVM: $options.customJrePath")
+    }
     context.messages.info("JVM options: $jvmArgs")
     context.messages.info("System properties: $systemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
@@ -164,62 +166,32 @@ class TestingTasksImpl extends TestingTasks {
 
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
-    def testJre = systemProperties.remove("intellij.test.jre")
-    if (testJre != null) {
-      context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: "$testJre/bin/java") {
-        jvmArgs.each { jvmarg(value: it) }
-        systemProperties.each { key, value ->
-          if (value != null) {
-            sysproperty(key: key, value: value)
-          }
+    String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
+    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath) {
+      jvmArgs.each { jvmarg(value: it) }
+      systemProperties.each { key, value ->
+        if (value != null) {
+          sysproperty(key: key, value: value)
         }
+      }
 
-        if (teamCityFormatterClasspath != null) {
-          classpath {
-            teamCityFormatterClasspath.each {
-              pathelement(location: it)
-            }
-          }
-          formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
-          context.messages.info("Added TeamCity's formatter to JUnit task")
-        }
-
+      if (teamCityFormatterClasspath != null) {
         classpath {
-          bootstrapClasspath.each {
+          teamCityFormatterClasspath.each {
             pathelement(location: it)
           }
         }
-
-        test(name: options.bootstrapSuite)
+        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
+        context.messages.info("Added TeamCity's formatter to JUnit task")
       }
-    }
-    else {
-      context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp) {
-        jvmArgs.each { jvmarg(value: it) }
-        systemProperties.each { key, value ->
-          if (value != null) {
-            sysproperty(key: key, value: value)
-          }
-        }
 
-        if (teamCityFormatterClasspath != null) {
-          classpath {
-            teamCityFormatterClasspath.each {
-              pathelement(location: it)
-            }
-          }
-          formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
-          context.messages.info("Added TeamCity's formatter to JUnit task")
+      classpath {
+        bootstrapClasspath.each {
+          pathelement(location: it)
         }
-
-        classpath {
-          bootstrapClasspath.each {
-            pathelement(location: it)
-          }
-        }
-
-        test(name: options.bootstrapSuite)
       }
+
+      test(name: options.bootstrapSuite)
     }
   }
 
