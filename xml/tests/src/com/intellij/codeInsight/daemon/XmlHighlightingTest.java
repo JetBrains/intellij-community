@@ -2063,6 +2063,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testCustomBoolean() throws Exception {
+    configureByFiles(null, BASE_PATH + "CustomBoolean.xml", BASE_PATH + "CustomBoolean.xsd");
+    doDoTest(true, false);
+  }
+
   public void testStackOverflowInSchema() throws Exception {
     configureByFiles(null, BASE_PATH + "XMLSchema_1_1.xsd");
     doHighlighting();
