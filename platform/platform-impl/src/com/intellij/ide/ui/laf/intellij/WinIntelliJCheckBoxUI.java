@@ -69,4 +69,9 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   public Icon getDefaultIcon() {
     return JBUI.scale(EmptyIcon.create(18)).asUIResource();
   }
+
+  @Override
+  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
+    return false;
+  }
 }

@@ -104,18 +104,18 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       final boolean armed = b.getModel().isArmed();
 
       final int R = JBUI.scale(4);
+      boolean overrideBg = isIndeterminate(b) && fillBackgroundForIndeterminateSameAsForSelected();
       if (c.hasFocus()) {
-        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected), w/2, h, getFocusedBackgroundColor2(armed, selected)));
+        g.setPaint(UIUtil.getGradientPaint(w/2, 1, getFocusedBackgroundColor1(armed, selected || overrideBg), w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
         g.fillRoundRect(0, 0, w, h, R, R);
 
         DarculaUIUtil.paintFocusRing(g, new Rectangle(1, 1, w - 2, h - 2));
       } else {
-        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected), w / 2, h, getBackgroundColor2(enabled,
-                                                                                                                           selected)));
+        g.setPaint(UIUtil.getGradientPaint(w / 2, 1, getBackgroundColor1(enabled, selected || overrideBg), w / 2, h, getBackgroundColor2(enabled, selected || overrideBg)));
         g.fillRoundRect(0, 0, w, h , R, R);
 
-        final Color borderColor1 = getBorderColor1(enabled, selected);
-        final Color borderColor2 = getBorderColor2(enabled, selected);
+        final Color borderColor1 = getBorderColor1(enabled, selected || overrideBg);
+        final Color borderColor2 = getBorderColor2(enabled, selected || overrideBg);
         g.setPaint(UIUtil.getGradientPaint(w / 2, 1, borderColor1, w / 2, h, borderColor2));
         g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? 1 : 0), w, h - 1, R, R);
 
@@ -163,6 +163,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                   textRect.y + fm.getAscent());
       }
     }
+  }
+
+  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
+    return false;
   }
 
   protected void paintCheckSign(Graphics2D g, boolean enabled, int w, int h) {
