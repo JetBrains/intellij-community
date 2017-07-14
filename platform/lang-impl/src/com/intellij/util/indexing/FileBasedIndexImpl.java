@@ -2118,10 +2118,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
         });
 
-        if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
-          myProgressIndicator.checkCanceled();
-          myProgressIndicator.setText("Scanning files to index");
-        }
+        ProgressManager.checkCanceled();
         return true;
       }
     }

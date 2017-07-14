@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.PomNamedTarget;
@@ -149,12 +150,12 @@ class PostHighlightingVisitor {
       final FileViewProvider viewProvider = myFile.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
-        progress.checkCanceled();
+        ProgressManager.checkCanceled();
         PsiElement psiRoot = viewProvider.getPsi(language);
         if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
         List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
         for (PsiElement element : elements) {
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           if (element instanceof PsiIdentifier) {
             PsiIdentifier identifier = (PsiIdentifier)element;
             HighlightInfo info = processIdentifier(identifier, progress, globalUsageHelper);
@@ -173,7 +174,7 @@ class PostHighlightingVisitor {
       if (importList != null) {
         final PsiImportStatementBase[] imports = importList.getAllImportStatements();
         for (PsiImportStatementBase statement : imports) {
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           final HighlightInfo info = processImport(statement, unusedImportKey);
           if (info != null) {
             errorFound |= info.getSeverity() == HighlightSeverity.ERROR;

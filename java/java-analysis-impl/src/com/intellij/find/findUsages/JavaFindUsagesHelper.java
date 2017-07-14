@@ -254,8 +254,8 @@ public class JavaFindUsagesHelper {
         if (progress != null) {
           String name = ReadAction.compute(aClass::getName);
           progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", name));
-          progress.checkCanceled();
         }
+        ProgressManager.checkCanceled();
         boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
           @Override
           public boolean processInReadAction(final PsiReference psiReference) {

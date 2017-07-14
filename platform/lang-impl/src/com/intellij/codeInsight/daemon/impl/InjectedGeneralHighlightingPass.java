@@ -154,7 +154,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     //rehighlight all injected PSI regardless the range,
     //since change in one place can lead to invalidation of injected PSI in (completely) other place.
     for (DocumentWindow documentRange : injected) {
-      progress.checkCanceled();
+      ProgressManager.checkCanceled();
       if (!documentRange.isValid()) continue;
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(documentRange);
       if (file == null) continue;
@@ -180,7 +180,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, true,
                                                                    element -> {
                                                                      ApplicationManager.getApplication().assertReadAccessAllowed();
-                                                                     progress.checkCanceled();
+                                                                     ProgressManager.checkCanceled();
                                                                      InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
                                                                      return true;
                                                                    })) {
@@ -358,7 +358,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       for (final HighlightVisitor visitor : filtered) {
         visitor.analyze(injectedPsi, true, holder, () -> {
           for (PsiElement element : elements) {
-            progress.checkCanceled();
+            ProgressManager.checkCanceled();
             visitor.visit(element);
           }
         });

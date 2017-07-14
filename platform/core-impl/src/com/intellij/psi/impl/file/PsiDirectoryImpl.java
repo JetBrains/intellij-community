@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
@@ -189,9 +188,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> processor) {
     checkValid();
-    ProgressIndicatorProvider.checkCanceled();
 
     for (VirtualFile vFile : myFile.getChildren()) {
+      ProgressManager.checkCanceled();
       boolean isDir = vFile.isDirectory();
       if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(vFile.getName(), isDir)) {
         continue;
@@ -213,12 +212,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
     VirtualFile[] files = myFile.getChildren();
     final ArrayList<PsiElement> children = new ArrayList<>(files.length);
-    processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-      @Override
-      public boolean execute(@NotNull final PsiFileSystemItem element) {
-        children.add(element);
-        return true;
-      }
+    processChildren(element -> {
+      children.add(element);
+      return true;
     });
 
     return PsiUtilCore.toPsiElementArray(children);

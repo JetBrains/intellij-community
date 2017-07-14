@@ -129,7 +129,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
 
     try {
       for (int i = lo; i < hi; ++i) {
-        progressIndicator.checkCanceled();
+        ProgressManager.checkCanceled();
         if (!processor.process(array.get(i))) {
           throw new ComputationAbortedException();
         }
@@ -231,9 +231,11 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
     for (final ApplierCompleter<T> task : failedSubTasks) {
+      ProgressManager.checkCanceled();
       ApplicationManager.getApplication().runReadAction(() ->
         task.wrapInReadActionAndIndicator(() -> {
           for (int i = task.lo; i < task.hi; ++i) {
+            ProgressManager.checkCanceled();
             if (!task.processor.process(task.array.get(i))) {
               result[0] = false;
               break;

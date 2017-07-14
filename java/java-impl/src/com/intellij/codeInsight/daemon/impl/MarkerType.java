@@ -413,7 +413,7 @@ public class MarkerType {
           if (!updateComponent(o, myRenderer.getComparator())) {
             indicator.cancel();
           }
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           return super.process(o);
         }
       });
@@ -424,7 +424,7 @@ public class MarkerType {
           if (!updateComponent(expr, myRenderer.getComparator())) {
             indicator.cancel();
           }
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           return super.process(expr);
         }
       });
@@ -469,7 +469,7 @@ public class MarkerType {
             if (!updateComponent(psiMethod, myRenderer.getComparator())) {
               indicator.cancel();
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return super.process(psiMethod);
           }
         });
@@ -481,7 +481,7 @@ public class MarkerType {
             if (!updateComponent(expr, myRenderer.getComparator())) {
               indicator.cancel();
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return super.process(expr);
           }
         });

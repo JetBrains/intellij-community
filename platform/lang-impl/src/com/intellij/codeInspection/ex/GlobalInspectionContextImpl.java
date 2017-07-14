@@ -485,7 +485,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
 
-    progressIndicator.checkCanceled();
+    ProgressManager.checkCanceled();
 
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -588,7 +588,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         try {
           final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(file -> {
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
@@ -600,17 +600,19 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               }
               return null;
             });
-            //do not inspect binary files
+            // do not inspect binary files
             if (psiFile != null) {
               try {
-                LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
+                if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+                  throw new IllegalStateException("Must not have read action");
+                }
                 outFilesToInspect.put(psiFile);
               }
               catch (InterruptedException e) {
                 LOG.error(e);
               }
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return true;
           });
         }

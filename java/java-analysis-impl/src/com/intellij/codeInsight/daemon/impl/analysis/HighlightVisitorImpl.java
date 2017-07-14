@@ -172,7 +172,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           .orElse(file.getTextRange());
         success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
           highlight.run();
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           if (document != null) {
             new PostHighlightingVisitor(file, document, refCountHolder).collectHighlights(holder, progress);
           }
