@@ -38,5 +38,6 @@ iml_module(
         "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:commons-compress",
     ],
 )
