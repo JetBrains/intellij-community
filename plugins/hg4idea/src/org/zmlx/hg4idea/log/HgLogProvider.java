@@ -97,10 +97,14 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast)
     throws VcsException {
-    // this method currently is very slow and time consuming
-    // so indexing is not to be used for mercurial for now
+    // parameter fast is currently not used
+    // since this method is not called from index yet, fast always is false
+    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when fast = true
+    // also we'll need to process commits one by one
+    
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
