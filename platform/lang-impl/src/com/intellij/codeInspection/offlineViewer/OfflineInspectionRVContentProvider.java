@@ -182,7 +182,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
       final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
-      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, toolWrapper, presentation)), true);
+      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
     }
   }
 }

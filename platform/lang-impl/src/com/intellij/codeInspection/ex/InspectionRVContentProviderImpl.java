@@ -125,7 +125,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;
           elemNode
-            .insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(refElement, problem, toolWrapper, presentation)), true);
+            .insertByOrder(ReadAction.compute(() -> new ProblemDescriptionNode(refElement, problem, presentation)), true);
           elemNode.setProblem(elemNode.getChildCount() == 1 ? problems[0] : null);
         }
     }
