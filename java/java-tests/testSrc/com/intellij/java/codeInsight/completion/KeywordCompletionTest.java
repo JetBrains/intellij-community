@@ -142,6 +142,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testIntInGenerics() { doTest(2, "int", "char", "final"); }
   public void testIntInGenerics2() { doTest(2, "int", "char", "final"); }
   public void testBreakInLabeledBlock() { doTest(1, "break label", "continue"); }
+  public void testPrimitiveInForLoop() { doTest(1, "int"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
 
   public void testTryInExpression() {

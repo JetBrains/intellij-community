@@ -144,7 +144,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return null;
     }
 
-    if (JavaKeywordCompletion.START_FOR.accepts(position)) {
+    if (JavaKeywordCompletion.START_FOR.withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.VARIABLE);
     }
 
