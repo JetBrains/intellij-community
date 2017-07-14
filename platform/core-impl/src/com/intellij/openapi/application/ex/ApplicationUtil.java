@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.concurrent.Callable;
@@ -99,8 +100,8 @@ public class ApplicationUtil {
     // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().
     // To prevent creation of unneeded wrapped exception we supply this method as a bait which stupid ForkJoinTask calls and immediately poisons itself,
     // causing the original exception to be used unwrapped. (see ForkJoinTask.getThrowableException())
-    @Override
-    public synchronized Throwable initCause(Throwable cause) {
+    @SuppressWarnings("unused")
+    public CannotRunReadActionException(@Nullable Throwable cause) {
       throw this;
     }
   }
