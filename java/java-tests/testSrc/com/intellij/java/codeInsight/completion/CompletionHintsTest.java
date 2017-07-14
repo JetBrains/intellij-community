@@ -282,7 +282,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     right();
     type("2");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,2 <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }");

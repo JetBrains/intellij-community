@@ -43,7 +43,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
-  private static final Key<Boolean> PINNED = Key.create("parameter.hint.pinned");
   private static final Key<MyFontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
@@ -64,24 +63,15 @@ public class ParameterHintsPresentationManager implements Disposable {
     return inlay.getRenderer() instanceof MyRenderer;
   }
 
-  public boolean isPinned(@NotNull Inlay inlay) {
-    return Boolean.TRUE.equals(inlay.getUserData(PINNED));
-  }
-
-  public void unpin(@NotNull Inlay inlay) {
-    inlay.putUserData(PINNED, null);
-  }
-
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, boolean pinned) {
+  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
     Inlay inlay = editor.getInlayModel().addInlineElement(offset, renderer);
     if (inlay != null) {
-      if (pinned) inlay.putUserData(PINNED, Boolean.TRUE);
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
     }
     return inlay;

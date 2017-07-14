@@ -53,7 +53,7 @@ public class InlineElementData extends HighlightData {
   @Override
   public void addHighlToView(Editor view, EditorColorsScheme scheme, Map<TextAttributesKey, String> displayText) {
     int offset = getStartOffset();
-    ParameterHintsPresentationManager.getInstance().addHint(view, offset, myText, false, false);
+    ParameterHintsPresentationManager.getInstance().addHint(view, offset, myText, false);
     List<Inlay> inlays = view.getInlayModel().getInlineElementsInRange(offset, offset);
     for (Inlay inlay : inlays) {
       EditorCustomElementRenderer renderer = inlay.getRenderer();
