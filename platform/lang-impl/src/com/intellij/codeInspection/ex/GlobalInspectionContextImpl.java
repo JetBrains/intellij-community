@@ -451,10 +451,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       while (true) {
         Disposable disposable = Disposer.newDisposable();
         ProgressIndicator wrapper = new SensitiveProgressWrapper(progressIndicator);
-        wrapper.start();
-        ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
 
         try {
+          // avoid "attach listener"/"write action" race
+          ReadAction.run(() -> {
+            wrapper.start();
+            ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+            // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
+            if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+              throw new ProcessCanceledException();
+            }
+          });
           // use wrapper here to cancel early when write action start but do not affect the original indicator
           ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
           break;
