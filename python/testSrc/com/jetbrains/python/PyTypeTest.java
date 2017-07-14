@@ -1993,6 +1993,15 @@ public class PyTypeTest extends PyTestCase {
              "        expr = param"));
   }
 
+  // PY-21175
+  public void testNoneTypeFilteredOutByConditionalAssignment() {
+    doTest("List[int]",
+           "xs = None\n" +
+           "if xs is None:\n" +
+           "    xs = [1, 2, 3]\n" +
+           "expr = xs\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
