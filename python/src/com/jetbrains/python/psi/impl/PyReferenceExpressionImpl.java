@@ -504,15 +504,22 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     try {
       final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false);
-      if (!defs.isEmpty()) {
-        final ReadWriteInstruction firstInstruction = PyUtil.as(defs.get(0), ReadWriteInstruction.class);
-        PyType type = firstInstruction != null ? firstInstruction.getType(context, anchor) : null;
-        for (int i = 1; i < defs.size(); i++) {
-          final ReadWriteInstruction instruction = PyUtil.as(defs.get(i), ReadWriteInstruction.class);
-          type = PyUnionType.union(type, instruction != null ? instruction.getType(context, anchor) : null);
+      PyType type = null;
+      for (Instruction def : defs) {
+        final ReadWriteInstruction instruction = PyUtil.as(def, ReadWriteInstruction.class);
+        if (instruction != null) {
+          final Ref<PyType> instructionType = instruction.getType(context, anchor);
+          if (instructionType != null) {
+            if (type != null) {
+              type = PyUnionType.union(type, instructionType.get());
+            }
+            else {
+              type = instructionType.get();
+            }
+          }
         }
-        return type;
       }
+      return type;
     }
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -149,27 +150,27 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Nullable
-  private static PyType createAssertionType(@Nullable PyType initial,
-                                            @Nullable PyType suggested,
-                                            boolean positive,
-                                            boolean transformToDefinition,
-                                            @NotNull TypeEvalContext context) {
+  private static Ref<PyType> createAssertionType(@Nullable PyType initial,
+                                                 @Nullable PyType suggested,
+                                                 boolean positive,
+                                                 boolean transformToDefinition,
+                                                 @NotNull TypeEvalContext context) {
     final PyType transformedType = transformTypeFromAssertion(suggested, transformToDefinition);
     if (positive) {
       if (!(initial instanceof PyUnionType) &&
           !PyTypeChecker.isUnknown(initial, context) &&
           PyTypeChecker.match(transformedType, initial, context)) {
-        return initial;
+        return Ref.create(initial);
       }
-      return transformedType;
+      return Ref.create(transformedType);
     }
     else if (initial instanceof PyUnionType) {
-      return ((PyUnionType)initial).exclude(transformedType, context);
+      return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
     else if (PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
-    return initial;
+    return Ref.create(initial);
   }
 
   @Nullable
@@ -196,7 +197,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                              @NotNull Function<TypeEvalContext, PyType> suggestedType) {
     final InstructionTypeCallback typeCallback = new InstructionTypeCallback() {
       @Override
-      public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
         return createAssertionType(context.getType(target), suggestedType.apply(context), positive, transformToDefinition, context);
       }
     };
@@ -223,7 +224,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   static class Assertion {
     private final PyReferenceExpression element;
-    private InstructionTypeCallback myFunction;
+    private final InstructionTypeCallback myFunction;
 
     Assertion(PyReferenceExpression element, InstructionTypeCallback getType) {
       this.element = element;
