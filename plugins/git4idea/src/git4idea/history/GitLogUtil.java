@@ -401,7 +401,8 @@ public class GitLogUtil {
   @NotNull
   private static List<String> createConfigParameters(boolean withChanges, boolean fast) {
     if (!withChanges) return Collections.emptyList();
-    return fast ? renameLimit(Registry.intValue("git.diff.renameLimit")) : Collections.emptyList();
+    return Registry.is("git.diff.renameLimit.infinity") ?
+           renameLimit(0) : (fast ? renameLimit(1000) : Collections.emptyList());
   }
 
   @NotNull
