@@ -31,7 +31,7 @@ class ParameterizedTestsDemo {
   }
 
   @ParameterizedTest
-  @MethodSource(value = {<warning descr="Multiple parameters have to be wrapped in Arguments">"d"</warning>})
+  @MethodSource(value = {"d"})
   void testWithMultipleParams(Object s, int i) { }
 
   @ParameterizedTest

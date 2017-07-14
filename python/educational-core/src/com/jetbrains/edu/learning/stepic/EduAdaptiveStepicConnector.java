@@ -3,19 +3,22 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.internal.LinkedTreeMap;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -27,7 +30,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.CodeTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
-import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.apache.http.HttpEntity;
@@ -57,9 +59,7 @@ import java.util.concurrent.TimeUnit;
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
 
 public class EduAdaptiveStepicConnector {
-  public static final String PYTHON2 = "python2";
-  public static final String PYTHON3 = "python3";
-  public static final String PYCHARM_COMMENT = "# Posted from PyCharm Edu\n";
+  public static final String PYCHARM_COMMENT = " Posted from PyCharm Edu\n";
   public static final int NEXT_RECOMMENDATION_REACTION = 2;
   public static final int TOO_HARD_RECOMMENDATION_REACTION = 0;
   public static final int TOO_BORING_RECOMMENDATION_REACTION = -1;
@@ -67,9 +67,9 @@ public class EduAdaptiveStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduAdaptiveStepicConnector.class);
   private static final int CONNECTION_TIMEOUT = 60 * 1000;
   private static final String CODE_TASK_TYPE = "code";
-  private static final String CODE_TASK_NAME = "code.py";
   private static final String CHOICE_TYPE_TEXT = "choice";
   private static final String TEXT_STEP_TYPE = "text";
+  private static final String TASK_NAME = "task";
 
   @Nullable
   public static Task getNextRecommendation(@NotNull Project project, @NotNull RemoteCourse course) {
@@ -112,8 +112,15 @@ public class EduAdaptiveStepicConnector {
             course.getLessons().get(0).setId(Integer.parseInt(lessonId));
 
             for (int stepId : realLesson.steps) {
-              final Task taskFromStep = getTask(project, realLesson.getName(), stepId, user.getId());
-              if (taskFromStep != null) return taskFromStep;
+              StepicWrappers.StepSource step = getStep(stepId);
+              String stepType = step.block.name;
+              if (typeSupported(stepType)) {
+                final Task taskFromStep = getTask(course, realLesson.getName(), step, stepId, user.getId());
+                if (taskFromStep != null) return taskFromStep;
+              }
+              else {
+                return skipRecommendation(project, course, user, lessonId);
+              }
             }
           }
           else {
@@ -139,42 +146,83 @@ public class EduAdaptiveStepicConnector {
     return null;
   }
 
+  private static Task skipRecommendation(@NotNull Project project, @NotNull RemoteCourse course, StepicUser user, String lessonId) {
+    postRecommendationReaction(lessonId, String.valueOf(user.getId()), TOO_HARD_RECOMMENDATION_REACTION);
+    return getNextRecommendation(project, course);
+  }
+
+  private static boolean typeSupported(String stepType) {
+    return CODE_TASK_TYPE.equals(stepType) || CHOICE_TYPE_TEXT.equals(stepType) || TEXT_STEP_TYPE.equals(stepType)
+           || stepType.startsWith(EduStepicNames.PYCHARM_PREFIX);
+  }
+
   @Nullable
-  private static Task getTask(@NotNull Project project, @NotNull String name, int stepId, int userId) throws IOException {
-    final StepicWrappers.StepSource step = getStep(stepId);
+  private static Task getTask(@NotNull RemoteCourse course,
+                              @NotNull String name,
+                              @NotNull StepicWrappers.StepSource step,
+                              int stepId, int userId) throws IOException {
     final String stepType = step.block.name;
+    Language language = course.getLanguageById();
+    if (language == null) {
+      LOG.warn("Language is null for the course: " + course.getName());
+      return null;
+    }
+
     if (stepType.equals(CODE_TASK_TYPE)) {
-      return getCodeTaskFromStep(project, step.block, name, stepId);
+      return getCodeTaskFromStep(language, step.block, name, stepId);
     }
     else if (stepType.equals(CHOICE_TYPE_TEXT)) {
-      return getChoiceTaskFromStep(name, step.block, stepId, userId);
+      return getChoiceTaskFromStep(language, name, step.block, stepId, userId);
     }
     else if (stepType.startsWith(EduStepicNames.PYCHARM_PREFIX)) {
       return EduStepicConnector.createTask(stepId);
     }
     else if (stepType.equals(TEXT_STEP_TYPE)) {
-      return getTheoryTaskFromStep(name, step.block, stepId);
+      return getTheoryTaskFromStep(language, name, step.block, stepId);
     }
 
     return null;
   }
 
+  @Nullable
+  private static String getTaskFileName(@NotNull Language language) {
+    // This is a hacky way to how we should name task file.
+    // It's assumed that if test's name is capitalized we need to capitalize task file name too.
+    String testFileName = EduPluginConfigurator.INSTANCE.forLanguage(language).getTestFileName();
+    boolean capitalize = !testFileName.isEmpty() && Character.isUpperCase(testFileName.charAt(0));
+
+    LanguageFileType type = language.getAssociatedFileType();
+    if (type == null) {
+      LOG.warn("Failed to create task file name: associated file type for " + language + " is null");
+      return null;
+    }
+
+    return (capitalize ? StringUtil.capitalize(TASK_NAME) : TASK_NAME) + "." + type.getDefaultExtension();
+  }
+
   @NotNull
-  private static Task getTheoryTaskFromStep(@NotNull String lessonName, @NotNull StepicWrappers.Step block, int stepId) {
+  private static Task getTheoryTaskFromStep(@NotNull Language language,
+                                            @NotNull String lessonName,
+                                            @NotNull StepicWrappers.Step block,
+                                            int stepId) {
     final Task task = new TheoryTask(lessonName);
     task.setStepId(stepId);
-
     task.addTaskText(EduNames.TASK, block.text);
+    String commentPrefix = LanguageCommenters.INSTANCE.forLanguage(language).getLineCommentPrefix();
+    String taskFileName = getTaskFileName(language);
 
-    createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
+    if (taskFileName != null) {
+      createMockTaskFile(task, commentPrefix + " this is a theory task. You can use this editor as a playground", taskFileName);
+    }
     return task;
   }
 
   @NotNull
-  private static Task getChoiceTaskFromStep(@NotNull String lessonName,
+  private static Task getChoiceTaskFromStep(@NotNull Language language,
+                                            @NotNull String name,
                                             @NotNull StepicWrappers.Step block,
                                             int stepId, int userId) {
-    final ChoiceTask task = new ChoiceTask(lessonName);
+    final ChoiceTask task = new ChoiceTask(name);
     task.setStepId(stepId);
     task.addTaskText(EduNames.TASK, block.text);
 
@@ -189,16 +237,19 @@ public class EduAdaptiveStepicConnector {
         LOG.warn("Dataset for step " + stepId + " is null");
       }
     }
-
-    createMockTaskFile(task, "# you can experiment here, it won't be checked");
+    String commentPrefix = LanguageCommenters.INSTANCE.forLanguage(language).getLineCommentPrefix();
+    String taskFileName = getTaskFileName(language);
+    if (taskFileName != null) {
+      createMockTaskFile(task, commentPrefix + " you can experiment here, it won't be checked", taskFileName);
+    }
     return task;
   }
 
-  private static void createMockTaskFile(@NotNull Task task, String editorText) {
+  private static void createMockTaskFile(@NotNull Task task, @NotNull String editorText, @NotNull String taskFileName) {
     final TaskFile taskFile = new TaskFile();
     taskFile.text = editorText;
-    taskFile.name = CODE_TASK_NAME;
-    task.taskFiles.put(CODE_TASK_NAME, taskFile);
+    taskFile.name = taskFileName;
+    task.taskFiles.put(taskFile.name, taskFile);
   }
 
   @Nullable
@@ -344,23 +395,26 @@ public class EduAdaptiveStepicConnector {
     lesson.initLesson(course, true);
 
     final String lessonName = EduNames.LESSON + lesson.getIndex();
-    createFilesForNewTask(project, task, lessonName);
+    createFilesForNewTask(project, task, lessonName, course.getLanguageById());
   }
 
   private static void createFilesForNewTask(@NotNull Project project,
                                             @NotNull Task task,
-                                            @NotNull String lessonName) {
+                                            @NotNull String lessonName,
+                                            @NotNull Language language) {
     final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
-    if (lessonDir != null) {
-      ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          StudyGenerator.createTask(task, lessonDir);
-        }
-        catch (IOException e) {
-          LOG.warn(e.getMessage());
-        }
-      }));
+    if (lessonDir == null) {
+      return;
     }
+
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiDirectory directory = PsiManager.getInstance(project).findDirectory(lessonDir);
+      if (directory == null) {
+        return;
+      }
+
+      EduPluginConfigurator.INSTANCE.forLanguage(language).createTaskContent(project, task, null, directory, task.getLesson().getCourse());
+    }));
   }
 
   public static void replaceCurrentTask(@NotNull Project project, @NotNull Task task, @NotNull Lesson lesson) {
@@ -373,23 +427,30 @@ public class EduAdaptiveStepicConnector {
     lesson.getTaskList().set(taskIndex - 1, task);
 
     final String lessonName = EduNames.LESSON + lesson.getIndex();
-    updateProjectFiles(project, task, lessonName);
+    updateProjectFiles(project, task, lessonName, course.getLanguageById());
     setToolWindowText(project, task);
   }
 
-  private static void updateProjectFiles(@NotNull Project project, @NotNull Task task, @NotNull String lessonName) {
+  private static void updateProjectFiles(@NotNull Project project, @NotNull Task task, @NotNull String lessonName, Language language) {
     final VirtualFile lessonDir = project.getBaseDir().findChild(lessonName);
-    if (lessonDir != null) {
-      ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          removeOldProjectFiles(lessonDir, task.getIndex());
-          StudyGenerator.createTask(task, lessonDir);
-        }
-        catch (IOException e) {
-          LOG.warn(e.getMessage());
-        }
-      }));
+    if (lessonDir == null) {
+      return;
     }
+
+    ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        PsiDirectory directory = PsiManager.getInstance(project).findDirectory(lessonDir);
+        if (directory == null) {
+          return;
+        }
+
+        removeOldProjectFiles(lessonDir, task.getIndex());
+        EduPluginConfigurator.INSTANCE.forLanguage(language).createTaskContent(project, task, null, directory, task.getLesson().getCourse());
+      }
+      catch (IOException e) {
+        LOG.warn(e.getMessage());
+      }
+    }));
   }
 
   private static void removeOldProjectFiles(@NotNull VirtualFile lessonDir, int taskIndex) throws IOException {
@@ -410,7 +471,7 @@ public class EduAdaptiveStepicConnector {
   }
 
   @NotNull
-  private static Task getCodeTaskFromStep(@NotNull Project project,
+  private static Task getCodeTaskFromStep(@NotNull Language language,
                                           @NotNull StepicWrappers.Step step,
                                           @NotNull String name,
                                           int lessonID) {
@@ -445,7 +506,8 @@ public class EduAdaptiveStepicConnector {
       }
     }
     else {
-      if (step.options.samples != null) {
+      //TODO: to be moved
+      if (language.isKindOf("Python") && step.options.samples != null) {
         createTestFileFromSamples(task, step.options.samples);
       }
     }
@@ -457,26 +519,28 @@ public class EduAdaptiveStepicConnector {
       }
     }
     else {
-      final String templateForTask = getCodeTemplateForTask(project, step.options.codeTemplates);
-      String text = templateForTask == null ? "# write your answer here \n" : templateForTask;
-      createMockTaskFile(task, text);
+      final String templateForTask = getCodeTemplateForTask(language, step.options.codeTemplates);
+      String commentPrefix = LanguageCommenters.INSTANCE.forLanguage(language).getLineCommentPrefix();
+      String text = templateForTask == null ? (commentPrefix + " write your answer here \n") : templateForTask;
+      String taskFileName = getTaskFileName(language);
+      if (taskFileName != null) {
+        createMockTaskFile(task, text, taskFileName);
+      }
     }
     return task;
   }
 
-  private static String getCodeTemplateForTask(@NotNull Project project,
-                                               @Nullable StepicWrappers.CodeTemplatesWrapper codeTemplates) {
+  private static String getCodeTemplateForTask(@NotNull Language language,
+                                               @Nullable LinkedTreeMap codeTemplates) {
     if (codeTemplates != null) {
-      final String languageString = getLanguageString(project);
-      if (languageString != null) {
-        return codeTemplates.getTemplateForLanguage(languageString);
-      }
+      final String languageString = EduPluginConfigurator.INSTANCE.forLanguage(language).getStepikDefaultLanguage();
+      return (String)codeTemplates.get(languageString);
     }
 
     return null;
   }
 
-  public static StudyCheckResult checkChoiceTask(@NotNull Project project, @NotNull ChoiceTask task, @NotNull StepicUser user) {
+  public static StudyCheckResult checkChoiceTask(@NotNull ChoiceTask task, @NotNull StepicUser user) {
     if (task.getSelectedVariants().isEmpty()) return new StudyCheckResult(StudyStatus.Failed, "No variants selected");
     final StepicWrappers.AdaptiveAttemptWrapper.Attempt attempt = getAttemptForStep(task.getStepId(), user.getId());
 
@@ -492,7 +556,8 @@ public class EduAdaptiveStepicConnector {
       if (result.getStatus() == StudyStatus.Failed) {
         try {
           createNewAttempt(task.getStepId());
-          final Task updatedTask = getTask(project, task.getName(), task.getStepId(), user.getId());
+          final Task updatedTask =
+            getTask((RemoteCourse)task.getLesson().getCourse(), task.getName(), getStep(task.getStepId()), task.getStepId(), user.getId());
           if (updatedTask instanceof ChoiceTask) {
             final List<String> variants = ((ChoiceTask)updatedTask).getChoiceVariants();
             task.setChoiceVariants(variants);
@@ -527,12 +592,15 @@ public class EduAdaptiveStepicConnector {
       LOG.warn(e.getMessage());
     }
     if (attemptId != -1) {
+      Course course = task.getLesson().getCourse();
+      Language courseLanguage = course.getLanguageById();
       final Editor editor = StudyUtils.getSelectedEditor(project);
-      String language = "python3";
       if (editor != null) {
-        final String answer = PYCHARM_COMMENT + editor.getDocument().getText();
+        String commentPrefix = LanguageCommenters.INSTANCE.forLanguage(courseLanguage).getLineCommentPrefix();
+        final String answer = commentPrefix + PYCHARM_COMMENT + editor.getDocument().getText();
+        String defaultLanguage = EduPluginConfigurator.INSTANCE.forLanguage(courseLanguage).getStepikDefaultLanguage();
         final StepicWrappers.SubmissionToPostWrapper submissionToPost =
-          new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), language, answer);
+          new StepicWrappers.SubmissionToPostWrapper(String.valueOf(attemptId), defaultLanguage, answer);
         return doAdaptiveCheck(submissionToPost, attemptId, user.getId());
       }
     }
@@ -618,24 +686,6 @@ public class EduAdaptiveStepicConnector {
       LOG.warn(e.getMessage());
     }
     return wrapper;
-  }
-
-  @Nullable
-  private static String getLanguageString(@NotNull Project project) {
-    final Language pythonLanguage = Language.findLanguageByID("Python");
-    if (pythonLanguage != null) {
-      Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(project).getModules()[0]).getSdk();
-      if (sdk != null) {
-        final String versionString = sdk.getVersionString();
-        if (versionString != null) {
-          final List<String> versionStringParts = StringUtil.split(versionString, " ");
-          if (versionStringParts.size() == 2) {
-            return versionStringParts.get(1).startsWith("2") ? PYTHON2 : PYTHON3;
-          }
-        }
-      }
-    }
-    return null;
   }
 
   private static int getAttemptId(@NotNull Task task) throws IOException {

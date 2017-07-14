@@ -241,14 +241,26 @@ public class JUnitUtil {
 
     Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module != null) {
-      for (final PsiMethod method : psiClass.getAllMethods()) {
-        ProgressManager.checkCanceled();
-        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) return true;
-      }
+      return CachedValuesManager.getCachedValue(psiClass, () -> {
+        boolean hasAnnotation = false;
+        for (final PsiMethod method : psiClass.getAllMethods()) {
+          ProgressManager.checkCanceled();
+          if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+            hasAnnotation = true;
+            break;
+          }
+        }
 
-      for (PsiClass aClass : psiClass.getAllInnerClasses()) {
-        if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) return true;
-      }
+        if (!hasAnnotation) {
+          for (PsiClass aClass : psiClass.getAllInnerClasses()) {
+            if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
+              hasAnnotation = true;
+              break;
+            }
+          }
+        }
+        return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      });
     }
 
     return false;

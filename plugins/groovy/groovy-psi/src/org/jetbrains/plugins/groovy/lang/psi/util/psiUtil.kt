@@ -16,11 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -47,3 +50,7 @@ fun modifierListMayBeEmpty(owner: PsiElement?): Boolean = when (owner) {
   else -> true
 }
 
+fun GrExpression?.isSuperExpression(): Boolean {
+  val referenceExpression = this as? GrReferenceExpression
+  return referenceExpression?.referenceNameElement?.node?.elementType == GroovyTokenTypes.kSUPER
+}

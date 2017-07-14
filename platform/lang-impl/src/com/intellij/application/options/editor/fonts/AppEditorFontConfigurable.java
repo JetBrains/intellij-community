@@ -79,6 +79,7 @@ public class AppEditorFontConfigurable implements SearchableConfigurable {
     AppEditorFontOptionsPanel optionsPanel = getFontPanel().getOptionsPanel();
     optionsPanel.updateWarning();
     optionsPanel.updateOptionsList();
+    getFontPanel().updatePreview();
   }
 
   @NotNull

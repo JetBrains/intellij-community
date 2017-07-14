@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -296,6 +296,40 @@ class Operators {
 
     doTest "a.as<caret>Boolean() != b.asBoolean()", "!!a != b.asBoolean()"
     doTest "a.asBoolean().toString()"
+  }
+
+  void 'test super calls'() {
+    fixture.configureByText '_.groovy', '''\
+class Inheritor extends Operators {
+  def testStuff(o) {
+    super.bitwiseNegate()   
+    super.negative()   
+    super.positive()   
+    super.next()   
+    super.previous()   
+    super.plus(o)   
+    super.minus(o)   
+    super.multiply(o)   
+    super.power(o)   
+    super.div(o)   
+    super.mod(o)   
+    super.or(o)   
+    super.and(o)   
+    super.xor(o)   
+    super.leftShift(o)   
+    super.rightShift(o)   
+    super.rightShiftUnsigned(o)   
+    super.asType(String)   
+    super.getAt(o)   
+    super.putAt(o, o)   
+    super.asBoolean()   
+    super.isCase(o)   
+    super.equals(o)   
+    super.compareTo(o)   
+  }
+}
+'''
+    fixture.checkHighlighting()
   }
 
   final String DECLARATIONS = 'def (Operators a, Operators b) = [null, null]\n'

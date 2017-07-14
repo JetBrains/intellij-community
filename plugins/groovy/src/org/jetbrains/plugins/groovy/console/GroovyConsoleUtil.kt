@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.console
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil.isSuitableModule
 import org.jetbrains.plugins.groovy.util.filterGroovyCompatibleModules
 
@@ -28,4 +29,8 @@ fun getApplicableModules(project: Project): List<Module> {
 
 fun getAnyApplicableModule(project: Project): Module? {
   return getApplicableModules(project).firstOrNull()
+}
+
+fun getWorkingDirectory(module: Module): String? {
+  return ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.path ?: module.project.basePath
 }
