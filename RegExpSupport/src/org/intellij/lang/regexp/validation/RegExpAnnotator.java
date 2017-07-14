@@ -199,13 +199,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (type == RegExpTT.ESC_CTRL_CHARACTER && text.equals("\\b") && !myLanguageHosts.supportsLiteralBackspace(ch)) {
       myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
     }
-    if (text.startsWith("\\") && myLanguageHosts.isRedundantEscape(ch, text)) {
-      final ASTNode astNode = ch.getNode().getFirstChildNode();
-      if (astNode != null && astNode.getElementType() == RegExpTT.REDUNDANT_ESCAPE) {
-        final Annotation a = myHolder.createWeakWarningAnnotation(ch, "Redundant character escape");
-        registerFix(a, new RemoveRedundantEscapeAction(ch));
-      }
-    }
     final RegExpChar.Type charType = ch.getType();
     if (charType == RegExpChar.Type.HEX || charType == RegExpChar.Type.UNICODE) {
       if (ch.getValue() == -1) {

@@ -21,31 +21,23 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCase {
+public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
-    highlightTest("<warning descr=\"Single character alternation in RegExp\">a|b|c|d</warning>");
+    quickfixTest("<warning descr=\"Redundant character escape '\\;' in RegExp\">\\;</warning>", ";", "Remove redundant escape");
   }
 
-  public void testNoWarn() {
-    highlightTest("a|b|cc|d");
+  public void testCharacterClass() {
+    highlightTest("<warning descr=\"Redundant character escape '\\-' in RegExp\">\\-</warning>[<warning descr=\"Redundant character escape '\\*' in RegExp\">\\*</warning>\\-\\[\\]\\\\<warning descr=\"Redundant character escape '\\+' in RegExp\">\\+</warning>]");
   }
 
-  public void testQuickfix() {
-    quickfixTest("<warning descr=\"Single character alternation in RegExp\">x|y|z</warning>", "[xyz]", "Replace with '[xyz]'");
-  }
-
-  public void testRemoveNonCapturingGroup() {
-    quickfixTest("(?:<warning descr=\"Single character alternation in RegExp\">k<caret>|l|m</warning>)", "[klm]", "Replace with '[klm]'");
-  }
-
-  public void testRemoveEscaping() {
-    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|\\å|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
+  public void testWhitespace() {
+    highlightTest("a<warning descr=\"Redundant character escape '\\ ' in RegExp\">\\ </warning>b<warning descr=\"Redundant character escape '\\ ' in RegExp\">\\ </warning>c");
   }
 
   @NotNull
   @Override
   protected LocalInspectionTool getInspection() {
-    return new SingleCharAlternationInspection();
+    return new RedundantEscapeInspection();
   }
 }
