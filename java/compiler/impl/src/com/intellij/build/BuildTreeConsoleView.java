@@ -68,6 +68,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
   private final Project myProject;
   private final SimpleTreeStructure myTreeStructure;
+  private final DetailsHandler myDetailsHandler;
 
   public BuildTreeConsoleView(Project project) {
     myProject = project;
@@ -147,7 +148,8 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter();
     Disposer.register(this, myThreeComponentsSplitter);
     myThreeComponentsSplitter.setFirstComponent(myContentPanel);
-    myThreeComponentsSplitter.setLastComponent(new DetailsHandler(myProject, tree, myThreeComponentsSplitter).getComponent());
+    myDetailsHandler = new DetailsHandler(myProject, tree, myThreeComponentsSplitter);
+    myThreeComponentsSplitter.setLastComponent(myDetailsHandler.getComponent());
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
   }
 
@@ -163,6 +165,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
   public void clear() {
     getRootElement().removeChildren();
     nodesMap.clear();
+    myDetailsHandler.clear();
     myBuilder.queueUpdate();
   }
 
@@ -354,6 +357,11 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
     public JComponent getComponent() {
       return myConsole.getComponent();
+    }
+
+    public void clear() {
+      myConsole.getComponent().setVisible(false);
+      myConsole.clear();
     }
   }
 }
