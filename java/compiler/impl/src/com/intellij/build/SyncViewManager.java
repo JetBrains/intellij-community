@@ -18,9 +18,11 @@ package com.intellij.build;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.execution.console.DuplexConsoleView;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.SmartList;
@@ -37,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Vladislav.Soroka
  */
-public class SyncViewManager {
+public class SyncViewManager implements Disposable {
 
   private final Project myProject;
   private final BuildContentManager myBuildContentManager;
@@ -75,6 +77,7 @@ public class SyncViewManager {
           final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
             new DuplexConsoleView<>(new BuildTextConsoleView(myProject, false, "CONSOLE"),
                                     new BuildTreeConsoleView(myProject));
+          Disposer.register(this, duplexConsoleView);
           duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
 
           final DefaultActionGroup toolbarActions = new DefaultActionGroup();
@@ -105,5 +108,9 @@ public class SyncViewManager {
         }
       });
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 }
