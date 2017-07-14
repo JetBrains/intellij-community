@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.project.impl;
 
+import com.intellij.ide.ProjectGroup;
+import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.openapi.project.Project;
@@ -30,12 +32,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.project.impl.ProjectOpeningTest.closeProject;
+
 /**
  * @author Konstantin Bulenkov
  */
-public class RecentProjectsTest extends ProjectOpeningTest {
+public class RecentProjectsTest extends PlatformTestCase {
   public void testMostRecentOnTop() throws Exception {
-    RecentProjectsManager.getInstance();
     String p1 = createAndOpenProject("p1");
     String p2 = createAndOpenProject("p2");
     String p3 = createAndOpenProject("p3");
@@ -47,10 +50,39 @@ public class RecentProjectsTest extends ProjectOpeningTest {
     doReopenCloseAndCheck(p3, "p3", "p1", "p2");
   }
 
+  public void testGroupsOrder() throws Exception {
+    String p1 = createAndOpenProject("p1");
+    String p2 = createAndOpenProject("p2");
+    String p3 = createAndOpenProject("p3");
+    String p4 = createAndOpenProject("p4");
+
+    RecentProjectsManager mgr = RecentProjectsManager.getInstance();
+    ProjectGroup g1 = new ProjectGroup("g1");
+    ProjectGroup g2 = new ProjectGroup("g2");
+    mgr.addGroup(g1);
+    mgr.addGroup(g2);
+
+    g1.addProject(p1);
+    g1.addProject(p2);
+    g2.addProject(p3);
+
+    checkGroups("g2", "g1");
+
+    doReopenCloseAndCheckGroups(p4, "g2", "g1");
+    doReopenCloseAndCheckGroups(p1, "g1", "g2");
+    doReopenCloseAndCheckGroups(p3, "g2", "g1");
+  }
+
   private static void doReopenCloseAndCheck(String projectPath, String... results) throws IOException, JDOMException {
     Project project = ProjectManager.getInstance().loadAndOpenProject(projectPath);
     closeProject(project);
     checkRecents(results);
+  }
+
+  private static void doReopenCloseAndCheckGroups(String projectPath, String... results) throws IOException, JDOMException {
+    Project project = ProjectManager.getInstance().loadAndOpenProject(projectPath);
+    closeProject(project);
+    checkGroups(results);
   }
 
   private static void checkRecents(String... recents) {
@@ -60,7 +92,15 @@ public class RecentProjectsTest extends ProjectOpeningTest {
       .map(s -> new File(s).getName().replace("idea_test_", ""))
       .filter(s -> recentProjects.contains(s))
       .collect(Collectors.toList());
-    Assert.assertArrayEquals(recents, projects.toArray());
+    Assert.assertEquals(Arrays.toString(recents), Arrays.toString(projects.toArray()));
+  }
+
+  private static void checkGroups(String... groups) {
+    List<String> recentGroups = Arrays.stream((RecentProjectsManager.getInstance()).getRecentProjectsActions(false, true))
+      .filter(a -> a instanceof ProjectGroupActionGroup)
+      .map(a -> ((ProjectGroupActionGroup)a).getGroup().getName())
+      .collect(Collectors.toList());
+    Assert.assertEquals(Arrays.toString(groups), Arrays.toString(recentGroups.toArray()));
   }
 
   private static String createAndOpenProject(String name) throws IOException, JDOMException, InterruptedException {
@@ -76,5 +116,12 @@ public class RecentProjectsTest extends ProjectOpeningTest {
     finally {
       closeProject(project);
     }
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    //this is a service. Initializes lazily
+    RecentProjectsManager.getInstance();
   }
 }
