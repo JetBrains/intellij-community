@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 
 class CloseAction extends AnAction implements DumbAware {
-  private GlobalInspectionContextImpl myContext;
+  private final GlobalInspectionContextImpl myContext;
 
   CloseAction(GlobalInspectionContextImpl context) {
     super(CommonBundle.message("action.close"), null, AllIcons.Actions.Cancel);
