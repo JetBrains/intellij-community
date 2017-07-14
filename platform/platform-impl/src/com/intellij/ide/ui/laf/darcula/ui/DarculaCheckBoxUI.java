@@ -229,4 +229,8 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   public Icon getDefaultIcon() {
     return EmptyIcon.create(JBUI.scale(20)).asUIResource();
   }
+
+  protected boolean isIndeterminate(JCheckBox checkBox) {
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState"));
+  }
 }
