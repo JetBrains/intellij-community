@@ -26,6 +26,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,17 +47,18 @@ public class RecentProjectsTest extends ProjectOpeningTest {
     doReopenCloseAndCheck(p3, "p3", "p1", "p2");
   }
 
-  private void doReopenCloseAndCheck(String projectPath, String...results) throws IOException, JDOMException {
+  private static void doReopenCloseAndCheck(String projectPath, String... results) throws IOException, JDOMException {
     Project project = ProjectManager.getInstance().loadAndOpenProject(projectPath);
     closeProject(project);
     checkRecents(results);
   }
 
-  private void checkRecents(String...recents) {
+  private static void checkRecents(String... recents) {
+    List<String> recentProjects = Arrays.asList(recents);
     RecentProjectsManagerBase.State state = ((RecentProjectsManagerBase)RecentProjectsManager.getInstance()).getState();
     List<String> projects = state.recentPaths.stream()
       .map(s -> new File(s).getName().replace("idea_test_", ""))
-      .filter(s -> !s.contains(getTestName(false)))
+      .filter(s -> recentProjects.contains(s))
       .collect(Collectors.toList());
     Assert.assertArrayEquals(recents, projects.toArray());
   }
