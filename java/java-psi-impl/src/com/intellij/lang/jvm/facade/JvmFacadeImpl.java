@@ -57,9 +57,6 @@ public class JvmFacadeImpl implements JvmFacade {
   @Override
   @NotNull
   public List<? extends JvmClass> findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    if (myDumbService.isDumb()) {
-      return doFindClassesWithJavaFacade(qualifiedName, scope); // don't cache
-    }
     Map<String, List<JvmClass>> map = myClassCache.computeIfAbsent(scope, s -> ContainerUtil.createConcurrentWeakValueMap());
     return map.computeIfAbsent(qualifiedName, fqn -> doFindClassesWithJavaFacade(fqn, scope));
   }
