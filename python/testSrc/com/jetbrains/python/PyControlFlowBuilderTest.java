@@ -238,6 +238,16 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-21175
+  public void testImplicitNegativeTypeAssertionAfterIf() {
+    doTest();
+  }
+
+  // PY-21175
+  public void testImplicitNegativeTypeAssertionAfterTwoNestedIf() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
