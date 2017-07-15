@@ -6,23 +6,25 @@
 5(6,9) element: PyTryPart
 6(7,9) element: PyAssignmentStatement
 7(8,9) READ ACCESS: open
-8(9,17) WRITE ACCESS: status
+8(9,18) WRITE ACCESS: status
 9(10) element: PyFinallyPart
 10(11) element: PyIfStatement
 11(12) READ ACCESS: status
-12(13,27) READ ACCESS: None
+12(13,17) READ ACCESS: None
 13(14) element: PyStatementList. Condition: status is not None:true
 14(15) ASSERTTYPE ACCESS: status
 15(16) element: PyPrintStatement
-16(27) READ ACCESS: status
-17(18) element: PyFinallyPart
-18(19) element: PyIfStatement
-19(20) READ ACCESS: status
-20(21,25) READ ACCESS: None
-21(22) element: PyStatementList. Condition: status is not None:true
-22(23) ASSERTTYPE ACCESS: status
-23(24) element: PyPrintStatement
-24(25) READ ACCESS: status
-25(26) element: PyExpressionStatement
-26(27) READ ACCESS: status
-27() element: null
+16(29) READ ACCESS: status
+17(29) ASSERTTYPE ACCESS: status
+18(19) element: PyFinallyPart
+19(20) element: PyIfStatement
+20(21) READ ACCESS: status
+21(22,26) READ ACCESS: None
+22(23) element: PyStatementList. Condition: status is not None:true
+23(24) ASSERTTYPE ACCESS: status
+24(25) element: PyPrintStatement
+25(27) READ ACCESS: status
+26(27) ASSERTTYPE ACCESS: status
+27(28) element: PyExpressionStatement
+28(29) READ ACCESS: status
+29() element: null

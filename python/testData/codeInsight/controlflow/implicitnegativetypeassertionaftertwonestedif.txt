@@ -1,0 +1,21 @@
+0(1) element: null
+1(2) element: PyIfStatement
+2(3) READ ACCESS: isinstance
+3(4) READ ACCESS: x
+4(5,17) READ ACCESS: str
+5(6) element: PyStatementList. Condition: not isinstance(x, str):true
+6(7) ASSERTTYPE ACCESS: x
+7(8) element: PyIfStatement
+8(9) READ ACCESS: x
+9(10,14) READ ACCESS: None
+10(11) element: PyStatementList. Condition: x is None:true
+11(12) ASSERTTYPE ACCESS: x
+12(13) element: PyPrintStatement
+13(15) READ ACCESS: x
+14(15) ASSERTTYPE ACCESS: x
+15(16) element: PyPrintStatement
+16(18) READ ACCESS: x
+17(18) ASSERTTYPE ACCESS: x
+18(19) element: PyPrintStatement
+19(20) READ ACCESS: x
+20() element: null

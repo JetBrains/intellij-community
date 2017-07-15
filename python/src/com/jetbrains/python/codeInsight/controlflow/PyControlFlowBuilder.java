@@ -365,13 +365,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       });
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    final Ref<Boolean> pendingInScopeEdges = Ref.create(false);
-    myBuilder.processPending((pendingScope, instruction) -> {
-      if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
-        pendingInScopeEdges.set(true);
-      }
-      myBuilder.addPendingEdge(pendingScope, instruction);
-    });
     final PyTypeAssertionEvaluator negativeAssertionEvaluator = new PyTypeAssertionEvaluator(false);
     final PyExpression ifCondition = ifPart.getCondition();
     // TODO: Add support for 'elif'
@@ -386,15 +379,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
       elseBranch.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-    } else {
-      if (!pendingInScopeEdges.get()) {
-        myBuilder.prevInstruction = lastBranchingPoint;
-        InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
-        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
-      }
-      else {
-        myBuilder.addPendingEdge(node, lastBranchingPoint);
-      }
+    }
+    else {
+      myBuilder.prevInstruction = lastBranchingPoint;
+      InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
+      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
   }
 
