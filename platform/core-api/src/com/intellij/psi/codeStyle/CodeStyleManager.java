@@ -303,4 +303,18 @@ public abstract class CodeStyleManager  {
     }
     return FormattingMode.REFORMAT;
   }
+
+  /**
+   * Run the given runnable disabling doc comment formatting.
+   * @param file     The file for which doc comment formatting should be temporarily disabled.
+   * @param runnable The runnable to run.
+   */
+  public void runWithDocCommentFormattingDisabled(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    return DocCommentSettings.DEFAULTS;
+  }
 }

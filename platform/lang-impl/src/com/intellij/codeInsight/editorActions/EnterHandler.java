@@ -43,7 +43,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -372,7 +371,8 @@ public class EnterHandler extends BaseEnterHandler {
                   commentContext.docStart = false;
                 }
                 else {
-                  commentContext.docAsterisk = CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED;
+                  commentContext.docAsterisk =
+                    CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myFile).isLeadingAsteriskEnabled();
                   commentContext.docStart = false;
                 }
               }
@@ -550,7 +550,7 @@ public class EnterHandler extends BaseEnterHandler {
       myOffset = CharArrayUtil.shiftForwardUntil(text, myOffset, docCommentLinePrefix) + 1;
       removeTrailingSpaces(myDocument, myOffset);
 
-      if (!CodeStyleSettingsManager.getSettings(getProject()).JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      if (!CodeStyleManager.getInstance(getProject()).getDocCommentSettings(myFile).isLeadingAsteriskEnabled()) {
         LOG.assertTrue(CharArrayUtil.regionMatches(myDocument.getCharsSequence(),myOffset - docCommentLinePrefix.length(), docCommentLinePrefix));
         myDocument.deleteString(myOffset - docCommentLinePrefix.length(), myOffset);
         myOffset--;
@@ -578,20 +578,10 @@ public class EnterHandler extends BaseEnterHandler {
       }
 
       CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(getProject());
-      CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());
-      boolean old = codeStyleSettings.ENABLE_JAVADOC_FORMATTING;
-      codeStyleSettings.ENABLE_JAVADOC_FORMATTING = false;
+      final Ref<PsiComment> commentRef = Ref.create(comment);
+      codeStyleManager.runWithDocCommentFormattingDisabled(myFile, () -> formatComment(commentRef, codeStyleManager));
+      comment = commentRef.get();
 
-      try {
-        RangeMarker commentMarker = myDocument.createRangeMarker(comment.getTextRange().getStartOffset(),
-                                                                 comment.getTextRange().getEndOffset());
-        codeStyleManager.reformatNewlyAddedElement(comment.getNode().getTreeParent(), comment.getNode());
-        comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(commentMarker.getStartOffset()), PsiComment.class);
-        commentMarker.dispose();
-      }
-      finally {
-        codeStyleSettings.ENABLE_JAVADOC_FORMATTING = old;
-      }
       PsiElement next = comment.getNextSibling();
       if (next == null && comment.getParent().getClass() == comment.getClass()) {
         next = comment.getParent().getNextSibling(); // expanding chameleon comment produces comment under comment
@@ -607,6 +597,15 @@ public class EnterHandler extends BaseEnterHandler {
         comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
       }
       return comment;
+    }
+
+    private void formatComment(Ref<PsiComment> commentRef, CodeStyleManager codeStyleManager) {
+      PsiComment comment = commentRef.get();
+      RangeMarker commentMarker = myDocument.createRangeMarker(comment.getTextRange().getStartOffset(),
+                                                               comment.getTextRange().getEndOffset());
+      codeStyleManager.reformatNewlyAddedElement(comment.getNode().getTreeParent(), comment.getNode());
+      commentRef.set(PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(commentMarker.getStartOffset()), PsiComment.class));
+      commentMarker.dispose();
     }
 
     @Nullable

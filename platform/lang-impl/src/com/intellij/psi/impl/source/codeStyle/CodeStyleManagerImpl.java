@@ -905,4 +905,27 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
     return builder.createModel(file, settings);
   }
+
+  @Override
+  public void runWithDocCommentFormattingDisabled(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    DocCommentSettings docSettings = getDocCommentSettings(file);
+    boolean currDocFormattingEnabled = docSettings.isDocFormattingEnabled();
+    docSettings.setDocFormattingEnabled(false);
+    try {
+      runnable.run();
+    }
+    finally {
+      docSettings.setDocFormattingEnabled(currDocFormattingEnabled);
+    }
+  }
+
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    Language language = file.getLanguage();
+    LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (settingsProvider != null) {
+      return settingsProvider.getDocCommentSettings(file);
+    }
+    return DocCommentSettings.DEFAULTS;
+  }
 }

@@ -214,6 +214,33 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return new JavaIndentOptionsEditor();
   }
 
+
+  @Override
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    if (file.isValid()) {
+      return new DocCommentSettings() {
+        private final CodeStyleSettings mySettings = CodeStyleSettingsManager.getSettings(file.getProject());
+
+        @Override
+        public boolean isDocFormattingEnabled() {
+          return mySettings.ENABLE_JAVADOC_FORMATTING;
+        }
+
+        @Override
+        public void setDocFormattingEnabled(boolean formattingEnabled) {
+          mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
+        }
+
+        @Override
+        public boolean isLeadingAsteriskEnabled() {
+          return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
+        }
+      };
+    }
+    return super.getDocCommentSettings(file);
+  }
+
   private static final String GENERAL_CODE_SAMPLE =
     "public class Foo {\n" +
     "  public int[] X = new int[]{1, 3, 5, 7, 9, 11};\n" +
