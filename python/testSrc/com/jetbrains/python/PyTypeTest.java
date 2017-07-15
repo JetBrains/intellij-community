@@ -2001,6 +2001,17 @@ public class PyTypeTest extends PyTestCase {
            "expr = xs\n");
   }
 
+  // PY-21175
+  public void testAnyAddedByConditionalDefinition() {
+    doTest("Union[str, Any]",
+           "def f(x, y):\n" +
+           "    if x:\n" +
+           "        var = y\n" +
+           "    else:\n" +
+           "        var = 'foo'\n" +
+           "    expr = var");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

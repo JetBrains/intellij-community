@@ -504,22 +504,23 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     try {
       final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false);
-      PyType type = null;
-      for (Instruction def : defs) {
-        final ReadWriteInstruction instruction = PyUtil.as(def, ReadWriteInstruction.class);
-        if (instruction != null) {
-          final Ref<PyType> instructionType = instruction.getType(context, anchor);
-          if (instructionType != null) {
-            if (type != null) {
-              type = PyUnionType.union(type, instructionType.get());
-            }
-            else {
-              type = instructionType.get();
-            }
+      // null means empty set of possible types, Ref(null) means Any
+      final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
+        .select(ReadWriteInstruction.class)
+        .map(instr -> instr.getType(context, anchor))
+        // don't use foldLeft(BiFunction) here, as it doesn't support null results
+        .foldLeft(null, (accType, defType) -> {
+          if (defType == null) {
+            return accType;
           }
-        }
-      }
-      return type;
+          else if (accType == null) {
+            return defType;
+          }
+          else {
+            return Ref.create(PyUnionType.union(accType.get(), defType.get()));
+          }
+        });
+      return Ref.deref(combinedType);
     }
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }
