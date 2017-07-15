@@ -167,7 +167,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     else if (initial instanceof PyUnionType) {
       return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
-    else if (PyTypeChecker.match(transformedType, initial, context)) {
+    else if (initial != null && PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return Ref.create(initial);
