@@ -21,15 +21,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.impl.RegExpElementImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,19 +95,10 @@ public class RedundantEscapeInspection extends LocalInspectionTool {
     @NotNull
     private static String replacement(RegExpChar aChar) {
       final int codePoint = aChar.getValue();
-      final PsiElement context = aChar.getContainingFile().getContext();
       final String s = Character.isSupplementaryCodePoint(codePoint)
                        ? Character.toString(Character.highSurrogate(codePoint)) + Character.toString(Character.lowSurrogate(codePoint))
                        : Character.toString((char)codePoint);
-      if (RegExpElementImpl.isLiteralExpression(context)) {
-        return StringUtil.escapeStringCharacters(s);
-      }
-      else if (context instanceof XmlElement) {
-        return XmlStringUtil.escapeString(s);
-      }
-      else {
-        return s;
-      }
+      return RegExpReplacementUtil.escapeForContext(s, aChar);
     }
   }
 }

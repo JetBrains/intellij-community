@@ -142,22 +142,35 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
               break;
             case '^':
               if (text.length() == 1) {
-                text.append(ch.getText());
+                text.append(ch.getUnescapedText());
               }
               else {
                 text.append((char)value);
               }
               break;
             default:
-              text.append(ch.getText());
+              text.append(ch.getUnescapedText());
           }
         }
         else {
-          text.append(ch.getText());
+          final int value = ch.getValue();
+          switch (value) {
+            case ']':
+              text.append("\\]");
+              break;
+            case '-':
+            case '^':
+              if (text.length() != 1) {
+                text.append("\\-");
+                break;
+              }
+            default:
+              text.append(ch.getUnescapedText());
+          }
         }
       }
     }
     text.append("]");
-    return text.toString();
+    return RegExpReplacementUtil.escapeForContext(text.toString(), pattern);
   }
 }

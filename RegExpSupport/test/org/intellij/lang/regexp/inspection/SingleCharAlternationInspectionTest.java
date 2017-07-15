@@ -43,6 +43,11 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
     quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|\\å|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
   }
 
+  public void testEscapes() {
+    quickfixTest("(<warning descr=\"Single character alternation in RegExp\">\\.|<caret>\\[|]|\\(|\\)|\\{|}|\\^|\\?|\\*|\\||\\+|-|\\$</warning>)ab",
+                 "([.\\[\\](){}^?*|+\\-$])ab", "Replace with '[.\\[\\](){}^?*|+\\-$]'");
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool getInspection() {
