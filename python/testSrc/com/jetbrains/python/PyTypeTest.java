@@ -2012,6 +2012,26 @@ public class PyTypeTest extends PyTestCase {
            "    expr = var");
   }
 
+  // PY-21626
+  public void testNestedConflictingIsNoneChecksInitialAny() {
+    doTest("Optional[Any]",
+           "def f(x):\n" +
+           "    if x is None:\n" +
+           "        if x is not None:\n" +
+           "            pass\n" +
+           "    expr = x");
+  }
+
+  // PY-21626
+  public void testNestedConflictingIsNoneChecksInitialKnown() {
+    doTest("Optional[str]",
+           "x = 'foo'\n" +
+           "if x is None:\n" +
+           "    if x is not None:\n" +
+           "        pass\n" +
+           "expr = x");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
