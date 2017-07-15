@@ -20,25 +20,15 @@ class MPSProperties extends ProductProperties {
         productLayout.mainModules = ["community-main"]
         productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES
         productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
-                ["util",
-                 "util-rt",
-                 "annotations",
-                 "extensions",
-                 "platform-main",
+                ["platform-main",
                  "testFramework",
                  "tests_bootstrap",
                  "execution-openapi",
                  "execution-impl",
-                 "bootstrap",
-                 "resources",
 //                 "community-resources",
                  "platform-resources",
-                 "forms_rt",
-                 "forms-compiler",
-                 "resources-en",
                  "platform-resources-en",
                  "colorSchemes",
-                 "javac2",
                  "instrumentation-util",
                  "external-system-impl"]
 
@@ -49,6 +39,7 @@ class MPSProperties extends ProductProperties {
         ]
 
         productLayout.additionalPlatformJars.put("forms_rt.jar", "forms-compiler")
+        productLayout.additionalPlatformJars.putAll("util.jar", ["util", "util-rt"])
         productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
         productLayout.additionalPlatformJars.
                 putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8"])
