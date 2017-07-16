@@ -24,6 +24,8 @@
       <module fileurl="file://$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/android/jps-plugin/android-jps-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-plugin/android-plugin.iml" filepath="$PROJECT_DIR$/android/android-plugin/android-plugin.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/android/rt/android-rt.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/android/android-test-framework/android-test-framework.iml" filepath="$PROJECT_DIR$/android/android-test-framework/android-test-framework.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/android/android-uitests/android-uitests.iml" filepath="$PROJECT_DIR$/android/android-uitests/android-uitests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/annotations.iml" filepath="$PROJECT_DIR$/platform/annotations/annotations.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" filepath="$PROJECT_DIR$/platform/annotations/common/annotations-common.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/annotations/java8/annotations-java8.iml" filepath="$PROJECT_DIR$/platform/annotations/java8/annotations-java8.iml" group="platform" />
@@ -290,6 +292,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/ui-designer-core.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/jps-plugin/ui-designer-jps-plugin.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/android/uitest-framework/uitest-framework.iml" filepath="$PROJECT_DIR$/android/uitest-framework/uitest-framework.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/update-server-mock/update-server-mock.iml" filepath="$PROJECT_DIR$/update-server-mock/update-server-mock.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/updater/updater.iml" filepath="$PROJECT_DIR$/updater/updater.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
