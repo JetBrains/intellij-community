@@ -34,10 +34,10 @@ import java.util.concurrent.TimeUnit
 
 class JUnitServerImpl: JUnitServer {
 
-
   private val SEND_THREAD = "JUnit Server Send Thread"
   private val RECEIVE_THREAD = "JUnit Server Receive Thread"
-  private val poolOfMessages: BlockingQueue<TransportMessage> = LinkedBlockingQueue()
+  private val postingMessages: BlockingQueue<TransportMessage> = LinkedBlockingQueue()
+  private val receivingMessages: BlockingQueue<TransportMessage> = LinkedBlockingQueue()
   private val handlers: ArrayList<ServerHandler> = ArrayList()
   private var failHandler: ((Throwable) -> Unit)? = null
   private val LOG = Logger.getLogger("#com.intellij.testGuiFramework.remote.server.JUnitServerImpl")
@@ -77,9 +77,12 @@ class JUnitServerImpl: JUnitServer {
   }
 
   override fun send(message: TransportMessage) {
-    poolOfMessages.put(message)
+    postingMessages.put(message)
     LOG.info("Add message to send pool: $message ")
   }
+
+  override fun receive(): TransportMessage =
+    receivingMessages.take()
 
   override fun sendAndWaitAnswer(message: TransportMessage)
     = sendAndWaitAnswerBase(message)
@@ -154,7 +157,7 @@ class JUnitServerImpl: JUnitServer {
       LOG.info("Server Send Thread started")
       try {
         while (connection.isConnected) {
-          val message = poolOfMessages.take()
+          val message = postingMessages.take()
           LOG.info("Sending message: $message ")
           objectOutputStream.writeObject(message)
         }
@@ -182,6 +185,7 @@ class JUnitServerImpl: JUnitServer {
           LOG.info("Receiving message: $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
+          receivingMessages.put(message)
           val copied: Array<ServerHandler> = handlers.toTypedArray().copyOf()
           copied
             .filter { it.acceptObject(message) }

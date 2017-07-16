@@ -25,6 +25,8 @@ interface JUnitServer {
 
   fun send(message: TransportMessage)
 
+  fun receive(): TransportMessage
+
   fun sendAndWaitAnswer(message: TransportMessage)
 
   fun sendAndWaitAnswer(message: TransportMessage, timeout: Long, timeUnit: TimeUnit)
