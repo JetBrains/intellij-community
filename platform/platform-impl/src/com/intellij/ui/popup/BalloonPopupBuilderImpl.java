@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,12 @@ import java.util.List;
 import java.util.Map;
 
 public class BalloonPopupBuilderImpl implements BalloonBuilder {
+  /**
+   * This key is supposed to be used as client property of content component (with value Boolean.TRUE) to suppress shadow painting
+   * when builder is being created indirectly and client cannot call its methods
+   */
+  @NonNls public static final String FORCED_NO_SHADOW = "FORCED_NO_SHADOW";
+
   @Nullable private final Map<Disposable, List<Balloon>> myStorage;
   @Nullable private Disposable myAnchor;
 
@@ -78,6 +85,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
     myContent = content;
+    if (Boolean.TRUE.equals(myContent.getClientProperty(FORCED_NO_SHADOW))) myShadow = false;
   }
 
   @NotNull
