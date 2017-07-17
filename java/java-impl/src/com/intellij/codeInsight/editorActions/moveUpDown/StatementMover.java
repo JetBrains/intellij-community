@@ -162,11 +162,11 @@ class StatementMover extends LineMover {
           boolean found = false;
           if ((element instanceof PsiStatement || element instanceof PsiComment) && statementCanBePlacedAlong(element)) {
             found = true;
-            if (!(element.getParent() instanceof PsiCodeBlock)) {
+            if (!(statementsCanBeMovedWithin(element.getParent()))) {
               elementToSurround = element;
             }
           }
-          else if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACE) && element.getParent() instanceof PsiCodeBlock) {
+          else if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACE) && statementsCanBeMovedWithin(element.getParent())) {
             // before code block closing brace
             found = true;
           }
@@ -188,7 +188,7 @@ class StatementMover extends LineMover {
       }
 
       destLine += down ? 1 : -1;
-      if (destLine == 0 || destLine >= editor.getDocument().getLineCount()) {
+      if (destLine < 0 || destLine >= editor.getDocument().getLineCount()) {
         return false;
       }
     }
@@ -203,7 +203,7 @@ class StatementMover extends LineMover {
     if (element instanceof PsiBlockStatement) return false;
     PsiElement parent = element.getParent();
     if (parent instanceof JspClassLevelDeclarationStatement) return false;
-    if (parent instanceof PsiCodeBlock) return true;
+    if (statementsCanBeMovedWithin(parent)) return true;
     if (parent instanceof PsiIfStatement &&
         (element == ((PsiIfStatement)parent).getThenBranch() || element == ((PsiIfStatement)parent).getElseBranch())) {
       return true;
@@ -216,6 +216,10 @@ class StatementMover extends LineMover {
     }
     // know nothing about that
     return false;
+  }
+
+  private static boolean statementsCanBeMovedWithin(PsiElement parent) {
+    return parent instanceof PsiCodeBlock || parent instanceof PsiJavaModule;
   }
 
   private static boolean checkMovingInsideOutside(PsiFile file, Editor editor, @NotNull MoveInfo info, boolean down) {
