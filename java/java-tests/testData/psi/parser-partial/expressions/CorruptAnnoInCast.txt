@@ -1,0 +1,8 @@
+PsiJavaFile:CorruptAnnoInCast.java
+  PsiParenthesizedExpression:(
+    PsiJavaToken:LPARENTH('(')
+    PsiErrorElement:Expression expected
+      <empty list>
+  PsiErrorElement:Unparsed tokens
+    PsiJavaToken:AT('@')
+    PsiJavaToken:AND('&')
