@@ -397,6 +397,35 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1) } }");
   }
 
+  public void testVarargWithTwoMandatoryArguments() throws Exception {
+    configureJava("class C { int vararg(int a, int b, int... args){ return 0; } void m() { varar<caret> } }");
+    complete();
+    checkResult("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<caret>, ) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>, <hint text=\"b:\"/><hint text=\", args:\"/>) } }");
+    assertCaretAfterInlay();
+    type("1");
+    next();
+    checkResult("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(1, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/><hint text=\", args:\"/>) } }");
+    assertCaretAfterInlay();
+    type("2");
+    next();
+    checkResult("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(1, 2, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <hint text=\"args:\"/>) } }");
+    assertCaretAfterInlay();
+    next();
+    checkResult("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(1, 2)<caret> } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2<hint text=\", args:\"/>) } }");
+    prev();
+    checkResult("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(1, 2, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <hint text=\"args:\"/>) } }");
+    assertCaretAfterInlay();
+    prev();
+    checkResult("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(1, 2<caret>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2<hint text=\", args:\"/>) } }");
+    assertCaretBeforeInlay();
+  }
+
   public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() throws Exception {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");

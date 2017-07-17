@@ -374,8 +374,11 @@ public class ParameterInfoController implements Disposable {
     if (argsList == null && !areParametersHintsEnabledOnCompletion()) return;
 
     offset = adjustOffsetToInlay(offset);
-
-    myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(offset).leanForward(true));
+    VisualPosition visualPosition = myEditor.offsetToVisualPosition(offset);
+    if (myEditor.getInlayModel().hasInlineElementAt(visualPosition)) {
+      visualPosition = new VisualPosition(visualPosition.line, visualPosition.column + 1);
+    }
+    myEditor.getCaretModel().moveToVisualPosition(visualPosition);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     myEditor.getSelectionModel().removeSelection();
     if (argsList != null) {
