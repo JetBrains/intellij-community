@@ -409,9 +409,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
-    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
     try {
-      myAccessValidator.startedProcessingActivityForIndex(indexKey);
+      myAccessValidator.startedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -424,7 +424,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       }
       throw e;
     } finally {
-      myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
+      myAccessValidator.stoppedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
     }
     return true;
   }
