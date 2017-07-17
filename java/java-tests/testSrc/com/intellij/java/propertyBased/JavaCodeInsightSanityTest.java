@@ -17,18 +17,18 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.DataStructure;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
-import slowCheck.PropertyChecker;
+import slowCheck.*;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -58,7 +58,8 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
 
   public void testReparse() {
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file -> 
-      Generator.anyOf(DeleteRange.psiRangeDeletions(file), 
+      Generator.anyOf(DeleteRange.psiRangeDeletions(file),
+                      Generator.constant(new CheckPsiTextConsistency(file)),
                       InsertString.asciiInsertions(file));
     PropertyChecker.forAll(actionsOnJavaFiles(fileActions), FileWithActions::checkIncrementalReparse);
   }
@@ -67,19 +68,26 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
   private static Generator<FileWithActions> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                   FileFilter fileFilter,
                                                                   Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
-    FileFilter childFilter = child -> {
+    FileFilter interestingIdeaFiles = child -> {
       String name = child.getName();
       if (name.startsWith(".")) return false;
 
-      return child.isDirectory() ? shouldGoInsiderDir(name)
-                                 : fileFilter.accept(child) && child.length() < 500_000;
+      if (child.isDirectory()) {
+        return shouldGoInsiderDir(name);
+      }
+      return !FileTypeManager.getInstance().getFileTypeByFileName(name).isBinary() &&
+             fileFilter.accept(child) &&
+             child.length() < 500_000;
     };
     Generator<File> randomFiles =
-      Generator.from(new FileGenerator(new File(rootPath), childFilter)).suchThat(Objects::nonNull).noShrink();
+      Generator.from(new FileGenerator(new File(rootPath), interestingIdeaFiles)).suchThat(Objects::nonNull).noShrink();
     return randomFiles.flatMap(ioFile -> {
       PsiFile file = copyFileToProject(ioFile, fixture, rootPath);
+      if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
+        return Generator.constant(null);
+      }
       return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
-    });
+    }).suchThat(Objects::nonNull);
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {

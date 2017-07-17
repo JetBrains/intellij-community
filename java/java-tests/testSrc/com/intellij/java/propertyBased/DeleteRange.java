@@ -31,7 +31,7 @@ class DeleteRange extends ActionOnRange {
 
   private DeleteRange(PsiFile file, int startOffset, int endOffset) {
     super(file.getViewProvider().getDocument(), startOffset, endOffset);
-    assert myMarker.getDocument().getTextLength() == file.getTextLength();
+    assert myMarker.getDocument().getTextLength() == file.getTextLength() : file + " " + myMarker.getDocument();
     myFile = file;
   }
 
@@ -45,6 +45,9 @@ class DeleteRange extends ActionOnRange {
       if (start == null || end == null) return null;
 
       PsiElement commonParent = PsiTreeUtil.findCommonParent(start, end);
+      if (commonParent == null || commonParent.getTextRange() == null) { // directory; for multi-root files
+        return null;
+      }
       return new DeleteRange(psiFile,
                              commonParent.getTextRange().getStartOffset(),
                              commonParent.getTextRange().getEndOffset());
