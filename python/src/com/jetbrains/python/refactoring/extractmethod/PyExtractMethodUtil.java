@@ -40,6 +40,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -622,9 +623,9 @@ public class PyExtractMethodUtil {
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
-    final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
+    final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<Object>() {
       @NotNull
-      public String createMethodSignature(final String methodName, @NotNull final AbstractVariableData[] variableDatas) {
+      public String createMethodSignature(@NotNull ExtractMethodSettings<Object> settings) {
         final StringBuilder builder = new StringBuilder();
         if (isClassMethod) {
           builder.append("cls");
@@ -632,7 +633,7 @@ public class PyExtractMethodUtil {
         else if (isMethod && !isStaticMethod) {
           builder.append("self");
         }
-        for (AbstractVariableData variableData : variableDatas) {
+        for (AbstractVariableData variableData : settings.getAbstractVariableData()) {
           if (variableData.passAsParameter) {
             if (builder.length() != 0) {
               builder.append(", ");
@@ -641,15 +642,16 @@ public class PyExtractMethodUtil {
           }
         }
         builder.insert(0, "(");
-        builder.insert(0, methodName);
+        builder.insert(0, settings.getMethodName());
         builder.insert(0, "def ");
         builder.append(")");
         return builder.toString();
       }
     };
 
-    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator,
-                                                                               PythonFileType.INSTANCE) {
+    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<Object>(project, "method_name", fragment,
+                                                                                          ArrayUtil.EMPTY_OBJECT_ARRAY, validator,
+                                                                                          decorator, PythonFileType.INSTANCE) {
       @Override
       protected String getHelpId() {
         return "python.reference.extractMethod";
