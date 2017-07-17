@@ -87,6 +87,12 @@ public class TreeUtilTest {
     Assert.assertEquals(count - 1, path.getLastPathComponent());
     Object[] array = TreeUtil.convertTreePathToArray(path);
     Assert.assertEquals(count, array.length);
+    try {
+      Assert.assertArrayEquals(array, path.getPath());
+    }
+    catch (StackOverflowError error) {
+      System.out.println("StackOverflow - getPath: " + count);
+    }
   }
 
   @Test
@@ -145,5 +151,11 @@ public class TreeUtilTest {
     TreePath path = TreeUtil.convertArrayToTreePath(array);
     Assert.assertEquals(count, path.getPathCount());
     Assert.assertEquals(count - 1, path.getLastPathComponent());
+    try {
+      Assert.assertEquals(path, new TreePath(array));
+    }
+    catch (StackOverflowError error) {
+      System.out.println("StackOverflow - new TreePath: " + count);
+    }
   }
 }
