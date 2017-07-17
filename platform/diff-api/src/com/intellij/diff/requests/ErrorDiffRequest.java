@@ -16,6 +16,7 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,6 @@ public class ErrorDiffRequest extends MessageDiffRequest {
   @NotNull
   private static String getErrorMessage(@NotNull Throwable e) {
     String message = e.getMessage();
-    return StringUtil.isEmptyOrSpaces(message) ? "Error: can't show diff" : message;
+    return StringUtil.isEmptyOrSpaces(message) ? DiffBundle.message("error.cant.show.diff.message") : message;
   }
 }
