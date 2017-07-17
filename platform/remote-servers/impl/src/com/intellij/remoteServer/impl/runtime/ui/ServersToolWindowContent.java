@@ -24,7 +24,6 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionListener;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
@@ -66,7 +65,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Tree myTree;
   private final CardLayout myPropertiesPanelLayout;
   private final JPanel myPropertiesPanel;
-  private final JBPanelWithHtmlEmptyText myMessagePanel;
+  private final JPanelWithHtmlEmptyText myMessagePanel;
   private final Map<String, JComponent> myLogComponents = new HashMap<>();
 
   private final DefaultTreeModel myTreeModel;
@@ -97,7 +96,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
     myPropertiesPanel = new JPanel(myPropertiesPanelLayout);
-    myMessagePanel = new JBPanelWithHtmlEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
+    myMessagePanel = new JPanelWithHtmlEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
     myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel);
     splitter.setSecondComponent(myPropertiesPanel);
     getMainPanel().add(splitter, BorderLayout.CENTER);
@@ -373,10 +372,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
            && node.getDeployment().getName().equals(deploymentName);
   }
 
-  private static class JBPanelWithHtmlEmptyText extends JBPanel<JBPanelWithHtmlEmptyText> {
+  private static class JPanelWithHtmlEmptyText extends JPanel {
     private final JLabel myLabel = new JLabel();
 
-    public JBPanelWithHtmlEmptyText withEmptyText(@NotNull String text) {
+    public JPanelWithHtmlEmptyText withEmptyText(@NotNull String text) {
       setEmptyText(text);
       return this;
     }
