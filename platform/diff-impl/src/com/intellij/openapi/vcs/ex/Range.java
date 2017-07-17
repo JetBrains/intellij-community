@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class Range {
-  private static final Logger LOG = Logger.getInstance(Range.class);
   public static final byte EQUAL = 0;
   public static final byte MODIFIED = 1;
   public static final byte INSERTED = 2;
@@ -41,7 +38,6 @@ public class Range {
   @Nullable private final List<InnerRange> myInnerRanges;
 
   @Nullable private RangeHighlighter myRangeHighlighter;
-  private boolean myValid = true;
 
   public Range(@NotNull Range range) {
     this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2());
@@ -137,14 +133,6 @@ public class Range {
     return myRangeHighlighter;
   }
 
-  public boolean isValid() {
-    return myValid;
-  }
-
-  public void invalidate() {
-    myValid = false;
-  }
-
   public static class InnerRange {
     private final int myLine1;
     private final int myLine2;
@@ -193,13 +181,6 @@ public class Range {
     public String toString() {
       return String.format("%s, %s, %s", myLine1, myLine2, getTypeName(myType));
     }
-  }
-
-  /*
-   * Check, if caret at <line> is corresponds to the current range
-   */
-  public boolean isSelectedByLine(int line) {
-    return DiffUtil.isSelectedByLine(line, myLine1, myLine2);
   }
 
   @NotNull

@@ -156,7 +156,6 @@ abstract class LineStatusTrackerBase {
   private fun destroyRanges() {
     removeAnathema()
     for (range in myRanges) {
-      range.invalidate()
       disposeHighlighter(range)
     }
     for (range in toBeDestroyedRanges) {
@@ -492,9 +491,6 @@ abstract class LineStatusTrackerBase {
         newRanges.addAll(rangesAfter)
         myRanges = newRanges
 
-        for (range in changedRanges) {
-          range.invalidate()
-        }
         toBeDestroyedRanges.addAll(changedRanges)
         toBeInstalledRanges.addAll(newChangedRanges)
 
@@ -702,11 +698,6 @@ abstract class LineStatusTrackerBase {
 
       var shift = 0
       for (range in ranges) {
-        if (!range.isValid) {
-          LOG.warn("Rollback of invalid range")
-          break
-        }
-
         if (first == null) {
           first = range
         }
@@ -774,9 +765,6 @@ abstract class LineStatusTrackerBase {
   fun getCurrentTextRange(range: Range): TextRange {
     synchronized(LOCK) {
       assert(isValid())
-      if (!range.isValid) {
-        LOG.warn("Current TextRange of invalid range")
-      }
       return DiffUtil.getLinesRange(document, range.line1, range.line2)
     }
   }
@@ -784,9 +772,6 @@ abstract class LineStatusTrackerBase {
   fun getVcsTextRange(range: Range): TextRange {
     synchronized(LOCK) {
       assert(isValid())
-      if (!range.isValid) {
-        LOG.warn("Vcs TextRange of invalid range")
-      }
       return DiffUtil.getLinesRange(vcsDocument, range.vcsLine1, range.vcsLine2)
     }
   }
@@ -847,5 +832,7 @@ abstract class LineStatusTrackerBase {
 
   companion object {
     protected val LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker")
+
+    private fun Range.isSelectedByLine(line: Int): Boolean = DiffUtil.isSelectedByLine(line, line1, line2)
   }
 }
