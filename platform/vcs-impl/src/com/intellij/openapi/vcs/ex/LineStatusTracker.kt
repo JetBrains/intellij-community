@@ -13,184 +13,135 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotificationPanel;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.DiffUtil.getLineCount
+import com.intellij.ide.GeneralSettings
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.EditorNotificationPanel
+import org.jetbrains.annotations.CalledInAwt
+import javax.swing.JPanel
 
-import javax.swing.*;
-import java.util.List;
-
-import static com.intellij.diff.util.DiffUtil.getLineCount;
-
-/**
- * @author irengrig
- *         author: lesya
- */
-@SuppressWarnings({"MethodMayBeStatic", "FieldAccessedSynchronizedAndUnsynchronized"})
-public class LineStatusTracker extends LineStatusTrackerBase {
-  public enum Mode {DEFAULT, SMART, SILENT}
-
-  private static final Key<JPanel> PANEL_KEY = new Key<>("LineStatusTracker.CanNotCalculateDiffPanel");
-
-  @NotNull private final VirtualFile myVirtualFile;
-
-  @NotNull private final FileEditorManager myFileEditorManager;
-  @NotNull private final VcsDirtyScopeManager myVcsDirtyScopeManager;
-
-  @NotNull private Mode myMode;
-
-  private LineStatusTracker(@NotNull final Project project,
-                            @NotNull final Document document,
-                            @NotNull final VirtualFile virtualFile,
-                            @NotNull final Mode mode) {
-    super(project, document);
-    myVirtualFile = virtualFile;
-    myMode = mode;
-
-    myFileEditorManager = FileEditorManager.getInstance(project);
-    myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+class LineStatusTracker private constructor(project: Project,
+                                            document: Document,
+                                            override val virtualFile: VirtualFile,
+                                            mode: Mode
+) : LineStatusTrackerBase(project, document) {
+  enum class Mode {
+    DEFAULT, SMART, SILENT
   }
 
-  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile,
-                                           @NotNull Document document,
-                                           @NotNull Project project,
-                                           @NotNull Mode mode) {
-    return new LineStatusTracker(project, document, virtualFile, mode);
-  }
+  private val fileEditorManager: FileEditorManager = FileEditorManager.getInstance(project)
+  private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
-  @NotNull
-  @Override
-  public Project getProject() {
-    //noinspection ConstantConditions
-    return super.getProject();
-  }
+  var mode: Mode = mode
+    set(value) {
+      if (value == mode) return
+      field = value
+      reinstallRanges()
+    }
 
-  @NotNull
-  public VirtualFile getVirtualFile() {
-    return myVirtualFile;
-  }
-
-  @NotNull
   @CalledInAwt
-  public Mode getMode() {
-    return myMode;
+  fun isAvailableAt(editor: Editor): Boolean {
+    return mode != Mode.SILENT && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
   @CalledInAwt
-  public boolean isAvailableAt(@NotNull Editor editor) {
-    return myMode != Mode.SILENT && editor.getSettings().isLineMarkerAreaShown() && !DiffUtil.isDiffEditor(editor);
-  }
+  override fun isDetectWhitespaceChangedLines(): Boolean = mode == Mode.SMART
 
   @CalledInAwt
-  public void setMode(@NotNull Mode mode) {
-    if (myMode == mode) return;
-    myMode = mode;
-
-    reinstallRanges();
-  }
-
-  @Override
-  @CalledInAwt
-  protected boolean isDetectWhitespaceChangedLines() {
-    return myMode == Mode.SMART;
-  }
-
-  @Override
-  @CalledInAwt
-  protected void installNotification(@NotNull String text) {
-    final FileEditor[] editors = myFileEditorManager.getAllEditors(myVirtualFile);
-    for (FileEditor editor : editors) {
-      JPanel panel = editor.getUserData(PANEL_KEY);
+  override fun installNotification(text: String) {
+    val editors = fileEditorManager.getAllEditors(virtualFile)
+    for (editor in editors) {
+      val panel = editor.getUserData(PANEL_KEY)
       if (panel == null) {
-        final JPanel newPanel = new EditorNotificationPanel().text(text);
-        editor.putUserData(PANEL_KEY, newPanel);
-        myFileEditorManager.addTopComponent(editor, newPanel);
+        val newPanel = EditorNotificationPanel().text(text)
+        editor.putUserData(PANEL_KEY, newPanel)
+        fileEditorManager.addTopComponent(editor, newPanel)
       }
     }
   }
 
-  @Override
   @CalledInAwt
-  protected void destroyNotification() {
-    final FileEditor[] editors = myFileEditorManager.getEditors(myVirtualFile);
-    for (FileEditor editor : editors) {
-      final JPanel panel = editor.getUserData(PANEL_KEY);
+  override fun destroyNotification() {
+    val editors = fileEditorManager.getEditors(virtualFile)
+    for (editor in editors) {
+      val panel = editor.getUserData(PANEL_KEY)
       if (panel != null) {
-        myFileEditorManager.removeTopComponent(editor, panel);
-        editor.putUserData(PANEL_KEY, null);
+        fileEditorManager.removeTopComponent(editor, panel)
+        editor.putUserData(PANEL_KEY, null)
       }
     }
   }
 
-  @Nullable
-  @Override
   @CalledInAwt
-  protected RangeHighlighter createHighlighter(@NotNull Range range) {
-    if (myMode == Mode.SILENT) return null;
+  override fun createHighlighter(range: Range): RangeHighlighter? {
+    if (mode == Mode.SILENT) return null
 
-    int first =
-      range.getLine1() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine1());
-    int second =
-      range.getLine2() >= getLineCount(myDocument) ? myDocument.getTextLength() : myDocument.getLineStartOffset(range.getLine2());
+    val first = if (range.line1 >= getLineCount(document)) document.textLength else document.getLineStartOffset(range.line1)
+    val second = if (range.line2 >= getLineCount(document)) document.textLength else document.getLineStartOffset(range.line2)
 
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(myDocument, myProject, true);
+    val markupModel = DocumentMarkupModel.forDocument(document, project, true)
 
-    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
-    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(range, (editor) -> {
-      return new LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range);
-    }));
+    val highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, TextRange(first, second), markupModel)
+    highlighter.lineMarkerRenderer = LineStatusMarkerRenderer.createRenderer(range) { editor ->
+      LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range)
+    }
 
-    highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+    highlighter.editorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
-    return highlighter;
+    return highlighter
   }
 
-  @Override
   @CalledInAwt
-  protected void fireFileUnchanged() {
-    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+  override fun fireFileUnchanged() {
+    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing.
-      TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
-        FileDocumentManager.getInstance().saveDocument(myDocument);
-        List<Range> ranges = getRanges();
+      TransactionGuard.getInstance().submitTransactionLater(project!!, Runnable {
+        FileDocumentManager.getInstance().saveDocument(document)
+        val ranges = getRanges()
         if (ranges == null || ranges.isEmpty()) {
           // file was modified, and now it's not -> dirty local change
-          myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+          vcsDirtyScopeManager.fileDirty(virtualFile);
         }
-      });
+      })
     }
   }
 
-  @Override
-  protected void doRollbackRange(@NotNull Range range) {
-    super.doRollbackRange(range);
-    markLinesUnchanged(range.getLine1(), range.getLine1() + range.getVcsLine2() - range.getVcsLine1());
+  override fun doRollbackRange(range: Range) {
+    super.doRollbackRange(range)
+    markLinesUnchanged(range.line1, range.line1 + range.vcsLine2 - range.vcsLine1)
   }
 
-  private void markLinesUnchanged(int startLine, int endLine) {
-    if (myDocument.getTextLength() == 0) return; // empty document has no lines
-    if (startLine == endLine) return;
-    ((DocumentImpl)myDocument).clearLineModificationFlags(startLine, endLine);
+  private fun markLinesUnchanged(startLine: Int, endLine: Int) {
+    if (document.textLength == 0) return  // empty document has no lines
+    if (startLine == endLine) return
+    (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
+  }
+
+  companion object {
+    private val PANEL_KEY = Key<JPanel>("LineStatusTracker.CanNotCalculateDiffPanel")
+
+    @JvmStatic
+    fun createOn(virtualFile: VirtualFile,
+                 document: Document,
+                 project: Project,
+                 mode: Mode): LineStatusTracker {
+      return LineStatusTracker(project, document, virtualFile, mode)
+    }
   }
 }

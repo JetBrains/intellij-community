@@ -13,359 +13,322 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.undo.UndoConstants;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.*;
+import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.DiffUtil.getLineCount
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationAdapter
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.undo.UndoConstants
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.diff.FilesTooBigForDiffException
+import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.CalledWithWriteLock
+import org.jetbrains.annotations.TestOnly
+import java.util.*
 
-import java.util.*;
-
-import static com.intellij.diff.util.DiffUtil.getLineCount;
-import static com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER;
-
-@SuppressWarnings({"MethodMayBeStatic", "FieldAccessedSynchronizedAndUnsynchronized"})
-public abstract class LineStatusTrackerBase {
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
-
+abstract class LineStatusTrackerBase {
   // all variables should be modified in EDT and under LOCK
   // read access allowed from EDT or while holding LOCK
-  private final Object LOCK = new Object();
+  private val LOCK = Any()
 
-  @Nullable protected final Project myProject;
-  @NotNull protected final Document myDocument;
-  @NotNull protected final Document myVcsDocument;
+  val project: Project?
 
-  @NotNull protected final Application myApplication;
+  val document: Document
+  val vcsDocument: Document
 
-  @NotNull protected final MyDocumentListener myDocumentListener;
-  @NotNull protected final ApplicationAdapter myApplicationListener;
+  private val application: Application = ApplicationManager.getApplication()
 
-  private boolean myInitialized;
-  private boolean myDuringRollback;
-  private boolean myBulkUpdate;
-  private boolean myAnathemaThrown;
-  private boolean myReleased;
+  private val documentListener: DocumentListener
+  private val applicationListener: ApplicationAdapter
 
-  @NotNull private List<Range> myRanges = Collections.emptyList();
+  private var isInitialized: Boolean = false
+  private var isDuringRollback: Boolean = false
+  private var isBulkUpdate: Boolean = false
+  private var isAnathemaThrown: Boolean = false
+  private var isReleased: Boolean = false
+
+  private var myRanges: List<Range> = emptyList()
 
   // operation delayed till the end of write action
-  @NotNull private final Set<Range> myToBeDestroyedRanges = ContainerUtil.newIdentityTroveSet();
-  @NotNull private final Set<Range> myToBeInstalledRanges = ContainerUtil.newIdentityTroveSet();
+  private val toBeDestroyedRanges = ContainerUtil.newIdentityTroveSet<Range>()
+  private val toBeInstalledRanges = ContainerUtil.newIdentityTroveSet<Range>()
 
-  @Nullable private DirtyRange myDirtyRange;
+  private var dirtyRange: DirtyRange? = null
 
-  public LineStatusTrackerBase(@Nullable final Project project,
-                               @NotNull final Document document) {
-    myDocument = document;
-    myProject = project;
+  constructor(project: Project?, document: Document) {
+    this.project = project
+    this.document = document
 
-    myApplication = ApplicationManager.getApplication();
+    documentListener = MyDocumentListener()
+    this.document.addDocumentListener(documentListener)
 
-    myDocumentListener = new MyDocumentListener();
-    myDocument.addDocumentListener(myDocumentListener);
+    applicationListener = MyApplicationListener()
+    application.addApplicationListener(applicationListener)
 
-    myApplicationListener = new MyApplicationListener();
-    myApplication.addApplicationListener(myApplicationListener);
-
-    myVcsDocument = new DocumentImpl("", true);
-    myVcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+    vcsDocument = DocumentImpl("", true)
+    vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, java.lang.Boolean.TRUE)
   }
 
   //
   // Abstract
   //
 
-  @Nullable
   @CalledInAwt
-  protected abstract RangeHighlighter createHighlighter(@NotNull Range range);
+  protected abstract fun createHighlighter(range: Range): RangeHighlighter?
 
   @CalledInAwt
-  protected boolean isDetectWhitespaceChangedLines() {
-    return false;
+  protected open fun isDetectWhitespaceChangedLines(): Boolean = false
+
+  @CalledInAwt
+  protected open fun installNotification(text: String) {
   }
 
   @CalledInAwt
-  protected void installNotification(@NotNull String text) {
+  protected open fun destroyNotification() {
   }
 
   @CalledInAwt
-  protected void destroyNotification() {
+  protected open fun fireFileUnchanged() {
   }
 
-  @CalledInAwt
-  protected void fireFileUnchanged() {
-  }
-
-  @Nullable
-  protected VirtualFile getVirtualFile() {
-    return null;
-  }
+  open val virtualFile: VirtualFile? = null
 
   //
   // Impl
   //
 
   @CalledInAwt
-  public void setBaseRevision(@NotNull final CharSequence vcsContent) {
-    myApplication.assertIsDispatchThread();
-    if (myReleased) return;
+  fun setBaseRevision(vcsContent: CharSequence) {
+    application.assertIsDispatchThread()
+    if (isReleased) return
 
-    synchronized (LOCK) {
+    synchronized(LOCK) {
       try {
-        myVcsDocument.setReadOnly(false);
-        myVcsDocument.setText(vcsContent);
-        myVcsDocument.setReadOnly(true);
+        vcsDocument.setReadOnly(false)
+        vcsDocument.setText(vcsContent)
+        vcsDocument.setReadOnly(true)
       }
       finally {
-        myInitialized = true;
+        isInitialized = true
       }
 
-      reinstallRanges();
+      reinstallRanges()
     }
   }
 
   @CalledInAwt
-  protected void reinstallRanges() {
-    if (!myInitialized || myReleased || myBulkUpdate) return;
+  protected fun reinstallRanges() {
+    if (!isInitialized || isReleased || isBulkUpdate) return
 
-    synchronized (LOCK) {
-      destroyRanges();
+    synchronized(LOCK) {
+      destroyRanges()
       try {
-        myRanges = RangesBuilder.createRanges(myDocument, myVcsDocument, isDetectWhitespaceChangedLines());
-        for (final Range range : myRanges) {
-          installHighlighter(range);
+        myRanges = RangesBuilder.createRanges(document, vcsDocument, isDetectWhitespaceChangedLines())
+        for (range in myRanges) {
+          installHighlighter(range)
         }
 
         if (myRanges.isEmpty()) {
-          fireFileUnchanged();
+          fireFileUnchanged()
         }
       }
-      catch (FilesTooBigForDiffException e) {
-        installAnathema();
+      catch (e: FilesTooBigForDiffException) {
+        installAnathema()
       }
     }
   }
 
   @CalledInAwt
-  private void destroyRanges() {
-    removeAnathema();
-    for (Range range : myRanges) {
-      range.invalidate();
-      disposeHighlighter(range);
+  private fun destroyRanges() {
+    removeAnathema()
+    for (range in myRanges) {
+      range.invalidate()
+      disposeHighlighter(range)
     }
-    for (Range range : myToBeDestroyedRanges) {
-      disposeHighlighter(range);
+    for (range in toBeDestroyedRanges) {
+      disposeHighlighter(range)
     }
-    myRanges = Collections.emptyList();
-    myToBeDestroyedRanges.clear();
-    myToBeInstalledRanges.clear();
-    myDirtyRange = null;
+    myRanges = emptyList()
+    toBeDestroyedRanges.clear()
+    toBeInstalledRanges.clear()
+    dirtyRange = null
   }
 
   @CalledInAwt
-  private void installAnathema() {
-    myAnathemaThrown = true;
-    installNotification("Can not highlight changed lines. File is too big and there are too many changes.");
+  private fun installAnathema() {
+    isAnathemaThrown = true
+    installNotification("Can not highlight changed lines. File is too big and there are too many changes.")
   }
 
   @CalledInAwt
-  private void removeAnathema() {
-    if (!myAnathemaThrown) return;
-    myAnathemaThrown = false;
-    destroyNotification();
+  private fun removeAnathema() {
+    if (!isAnathemaThrown) return
+    isAnathemaThrown = false
+    destroyNotification()
   }
 
   @CalledInAwt
-  private void installHighlighter(@NotNull Range range) {
-    myApplication.assertIsDispatchThread();
-    if (range.getHighlighter() != null) {
-      LOG.error("Multiple highlighters registered for the same Range");
-      return;
+  private fun installHighlighter(range: Range) {
+    application.assertIsDispatchThread()
+    if (range.highlighter != null) {
+      LOG.error("Multiple highlighters registered for the same Range")
+      return
     }
 
     try {
-      RangeHighlighter highlighter = createHighlighter(range);
-      range.setHighlighter(highlighter);
+      val highlighter = createHighlighter(range)
+      range.highlighter = highlighter
     }
-    catch (Exception e) {
-      LOG.error(e);
+    catch (e: Exception) {
+      LOG.error(e)
     }
   }
 
   @CalledInAwt
-  private void disposeHighlighter(@NotNull Range range) {
+  private fun disposeHighlighter(range: Range) {
     try {
-      RangeHighlighter highlighter = range.getHighlighter();
+      val highlighter = range.highlighter
       if (highlighter != null) {
-        range.setHighlighter(null);
-        highlighter.dispose();
+        range.highlighter = null
+        highlighter.dispose()
       }
     }
-    catch (Exception e) {
-      LOG.error(e);
+    catch (e: Exception) {
+      LOG.error(e)
     }
   }
 
-  private boolean tryValidate() {
-    if (myApplication.isDispatchThread()) updateRanges();
-    return isValid();
+  private fun tryValidate(): Boolean {
+    if (application.isDispatchThread) updateRanges()
+    return isValid()
   }
 
-  public boolean isOperational() {
-    synchronized (LOCK) {
-      return myInitialized && !myReleased;
-    }
+  fun isOperational(): Boolean = synchronized(LOCK) {
+    return isInitialized && !isReleased
   }
 
-  public boolean isValid() {
-    synchronized (LOCK) {
-      return !isSuppressed() && myDirtyRange == null;
-    }
+  fun isValid(): Boolean = synchronized(LOCK) {
+    return !isSuppressed() && dirtyRange == null
   }
 
-  private boolean isSuppressed() {
-    return !myInitialized || myReleased || myAnathemaThrown || myBulkUpdate || myDuringRollback;
+  private fun isSuppressed(): Boolean {
+    return !isInitialized || isReleased || isAnathemaThrown || isBulkUpdate || isDuringRollback
   }
 
-  public void release() {
-    Runnable runnable = () -> {
-      if (myReleased) return;
-      LOG.assertTrue(!myDuringRollback);
+  fun release() {
+    val runnable = Runnable {
+      if (isReleased) return@Runnable
+      LOG.assertTrue(!isDuringRollback)
 
-      synchronized (LOCK) {
-        myReleased = true;
-        myDocument.removeDocumentListener(myDocumentListener);
-        myApplication.removeApplicationListener(myApplicationListener);
+      synchronized(LOCK) {
+        isReleased = true
+        document.removeDocumentListener(documentListener)
+        application.removeApplicationListener(applicationListener)
 
-        destroyRanges();
+        destroyRanges()
       }
-    };
+    }
 
-    if (myApplication.isDispatchThread() && !myDuringRollback) {
-      runnable.run();
+    if (application.isDispatchThread && !isDuringRollback) {
+      runnable.run()
     }
     else {
-      myApplication.invokeLater(runnable);
+      application.invokeLater(runnable)
     }
-  }
-
-  @Nullable
-  public Project getProject() {
-    return myProject;
-  }
-
-  @NotNull
-  public Document getDocument() {
-    return myDocument;
-  }
-
-  @NotNull
-  public Document getVcsDocument() {
-    return myVcsDocument;
   }
 
   /**
    * Ranges can be modified without taking the write lock, so calling this method twice not from EDT can produce different results.
    */
-  @Nullable
-  public List<Range> getRanges() {
-    synchronized (LOCK) {
-      if (!tryValidate()) return null;
-      myApplication.assertReadAccessAllowed();
+  fun getRanges(): List<Range>? = synchronized(LOCK) {
+    if (!tryValidate()) return null
+    application.assertReadAccessAllowed()
 
-      List<Range> result = new ArrayList<>(myRanges.size());
-      for (Range range : myRanges) {
-        result.add(new Range(range));
-      }
-      return result;
+    val result = ArrayList<Range>(myRanges.size)
+    for (range in myRanges) {
+      result.add(Range(range))
     }
+    return result
   }
 
-  @NotNull
   @TestOnly
-  public List<Range> getRangesInner() {
-    return myRanges;
-  }
+  fun getRangesInner(): List<Range> = myRanges
 
   @CalledInAwt
-  public void startBulkUpdate() {
-    if (myReleased) return;
-    synchronized (LOCK) {
-      myBulkUpdate = true;
-      destroyRanges();
+  fun startBulkUpdate() {
+    if (isReleased) return
+    synchronized(LOCK) {
+      isBulkUpdate = true
+      destroyRanges()
     }
   }
 
   @CalledInAwt
-  public void finishBulkUpdate() {
-    if (myReleased) return;
-    synchronized (LOCK) {
-      myBulkUpdate = false;
-      reinstallRanges();
+  fun finishBulkUpdate() {
+    if (isReleased) return
+    synchronized(LOCK) {
+      isBulkUpdate = false
+      reinstallRanges()
     }
   }
 
   @CalledInAwt
-  private void updateRanges() {
-    if (isSuppressed()) return;
-    if (myDirtyRange != null) {
-      synchronized (LOCK) {
+  private fun updateRanges() {
+    if (isSuppressed()) return
+    if (dirtyRange != null) {
+      synchronized(LOCK) {
         try {
-          doUpdateRanges(myDirtyRange.line1, myDirtyRange.line2, myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
-          myDirtyRange = null;
+          doUpdateRanges(dirtyRange!!.line1, dirtyRange!!.line2, dirtyRange!!.lineShift, dirtyRange!!.beforeTotalLines)
+          dirtyRange = null
         }
-        catch (Exception e) {
-          LOG.error(e);
-          reinstallRanges();
+        catch (e: Exception) {
+          LOG.error(e)
+          reinstallRanges()
         }
       }
     }
   }
 
   @CalledInAwt
-  private void updateRangeHighlighters() {
-    if (myToBeInstalledRanges.isEmpty() && myToBeDestroyedRanges.isEmpty()) return;
+  private fun updateRangeHighlighters() {
+    if (toBeInstalledRanges.isEmpty && toBeDestroyedRanges.isEmpty) return
 
-    synchronized (LOCK) {
-      myToBeInstalledRanges.removeAll(myToBeDestroyedRanges);
+    synchronized(LOCK) {
+      toBeInstalledRanges.removeAll(toBeDestroyedRanges)
 
-      for (Range range : myToBeDestroyedRanges) {
-        disposeHighlighter(range);
+      for (range in toBeDestroyedRanges) {
+        disposeHighlighter(range)
       }
-      for (Range range : myToBeInstalledRanges) {
-        installHighlighter(range);
+      for (range in toBeInstalledRanges) {
+        installHighlighter(range)
       }
-      myToBeDestroyedRanges.clear();
-      myToBeInstalledRanges.clear();
+      toBeDestroyedRanges.clear()
+      toBeInstalledRanges.clear()
     }
   }
 
-  private class MyApplicationListener extends ApplicationAdapter {
-    @Override
-    public void afterWriteActionFinished(@NotNull Object action) {
-      updateRanges();
-      updateRangeHighlighters();
+  private inner class MyApplicationListener : ApplicationAdapter() {
+    override fun afterWriteActionFinished(action: Any) {
+      updateRanges()
+      updateRangeHighlighters()
     }
   }
 
-  private class MyDocumentListener implements DocumentListener {
+  private inner class MyDocumentListener : DocumentListener {
     /*
      *   beforeWriteLock   beforeChange     Current
      *              |            |             |
@@ -383,521 +346,506 @@ public abstract class LineStatusTrackerBase {
      *                            line2
      */
 
-    private int myLine1;
-    private int myLine2;
-    private int myBeforeTotalLines;
+    private var myLine1: Int = 0
+    private var myLine2: Int = 0
+    private var myBeforeTotalLines: Int = 0
 
-    @Override
-    public void beforeDocumentChange(DocumentEvent e) {
-      if (isSuppressed()) return;
-      assert myDocument == e.getDocument();
+    override fun beforeDocumentChange(e: DocumentEvent) {
+      if (isSuppressed()) return
+      assert(document === e.document)
 
-      myLine1 = myDocument.getLineNumber(e.getOffset());
-      if (e.getOldLength() == 0) {
-        myLine2 = myLine1 + 1;
+      myLine1 = document.getLineNumber(e.offset)
+      if (e.oldLength == 0) {
+        myLine2 = myLine1 + 1
       }
       else {
-        myLine2 = myDocument.getLineNumber(e.getOffset() + e.getOldLength()) + 1;
+        myLine2 = document.getLineNumber(e.offset + e.oldLength) + 1
       }
 
-      myBeforeTotalLines = getLineCount(myDocument);
+      myBeforeTotalLines = getLineCount(document)
     }
 
-    @Override
-    public void documentChanged(final DocumentEvent e) {
-      myApplication.assertIsDispatchThread();
+    override fun documentChanged(e: DocumentEvent) {
+      application.assertIsDispatchThread()
 
-      if (isSuppressed()) return;
-      assert myDocument == e.getDocument();
+      if (isSuppressed()) return
+      assert(document === e.document)
 
-      synchronized (LOCK) {
-        int newLine1 = myLine1;
-        int newLine2;
-        if (e.getNewLength() == 0) {
-          newLine2 = newLine1 + 1;
+      synchronized(LOCK) {
+        val newLine1 = myLine1
+        val newLine2: Int
+        if (e.newLength == 0) {
+          newLine2 = newLine1 + 1
         }
         else {
-          newLine2 = myDocument.getLineNumber(e.getOffset() + e.getNewLength()) + 1;
+          newLine2 = document.getLineNumber(e.offset + e.newLength) + 1
         }
 
-        int linesShift = (newLine2 - newLine1) - (myLine2 - myLine1);
+        val linesShift = newLine2 - newLine1 - (myLine2 - myLine1)
 
-        int[] fixed = fixRanges(e, myLine1, myLine2);
-        int line1 = fixed[0];
-        int line2 = fixed[1];
+        val fixed = fixRanges(e, myLine1, myLine2)
+        val line1 = fixed[0]
+        val line2 = fixed[1]
 
-        if (myDirtyRange == null) {
-          myDirtyRange = new DirtyRange(line1, line2, linesShift, myBeforeTotalLines);
+        if (dirtyRange == null) {
+          dirtyRange = DirtyRange(line1, line2, linesShift, myBeforeTotalLines)
         }
         else {
-          int oldLine1 = myDirtyRange.line1;
-          int oldLine2 = myDirtyRange.line2 + myDirtyRange.lineShift;
+          val oldLine1 = dirtyRange!!.line1
+          val oldLine2 = dirtyRange!!.line2 + dirtyRange!!.lineShift
 
-          int updatedLine1 = myDirtyRange.line1 - Math.max(oldLine1 - line1, 0);
-          int updatedLine2 = myDirtyRange.line2 + Math.max(line2 - oldLine2, 0);
+          val updatedLine1 = dirtyRange!!.line1 - Math.max(oldLine1 - line1, 0)
+          val updatedLine2 = dirtyRange!!.line2 + Math.max(line2 - oldLine2, 0)
 
-          myDirtyRange = new DirtyRange(updatedLine1, updatedLine2, linesShift + myDirtyRange.lineShift, myDirtyRange.beforeTotalLines);
+          dirtyRange = DirtyRange(updatedLine1, updatedLine2, linesShift + dirtyRange!!.lineShift, dirtyRange!!.beforeTotalLines)
         }
       }
     }
   }
 
-  @NotNull
-  private int[] fixRanges(@NotNull DocumentEvent e, int line1, int line2) {
-    CharSequence document = myDocument.getCharsSequence();
-    int offset = e.getOffset();
+  private fun fixRanges(e: DocumentEvent, line1: Int, line2: Int): IntArray {
+    val document = document.charsSequence
+    val offset = e.offset
 
-    if (e.getOldLength() == 0 && e.getNewLength() != 0) {
-      if (StringUtil.endsWithChar(e.getNewFragment(), '\n') && isNewline(offset - 1, document)) {
-        return new int[]{line1, line2 - 1};
+    if (e.oldLength == 0 && e.newLength != 0) {
+      if (StringUtil.endsWithChar(e.newFragment, '\n') && isNewline(offset - 1, document)) {
+        return intArrayOf(line1, line2 - 1)
       }
-      if (StringUtil.startsWithChar(e.getNewFragment(), '\n') && isNewline(offset + e.getNewLength(), document)) {
-        return new int[]{line1 + 1, line2};
+      if (StringUtil.startsWithChar(e.newFragment, '\n') && isNewline(offset + e.newLength, document)) {
+        return intArrayOf(line1 + 1, line2)
       }
     }
-    if (e.getOldLength() != 0 && e.getNewLength() == 0) {
-      if (StringUtil.endsWithChar(e.getOldFragment(), '\n') && isNewline(offset - 1, document)) {
-        return new int[]{line1, line2 - 1};
+    if (e.oldLength != 0 && e.newLength == 0) {
+      if (StringUtil.endsWithChar(e.oldFragment, '\n') && isNewline(offset - 1, document)) {
+        return intArrayOf(line1, line2 - 1)
       }
-      if (StringUtil.startsWithChar(e.getOldFragment(), '\n') && isNewline(offset + e.getNewLength(), document)) {
-        return new int[]{line1 + 1, line2};
+      if (StringUtil.startsWithChar(e.oldFragment, '\n') && isNewline(offset + e.newLength, document)) {
+        return intArrayOf(line1 + 1, line2)
       }
     }
 
-    return new int[]{line1, line2};
+    return intArrayOf(line1, line2)
   }
 
-  private static boolean isNewline(int offset, @NotNull CharSequence sequence) {
-    if (offset < 0) return false;
-    if (offset >= sequence.length()) return false;
-    return sequence.charAt(offset) == '\n';
+  private fun isNewline(offset: Int, sequence: CharSequence): Boolean {
+    if (offset < 0) return false
+    if (offset >= sequence.length) return false
+    return sequence[offset] == '\n'
   }
 
-  private void doUpdateRanges(int beforeChangedLine1,
-                              int beforeChangedLine2,
-                              int linesShift,
-                              int beforeTotalLines) {
-    LOG.assertTrue(!myReleased);
+  private fun doUpdateRanges(beforeChangedLine1: Int,
+                             beforeChangedLine2: Int,
+                             linesShift: Int,
+                             beforeTotalLines: Int) {
+    var beforeChangedLine1 = beforeChangedLine1
+    var beforeChangedLine2 = beforeChangedLine2
+    LOG.assertTrue(!isReleased)
 
-    List<Range> rangesBeforeChange = new ArrayList<>();
-    List<Range> rangesAfterChange = new ArrayList<>();
-    List<Range> changedRanges = new ArrayList<>();
+    val rangesBeforeChange = ArrayList<Range>()
+    val rangesAfterChange = ArrayList<Range>()
+    val changedRanges = ArrayList<Range>()
 
-    sortRanges(beforeChangedLine1, beforeChangedLine2, linesShift, rangesBeforeChange, changedRanges, rangesAfterChange);
+    sortRanges(beforeChangedLine1, beforeChangedLine2, linesShift, rangesBeforeChange, changedRanges, rangesAfterChange)
 
-    Range firstChangedRange = ContainerUtil.getFirstItem(changedRanges);
-    Range lastChangedRange = ContainerUtil.getLastItem(changedRanges);
+    val firstChangedRange = ContainerUtil.getFirstItem(changedRanges)
+    val lastChangedRange = ContainerUtil.getLastItem<Range, List<Range>>(changedRanges)
 
-    if (firstChangedRange != null && firstChangedRange.getLine1() < beforeChangedLine1) {
-      beforeChangedLine1 = firstChangedRange.getLine1();
+    if (firstChangedRange != null && firstChangedRange.line1 < beforeChangedLine1) {
+      beforeChangedLine1 = firstChangedRange.line1
     }
-    if (lastChangedRange != null && lastChangedRange.getLine2() > beforeChangedLine2) {
-      beforeChangedLine2 = lastChangedRange.getLine2();
+    if (lastChangedRange != null && lastChangedRange.line2 > beforeChangedLine2) {
+      beforeChangedLine2 = lastChangedRange.line2
     }
 
     doUpdateRanges(beforeChangedLine1, beforeChangedLine2, linesShift, beforeTotalLines,
-                   rangesBeforeChange, changedRanges, rangesAfterChange);
+                   rangesBeforeChange, changedRanges, rangesAfterChange)
   }
 
-  private void doUpdateRanges(int beforeChangedLine1,
-                              int beforeChangedLine2,
-                              int linesShift, // before -> after
-                              int beforeTotalLines,
-                              @NotNull List<Range> rangesBefore,
-                              @NotNull List<Range> changedRanges,
-                              @NotNull List<Range> rangesAfter) {
+  private fun doUpdateRanges(beforeChangedLine1: Int,
+                             beforeChangedLine2: Int,
+                             linesShift: Int, // before -> after
+                             beforeTotalLines: Int,
+                             rangesBefore: List<Range>,
+                             changedRanges: List<Range>,
+                             rangesAfter: List<Range>) {
     try {
-      int vcsTotalLines = getLineCount(myVcsDocument);
+      val vcsTotalLines = getLineCount(vcsDocument)
 
-      Range lastRangeBefore = ContainerUtil.getLastItem(rangesBefore);
-      Range firstRangeAfter = ContainerUtil.getFirstItem(rangesAfter);
+      val lastRangeBefore = ContainerUtil.getLastItem(rangesBefore)
+      val firstRangeAfter = ContainerUtil.getFirstItem(rangesAfter)
 
-      //noinspection UnnecessaryLocalVariable
-      int afterChangedLine1 = beforeChangedLine1;
-      int afterChangedLine2 = beforeChangedLine2 + linesShift;
 
-      int vcsLine1 = getVcsLine1(lastRangeBefore, beforeChangedLine1);
-      int vcsLine2 = getVcsLine2(firstRangeAfter, beforeChangedLine2, beforeTotalLines, vcsTotalLines);
+      val afterChangedLine1 = beforeChangedLine1
+      val afterChangedLine2 = beforeChangedLine2 + linesShift
 
-      List<Range> newChangedRanges = getNewChangedRanges(afterChangedLine1, afterChangedLine2, vcsLine1, vcsLine2);
+      val vcsLine1 = getVcsLine1(lastRangeBefore, beforeChangedLine1)
+      val vcsLine2 = getVcsLine2(firstRangeAfter, beforeChangedLine2, beforeTotalLines, vcsTotalLines)
 
-      shiftRanges(rangesAfter, linesShift);
+      val newChangedRanges = getNewChangedRanges(afterChangedLine1, afterChangedLine2, vcsLine1, vcsLine2)
 
-      if (!changedRanges.equals(newChangedRanges)) {
-        myRanges = new ArrayList<>(rangesBefore.size() + newChangedRanges.size() + rangesAfter.size());
+      shiftRanges(rangesAfter, linesShift)
 
-        myRanges.addAll(rangesBefore);
-        myRanges.addAll(newChangedRanges);
-        myRanges.addAll(rangesAfter);
+      if (changedRanges != newChangedRanges) {
+        val newRanges = ArrayList<Range>(rangesBefore.size + newChangedRanges.size + rangesAfter.size)
+        newRanges.addAll(rangesBefore)
+        newRanges.addAll(newChangedRanges)
+        newRanges.addAll(rangesAfter)
+        myRanges = newRanges
 
-        for (Range range : changedRanges) {
-          range.invalidate();
+        for (range in changedRanges) {
+          range.invalidate()
         }
-        myToBeDestroyedRanges.addAll(changedRanges);
-        myToBeInstalledRanges.addAll(newChangedRanges);
+        toBeDestroyedRanges.addAll(changedRanges)
+        toBeInstalledRanges.addAll(newChangedRanges)
 
         if (myRanges.isEmpty()) {
-          fireFileUnchanged();
+          fireFileUnchanged()
         }
       }
     }
-    catch (ProcessCanceledException ignore) {
+    catch (ignore: ProcessCanceledException) {
     }
-    catch (FilesTooBigForDiffException e1) {
-      destroyRanges();
-      installAnathema();
+    catch (e: FilesTooBigForDiffException) {
+      destroyRanges()
+      installAnathema()
     }
   }
 
-  private static int getVcsLine1(@Nullable Range range, int line) {
-    return range == null ? line : line + range.getVcsLine2() - range.getLine2();
+  private fun getVcsLine1(range: Range?, line: Int): Int {
+    return if (range == null) line else line + range.vcsLine2 - range.line2
   }
 
-  private static int getVcsLine2(@Nullable Range range, int line, int totalLinesBefore, int totalLinesAfter) {
-    return range == null ? totalLinesAfter - totalLinesBefore + line : line + range.getVcsLine1() - range.getLine1();
+  private fun getVcsLine2(range: Range?, line: Int, totalLinesBefore: Int, totalLinesAfter: Int): Int {
+    return if (range == null) totalLinesAfter - totalLinesBefore + line else line + range.vcsLine1 - range.line1
   }
 
-  private List<Range> getNewChangedRanges(int changedLine1, int changedLine2, int vcsLine1, int vcsLine2)
-    throws FilesTooBigForDiffException {
-
+  @Throws(FilesTooBigForDiffException::class)
+  private fun getNewChangedRanges(changedLine1: Int, changedLine2: Int, vcsLine1: Int, vcsLine2: Int): List<Range> {
     if (changedLine1 == changedLine2 && vcsLine1 == vcsLine2) {
-      return Collections.emptyList();
+      return emptyList()
     }
     if (changedLine1 == changedLine2) {
-      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
+      return listOf(Range(changedLine1, changedLine2, vcsLine1, vcsLine2))
     }
     if (vcsLine1 == vcsLine2) {
-      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
+      return listOf(Range(changedLine1, changedLine2, vcsLine1, vcsLine2))
     }
 
-    List<String> lines = DiffUtil.getLines(myDocument, changedLine1, changedLine2);
-    List<String> vcsLines = DiffUtil.getLines(myVcsDocument, vcsLine1, vcsLine2);
+    val lines = DiffUtil.getLines(document, changedLine1, changedLine2)
+    val vcsLines = DiffUtil.getLines(vcsDocument, vcsLine1, vcsLine2)
 
-    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, isDetectWhitespaceChangedLines());
+    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, isDetectWhitespaceChangedLines())
   }
 
-  private static void shiftRanges(@NotNull List<Range> rangesAfterChange, int shift) {
-    for (final Range range : rangesAfterChange) {
-      range.shift(shift);
+  private fun shiftRanges(rangesAfterChange: List<Range>, shift: Int) {
+    for (range in rangesAfterChange) {
+      range.shift(shift)
     }
   }
 
-  private void sortRanges(int beforeChangedLine1,
-                          int beforeChangedLine2,
-                          int linesShift,
-                          @NotNull List<Range> rangesBeforeChange,
-                          @NotNull List<Range> changedRanges,
-                          @NotNull List<Range> rangesAfterChange) {
-    int lastBefore = -1;
-    int firstAfter = myRanges.size();
-    for (int i = 0; i < myRanges.size(); i++) {
-      Range range = myRanges.get(i);
+  private fun sortRanges(beforeChangedLine1: Int,
+                         beforeChangedLine2: Int,
+                         linesShift: Int,
+                         rangesBeforeChange: MutableList<Range>,
+                         changedRanges: MutableList<Range>,
+                         rangesAfterChange: MutableList<Range>) {
+    var lastBefore = -1
+    var firstAfter = myRanges.size
+    for (i in myRanges.indices) {
+      val range = myRanges[i]
 
-      if (range.getLine2() < beforeChangedLine1) {
-        lastBefore = i;
+      if (range.line2 < beforeChangedLine1) {
+        lastBefore = i
       }
-      else if (range.getLine1() > beforeChangedLine2) {
-        firstAfter = i;
-        break;
+      else if (range.line1 > beforeChangedLine2) {
+        firstAfter = i
+        break
       }
     }
 
     // Expand on ranges, that are separated from changed lines only by whitespaces
 
     while (lastBefore != -1) {
-      int firstChangedLine = beforeChangedLine1;
-      if (lastBefore + 1 < myRanges.size()) {
-        Range firstChanged = myRanges.get(lastBefore + 1);
-        firstChangedLine = Math.min(firstChangedLine, firstChanged.getLine1());
+      var firstChangedLine = beforeChangedLine1
+      if (lastBefore + 1 < myRanges.size) {
+        val firstChanged = myRanges[lastBefore + 1]
+        firstChangedLine = Math.min(firstChangedLine, firstChanged.line1)
       }
 
-      if (!isLineRangeEmpty(myDocument, myRanges.get(lastBefore).getLine2(), firstChangedLine)) {
-        break;
+      if (!isLineRangeEmpty(document, myRanges[lastBefore].line2, firstChangedLine)) {
+        break
       }
 
-      lastBefore--;
+      lastBefore--
     }
 
-    while (firstAfter != myRanges.size()) {
-      int firstUnchangedLineAfter = beforeChangedLine2 + linesShift;
+    while (firstAfter != myRanges.size) {
+      var firstUnchangedLineAfter = beforeChangedLine2 + linesShift
       if (firstAfter > 0) {
-        Range lastChanged = myRanges.get(firstAfter - 1);
-        firstUnchangedLineAfter = Math.max(firstUnchangedLineAfter, lastChanged.getLine2() + linesShift);
+        val lastChanged = myRanges[firstAfter - 1]
+        firstUnchangedLineAfter = Math.max(firstUnchangedLineAfter, lastChanged.line2 + linesShift)
       }
 
-      if (!isLineRangeEmpty(myDocument, firstUnchangedLineAfter, myRanges.get(firstAfter).getLine1() + linesShift)) {
-        break;
+      if (!isLineRangeEmpty(document, firstUnchangedLineAfter, myRanges[firstAfter].line1 + linesShift)) {
+        break
       }
 
-      firstAfter++;
+      firstAfter++
     }
 
-    for (int i = 0; i < myRanges.size(); i++) {
-      Range range = myRanges.get(i);
+    for (i in myRanges.indices) {
+      val range = myRanges[i]
       if (i <= lastBefore) {
-        rangesBeforeChange.add(range);
+        rangesBeforeChange.add(range)
       }
       else if (i >= firstAfter) {
-        rangesAfterChange.add(range);
+        rangesAfterChange.add(range)
       }
       else {
-        changedRanges.add(range);
+        changedRanges.add(range)
       }
     }
   }
 
-  private static boolean isLineRangeEmpty(@NotNull Document document, int line1, int line2) {
-    int lineCount = getLineCount(document);
-    int startOffset = line1 == lineCount ? document.getTextLength() : document.getLineStartOffset(line1);
-    int endOffset = line2 == lineCount ? document.getTextLength() : document.getLineStartOffset(line2);
+  private fun isLineRangeEmpty(document: Document, line1: Int, line2: Int): Boolean {
+    val lineCount = getLineCount(document)
+    val startOffset = if (line1 == lineCount) document.textLength else document.getLineStartOffset(line1)
+    val endOffset = if (line2 == lineCount) document.textLength else document.getLineStartOffset(line2)
 
-    CharSequence interval = document.getImmutableCharSequence().subSequence(startOffset, endOffset);
-    return StringUtil.isEmptyOrSpaces(interval);
+    val interval = document.immutableCharSequence.subSequence(startOffset, endOffset)
+    return StringUtil.isEmptyOrSpaces(interval)
   }
 
-  @Nullable
-  public Range getNextRange(Range range) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return null;
-      final int index = myRanges.indexOf(range);
-      if (index == myRanges.size() - 1) return null;
-      return myRanges.get(index + 1);
+  fun getNextRange(range: Range): Range? {
+    synchronized(LOCK) {
+      if (!tryValidate()) return null
+      val index = myRanges.indexOf(range)
+      if (index == myRanges.size - 1) return null
+      return myRanges[index + 1]
     }
   }
 
-  @Nullable
-  public Range getPrevRange(Range range) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return null;
-      final int index = myRanges.indexOf(range);
-      if (index <= 0) return null;
-      return myRanges.get(index - 1);
+  fun getPrevRange(range: Range): Range? {
+    synchronized(LOCK) {
+      if (!tryValidate()) return null
+      val index = myRanges.indexOf(range)
+      if (index <= 0) return null
+      return myRanges[index - 1]
     }
   }
 
-  @Nullable
-  public Range getNextRange(int line) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return null;
-      for (Range range : myRanges) {
-        if (line < range.getLine2() && !range.isSelectedByLine(line)) {
-          return range;
+  fun getNextRange(line: Int): Range? {
+    synchronized(LOCK) {
+      if (!tryValidate()) return null
+      for (range in myRanges) {
+        if (line < range.line2 && !range.isSelectedByLine(line)) {
+          return range
         }
       }
-      return null;
+      return null
     }
   }
 
-  @Nullable
-  public Range getPrevRange(int line) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return null;
-      for (int i = myRanges.size() - 1; i >= 0; i--) {
-        Range range = myRanges.get(i);
-        if (line > range.getLine1() && !range.isSelectedByLine(line)) {
-          return range;
+  fun getPrevRange(line: Int): Range? {
+    synchronized(LOCK) {
+      if (!tryValidate()) return null
+      for (i in myRanges.indices.reversed()) {
+        val range = myRanges[i]
+        if (line > range.line1 && !range.isSelectedByLine(line)) {
+          return range
         }
       }
-      return null;
+      return null
     }
   }
 
-  @Nullable
-  public Range getRangeForLine(int line) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return null;
-      for (final Range range : myRanges) {
-        if (range.isSelectedByLine(line)) return range;
+  fun getRangeForLine(line: Int): Range? {
+    synchronized(LOCK) {
+      if (!tryValidate()) return null
+      for (range in myRanges) {
+        if (range.isSelectedByLine(line)) return range
       }
-      return null;
+      return null
     }
   }
 
-  protected void doRollbackRange(@NotNull Range range) {
-    DiffUtil.applyModification(myDocument, range.getLine1(), range.getLine2(), myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
+  protected open fun doRollbackRange(range: Range) {
+    DiffUtil.applyModification(document, range.line1, range.line2, vcsDocument, range.vcsLine1, range.vcsLine2)
   }
 
   @CalledWithWriteLock
-  public void rollbackChanges(@NotNull Range range) {
-    rollbackChanges(Collections.singletonList(range));
+  fun rollbackChanges(range: Range) {
+    rollbackChanges(listOf(range))
   }
 
   @CalledWithWriteLock
-  public void rollbackChanges(@NotNull final BitSet lines) {
-    List<Range> toRollback = new ArrayList<>();
-    for (Range range : myRanges) {
-      boolean check = DiffUtil.isSelectedByLine(lines, range.getLine1(), range.getLine2());
+  fun rollbackChanges(lines: BitSet) {
+    val toRollback = ArrayList<Range>()
+    for (range in myRanges) {
+      val check = DiffUtil.isSelectedByLine(lines, range.line1, range.line2)
       if (check) {
-        toRollback.add(range);
+        toRollback.add(range)
       }
     }
 
-    rollbackChanges(toRollback);
+    rollbackChanges(toRollback)
   }
 
   /**
    * @param ranges - sorted list of ranges to rollback
    */
   @CalledWithWriteLock
-  private void rollbackChanges(@NotNull final List<Range> ranges) {
-    runBulkRollback(() -> {
-      Range first = null;
-      Range last = null;
+  private fun rollbackChanges(ranges: List<Range>) {
+    runBulkRollback {
+      var first: Range? = null
+      var last: Range? = null
 
-      int shift = 0;
-      for (Range range : ranges) {
-        if (!range.isValid()) {
-          LOG.warn("Rollback of invalid range");
-          break;
+      var shift = 0
+      for (range in ranges) {
+        if (!range.isValid) {
+          LOG.warn("Rollback of invalid range")
+          break
         }
 
         if (first == null) {
-          first = range;
+          first = range
         }
-        last = range;
+        last = range
 
-        Range shiftedRange = new Range(range);
-        shiftedRange.shift(shift);
+        val shiftedRange = Range(range)
+        shiftedRange.shift(shift)
 
-        doRollbackRange(shiftedRange);
+        doRollbackRange(shiftedRange)
 
-        shift += (range.getVcsLine2() - range.getVcsLine1()) - (range.getLine2() - range.getLine1());
+        shift += range.vcsLine2 - range.vcsLine1 - (range.line2 - range.line1)
       }
 
       if (first != null) {
-        int beforeChangedLine1 = first.getLine1();
-        int beforeChangedLine2 = last.getLine2();
+        val beforeChangedLine1 = first.line1
+        val beforeChangedLine2 = last!!.line2
 
-        int beforeTotalLines = getLineCount(myDocument) - shift;
+        val beforeTotalLines = getLineCount(document) - shift
 
-        doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines);
-        updateRangeHighlighters();
+        doUpdateRanges(beforeChangedLine1, beforeChangedLine2, shift, beforeTotalLines)
+        updateRangeHighlighters()
       }
-    });
+    }
   }
 
   @CalledWithWriteLock
-  private void runBulkRollback(@NotNull Runnable task) {
-    myApplication.assertWriteAccessAllowed();
-    if (!tryValidate()) return;
+  private fun runBulkRollback(task: () -> Unit) {
+    application.assertWriteAccessAllowed()
+    if (!tryValidate()) return
 
-    synchronized (LOCK) {
+    synchronized(LOCK) {
       try {
-        myDuringRollback = true;
+        isDuringRollback = true
 
-        task.run();
+        task()
       }
-      catch (Error | RuntimeException e) {
-        reinstallRanges();
-        throw e;
+      catch (e: Error) {
+        reinstallRanges()
+        throw e
+      }
+      catch (e: RuntimeException) {
+        reinstallRanges()
+        throw e
       }
       finally {
-        myDuringRollback = false;
+        isDuringRollback = false
       }
     }
   }
 
-  @NotNull
-  public CharSequence getCurrentContent(@NotNull Range range) {
-    TextRange textRange = getCurrentTextRange(range);
-    final int startOffset = textRange.getStartOffset();
-    final int endOffset = textRange.getEndOffset();
-    return myDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
+  fun getCurrentContent(range: Range): CharSequence {
+    val textRange = getCurrentTextRange(range)
+    val startOffset = textRange.startOffset
+    val endOffset = textRange.endOffset
+    return document.immutableCharSequence.subSequence(startOffset, endOffset)
   }
 
-  @NotNull
-  public CharSequence getVcsContent(@NotNull Range range) {
-    TextRange textRange = getVcsTextRange(range);
-    final int startOffset = textRange.getStartOffset();
-    final int endOffset = textRange.getEndOffset();
-    return myVcsDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
+  fun getVcsContent(range: Range): CharSequence {
+    val textRange = getVcsTextRange(range)
+    val startOffset = textRange.startOffset
+    val endOffset = textRange.endOffset
+    return vcsDocument.immutableCharSequence.subSequence(startOffset, endOffset)
   }
 
-  @NotNull
-  public TextRange getCurrentTextRange(@NotNull Range range) {
-    synchronized (LOCK) {
-      assert isValid();
-      if (!range.isValid()) {
-        LOG.warn("Current TextRange of invalid range");
+  fun getCurrentTextRange(range: Range): TextRange {
+    synchronized(LOCK) {
+      assert(isValid())
+      if (!range.isValid) {
+        LOG.warn("Current TextRange of invalid range")
       }
-      return DiffUtil.getLinesRange(myDocument, range.getLine1(), range.getLine2());
+      return DiffUtil.getLinesRange(document, range.line1, range.line2)
     }
   }
 
-  @NotNull
-  public TextRange getVcsTextRange(@NotNull Range range) {
-    synchronized (LOCK) {
-      assert isValid();
-      if (!range.isValid()) {
-        LOG.warn("Vcs TextRange of invalid range");
+  fun getVcsTextRange(range: Range): TextRange {
+    synchronized(LOCK) {
+      assert(isValid())
+      if (!range.isValid) {
+        LOG.warn("Vcs TextRange of invalid range")
       }
-      return DiffUtil.getLinesRange(myVcsDocument, range.getVcsLine1(), range.getVcsLine2());
+      return DiffUtil.getLinesRange(vcsDocument, range.vcsLine1, range.vcsLine2)
     }
   }
 
-  public boolean isLineModified(int line) {
-    return isRangeModified(line, line + 1);
+  fun isLineModified(line: Int): Boolean {
+    return isRangeModified(line, line + 1)
   }
 
-  public boolean isRangeModified(int line1, int line2) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return false;
-      if (line1 == line2) return false;
-      assert line1 < line2;
+  fun isRangeModified(line1: Int, line2: Int): Boolean {
+    synchronized(LOCK) {
+      if (!tryValidate()) return false
+      if (line1 == line2) return false
+      assert(line1 < line2)
 
-      for (Range range : myRanges) {
-        if (range.getLine1() >= line2) return false;
-        if (range.getLine2() > line1) return true;
+      for (range in myRanges) {
+        if (range.line1 >= line2) return false
+        if (range.line2 > line1) return true
       }
-      return false;
+      return false
     }
   }
 
-  public int transferLineToFromVcs(int line, boolean approximate) {
-    return transferLine(line, approximate, true);
+  fun transferLineToFromVcs(line: Int, approximate: Boolean): Int {
+    return transferLine(line, approximate, true)
   }
 
-  public int transferLineToVcs(int line, boolean approximate) {
-    return transferLine(line, approximate, false);
+  fun transferLineToVcs(line: Int, approximate: Boolean): Int {
+    return transferLine(line, approximate, false)
   }
 
-  private int transferLine(int line, boolean approximate, boolean fromVcs) {
-    synchronized (LOCK) {
-      if (!tryValidate()) return approximate ? line : ABSENT_LINE_NUMBER;
+  private fun transferLine(line: Int, approximate: Boolean, fromVcs: Boolean): Int {
+    synchronized(LOCK) {
+      if (!tryValidate()) return if (approximate) line else ABSENT_LINE_NUMBER
 
-      int result = line;
+      var result = line
 
-      for (Range range : myRanges) {
-        int startLine1 = fromVcs ? range.getVcsLine1() : range.getLine1();
-        int endLine1 = fromVcs ? range.getVcsLine2() : range.getLine2();
-        int startLine2 = fromVcs ? range.getLine1() : range.getVcsLine1();
-        int endLine2 = fromVcs ? range.getLine2() : range.getVcsLine2();
+      for (range in myRanges) {
+        val startLine1 = if (fromVcs) range.vcsLine1 else range.line1
+        val endLine1 = if (fromVcs) range.vcsLine2 else range.line2
+        val startLine2 = if (fromVcs) range.line1 else range.vcsLine1
+        val endLine2 = if (fromVcs) range.line2 else range.vcsLine2
 
         if (startLine1 <= line && endLine1 > line) {
-          return approximate ? startLine2 : ABSENT_LINE_NUMBER;
+          return if (approximate) startLine2 else ABSENT_LINE_NUMBER
         }
 
-        if (endLine1 > line) return result;
+        if (endLine1 > line) return result
 
-        int length1 = endLine1 - startLine1;
-        int length2 = endLine2 - startLine2;
-        result += length2 - length1;
+        val length1 = endLine1 - startLine1
+        val length2 = endLine2 - startLine2
+        result += length2 - length1
       }
-      return result;
+      return result
     }
   }
 
-  private static class DirtyRange {
-    public final int line1;
-    public final int line2;
-    public final int lineShift;
-    public final int beforeTotalLines;
+  private class DirtyRange(val line1: Int, val line2: Int, val lineShift: Int, val beforeTotalLines: Int)
 
-    public DirtyRange(int line1, int line2, int lineShift, int beforeTotalLines) {
-      this.line1 = line1;
-      this.line2 = line2;
-      this.lineShift = lineShift;
-      this.beforeTotalLines = beforeTotalLines;
-    }
+  companion object {
+    protected val LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker")
   }
 }

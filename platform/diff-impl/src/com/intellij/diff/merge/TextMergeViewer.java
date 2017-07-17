@@ -1289,12 +1289,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Nullable
       @Override
       protected RangeHighlighter createHighlighter(@NotNull Range range) {
-        int first = range.getLine1() < getLineCount(myDocument) ?
-                    myDocument.getLineStartOffset(range.getLine1()) :
-                    myDocument.getTextLength();
-        int second = range.getLine2() < getLineCount(myDocument) ?
-                     myDocument.getLineStartOffset(range.getLine2()) :
-                     myDocument.getTextLength();
+        Document document = getDocument();
+        int first = range.getLine1() < getLineCount(document) ?
+                    document.getLineStartOffset(range.getLine1()) :
+                    document.getTextLength();
+        int second = range.getLine2() < getLineCount(document) ?
+                     document.getLineStartOffset(range.getLine2()) :
+                     document.getTextLength();
 
         MarkupModel markupModel = getEditor().getMarkupModel();
 
@@ -1306,8 +1307,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Nullable
       @Override
-      protected VirtualFile getVirtualFile() {
-        return FileDocumentManager.getInstance().getFile(myDocument);
+      public VirtualFile getVirtualFile() {
+        return FileDocumentManager.getInstance().getFile(getDocument());
       }
     }
 
