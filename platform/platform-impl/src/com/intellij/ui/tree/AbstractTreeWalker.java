@@ -116,11 +116,7 @@ abstract class AbstractTreeWalker<N> {
     TreePath result = null;
     if (node != null) {
       try {
-        Object component = converter.apply(node);
-        TreePath path = parent != null
-                        ? parent.pathByAddingChild(component)
-                        : new TreePath(component);
-
+        TreePath path = TreeUtil.createTreePath(parent, converter.apply(node));
         switch (visitor.accept(path)) {
           case CONTINUE:
             update(null, State.REQUESTED);
@@ -175,8 +171,7 @@ abstract class AbstractTreeWalker<N> {
           current = path.getParentPath();
         }
         else {
-          Object component = converter.apply(node);
-          TreePath path = this.current.pathByAddingChild(component);
+          TreePath path = TreeUtil.createTreePath(current, converter.apply(node));
           switch (visitor.accept(path)) {
             case CONTINUE:
               update(State.STARTED, State.REQUESTED);
