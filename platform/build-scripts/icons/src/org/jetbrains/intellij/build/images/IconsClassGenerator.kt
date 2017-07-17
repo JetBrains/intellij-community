@@ -125,7 +125,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     // please do corresponding changes in IconsGeneratedSourcesFilter as well
     append(answer, "/**", 0)
     append(answer, " * NOTE THIS FILE IS AUTO-GENERATED", 0)
-    append(answer, " * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead", 0)
+    append(answer, " * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead", 0)
     append(answer, " */", 0)
 
     append(answer, "public class $className {", 0)
