@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -39,6 +40,8 @@ import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +56,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyChangeListener, DataProvider {
@@ -87,6 +91,27 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     myShowContent = new ShowContentAction(myWindow, myContent);
 
     setBorder(new EmptyBorder(0, 0, 0, 2));
+
+    UIUtil.putClientProperty(
+      this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
+        @Override
+        public Iterator<JComponent> iterator() {
+          if (myManager == null || myManager.getContentCount() == 0) {
+            return EmptyIterator.getInstance();
+          }
+          return JBIterable.of(myManager.getContents())
+            .map(content -> {
+              JComponent last = null;
+              for (Component c : UIUtil.uiParents(content.getComponent(), false)) {
+                if (c == myManager.getComponent() || !(c instanceof JComponent)) return null;
+                last = (JComponent)c;
+              }
+              return last;
+            })
+            .filter(Conditions.notNull())
+            .iterator();
+        }
+      });
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {
