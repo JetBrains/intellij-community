@@ -59,7 +59,10 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.Field;
@@ -1322,17 +1325,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         JTree tree = (JTree)component;
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
         if (path != null) {
-          TreeNode value = ((TreeNode)path.getLastPathComponent());
-          if (value instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
-
-            Component rendererComponent = tree.getCellRenderer()
-              .getTreeCellRendererComponent(tree, node, tree.getSelectionModel().isPathSelected(path),
-                                            tree.isExpanded(path), node.isLeaf(), tree.getRowForPath(path), tree.hasFocus());
-            clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
-            clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
-            return clickInfo;
-          }
+          Object object = path.getLastPathComponent();
+          Component rendererComponent = tree.getCellRenderer().getTreeCellRendererComponent(
+              tree, object, tree.getSelectionModel().isPathSelected(path),
+              tree.isExpanded(path),
+              tree.getModel().isLeaf(object),
+              tree.getRowForPath(path), tree.hasFocus());
+          clickInfo.add(new PropertyBean(RENDERER_BOUNDS, tree.getPathBounds(path)));
+          clickInfo.addAll(new InspectorTableModel(rendererComponent).myProperties);
+          return clickInfo;
         }
       }
       return null;
