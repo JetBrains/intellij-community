@@ -57,28 +57,27 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
       if (branches.length < 2) {
         return;
       }
-      boolean nonEmptyBranchSeen = false;
-      for (final RegExpBranch branch : branches) {
-        if (branch.getAtoms().length != 0) {
-          nonEmptyBranchSeen = true;
+      boolean emptyBranchSeen = false;
+      for (int i = 0; i < branches.length; i++) {
+        final RegExpBranch branch = branches[i];
+        if (branch.getAtoms().length > 0) {
           continue;
         }
-        final DuplicateAlternationBranchFix fix = new DuplicateAlternationBranchFix(nonEmptyBranchSeen);
-        final PsiElement element = nonEmptyBranchSeen ? branch.getPrevSibling() : branch.getNextSibling();
-        if (element != null) {
-          myHolder.registerProblem(element, "Empty branch in alternation", fix);
+        if (i == 0) {
+          // empty branch at beginning allowed
+          emptyBranchSeen = true;
+          continue;
         }
+        if (!emptyBranchSeen && i == branches.length - 1) {
+          // empty branch at end allowed, if no empty branch at beginning
+          continue;
+        }
+        myHolder.registerProblem(branch.getPrevSibling(), "Empty branch in alternation", new DuplicateAlternationBranchFix());
       }
     }
   }
 
   private static class DuplicateAlternationBranchFix implements LocalQuickFix {
-
-    private final boolean myDeleteNext;
-
-    public DuplicateAlternationBranchFix(boolean deleteNext) {
-      myDeleteNext = deleteNext;
-    }
 
     @Nls
     @NotNull
@@ -90,12 +89,7 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      if (myDeleteNext) {
-        element.getNextSibling().delete();
-      }
-      else {
-        element.getPrevSibling().delete();
-      }
+      element.getNextSibling().delete();
       element.delete();
     }
   }
