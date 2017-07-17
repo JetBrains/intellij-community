@@ -29,15 +29,18 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class TestPackage extends TestObject {
 
@@ -67,7 +70,21 @@ public class TestPackage extends TestObject {
           try {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
+            long start = System.currentTimeMillis();
+            if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+              String packageName = getPackageName(data);
+              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getConfiguration());
+              PsiManager manager = PsiManager.getInstance(myProject);
+              Arrays.stream(classNames)
+                .filter(className -> acceptClassName(className)) //check patterns
+                .map(name -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope()))
+                .filter(aClass -> aClass != null)
+                .forEach(myClasses::add);
+              LOG.info("Found tests in " + (System.currentTimeMillis() - start));
+            }
+            else {
+              ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
+            }
           }
           catch (CantRunException ignored) {}
         }
@@ -83,6 +100,10 @@ public class TestPackage extends TestObject {
         catch (ExecutionException ignored) {}
       }
     };
+  }
+
+  protected boolean acceptClassName(String className) {
+    return true;
   }
 
   protected boolean createTempFiles() {
