@@ -274,7 +274,7 @@
     </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
-      icon="AllIcons.General.GetProjectfromVCS">
+      icon="AllIcons.Welcome.FromVCS">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
 
