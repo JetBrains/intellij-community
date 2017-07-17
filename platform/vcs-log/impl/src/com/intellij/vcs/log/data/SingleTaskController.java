@@ -121,6 +121,7 @@ public abstract class SingleTaskController<Request, Result> {
    * The underlying currently active task should use this method to inform that it has completed the execution. <br/>
    * If the result is not null, it is immediately passed to the result handler specified in the constructor.
    * Otherwise result handler is not called, the task just completes.
+   * After result handler is called, a new task is started if there are new requests awaiting in the queue.
    */
   public final void taskCompleted(@Nullable Result result) {
     if (result != null) {
