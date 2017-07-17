@@ -402,10 +402,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addFinal() {
-    PsiStatement statement = PsiTreeUtil.getParentOfType(myPosition, PsiExpressionStatement.class);
-    if (statement == null) {
-      statement = PsiTreeUtil.getParentOfType(myPosition, PsiDeclarationStatement.class);
-    }
+    PsiStatement statement = PsiTreeUtil.getParentOfType(myPosition, PsiExpressionStatement.class, PsiDeclarationStatement.class);
     if (statement != null && statement.getTextRange().getStartOffset() == myPosition.getTextRange().getStartOffset()) {
       if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).afterLeaf("{").accepts(statement)) {
         PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myPrevLeaf, PsiTryStatement.class);

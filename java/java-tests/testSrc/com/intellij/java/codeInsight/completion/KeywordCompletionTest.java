@@ -133,6 +133,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInTryWithResources() { doTest(1, "final", "float", "class"); }
+  public void testFinalInLambda() { doTest(2, "final", "float"); }
   public void testNoFinalAfterTryBody() { doTest(1, "final", "finally"); }
   public void testClassInMethod() { doTest(2, "class", "char"); }
   public void testIntInClassArray() { doTest(2, "int", "char", "final"); }
