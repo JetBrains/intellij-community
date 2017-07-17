@@ -2033,6 +2033,19 @@ public class PyTypeTest extends PyTestCase {
            "expr = x");
   }
 
+  // PY-21175
+  public void testLazyAttributeInitialization() {
+    doTest("int",
+           "class C:\n" +
+           "    def __init__(self):\n" +
+           "        self.attr = None\n" +
+           "    \n" +
+           "    def m(self):\n" +
+           "        if self.attr is None:\n" +
+           "            self.attr = 42\n" +
+           "        expr = self.attr");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
