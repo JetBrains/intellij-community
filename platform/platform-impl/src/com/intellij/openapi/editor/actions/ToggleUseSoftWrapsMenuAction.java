@@ -36,7 +36,7 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   @Override
   public void update(@NotNull AnActionEvent e){
     super.update(e);
-    if (!e.isActionToolbar()) {
+    if (!e.isFromActionToolbar()) {
       e.getPresentation().setIcon(null);
     }
     if (ActionPlaces.UNKNOWN.equals(e.getPlace())) {

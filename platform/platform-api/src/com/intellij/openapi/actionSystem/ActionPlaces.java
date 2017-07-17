@@ -143,7 +143,7 @@ public abstract class ActionPlaces {
 
 
   /**
-   * @deprecated use {@link AnActionEvent#isActionToolbar()}
+   * @deprecated use {@link AnActionEvent#isFromActionToolbar()}
    */
   public static boolean isToolbarPlace(@NotNull String place) {
     return ourToolbarPlaces.contains(place);
