@@ -68,6 +68,12 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class BalloonImpl implements Balloon, IdeTooltip.Ui {
+  /**
+   * This key is supposed to be used as client property of content component (with value Boolean.TRUE) to suppress shadow painting
+   * when builder is being created indirectly and client cannot call its methods
+   */
+  public static final Key<Boolean> FORCED_NO_SHADOW = Key.create("BALLOON_FORCED_NO_SHADOW");
+
   public static final int DIALOG_ARC = 6;
   public static final int ARC = 3;
   public static final int DIALOG_TOPBOTTOM_POINTER_WIDTH = 24;
