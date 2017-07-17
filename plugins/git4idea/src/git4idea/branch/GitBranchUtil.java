@@ -21,6 +21,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,13 +37,13 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import git4idea.validators.GitNewBranchNameValidator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -338,22 +339,10 @@ public class GitBranchUtil {
       Collection<String> names = local
                                  ? convertBranchesToNames(branchesCollection.getLocalBranches())
                                  : getBranchNamesWithoutRemoteHead(branchesCollection.getRemoteBranches());
-      if (commonBranches == null) {
-        commonBranches = names;
-      }
-      else {
-        commonBranches = ContainerUtil.intersection(commonBranches, names);
-      }
+      commonBranches = commonBranches == null ? names : ContainerUtil.intersection(commonBranches, names);
     }
 
-    if (commonBranches != null) {
-      ArrayList<String> common = new ArrayList<>(commonBranches);
-      Collections.sort(common);
-      return common;
-    }
-    else {
-      return Collections.emptyList();
-    }
+    return commonBranches != null ? StreamEx.of(commonBranches).sorted(StringUtil::naturalCompare).toList() : Collections.emptyList();
   }
 
   /**

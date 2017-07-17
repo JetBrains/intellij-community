@@ -27,10 +27,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.branch.GitNewBranchOptions;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
@@ -48,7 +51,6 @@ import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
-import static java.util.stream.Collectors.toList;
 
 class GitBranchPopupActions {
 
@@ -77,12 +79,15 @@ class GitBranchPopupActions {
 
     popupGroup.addSeparator("Local Branches" + repoInfo);
     GitLocalBranch currentBranch = myRepository.getCurrentBranch();
-    List<BranchActionGroup> localBranchActions = myRepository.getBranches().getLocalBranches().stream()
-      .sorted()
+    GitBranchesCollection branchesCollection = myRepository.getBranches();
+
+    List<LocalBranchActions> localBranchActions = StreamEx.of(branchesCollection.getLocalBranches())
       .filter(branch -> !branch.equals(currentBranch))
-      .map(branch -> new LocalBranchActions(myProject, repositoryList, branch.getName(), myRepository))
+      .map(GitBranch::getName)
+      .sorted(StringUtil::naturalCompare)
+      .map(localName -> new LocalBranchActions(myProject, repositoryList, localName, myRepository))
       .sorted(FAVORITE_BRANCH_COMPARATOR)
-      .collect(toList());
+      .toList();
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
     if (currentBranch != null) {
       localBranchActions.add(0, new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
@@ -94,11 +99,11 @@ class GitBranchPopupActions {
                                firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
-    List<BranchActionGroup> remoteBranchActions =
-      myRepository.getBranches().getRemoteBranches().stream()
-        .sorted()
-        .map(remoteBranch -> new RemoteBranchActions(myProject, repositoryList, remoteBranch.getName(), myRepository))
-        .collect(toList());
+    List<RemoteBranchActions> remoteBranchActions = StreamEx.of(branchesCollection.getRemoteBranches())
+      .map(GitBranch::getName)
+      .sorted(StringUtil::naturalCompare)
+      .map(remoteName -> new RemoteBranchActions(myProject, repositoryList, remoteName, myRepository))
+      .toList();
     wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
                                getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
     return popupGroup;
