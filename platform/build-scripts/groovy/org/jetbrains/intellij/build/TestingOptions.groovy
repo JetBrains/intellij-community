@@ -68,7 +68,7 @@ class TestingOptions {
   /**
    * Specifies path to JRE which will be used to run tests. By default tests run under the same JRE which is used to run the build scripts.
    */
-  String customJrePath = System.getProperty("intellij.build.test.jre", System.getProperty("intellij.test.jre"))
+  String customJrePath = System.getProperty("intellij.build.test.jre")
 
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", "ALL_EXCLUDE_DEFINED")
   private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
