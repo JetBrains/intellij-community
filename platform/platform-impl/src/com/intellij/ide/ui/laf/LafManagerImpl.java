@@ -41,10 +41,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -55,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.EventListenerList;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
@@ -106,7 +102,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     "ComboBox", "Table", "TextArea", "EditorPane", "TextPane", "FormattedTextField", "PasswordField",
     "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
 
-  private final EventListenerList myListenerList;
+  private final EventDispatcher<LafManagerListener> myEventDispatcher = EventDispatcher.create(LafManagerListener.class);
   private final UIManager.LookAndFeelInfo[] myLaFs;
   private UIManager.LookAndFeelInfo myCurrentLaf;
   private final Map<UIManager.LookAndFeelInfo, HashMap<String, Object>> myStoredDefaults = ContainerUtil.newHashMap();
@@ -123,8 +119,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * Invoked via reflection.
    */
   LafManagerImpl() {
-    myListenerList = new EventListenerList();
-
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
     if (SystemInfo.isMac) {
@@ -175,27 +169,19 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return !Registry.is("idea.4.5.laf.enabled");
   }
 
-  /**
-   * Adds specified listener
-   */
   @Override
-  public void addLafManagerListener(@NotNull final LafManagerListener l) {
-    myListenerList.add(LafManagerListener.class, l);
+  public void addLafManagerListener(@NotNull LafManagerListener listener) {
+    myEventDispatcher.addListener(listener);
   }
 
-  /**
-   * Removes specified listener
-   */
   @Override
-  public void removeLafManagerListener(@NotNull final LafManagerListener l) {
-    myListenerList.remove(LafManagerListener.class, l);
+  public void addLafManagerListener(@NotNull LafManagerListener listener, @NotNull Disposable disposable) {
+    myEventDispatcher.addListener(listener, disposable);
   }
 
-  private void fireLookAndFeelChanged() {
-    LafManagerListener[] listeners = myListenerList.getListeners(LafManagerListener.class);
-    for (LafManagerListener listener : listeners) {
-      listener.lookAndFeelChanged(this);
-    }
+  @Override
+  public void removeLafManagerListener(@NotNull final LafManagerListener listener) {
+    myEventDispatcher.removeListener(listener);
   }
 
   @Override
@@ -287,6 +273,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return element;
   }
 
+  @NotNull
   @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels() {
     return myLaFs.clone();
@@ -342,7 +329,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * Sets current LAF. The method doesn't update component hierarchy.
    */
   @Override
-  public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
       return;
@@ -484,7 +471,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       updateUI(frame);
     }
-    fireLookAndFeelChanged();
+
+    myEventDispatcher.getMulticaster().lookAndFeelChanged(this);
   }
 
   private static void patchHiDPI(UIDefaults defaults) {
