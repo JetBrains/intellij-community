@@ -28,8 +28,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
@@ -39,11 +37,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.content.Content;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.IJSwingUtilities;
@@ -476,8 +471,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixSeparatorColor(uiDefaults);
 
-    updateToolWindows();
-
     for (Frame frame : Frame.getFrames()) {
       // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
       // com.apple.laf.AquaNativeResources$CColorPaintUIResource
@@ -531,25 +524,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
     defaults.put("hidpi.scaleFactor", JBUI.scale(1f));
-  }
-
-  public static void updateToolWindows() {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-      for (String id : toolWindowManager.getToolWindowIds()) {
-        final ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
-        for (Content content : toolWindow.getContentManager().getContents()) {
-          final JComponent component = content.getComponent();
-          if (component != null) {
-            IJSwingUtilities.updateComponentTreeUI(component);
-          }
-        }
-        final JComponent c = toolWindow.getComponent();
-        if (c != null) {
-          IJSwingUtilities.updateComponentTreeUI(c);
-        }
-      }
-    }
   }
 
   private static void fixMenuIssues(UIDefaults uiDefaults) {
