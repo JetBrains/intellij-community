@@ -110,6 +110,7 @@ public class RecentProjectsTest extends PlatformTestCase {
       ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
       project = manager.createProject(null, path.getPath());
       project.save();
+      closeProject(project);
       project = manager.loadAndOpenProject(path.getPath());
       return project.getBasePath();
     }
