@@ -238,7 +238,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     protected ProductionMarker myParent;
     protected ProductionMarker myNext;
 
-    ProductionMarker(int markerId, PsiBuilderImpl builder) {
+    ProductionMarker(int markerId, @NotNull PsiBuilderImpl builder) {
       this.markerId = markerId;
       myBuilder = builder;
     }
@@ -445,7 +445,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public String toString() {
-      if (myBuilder == null) return "<dropped>";
+      if (myLexemeIndex < 0) return "<dropped>";
       boolean isDone = isDone();
       CharSequence originalText = myBuilder.getOriginalText();
       int startOffset = getStartOffset() - myBuilder.myOffset;
