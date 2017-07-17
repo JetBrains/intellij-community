@@ -63,7 +63,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.*;
@@ -1289,17 +1288,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Nullable
       @Override
       protected RangeHighlighter createHighlighter(@NotNull Range range) {
-        Document document = getDocument();
-        int first = range.getLine1() < getLineCount(document) ?
-                    document.getLineStartOffset(range.getLine1()) :
-                    document.getTextLength();
-        int second = range.getLine2() < getLineCount(document) ?
-                     document.getLineStartOffset(range.getLine2()) :
-                     document.getTextLength();
-
         MarkupModel markupModel = getEditor().getMarkupModel();
 
-        RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, new TextRange(first, second), markupModel);
+        RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, markupModel);
         highlighter.setLineMarkerRenderer(new MyLineStatusMarkerRenderer(range));
 
         return highlighter;

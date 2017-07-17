@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.DiffUtil.getLineCount
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.editor.Document
@@ -29,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -92,12 +90,9 @@ class LineStatusTracker private constructor(project: Project,
   override fun createHighlighter(range: Range): RangeHighlighter? {
     if (mode == Mode.SILENT) return null
 
-    val first = if (range.line1 >= getLineCount(document)) document.textLength else document.getLineStartOffset(range.line1)
-    val second = if (range.line2 >= getLineCount(document)) document.textLength else document.getLineStartOffset(range.line2)
-
     val markupModel = DocumentMarkupModel.forDocument(document, project, true)
 
-    val highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, TextRange(first, second), markupModel)
+    val highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, markupModel)
     highlighter.lineMarkerRenderer = LineStatusMarkerRenderer.createRenderer(range) { editor ->
       LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range)
     }

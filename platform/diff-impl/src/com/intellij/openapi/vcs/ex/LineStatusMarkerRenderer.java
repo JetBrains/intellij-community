@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -48,8 +49,8 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
 
   @NotNull
   public static RangeHighlighter createRangeHighlighter(@NotNull Range range,
-                                                        @NotNull TextRange textRange,
                                                         @NotNull MarkupModel markupModel) {
+    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), true);
     TextAttributes attributes = getTextAttributes(range);
 
     final RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
