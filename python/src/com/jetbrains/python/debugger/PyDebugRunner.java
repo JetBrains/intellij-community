@@ -37,6 +37,8 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
+import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PydevConsoleRunnerFactory;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -116,6 +118,9 @@ public class PyDebugRunner extends GenericProgramRunner {
     return false;
   }
 
+  protected boolean isInMixedMode() {
+    return true;
+  }
 
   protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
     throws ExecutionException {
@@ -132,21 +137,51 @@ public class PyDebugRunner extends GenericProgramRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
     final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = environment.getRunProfile();
-    final ExecutionResult result =
-      pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
+    final CommandLinePatcher[] patchers =
+      createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort);
 
-    return XDebuggerManager.getInstance(environment.getProject()).
-      startSession(environment, new XDebugProcessStarter() {
-        @Override
-        @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
-          PyDebugProcess pyDebugProcess =
-            createDebugProcess(session, serverSocket, result, pyState);
+    if (isInMixedMode()) {
+      final GeneralCommandLine commandLine = pyState.generateCommandLine(patchers);
+      final PyCidrGDBDebugLauncher launcher = new PyCidrGDBDebugLauncher(environment.getProject(),
+                                                                         null,
+                                                                         new CidrRemoteDebugParameters(),
+                                                                         commandLine,
+                                                                         pyState.getPyDebugConsoleBuilder(environment.getProject()),
+                                                                         new PyDebuggerEditorsProvider());
 
-          createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
-          return pyDebugProcess;
-        }
-      });
+      return XDebuggerManager.getInstance(environment.getProject()).
+        startSession(environment, new XDebugProcessStarter() {
+          @Override
+          @NotNull
+          public XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException {
+            CidrDebugProcess cidrDebugProcess = launcher.startDebugProcess(pyState, session);
+            pyState.attachConsole(cidrDebugProcess.getConsole(), cidrDebugProcess.getProject(), cidrDebugProcess.getProcessHandler());
+
+            ExecutionResult result = new DefaultExecutionResult(cidrDebugProcess.getConsole(), cidrDebugProcess.getProcessHandler());
+
+            PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
+            createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
+
+            return new PyCidrDebugProcess(cidrDebugProcess, pyDebugProcess, session);
+          }
+        });
+    }
+    else {
+      final ExecutionResult result = pyState.execute(environment.getExecutor(), patchers);
+
+      return XDebuggerManager.getInstance(environment.getProject()).
+        startSession(environment, new XDebugProcessStarter() {
+          @Override
+          @NotNull
+          public XDebugProcess start(@NotNull final XDebugSession session) {
+            PyDebugProcess pyDebugProcess =
+              createDebugProcess(session, serverSocket, result, pyState);
+
+            createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
+            return pyDebugProcess;
+          }
+        });
+    }
   }
 
   @NotNull

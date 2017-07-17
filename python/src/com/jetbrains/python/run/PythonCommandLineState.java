@@ -151,12 +151,20 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
+    return attachConsole(consoleView, project, processHandler);
+  }
+
+  @NotNull
+  public ConsoleView attachConsole(ConsoleView consoleView, Project project, ProcessHandler processHandler)
+    throws ExecutionException {
     consoleView.addMessageFilter(createUrlFilter(processHandler));
-
     addTracebackFilter(project, consoleView, processHandler);
-
     consoleView.attachToProcess(processHandler);
     return consoleView;
+  }
+
+  public TextConsoleBuilder getPyDebugConsoleBuilder(Project project) {
+    return new PyDebugConsoleBuilder(project, PythonSdkType.findSdkByPath(myConfig.getInterpreterPath()));
   }
 
   protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
