@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
@@ -218,19 +219,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
-    final PsiElement[] children = node.getChildren();
-    // Case of non qualified reference
-    if (children.length == 0) {
-      final ReadWriteInstruction.ACCESS access = node.getParent() instanceof PySliceExpression
-                                                 ? ReadWriteInstruction.ACCESS.READ : ReadWriteInstruction.ACCESS.WRITE;
-      final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
-      myBuilder.addNode(instruction);
-      myBuilder.checkPending(instruction);
-    }
-    else {
-      for (PsiElement child : children) {
-        child.accept(this);
-      }
+    final ReadWriteInstruction.ACCESS access = ReadWriteInstruction.ACCESS.WRITE;
+    final QualifiedName qName = node.asQualifiedName();
+    final String targetName = qName == null ? node.getName() : qName.toString();
+    final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, targetName, access);
+    myBuilder.addNode(instruction);
+    myBuilder.checkPending(instruction);
+
+    final PyExpression qualifier = node.getQualifier();
+    if (qualifier != null) {
+      qualifier.accept(this);
     }
   }
 
