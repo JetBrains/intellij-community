@@ -167,14 +167,14 @@ object GuiTestUtilKt {
 
   //Does the textComponent intersects X axis line going through the center of this component and lays lefter than this component
   fun Component.hasOnCenterXAxis(textComponent: Component, onLeft: Boolean): Boolean {
-    val centerXAxis = this.bounds.height / 2 + this.bounds.y + this.locationOnScreen.y
+    val centerXAxis = this.bounds.height / 2 + this.locationOnScreen.y
     val sideCheck =
       if (onLeft)
-        textComponent.bounds.x + textComponent.locationOnScreen.x + textComponent.bounds.width < this.bounds.x + this.locationOnScreen.x
+        textComponent.locationOnScreen.x  < this.locationOnScreen.x
       else
-        textComponent.bounds.x + textComponent.locationOnScreen.x > this.bounds.x + this.locationOnScreen.x + this.bounds.width
-    return (textComponent.bounds.y + textComponent.locationOnScreen.y <= centerXAxis)
-           && (textComponent.bounds.y + textComponent.locationOnScreen.y + textComponent.bounds.height >= centerXAxis)
+        textComponent.locationOnScreen.x > this.locationOnScreen.x
+    return (textComponent.locationOnScreen.y <= centerXAxis)
+           && (textComponent.locationOnScreen.y + textComponent.bounds.height >= centerXAxis)
            && (sideCheck)
   }
 
