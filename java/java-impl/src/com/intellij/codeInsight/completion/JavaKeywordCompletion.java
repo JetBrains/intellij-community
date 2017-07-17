@@ -769,7 +769,7 @@ public class JavaKeywordCompletion {
 
     if (END_OF_BLOCK.getValue().isAcceptable(position, position) &&
         PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, true, PsiMember.class) != null) {
-      return true;
+      return !isForLoopMachinery(position);
     }
 
     if (psiElement().withParents(PsiReferenceExpression.class, PsiExpressionStatement.class, PsiIfStatement.class).andNot(
@@ -782,6 +782,14 @@ public class JavaKeywordCompletion {
     }
 
     return false;
+  }
+
+  private static boolean isForLoopMachinery(PsiElement position) {
+    PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiStatement.class);
+    if (statement == null) return false;
+
+    return statement instanceof PsiForStatement ||
+           statement.getParent() instanceof PsiForStatement && statement != ((PsiForStatement)statement.getParent()).getBody();
   }
 
   private LookupElement createKeyword(String keyword) {
