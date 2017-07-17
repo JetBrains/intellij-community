@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -135,7 +136,7 @@ public class ParameterHintsUpdater {
       if (action == InlayUpdateInfo.Action.ADD) {
         boolean useAnimation = !myForceImmediateUpdate && !firstTime && !isSameHintRemovedNear(newText, infoIndex) && !isInBulkMode;
         Inlay inlay = myHintsManager.addHint(myEditor, info.offset, newText, useAnimation);
-        if (inlay != null) {
+        if (inlay != null && !((DocumentEx)myEditor.getDocument()).isInBulkUpdate()) {
           VisualPosition inlayPosition = inlay.getVisualPosition();
           VisualPosition visualPosition = new VisualPosition(inlayPosition.line, inlayPosition.column + (info.showAfterCaret ? 1 : 0));
           Caret caret = myEditor.getCaretModel().getCaretAt(visualPosition);
