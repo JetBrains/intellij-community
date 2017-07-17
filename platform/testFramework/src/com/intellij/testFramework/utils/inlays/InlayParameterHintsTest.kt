@@ -20,11 +20,15 @@ import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.util.TextRange
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import junit.framework.ComparisonFailure
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import java.util.regex.Pattern
 
 
@@ -33,7 +37,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   private var isParamHintsEnabledBefore = false
 
   companion object {
-    val pattern: Pattern = Pattern.compile("<hint\\s+text=\"([^\"\n\r]+)\"\\s*/>")
+    val pattern: Pattern = Pattern.compile("(<caret>)|(<selection>)|(</selection>)|<hint\\s+text=\"([^\"\n\r]+)\"\\s*/>")
 
     private val default = ParameterNameHintsSettings()
   }
@@ -55,25 +59,38 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val originalText = document.text
-    val expectedInlays: List<InlayInfo> = extractInlays(document)
-    myFixture.doHighlighting();
-    verifyInlays(expectedInlays, originalText)
+    val expectedInlaysAndCaret = extractInlaysAndCaretInfo(document)
+    myFixture.doHighlighting()
+    verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText)
   }
 
-  fun verifyInlays(expectedInlays : List<InlayInfo>, originalText: String) {
+  fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo, originalText: String) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val actual: List<Pair<Int, String>> = getActualInlays()
 
-    val expected = expectedInlays.map { Pair(it.offset, it.text) }
+    val expected = expectedInlaysAndCaret.inlays.map { Pair(it.offset, it.text) }
 
-    if (expectedInlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
+    if (expectedInlaysAndCaret.inlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val proposedText = StringBuilder(document.text)
       actual.asReversed().forEach { proposedText.insert(it.first, "<hint text=\"${it.second}\" />") }
 
       VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
         throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
       } ?: throw ComparisonFailure("Hints differ", originalText, proposedText.toString())
+    }
+
+    if (expectedInlaysAndCaret.caretOffset != null) {
+      assertEquals("Unexpected caret offset", expectedInlaysAndCaret.caretOffset, myFixture.editor.caretModel.offset)
+      val position = myFixture.editor.offsetToVisualPosition(expectedInlaysAndCaret.caretOffset)
+      assertEquals("Unexpected caret visual position", 
+                   VisualPosition(position.line, position.column + expectedInlaysAndCaret.inlaysBeforeCaret),
+                   myFixture.editor.caretModel.visualPosition)
+      val selectionModel = myFixture.editor.selectionModel
+      if (expectedInlaysAndCaret.selection == null) assertFalse(selectionModel.hasSelection())
+      else assertEquals("Unexpected selection", 
+                        expectedInlaysAndCaret.selection, 
+                        TextRange(selectionModel.selectionStart, selectionModel.selectionEnd))
     }
   }
 
@@ -88,25 +105,45 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       .sortedBy { it.first }
   }
 
-  fun extractInlays(document: Document): List<InlayInfo> {
+  fun extractInlaysAndCaretInfo(document: Document): CaretAndInlaysInfo {
     val text = document.text
     val matcher = pattern.matcher(text)
 
     val inlays = mutableListOf<InlayInfo>()
     var extractedLength = 0
+    var caretOffset : Int? = null
+    var inlaysBeforeCaret = 0
+    var selectionStart : Int? = null
+    var selectionEnd : Int? = null
 
     while (matcher.find()) {
       val start = matcher.start()
       val matchedLength = matcher.end() - start
 
       val realStartOffset = start - extractedLength
-      inlays += InlayInfo(matcher.group(1), realStartOffset)
+      if (matcher.group(1) != null) {
+        caretOffset = realStartOffset
+        inlays.asReversed()
+          .takeWhile { it.offset == caretOffset }
+          .forEach { inlaysBeforeCaret++ }
+      }
+      else if (matcher.group(2) != null) {
+        selectionStart = realStartOffset
+      }
+      else if (matcher.group(3) != null) {
+        selectionEnd = realStartOffset
+      }
+      else {
+        inlays += InlayInfo(matcher.group(4), realStartOffset)
+      }
 
       removeText(document, realStartOffset, matchedLength)
       extractedLength += (matcher.end() - start)
     }
 
-    return inlays
+    return CaretAndInlaysInfo(caretOffset, inlaysBeforeCaret,
+                              if (selectionStart == null || selectionEnd == null) null else TextRange(selectionStart, selectionEnd),
+                              inlays)
   }
 
   private fun removeText(document: Document, realStartOffset: Int, matchedLength: Int) {
@@ -117,3 +154,5 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
 
 
 }
+
+class CaretAndInlaysInfo (val caretOffset: Int?, val inlaysBeforeCaret: Int, val selection: TextRange?, val inlays: List<InlayInfo>)

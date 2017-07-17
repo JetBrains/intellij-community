@@ -27,7 +27,6 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
-import com.intellij.codeInsight.hints.InlayInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -115,6 +114,7 @@ import com.intellij.refactoring.rename.*;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
@@ -1760,9 +1760,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void checkResultWithInlays(String text) {
     Document checkDocument = new DocumentImpl(text);
     InlayHintsChecker checker = new InlayHintsChecker(this);
-    List<InlayInfo> inlayInfos = checker.extractInlays(checkDocument);
+    CaretAndInlaysInfo inlaysAndCaretInfo = checker.extractInlaysAndCaretInfo(checkDocument);
     checkResult(checkDocument.getText());
-    checker.verifyInlays(inlayInfos, text);
+    checker.verifyInlaysAndCaretInfo(inlaysAndCaretInfo, text);
   }
 
   @Override
