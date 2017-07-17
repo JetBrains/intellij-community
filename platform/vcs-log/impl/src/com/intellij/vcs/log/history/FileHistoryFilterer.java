@@ -23,7 +23,10 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.VcsAppendableHistoryPartnerAdapter;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
+import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -91,31 +94,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     if (myIndex.isIndexed(myRoot)) {
-      Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), Collections.singleton(myRoot), filters);
-      IndexDataGetter.FileNamesData data = myIndexDataGetter.buildFileNamesData(myFilePath);
-      VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, data.getCommits());
-
-      Map<Integer, FilePath> pathsMap = null;
-      if (visibleGraph.getVisibleCommitCount() > 0) {
-        if (visibleGraph instanceof VisibleGraphImpl) {
-          int row = getCurrentRow(dataPack, visibleGraph, data);
-          if (row >= 0) {
-            FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl<Integer>)visibleGraph, data);
-            if (refiner.refine(row, myFilePath)) {
-              // creating a vg is the most expensive task, so trying to avoid that when unnecessary
-              visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
-              pathsMap = refiner.getPathsForCommits();
-            }
-          }
-        }
-      }
-
-      if (pathsMap == null) {
-        pathsMap = data.buildPathsMap();
-      }
-
-      VisiblePack visiblePack = new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
-
+      VisiblePack visiblePack = filterWithIndex(dataPack, sortType, filters);
       LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for " + myFilePath + " with index");
       return Pair.create(visiblePack, commitCount);
     }
@@ -125,18 +104,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
       VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
       if (provider != null) {
         try {
-          VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
-          provider.reportAppendableHistory(myFilePath, partner);
-
-          Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
-          for (VcsFileRevision revision : partner.getSession().getRevisionList()) {
-            int index = myStorage.getCommitIndex(HashImpl.build(revision.getRevisionNumber().asString()), myRoot);
-            pathsMap.put(index, ((VcsFileRevisionEx)revision).getPath());
-          }
-
-          VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keySet());
-          VisiblePack visiblePack = new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
-
+          VisiblePack visiblePack = filterWithProvider(provider, dataPack, sortType, filters);
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                     " for computing history for " +
                     myFilePath +
@@ -150,6 +118,54 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     return super.filter(dataPack, sortType, filters, commitCount);
+  }
+
+  @NotNull
+  private VisiblePack filterWithProvider(@NotNull VcsHistoryProvider provider,
+                                         @NotNull DataPack dataPack,
+                                         @NotNull PermanentGraph.SortType sortType,
+                                         @NotNull VcsLogFilterCollection filters) throws VcsException {
+    VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
+    provider.reportAppendableHistory(myFilePath, partner);
+
+    Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
+    for (VcsFileRevision revision : partner.getSession().getRevisionList()) {
+      int index = myStorage.getCommitIndex(HashImpl.build(revision.getRevisionNumber().asString()), myRoot);
+      pathsMap.put(index, ((VcsFileRevisionEx)revision).getPath());
+    }
+
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, null, pathsMap.keySet());
+    return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
+  }
+
+  @NotNull
+  private VisiblePack filterWithIndex(@NotNull DataPack dataPack,
+                                      @NotNull PermanentGraph.SortType sortType,
+                                      @NotNull VcsLogFilterCollection filters) {
+    Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), Collections.singleton(myRoot), filters);
+    IndexDataGetter.FileNamesData data = myIndexDataGetter.buildFileNamesData(myFilePath);
+    VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, data.getCommits());
+
+    Map<Integer, FilePath> pathsMap = null;
+    if (visibleGraph.getVisibleCommitCount() > 0) {
+      if (visibleGraph instanceof VisibleGraphImpl) {
+        int row = getCurrentRow(dataPack, visibleGraph, data);
+        if (row >= 0) {
+          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl<Integer>)visibleGraph, data);
+          if (refiner.refine(row, myFilePath)) {
+            // creating a vg is the most expensive task, so trying to avoid that when unnecessary
+            visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
+            pathsMap = refiner.getPathsForCommits();
+          }
+        }
+      }
+    }
+
+    if (pathsMap == null) {
+      pathsMap = data.buildPathsMap();
+    }
+
+    return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
   }
 
   private void checkDetailsFilter(@NotNull VcsLogFilterCollection filters) {
