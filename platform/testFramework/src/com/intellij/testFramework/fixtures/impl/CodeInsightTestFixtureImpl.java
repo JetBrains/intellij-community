@@ -336,7 +336,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
     }
     catch (IOException e) {
-
+      throw new UncheckedIOException(e);
     }
   }
 
