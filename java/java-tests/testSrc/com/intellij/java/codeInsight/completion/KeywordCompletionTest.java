@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -111,9 +112,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
 
   public void testInstanceofNegation() {
-    configureByFile(BASE_PATH + getTestName(true) + ".java");
+    configureByTestName();
     selectItem(myItems[0], '!');
-    checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
+    checkResultByTestName();
   }
 
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
@@ -146,20 +147,34 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitiveInForLoop() { doTest(1, "int"); }
   public void testPrivateInJava9Interface() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest(); }
 
+  public void testOverwriteCatch() {
+    configureByTestName();
+    selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
+    checkResultByTestName();
+  }
+
   public void testTryInExpression() {
-    configureByFile(BASE_PATH + getTestName(true) + ".java");
+    configureByTestName();
     assertEquals("toString", myItems[0].getLookupString());
     assertEquals("this", myItems[1].getLookupString());
   }
 
   private void doTest() {
+    configureByTestName();
+    checkResultByTestName();
+  }
+
+  private void configureByTestName() {
     configureByFile(BASE_PATH + getTestName(true) + ".java");
+  }
+
+  private void checkResultByTestName() {
     checkResultByFile(BASE_PATH + getTestName(true) + "_after.java");
   }
 
   // todo: check included/excluded variants separately
   protected void doTest(int finalCount, String... values) {
-    configureByFile(BASE_PATH + getTestName(true) + ".java");
+    configureByTestName();
     testByCount(finalCount, values);
   }
 }
