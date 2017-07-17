@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatemen
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +57,7 @@ class StatementMover extends LineMover {
       assert document != null : statement.getContainingFile();
       int startOffset = document.getLineStartOffset(info.toMove.startLine);
       int endOffset = getLineStartSafeOffset(document, info.toMove.endLine);
-      if (document.getText().charAt(endOffset-1) == '\n') endOffset--;
+      if (document.getText().charAt(endOffset - 1) == '\n') endOffset--;
       RangeMarker lineRangeMarker = document.createRangeMarker(startOffset, endOffset);
 
       PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();
@@ -80,7 +81,7 @@ class StatementMover extends LineMover {
         int start = document.getLineNumber(brace.getTextRange().getStartOffset());
         int end = info.toMove.startLine;
         if (start > end) end = start;
-        info.toMove2  = new LineRange(start, end);
+        info.toMove2 = new LineRange(start, end);
       }
     }
     catch (IncorrectOperationException e) {
@@ -103,7 +104,7 @@ class StatementMover extends LineMover {
     if (statements.length == 0) return false;
 
     range.firstElement = statements[0];
-    range.lastElement = statements[statements.length-1];
+    range.lastElement = statements[statements.length - 1];
 
     if (!checkMovingInsideOutside(file, editor, info, down)) {
       return info.prohibitMove();
@@ -147,9 +148,9 @@ class StatementMover extends LineMover {
 
   private static boolean calcInsertOffset(PsiFile file, Editor editor, LineRange range, MoveInfo info, boolean down) {
     int destLine = getDestLineForAnonymous(editor, range, down);
-
     int startLine = down ? range.endLine : range.startLine - 1;
     if (destLine < 0 || startLine < 0) return false;
+
     while (true) {
       int offset = editor.logicalPositionToOffset(new LogicalPosition(destLine, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
@@ -159,16 +160,13 @@ class StatementMover extends LineMover {
         if (elementTextRange.isEmpty() || !elementTextRange.grown(-1).shiftRight(1).contains(offset)) {
           PsiElement elementToSurround = null;
           boolean found = false;
-          if ((element instanceof PsiStatement || element instanceof PsiComment)
-              && statementCanBePlacedAlong(element)) {
+          if ((element instanceof PsiStatement || element instanceof PsiComment) && statementCanBePlacedAlong(element)) {
             found = true;
             if (!(element.getParent() instanceof PsiCodeBlock)) {
               elementToSurround = element;
             }
           }
-          else if (element instanceof PsiJavaToken
-                   && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE
-                   && element.getParent() instanceof PsiCodeBlock) {
+          else if (PsiUtil.isJavaToken(element, JavaTokenType.RBRACE) && element.getParent() instanceof PsiCodeBlock) {
             // before code block closing brace
             found = true;
           }
@@ -182,12 +180,13 @@ class StatementMover extends LineMover {
               startLine = tmp;
             }
 
-            info.toMove2 = down ? new LineRange(startLine, endLine) : new LineRange(startLine, endLine+1);
+            info.toMove2 = down ? new LineRange(startLine, endLine) : new LineRange(startLine, endLine + 1);
             return true;
           }
         }
         element = element.getParent();
       }
+
       destLine += down ? 1 : -1;
       if (destLine == 0 || destLine >= editor.getDocument().getLineCount()) {
         return false;
@@ -225,11 +224,7 @@ class StatementMover extends LineMover {
     PsiElement elementAtOffset = file.getViewProvider().findElementAt(offset, JavaLanguage.INSTANCE);
     if (elementAtOffset == null) return false;
 
-    PsiElement guard = elementAtOffset;
-    do {
-      guard = PsiTreeUtil.getParentOfType(guard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
-    }
-    while (guard instanceof PsiAnonymousClass);
+    PsiElement guard = findGuard(elementAtOffset);
 
     PsiElement brace = itIsTheClosingCurlyBraceWeAreMoving(file, editor);
     if (brace != null) {
@@ -241,19 +236,17 @@ class StatementMover extends LineMover {
 
     // cannot move in/outside method/class/initializer/comment
     if (!calcInsertOffset(file, editor, info.toMove, info, down)) return false;
+
     int insertOffset = down ? getLineStartSafeOffset(editor.getDocument(), info.toMove2.endLine)
                             : editor.getDocument().getLineStartOffset(info.toMove2.startLine);
     PsiElement elementAtInsertOffset = file.getViewProvider().findElementAt(insertOffset, JavaLanguage.INSTANCE);
-    PsiElement newGuard = elementAtInsertOffset;
-    do {
-      newGuard = PsiTreeUtil.getParentOfType(newGuard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
-    }
-    while (newGuard instanceof PsiAnonymousClass);
+    PsiElement newGuard = findGuard(elementAtInsertOffset);
 
     if (brace != null &&
         PsiTreeUtil.getParentOfType(brace, PsiCodeBlock.class, false) != PsiTreeUtil.getParentOfType(elementAtInsertOffset, PsiCodeBlock.class, false)) {
       info.indentSource = true;
     }
+
     if (newGuard == guard && isInside(insertOffset, newGuard) == isInside(offset, guard)) return true;
 
     // moving in/out nested class is OK
@@ -261,6 +254,15 @@ class StatementMover extends LineMover {
     if (newGuard instanceof PsiClass && newGuard.getParent() instanceof PsiClass) return true;
 
     return false;
+  }
+
+  private static PsiElement findGuard(PsiElement element) {
+    PsiElement guard = element;
+    do {
+      guard = PsiTreeUtil.getParentOfType(guard, PsiMethod.class, PsiClassInitializer.class, PsiClass.class, PsiComment.class);
+    }
+    while (guard instanceof PsiAnonymousClass);
+    return guard;
   }
 
   private static boolean isInside(int offset, PsiElement guard) {
@@ -301,7 +303,7 @@ class StatementMover extends LineMover {
       endLine = document.getLineCount();
     }
     else {
-      endLine = editor.offsetToLogicalPosition(endOffset).line+1;
+      endLine = editor.offsetToLogicalPosition(endOffset).line + 1;
       endLine = Math.min(endLine, document.getLineCount());
     }
     int startLine = Math.min(range.startLine, editor.offsetToLogicalPosition(elementRange.getFirst().getTextOffset()).line);
