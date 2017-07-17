@@ -567,7 +567,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
 
     assertTrue(foundClassProcessAll[0])
-    assertTrue(!foundClassStub[0])
+    assertTrue(foundClassStub[0])
 
     def foundId = [false]
     def foundStub = [false]
