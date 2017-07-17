@@ -52,9 +52,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -67,7 +65,6 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -78,7 +75,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -183,7 +179,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     @NotNull private final ModifierProvider myModifierProvider;
     @NotNull private final MyInnerDiffWorker myInnerDiffWorker;
-    @NotNull private final MyLineStatusTracker myLineStatusTracker;
+    @NotNull private final SimpleLineStatusTracker myLineStatusTracker;
 
     @NotNull private final TextDiffProviderBase myTextDiffProvider;
 
@@ -202,7 +198,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myModifierProvider = new ModifierProvider();
       myInnerDiffWorker = new MyInnerDiffWorker();
 
-      myLineStatusTracker = new MyLineStatusTracker(getProject(), getEditor().getDocument());
+      myLineStatusTracker = new SimpleLineStatusTracker(getProject(), getEditor().getDocument(), MyLineStatusMarkerRenderer::new);
 
       myTextDiffProvider = new TextDiffProviderBase(getTextSettings(),
                                                     myInnerDiffWorker::onSettingsChanged,
@@ -1280,64 +1276,27 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    private class MyLineStatusTracker extends LineStatusTrackerBase {
-      public MyLineStatusTracker(@Nullable Project project, @NotNull Document document) {
-        super(project, document);
+    private class MyLineStatusMarkerRenderer extends LineStatusMarkerPopupRenderer {
+      public MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase tracker) {
+        super(tracker);
       }
 
       @Nullable
       @Override
-      protected RangeHighlighter createHighlighter(@NotNull Range range) {
-        MarkupModel markupModel = getEditor().getMarkupModel();
-
-        RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, markupModel);
-        highlighter.setLineMarkerRenderer(new MyLineStatusMarkerRenderer(range));
-
-        return highlighter;
-      }
-
-      @Nullable
-      @Override
-      public VirtualFile getVirtualFile() {
-        return FileDocumentManager.getInstance().getFile(getDocument());
-      }
-    }
-
-    private class MyLineStatusMarkerRenderer extends LineStatusMarkerRenderer {
-      private final Range myRange;
-
-      public MyLineStatusMarkerRenderer(Range range) {
-        super(range);
-        myRange = range;
-      }
-
-      @Override
-      public boolean canDoAction(MouseEvent e) {
-        return isInsideMarkerArea(e);
-      }
-
-      @Override
-      public void doAction(Editor editor1, MouseEvent e) {
-        LineStatusMarkerPopup popup = new MyLineStatusMarkerPopup(myRange);
-        popup.showHint(e);
+      protected MarkupEditorFilter getEditorFilter() {
+        return editor -> editor == getEditor();
       }
 
       @Override
       protected int getFramingBorderSize() {
         return JBUI.scale(2);
       }
-    }
-
-    private class MyLineStatusMarkerPopup extends LineStatusMarkerPopup {
-      public MyLineStatusMarkerPopup(@NotNull Range range) {
-        super(myLineStatusTracker, getEditor(), range);
-      }
 
       @Override
-      public void scrollAndShow() {
+      public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
         if (!myTracker.isValid()) return;
         final Document document = myTracker.getDocument();
-        int line = Math.min(myRange.getType() == Range.DELETED ? myRange.getLine2() : myRange.getLine2() - 1, getLineCount(document) - 1);
+        int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
         int[] startLines = new int[]{
           transferPosition(ThreeSide.BASE, ThreeSide.LEFT, new LogicalPosition(line, 0)).line,
@@ -1350,18 +1309,18 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
 
         getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
-        showAfterScroll();
+        showAfterScroll(editor, range);
       }
 
       @NotNull
       @Override
-      protected List<AnAction> createToolbarActions(@Nullable Point mousePosition) {
+      protected List<AnAction> createToolbarActions(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
         List<AnAction> actions = new ArrayList<>();
-        actions.add(new MyShowPrevChangeMarkerAction(myRange));
-        actions.add(new MyShowNextChangeMarkerAction(myRange));
-        actions.add(new ShowLineStatusRangeDiffAction(myTracker, myRange, myEditor));
-        actions.add(new CopyLineStatusRangeAction(myTracker, myRange));
-        actions.add(new ToggleByWordDiffAction(myRange, mousePosition));
+        actions.add(new MyShowPrevChangeMarkerAction(range));
+        actions.add(new MyShowNextChangeMarkerAction(range));
+        actions.add(new ShowLineStatusRangeDiffAction(myTracker, range, editor));
+        actions.add(new CopyLineStatusRangeAction(myTracker, range));
+        actions.add(new ToggleByWordDiffAction(range, mousePosition));
         return actions;
       }
     }
@@ -1393,7 +1352,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         if (!myLineStatusTracker.isValid()) return;
         int line = getEditor().getCaretModel().getLogicalPosition().line;
         Range targetRange = myRange != null ? getTargetRange(myRange) : getTargetRange(line);
-        if (targetRange != null) new MyLineStatusMarkerPopup(targetRange).scrollAndShow();
+        if (targetRange != null) new MyLineStatusMarkerRenderer(myLineStatusTracker).scrollAndShow(getEditor(), targetRange);
       }
     }
 
@@ -1433,7 +1392,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    private class ToggleByWordDiffAction extends LineStatusMarkerPopup.ToggleByWordDiffActionBase {
+    private class ToggleByWordDiffAction extends LineStatusMarkerPopupRenderer.ToggleByWordDiffActionBase {
       @NotNull private final Range myRange;
       @Nullable private final Point myMousePosition;
 
@@ -1444,7 +1403,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected void reshowPopup() {
-        new MyLineStatusMarkerPopup(myRange).showHintAt(myMousePosition);
+        new MyLineStatusMarkerRenderer(myLineStatusTracker).showHintAt(getEditor(), myRange, myMousePosition);
       }
     }
   }

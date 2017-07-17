@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -49,6 +48,8 @@ abstract class LineStatusTrackerBase {
 
   val document: Document
   val vcsDocument: Document
+
+  protected abstract val renderer: LineStatusMarkerRenderer
 
   private val application: Application = ApplicationManager.getApplication()
 
@@ -86,9 +87,6 @@ abstract class LineStatusTrackerBase {
   //
   // Abstract
   //
-
-  @CalledInAwt
-  protected abstract fun createHighlighter(range: Range): RangeHighlighter?
 
   @CalledInAwt
   protected open fun isDetectWhitespaceChangedLines(): Boolean = false
@@ -189,7 +187,7 @@ abstract class LineStatusTrackerBase {
     }
 
     try {
-      val highlighter = createHighlighter(range)
+      val highlighter = renderer.createHighlighter(range)
       range.highlighter = highlighter
     }
     catch (e: Exception) {

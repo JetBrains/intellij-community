@@ -17,21 +17,29 @@ package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.GeneralSettings
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction
+import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import org.jetbrains.annotations.CalledInAwt
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.JPanel
 
 class LineStatusTracker private constructor(project: Project,
@@ -45,6 +53,8 @@ class LineStatusTracker private constructor(project: Project,
 
   private val fileEditorManager: FileEditorManager = FileEditorManager.getInstance(project)
   private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
+
+  override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
 
   var mode: Mode = mode
     set(value) {
@@ -87,22 +97,6 @@ class LineStatusTracker private constructor(project: Project,
   }
 
   @CalledInAwt
-  override fun createHighlighter(range: Range): RangeHighlighter? {
-    if (mode == Mode.SILENT) return null
-
-    val markupModel = DocumentMarkupModel.forDocument(document, project, true)
-
-    val highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, markupModel)
-    highlighter.lineMarkerRenderer = LineStatusMarkerRenderer.createRenderer(range) { editor ->
-      LineStatusTrackerDrawing.MyLineStatusMarkerPopup(this, editor, range)
-    }
-
-    highlighter.editorFilter = MarkupEditorFilterFactory.createIsNotDiffFilter()
-
-    return highlighter
-  }
-
-  @CalledInAwt
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
       // later to avoid saving inside document change event processing.
@@ -128,6 +122,45 @@ class LineStatusTracker private constructor(project: Project,
     (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
   }
 
+  class MyLineStatusMarkerRenderer(val tracker: LineStatusTracker) : LineStatusMarkerPopupRenderer(tracker) {
+    override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
+
+    override fun canDoAction(range: Range, e: MouseEvent?): Boolean {
+      if (tracker.mode == Mode.SILENT) return false
+      return super.canDoAction(range, e)
+    }
+
+    override fun paint(editor: Editor, range: Range, g: Graphics, r: Rectangle) {
+      if (tracker.mode == Mode.SILENT) return
+      super.paint(editor, range, g, r)
+    }
+
+    override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
+      val actions = ArrayList<AnAction>()
+      actions.add(ShowPrevChangeMarkerAction(tracker.getPrevRange(range), tracker, editor))
+      actions.add(ShowNextChangeMarkerAction(tracker.getNextRange(range), tracker, editor))
+      actions.add(RollbackLineStatusRangeAction(tracker, range, editor))
+      actions.add(ShowLineStatusRangeDiffAction(tracker, range, editor))
+      actions.add(CopyLineStatusRangeAction(tracker, range))
+      actions.add(ToggleByWordDiffAction(range, editor, tracker, mousePosition))
+      return actions
+    }
+
+    override fun getFileType(): FileType {
+      return tracker.virtualFile.getFileType()
+    }
+
+    private class ToggleByWordDiffAction(private val myRange: Range,
+                                         private val myEditor: Editor,
+                                         private val myTracker: LineStatusTracker,
+                                         private val myMousePosition: Point?
+    ) : LineStatusMarkerPopupRenderer.ToggleByWordDiffActionBase() {
+      override fun reshowPopup() {
+        MyLineStatusMarkerRenderer(myTracker).showHintAt(myEditor, myRange, myMousePosition)
+      }
+    }
+  }
+
   companion object {
     private val PANEL_KEY = Key<JPanel>("LineStatusTracker.CanNotCalculateDiffPanel")
 
@@ -137,6 +170,16 @@ class LineStatusTracker private constructor(project: Project,
                  project: Project,
                  mode: Mode): LineStatusTracker {
       return LineStatusTracker(project, document, virtualFile, mode)
+    }
+
+    @JvmStatic
+    fun moveToRange(range: Range, editor: Editor, tracker: LineStatusTracker) {
+      MyLineStatusMarkerRenderer(tracker).scrollAndShow(editor, range)
+    }
+
+    @JvmStatic
+    fun showHint(range: Range, editor: Editor, tracker: LineStatusTracker) {
+      MyLineStatusMarkerRenderer(tracker).showAfterScroll(editor, range)
     }
   }
 }

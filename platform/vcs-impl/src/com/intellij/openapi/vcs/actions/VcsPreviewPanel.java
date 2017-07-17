@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
@@ -123,10 +124,15 @@ class VcsPreviewPanel implements PreviewPanel {
 
   private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {
     RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, myEditor.getMarkupModel());
-    highlighter.setLineMarkerRenderer(new LineStatusMarkerRenderer(range) {
+    highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
+      @Override
+      public void paint(Editor editor, Graphics g, Rectangle r) {
+        LineStatusMarkerRenderer.paintRange(g, myEditor, r, range, 0);
+      }
+
       @Override
       public boolean canDoAction(MouseEvent e) {
-        return isInsideMarkerArea(e);
+        return LineStatusMarkerRenderer.isInsideMarkerArea(e);
       }
 
       @Override
