@@ -19,6 +19,9 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
+import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -38,6 +41,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +130,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  protected void invokeImpl(final PsiClass targetClass) {
+  protected void invokeImpl(final PsiClass targetClass, Editor editor) {
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
@@ -140,6 +144,34 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
     LOG.assertTrue(methodName != null);
 
+    final boolean shouldBeAbstract = shouldBeAbstract(expression.getMethodExpression(), targetClass);
+    boolean shouldBeStatic = (!targetClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(targetClass)) &&
+                             shouldCreateStaticMember(expression.getMethodExpression(), targetClass) &&
+                             !shouldBeAbstract;
+
+    PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+
+    JvmCommonIntentionActionsFactory actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(targetClass.getLanguage());
+    if (actionsFactory != null && !(actionsFactory instanceof JavaCommonIntentionActionsFactory)) {
+      List<String> modifiers = new ArrayList<>(2);
+      if (shouldBeAbstract) {
+        modifiers.add(PsiModifier.ABSTRACT);
+      }
+      if (shouldBeStatic) {
+        modifiers.add(PsiModifier.STATIC);
+      }
+
+      CreateFromUsage.MethodInfo methodInfo = new CreateFromUsage.MethodInfo(
+        targetClass,
+        methodName,
+        modifiers,
+        new CreateFromUsage.TypeInfo(ArraysKt.toList(getExpectedTypes(expression))),
+        CreateFromUsageUtils.getParameterInfos(targetClass, ContainerUtil.map2List(arguments, Pair.createFunction(null)))
+      );
+      CreateFromUsageUtils.invokeActionInTargetEditor(targetClass, () -> actionsFactory.createGenerateMethodFromUsageActions(methodInfo));
+      return;
+    }
+
     PsiMethod method = createMethod(targetClass, parentClass, enclosingContext, methodName);
     if (method == null) {
       return;
@@ -152,7 +184,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     PsiCodeBlock body = method.getBody();
     assert body != null;
-    final boolean shouldBeAbstract = shouldBeAbstract(expression.getMethodExpression(), targetClass);
     if (shouldBeAbstract) {
       body.delete();
       if (!targetClass.isInterface()) {
@@ -165,18 +196,22 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     expression = getMethodCall();
     LOG.assertTrue(expression.isValid());
 
-    if ((!targetClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(targetClass)) && shouldCreateStaticMember(expression.getMethodExpression(), targetClass) && !shouldBeAbstract) {
+    if (shouldBeStatic) {
       PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
     }
 
     final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
-    PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     doCreate(targetClass, method, shouldBeAbstract,
              ContainerUtil.map2List(arguments, Pair.createFunction(null)),
              getTargetSubstitutor(expression),
-             CreateFromUsageUtils.guessExpectedTypes(expression, expression.getParent() instanceof PsiStatement),
+             getExpectedTypes(expression),
              context);
+  }
+
+  @NotNull
+  private static ExpectedTypeInfo[] getExpectedTypes(PsiMethodCallExpression expression) {
+    return CreateFromUsageUtils.guessExpectedTypes(expression, expression.getParent() instanceof PsiStatement);
   }
 
   public static PsiMethod createMethod(PsiClass targetClass,

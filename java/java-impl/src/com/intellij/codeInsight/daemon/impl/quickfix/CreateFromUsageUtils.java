@@ -21,6 +21,8 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -29,6 +31,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -70,6 +73,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.collections.ArraysKt;
+import kotlin.collections.CollectionsKt;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -244,24 +250,19 @@ public class CreateFromUsageUtils {
     setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, Pair.createFunction(null)));
   }
 
-  static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
-                                    final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
-    throws IncorrectOperationException {
-    PsiManager psiManager = method.getManager();
-    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
-    if (factory == null) return;
-
-    PsiParameterList parameterList = method.getParameterList();
-
-    GlobalSearchScope resolveScope = method.getResolveScope();
-
-    GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
-
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
-    final PsiClass containingClass = method.getContainingClass();
-    final boolean isInterface = containingClass != null && containingClass.isInterface();
+  static List<CreateFromUsage.ParameterInfo> getParameterInfos(
+    final PsiElement context,
+    final List<Pair<PsiExpression, PsiType>> arguments
+  ) {
     //255 is the maximum number of method parameters
-    for (int i = 0; i < Math.min(arguments.size(), 255); i++) {
+    int parameterCount = Math.min(arguments.size(), 255);
+    ArrayList<CreateFromUsage.ParameterInfo> parameterInfos = new ArrayList<>(parameterCount);
+
+    PsiManager psiManager = context.getManager();
+
+    GlobalSearchScope resolveScope = context.getResolveScope();
+
+    for (int i = 0; i < parameterCount; i++) {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
       PsiExpression exp = arg.first;
 
@@ -281,9 +282,42 @@ public class CreateFromUsageUtils {
       } else if (argType instanceof PsiWildcardType) {
         argType = ((PsiWildcardType)argType).isBounded() ? ((PsiWildcardType)argType).getBound() : PsiType.getJavaLangObject(psiManager, resolveScope);
       }
+
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
+      CreateFromUsage.TypeInfo parameterTypeInfo = new CreateFromUsage.TypeInfo(Collections.singletonList(info));
+      CreateFromUsage.ParameterInfo parameterInfo = new CreateFromUsage.ParameterInfo(parameterTypeInfo, ArraysKt.toList(names));
+
+      parameterInfos.add(parameterInfo);
+    }
+
+    return parameterInfos;
+  }
+
+  static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
+                                    final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
+    throws IncorrectOperationException {
+    PsiManager psiManager = method.getManager();
+    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+    if (factory == null) return;
+
+    PsiParameterList parameterList = method.getParameterList();
+
+    GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
+
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
+    final PsiClass containingClass = method.getContainingClass();
+    final boolean isInterface = containingClass != null && containingClass.isInterface();
+
+    List<CreateFromUsage.ParameterInfo> parameterInfos = getParameterInfos(method, arguments);
+
+    for (int i = 0; i < parameterInfos.size(); i++) {
+      CreateFromUsage.ParameterInfo parameterInfo = parameterInfos.get(i);
+      ExpectedTypeInfo info = (ExpectedTypeInfo) CollectionsKt.first(parameterInfo.getTypeInfo().getTypeConstraints());
+      List<String> suggestedNames = parameterInfo.getSuggestedNames();
+
       PsiParameter parameter;
       if (parameterList.getParametersCount() <= i) {
-        PsiParameter param = factory.createParameter(names[0], argType);
+        PsiParameter param = factory.createParameter(suggestedNames.get(0), info.getType());
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
@@ -292,13 +326,11 @@ public class CreateFromUsageUtils {
         parameter = parameterList.getParameters()[i];
       }
 
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
-
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
                                substitutor, builder, context, containingClass);
 
-      Expression expression = new ParameterNameExpression(names);
+      Expression expression = new ParameterNameExpression(ArrayUtil.toStringArray(suggestedNames));
       builder.replaceElement(parameter.getNameIdentifier(), expression);
     }
   }
@@ -1059,5 +1091,13 @@ public class CreateFromUsageUtils {
 
       return set.toArray(new LookupElement[set.size()]);
     }
+  }
+
+  public static void invokeActionInTargetEditor(@NotNull PsiElement psiElement, @NotNull Function0<List<IntentionAction>> getActions) {
+    IntentionAction action = CollectionsKt.firstOrNull(getActions.invoke());
+    if (action == null) return;
+
+    Editor targetEditor = EditorHelper.openInEditor(psiElement);
+    action.invoke(psiElement.getProject(), targetEditor, psiElement.getContainingFile());
   }
 }

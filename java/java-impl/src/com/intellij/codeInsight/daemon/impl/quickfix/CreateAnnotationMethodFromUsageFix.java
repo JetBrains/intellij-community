@@ -20,14 +20,20 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
+import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
+import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   private static final Logger LOG = Logger.getInstance(CreateAnnotationMethodFromUsageFix.class);
@@ -64,11 +70,28 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiNameValuePair nameValuePair = getNameValuePair();
     if (nameValuePair == null || isValidElement(nameValuePair)) return;
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(nameValuePair.getProject()).getElementFactory();
-
     final String methodName = nameValuePair.getName();
     LOG.assertTrue(methodName != null);
 
+    final PsiType type = getAnnotationValueType(nameValuePair.getValue());
+    LOG.assertTrue(type != null);
+    final ExpectedTypeInfo[] expectedTypes =
+      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
+
+    JvmCommonIntentionActionsFactory actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(targetClass.getLanguage());
+    if (actionsFactory != null && !(actionsFactory instanceof JavaCommonIntentionActionsFactory)) {
+      CreateFromUsage.MethodInfo methodInfo = new CreateFromUsage.MethodInfo(
+        targetClass,
+        methodName,
+        Collections.emptyList(),
+        new CreateFromUsage.TypeInfo(ArraysKt.toList(expectedTypes)),
+        Collections.emptyList()
+      );
+      CreateFromUsageUtils.invokeActionInTargetEditor(targetClass, () -> actionsFactory.createGenerateMethodFromUsageActions(methodInfo));
+      return;
+    }
+
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(nameValuePair.getProject()).getElementFactory();
     PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
     method = (PsiMethod)targetClass.add(method);
@@ -76,13 +99,9 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiCodeBlock body = method.getBody();
     assert body != null;
     body.delete();
-    
+
     final PsiElement context = PsiTreeUtil.getParentOfType(nameValuePair, PsiClass.class, PsiMethod.class);
 
-    final PsiType type = getAnnotationValueType(nameValuePair.getValue());
-    LOG.assertTrue(type != null);
-    final ExpectedTypeInfo[] expectedTypes =
-      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
     CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }

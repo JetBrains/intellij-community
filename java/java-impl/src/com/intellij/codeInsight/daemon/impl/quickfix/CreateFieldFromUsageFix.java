@@ -18,12 +18,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.CreateFromUsage;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
 import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -32,7 +30,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import kotlin.collections.ArraysKt;
-import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -118,13 +115,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
         ArraysKt.filter(PsiModifier.MODIFIERS, (modifier) -> field.getModifierList().hasModifierProperty(modifier)),
         new CreateFromUsage.TypeInfo(ArraysKt.toList(expectedTypes))
       );
-
-      IntentionAction action = CollectionsKt.firstOrNull(actionsFactory.createGenerateFieldFromUsageActions(fieldInfo));
-      if (action == null) return;
-
-      Editor targetEditor = EditorHelper.openInEditor(targetClass);
-      action.invoke(project, targetEditor, targetClass.getContainingFile());
-
+      CreateFromUsageUtils.invokeActionInTargetEditor(targetClass, () -> actionsFactory.createGenerateFieldFromUsageActions(fieldInfo));
       return;
     }
 
