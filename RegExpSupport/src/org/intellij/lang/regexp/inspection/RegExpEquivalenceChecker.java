@@ -167,6 +167,9 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean areClassesEquivalent(RegExpClass aClass1, RegExpClass aClass2) {
+    if (aClass1.isNegated() != aClass2.isNegated()) {
+      return false;
+    }
     final RegExpClassElement[] elements1 = aClass1.getElements();
     final RegExpClassElement[] elements2 = aClass2.getElements();
     if (elements1.length != elements2.length) {
