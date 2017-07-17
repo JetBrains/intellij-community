@@ -655,7 +655,7 @@ public class HighlightMethodUtil {
   static HighlightInfo checkAmbiguousMethodCallIdentifier(@NotNull PsiReferenceExpression referenceToMethod,
                                                           @NotNull JavaResolveResult[] resolveResults,
                                                           @NotNull PsiExpressionList list,
-                                                          final PsiElement element,
+                                                          @Nullable PsiElement element,
                                                           @NotNull JavaResolveResult resolveResult,
                                                           @NotNull PsiMethodCallExpression methodCall,
                                                           @NotNull PsiResolveHelper resolveHelper,
@@ -669,7 +669,7 @@ public class HighlightMethodUtil {
     String description;
     PsiElement elementToHighlight = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
     if (element != null && !resolveResult.isAccessible()) {
-      description = HighlightUtil.buildProblemWithAccessDescription(referenceToMethod, resolveResult);
+      description = HighlightUtil.buildProblemWithAccessDescription(referenceToMethod, element, resolveResult);
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
       if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
@@ -1632,7 +1632,7 @@ public class HighlightMethodUtil {
       }
     }
     if (classReference != null && !resolveHelper.isAccessible(aClass, constructorCall, accessObjectClass)) {
-      String description = HighlightUtil.buildProblemWithAccessDescription(classReference, typeResolveResult);
+      String description = HighlightUtil.buildProblemWithAccessDescription(classReference, aClass, typeResolveResult);
       PsiElement element = ObjectUtils.notNull(classReference.getReferenceNameElement(), classReference);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       HighlightUtil.registerAccessQuickFixAction(aClass, classReference, info, null);
@@ -1656,7 +1656,7 @@ public class HighlightMethodUtil {
         return;
       }
       if (classReference != null && aClass.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass)) {
-        holder.add(buildAccessProblem(classReference, typeResolveResult, aClass));
+        holder.add(buildAccessProblem(classReference, aClass, typeResolveResult));
       } else if (aClass.isInterface() && constructorCall instanceof PsiNewExpression) {
         final PsiReferenceParameterList typeArgumentList = ((PsiNewExpression)constructorCall).getTypeArgumentList();
         if (typeArgumentList.getTypeArguments().length > 0) {
@@ -1704,7 +1704,7 @@ public class HighlightMethodUtil {
       else if (classReference != null &&
                (!result.isAccessible() ||
                 constructor.hasModifierProperty(PsiModifier.PROTECTED) && callingProtectedConstructorFromDerivedClass(constructorCall, aClass))) {
-        holder.add(buildAccessProblem(classReference, result, constructor));
+        holder.add(buildAccessProblem(classReference, constructor, result));
       }
       else if (!applicable) {
         String constructorName = HighlightMessageUtil.getSymbolName(constructor, result.getSubstitutor());
@@ -1785,11 +1785,13 @@ public class HighlightMethodUtil {
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
   }
 
-  private static HighlightInfo buildAccessProblem(@NotNull PsiJavaCodeReferenceElement classReference, JavaResolveResult result, PsiMember elementToFix) {
-    String description = HighlightUtil.buildProblemWithAccessDescription(classReference, result);
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classReference).descriptionAndTooltip(description).navigationShift(+1).create();
+  private static HighlightInfo buildAccessProblem(PsiJavaCodeReferenceElement ref,
+                                                  PsiMember resolved,
+                                                  JavaResolveResult result) {
+    String description = HighlightUtil.buildProblemWithAccessDescription(ref, resolved, result);
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description).navigationShift(+1).create();
     if (result.isStaticsScopeCorrect()) {
-      HighlightUtil.registerAccessQuickFixAction(elementToFix, classReference, info, result.getCurrentFileResolveScope());
+      HighlightUtil.registerAccessQuickFixAction(resolved, ref, info, result.getCurrentFileResolveScope());
     }
     return info;
   }

@@ -1717,13 +1717,13 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @NotNull
-  static String buildProblemWithAccessDescription(@NotNull PsiElement reference, @NotNull JavaResolveResult result) {
-    return buildProblemWithAccessDescription(reference, result, ObjectUtils.notNull(result.getElement())).first;
+  static String buildProblemWithAccessDescription(@NotNull PsiElement ref, @NotNull PsiElement resolved, @NotNull JavaResolveResult result) {
+    return accessProblemTextAndFixes(ref, resolved, result).first;
   }
 
-  private static Pair<String, List<IntentionAction>> buildProblemWithAccessDescription(PsiElement reference,
-                                                                                       JavaResolveResult result,
-                                                                                       PsiElement resolved) {
+  private static Pair<String, List<IntentionAction>> accessProblemTextAndFixes(PsiElement reference,
+                                                                               PsiElement resolved,
+                                                                               JavaResolveResult result) {
     assert resolved instanceof PsiModifierListOwner : resolved;
     PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
@@ -2794,7 +2794,7 @@ public class HighlightUtil extends HighlightUtilBase {
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
     if (!skipValidityChecks && !result.isValidResult()) {
       if (!result.isAccessible()) {
-        Pair<String, List<IntentionAction>> problem = buildProblemWithAccessDescription(ref, result, resolved);
+        Pair<String, List<IntentionAction>> problem = accessProblemTextAndFixes(ref, resolved, result);
         boolean moduleAccessProblem = problem.second != null;
         PsiElement range = moduleAccessProblem ? findPackagePrefix(ref) : refName;
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(range).descriptionAndTooltip(problem.first).create();
