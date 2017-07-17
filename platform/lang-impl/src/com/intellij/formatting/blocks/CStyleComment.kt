@@ -15,21 +15,12 @@
  */
 package com.intellij.formatting.blocks
 
-import com.intellij.formatting.*
+import com.intellij.formatting.Block
+import com.intellij.formatting.Indent
+import com.intellij.formatting.Spacing
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.TokenType
 import com.intellij.psi.formatter.common.AbstractBlock
-
-
-fun ASTNode.prev(): ASTNode? {
-  var prev = treePrev
-  while (prev != null && prev.elementType == TokenType.WHITE_SPACE) {
-    prev = prev.treePrev
-  }
-  if (prev != null) return prev
-  return if (treeParent != null) treeParent.prev() else null
-}
 
 
 class CStyleCommentBlock(comment: ASTNode, private val indent: Indent?): AbstractBlock(comment, null, null) {
@@ -91,43 +82,6 @@ class CStyleCommentBlock(comment: ASTNode, private val indent: Indent?): Abstrac
 
 
 private class LineInfo(val text: String, val textRange: TextRange)
-
-
-class TextLineBlock(
-    val text: String,
-    private val textRange: TextRange,
-    private val alignment: Alignment?,
-    private val indent: Indent?,
-    val spacing: Spacing?
-) : Block {
-
-  override fun getTextRange(): TextRange {
-    return textRange
-  }
-
-  override fun getSubBlocks(): List<Block> = emptyList()
-
-  override fun getWrap() = null
-
-  override fun getIndent() = indent
-
-  override fun getAlignment() = alignment
-
-  override fun getSpacing(child1: Block?, child2: Block) = spacing
-
-  override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
-    throw UnsupportedOperationException("Should not be called")
-  }
-
-  override fun isIncomplete() = false
-
-  override fun isLeaf() = true
-
-  override fun toString(): String {
-    return "TextLineBlock(text='$text', textRange=$textRange)"
-  }
-
-}
 
 
 fun <T> List<T>.split(predicate: (T) -> Boolean): List<List<T>> {
