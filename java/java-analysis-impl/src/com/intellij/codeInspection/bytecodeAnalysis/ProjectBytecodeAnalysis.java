@@ -337,6 +337,10 @@ public class ProjectBytecodeAnalysis {
     return result;
   }
 
+  private static EKey withStability(EKey key, boolean stability) {
+    return new EKey(key.method, key.dirKey, stability, false);
+  }
+
   private void collectPurityEquations(EKey key, PuritySolver puritySolver)
     throws EquationsLimitException {
     HashSet<EKey> queued = new HashSet<>();
@@ -350,21 +354,20 @@ public class ProjectBytecodeAnalysis {
         throw new EquationsLimitException();
       }
       ProgressManager.checkCanceled();
-      EKey hKey = queue.pop();
+      EKey curKey = queue.pop();
 
-      Map<EKey, Effects> allEquations = new HashMap<>();
-      for (Equations equations : myEquationProvider.getEquations(hKey.method)) {
-        boolean stable = equations.stable;
-        for (DirectionResultPair pair : equations.results) {
-          int dirKey = pair.directionKey;
-          if (dirKey == hKey.dirKey) {
-            Effects effects = (Effects)pair.result;
-            allEquations.merge(new EKey(hKey.method, dirKey, stable, false), effects, Effects::combine);
-            effects.dependencies().filter(queued::add).forEach(queue::push);
-          }
-        }
+      boolean stable = true;
+      Effects combined = null;
+      for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
+        stable &= equations.stable;
+        Effects effects = (Effects)equations.find(curKey.getDirection())
+          .orElseGet(() -> new Effects(DataValue.UnknownDataValue1, Effects.TOP_EFFECTS));
+        combined = combined == null ? effects : combined.combine(effects);
       }
-      allEquations.forEach(puritySolver::addEquation);
+      if (combined != null) {
+        combined.dependencies().filter(queued::add).forEach(queue::push);
+        puritySolver.addEquation(withStability(curKey, stable), combined);
+      }
     }
   }
 
@@ -382,45 +385,22 @@ public class ProjectBytecodeAnalysis {
         throw new EquationsLimitException();
       }
       ProgressManager.checkCanceled();
-      EKey hKey = queue.pop();
+      EKey curKey = queue.pop();
 
-      for (Equations equations : myEquationProvider.getEquations(hKey.method)) {
-        boolean stable = equations.stable;
-        for (DirectionResultPair pair : equations.results) {
-          int dirKey = pair.directionKey;
-          if (dirKey == hKey.dirKey) {
-            Result result = pair.result;
-
-            solver.addEquation(new Equation(new EKey(hKey.method, dirKey, stable, false), result));
-            if (result instanceof Pending) {
-              Pending pending = (Pending)result;
-              for (Component component : pending.delta) {
-                for (EKey depKey : component.ids) {
-                  if (!queued.contains(depKey)) {
-                    queue.push(depKey);
-                    queued.add(depKey);
-                  }
-                }
-              }
-            }
-          }
-        }
+      for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
+        Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
+        solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
+        result.dependencies().filter(queued::add).forEach(queue::push);
       }
     }
   }
 
-  private void collectSingleEquation(EKey hKey, Solver solver) throws EquationsLimitException {
+  private void collectSingleEquation(EKey curKey, Solver solver) throws EquationsLimitException {
     ProgressManager.checkCanceled();
 
-    for (Equations equations : myEquationProvider.getEquations(hKey.method)) {
-      boolean stable = equations.stable;
-      for (DirectionResultPair pair : equations.results) {
-        int dirKey = pair.directionKey;
-        if (dirKey == hKey.dirKey) {
-          Result result = pair.result;
-          solver.addEquation(new Equation(new EKey(hKey.method, dirKey, stable, false), result));
-        }
-      }
+    for (Equations equations : myEquationProvider.getEquations(curKey.method)) {
+      Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
+      solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
     }
   }
 
