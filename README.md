@@ -1,6 +1,6 @@
 # IntelliJ IDEA Community Edition
 ### Building and Running from the IDE
-To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 2017.1. To build and run the code:
+To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 2017.2.1. To build and run the code:
 * Run **getPlugins.sh** / **getPlugins.bat** from the project root directory to check out additional modules.
 * If this git repository is not on 'master' branch you need to checkout the same branches/tags in android and android/tools-base git repositories.
 * Open the project.
