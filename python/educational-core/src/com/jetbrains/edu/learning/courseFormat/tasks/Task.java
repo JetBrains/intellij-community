@@ -105,6 +105,12 @@ public abstract class Task implements StudyItem {
     return testsText;
   }
 
+  @SuppressWarnings("unused")
+  //used for deserialization
+  public void setTestsText(Map<String, String> testsText) {
+    this.testsText = testsText;
+  }
+
   public Map<String, String> getTaskTexts() {
     return taskTexts;
   }
