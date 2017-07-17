@@ -143,7 +143,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void checkInnerRanges() {
-    List<Range> ranges = myTracker.getRangesInner();
+    List<Range> ranges = myTracker.getRanges();
 
     for (Range range : ranges) {
       List<Range.InnerRange> innerRanges = range.getInnerRanges();

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,14 +29,12 @@ public class Range {
   // (2,3) - modified 2nd line
   // (2,2) - empty range between 1 and 2 lines
   // index of first line is 0
-  private int myLine1;
-  private int myLine2;
-  private int myVcsLine1;
-  private int myVcsLine2;
+  private final int myLine1;
+  private final int myLine2;
+  private final int myVcsLine1;
+  private final int myVcsLine2;
 
   @Nullable private final List<InnerRange> myInnerRanges;
-
-  @Nullable private RangeHighlighter myRangeHighlighter;
 
   public Range(@NotNull Range range) {
     this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2());
@@ -93,16 +90,6 @@ public class Range {
     return MODIFIED;
   }
 
-  public void shift(int shift) {
-    myLine1 += shift;
-    myLine2 += shift;
-  }
-
-  public void vcsShift(int shift) {
-    myVcsLine1 += shift;
-    myVcsLine2 += shift;
-  }
-
   @Nullable
   public List<InnerRange> getInnerRanges() {
     return myInnerRanges;
@@ -122,15 +109,6 @@ public class Range {
 
   public int getVcsLine2() {
     return myVcsLine2;
-  }
-
-  public void setHighlighter(@Nullable RangeHighlighter highlighter) {
-    myRangeHighlighter = highlighter;
-  }
-
-  @Nullable
-  public RangeHighlighter getHighlighter() {
-    return myRangeHighlighter;
   }
 
   public static class InnerRange {

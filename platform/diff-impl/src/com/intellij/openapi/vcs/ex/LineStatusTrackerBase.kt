@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -36,7 +37,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.FilesTooBigForDiffException
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledWithWriteLock
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 abstract class LineStatusTrackerBase {
@@ -62,11 +62,11 @@ abstract class LineStatusTrackerBase {
   private var isAnathemaThrown: Boolean = false
   private var isReleased: Boolean = false
 
-  private var myRanges: List<Range> = emptyList()
+  private var myRanges: List<RangeImpl> = emptyList()
 
   // operation delayed till the end of write action
-  private val toBeDestroyedRanges = ContainerUtil.newIdentityTroveSet<Range>()
-  private val toBeInstalledRanges = ContainerUtil.newIdentityTroveSet<Range>()
+  private val toBeDestroyedRanges = ContainerUtil.newIdentityTroveSet<RangeImpl>()
+  private val toBeInstalledRanges = ContainerUtil.newIdentityTroveSet<RangeImpl>()
 
   private var dirtyRange: DirtyRange? = null
 
@@ -135,7 +135,7 @@ abstract class LineStatusTrackerBase {
     synchronized(LOCK) {
       destroyRanges()
       try {
-        myRanges = RangesBuilder.createRanges(document, vcsDocument, isDetectWhitespaceChangedLines())
+        myRanges = RangesBuilder.createRanges(document, vcsDocument, isDetectWhitespaceChangedLines()).map(::RangeImpl)
         for (range in myRanges) {
           installHighlighter(range)
         }
@@ -179,7 +179,7 @@ abstract class LineStatusTrackerBase {
   }
 
   @CalledInAwt
-  private fun installHighlighter(range: Range) {
+  private fun installHighlighter(range: RangeImpl) {
     application.assertIsDispatchThread()
     if (range.highlighter != null) {
       LOG.error("Multiple highlighters registered for the same Range")
@@ -187,7 +187,7 @@ abstract class LineStatusTrackerBase {
     }
 
     try {
-      val highlighter = renderer.createHighlighter(range)
+      val highlighter = renderer.createHighlighter(range.toRange())
       range.highlighter = highlighter
     }
     catch (e: Exception) {
@@ -196,7 +196,7 @@ abstract class LineStatusTrackerBase {
   }
 
   @CalledInAwt
-  private fun disposeHighlighter(range: Range) {
+  private fun disposeHighlighter(range: RangeImpl) {
     try {
       val highlighter = range.highlighter
       if (highlighter != null) {
@@ -257,13 +257,10 @@ abstract class LineStatusTrackerBase {
 
     val result = ArrayList<Range>(myRanges.size)
     for (range in myRanges) {
-      result.add(Range(range))
+      result.add(range.toRange())
     }
     return result
   }
-
-  @TestOnly
-  fun getRangesInner(): List<Range> = myRanges
 
   @CalledInAwt
   fun startBulkUpdate() {
@@ -438,14 +435,14 @@ abstract class LineStatusTrackerBase {
     var beforeChangedLine2 = beforeChangedLine2
     LOG.assertTrue(!isReleased)
 
-    val rangesBeforeChange = ArrayList<Range>()
-    val rangesAfterChange = ArrayList<Range>()
-    val changedRanges = ArrayList<Range>()
+    val rangesBeforeChange = ArrayList<RangeImpl>()
+    val rangesAfterChange = ArrayList<RangeImpl>()
+    val changedRanges = ArrayList<RangeImpl>()
 
     sortRanges(beforeChangedLine1, beforeChangedLine2, linesShift, rangesBeforeChange, changedRanges, rangesAfterChange)
 
     val firstChangedRange = ContainerUtil.getFirstItem(changedRanges)
-    val lastChangedRange = ContainerUtil.getLastItem<Range, List<Range>>(changedRanges)
+    val lastChangedRange = ContainerUtil.getLastItem<RangeImpl, List<RangeImpl>>(changedRanges)
 
     if (firstChangedRange != null && firstChangedRange.line1 < beforeChangedLine1) {
       beforeChangedLine1 = firstChangedRange.line1
@@ -462,9 +459,9 @@ abstract class LineStatusTrackerBase {
                              beforeChangedLine2: Int,
                              linesShift: Int, // before -> after
                              beforeTotalLines: Int,
-                             rangesBefore: List<Range>,
-                             changedRanges: List<Range>,
-                             rangesAfter: List<Range>) {
+                             rangesBefore: List<RangeImpl>,
+                             changedRanges: List<RangeImpl>,
+                             rangesAfter: List<RangeImpl>) {
     try {
       val vcsTotalLines = getLineCount(vcsDocument)
 
@@ -483,7 +480,7 @@ abstract class LineStatusTrackerBase {
       shiftRanges(rangesAfter, linesShift)
 
       if (changedRanges != newChangedRanges) {
-        val newRanges = ArrayList<Range>(rangesBefore.size + newChangedRanges.size + rangesAfter.size)
+        val newRanges = ArrayList<RangeImpl>(rangesBefore.size + newChangedRanges.size + rangesAfter.size)
         newRanges.addAll(rangesBefore)
         newRanges.addAll(newChangedRanges)
         newRanges.addAll(rangesAfter)
@@ -505,33 +502,33 @@ abstract class LineStatusTrackerBase {
     }
   }
 
-  private fun getVcsLine1(range: Range?, line: Int): Int {
+  private fun getVcsLine1(range: RangeImpl?, line: Int): Int {
     return if (range == null) line else line + range.vcsLine2 - range.line2
   }
 
-  private fun getVcsLine2(range: Range?, line: Int, totalLinesBefore: Int, totalLinesAfter: Int): Int {
+  private fun getVcsLine2(range: RangeImpl?, line: Int, totalLinesBefore: Int, totalLinesAfter: Int): Int {
     return if (range == null) totalLinesAfter - totalLinesBefore + line else line + range.vcsLine1 - range.line1
   }
 
   @Throws(FilesTooBigForDiffException::class)
-  private fun getNewChangedRanges(changedLine1: Int, changedLine2: Int, vcsLine1: Int, vcsLine2: Int): List<Range> {
+  private fun getNewChangedRanges(changedLine1: Int, changedLine2: Int, vcsLine1: Int, vcsLine2: Int): List<RangeImpl> {
     if (changedLine1 == changedLine2 && vcsLine1 == vcsLine2) {
       return emptyList()
     }
     if (changedLine1 == changedLine2) {
-      return listOf(Range(changedLine1, changedLine2, vcsLine1, vcsLine2))
+      return listOf(RangeImpl(changedLine1, changedLine2, vcsLine1, vcsLine2, null))
     }
     if (vcsLine1 == vcsLine2) {
-      return listOf(Range(changedLine1, changedLine2, vcsLine1, vcsLine2))
+      return listOf(RangeImpl(changedLine1, changedLine2, vcsLine1, vcsLine2, null))
     }
 
     val lines = DiffUtil.getLines(document, changedLine1, changedLine2)
     val vcsLines = DiffUtil.getLines(vcsDocument, vcsLine1, vcsLine2)
 
-    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, isDetectWhitespaceChangedLines())
+    return RangesBuilder.createRanges(lines, vcsLines, changedLine1, vcsLine1, isDetectWhitespaceChangedLines()).map(::RangeImpl)
   }
 
-  private fun shiftRanges(rangesAfterChange: List<Range>, shift: Int) {
+  private fun shiftRanges(rangesAfterChange: List<RangeImpl>, shift: Int) {
     for (range in rangesAfterChange) {
       range.shift(shift)
     }
@@ -540,9 +537,9 @@ abstract class LineStatusTrackerBase {
   private fun sortRanges(beforeChangedLine1: Int,
                          beforeChangedLine2: Int,
                          linesShift: Int,
-                         rangesBeforeChange: MutableList<Range>,
-                         changedRanges: MutableList<Range>,
-                         rangesAfterChange: MutableList<Range>) {
+                         rangesBeforeChange: MutableList<RangeImpl>,
+                         changedRanges: MutableList<RangeImpl>,
+                         rangesAfterChange: MutableList<RangeImpl>) {
     var lastBefore = -1
     var firstAfter = myRanges.size
     for (i in myRanges.indices) {
@@ -611,21 +608,11 @@ abstract class LineStatusTrackerBase {
   }
 
   fun getNextRange(range: Range): Range? {
-    synchronized(LOCK) {
-      if (!tryValidate()) return null
-      val index = myRanges.indexOf(range)
-      if (index == myRanges.size - 1) return null
-      return myRanges[index + 1]
-    }
+    return getNextRange(range.line1)
   }
 
   fun getPrevRange(range: Range): Range? {
-    synchronized(LOCK) {
-      if (!tryValidate()) return null
-      val index = myRanges.indexOf(range)
-      if (index <= 0) return null
-      return myRanges[index - 1]
-    }
+    return getPrevRange(range.line1)
   }
 
   fun getNextRange(line: Int): Range? {
@@ -633,7 +620,7 @@ abstract class LineStatusTrackerBase {
       if (!tryValidate()) return null
       for (range in myRanges) {
         if (line < range.line2 && !range.isSelectedByLine(line)) {
-          return range
+          return range.toRange()
         }
       }
       return null
@@ -646,7 +633,7 @@ abstract class LineStatusTrackerBase {
       for (i in myRanges.indices.reversed()) {
         val range = myRanges[i]
         if (line > range.line1 && !range.isSelectedByLine(line)) {
-          return range
+          return range.toRange()
         }
       }
       return null
@@ -657,7 +644,7 @@ abstract class LineStatusTrackerBase {
     synchronized(LOCK) {
       if (!tryValidate()) return null
       for (range in myRanges) {
-        if (range.isSelectedByLine(line)) return range
+        if (range.isSelectedByLine(line)) return range.toRange()
       }
       return null
     }
@@ -669,12 +656,13 @@ abstract class LineStatusTrackerBase {
 
   @CalledWithWriteLock
   fun rollbackChanges(range: Range) {
-    rollbackChanges(listOf(range))
+    val rangeImpl = myRanges.find { it.sameAs(range) }
+    if (rangeImpl != null) rollbackChanges(listOf(rangeImpl))
   }
 
   @CalledWithWriteLock
   fun rollbackChanges(lines: BitSet) {
-    val toRollback = ArrayList<Range>()
+    val toRollback = ArrayList<RangeImpl>()
     for (range in myRanges) {
       val check = DiffUtil.isSelectedByLine(lines, range.line1, range.line2)
       if (check) {
@@ -689,10 +677,10 @@ abstract class LineStatusTrackerBase {
    * @param ranges - sorted list of ranges to rollback
    */
   @CalledWithWriteLock
-  private fun rollbackChanges(ranges: List<Range>) {
+  private fun rollbackChanges(ranges: List<RangeImpl>) {
     runBulkRollback {
-      var first: Range? = null
-      var last: Range? = null
+      var first: RangeImpl? = null
+      var last: RangeImpl? = null
 
       var shift = 0
       for (range in ranges) {
@@ -701,9 +689,8 @@ abstract class LineStatusTrackerBase {
         }
         last = range
 
-        val shiftedRange = Range(range)
-        shiftedRange.shift(shift)
-
+        val shiftedRange = Range(range.line1 + shift, range.line2 + shift,
+                                 range.vcsLine1, range.vcsLine2)
         doRollbackRange(shiftedRange)
 
         shift += range.vcsLine2 - range.vcsLine1 - (range.line2 - range.line1)
@@ -828,9 +815,54 @@ abstract class LineStatusTrackerBase {
 
   private class DirtyRange(val line1: Int, val line2: Int, val lineShift: Int, val beforeTotalLines: Int)
 
+  private class RangeImpl(
+    var line1: Int,
+    var line2: Int,
+    var vcsLine1: Int,
+    var vcsLine2: Int,
+
+    var innerRanges: List<Range.InnerRange>?,
+    var highlighter: RangeHighlighter? = null
+  ) {
+    constructor(range: Range) : this(range.line1, range.line2, range.vcsLine1, range.vcsLine2, range.innerRanges)
+
+    fun toRange(): Range = Range(line1, line2, vcsLine1, vcsLine2, innerRanges)
+    fun sameAs(range: Range) = line1 == range.line1 && line2 == range.line2 &&
+                               vcsLine1 == range.vcsLine1 && vcsLine2 == range.vcsLine2
+
+    fun isSelectedByLine(line: Int): Boolean = DiffUtil.isSelectedByLine(line, line1, line2)
+
+    fun shift(shift: Int) {
+      line1 += shift
+      line2 += shift
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other?.javaClass != javaClass) return false
+
+      other as RangeImpl
+
+      if (line1 != other.line1) return false
+      if (line2 != other.line2) return false
+      if (vcsLine1 != other.vcsLine1) return false
+      if (vcsLine2 != other.vcsLine2) return false
+      if (innerRanges != other.innerRanges) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = line1
+      result = 31 * result + line2
+      result = 31 * result + vcsLine1
+      result = 31 * result + vcsLine2
+      result = 31 * result + (innerRanges?.hashCode() ?: 0)
+      return result
+    }
+  }
+
   companion object {
     protected val LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker")
-
-    private fun Range.isSelectedByLine(line: Int): Boolean = DiffUtil.isSelectedByLine(line, line1, line2)
   }
 }

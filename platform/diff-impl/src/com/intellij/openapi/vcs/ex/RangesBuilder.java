@@ -140,9 +140,8 @@ public class RangesBuilder {
       if (range.isEmpty()) return;
 
       List<InnerRange> innerRanges = calcInnerRanges(range);
-      Range newRange = new Range(range.start2, range.end2, range.start1, range.end1, innerRanges);
-      newRange.shift(myCurrentShift);
-      newRange.vcsShift(myVcsShift);
+      Range newRange = new Range(range.start2 + myCurrentShift, range.end2 + myCurrentShift,
+                                 range.start1 + myVcsShift, range.end1 + myVcsShift, innerRanges);
 
       myResult.add(newRange);
     }
