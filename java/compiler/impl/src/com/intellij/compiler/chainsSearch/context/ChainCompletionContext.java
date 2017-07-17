@@ -28,10 +28,12 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.LightRef;
@@ -183,11 +185,27 @@ public class ChainCompletionContext {
       target = target.toIterators();
     }
 
-    ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement);
+    Set<? extends PsiVariable> excludedVariables = getEnclosingLocalVariables(containingElement);
+    ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement, excludedVariables);
     PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());
     List<PsiNamedElement> contextElements = processor.getContextElements();
 
     return new ChainCompletionContext(target, contextElements, containingElement);
+  }
+
+  @NotNull
+  private static Set<? extends PsiVariable> getEnclosingLocalVariables(@NotNull PsiElement place) {
+    Set<PsiLocalVariable> result = new THashSet<>();
+    if (place instanceof PsiLocalVariable) result.add((PsiLocalVariable)place);
+    PsiElement parent = place.getParent();
+    while (parent != null) {
+      if (parent instanceof PsiFileSystemItem) break;
+      if (parent instanceof PsiLocalVariable && PsiTreeUtil.isAncestor(((PsiLocalVariable)parent).getInitializer(), place, false)) {
+        result.add((PsiLocalVariable)parent);
+      }
+      parent = parent.getParent();
+    }
+    return result;
   }
 
   private static class ContextProcessor extends BaseScopeProcessor implements ElementClassHint {
@@ -195,13 +213,16 @@ public class ChainCompletionContext {
     private final PsiVariable myCompletionVariable;
     private final PsiResolveHelper myResolveHelper;
     private final PsiElement myPlace;
+    private final Set<? extends PsiVariable> myExcludedVariables;
 
     private ContextProcessor(@Nullable PsiVariable variable,
                              @NotNull Project project,
-                             @NotNull PsiElement place) {
+                             @NotNull PsiElement place,
+                             @NotNull Set<? extends PsiVariable> excludedVariables) {
       myCompletionVariable = variable;
       myResolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
       myPlace = place;
+      myExcludedVariables = excludedVariables;
     }
 
     @Override
@@ -215,6 +236,7 @@ public class ChainCompletionContext {
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if ((!(element instanceof PsiMethod) || PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) &&
+          (!(element instanceof PsiVariable) || !myExcludedVariables.contains(element)) &&
           (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
         PsiType type = getType(element);
         if (type == null) {

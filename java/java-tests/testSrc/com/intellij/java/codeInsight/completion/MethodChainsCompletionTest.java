@@ -235,6 +235,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     doTestRendering();
   }
 
+  public void testDoNotSuggestUninitializedVariable() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("psiElement.getProject", element.getLookupString());
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int chainSize,
