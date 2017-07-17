@@ -96,8 +96,8 @@ public class PyDefUseUtil {
     if (element instanceof PyImportElement) {
       return ((PyImportElement) element).getVisibleName();
     }
-    if (element instanceof PyReferenceExpression) {
-      final QualifiedName qname = ((PyReferenceExpression)element).asQualifiedName();
+    if (element instanceof PyReferenceExpression || element instanceof PyTargetExpression) {
+      final QualifiedName qname = ((PyQualifiedExpression)element).asQualifiedName();
       if (qname != null) {
         return qname.toString();
       }
