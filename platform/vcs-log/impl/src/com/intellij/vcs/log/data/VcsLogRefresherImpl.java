@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -92,11 +91,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+    LOG.debug("Starting a background task...");
     ProgressIndicator indicator = myProgress.createProgressIndicator();
-    UIUtil.invokeLaterIfNeeded(() -> {
-      LOG.debug("Starting a background task...");
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, indicator);
-    });
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, indicator);
     return indicator;
   }
 
