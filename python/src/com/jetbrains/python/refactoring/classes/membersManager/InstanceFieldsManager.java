@@ -136,7 +136,7 @@ class InstanceFieldsManager extends FieldsManager {
     @Override
     protected boolean applyNotNull(@NotNull final PyTargetExpression input) {
       final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(input.getProject(), null);
-      final PyResolveContext context = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+      final PyResolveContext context = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
       return input.getReference(context).resolve() instanceof PyTargetExpression;
     }
   }
