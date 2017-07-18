@@ -224,7 +224,7 @@ public class ExpectedHighlightingData {
       endOffset -= endTag.length();
 
       LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<>(descr), null,
+                                                                 new ConstantFunction<>(StringUtil.unescapeStringCharacters(descr)), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
