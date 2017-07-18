@@ -131,8 +131,10 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     final Document doc = manager.getDocument(psiFile);
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      doc.replaceString(0, doc.getTextLength(), text);
-      manager.commitDocument(doc);
+      if (doc != null) {
+        doc.replaceString(0, doc.getTextLength(), text);
+        manager.commitDocument(doc);
+      }
       try {
         CodeStyleManager.getInstance(project).reformat(psiFile);
       }
