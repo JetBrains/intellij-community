@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -140,36 +141,57 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
    */
   @Nullable
   static PsiExpression extractAddend(PsiAssignmentExpression assignment) {
-      if(JavaTokenType.PLUSEQ.equals(assignment.getOperationTokenType())) {
-        return assignment.getRExpression();
-      } else if(JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
-        if (assignment.getRExpression() instanceof PsiBinaryExpression) {
-          PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
-          if(JavaTokenType.PLUS.equals(binOp.getOperationTokenType())) {
-            if(sameReference(binOp.getLOperand(), assignment.getLExpression())) {
-              return binOp.getROperand();
-            }
-            if(sameReference(binOp.getROperand(), assignment.getLExpression())) {
-              return binOp.getLOperand();
-            }
-          }
-        }
-      }
-      return null;
+    return extractOperand(assignment, JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
   }
 
   @Nullable
-  static PsiVariable extractAccumulator(PsiAssignmentExpression assignment) {
+  static PsiExpression extractMultiplier(PsiAssignmentExpression assignment) {
+    return extractOperand(assignment, JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
+  }
+
+  @Nullable
+  private static PsiExpression extractOperand(PsiAssignmentExpression assignment, IElementType opWithEq, IElementType op) {
+    if(opWithEq.equals(assignment.getOperationTokenType())) {
+      return assignment.getRExpression();
+    } else if(JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
+      if (assignment.getRExpression() instanceof PsiBinaryExpression) {
+        PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
+        if(op.equals(binOp.getOperationTokenType())) {
+          if(sameReference(binOp.getLOperand(), assignment.getLExpression())) {
+            return binOp.getROperand();
+          }
+          if(sameReference(binOp.getROperand(), assignment.getLExpression())) {
+            return binOp.getLOperand();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+
+  @Nullable
+  static PsiVariable extractSumAccumulator(PsiAssignmentExpression assignment) {
+    return extractAccumulator(assignment, JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
+  }
+
+  @Nullable
+  static PsiVariable extractMultiplyAccumulator(PsiAssignmentExpression assignment) {
+    return extractAccumulator(assignment, JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
+  }
+
+  @Nullable
+  private static PsiVariable extractAccumulator(PsiAssignmentExpression assignment, IElementType opWithEq, IElementType op) {
     PsiReferenceExpression lExpr = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
     if(lExpr == null) return null;
     PsiVariable var = tryCast(lExpr.resolve(), PsiVariable.class);
     if(var == null) return null;
-    if(JavaTokenType.PLUSEQ.equals(assignment.getOperationTokenType())) {
+    if(opWithEq.equals(assignment.getOperationTokenType())) {
       return var;
     } else if(JavaTokenType.EQ.equals(assignment.getOperationTokenType())) {
       if (assignment.getRExpression() instanceof PsiBinaryExpression) {
         PsiBinaryExpression binOp = (PsiBinaryExpression)assignment.getRExpression();
-        if(JavaTokenType.PLUS.equals(binOp.getOperationTokenType())) {
+        if(op.equals(binOp.getOperationTokenType())) {
           PsiExpression left = binOp.getLOperand();
           PsiExpression right = binOp.getROperand();
           if (sameReference(left, lExpr) || sameReference(right, lExpr)) {
@@ -224,13 +246,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   @Nullable
-  private static PsiVariable getAccumulatedVariable(TerminalBlock tb, List<PsiVariable> variables) {
+  private static PsiVariable getAccumulatedSumVariable(TerminalBlock tb, List<PsiVariable> variables) {
     // have only one non-final variable
     if(variables.size() != 1) return null;
 
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if(assignment == null) return null;
-    PsiVariable var = extractAccumulator(assignment);
+    PsiVariable var = extractSumAccumulator(assignment);
 
     // the referred variable is the same as non-final variable
     if(var == null || !variables.contains(var)) return null;
@@ -241,6 +263,27 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiExpression addend = extractAddend(assignment);
     LOG.assertTrue(addend != null);
     if(VariableAccessUtils.variableIsUsed(var, addend)) return null;
+    return var;
+  }
+
+  @Nullable
+  private static PsiVariable getAccumulatedMultiplyVariable(TerminalBlock tb, List<PsiVariable> variables) {
+    // have only one non-final variable
+    if(variables.size() != 1) return null;
+
+    PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
+    if(assignment == null) return null;
+    PsiVariable var = extractMultiplyAccumulator(assignment);
+
+    // the referred variable is the same as non-final variable
+    if(var == null || !variables.contains(var)) return null;
+    if (!(var.getType() instanceof PsiPrimitiveType) || var.getType().equalsToText("float")) return null;
+
+    // the referred variable is not used in intermediate operations
+    if(tb.isReferencedInOperations(var)) return null;
+    PsiExpression multiplier = extractMultiplier(assignment);
+    LOG.assertTrue(multiplier != null);
+    if(VariableAccessUtils.variableIsUsed(var, multiplier)) return null;
     return var;
   }
 
@@ -463,8 +506,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (nonFinalVariables.isEmpty() && extractArray(tb) != null) {
         return new ToArrayMigration(true);
       }
-      if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
+      if (getAccumulatedSumVariable(tb, nonFinalVariables) != null) {
         return new SumMigration(true);
+      }
+      if (getAccumulatedMultiplyVariable(tb, nonFinalVariables) != null) {
+        return new MultiplyMigration(true);
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
       if (exitPoints == null) return null;

@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -62,6 +64,47 @@ abstract class BaseStreamApiMigration {
       }
     }
     return loopStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + streamText + ";", loopStatement));
+  }
+
+  static PsiElement replaceWithNumericMultiplication(PsiLoopStatement loopStatement,
+                                                     PsiVariable var,
+                                                     String streamText,
+                                                     PsiType expressionType) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
+    restoreComments(loopStatement, loopStatement.getBody());
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
+
+    PsiExpression initializer = var.getInitializer();
+
+    String finalExpressionText;
+    boolean parenthesisRequired = false;
+    if (initializer != null) {
+      if (ExpressionUtils.isOne(initializer)) {
+        finalExpressionText = streamText;
+      }
+      else {
+        parenthesisRequired = true;
+        finalExpressionText = ParenthesesUtils.getText(initializer, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE) + " * " + streamText;
+      }
+    }
+    else {
+      finalExpressionText = streamText;
+    }
+    if (status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
+      PsiType type = var.getType();
+      String replacement;
+      if (type.equals(expressionType)) {
+        replacement = finalExpressionText;
+      }
+      else {
+        if(parenthesisRequired) {
+          finalExpressionText = "(" + finalExpressionText + ")";
+        }
+        replacement = "(" + type.getCanonicalText() + ") " + finalExpressionText;
+      }
+      return replaceInitializer(loopStatement, var, initializer, replacement, status);
+    }
+    return loopStatement.replace(elementFactory.createStatementFromText(var.getName() + "*=" + finalExpressionText + ";", loopStatement));
   }
 
   static PsiElement replaceInitializer(PsiLoopStatement loopStatement,

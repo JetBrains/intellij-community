@@ -33,7 +33,7 @@ class SumMigration extends BaseStreamApiMigration {
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return null;
-    PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment);
+    PsiVariable var = StreamApiMigrationInspection.extractSumAccumulator(assignment);
     if (var == null) return null;
 
     PsiExpression addend = StreamApiMigrationInspection.extractAddend(assignment);
