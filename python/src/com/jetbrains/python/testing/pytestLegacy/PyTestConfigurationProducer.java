@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.webcore.packaging.PackageVersionComparator;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyPackageUtil;
@@ -65,7 +66,7 @@ public class PyTestConfigurationProducer extends PythonTestLegacyConfigurationPr
       return false;
     }
     if (!(TestRunnerService.getInstance(module).getProjectConfiguration().equals(
-      PythonTestConfigurationsModel.PY_TEST_NAME))) {
+      PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)))) {
       return false;
     }
 

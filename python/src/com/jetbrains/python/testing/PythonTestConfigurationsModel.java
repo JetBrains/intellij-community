@@ -25,8 +25,6 @@ import java.util.List;
 
 public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");
-  public static final String PYTHONS_NOSETEST_NAME = PyBundle.message("runcfg.nosetests.display_name");
-  public static final String PY_TEST_NAME = PyBundle.message("runcfg.pytest.display_name");
 
   private String myTestRunner;
   private Module myModule;
