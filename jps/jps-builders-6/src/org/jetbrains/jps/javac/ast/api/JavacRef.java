@@ -153,7 +153,7 @@ public interface JavacRef {
     public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache) {
       if (qualifier != null) {
         TypeMirror type = qualifier.asType();
-        if (type == null || type.getKind() == TypeKind.NONE || type.getKind() == TypeKind.OTHER) {
+        if (!isValidType(type)) {
           return null;
         }
       }
@@ -198,10 +198,14 @@ public interface JavacRef {
       Element enclosingElement = element.getEnclosingElement();
       if (enclosingElement == null) return false;
       TypeMirror type = enclosingElement.asType();
-      if (type == null || type.getKind() == TypeKind.NONE || type.getKind() == TypeKind.OTHER) {
+      if (!isValidType(type)) {
         return false;
       }
       return true;
+    }
+
+    private static boolean isValidType(TypeMirror type) {
+      return type != null && type.getKind() != TypeKind.NONE && type.getKind() != TypeKind.OTHER;
     }
   }
 
