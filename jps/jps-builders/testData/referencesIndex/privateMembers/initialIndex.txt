@@ -3,8 +3,6 @@ java.lang.Object -> PrivateMembers PrivateMembers$PrivateInnerClass
 
 Backward References:
 PrivateMembers in PrivateMembers occurrences = 1
-PrivateMembers.<init>(0) in PrivateMembers occurrences = 1
-java.lang.Object.<init>(0) in PrivateMembers occurrences = 2
 
 Class Definitions:
 PrivateMembers in PrivateMembers

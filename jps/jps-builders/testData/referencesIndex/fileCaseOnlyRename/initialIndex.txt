@@ -3,10 +3,8 @@ java.lang.Object -> Inner
 
 Backward References:
 Inner in Bar occurrences = 1
-Inner.<init>(0) in Bar occurrences = 1
 Inner.m(0) in Bar occurrences = 1
 java.io.PrintStream.println(1) in Bar occurrences = 1
-java.lang.Object.<init>(0) in Bar occurrences = 1
 java.lang.System in Bar occurrences = 1
 java.lang.System.out in Bar occurrences = 1
 

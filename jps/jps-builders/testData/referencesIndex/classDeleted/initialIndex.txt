@@ -5,10 +5,7 @@ java.lang.Runnable -> Foo$Inner
 Backward References:
 Foo in Foo occurrences = 1
 Foo$Inner in Foo occurrences = 1
-Foo$Inner.<init>(0) in Foo occurrences = 1
 Foo$Inner.run(0) in Foo occurrences = 1
-Foo.<init>(0) in Foo occurrences = 1
-java.lang.Object.<init>(0) in Foo occurrences = 2
 java.lang.Override in Foo occurrences = 1
 java.lang.Runnable in Foo occurrences = 1
 
