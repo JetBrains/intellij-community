@@ -16,6 +16,9 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.propertyBased.InvokeCompletion;
+import com.intellij.testFramework.propertyBased.MadTestingAction;
+import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.SystemProperties;
 import slowCheck.CheckerSettings;
 import slowCheck.Generator;
@@ -32,7 +35,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
     PropertyChecker.forAll(settings.withIterationCount(20), psiJavaFiles(), file -> {
       System.out.println("for file: " + file.getVirtualFile().getPresentableUrl());
       PropertyChecker.forAll(settings.withIterationCount(10), Generator.listsOf(InvokeCompletion.completions(file, new JavaCompletionPolicy())), list -> {
-        changeAndRevert(myProject, () -> MadTestingAction.runActions(list));
+        MadTestingUtil.changeAndRevert(myProject, () -> MadTestingAction.runActions(list));
         return true;
       });
       return true;

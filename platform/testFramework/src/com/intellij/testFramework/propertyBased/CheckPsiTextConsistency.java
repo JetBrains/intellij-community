@@ -13,34 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 
 /**
  * @author peter
  */
-abstract class FilePsiMutation implements MadTestingAction {
-  protected final PsiFile myFile;
+public class CheckPsiTextConsistency implements MadTestingAction {
+  private final PsiFile myFile;
 
-  FilePsiMutation(PsiFile file) {
+  public CheckPsiTextConsistency(PsiFile file) {
     myFile = file;
   }
 
   @Override
-  public String toString() {
-    return getClass().getSimpleName() + "[" + myFile.getVirtualFile().getPath() + "]";
-  }
-
-  @Override
   public void performAction() {
-    PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myFile.getViewProvider().getDocument());
-    WriteCommandAction.runWriteCommandAction(myFile.getProject(), this::performMutation);
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
+    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkFileStructure);
   }
-
-  protected abstract void performMutation();
 }

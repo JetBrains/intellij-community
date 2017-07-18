@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -48,7 +49,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-class InvokeCompletion extends ActionOnRange {
+public class InvokeCompletion extends ActionOnRange {
   private final int myItemIndexRaw;
   private LookupElement mySelectedItem;
   private final char myCompletionChar;
@@ -76,6 +77,7 @@ class InvokeCompletion extends ActionOnRange {
     Project project = myFile.getProject();
     Editor editor =
       FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), true);
+    assert editor != null;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     int offset = getStartOffset();
@@ -83,7 +85,7 @@ class InvokeCompletion extends ActionOnRange {
 
     editor.getCaretModel().moveToOffset(offset);
     
-    AbstractApplyAndRevertTestCase.restrictChangesToDocument(editor.getDocument(), () -> {
+    MadTestingUtil.restrictChangesToDocument(editor.getDocument(), () -> {
       Disposable raiseCompletionLimit = Disposer.newDisposable();
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
@@ -138,9 +140,11 @@ class InvokeCompletion extends ActionOnRange {
   }
 
   @NotNull
-  static Generator<InvokeCompletion> completions(PsiFile psiFile, CompletionPolicy policy) {
+  public static Generator<InvokeCompletion> completions(PsiFile psiFile, CompletionPolicy policy) {
     return Generator.from(data -> {
-      int offset = data.drawInt(IntDistribution.uniform(0, psiFile.getViewProvider().getDocument().getTextLength()));
+      Document document = psiFile.getViewProvider().getDocument();
+      assert document != null;
+      int offset = data.drawInt(IntDistribution.uniform(0, document.getTextLength()));
       int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
       char c = Generator.sampledFrom('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
       return new InvokeCompletion(psiFile, offset, itemIndex, c, policy);

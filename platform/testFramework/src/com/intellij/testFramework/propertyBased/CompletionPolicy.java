@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,15 +24,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public abstract class CompletionPolicy {
+public class CompletionPolicy {
 
   /**
    * @return the lookup string of an element that should be suggested in the given position
    */
   public String getExpectedVariant(Editor editor, PsiFile file) {
     PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
-    PsiElement refTarget = ref == null ? null : ref.resolve();
     if (leaf == null) {
       return null;
     }
@@ -39,10 +38,15 @@ public abstract class CompletionPolicy {
     if (leafText.isEmpty() ||
         !Character.isLetter(leafText.charAt(0)) ||
         leaf instanceof PsiWhiteSpace ||
-        PsiTreeUtil.getParentOfType(leaf, PsiComment.class, false) != null) {
+        PsiTreeUtil.getNonStrictParentOfType(leaf, PsiComment.class) != null) {
       return null;
     }
+
+    if (isDeclarationName(editor, file, leaf)) return null;
+
+    PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
     if (ref != null) {
+      PsiElement refTarget = ref.resolve();
       if (refTarget == null || !shouldSuggestReferenceText(ref)) return null;
     }
     else {
@@ -53,6 +57,12 @@ public abstract class CompletionPolicy {
     }
     return leafText;
 
+  }
+
+  private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf) {
+    PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    if (target != null) target = target.getNavigationElement();
+    return target != null && target.getContainingFile() == file && target.getTextOffset() == leaf.getTextRange().getStartOffset();
   }
 
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {

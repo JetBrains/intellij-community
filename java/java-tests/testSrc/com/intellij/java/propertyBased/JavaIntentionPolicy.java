@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
 
 /**

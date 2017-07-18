@@ -17,6 +17,7 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.propertyBased.FilePsiMutation;
 
 import java.util.Objects;
 

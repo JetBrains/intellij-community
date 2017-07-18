@@ -18,6 +18,7 @@ package com.intellij.java.propertyBased;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.propertyBased.CompletionPolicy;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,7 +43,6 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   @Override
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
-    if (leaf instanceof PsiIdentifier) return false; // name of some element
     if (leaf instanceof PsiKeyword) {
       if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
           PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getType()) == null) {

@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
 
 import java.util.List;
@@ -27,11 +26,11 @@ import java.util.List;
 /**
  * @author peter
  */
-class FileWithActions {
+public class FileWithActions {
   private final PsiFile myFile;
   private final List<? extends MadTestingAction> myActions;
 
-  FileWithActions(PsiFile file, List<? extends MadTestingAction> actions) {
+  public FileWithActions(PsiFile file, List<? extends MadTestingAction> actions) {
     myFile = file;
     myActions = actions;
   }
@@ -45,18 +44,11 @@ class FileWithActions {
     return myFile.getVirtualFile().getPath() + "[" + StringUtil.join(myActions, a -> "\n  " + a, "") + "\n]";
   }
 
-  boolean runActions() {
+  public boolean runActions() {
     Project project = myFile.getProject();
-    new RunAll(() -> AbstractApplyAndRevertTestCase.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
+    new RunAll(() -> MadTestingUtil.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
                () -> WriteAction.run(() -> myFile.getVirtualFile().delete(this))).run();
     return true;
   }
 
-  boolean checkIncrementalReparse() {
-    Project project = myFile.getProject();
-    new RunAll(() -> AbstractApplyAndRevertTestCase.changeAndRevert(project, () -> MadTestingAction.runActions(myActions)),
-               () -> PsiTestUtil.checkPsiStructureWithCommit(getPsiFile(), PsiTestUtil::checkFileStructure),
-               () -> WriteAction.run(() -> myFile.getVirtualFile().delete(this))).run();
-    return true;
-  }
 }

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import slowCheck.CheckerSettings;
@@ -37,7 +38,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
   public void setUp() throws Exception {
     super.setUp();
     ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).disableBackgroundCommit(getTestRootDisposable());
-    enableAllInspections(myProject, myProject);
+    MadTestingUtil.enableAllInspections(myProject, myProject);
   }
 
   public void testIntentionsInDifferentFiles() throws Throwable {
@@ -54,7 +55,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
         checkCompiles(myCompilerTester.rebuild());
       }
 
-      changeAndRevert(myProject, () -> {
+      MadTestingUtil.changeAndRevert(myProject, () -> {
         MadTestingAction.runActions(list);
         
         if (tracker.getModificationCount() != startModCount) {
@@ -81,7 +82,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
       });
 
     PropertyChecker.forAll(settings, Generator.listsOf(genActionGroup).map(ContainerUtil::flatten), list -> {
-      changeAndRevert(myProject, () -> {
+      MadTestingUtil.changeAndRevert(myProject, () -> {
         //System.out.println(list);
         MadTestingAction.runActions(list);
       });

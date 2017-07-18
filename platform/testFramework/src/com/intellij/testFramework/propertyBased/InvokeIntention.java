@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -34,7 +34,7 @@ import slowCheck.Generator;
 
 import java.util.List;
 
-class InvokeIntention extends ActionOnRange {
+public class InvokeIntention extends ActionOnRange {
   private final PsiFile myFile;
   private final int myIntentionIndex;
   private final IntentionPolicy myPolicy;
@@ -50,7 +50,7 @@ class InvokeIntention extends ActionOnRange {
   }
 
   @NotNull
-  static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile, @NotNull IntentionPolicy policy) {
+  public static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile, @NotNull IntentionPolicy policy) {
     return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), Generator.integers(0, 100),
                              (offset, index) -> new InvokeIntention(psiFile, offset, index, policy)).noShrink();
   }
@@ -79,7 +79,7 @@ class InvokeIntention extends ActionOnRange {
 
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, myFile, editor, intention.getText());
     if (changedDocument != null) {
-      AbstractApplyAndRevertTestCase.restrictChangesToDocument(changedDocument, r);
+      MadTestingUtil.restrictChangesToDocument(changedDocument, r);
     } else {
       r.run();
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
@@ -26,7 +26,7 @@ import slowCheck.IntDistribution;
 
 import java.util.Objects;
 
-class DeleteRange extends ActionOnRange {
+public class DeleteRange extends ActionOnRange {
   private final PsiFile myFile;
 
   DeleteRange(PsiFile file, int startOffset, int endOffset) {
@@ -35,7 +35,7 @@ class DeleteRange extends ActionOnRange {
     myFile = file;
   }
 
-  static Generator<DeleteRange> psiRangeDeletions(@NotNull PsiFile psiFile) {
+  public static Generator<DeleteRange> psiRangeDeletions(@NotNull PsiFile psiFile) {
     return Generator.from(data -> {
       if (psiFile.getTextLength() == 0) return new DeleteRange(psiFile, 0, 0);
 

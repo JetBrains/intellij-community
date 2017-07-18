@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import slowCheck.Generator;
 
-class InsertString extends ActionOnRange {
+public class InsertString extends ActionOnRange {
   private final PsiFile myFile;
   private final String myToInsert;
 
@@ -31,7 +31,7 @@ class InsertString extends ActionOnRange {
     myFile = file;
   }
 
-  static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {
+  public static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {
     return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), 
                              Generator.stringsOf(Generator.asciiPrintableChars()),
                              (offset, toInsert) -> new InsertString(psiFile, offset, toInsert));

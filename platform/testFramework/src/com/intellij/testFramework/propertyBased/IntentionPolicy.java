@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.codeInsight.intention.IntentionAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-class CheckPsiTextConsistency implements MadTestingAction {
-  private final PsiFile myFile;
-
-  CheckPsiTextConsistency(PsiFile file) {
-    myFile = file;
+public class IntentionPolicy {
+  public boolean mayInvokeIntention(@NotNull IntentionAction action) {
+    return action.startInWriteAction() && !shouldSkipIntention(action.getText());
   }
 
-  @Override
-  public void performAction() {
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkFileStructure);
+  protected boolean shouldSkipIntention(@NotNull String actionText) {
+    return false;
   }
 }

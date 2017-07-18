@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+
+import java.util.List;
 
 /**
  * @author peter
  */
-public class IntentionPolicy {
-  public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    return action.startInWriteAction() && !shouldSkipIntention(action.getText());
-  }
+public interface MadTestingAction {
+  
+  void performAction();
 
-  protected boolean shouldSkipIntention(@NotNull String actionText) {
-    return false;
+  static void runActions(List<? extends MadTestingAction> list) {
+    for (int i = 0; i < list.size(); i++) {
+      MadTestingAction action = list.get(i);
+      if (i > 0 && action == list.get(i - 1)) continue;
+
+      FileDocumentManager.getInstance().saveAllDocuments();
+
+      action.performAction();
+    }
   }
 }

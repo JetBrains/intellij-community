@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.propertyBased;
+package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Editor;
@@ -32,10 +32,10 @@ import java.util.List;
 /**
  * @author peter
  */
-class RehighlightAllEditors implements MadTestingAction {
+public class RehighlightAllEditors implements MadTestingAction {
   private final Project myProject;
 
-  RehighlightAllEditors(Project project) {
+  public RehighlightAllEditors(Project project) {
     myProject = project;
   }
 
