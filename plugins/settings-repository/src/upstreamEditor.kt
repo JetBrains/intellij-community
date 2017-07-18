@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.internal.statistic.ActionsCollector
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -70,6 +71,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
       }
 
       override fun actionPerformed(event: ActionEvent) {
+        ActionsCollector.getInstance().record("Ics." + getValue(Action.NAME))
         val repositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
         var upstreamSet = false
         try {
