@@ -49,6 +49,7 @@ import java.util.List;
 
 public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText {
   private static final String IS_ACTIVE = "Is Active";
+  private static final String INCLUDE_EXCLUDE = "Include/Exclude";
   protected JBTable myTable = null;
   protected FilterTableModel myTableModel = null;
   protected final Project myProject;
@@ -136,7 +137,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
       TableColumn includeColumn = columnModel.getColumn(FilterTableModel.INCLUDE_MARK);
       includeColumn.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
-      TableUtil.setupCheckboxColumn(includeColumn, preferredWidth);
+      TableUtil.setupCheckboxColumn(includeColumn, fontMetrics.stringWidth(INCLUDE_EXCLUDE) + 20);
     }
     TableUtil.setupCheckboxColumn(column, preferredWidth);
     column.setCellRenderer(new EnabledCellRenderer(myTable.getDefaultRenderer(Boolean.class)));
@@ -249,7 +250,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
         return "Pattern";
       }
       if (column == INCLUDE_MARK) {
-        return "Include";
+        return INCLUDE_EXCLUDE;
       }
       return IS_ACTIVE;
     }
