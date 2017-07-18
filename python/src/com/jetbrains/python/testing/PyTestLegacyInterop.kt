@@ -138,7 +138,7 @@ private fun VirtualFile.asPyFile(project: Project): PyFile? {
 class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newConfig: T)
   : JDOMExternalizable {
 
-  private val configManager: LegacyConfigurationManager<*, *>
+  private val configManager: LegacyConfigurationManager<*, *>?
   private val project = newConfig.project
 
   /**
@@ -168,12 +168,17 @@ class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newCo
         configManager = LegacyConfigurationManagerUnit(newConfig)
       }
       else -> {
-        throw IllegalAccessException("Unknown config: $newConfig")
+        configManager = null
       }
     }
   }
 
   override fun readExternal(element: Element) {
+    val configManager = configManager
+    if (configManager == null) {
+      containsLegacyInformation = false
+      return
+    }
     val legacyConfig = configManager.legacyConfig
     if (legacyConfig is RunConfiguration) {
       (legacyConfig as RunConfiguration).readExternal(element)
@@ -190,7 +195,7 @@ class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newCo
 
   override fun writeExternal(element: Element) {
     if (containsLegacyInformation ?: return) {
-      val legacyConfig = configManager.legacyConfig
+      val legacyConfig = configManager?.legacyConfig
       if (legacyConfig is RunConfiguration) {
         (legacyConfig as RunConfiguration).writeExternal(element)
       }
@@ -203,7 +208,7 @@ class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newCo
   fun copyFromLegacyIfNeeded() {
     assert(project.isInitialized, { "Initialized project required" })
     if (containsLegacyInformation ?: return && !(legacyInformationCopiedToNew ?: false) && SwingUtilities.isEventDispatchThread()) {
-        configManager.copyFromLegacy()
+        configManager?.copyFromLegacy()
         legacyInformationCopiedToNew = true
       }
   }
