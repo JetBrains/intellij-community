@@ -1387,7 +1387,8 @@ public class HighlightUtil extends HighlightUtilBase {
       if (ExceptionUtil.isGeneralExceptionType(catchType)) continue;
 
       // collect exceptions which are caught by this type
-      Collection<PsiClassType> caught = ContainerUtil.findAll(thrownTypes, catchType::isAssignableFrom);
+      final Collection<PsiClassType> caught =
+        ContainerUtil.findAll(thrownTypes, type -> catchType.isAssignableFrom(type) || type.isAssignableFrom(catchType));
       if (caught.isEmpty()) continue;
       final Collection<PsiClassType> caughtCopy = ContainerUtil.newHashSet(caught);
 
