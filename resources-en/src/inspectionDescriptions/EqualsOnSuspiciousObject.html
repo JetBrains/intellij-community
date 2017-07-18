@@ -1,11 +1,8 @@
 <html>
 <body>
-<p>This inspection reports when equality check is performed for specific classes like
-  <code>StringBuilder</code> or <code>StringBuffer</code> for which <code>equals()</code> is not
-  redefined. Such call will not compare object contents and is equivalent to the reference
-  equality. If reference equality is intended, it's better to use <code>==</code> explicitly
-  to avoid confusion.
-</p>
+Reports when <b>equals()</b> is called on specific classes like <b>StringBuilder</b> or <b>StringBuffer</b>.
+The <b>equals()</b> method is not overridden in these classes, so may return false even when the contents of two objects are the same.
+If reference equality is intended, it's better to use <b>==</b> to avoid confusion.
 <!-- tooltip end -->
 <p><small>New in 2017.2</small></p>
 </body>
