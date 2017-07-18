@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.lib.impl
+package com.intellij.debugger.streams.lib;
 
-import com.intellij.debugger.streams.lib.LibrarySupport
-import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.project.Project
+import com.intellij.debugger.streams.lib.impl.LibraryManagerImpl;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-class LibraryManager(project: Project) : ProjectComponent {
-  private val myLibraries: List<LibrarySupport>
-
-  init {
-    val std = StandardLibrarySupport(project)
-    val streamEx = StreamExLibrarySupport(project)
-    myLibraries = listOf(std, streamEx)
+public interface LibraryManager extends ProjectComponent {
+  static LibraryManager getInstance(@NotNull Project project) {
+    return project.getComponent(LibraryManager.class);
   }
-
-  fun getLibraryByPackage(packageName: String): LibrarySupport? = myLibraries.find { it.description.packageName == packageName }
 }
