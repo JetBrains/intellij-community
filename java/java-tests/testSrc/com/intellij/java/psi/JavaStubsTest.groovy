@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
@@ -29,7 +30,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.siyeh.ig.style.LambdaBodyCanBeCodeBlockInspection
 
 import java.util.concurrent.Callable
 
@@ -208,4 +208,17 @@ class Foo {
       PsiTestUtil.checkStubsMatchText(file)
     }
   }
+
+  void "test inserting class keyword"() {
+    String text = "class Foo { void foo() { return; } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    Document document = psiFile.getViewProvider().getDocument()
+
+    WriteCommandAction.runWriteCommandAction(project) { 
+      document.insertString(text.indexOf("return"), "class ") 
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
 }

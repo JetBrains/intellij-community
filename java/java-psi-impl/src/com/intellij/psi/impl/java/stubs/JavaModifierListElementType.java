@@ -23,16 +23,11 @@ import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
 import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-
-import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @author max
@@ -82,7 +77,7 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   private static boolean shouldCreateStub(IElementType parentType) {
-    return parentType != null && parentType != LOCAL_VARIABLE && parentType != RESOURCE_VARIABLE && parentType != RESOURCE_LIST;
+    return parentType instanceof IStubElementType;
   }
 
   @NotNull
