@@ -98,6 +98,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.Protocol")
     .build();
 
+  /**
+   * For the following names we shouldn't go further to the RHS of assignments,
+   * since they are not type aliases already and in typing.pyi are assigned to
+   * some synthetic values.
+   */
   private static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
     .add("typing.overload")
     .add("typing.Any")
@@ -455,7 +460,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Collections.emptyList();
     }
     final TypeEvalContext typeEvalContext = context.getTypeContext();
-    // XXX: Requires switching from stub to AST
     return StreamEx.of(PyClassElementType.getSubscriptedSuperClassesStubLike(cls))
       .map(PySubscriptionExpression::getIndexExpression)
       .flatMap(e -> {
@@ -669,7 +673,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getStringLiteralType(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PyStringLiteralExpression) {
-      // XXX: Requires switching from stub to AST
       final String contents = ((PyStringLiteralExpression)element).getStringValue();
       return Ref.deref(getStringBasedType(contents, element, context));
     }
@@ -854,9 +857,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
         }
         final String name = element != null ? getQualifiedName(element) : null;
-        // For the following names we shouldn't go to the RHS of assignments,
-        // since in typing.py they are not type aliases already and assigned to
-        // something not so useful.
         if (name != null && OPAQUE_NAMES.contains(name)) {
           elements.add(element);
           continue;
