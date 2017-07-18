@@ -32,7 +32,7 @@ public class OptionalTerminatorHandler implements TraceExpressionBuilderImpl.Ter
   private final GenericType myOptionalType;
   private final String myResultExpression;
 
-  OptionalTerminatorHandler(@NotNull TerminatorStreamCall call, @NotNull String resultExpression) {
+  public OptionalTerminatorHandler(@NotNull TerminatorStreamCall call, @NotNull String resultExpression) {
     myTerminatorHandler = new TerminatorHandler(call.getTypeBefore());
     myOptionalType = GenericTypeUtil.unwrapOptional(call.getResultType());
     myResultExpression = resultExpression;

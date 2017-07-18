@@ -40,7 +40,7 @@ public class MatchHandler extends HandlerBase.Terminator {
   private final GenericType myTypeBefore;
   private final TerminatorStreamCall myCall;
 
-  MatchHandler(@NotNull TerminatorStreamCall call) {
+  public MatchHandler(@NotNull TerminatorStreamCall call) {
     final GenericType typeBefore = call.getTypeBefore();
     myBeforeFilterPeekInserter = new PeekTracerHandler(0, "match", typeBefore, typeBefore);
     myAfterFilterPeekInserter = new PeekTracerHandler(1, "match", typeBefore, typeBefore);
