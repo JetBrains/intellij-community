@@ -208,8 +208,6 @@ public class SystemInfo extends SystemInfoRt {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, s);
   }
 
-  private static boolean isSnapPackage = System.getenv("SNAP") != null;
-
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
   public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
