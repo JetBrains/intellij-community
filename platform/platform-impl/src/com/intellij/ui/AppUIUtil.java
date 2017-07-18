@@ -70,7 +70,7 @@ public class AppUIUtil {
     window.setIconImages(getAppIconImages());
   }
 
-  public static void updateAppIcon() {
+  static {
     // Forcedly set app-icon for the debug IDE on macOS.
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     if (SystemInfo.isMac && appInfo.getBuild().isSnapshot()) {
