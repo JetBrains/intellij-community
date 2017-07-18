@@ -462,8 +462,12 @@ public class GenericsUtil {
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
+    //4.10.2
+    //Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<R1,...,Rn> where at least one of the Ri is a wildcard
+    //type argument, are the direct supertypes of the parameterized type C<X1,...,Xn> which is the result of applying capture conversion to C<R1,...,Rn>.
+    PsiType capturedType = PsiUtil.captureToplevelWildcards(type, referenceParameterList);
     //allow unchecked conversions in method calls but not in type declaration
-    return checkNotInBounds(type, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
+    return checkNotInBounds(capturedType, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {
