@@ -158,9 +158,11 @@ public interface JavacRef {
         }
       }
       if (element instanceof TypeElement) {
+        if (qualifier == null && !checkEnclosingElement(element)) return null;
         return new JavacElementClassImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof VariableElement) {
+        if (qualifier == null && !checkEnclosingElement(element)) return null;
         return new JavacElementFieldImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof ExecutableElement) {
@@ -190,6 +192,16 @@ public interface JavacRef {
         hashCode += myQualifier.hashCode();
       }
       return hashCode;
+    }
+
+    private static boolean checkEnclosingElement(Element element) {
+      Element enclosingElement = element.getEnclosingElement();
+      if (enclosingElement == null) return false;
+      TypeMirror type = element.asType();
+      if (type == null || type.getKind() == TypeKind.NONE || type.getKind() == TypeKind.OTHER) {
+        return false;
+      }
+      return true;
     }
   }
 
