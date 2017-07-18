@@ -391,6 +391,36 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays(" <caret>class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
   }
 
+  public void testSeveralParametersCompletion() throws Exception {
+    configureJava("class P {\n" +
+                  "    void method(int a, int b) {}\n" +
+                  "}\n" +
+                  "class C extends P {\n" +
+                  "    void method(int a, int b) {\n" +
+                  "        super.meth<caret>\n" +
+                  "    }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class P {\n" +
+                          "    void method(int a, int b) {}\n" +
+                          "}\n" +
+                          "class C extends P {\n" +
+                          "    void method(int a, int b) {\n" +
+                          "        super.method(<hint text=\"a:\"/><caret>, <hint text=\"b:\"/>);\n" +
+                          "    }\n" +
+                          "}");
+    complete("a, b");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class P {\n" +
+                          "    void method(int a, int b) {}\n" +
+                          "}\n" +
+                          "class C extends P {\n" +
+                          "    void method(int a, int b) {\n" +
+                          "        super.method(a, b);<caret>\n" +
+                          "    }\n" +
+                          "}");
+  }
+
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
