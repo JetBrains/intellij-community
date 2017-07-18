@@ -46,8 +46,8 @@ import com.intellij.testGuiFramework.generators.Utils.getJTreePath
 import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
 import com.intellij.testGuiFramework.generators.Utils.withRobot
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt.hasOnCenterXAxis
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
@@ -685,7 +685,7 @@ object Utils {
   fun findBoundedText(target: Component, container: Component): String? {
     val textComponents = withRobot { robot ->
       robot.finder().findAll(container as Container,
-                             ComponentMatcher { component -> component!!.isTextComponent() && target.hasOnCenterXAxis(component, true) })
+                             ComponentMatcher { component -> component!!.isTextComponent() && target.onHeightCenter(component, true) })
     }
     if (textComponents.isEmpty()) return null
     //if  more than one component is found let's take the righter one

@@ -157,16 +157,17 @@ object GuiTestUtilKt {
     }
   }
 
-  fun findComponentByText(robot: Robot, container: Container, text: String): Component
-    = robot.finder().find(container, ComponentMatcher { component ->
-    component!!.isTextComponent() && component.getComponentText() == text && component.isShowing })
+  fun findComponentByText(robot: Robot, container: Container, text: String): Component {
+    return withPause { robot.finder().findAll(container, ComponentMatcher { component ->
+      component!!.isShowing && component.isTextComponent() && component.getComponentText() == text }).firstOrNull() }
+  }
 
   fun <BoundedComponent> findBoundedComponentByText(robot: Robot, container: Container, text: String, componentType: Class<BoundedComponent>): BoundedComponent {
     val componentWithText = findComponentByText(robot, container, text)
     if (componentWithText is JLabel && componentWithText.labelFor != null && componentType.isInstance(componentWithText.labelFor)) return componentWithText.labelFor as BoundedComponent
-    val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
     try {
       return withPause {
+        val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
         componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
           .sortedBy { it.bounds.x }
           .firstOrNull()
