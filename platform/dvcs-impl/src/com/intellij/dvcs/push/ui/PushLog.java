@@ -41,6 +41,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,8 +59,6 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 
 public class PushLog extends JPanel implements DataProvider {
 
@@ -350,11 +349,14 @@ public class PushLog extends JPanel implements DataProvider {
   @NotNull
   private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
     //addAll Commit nodes from selected Repository nodes;
-    List<CommitNode> nodes = selectedNodes.stream().filter(RepositoryNode.class::isInstance)
-      .flatMap(node -> getChildNodesByType(node, CommitNode.class, true).stream()).collect(toList());
+    List<CommitNode> nodes = StreamEx.of(selectedNodes)
+      .select(RepositoryNode.class)
+      .toFlatList(node -> getChildNodesByType(node, CommitNode.class, true));
     // add all others selected Commit nodes;
-    nodes.addAll(selectedNodes.stream().filter(node -> node instanceof CommitNode && !nodes.contains(node)).map(CommitNode.class::cast)
-                   .collect(toList()));
+    nodes.addAll(StreamEx.of(selectedNodes)
+                   .select(CommitNode.class)
+                   .filter(node -> !nodes.contains(node))
+                   .toList());
     return nodes;
   }
 
@@ -484,9 +486,11 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   private void toggleRepositoriesFromCommits() {
-    LinkedHashSet<CheckedTreeNode> checkedNodes =
-      getSelectedTreeNodes().stream().map(n -> n instanceof CommitNode ? n.getParent() : n).filter(CheckedTreeNode.class::isInstance)
-        .map(CheckedTreeNode.class::cast).filter(CheckedTreeNode::isEnabled).collect(toCollection(LinkedHashSet::new));
+    LinkedHashSet<CheckedTreeNode> checkedNodes = StreamEx.of(getSelectedTreeNodes())
+      .map(n -> n instanceof CommitNode ? n.getParent() : n)
+      .select(CheckedTreeNode.class)
+      .filter(CheckedTreeNode::isEnabled)
+      .toCollection(LinkedHashSet::new);
     if (checkedNodes.isEmpty()) return;
     // use new state from first lead node;
     boolean newState = !checkedNodes.iterator().next().isChecked();
