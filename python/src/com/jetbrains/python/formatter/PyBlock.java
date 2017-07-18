@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -895,7 +895,18 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     final PyStatement last = statements[statements.length - 1];
-    return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement;
+    return last instanceof PyReturnStatement || last instanceof PyRaiseStatement || last instanceof PyPassStatement || isEllipsis(last);
+  }
+
+  private static boolean isEllipsis(@NotNull PyStatement statement) {
+    if (statement instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)statement).getExpression();
+      if (expression instanceof PyNoneLiteralExpression) {
+        return ((PyNoneLiteralExpression)expression).isEllipsis();
+      }
+    }
+
+    return false;
   }
 
   @Nullable
