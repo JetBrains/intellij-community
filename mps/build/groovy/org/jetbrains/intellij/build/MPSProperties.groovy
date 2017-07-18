@@ -51,7 +51,6 @@ class MPSProperties extends ProductProperties {
                 withProjectLibrary("jgoodies-common")
                 withProjectLibrary("jgoodies-looks")
                 withProjectLibrary("commons-net")
-                withProjectLibrary("hamcrest")
                 withProjectLibrary("JUnit4")
                 withProjectLibrary("http-client-3.1")
                 withProjectLibrary("pty4j") // for terminal plugin
