@@ -383,9 +383,18 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public abstract static class ToggleByWordDiffActionBase extends ToggleAction implements DumbAware {
-    public ToggleByWordDiffActionBase() {
+  public class ToggleByWordDiffAction extends ToggleAction implements DumbAware {
+    @NotNull private final Editor myEditor;
+    @NotNull private final Range myRange;
+    @Nullable private final Point myMousePosition;
+
+    public ToggleByWordDiffAction(@NotNull Editor editor,
+                                  @NotNull Range range,
+                                  @Nullable Point position) {
       super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
+      myEditor = editor;
+      myRange = range;
+      myMousePosition = position;
     }
 
     @Override
@@ -399,6 +408,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       reshowPopup();
     }
 
-    protected abstract void reshowPopup();
+    public void reshowPopup() {
+      LineStatusMarkerPopupRenderer.this.showHintAt(myEditor, myRange, myMousePosition);
+    }
   }
 }

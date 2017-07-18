@@ -141,22 +141,12 @@ class LineStatusTracker private constructor(project: Project,
       actions.add(RollbackLineStatusRangeAction(tracker, range, editor))
       actions.add(ShowLineStatusRangeDiffAction(tracker, range, editor))
       actions.add(CopyLineStatusRangeAction(tracker, range))
-      actions.add(ToggleByWordDiffAction(range, editor, tracker, mousePosition))
+      actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
     }
 
     override fun getFileType(): FileType {
       return tracker.virtualFile.getFileType()
-    }
-
-    private class ToggleByWordDiffAction(private val myRange: Range,
-                                         private val myEditor: Editor,
-                                         private val myTracker: LineStatusTracker,
-                                         private val myMousePosition: Point?
-    ) : LineStatusMarkerPopupRenderer.ToggleByWordDiffActionBase() {
-      override fun reshowPopup() {
-        MyLineStatusMarkerRenderer(myTracker).showHintAt(myEditor, myRange, myMousePosition)
-      }
     }
   }
 

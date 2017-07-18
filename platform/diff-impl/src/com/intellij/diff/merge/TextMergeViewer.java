@@ -1320,7 +1320,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         actions.add(new MyShowNextChangeMarkerAction(range));
         actions.add(new ShowLineStatusRangeDiffAction(myTracker, range, editor));
         actions.add(new CopyLineStatusRangeAction(myTracker, range));
-        actions.add(new ToggleByWordDiffAction(range, mousePosition));
+        actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
         return actions;
       }
     }
@@ -1389,21 +1389,6 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       @Override
       protected Range getTargetRange(int line) {
         return myLineStatusTracker.getNextRange(line);
-      }
-    }
-
-    private class ToggleByWordDiffAction extends LineStatusMarkerPopupRenderer.ToggleByWordDiffActionBase {
-      @NotNull private final Range myRange;
-      @Nullable private final Point myMousePosition;
-
-      public ToggleByWordDiffAction(@NotNull Range range, @Nullable Point mousePosition) {
-        myRange = range;
-        myMousePosition = mousePosition;
-      }
-
-      @Override
-      protected void reshowPopup() {
-        new MyLineStatusMarkerRenderer(myLineStatusTracker).showHintAt(getEditor(), myRange, myMousePosition);
       }
     }
   }
