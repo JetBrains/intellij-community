@@ -22,7 +22,6 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -624,8 +623,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   private static PyExpression getAnnotationValue(@NotNull PyAnnotationOwner owner, @NotNull TypeEvalContext context) {
-    final boolean elementWasParsed = owner instanceof StubBasedPsiElement && ((StubBasedPsiElement)owner).getStub() == null;
-    if (context.maySwitchToAST(owner) || elementWasParsed) {
+    if (context.maySwitchToAST(owner)) {
       final PyAnnotation annotation = owner.getAnnotation();
       if (annotation != null) {
         return annotation.getValue();
