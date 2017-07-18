@@ -78,6 +78,7 @@ def args = [
         "-Xmx2048m",
         "-XX:ReservedCodeCacheSize=96m",
         "-XX:+UseCodeCacheFlushing",
+        "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin",
 	"-Denable.nav.editor=true"
 ]
 
