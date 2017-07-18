@@ -200,7 +200,7 @@ public class JavaKeywordCompletion {
   }
 
   private static PsiElement prevSignificantLeaf(PsiElement position) {
-    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> e instanceof PsiComment).first();
+    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> PsiTreeUtil.getNonStrictParentOfType(e, PsiComment.class) != null).first();
   }
 
   private void addKeyword(LookupElement element) {
