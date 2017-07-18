@@ -26,7 +26,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -72,7 +71,12 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
                                 boolean everywhere,
                                 @NotNull ProgressIndicator cancelled,
                                 @NotNull final Processor<Object> consumer) {
-    return filterElements(pattern, consumer::process);
+    return filterElements(pattern, value -> {
+      if (!everywhere && value.value instanceof ActionWrapper && !((ActionWrapper)value.value).isAvailable()) {
+        return true;
+      }
+      return consumer.process(value);
+    });
   }
 
   public boolean filterElements(String pattern, Processor<MatchedValue> consumer) {
@@ -106,10 +110,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, wrappers, consumer);
   }
 
-  private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+  private boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final CollectConsumer<Object> collector = new CollectConsumer<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      //noinspection deprecation
       if (provider instanceof OptionsTopHitProvider.CoveredByToggleActions) continue;
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(project)) continue;
       if (provider instanceof OptionsTopHitProvider && !StringUtil.startsWith(pattern, "#")) {
@@ -212,12 +217,11 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
     return processItems(pattern, intentions, consumer);
   }
 
-  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    List<MatchedValue> matched = ContainerUtil.newArrayList();
-    items.transform(o -> {
-      ProgressManager.checkCanceled();
-      return o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern);
-    }).addAllTo(matched);
+  private boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
+    List<? extends Comparable> itemList = items.toList();
+    myModel.updateActions(ContainerUtil.findAll(itemList, ActionWrapper.class));
+    
+    List<MatchedValue> matched = ContainerUtil.map(itemList, o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern));
     Collections.sort(matched);
     return ContainerUtil.process(matched, consumer);
   }
