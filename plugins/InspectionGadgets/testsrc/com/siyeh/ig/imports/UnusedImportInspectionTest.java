@@ -92,6 +92,14 @@ public class UnusedImportInspectionTest extends LightInspectionTestCase {
            "}}");
   }
 
+  public void testNoHighlightingInInvalidCode() {
+    myFixture.configureByText("a.java",
+                              "import<EOLError></EOLError>\n" +
+                              "import java.util.*<error> </error><error>Math.max;</error>\n" +
+                              "class Main {}");
+    myFixture.testHighlighting(true, false, false);
+  }
+
   public void testStaticImportOnDemandConflict1() {
     addEnvironmentClass("package a;" +
                         "public class Parent {" +
