@@ -40,7 +40,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.function.Predicate;
 
 public class TestPackage extends TestObject {
 
@@ -73,7 +77,7 @@ public class TestPackage extends TestObject {
             long start = System.currentTimeMillis();
             if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
               String packageName = getPackageName(data);
-              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getConfiguration());
+              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getConfiguration(), TestPackage::createPredicate);
               PsiManager manager = PsiManager.getInstance(myProject);
               Arrays.stream(classNames)
                 .filter(className -> acceptClassName(className)) //check patterns
@@ -210,5 +214,45 @@ public class TestPackage extends TestObject {
   @TestOnly
   public File getWorkingDirsFile() {
     return myWorkingDirsFile;
+  }
+
+  private static Predicate<Class<?>> createPredicate(ClassLoader classLoader) {
+
+    try {
+      Class<?> testCaseClass = Class.forName("junit.framework.TestCase", true, classLoader);
+
+      @SuppressWarnings("unchecked")
+      Class<? extends Annotation> runWithClass = (Class<? extends Annotation>)Class.forName("org.junit.runner.RunWith", true, classLoader);
+
+      @SuppressWarnings("unchecked")
+      Class<? extends Annotation> testClass = (Class<? extends Annotation>)Class.forName("org.junit.Test", true, classLoader);
+
+      return aClass -> {
+        //junit 3
+        if (testCaseClass.isAssignableFrom(aClass)) {
+          return true;
+        }
+        else {
+          //annotation
+          if (aClass.isAnnotationPresent(runWithClass)) {
+            return true;
+          }
+          else {
+            //junit 4 & suite
+            for (Method method : aClass.getMethods()) {
+              if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
+                  method.isAnnotationPresent(testClass)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      };
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+      return aClass -> false;
+    }
   }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.junit;
+package com.intellij.execution;
 
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,20 +30,20 @@ import com.intellij.util.lang.UrlClassLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class TestClassCollector {
 
   private static final Logger LOG = Logger.getInstance(TestClassCollector.class);
 
-  public static String[] collectClassFQNames(String packageName, JUnitConfiguration configuration) {
+  public static String[] collectClassFQNames(String packageName, JavaTestConfigurationBase configuration, Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
     Module module = configuration.getConfigurationModule().getModule();
     List<URL> urls = new ArrayList<>();
 
@@ -59,7 +59,7 @@ public class TestClassCollector {
     }
 
     Path rootPath = null;
-    if (configuration.getPersistentData().getScope() == TestSearchScope.SINGLE_MODULE) {
+    if (configuration.getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
       CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
       if (moduleExtension != null) {
         VirtualFile tests = moduleExtension.getCompilerOutputPathForTests();
@@ -75,14 +75,7 @@ public class TestClassCollector {
       String packagePath = packageName.replace('.', '/');
       Enumeration<URL> resources = classLoader.getResources(packagePath);
 
-      Class<?> testCaseClass = Class.forName("junit.framework.TestCase", true, classLoader);
-
-      @SuppressWarnings("unchecked")
-      Class<? extends Annotation> runWithClass = (Class<? extends Annotation>)Class.forName("org.junit.runner.RunWith", true, classLoader);
-
-      @SuppressWarnings("unchecked")
-      Class<? extends Annotation> testClass = (Class<? extends Annotation>)Class.forName("org.junit.Test", true, classLoader);
-
+      Predicate<Class<?>> classPredicate = predicateProducer.apply(classLoader);
       while (resources.hasMoreElements()) {
         URL url = resources.nextElement();
         Path baseDir = Paths.get(url.toURI());
@@ -111,25 +104,8 @@ public class TestClassCollector {
                    aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
                   return result;
                 }
-                //junit 3
-                if (testCaseClass.isAssignableFrom(aClass)) {
+                if (classPredicate.test(aClass)) {
                   classes.add(fqName);
-                }
-                else {
-                  //annotation
-                  if (aClass.isAnnotationPresent(runWithClass)) {
-                    classes.add(fqName);
-                  }
-                  else {
-                    //junit 4 & suite
-                    for (Method method : aClass.getMethods()) {
-                      if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
-                          method.isAnnotationPresent(testClass)) {
-                        classes.add(fqName);
-                        break;
-                      }
-                    }
-                  }
                 }
               }
               catch (Throwable e) {

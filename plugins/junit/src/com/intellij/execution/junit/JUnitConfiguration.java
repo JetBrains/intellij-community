@@ -320,6 +320,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
   }
 
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistentData().getScope();
+  }
+
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
     myData.setTestMethod(sourceLocation);
     myData.TEST_OBJECT = BY_SOURCE_POSITION;
