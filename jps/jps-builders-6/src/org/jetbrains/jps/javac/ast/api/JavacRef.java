@@ -158,7 +158,6 @@ public interface JavacRef {
         }
       }
       if (element instanceof TypeElement) {
-        if (qualifier == null && !checkEnclosingElement(element)) return null;
         return new JavacElementClassImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof VariableElement) {
@@ -166,6 +165,7 @@ public interface JavacRef {
         return new JavacElementFieldImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof ExecutableElement) {
+        if (qualifier == null && !checkEnclosingElement(element)) return null;
         return new JavacElementMethodImpl(element, qualifier, nameTableCache);
       }
       else if (element == null || element.getKind() == ElementKind.OTHER || element.getKind() == ElementKind.TYPE_PARAMETER) {
