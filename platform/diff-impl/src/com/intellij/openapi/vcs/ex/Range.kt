@@ -13,166 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.ex;
+package com.intellij.openapi.vcs.ex
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+data class Range(val line1: Int,
+                 val line2: Int,
+                 val vcsLine1: Int,
+                 val vcsLine2: Int,
+                 val innerRanges: List<InnerRange>?) {
+  constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int) : this(line1, line2, vcsLine1, vcsLine2, null)
+  constructor(range: Range) : this(range.line1, range.line2, range.vcsLine1, range.vcsLine2)
 
-import java.util.List;
+  data class InnerRange(val line1: Int, val line2: Int, val type: Byte)
 
-public class Range {
-  public static final byte EQUAL = 0;
-  public static final byte MODIFIED = 1;
-  public static final byte INSERTED = 2;
-  public static final byte DELETED = 3;
-
-  // (2,3) - modified 2nd line
-  // (2,2) - empty range between 1 and 2 lines
-  // index of first line is 0
-  private final int myLine1;
-  private final int myLine2;
-  private final int myVcsLine1;
-  private final int myVcsLine2;
-
-  @Nullable private final List<InnerRange> myInnerRanges;
-
-  public Range(@NotNull Range range) {
-    this(range.getLine1(), range.getLine2(), range.getVcsLine1(), range.getVcsLine2());
+  init {
+    assert(line1 != line2 || vcsLine1 != vcsLine2)
   }
 
-  public Range(int line1, int line2, int vcsLine1, int vcsLine2) {
-    this(line1, line2, vcsLine1, vcsLine2, null);
+  val type: Byte get() {
+    if (line1 == line2) return DELETED
+    if (vcsLine1 == vcsLine2) return INSERTED
+    return MODIFIED
   }
 
-  public Range(int line1, int line2, int vcsLine1, int vcsLine2, @Nullable List<InnerRange> innerRanges) {
-    assert line1 != line2 || vcsLine1 != vcsLine2;
-
-    myLine1 = line1;
-    myLine2 = line2;
-    myVcsLine1 = vcsLine1;
-    myVcsLine2 = vcsLine2;
-    myInnerRanges = innerRanges;
-  }
-
-  public int hashCode() {
-    return myVcsLine1 ^ myVcsLine2 ^ myLine1 ^ myLine2;
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    Range range = (Range)o;
-
-    if (myLine1 != range.myLine1) return false;
-    if (myLine2 != range.myLine2) return false;
-    if (myVcsLine1 != range.myVcsLine1) return false;
-    if (myVcsLine2 != range.myVcsLine2) return false;
-
-    if (myInnerRanges == null) return range.myInnerRanges == null;
-    if (range.myInnerRanges == null) return false;
-
-    if (myInnerRanges.size() != range.myInnerRanges.size()) return false;
-    for (int i = 0; i < myInnerRanges.size(); i++) {
-      if (!myInnerRanges.get(i).equals(range.myInnerRanges.get(i))) return false;
-    }
-
-    return true;
-  }
-
-  public String toString() {
-    return String.format("%s, %s, %s, %s", myLine1, myLine2, myVcsLine1, myVcsLine2);
-  }
-
-  public byte getType() {
-    if (myLine1 == myLine2) return DELETED;
-    if (myVcsLine1 == myVcsLine2) return INSERTED;
-    return MODIFIED;
-  }
-
-  @Nullable
-  public List<InnerRange> getInnerRanges() {
-    return myInnerRanges;
-  }
-
-  public int getLine1() {
-    return myLine1;
-  }
-
-  public int getLine2() {
-    return myLine2;
-  }
-
-  public int getVcsLine1() {
-    return myVcsLine1;
-  }
-
-  public int getVcsLine2() {
-    return myVcsLine2;
-  }
-
-  public static class InnerRange {
-    private final int myLine1;
-    private final int myLine2;
-    private final byte myType;
-
-    public InnerRange(int line1, int line2, byte type) {
-      myLine1 = line1;
-      myLine2 = line2;
-      myType = type;
-    }
-
-    public int getLine1() {
-      return myLine1;
-    }
-
-    public int getLine2() {
-      return myLine2;
-    }
-
-    public byte getType() {
-      return myType;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      InnerRange range = (InnerRange)o;
-
-      if (myLine1 != range.myLine1) return false;
-      if (myLine2 != range.myLine2) return false;
-      if (myType != range.myType) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myLine1;
-      result = 31 * result + myLine2;
-      result = 31 * result + (int)myType;
-      return result;
-    }
-
-    public String toString() {
-      return String.format("%s, %s, %s", myLine1, myLine2, getTypeName(myType));
-    }
-  }
-
-  @NotNull
-  private static String getTypeName(byte type) {
-    switch (type) {
-      case MODIFIED:
-        return "MODIFIED";
-      case INSERTED:
-        return "INSERTED";
-      case DELETED:
-        return "DELETED";
-      case EQUAL:
-        return "EQUAL";
-    }
-    return "UNKNOWN(" + type + ")";
+  companion object {
+    @JvmField val EQUAL: Byte = 0
+    @JvmField val MODIFIED: Byte = 1
+    @JvmField val INSERTED: Byte = 2
+    @JvmField val DELETED: Byte = 3
   }
 }
