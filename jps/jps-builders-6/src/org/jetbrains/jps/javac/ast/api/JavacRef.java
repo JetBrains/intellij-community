@@ -197,7 +197,7 @@ public interface JavacRef {
     private static boolean checkEnclosingElement(Element element) {
       Element enclosingElement = element.getEnclosingElement();
       if (enclosingElement == null) return false;
-      TypeMirror type = element.asType();
+      TypeMirror type = enclosingElement.asType();
       if (type == null || type.getKind() == TypeKind.NONE || type.getKind() == TypeKind.OTHER) {
         return false;
       }
