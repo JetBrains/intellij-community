@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -31,15 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import slowCheck.Generator;
 import slowCheck.IntDistribution;
 
@@ -52,25 +49,26 @@ import java.util.Set;
  * @author peter
  */
 class InvokeCompletion extends ActionOnRange {
-  final int itemIndexRaw;
-  LookupElement selectedItem;
-  final char completionChar;
+  private final int myItemIndexRaw;
+  private LookupElement mySelectedItem;
+  private final char myCompletionChar;
   private final PsiFile myFile;
+  private final CompletionPolicy myPolicy;
+  private final String myConstructorArgs;
 
-  InvokeCompletion(Document document, int offset, int itemIndexRaw, char completionChar, PsiFile file) {
-    super(document, offset, offset);
-    this.itemIndexRaw = itemIndexRaw;
-    this.completionChar = completionChar;
+  InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
+    super(file.getViewProvider().getDocument(), offset, offset);
+    this.myItemIndexRaw = itemIndexRaw;
+    this.myCompletionChar = completionChar;
     myFile = file;
+    myPolicy = policy;
+    myConstructorArgs = "_, " + offset + ", " + itemIndexRaw + ", '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "', _";
   }
 
   @Override
   public String toString() {
-    return "CompletionInvocation{" +
-           "offset=" + getStartOffset() +
-           ", selectedItem=" + selectedItem + "(" + itemIndexRaw + ")" +
-           ", completionChar=" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) +
-           '}';
+    return "InvokeCompletion(" + myConstructorArgs + ")" +
+           "{" + myFile.getVirtualFile().getPath() + ", offset=" + getStartOffset() + ", selected=" + mySelectedItem + '}';
   }
 
   @Override
@@ -89,6 +87,7 @@ class InvokeCompletion extends ActionOnRange {
       Disposable raiseCompletionLimit = Disposer.newDisposable();
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
+        PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
         performCompletion(editor);
         PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
       }
@@ -101,7 +100,7 @@ class InvokeCompletion extends ActionOnRange {
   }
 
   private void performCompletion(Editor editor) {
-    String expectedVariant = getExpectedVariant(editor, myFile);
+    String expectedVariant = myPolicy.getExpectedVariant(editor, myFile);
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(myFile.getProject(), editor);
 
@@ -119,9 +118,9 @@ class InvokeCompletion extends ActionOnRange {
 
     checkNoDuplicates(items);
 
-    LookupElement item = items.get(itemIndexRaw % items.size());
-    selectedItem = item;
-    ((LookupImpl)lookup).finishLookup(completionChar, item);
+    LookupElement item = items.get(myItemIndexRaw % items.size());
+    mySelectedItem = item;
+    ((LookupImpl)lookup).finishLookup(myCompletionChar, item);
   }
 
   private static void checkNoDuplicates(List<LookupElement> items) {
@@ -138,61 +137,13 @@ class InvokeCompletion extends ActionOnRange {
     }
   }
 
-  @Nullable
-  private static String getExpectedVariant(Editor editor, PsiFile file) {
-    PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
-    PsiElement refTarget = ref == null ? null : ref.resolve();
-    if (leaf == null) {
-      return null;
-    }
-    String leafText = leaf.getText();
-    if (leafText.isEmpty() ||
-        !Character.isLetter(leafText.charAt(0)) ||
-        leaf instanceof PsiWhiteSpace ||
-        PsiTreeUtil.getParentOfType(leaf, PsiComment.class, false) != null) {
-      return null;
-    }
-    if (ref != null) {
-      if (refTarget == null) return null;
-      if (ref instanceof PsiJavaCodeReferenceElement && !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)ref)) {
-        return null;
-      }
-    }
-    else {
-      if (!SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isEmpty()) {
-        return null;
-      }
-      if (leaf instanceof PsiIdentifier) return null; // it's not a ref, just some name
-      if (leaf instanceof PsiKeyword) {
-        if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
-            PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getType()) == null) {
-          return null;
-        }
-      }
-      if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
-        return null; // boolean literal presence depends on expected types, which can be missing in red files
-      }
-    }
-    return leafText;
-  }
-
-  private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref) {
-    if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) == null) return false;
-
-    PsiElement target = ref.resolve();
-    if (!ref.isQualified() && target instanceof PsiPackage) return false;
-    return target != null;
-  }
-
   @NotNull
-  static Generator<InvokeCompletion> completions(PsiFile psiFile) {
-    Document document = psiFile.getViewProvider().getDocument();
+  static Generator<InvokeCompletion> completions(PsiFile psiFile, CompletionPolicy policy) {
     return Generator.from(data -> {
-      int offset = data.drawInt(IntDistribution.uniform(0, document.getTextLength()));
+      int offset = data.drawInt(IntDistribution.uniform(0, psiFile.getViewProvider().getDocument().getTextLength()));
       int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
       char c = Generator.sampledFrom('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
-      return new InvokeCompletion(document, offset, itemIndex, c, psiFile);
+      return new InvokeCompletion(psiFile, offset, itemIndex, c, policy);
     });
   }
 }

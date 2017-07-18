@@ -29,7 +29,7 @@ import java.util.Objects;
 class DeleteRange extends ActionOnRange {
   private final PsiFile myFile;
 
-  private DeleteRange(PsiFile file, int startOffset, int endOffset) {
+  DeleteRange(PsiFile file, int startOffset, int endOffset) {
     super(file.getViewProvider().getDocument(), startOffset, endOffset);
     assert myMarker.getDocument().getTextLength() == file.getTextLength() : file + " " + myMarker.getDocument();
     myFile = file;

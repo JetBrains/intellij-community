@@ -47,7 +47,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     AtomicLong rebuildStamp = new AtomicLong();
 
     CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS.withIterationCount(30);
-    Generator<InvokeIntention> genIntention = psiJavaFiles().flatMap(InvokeIntention::randomIntentions);
+    Generator<InvokeIntention> genIntention = psiJavaFiles().flatMap(file -> InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()));
     PropertyChecker.forAll(settings, Generator.listsOf(genIntention.noShrink()), list -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
@@ -74,7 +74,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
                                                                Generator.constant(new DeleteForeachInitializers(file)),
                                                                Generator.constant(new DeleteSecondArgument(file)),
                                                                Generator.constant(new MakeAllMethodsVoid(file)));
-        Generator<MadTestingAction> allActions = Generator.frequency(2, InvokeIntention.randomIntentions(file),
+        Generator<MadTestingAction> allActions = Generator.frequency(2, InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
                                                                      1, Generator.constant(new RehighlightAllEditors(myProject)),
                                                                      1, mutation);
         return Generator.listsOf(IntDistribution.uniform(0, 5), allActions.noShrink());

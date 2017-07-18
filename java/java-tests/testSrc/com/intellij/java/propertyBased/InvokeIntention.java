@@ -18,7 +18,6 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,7 +25,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,42 +37,32 @@ import java.util.List;
 class InvokeIntention extends ActionOnRange {
   private final PsiFile myFile;
   private final int myIntentionIndex;
-  private IntentionAction myIntentionAction;
+  private final IntentionPolicy myPolicy;
+  private final String myConstructorArgs;
+  private String myInvocationLog = "not invoked";
 
-  private InvokeIntention(PsiFile file, int offset, int intentionIndex) {
+  InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
     super(file.getViewProvider().getDocument(), offset, offset);
     myFile = file;
     myIntentionIndex = intentionIndex;
+    myPolicy = policy;
+    myConstructorArgs = "_ , " + offset + ", " + intentionIndex + ", _";
   }
 
   @NotNull
-  static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile) {
+  static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile, @NotNull IntentionPolicy policy) {
     return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), Generator.integers(0, 100),
-                             (offset, index) -> new InvokeIntention(psiFile, offset, index)).noShrink();
+                             (offset, index) -> new InvokeIntention(psiFile, offset, index, policy)).noShrink();
   }
 
   @Override
   public String toString() {
-    return "InvokeIntention[" + myFile.getVirtualFile().getPath() + ", offset " + getStartOffset() +
-           ", invoke '" + ReadAction.compute(() -> getIntentionText()) + "']";
-  }
-
-  private String getIntentionText() {
-    if (myIntentionAction == null) {
-      return "index " + String.valueOf(myIntentionIndex);
-    }
-
-    String name = null;
-    try {
-      name = myIntentionAction.getText();
-    }
-    catch (PsiInvalidElementAccessException ignore) {
-    }
-    return name == null ? myIntentionAction.toString() : name;
+    return "InvokeIntention(" + myConstructorArgs + "){" + myFile.getVirtualFile().getPath() + "," + myInvocationLog + "}";
   }
 
   public void performAction() {
     int offset = getStartOffset();
+    myInvocationLog = "offset " + offset;
     if (offset < 0) return;
 
     Editor editor = FileEditorManager.getInstance(myFile.getProject()).openTextEditor(new OpenFileDescriptor(myFile.getProject(), myFile.getVirtualFile(), offset), true);
@@ -82,8 +70,9 @@ class InvokeIntention extends ActionOnRange {
     List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, myFile.getProject());
     boolean hasErrors = infos.stream().anyMatch(i -> i.getSeverity() == HighlightSeverity.ERROR);
 
-    IntentionAction intention = myIntentionAction = getRandomIntention(editor);
+    IntentionAction intention = getRandomIntention(editor);
     if (intention == null) return;
+    myInvocationLog += ", invoke '" + intention.getText() + "'";
 
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
@@ -116,31 +105,7 @@ class InvokeIntention extends ActionOnRange {
   @Nullable
   private IntentionAction getRandomIntention(Editor editor) {
     List<IntentionAction> actions = ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, myFile),
-                                                         action -> action.startInWriteAction() &&
-                                                                   !shouldSkipIntention(action.getText()));
+                                                         myPolicy::mayInvokeIntention);
     return actions.isEmpty() ? null : actions.get(myIntentionIndex % actions.size());
   }
-
-  private static boolean shouldSkipIntention(String actionText) {
-    return actionText.startsWith("Flip") ||
-           actionText.startsWith("Attach annotations") || // changes project model
-           actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
-           actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
-           actionText.startsWith("Make method default") ||
-           actionText.startsWith("Convert to project line separators") || // changes VFS, not document
-           actionText.contains("to custom tags") || // changes only inspection settings
-           actionText.contains("to 'Ignore if annotated by' list") || // changes only inspection settings
-           actionText.startsWith("Allow these suppressions") || // changes only inspection settings
-           actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template)
-           actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
-           actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
-           actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
-           actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
-           actionText.startsWith("Add qualifier") || // in javadoc; displays a popup which isn't allowed in tests
-           actionText.startsWith("Cast to ") || // produces uncompilable code by design
-           actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
-           actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
-           actionText.startsWith("Unimplement");
-  }
-
 }

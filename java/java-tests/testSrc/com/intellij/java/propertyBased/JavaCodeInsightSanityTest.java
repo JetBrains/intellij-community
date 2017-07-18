@@ -45,8 +45,8 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
   public void testRandomActivity() {
     AbstractApplyAndRevertTestCase.enableAllInspections(getProject(), getTestRootDisposable());
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-      Generator.anyOf(InvokeIntention.randomIntentions(file),
-                      InvokeCompletion.completions(file),
+      Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
+                      InvokeCompletion.completions(file, new JavaCompletionPolicy()),
                       DeleteRange.psiRangeDeletions(file));
     PropertyChecker.forAll(actionsOnJavaFiles(fileActions), FileWithActions::runActions);
   }

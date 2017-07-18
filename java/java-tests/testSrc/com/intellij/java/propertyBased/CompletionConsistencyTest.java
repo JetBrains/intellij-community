@@ -31,7 +31,7 @@ public class CompletionConsistencyTest extends AbstractApplyAndRevertTestCase {
     CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS;
     PropertyChecker.forAll(settings.withIterationCount(20), psiJavaFiles(), file -> {
       System.out.println("for file: " + file.getVirtualFile().getPresentableUrl());
-      PropertyChecker.forAll(settings.withIterationCount(10), Generator.listsOf(InvokeCompletion.completions(file)), list -> {
+      PropertyChecker.forAll(settings.withIterationCount(10), Generator.listsOf(InvokeCompletion.completions(file, new JavaCompletionPolicy())), list -> {
         changeAndRevert(myProject, () -> MadTestingAction.runActions(list));
         return true;
       });
