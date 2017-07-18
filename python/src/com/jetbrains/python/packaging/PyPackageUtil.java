@@ -288,7 +288,7 @@ public class PyPackageUtil {
    * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited
    * (see the implementation of ApplicationImpl#runProcessWithProgressSynchronously() for details).
    */
-  @Nullable
+  @NotNull
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
 
     final Application app = ApplicationManager.getApplication();
