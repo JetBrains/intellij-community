@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacParserAction;
+import com.intellij.openapi.diagnostic.Logger;
 import junit.framework.TestCase;
 
 import java.util.ResourceBundle;
@@ -28,7 +29,19 @@ import java.util.regex.Matcher;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JavacOutputParserTest extends TestCase {
-  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("com.sun.tools.javac.resources.compiler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.JavacOutputParserTest");
+  private static final ResourceBundle ourBundle;
+
+  static {
+    ResourceBundle bundle = null;
+    try {
+      bundle = ResourceBundle.getBundle("com.sun.tools.javac.resources.compiler");
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+    ourBundle = bundle;
+  }
   /*
   compiler.misc.verbose.parsing.started->[parsing started {0}]
   compiler.misc.verbose.parsing.done->[parsing completed {0}ms]
@@ -59,20 +72,25 @@ LIne read: #[loading C:\java\jdk150_04\jre\lib\rt.jar(java/lang/RuntimeException
 LIne read: #[wrote C:\temp\rmiTest\classes\mycompany\TTT.class]#
   */
   public void testFilePathMatcher() {
-    MyJavacParserAction action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.parsing.started")));
-    action.setExpectedString("C:/temp/rmiTest/source/mycompany/TTT.java").execute("[parsing started C:/temp/rmiTest/source/mycompany/TTT.java]", null);
+    if (ourBundle != null) {
+      MyJavacParserAction action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.parsing.started")));
+      action.setExpectedString("C:/temp/rmiTest/source/mycompany/TTT.java").execute("[parsing started C:/temp/rmiTest/source/mycompany/TTT.java]", null);
 
-    action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.loading")));
-    action.setExpectedString("C:/java/jdk150_04/jre/lib/rt.jar(java/lang/Object.class)").execute("[loading C:/java/jdk150_04/jre/lib/rt.jar(java/lang/Object.class)]", null);
+      action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.loading")));
+      action.setExpectedString("C:/java/jdk150_04/jre/lib/rt.jar(java/lang/Object.class)").execute("[loading C:/java/jdk150_04/jre/lib/rt.jar(java/lang/Object.class)]", null);
 
-    action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.checking.attribution")));
-    action.setExpectedString("mycompany.TTT").execute("[checking mycompany.TTT]", null);
+      action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.checking.attribution")));
+      action.setExpectedString("mycompany.TTT").execute("[checking mycompany.TTT]", null);
 
-    action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.wrote.file")));
-    action.setExpectedString("C:/temp/rmiTest/classes/mycompany/TTT.class").execute("[wrote C:/temp/rmiTest/classes/mycompany/TTT.class]", null);
+      action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.wrote.file")));
+      action.setExpectedString("C:/temp/rmiTest/classes/mycompany/TTT.class").execute("[wrote C:/temp/rmiTest/classes/mycompany/TTT.class]", null);
 
-    action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.parsing.done")));
-    action.setExpectedString("47").execute("[parsing completed 47ms]", null);
+      action = new MyJavacParserAction(JavacOutputParser.createMatcher(ourBundle.getString("compiler.misc.verbose.parsing.done")));
+      action.setExpectedString("47").execute("[parsing completed 47ms]", null);
+    }
+    else {
+      System.out.println("JavacOutputParserTest.testFilePathMatcher SKIPPED");
+    }
   }
 
   private static class MyJavacParserAction extends JavacParserAction {
