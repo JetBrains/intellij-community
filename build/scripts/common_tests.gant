@@ -92,7 +92,6 @@ target('run_tests': 'Run java tests') {
     ].each { pass(jvmArgs, it) }
 
     def tempDir = p("teamcity.build.tempDir", p("java.io.tmpdir"))
-    jvmArgs << "-Djava.io.tmpdir=${tempDir}"
     jvmArgs << "-Dteamcity.build.tempDir=${tempDir}"
 
     System.getProperties().entrySet().each {
