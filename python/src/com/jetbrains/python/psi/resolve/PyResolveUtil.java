@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -36,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -164,19 +163,18 @@ public class PyResolveUtil {
       initialResults = StreamEx.of(unqualifiedResults);
     }
     final List<String> remainingNames = qualifiedName.removeHead(1).getComponents();
-    final StreamEx<RatedResolveResult> result = StreamEx.of(remainingNames).reduce(initialResults, (prev, name) ->
+    final StreamEx<RatedResolveResult> result = StreamEx.of(remainingNames).foldLeft(initialResults, (prev, name) ->
       prev
         .map(RatedResolveResult::getElement)
-        .map(elem -> as(elem, PyTypedElement.class))
-        .nonNull()
+        .select(PyTypedElement.class)
         .map(context::getType)
         .nonNull()
-        .map(type -> type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type)
-        .flatMap(elemType -> {
+        .flatMap(type -> {
+          final PyType instanceType = type instanceof PyClassLikeType ? ((PyClassLikeType)type).toInstance() : type;
           final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-          final List<? extends RatedResolveResult> results = elemType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+          final List<? extends RatedResolveResult> results = instanceType.resolveMember(name, null, AccessDirection.READ, resolveContext);
           return results != null ? StreamEx.of(results) : StreamEx.<RatedResolveResult>empty();
-        }), (oldResults, newResults) -> newResults);
+        }));
     return PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new));
   }
 }
