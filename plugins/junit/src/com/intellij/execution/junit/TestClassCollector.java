@@ -90,6 +90,7 @@ public class TestClassCollector {
         //collect tests under single module test output only
         if (rootPath != null && !baseDir.startsWith(rootPath)) continue;
 
+        String pathSeparator = baseDir.getFileSystem().getSeparator();
         Files.walkFileTree(baseDir, new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -99,7 +100,6 @@ public class TestClassCollector {
             if (fName.endsWith(".class")) {
               try {
                 Path relativePath = baseDir.relativize(file.getParent());
-                String pathSeparator = baseDir.getFileSystem().getSeparator();
                 String subpackageName = StringUtil.getQualifiedName(relativePath.toString().replace(pathSeparator, "."),
                                                                     FileUtil.getNameWithoutExtension(fName));
                 String fqName = StringUtil.getQualifiedName(packageName, subpackageName);
