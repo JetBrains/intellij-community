@@ -24,7 +24,8 @@ class CircletConnectionComponent(val project: Project) :
     AbstractProjectComponent(project),
     ILifetimedComponent by LifetimedComponent(project) {
 
-    //    val endpoint = "http://latest.n.circlet.labs.intellij.net"
+    // val endpoint = "http://latest.n.circlet.labs.intellij.net"
+
     val endpoint = "http://localhost:8000"
 
     val loginDataComponent = component<CircletLoginComponent>()
