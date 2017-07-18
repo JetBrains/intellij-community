@@ -531,3 +531,9 @@ iml_module(
         "//tools/idea/.idea/libraries:jsr305",
     ],
 )
+
+filegroup(
+    name = "platform-build-info",
+    srcs = ["build.txt"],
+    visibility = ["//visibility:public"],
+)
