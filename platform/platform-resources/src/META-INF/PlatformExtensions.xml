@@ -196,6 +196,7 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.ShortcutsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.ActionsCollector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
                         serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
@@ -379,6 +380,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ShortcutsCollector$ShortcutUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ActionsCollector$ActionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
