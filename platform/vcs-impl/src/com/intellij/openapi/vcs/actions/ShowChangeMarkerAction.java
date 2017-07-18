@@ -23,11 +23,14 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
   protected abstract Range extractRange(LineStatusTracker lineStatusTracker, int line, Editor editor);
 
-  public Range getRange(VcsContext context) {
+
+  @Nullable
+  protected Range getRange(VcsContext context) {
     Editor editor = getEditor(context);
     if (editor == null) return null;
 
@@ -37,7 +40,8 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     return extractRange(lineStatusTracker, editor.getCaretModel().getLogicalPosition().line, editor);
   }
 
-  public LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
+  @Nullable
+  protected LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
     Editor editor = getEditor(dataContext);
     if (editor == null) return null;
     Project project = dataContext.getProject();
@@ -45,9 +49,11 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     return LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
   }
 
-  public Editor getEditor(VcsContext dataContext) {
+  @Nullable
+  protected Editor getEditor(VcsContext dataContext) {
     return dataContext.getEditor();
   }
+
 
   @Override
   protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
@@ -60,22 +66,42 @@ public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
     presentation.setVisible(editor != null || ActionPlaces.isToolbarPlace(context.getPlace()));
   }
 
-
   @Override
   protected void actionPerformed(@NotNull VcsContext context) {
     Editor editor = getEditor(context);
     LineStatusTracker lineStatusTracker = getLineStatusTracker(context);
     Range range = getRange(context);
-
+    assert editor != null && lineStatusTracker != null && range != null;
 
     LineStatusTracker.moveToRange(range, editor, lineStatusTracker);
   }
 
-  protected interface ChangeMarkerContext {
-    Range getRange(VcsContext dataContext);
 
-    LineStatusTracker getLineStatusTracker(VcsContext dataContext);
+  public static class Next extends ShowChangeMarkerAction {
+    protected Range extractRange(LineStatusTracker tracker, int line, Editor editor) {
+      return tracker.getNextRange(line);
+    }
+  }
 
-    Editor getEditor(VcsContext dataContext);
+  public static class Prev extends ShowChangeMarkerAction {
+    protected Range extractRange(LineStatusTracker tracker, int line, Editor editor) {
+      return tracker.getPrevRange(line);
+    }
+  }
+
+  public static class Current extends ShowChangeMarkerAction {
+    protected Range extractRange(LineStatusTracker lineStatusTracker, int line, Editor editor) {
+      return lineStatusTracker.getRangeForLine(line);
+    }
+
+    @Override
+    protected void actionPerformed(@NotNull VcsContext context) {
+      Editor editor = getEditor(context);
+      LineStatusTracker lineStatusTracker = getLineStatusTracker(context);
+      Range range = getRange(context);
+      assert editor != null && lineStatusTracker != null && range != null;
+
+      LineStatusTracker.showHint(range, editor, lineStatusTracker);
+    }
   }
 }
