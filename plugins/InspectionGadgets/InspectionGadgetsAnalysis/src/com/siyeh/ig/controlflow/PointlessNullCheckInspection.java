@@ -21,12 +21,9 @@ import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -248,7 +245,9 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (reference == null) return null;
       PsiVariable target = tryCast(reference.resolve(), PsiVariable.class);
       if (target == null) return null;
-      if (!ReferencesSearch.search(target, new LocalSearchScope(call)).forEach((Processor<PsiReference>)obj -> reference.equals(obj))) {
+      if (!SyntaxTraverser.psiTraverser(call).filter(PsiReference.class)
+        .filter(ref -> !reference.equals(ref) && ref.isReferenceTo(target)).isEmpty()) {
+        // variable is reused for something else
         return null;
       }
       return reference;
