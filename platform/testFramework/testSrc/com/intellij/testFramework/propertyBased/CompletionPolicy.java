@@ -62,7 +62,9 @@ public class CompletionPolicy {
   private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf) {
     PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (target != null) target = target.getNavigationElement();
-    return target != null && target.getContainingFile() == file && target.getTextOffset() == leaf.getTextRange().getStartOffset();
+    PsiFile targetFile = target != null ? target.getContainingFile() : null;
+    return targetFile != null && targetFile.getViewProvider() == file.getViewProvider() && 
+           target.getTextOffset() == leaf.getTextRange().getStartOffset();
   }
 
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
