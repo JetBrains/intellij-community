@@ -22,6 +22,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
@@ -230,5 +231,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   public ExecutionTarget getExecutionTarget() {
     return DefaultExecutionTarget.INSTANCE;
+  }
+
+  /**
+   * @return true if "View assertEquals Difference" should be enabled for all test tree nodes
+   *              to suppress "Compare with" action
+   * @see {@link ViewAssertEqualsDiffAction}
+   */
+  public boolean isViewAssertEqualsDiffActionEnabled() {
+    return false;
   }
 }
