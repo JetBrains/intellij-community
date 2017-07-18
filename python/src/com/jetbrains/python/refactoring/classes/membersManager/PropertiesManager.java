@@ -190,7 +190,7 @@ class PropertiesManager extends MembersManager<PyElement> {
       final PsiReference reference;
       if (node instanceof PyReferenceOwner) {
         final TypeEvalContext context = TypeEvalContext.userInitiated(node.getProject(), null);
-        reference = ((PyReferenceOwner)node).getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
+        reference = ((PyReferenceOwner)node).getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
       }
       else {
         reference = node.getReference();

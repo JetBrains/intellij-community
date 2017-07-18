@@ -58,7 +58,7 @@ public class PyGlobalUndefinedInspection extends PyInspection {
       final PyTargetExpression[] globals = node.getGlobals();
 
       for (PyTargetExpression global : globals) {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
         if (global.getReference(resolveContext).resolve() == global) {
           registerProblem(global, PyBundle.message("INSP.NAME.global.$0.undefined", global.getName()));
         }
