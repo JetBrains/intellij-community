@@ -19,9 +19,15 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
@@ -44,11 +50,15 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.HintHint;
@@ -61,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -380,6 +391,124 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     public int getEditorTextOffset() {
       return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
+    }
+  }
+
+
+  public class ShowNextChangeMarkerAction extends DumbAwareAction {
+    @NotNull private final Editor myEditor;
+    @NotNull private final Range myRange;
+
+    public ShowNextChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
+      myEditor = editor;
+      myRange = range;
+      ActionUtil.copyFrom(this, "VcsShowNextChangeMarker");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myTracker.getNextRange(myRange) != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Range range = myTracker.getNextRange(myRange);
+      if (range != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, range);
+    }
+  }
+
+  public class ShowPrevChangeMarkerAction extends DumbAwareAction {
+    @NotNull private final Editor myEditor;
+    @NotNull private final Range myRange;
+
+    public ShowPrevChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
+      myEditor = editor;
+      myRange = range;
+      ActionUtil.copyFrom(this, "VcsShowPrevChangeMarker");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(myTracker.getPrevRange(myRange) != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Range range = myTracker.getPrevRange(myRange);
+      if (range != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, range);
+    }
+  }
+
+  public class CopyLineStatusRangeAction extends DumbAwareAction {
+    private final Range myRange;
+
+    public CopyLineStatusRangeAction(@NotNull Range range) {
+      myRange = range;
+      ActionUtil.copyFrom(this, IdeActions.ACTION_COPY);
+    }
+
+    public void update(final AnActionEvent e) {
+      boolean enabled = Range.DELETED == myRange.getType() || Range.MODIFIED == myRange.getType();
+      e.getPresentation().setEnabled(myTracker.isValid() && enabled);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      final String content = myTracker.getVcsContent(myRange) + "\n";
+      CopyPasteManager.getInstance().setContents(new StringSelection(content));
+    }
+  }
+
+  public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
+    private final Range myRange;
+
+    public ShowLineStatusRangeDiffAction(@NotNull Range range) {
+      myRange = range;
+      ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    }
+
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setEnabled(myTracker.isValid());
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      DiffManager.getInstance().showDiff(e.getProject(), createDiffData());
+    }
+
+    @NotNull
+    private DiffRequest createDiffData() {
+      Range range = expand(myRange, myTracker.getDocument(), myTracker.getVcsDocument());
+
+      DiffContent vcsContent = createDiffContent(myTracker.getVcsDocument(),
+                                                 myTracker.getVirtualFile(),
+                                                 myTracker.getVcsTextRange(range));
+      DiffContent currentContent = createDiffContent(myTracker.getDocument(),
+                                                     myTracker.getVirtualFile(),
+                                                     myTracker.getCurrentTextRange(range));
+
+      return new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
+                                   vcsContent, currentContent,
+                                   VcsBundle.message("diff.content.title.up.to.date"),
+                                   VcsBundle.message("diff.content.title.current.range")
+      );
+    }
+
+    @NotNull
+    private DiffContent createDiffContent(@NotNull Document document, @Nullable VirtualFile highlightFile, @NotNull TextRange textRange) {
+      final Project project = myTracker.getProject();
+      DocumentContent content = DiffContentFactory.getInstance().create(project, document, highlightFile);
+      return DiffContentFactory.getInstance().createFragment(project, content, textRange);
+    }
+
+    @NotNull
+    private Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
+      boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
+      boolean canExpandAfter = range.getLine2() < getLineCount(document) && range.getVcsLine2() < getLineCount(uDocument);
+      int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
+      int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
+      int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
+      int uOffset2 = range.getVcsLine2() + (canExpandAfter ? 1 : 0);
+      return new Range(offset1, offset2, uOffset1, uOffset2);
     }
   }
 

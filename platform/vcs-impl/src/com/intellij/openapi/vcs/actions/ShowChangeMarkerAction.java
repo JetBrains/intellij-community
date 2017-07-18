@@ -24,80 +24,48 @@ import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * author: lesya
- */
 public abstract class ShowChangeMarkerAction extends AbstractVcsAction {
-  protected final ChangeMarkerContext myChangeMarkerContext;
-
-
   protected abstract Range extractRange(LineStatusTracker lineStatusTracker, int line, Editor editor);
 
-  public ShowChangeMarkerAction(final Range range, final LineStatusTracker lineStatusTracker, final Editor editor) {
-    myChangeMarkerContext = new ChangeMarkerContext() {
-      @Override
-      public Range getRange(VcsContext dataContext) {
-        return range;
-      }
+  public Range getRange(VcsContext context) {
+    Editor editor = getEditor(context);
+    if (editor == null) return null;
 
-      @Override
-      public LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
-        return lineStatusTracker;
-      }
+    LineStatusTracker lineStatusTracker = getLineStatusTracker(context);
+    if (lineStatusTracker == null) return null;
 
-      @Override
-      public Editor getEditor(VcsContext dataContext) {
-        return editor;
-      }
-    };
+    return extractRange(lineStatusTracker, editor.getCaretModel().getLogicalPosition().line, editor);
   }
 
-  public ShowChangeMarkerAction() {
-    myChangeMarkerContext = new ChangeMarkerContext() {
-      @Override
-      public Range getRange(VcsContext context) {
-        Editor editor = getEditor(context);
-        if (editor == null) return null;
+  public LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
+    Editor editor = getEditor(dataContext);
+    if (editor == null) return null;
+    Project project = dataContext.getProject();
+    if (project == null) return null;
+    return LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
+  }
 
-        LineStatusTracker lineStatusTracker = getLineStatusTracker(context);
-        if (lineStatusTracker == null) return null;
-
-        return extractRange(lineStatusTracker, editor.getCaretModel().getLogicalPosition().line, editor);
-      }
-
-      @Override
-      public LineStatusTracker getLineStatusTracker(VcsContext dataContext) {
-        Editor editor = getEditor(dataContext);
-        if (editor == null) return null;
-        Project project = dataContext.getProject();
-        if (project == null) return null;
-        return LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
-      }
-
-      @Override
-      public Editor getEditor(VcsContext dataContext) {
-        return dataContext.getEditor();
-      }
-    };
+  public Editor getEditor(VcsContext dataContext) {
+    return dataContext.getEditor();
   }
 
   @Override
   protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
-    Editor editor = myChangeMarkerContext.getEditor(context);
-    LineStatusTracker tracker = myChangeMarkerContext.getLineStatusTracker(context);
+    Editor editor = getEditor(context);
+    LineStatusTracker tracker = getLineStatusTracker(context);
 
     boolean isAvailable = tracker != null && tracker.isValid() && editor != null && tracker.isAvailableAt(editor);
 
-    presentation.setEnabled(isAvailable && myChangeMarkerContext.getRange(context) != null);
+    presentation.setEnabled(isAvailable && getRange(context) != null);
     presentation.setVisible(editor != null || ActionPlaces.isToolbarPlace(context.getPlace()));
   }
 
 
   @Override
   protected void actionPerformed(@NotNull VcsContext context) {
-    Editor editor = myChangeMarkerContext.getEditor(context);
-    LineStatusTracker lineStatusTracker = myChangeMarkerContext.getLineStatusTracker(context);
-    Range range = myChangeMarkerContext.getRange(context);
+    Editor editor = getEditor(context);
+    LineStatusTracker lineStatusTracker = getLineStatusTracker(context);
+    Range range = getRange(context);
 
 
     LineStatusTracker.moveToRange(range, editor, lineStatusTracker);

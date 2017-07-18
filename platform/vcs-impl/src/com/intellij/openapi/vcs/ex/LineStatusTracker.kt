@@ -29,8 +29,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction
-import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -136,11 +134,11 @@ class LineStatusTracker private constructor(project: Project,
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
-      actions.add(ShowPrevChangeMarkerAction(tracker.getPrevRange(range), tracker, editor))
-      actions.add(ShowNextChangeMarkerAction(tracker.getNextRange(range), tracker, editor))
+      actions.add(ShowPrevChangeMarkerAction(editor, range))
+      actions.add(ShowNextChangeMarkerAction(editor, range))
       actions.add(RollbackLineStatusRangeAction(tracker, range, editor))
-      actions.add(ShowLineStatusRangeDiffAction(tracker, range, editor))
-      actions.add(CopyLineStatusRangeAction(tracker, range))
+      actions.add(ShowLineStatusRangeDiffAction(range))
+      actions.add(CopyLineStatusRangeAction(range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
     }

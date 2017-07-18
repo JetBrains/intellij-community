@@ -21,23 +21,15 @@ import com.intellij.openapi.vcs.ex.Range;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowCurrentChangeMarkerAction extends ShowChangeMarkerAction {
-
-  public ShowCurrentChangeMarkerAction(final Range range, final LineStatusTracker lineStatusTracker, final Editor editor) {
-    super(range, lineStatusTracker, editor);
-  }
-
-  public ShowCurrentChangeMarkerAction() {
-  }
-
   protected Range extractRange(LineStatusTracker lineStatusTracker, int line, Editor editor) {
     return lineStatusTracker.getRangeForLine(line);
   }
 
   @Override
   protected void actionPerformed(@NotNull VcsContext context) {
-    Editor editor = myChangeMarkerContext.getEditor(context);
-    LineStatusTracker lineStatusTracker = myChangeMarkerContext.getLineStatusTracker(context);
-    Range range = myChangeMarkerContext.getRange(context);
+    Editor editor = getEditor(context);
+    LineStatusTracker lineStatusTracker = getLineStatusTracker(context);
+    Range range = getRange(context);
 
     LineStatusTracker.showHint(range, editor, lineStatusTracker);
   }

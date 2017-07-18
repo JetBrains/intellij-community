@@ -63,8 +63,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.*;
+import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupRenderer;
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase;
 import com.intellij.openapi.vcs.ex.Range;
+import com.intellij.openapi.vcs.ex.SimpleLineStatusTracker;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -1318,8 +1320,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<AnAction> actions = new ArrayList<>();
         actions.add(new MyShowPrevChangeMarkerAction(range));
         actions.add(new MyShowNextChangeMarkerAction(range));
-        actions.add(new ShowLineStatusRangeDiffAction(myTracker, range, editor));
-        actions.add(new CopyLineStatusRangeAction(myTracker, range));
+        actions.add(new ShowLineStatusRangeDiffAction(range));
+        actions.add(new CopyLineStatusRangeAction(range));
         actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
         return actions;
       }
