@@ -52,8 +52,6 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSunJvm = vendorContains("Sun") && vendorContains("Microsystems");
   public static final boolean isIbmJvm = vendorContains("IBM");
   public static final boolean isJetBrainsJvm = vendorContains("JetBrains");
-  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
-  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   public static final boolean IS_AT_LEAST_JAVA9 = isJavaVersionAtLeast("9");
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
@@ -210,6 +208,8 @@ public class SystemInfo extends SystemInfoRt {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, s);
   }
 
+  private static boolean isSnapPackage = System.getenv("SNAP") != null;
+
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
   public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
@@ -229,5 +229,8 @@ public class SystemInfo extends SystemInfoRt {
 
   /** @deprecated outdated (to be removed in IDEA 2018) */
   public static final boolean isOS2 = SystemInfoRt.isOS2;
+
+  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
+  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   //</editor-fold>
 }

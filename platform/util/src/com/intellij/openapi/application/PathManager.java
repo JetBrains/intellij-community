@@ -93,8 +93,7 @@ public class PathManager {
     else {
       ourHomePath = getHomePathFor(PathManager.class);
       if (ourHomePath == null) {
-        String advice = SystemInfo.isMac ? "reinstall the software."
-                                         : "make sure bin/idea.properties is present in the installation directory.";
+        String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
         throw new RuntimeException("Could not find installation home path. Please " + advice);
       }
     }
@@ -399,51 +398,39 @@ public class PathManager {
 
   public static void loadProperties() {
     getHomePath();
-    Set<String> propFiles = new LinkedHashSet<String>();
-    propFiles.add(System.getProperty(PROPERTIES_FILE));
-    propFiles.add(getCustomPropertiesFile());
-    propFiles.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
+
+    Set<String> paths = new LinkedHashSet<String>();
+    paths.add(System.getProperty(PROPERTIES_FILE));
+    paths.add(getCustomPropertiesFile());
+    paths.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
     for (String binDir : ourBinDirectories) {
-      propFiles.add(binDir + '/' + PROPERTIES_FILE_NAME);
+      paths.add(binDir + '/' + PROPERTIES_FILE_NAME);
     }
 
-    for (String path : propFiles) {
-      if (path == null) {
-        continue;
-      }
-      File propFile = new File(path);
-      if (!propFile.exists()) {
-        continue;
-      }
-      try {
-        Reader fis = new BufferedReader(new FileReader(propFile));
+    Properties sysProperties = System.getProperties();
+    for (String path : paths) {
+      if (path != null && new File(path).exists()) {
         try {
-          Map<String, String> properties = FileUtil.loadProperties(fis);
-          Properties sysProperties = System.getProperties();
-
-          for (Map.Entry<String, String> entry : properties.entrySet()) {
-            String key = entry.getKey();
-            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-              log(propFile.getPath() + ": '" + PROPERTY_HOME_PATH + "' and '" + PROPERTY_HOME + "' properties cannot be redefined");
-            }
-            else {
-              String value = entry.getValue();
-              if (sysProperties.get(key) != null) {
-                log(propFile.getPath() + ": '" + key + " = " + value + "' already defined in system properties: " + sysProperties.get(key));
+          Reader fis = new BufferedReader(new FileReader(path));
+          try {
+            Map<String, String> properties = FileUtil.loadProperties(fis);
+            for (Map.Entry<String, String> entry : properties.entrySet()) {
+              String key = entry.getKey();
+              if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+                log(path + ": '" + key + "' cannot be redefined");
               }
-              else {
-                value = substituteVars(value);
-                sysProperties.setProperty(key, value);
+              else if (!sysProperties.containsKey(key)) {
+                sysProperties.setProperty(key, substituteVars(entry.getValue()));
               }
             }
           }
+          finally {
+            fis.close();
+          }
         }
-        finally {
-          fis.close();
+        catch (IOException e) {
+          log("Can't read property file '" + path + "': " + e.getMessage());
         }
-      }
-      catch (IOException e) {
-        log("Problem reading from property file: " + propFile);
       }
     }
   }
