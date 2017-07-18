@@ -245,20 +245,16 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
             PsiElement referent = reference.getUserData(TEMP_REFERENT_USER_DATA);
             if (!reference.isQualified()) {
               if (referent instanceof PsiMember && referent != reference.resolve()) {
-                PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
                 try {
                   final PsiClass containingClass = ((PsiMember)referent).getContainingClass();
                   if (containingClass != null) {
-                    PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
-                    reference = (PsiReferenceExpression)reference.replace(copy);
-                    ((PsiReferenceExpression)reference.getQualifier()).bindToElement(containingClass);
+                    reference = rebind(reference, containingClass);
                   }
                 }
                 catch (IncorrectOperationException e) {
                   LOG.error (e);
                 }
               }
-              reference.putUserData(TEMP_REFERENT_USER_DATA, null);
             }
             else if (referent == null || referent instanceof PsiMember && ((PsiMember)referent).hasModifierProperty(PsiModifier.STATIC)) {
               if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
@@ -273,6 +269,9 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                   catch (IncorrectOperationException e) {
                     LOG.error(e);
                   }
+                  if (reference.resolve() != referent) {
+                    reference = rebind(reference, resolvedClass);
+                  }
                 }
               }
             }
@@ -284,6 +283,14 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
         }
       }
     });
+  }
+
+  private static PsiJavaCodeReferenceElement rebind(PsiJavaCodeReferenceElement reference, PsiClass targetClass) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
+    PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
+    reference = (PsiReferenceExpression)reference.replace(copy);
+    ((PsiReferenceExpression)reference.getQualifier()).bindToElement(targetClass);
+    return reference;
   }
 
   @Override
