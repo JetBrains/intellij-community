@@ -44,11 +44,8 @@ import java.util.Collections;
 class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
   implements DashboardRunConfigurationNode {
 
-  private final RunContentDescriptor myDescriptor;
-
   RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
     super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
-    myDescriptor = value.second;
   }
 
   @Override
@@ -61,7 +58,17 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
-    return myDescriptor;
+    Content content = getContent();
+    if (content == null) return null;
+
+    return RunContentManagerImpl.getRunContentDescriptorByContent(content);
+  }
+
+  @Nullable
+  @Override
+  public Content getContent() {
+    //noinspection ConstantConditions ???
+    return getValue().second;
   }
 
   @Override
