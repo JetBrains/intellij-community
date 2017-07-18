@@ -119,6 +119,15 @@ class LineStatusTracker private constructor(project: Project,
     (document as DocumentImpl).clearLineModificationFlags(startLine, endLine)
   }
 
+
+  fun scrollAndShowHint(range: Range, editor: Editor) {
+    renderer.scrollAndShow(editor, range)
+  }
+
+  fun showHint(range: Range, editor: Editor) {
+    renderer.showAfterScroll(editor, range)
+  }
+
   class MyLineStatusMarkerRenderer(val tracker: LineStatusTracker) : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
@@ -157,16 +166,6 @@ class LineStatusTracker private constructor(project: Project,
                  project: Project,
                  mode: Mode): LineStatusTracker {
       return LineStatusTracker(project, document, virtualFile, mode)
-    }
-
-    @JvmStatic
-    fun moveToRange(range: Range, editor: Editor, tracker: LineStatusTracker) {
-      MyLineStatusMarkerRenderer(tracker).scrollAndShow(editor, range)
-    }
-
-    @JvmStatic
-    fun showHint(range: Range, editor: Editor, tracker: LineStatusTracker) {
-      MyLineStatusMarkerRenderer(tracker).showAfterScroll(editor, range)
     }
   }
 }
