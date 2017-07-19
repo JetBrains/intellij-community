@@ -18,15 +18,15 @@ package com.intellij.openapi.vcs.ex
 internal typealias LstRange = com.intellij.openapi.vcs.ex.Range
 internal typealias LstInnerRange = com.intellij.openapi.vcs.ex.Range.InnerRange
 
-data class Range(val line1: Int,
-                 val line2: Int,
-                 val vcsLine1: Int,
-                 val vcsLine2: Int,
-                 val innerRanges: List<InnerRange>?) {
+class Range(val line1: Int,
+            val line2: Int,
+            val vcsLine1: Int,
+            val vcsLine2: Int,
+            val innerRanges: List<InnerRange>?) {
   constructor(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int) : this(line1, line2, vcsLine1, vcsLine2, null)
   constructor(range: Range) : this(range.line1, range.line2, range.vcsLine1, range.vcsLine2)
 
-  data class InnerRange(val line1: Int, val line2: Int, val type: Byte)
+  class InnerRange(val line1: Int, val line2: Int, val type: Byte)
 
   init {
     assert(line1 != line2 || vcsLine1 != vcsLine2)
@@ -37,6 +37,8 @@ data class Range(val line1: Int,
     if (vcsLine1 == vcsLine2) return INSERTED
     return MODIFIED
   }
+
+  override fun toString(): String = "[$vcsLine1, $vcsLine2) - [$line1, $line2)"
 
   companion object {
     @JvmField val EQUAL: Byte = 0

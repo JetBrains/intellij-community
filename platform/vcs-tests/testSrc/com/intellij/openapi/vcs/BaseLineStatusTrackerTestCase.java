@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +85,16 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   protected void compareRanges() throws FilesTooBigForDiffException {
     List<Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
     List<Range> actual = myTracker.getRanges();
-    assertEquals(expected, actual);
+    assertEqualRanges(expected, actual);
+  }
+
+  public static void assertEqualRanges(List<Range> expected, List<Range> actual) {
+    UsefulTestCase.assertOrderedEquals("", actual, expected, (r1, r2) -> {
+      return r1.getLine1() == r2.getLine1() &&
+             r1.getLine2() == r2.getLine2() &&
+             r1.getVcsLine1() == r2.getVcsLine1() &&
+             r1.getVcsLine2() == r2.getVcsLine2();
+    });
   }
 
   protected void createDocument(@NotNull String text) throws FilesTooBigForDiffException {
