@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmTypeDeclaration;
+import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.lang.jvm.types.JvmTypeResolveResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author max
  */
-public abstract class PsiClassType extends PsiType {
+public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
   public static final ArrayFactory<PsiClassType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiClassType[count];
 
@@ -242,6 +245,25 @@ public abstract class PsiClassType extends PsiType {
   @NotNull
   @Contract(pure = true)
   public abstract PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel);
+
+  @NotNull
+  @Override
+  public String getName() {
+    return getClassName();
+  }
+
+  @Nullable
+  @Override
+  public JvmTypeResolveResult resolveType() {
+    PsiClass clazz = resolve();
+    return clazz == null ? null : new JvmTypeResolveResult() {
+      @NotNull
+      @Override
+      public JvmTypeDeclaration getDeclaration() {
+        return clazz;
+      }
+    };
+  }
 
   /**
    * Represents the result of resolving a reference to a Java class.

@@ -109,19 +109,19 @@ public class PsiJvmConversionHelper {
 
   @NotNull
   public static JvmReferenceType toJvmReferenceType(@NotNull PsiClassType type) {
-    if (type.hasParameters()) {
-      return new PsiJvmClassType(type);
-    }
-    else {
-      return new PsiJvmReferenceType(type);
-    }
+    return type.hasParameters() ? toJvmClassType(type) : type;
   }
 
-  private static class PsiJvmReferenceType implements JvmReferenceType {
+  @NotNull
+  public static JvmClassType toJvmClassType(@NotNull PsiClassType type) {
+    return new PsiJvmClassType(type);
+  }
 
-    protected final @NotNull PsiClassType myPsiClassType;
+  private static class PsiJvmClassType implements JvmClassType {
 
-    private PsiJvmReferenceType(@NotNull PsiClassType type) {
+    private final @NotNull PsiClassType myPsiClassType;
+
+    private PsiJvmClassType(@NotNull PsiClassType type) {
       myPsiClassType = type;
     }
 
@@ -131,30 +131,10 @@ public class PsiJvmConversionHelper {
       return myPsiClassType.getClassName();
     }
 
-    @Nullable
-    @Override
-    public JvmTypeResolveResult resolveType() {
-      PsiClass clazz = myPsiClassType.resolve();
-      return clazz == null ? null : new JvmTypeResolveResult() {
-        @NotNull
-        @Override
-        public JvmTypeDeclaration getDeclaration() {
-          return clazz;
-        }
-      };
-    }
-
     @NotNull
     @Override
     public JvmAnnotation[] getAnnotations() {
       return myPsiClassType.getAnnotations();
-    }
-  }
-
-  private static class PsiJvmClassType extends PsiJvmReferenceType implements JvmClassType {
-
-    private PsiJvmClassType(@NotNull PsiClassType type) {
-      super(type);
     }
 
     @Nullable
@@ -162,7 +142,7 @@ public class PsiJvmConversionHelper {
     public JvmGenericResolveResult resolveType() {
       final ClassResolveResult classResolveResult = myPsiClassType.resolveGenerics();
       final PsiClass clazz = classResolveResult.getElement();
-      if (clazz == null) return null;
+      if (clazz == null || clazz instanceof PsiTypeParameter) return null;
 
       final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
       return new JvmGenericResolveResult() {
@@ -189,7 +169,6 @@ public class PsiJvmConversionHelper {
       return ContainerUtil.map(myPsiClassType.getParameters(), it -> toJvmType(it));
     }
   }
-
 
   private static class PsiJvmSubstitutor implements JvmSubstitutor {
 
