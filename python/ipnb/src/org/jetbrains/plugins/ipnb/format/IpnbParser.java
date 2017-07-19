@@ -65,7 +65,7 @@ public class IpnbParser {
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) {
       int nbformat = isIpythonNewFormat(virtualFile) ? 4 : 3;
-      return new IpnbFile(new HashMap<>(), nbformat, Lists.newArrayList(), path);
+      return new IpnbFile(new HashMap<>(), nbformat, 0, Lists.newArrayList(), path);
     }
     List<IpnbCell> cells = new ArrayList<>();
     final IpnbWorksheet[] worksheets = rawFile.worksheets;
@@ -83,7 +83,7 @@ public class IpnbParser {
       }
     }
     showValidationMessage();
-    return new IpnbFile(rawFile.metadata, rawFile.nbformat, cells, path);
+    return new IpnbFile(rawFile.metadata, rawFile.nbformat, rawFile.nbformat_minor, cells, path);
   }
 
   private static boolean validateSource(IpnbCellRaw cell) {
@@ -144,6 +144,7 @@ public class IpnbParser {
     }
 
     final IpnbFileRaw fileRaw = new IpnbFileRaw();
+    fileRaw.nbformat_minor = ipnbFile.getNbFormatMinor();
     fileRaw.metadata = ipnbFile.getMetadata();
     if (ipnbFile.getNbformat() == 4) {
       for (IpnbCell cell : ipnbFile.getCells()) {
