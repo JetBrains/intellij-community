@@ -15,11 +15,11 @@
  */
 package com.intellij.lang.jvm.types;
 
-import com.intellij.lang.jvm.JvmTypeDeclarator;
+import com.intellij.lang.jvm.JvmTypeDeclaration;
 import org.jetbrains.annotations.NotNull;
 
 public interface JvmTypeResolveResult {
 
   @NotNull
-  JvmTypeDeclarator getDeclarator();
+  JvmTypeDeclaration getDeclaration();
 }

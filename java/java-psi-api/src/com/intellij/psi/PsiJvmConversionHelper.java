@@ -138,7 +138,7 @@ public class PsiJvmConversionHelper {
       return clazz == null ? null : new JvmTypeResolveResult() {
         @NotNull
         @Override
-        public JvmTypeDeclarator getDeclarator() {
+        public JvmTypeDeclaration getDeclaration() {
           return clazz;
         }
       };
@@ -171,7 +171,7 @@ public class PsiJvmConversionHelper {
 
         @NotNull
         @Override
-        public JvmClass getDeclarator() {
+        public JvmClass getDeclaration() {
           return clazz;
         }
 

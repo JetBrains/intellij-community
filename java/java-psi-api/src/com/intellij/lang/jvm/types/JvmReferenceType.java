@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.jvm.types;
 
-import com.intellij.lang.jvm.JvmTypeDeclarator;
+import com.intellij.lang.jvm.JvmTypeDeclaration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +29,9 @@ public interface JvmReferenceType extends JvmType {
   String getName();
 
   @Nullable
-  default JvmTypeDeclarator resolve() {
+  default JvmTypeDeclaration resolve() {
     JvmTypeResolveResult result = resolveType();
-    return result == null ? null : result.getDeclarator();
+    return result == null ? null : result.getDeclaration();
   }
 
   @Nullable

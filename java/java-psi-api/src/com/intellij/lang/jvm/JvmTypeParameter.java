@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @see java.lang.reflect.TypeVariable
  */
-public interface JvmTypeParameter extends JvmTypeDeclarator {
+public interface JvmTypeParameter extends JvmTypeDeclaration {
 
   @NotNull
   Iterable<JvmReferenceType> bounds();

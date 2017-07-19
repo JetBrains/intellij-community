@@ -22,7 +22,7 @@ public interface JvmGenericResolveResult extends JvmTypeResolveResult {
 
   @NotNull
   @Override
-  JvmClass getDeclarator();
+  JvmClass getDeclaration();
 
   @NotNull
   JvmSubstitutor getSubstitutor();

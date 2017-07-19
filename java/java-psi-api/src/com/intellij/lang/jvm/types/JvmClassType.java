@@ -34,7 +34,7 @@ public interface JvmClassType extends JvmReferenceType {
   @Override
   default JvmClass resolve() {
     JvmGenericResolveResult result = resolveType();
-    return result == null ? null : result.getDeclarator();
+    return result == null ? null : result.getDeclaration();
   }
 
   @Nullable

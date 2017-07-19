@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents an element which declares a type, such as class or type parameter.
  */
-public interface JvmTypeDeclarator extends JvmNamedElement, JvmAnnotatedElement {
+public interface JvmTypeDeclaration extends JvmNamedElement, JvmAnnotatedElement {
 
   @NotNull
   @Override
