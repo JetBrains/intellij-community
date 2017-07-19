@@ -245,14 +245,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         exclude(name: "BUILD")
       }
     }
-    // TODO: Cloud Tools declares templates/ and clientTemplates/ as source roots (why?!), so they'll also be packaged in the .jar.
-    buildContext.ant.copy(todir: "$targetDirectory/plugins/google-cloud-tools-as/lib/templates") {
-      fileset(dir: "$root/tools/studio/google/cloud/tools/android-studio-plugin/resources/templates")
-    }
-    buildContext.ant.copy(todir: "$targetDirectory/plugins/google-cloud-tools-as/lib/clientTemplates") {
-      fileset(dir: "$root/tools/studio/google/cloud/tools/android-studio-plugin/resources/clientTemplates")
-    }
-
 
     // Profiler prebuilt binaries:
     buildContext.ant.copy(todir: "$androidPluginLib") {
