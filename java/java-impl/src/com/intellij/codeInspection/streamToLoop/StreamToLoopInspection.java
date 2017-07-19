@@ -85,7 +85,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         super.visitMethodCallExpression(call);
         PsiReferenceExpression expression = call.getMethodExpression();
         PsiElement nameElement = expression.getReferenceNameElement();
-        if (nameElement == null || !SUPPORTED_TERMINALS.contains(nameElement.getText()) || !isSupportedCodeLocation(call)) return;
+        if (nameElement == null || !SUPPORTED_TERMINALS.contains(nameElement.getText()) || !ControlFlowUtils.canExtractStatement(call)) return;
         PsiMethod method = call.resolveMethod();
         if(method == null) return;
         PsiClass aClass = method.getContainingClass();
@@ -110,45 +110,6 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
         holder.registerProblem(call, range, message, new ReplaceStreamWithLoopFix(message));
       }
     };
-  }
-
-  private static boolean isSupportedCodeLocation(PsiMethodCallExpression call) {
-    PsiElement cur = call;
-    PsiElement parent = cur.getParent();
-    while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
-      if(parent instanceof PsiLambdaExpression) {
-        return true;
-      }
-      if(parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-        IElementType type = polyadicExpression.getOperationTokenType();
-        if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != cur) {
-          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
-          return false;
-        }
-      }
-      if(parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
-        return false;
-      }
-      if(parent instanceof PsiMethodCallExpression) {
-        PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
-        if(methodExpression.textMatches("this") || methodExpression.textMatches("super")) {
-          return false;
-        }
-      }
-      cur = parent;
-      parent = cur.getParent();
-    }
-    if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
-    if(parent instanceof PsiLocalVariable) {
-      PsiElement grandParent = parent.getParent();
-      if(grandParent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)grandParent).getDeclaredElements().length == 1) {
-        return true;
-      }
-    }
-    if(parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == cur) return true;
-    if(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == cur) return true;
-    return false;
   }
 
   @Nullable
@@ -304,7 +265,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       PsiElement element = descriptor.getStartElement();
       if(!(element instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)element;
-      if(!isSupportedCodeLocation(terminalCall)) return;
+      if(!ControlFlowUtils.canExtractStatement(terminalCall)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       terminalCall = RefactoringUtil.ensureCodeBlock(terminalCall);
       if (terminalCall == null) return;
