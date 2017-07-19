@@ -68,7 +68,7 @@ open class ApplicationRule : ExternalResource() {
 /**
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectRule : ApplicationRule() {
+class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
   companion object {
     private var sharedProject: ProjectEx? = null
     private val projectOpened = AtomicBoolean()
@@ -137,7 +137,7 @@ class ProjectRule : ApplicationRule() {
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
-          LightProjectDescriptor().setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+          projectDescriptor.setUpProject(project, object : LightProjectDescriptor.SetupHandler {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module
