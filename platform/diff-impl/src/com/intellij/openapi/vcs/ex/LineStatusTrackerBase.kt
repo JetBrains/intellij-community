@@ -421,8 +421,8 @@ abstract class LineStatusTrackerBase {
   }
 
   private fun isNewline(offset: Int, sequence: CharSequence): Boolean {
-    if (offset < 0) return false
-    if (offset >= sequence.length) return false
+    if (offset < 0) return true
+    if (offset >= sequence.length) return true
     return sequence[offset] == '\n'
   }
 
