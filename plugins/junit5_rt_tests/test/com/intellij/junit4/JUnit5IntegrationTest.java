@@ -209,7 +209,7 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
   @Override
   protected JpsMavenRepositoryLibraryDescriptor[] getRequiredLibs() {
     return new JpsMavenRepositoryLibraryDescriptor[] {
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.0.0-M5"),
+      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.0.0-M6"),
       new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12")
     };
   }
