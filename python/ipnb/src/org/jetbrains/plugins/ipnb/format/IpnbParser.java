@@ -3,6 +3,8 @@ package org.jetbrains.plugins.ipnb.format;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -18,6 +20,7 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.apache.commons.lang.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
@@ -43,8 +46,10 @@ public class IpnbParser {
   @NotNull
   private static Gson initGson() {
     final GsonBuilder builder =
-      new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
-        .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter())
+      new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+        .registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
+        .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter())
+        .registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter())
         .registerTypeAdapter(OutputDataRaw.class, new OutputDataAdapter())
         .registerTypeAdapter(CellOutputRaw.class, new CellOutputDeserializer())
         .registerTypeAdapter(OutputDataRaw.class, new OutputDataDeserializer())
@@ -517,7 +522,7 @@ public class IpnbParser {
     }
   }
 
-  static class FileAdapter implements JsonSerializer<IpnbFileRaw> {
+  static class FileAdapter implements JsonSerializer<IpnbFileRaw>, JsonDeserializer<IpnbFileRaw> {
     @Override
     public JsonElement serialize(IpnbFileRaw fileRaw, Type typeOfSrc, JsonSerializationContext context) {
       final JsonObject jsonObject = new JsonObject();
@@ -526,7 +531,7 @@ public class IpnbParser {
         jsonObject.add("worksheets", worksheets);
       }
       if (fileRaw.cells != null) {
-        final JsonElement cells = gson.toJsonTree(fileRaw.cells);
+        final JsonElement cells = gson.toJsonTree(fileRaw.cells, new TypeToken<List<IpnbCellRaw>>(){}.getType());
         jsonObject.add("cells", cells);
       }
       final JsonElement metadata = gson.toJsonTree(fileRaw.metadata);
@@ -537,7 +542,72 @@ public class IpnbParser {
 
       return jsonObject;
     }
+
+    @Override
+    public IpnbFileRaw deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      JsonObject object = json.getAsJsonObject();
+      IpnbFileRaw fileRaw = new IpnbFileRaw();
+
+      JsonElement worksheets = object.get("worksheets");
+      if (worksheets != null) {
+        fileRaw.worksheets = gson.fromJson(worksheets, new TypeToken<List<IpnbWorksheet>>(){}.getType());
+      }
+
+      JsonElement cellsElement = object.get("cells");
+      if (cellsElement != null) {
+        fileRaw.cells = gson.fromJson(cellsElement, new TypeToken<List<IpnbCellRaw>>(){}.getType());
+      }
+
+      JsonElement metadataElement = object.get("metadata");
+      if (metadataElement != null) {
+        LinkedTreeMap<String, Object> metadataMap = gson.fromJson(metadataElement, new TypeToken<Map<String, Object>>(){}.getType());
+
+        JsonElement kernelInfo = metadataElement.getAsJsonObject().get("kernel_info");
+        if (kernelInfo != null) {
+          metadataMap.put("kernel_info", gson.fromJson(kernelInfo, new TypeToken<Map<String, String>>() {}.getType()));
+        }
+
+        JsonElement languageInfo = metadataElement.getAsJsonObject().get("language_info");
+        if (languageInfo != null) {
+          LinkedTreeMap<String, Object> languageInfoMap = gson.fromJson(languageInfo, new TypeToken<Map<String, Object>>() {}.getType());
+          JsonElement codemirrorMode = languageInfo.getAsJsonObject().get("codemirror_mode");
+          if (codemirrorMode != null) {
+            LinkedTreeMap<String, Object> codemirrorModeMap = gson.fromJson(codemirrorMode, new TypeToken<Map<String, String>>() {}.getType());
+            if (codemirrorModeMap.containsKey("version")) {
+
+              String version = (String)codemirrorModeMap.get("version");
+              if (NumberUtils.isNumber(version)) {
+                try {
+                  codemirrorModeMap.put("version", Integer.parseInt(version));
+                }
+                catch (NumberFormatException e) {
+                  // added this to obtain backward compatibility as previously we parsed "version" as double.
+                  codemirrorModeMap.put("version", (int) Double.parseDouble(version));
+                }
+              }
+            }
+            languageInfoMap.put("codemirror_mode", codemirrorModeMap);
+          }
+          metadataMap.put("language_info", languageInfoMap);
+        }
+
+        fileRaw.metadata = metadataMap;
+      }
+
+      JsonElement nbformat = object.get("nbformat");
+      if (nbformat != null) {
+        fileRaw.nbformat = nbformat.getAsInt();
+      }
+
+      JsonElement nbformatMinor = object.get("nbformat_minor");
+      if (nbformatMinor != null) {
+        fileRaw.nbformat_minor = nbformatMinor.getAsInt();
+      }
+
+      return fileRaw;
+    }
   }
+
 
   static class CellRawDeserializer implements JsonDeserializer<IpnbCellRaw> {
 
