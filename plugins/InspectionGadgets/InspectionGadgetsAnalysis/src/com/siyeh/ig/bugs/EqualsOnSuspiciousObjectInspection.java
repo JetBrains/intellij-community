@@ -52,7 +52,7 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new BaseEqualsVisitor() {
       @Override
-      void checkTypes(PsiReferenceExpression expression, PsiType type1, PsiType type2) {
+      void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType type1, @NotNull PsiType type2) {
         checkType(expression, type1);
         checkType(expression, type2);
       }

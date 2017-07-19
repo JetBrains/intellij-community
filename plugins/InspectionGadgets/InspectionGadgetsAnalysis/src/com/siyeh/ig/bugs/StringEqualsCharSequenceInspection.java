@@ -93,7 +93,7 @@ public class StringEqualsCharSequenceInspection extends BaseInspection {
   private static class StringEqualsCharSequenceVisitor extends BaseEqualsVisitor {
 
     @Override
-    void checkTypes(PsiReferenceExpression expression, PsiType leftType, PsiType rightType) {
+    void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
       if (!leftType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
