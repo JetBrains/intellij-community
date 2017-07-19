@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,6 +94,15 @@ public class IndexDataGetter {
             myFatalErrorsConsumer.consume(this, e);
           }
         });
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
+          myIndexStorage.markCorrupted();
+          myFatalErrorsConsumer.consume(this, e);
+        }
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
