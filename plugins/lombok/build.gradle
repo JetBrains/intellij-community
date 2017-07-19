@@ -1,239 +1,242 @@
-buildscript {
-    repositories {
-        maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
-    }
-}
-
 plugins {
-    id "org.jetbrains.intellij" version "0.2.0"
-    id 'de.undercouch.download' version '2.1.0'
+  id "org.jetbrains.intellij" version "0.2.14"
+  id 'de.undercouch.download' version '3.2.0'
 }
-
-apply plugin: 'org.jetbrains.intellij'
 
 allprojects {
 
-    apply plugin: 'java'
-    apply plugin: 'idea'
-    apply plugin: 'jacoco'
+  apply plugin: 'java'
+  apply plugin: 'idea'
+  apply plugin: 'jacoco'
 
-    group pluginGroup
-    version = pluginVersion
+  group pluginGroup
+  version = pluginVersion
 
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaTargetVersion
+  sourceCompatibility = javaVersion
+  targetCompatibility = javaTargetVersion
 
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
+  repositories {
+    mavenCentral()
+    mavenLocal()
+  }
 }
 
 tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+  options.encoding = 'UTF-8'
 
-    if (!Boolean.valueOf(System.getenv('CI'))) {
-        def javaHome = System.getenv("JAVA_HOME")
-        if (null == javaHome || "".equals(javaHome)) {
-            javaHome = JDK6_HOME
-        }
-
-        options.bootClasspath = "$javaHome/lib/rt.jar"
-        println "Using bootClasspath: ${options.bootClasspath} for compiling"
+  if (!Boolean.valueOf(System.getenv('CI'))) {
+    def javaHome = System.getenv("JAVA_HOME")
+    if (null == javaHome || "".equals(javaHome)) {
+      javaHome = JDK6_HOME
     }
+
+    if (!file("$javaHome/lib/rt.jar").exists() && file("$javaHome/jre/lib/rt.jar").exists()) {
+      options.bootClasspath = "$javaHome/jre/lib/rt.jar"
+    } else {
+      options.bootClasspath = "$javaHome/lib/rt.jar"
+    }
+  }
 }
 
 sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java',
-                       'generated/src']
-        }
-        resources {
-            srcDirs = ['src/main/resources',
-                       'generated/resources']
-        }
+  main {
+    java {
+      srcDirs = ['src/main/java',
+                 'generated/src']
     }
+    resources {
+      srcDirs = ['src/main/resources',
+                 'generated/resources']
+    }
+  }
 }
 
 intellij {
-    def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
-    version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
-    println "Building for IntelliJ version: ${version}"
+  def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+  version = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+  println "Building for IntelliJ version: ${version}"
 
-    pluginName pluginName
-    downloadSources !Boolean.valueOf(System.getenv('CI'))
-    alternativeIdePath idePath
-    updateSinceUntilBuild false
-    sameSinceUntilBuild Boolean.valueOf(isEAP)
+  pluginName pluginName
+  downloadSources !Boolean.valueOf(System.getenv('CI'))
+  alternativeIdePath idePath
+  updateSinceUntilBuild false
+  sameSinceUntilBuild Boolean.valueOf(isEAP)
 
-    sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${version}"
+  sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${version}"
 
-    plugins 'coverage'
+  plugins 'coverage'
 
-    publish {
-        channel publishChannel
-        username publishUsername
-        password publishPassword
-    }
+}
+
+publishPlugin {
+  channels publishChannel
+  username publishUsername
+  password publishPassword
 }
 
 idea {
-    project {
-        jdkName = javaVersion
-        languageLevel = javaVersion
-    }
+  project {
+    jdkName = javaVersion
+    languageLevel = javaVersion
+  }
 }
 
 plugins.withType(JavaPlugin) {
-    test {
-        systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
-    }
+  test {
+    systemProperty "NO_FS_ROOTS_ACCESS_CHECK", "true"
+  }
 }
 
 jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
+  reports {
+    xml.enabled = true
+    html.enabled = true
+  }
 }
 
 check.dependsOn jacocoTestReport
 
 // Configurations
 configurations {
-    bnf
+  bnf
 
-    lombok
-    hrisey
+  lombok
+  hrisey
 }
 
 dependencies {
-    lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.12', classifier: 'sources', ext: 'jar'
-    hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
+  lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.18', classifier: 'sources', ext: 'jar'
+  hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
-    bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
+  bnf files("$buildDir/tools/GrammarKit/lib/grammar-kit.jar")
 
-    compile(project(':patcher')) {
-        exclude group: 'org.javassist'
-    }
+  compile(project(':patcher')) {
+    exclude group: 'org.javassist'
+  }
 
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '1.+'
+  testCompile group: 'junit', name: 'junit', version: '4.12'
+  testCompile group: 'org.mockito', name: 'mockito-core', version: '1.+'
 }
 
 import de.undercouch.gradle.tasks.download.Download
 
 // Tasks
 copy {
-    includeEmptyDirs = false
-    from({ zipTree(configurations.lombok.singleFile) }) {
-        include 'lombok/extern/**'
-        include 'lombok/experimental/**'
-        include 'lombok/Builder.java'
-        include 'lombok/AccessLevel.java'
-        include 'lombok/*ArgsConstructor.java'
-        include 'lombok/Cleanup.java'
-        include 'lombok/Data.java'
-        include 'lombok/Delegate.java'
-        include 'lombok/Getter.java'
-        include 'lombok/Setter.java'
-        include 'lombok/Equals*.java'
-        include 'lombok/NonNull.java'
-        include 'lombok/Synchronized.java'
-        include 'lombok/ToString.java'
-        include 'lombok/SneakyThrows.java'
-        include 'lombok/Value.java'
-        include 'lombok/val.java'
-        include 'lombok/var.java'
-        include 'lombok/Singular.java'
-        include 'lombok/core/handlers/Singulars.java'
-    }
-    into("generated/src")
+  includeEmptyDirs = false
+  from({ zipTree(configurations.lombok.singleFile) }) {
+    include 'lombok/extern/**'
+    include 'lombok/experimental/**'
+    include 'lombok/Builder.java'
+    include 'lombok/AccessLevel.java'
+    include 'lombok/*ArgsConstructor.java'
+    include 'lombok/Cleanup.java'
+    include 'lombok/Data.java'
+    include 'lombok/Delegate.java'
+    include 'lombok/Getter.java'
+    include 'lombok/Setter.java'
+    include 'lombok/Equals*.java'
+    include 'lombok/NonNull.java'
+    include 'lombok/Synchronized.java'
+    include 'lombok/ToString.java'
+    include 'lombok/SneakyThrows.java'
+    include 'lombok/Value.java'
+    include 'lombok/val.java'
+    include 'lombok/var.java'
+    include 'lombok/Singular.java'
+    include 'lombok/core/handlers/Singulars.java'
+  }
+  into("generated/src")
 }
 
 copy {
-    includeEmptyDirs = false
-    from({ zipTree(configurations.hrisey.singleFile) }) {
-        include 'hrisey/Parcelable.java'
-        include 'hrisey/Preferences.java'
-    }
-    into("generated/src")
+  includeEmptyDirs = false
+  from({ zipTree(configurations.hrisey.singleFile) }) {
+    include 'hrisey/Parcelable.java'
+    include 'hrisey/Preferences.java'
+  }
+  into("generated/src")
 }
 
 copy {
-    includeEmptyDirs = false
-    from({ zipTree(configurations.lombok.singleFile) }) {
-        include '**/*.txt'
-    }
-    into("generated/resources")
+  includeEmptyDirs = false
+  from({ zipTree(configurations.lombok.singleFile) }) {
+    include '**/*.txt'
+  }
+  into("generated/resources")
 }
 
 
 task downloadJFlexJar(type: Download) {
-    description 'Downloads JFlex.'
+  description 'Downloads JFlex.'
 
-    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.7.0-SNAPSHOT.jar'
-    dest "$buildDir/tools/JFlex.jar"
-    onlyIf { !file("$buildDir/tools/JFlex.jar").exists() }
+  src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/jflex-1.7.0-SNAPSHOT.jar'
+  dest "$buildDir/tools/JFlex.jar"
+  onlyIf { !file("$buildDir/tools/JFlex.jar").exists() }
 }
 
 task downloadJFlexSkeleton(type: Download) {
-    description 'Downloads JFlex skeleton.'
+  description 'Downloads JFlex skeleton.'
 
-    src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
-    dest "$buildDir/tools/idea-flex.skeleton"
-    onlyIf { !file("$buildDir/tools/idea-flex.skeleton").exists() }
+  src 'https://github.com/JetBrains/intellij-community/raw/master/tools/lexer/idea-flex.skeleton'
+  dest "$buildDir/tools/idea-flex.skeleton"
+  onlyIf { !file("$buildDir/tools/idea-flex.skeleton").exists() }
 }
 
 task downloadGrammarKit(type: Download) {
-    description 'Downloads GrammarKit.'
+  description 'Downloads GrammarKit.'
 
+  // Because of inconsistency in the way GrammarKit is published, we sometimes need custom URLs
+  if (grammarKitOverrideUrl == "") {
     src "https://github.com/JetBrains/Grammar-Kit/releases/download/${versionOfGrammarKit}/GrammarKit.zip"
-    dest "$buildDir/tools/GrammarKit.zip"
-    onlyIfNewer true
+  } else {
+    println "Using GrammarKit override download URL"
+    src grammarKitOverrideUrl
+  }
+  dest "$buildDir/tools/GrammarKit.zip"
+  onlyIfNewer true
 }
 
-task unzipGrammarKit(type: Copy) {
-    description 'Extracts GrammarKit files.'
-    dependsOn downloadGrammarKit
 
-    from zipTree("$buildDir/tools/GrammarKit.zip")
-    into "${buildDir}/tools/"
-    include "GrammarKit/lib/*"
+task unzipGrammarKit(type: Copy) {
+  description 'Extracts GrammarKit files.'
+  dependsOn downloadGrammarKit
+
+  from zipTree("$buildDir/tools/GrammarKit.zip")
+  into "${buildDir}/tools/"
+  include "GrammarKit/lib/*"
 }
 
 task generateLexer(type: JavaExec) {
-    description 'Generates lexer sources with JFlex.'
-    dependsOn downloadJFlexJar, downloadJFlexSkeleton
+  description 'Generates lexer sources with JFlex.'
+  dependsOn downloadJFlexJar, downloadJFlexSkeleton
 
-    main '-jar'
-    args = ["$buildDir/tools/JFlex.jar",
-            '-nobak',
-            '-skel',
-            "$buildDir/tools/idea-flex.skeleton",
-            '-d',
-            "generated/src/de/plushnikov/intellij/plugin/language/",
-            "$projectDir/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex",
-    ]
+  main '-jar'
+  args = ["$buildDir/tools/JFlex.jar",
+          '-nobak',
+          '-skel',
+          "$buildDir/tools/idea-flex.skeleton",
+          '-d',
+          "generated/src/de/plushnikov/intellij/plugin/language/",
+          "$projectDir/src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.flex",
+  ]
 }
 
 task generateParser(type: JavaExec) {
-    description 'Generates parser sources with GrammarKit.'
-    dependsOn unzipGrammarKit
+  description 'Generates parser sources with GrammarKit.'
+  dependsOn unzipGrammarKit
 
-    main = 'org.intellij.grammar.Main'
-    args = ["generated/src", file("src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf")]
+  main = 'org.intellij.grammar.Main'
+  args = ["generated/src", file("src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf")]
 
-    classpath = configurations.compile + configurations.bnf
+  classpath = configurations.bnf + configurations.idea
 }
 
 task generateSources() {
-    dependsOn generateParser, generateLexer
+  dependsOn generateParser, generateLexer
 }
 
 clean.doFirst {
-    delete 'generated', 'out'
+  delete 'generated', 'out'
 }
 
 compileJava.dependsOn generateSources
