@@ -97,6 +97,6 @@ public class JUnitLiveTestProgressFormatter implements JUnitResultFormatter, Ign
     if (test instanceof TestCase) {
       return test.getClass().getName() + "." + ((TestCase)test).getName();
     }
-    return test.toString();
+    return String.valueOf(test);
   }
 }
