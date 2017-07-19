@@ -69,13 +69,16 @@ class CompilationContextImpl implements CompilationContext {
     if (!options.isInDevelopmentMode) {
       setupCompilationDependencies(gradle)
     }
+    else {
+      gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+    }
 
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
 
     if (project.modules.isEmpty()) {
-      loadProject(projectHome, jdk8Home, kotlinHome, project, global, messages)
+      loadProject(projectHome, jdk8Home, kotlinHome, project, global, messages, ant)
     }
     else {
       //todo[nik] currently we need this to build IDEA CE from IDEA UI build scripts. It would be better to create a separate JpsProject instance instead
@@ -88,9 +91,9 @@ class CompilationContextImpl implements CompilationContext {
     return context
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsGantProjectBuilder projectBuilder, JpsProject project, 
-                                 JpsGlobal global, String communityHome, String projectHome, String jdk8Home, String kotlinHome, 
-                                 BuildMessages messages, BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, 
+  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsGantProjectBuilder projectBuilder, JpsProject project,
+                                 JpsGlobal global, String communityHome, String projectHome, String jdk8Home, String kotlinHome,
+                                 BuildMessages messages, BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator,
                                  BuildOptions options) {
     this.ant = ant
     this.gradle = gradle
@@ -105,12 +108,15 @@ class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, gradle, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome, 
+    return new CompilationContextImpl(ant, gradle, projectBuilder, project, global, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       paths.kotlinHome, messages, buildOutputRootEvaluator, options)
   }
 
-  private static void loadProject(String projectHome, String jdkHome, String kotlinHome, JpsProject project, JpsGlobal global, 
-                                  BuildMessages messages) {
+  private static void loadProject(String projectHome, String jdkHome, String kotlinHome, JpsProject project, JpsGlobal global,
+                                  BuildMessages messages, AntBuilder ant) {
+    //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
+    ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
+
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(global).addPathVariable("KOTLIN_BUNDLED", "$kotlinHome/kotlinc")
 
     JdkUtils.defineJdk(global, "IDEA jdk", JdkUtils.computeJdkHome(messages, "jdkHome", "$projectHome/build/jdk/1.6", "JDK_16_x64"))
@@ -126,6 +132,22 @@ class CompilationContextImpl implements CompilationContext {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
       gradle.run('Setting up compilation dependencies', 'setupJdks', 'setupKotlinPlugin')
+    }
+  }
+
+  private static void ensureKotlinJpsPluginIsAddedToClassPath(String kotlinHomePath, AntBuilder ant, BuildMessages messages) {
+    if (CompilationContextImpl.class.getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
+      return
+    }
+
+    def kotlinPluginLibPath = "$kotlinHomePath/lib"
+    if (new File(kotlinPluginLibPath).exists()) {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
+        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
+      }
+    }
+    else {
+      messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
     }
   }
 
