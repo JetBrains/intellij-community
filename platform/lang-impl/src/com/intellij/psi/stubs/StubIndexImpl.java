@@ -365,8 +365,11 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       }
     }
-    catch (StorageException | AssertionError e) {
+    catch (StorageException e) {
       forceRebuild(e);
+    } catch (AssertionError e) {
+      forceRebuild(e);
+      throw e;
     }
     catch (RuntimeException e) {
       final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
