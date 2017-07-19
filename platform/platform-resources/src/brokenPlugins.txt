@@ -61,7 +61,7 @@ com.hasintech.intellij.angularTemplates 1.0.2 1.1.2
 com.jetbrains.plugins.jade 144.2931 142.4651 141.506 140.2144 140.1212 140.216 138.1744 133.74 130.1520 121.390 122.668 121.185
 com.jetbrains.ec2manager 1.0.5 1.0.4 1.0.3 1.0.2 1.0.1 1.0 0.3.4 0.3.4 0.3.2 0.3.1 0.3.0 0.2.0 0.1.2 0.1.1 0.1.0
 AAHack 0.1
-QAPlug 1.3.11 1.3.10 1.3.9 1.3.8 1.3.7
+QAPlug 1.3.11 1.3.10 1.3.9 1.3.8 1.3.7 1.3.8 1.3.9 1.3.10 1.3.11 1.3.12
 org.jetbrains.memory.view 0.0.2 0.0.3 0.0.4 0.0.5 0.0.6 0.0.7 0.0.8 0.0.9 0.0.10 0.9 0.91 0.91.145 0.91.162 0.92.145 0.92.162 0.93.145 0.93.162 0.93.171
 com.jetbrains.intellij.api.watcher 5.0.0 5.1.0 5.2.0 5.3.0 5.4.0
 com.jetbrains.performancePlugin 1.1 1.3 1.3.1 1.3.2
@@ -75,3 +75,4 @@ de.halirutan.mathematica 2.0.24
 com.intellij.plugin.applescript 0.115
 org.argus.cit.intellij 1.0.2 1.0.3 1.0.4
 com.intellij.appcode-ui-designer 1.0 1.1
+io.t28.json2java 0.1.0 0.2.0 0.2.1
