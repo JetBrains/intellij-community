@@ -42,6 +42,9 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
   public void actionPerformed(final AnActionEvent e) {
+    if (!e.getPresentation().isVisible()) {
+      return;
+    }
     if (!openDiff(e.getDataContext(), null)) {
       final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
       Messages.showInfoMessage(component, "Comparison error was not found", "No Comparison Data Found");
@@ -91,11 +94,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(e.getDataContext());
     boolean visible = test != null && test.getDiffViewerProvider() != null;
 
-    TestFrameworkRunningModel runningModel = TestTreeView.MODEL_DATA_KEY.getData(e.getDataContext());
-    boolean enabled = visible || (runningModel != null &&
-                                  runningModel.getProperties().isViewAssertEqualsDiffActionEnabled());
-
-    presentation.setEnabled(enabled);
+    presentation.setEnabled(test != null);
     presentation.setVisible(visible);
   }
 

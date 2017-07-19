@@ -232,13 +232,4 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   public ExecutionTarget getExecutionTarget() {
     return DefaultExecutionTarget.INSTANCE;
   }
-
-  /**
-   * @return true if "View assertEquals Difference" should be enabled for all test tree nodes
-   *              to suppress "Compare with" action
-   * @see {@link ViewAssertEqualsDiffAction}
-   */
-  public boolean isViewAssertEqualsDiffActionEnabled() {
-    return false;
-  }
 }
