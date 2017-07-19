@@ -18,6 +18,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -35,8 +36,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile,
-                    boolean readOnly
-                    ) throws IOException {
+                    boolean readOnly) throws IOException {
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
@@ -76,10 +76,10 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
     return myReadOnly;
   }
 
-  private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
+  static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
     @NotNull private final DataExternalizer<T> myValueExternalizer;
 
-    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer) {
+    ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer) {
       myValueExternalizer = valueExternalizer;
     }
 

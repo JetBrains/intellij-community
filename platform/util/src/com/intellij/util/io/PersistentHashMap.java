@@ -36,6 +36,8 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Eugene Zhuravlev
@@ -453,7 +455,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public final boolean processKeys(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
       myAppendCache.clear();
-      return myEnumerator.iterateData(processor);
+      long start = System.currentTimeMillis();
+      boolean b = myEnumerator.iterateData(processor);
+      System.out.println("process keys: file: " + myStorageFile.getPath() + " elapsed:" + (System.currentTimeMillis() - start));
+      return b;
     }
   }
 
@@ -476,13 +481,27 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  public static final AtomicLong sumTime = new AtomicLong(0);
+  public static final AtomicInteger num = new AtomicInteger(0);
+
   @Override
   public final Value get(Key key) throws IOException {
     synchronized (myEnumerator) {
       myBusyReading = true;
+      long start = System.nanoTime();
       try {
         return doGet(key);
       } finally {
+        long elapsed = System.nanoTime() - start;
+        System.out.println("file: " + myStorageFile.getPath() + " key: " + key + " elapsed:" + elapsed);
+        num.incrementAndGet();
+        sumTime.addAndGet(elapsed);
+        try {
+          Thread.sleep(1);
+        }
+        catch (InterruptedException e) {
+
+        }
         myBusyReading = false;
       }
     }
@@ -590,6 +609,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @Override
   public final void remove(Key key) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
@@ -664,6 +684,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if(myDoTrace) LOG.info("Closed " + myStorageFile);
     synchronized (myEnumerator) {
       doClose();
+    }
+  }
+
+  @Override
+  public void clear() throws IOException {
+    final File baseFile = getBaseFile();
+    try {
+      close();
+    }
+    catch (Throwable ignored) {
+    }
+    if (baseFile != null) {
+      IOUtil.deleteAllFilesStartingWith(baseFile);
     }
   }
 

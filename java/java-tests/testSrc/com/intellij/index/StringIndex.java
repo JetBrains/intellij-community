@@ -20,10 +20,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapReduceIndex;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -43,7 +40,7 @@ public class StringIndex {
   private volatile Exception myRebuildException;
   public StringIndex(String testName,
                      final IndexStorage<String, String> storage,
-                     final PersistentHashMap<Integer, Collection<String>> inputIndex,
+                     final PersistentMap<Integer, Collection<String>> inputIndex,
                      boolean failOnRebuildRequest)
     throws IOException {
     ID<String, String> id = ID.create(testName + "string_index");
@@ -80,7 +77,7 @@ public class StringIndex {
     myIndex = new VfsAwareMapReduceIndex<String, String, PathContentPair>(extension, storage, new MapBasedForwardIndex<String, String>(extension) {
       @NotNull
       @Override
-      public PersistentHashMap<Integer, Collection<String>> createMap() throws IOException {
+      public PersistentMap<Integer, Collection<String>> createMap() throws IOException {
         return inputIndex;
       }
     }) {

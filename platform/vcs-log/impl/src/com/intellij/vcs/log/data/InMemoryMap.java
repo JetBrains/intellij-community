@@ -36,6 +36,11 @@ public class InMemoryMap<K, V> implements PersistentMap<K, V> {
   }
 
   @Override
+  public void remove(K key) throws IOException {
+    myMap.remove(key);
+  }
+
+  @Override
   public boolean processKeys(Processor<K> processor) throws IOException {
     for (K key : myMap.keySet()) {
       if (!processor.process(key)) {
@@ -65,5 +70,10 @@ public class InMemoryMap<K, V> implements PersistentMap<K, V> {
 
   @Override
   public void markDirty() throws IOException {
+  }
+
+  @Override
+  public void clear() throws IOException {
+
   }
 }

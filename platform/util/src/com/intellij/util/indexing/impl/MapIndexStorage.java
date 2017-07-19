@@ -70,20 +70,28 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   }
 
   protected void initMapAndCache() throws IOException {
-    final ValueContainerMap<Key, Value> map;
-    PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(
-      new PersistentHashMapValueStorage.ExceptionalIOCancellationCallback() {
-        @Override
-        public void checkCancellation() {
-          checkCanceled();
-        }
-      });
-    PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
-    try {
-      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myReadOnly);
-    } finally {
-      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
-      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
+    final Object lock;
+    if (PersistentMap.useIndexServer) {
+      myMap = new TCPPersistentMap<Key, UpdatableValueContainer<Value>>(getStorageFile(), myKeyDescriptor, new ValueContainerMap.ValueContainerExternalizer<Value>(myDataExternalizer));
+      lock = new Object();
+    }
+    else {
+      PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(
+        new PersistentHashMapValueStorage.ExceptionalIOCancellationCallback() {
+          @Override
+          public void checkCancellation() {
+            checkCanceled();
+          }
+        });
+      PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
+      try {
+        myMap = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myReadOnly);
+      }
+      finally {
+        PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
+        PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
+      }
+      lock = null;
     }
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
       @Override
@@ -93,15 +101,18 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
           @NotNull
           @Override
           public Object getLock() {
-            return map.getDataAccessLock();
+            if (PersistentMap.useIndexServer) {
+              return lock;
+            } else {
+              return ((ValueContainerMap)myMap).getDataAccessLock();
+            }
           }
 
-          @Nullable
           @Override
           public ValueContainer<Value> compute() {
             ValueContainer<Value> value;
             try {
-              value = map.get(key);
+              value = myMap.get(key);
               if (value == null) {
                 value = new ValueContainerImpl<Value>();
               }
@@ -118,7 +129,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       protected void onDropFromCache(final Key key, @NotNull final ChangeTrackingValueContainer<Value> valueContainer) {
         if (!myReadOnly && valueContainer.isDirty()) {
           try {
-            map.put(key, valueContainer);
+            myMap.put(key, valueContainer);
           }
           catch (IOException e) {
             throw new RuntimeException(e);
@@ -126,8 +137,6 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
         }
       }
     };
-
-    myMap = map;
   }
 
   protected abstract void checkCanceled();

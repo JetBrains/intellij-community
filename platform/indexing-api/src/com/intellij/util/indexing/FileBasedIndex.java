@@ -195,6 +195,6 @@ public abstract class FileBasedIndex implements BaseComponent {
   }
 
   // TODO: remove once changes becomes permanent
-  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping =
-    SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
+  public static final boolean ourEnableTracingOfKeyHashToVirtualFileMapping = false;
+    //SystemProperties.getBooleanProperty("idea.enable.tracing.keyhash2virtualfile", true);
 }
