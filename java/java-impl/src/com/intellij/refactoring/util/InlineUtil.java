@@ -138,10 +138,15 @@ public class InlineUtil {
   }
 
   private static PsiExpression surroundWithCast(PsiVariable variable, PsiExpression expr) {
-    PsiTypeCastExpression cast = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText("(t)a", null);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
+    PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(t)a", null);
     PsiTypeElement castTypeElement = cast.getCastType();
     assert castTypeElement != null;
-    castTypeElement.replace(variable.getTypeElement());
+    PsiTypeElement typeElement = variable.getTypeElement();
+    if (typeElement == null) {
+      typeElement = factory.createTypeElement(variable.getType());
+    }
+    castTypeElement.replace(typeElement);
     final PsiExpression operand = cast.getOperand();
     assert operand != null;
     operand.replace(expr);
