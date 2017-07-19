@@ -26,6 +26,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -71,7 +72,9 @@ public class TestPackage extends TestObject {
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
         if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
+          DumbService instance = DumbService.getInstance(myProject);
           try {
+            instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
             long start = System.currentTimeMillis();
@@ -81,7 +84,7 @@ public class TestPackage extends TestObject {
               PsiManager manager = PsiManager.getInstance(myProject);
               Arrays.stream(classNames)
                 .filter(className -> acceptClassName(className)) //check patterns
-                .map(name -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope()))
+                .map(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())))
                 .filter(aClass -> aClass != null)
                 .forEach(myClasses::add);
               LOG.info("Found tests in " + (System.currentTimeMillis() - start));
@@ -91,6 +94,9 @@ public class TestPackage extends TestObject {
             }
           }
           catch (CantRunException ignored) {}
+          finally {
+            instance.setAlternativeResolveEnabled(false);
+          }
         }
       }
 
