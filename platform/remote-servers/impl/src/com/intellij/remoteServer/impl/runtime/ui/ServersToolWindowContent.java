@@ -52,11 +52,39 @@ import java.util.Set;
  */
 public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector, TreeContent {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
+
   @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
   @NonNls private static final String PLACE_TOOLBAR_TOP = "ServersToolWindowContent#Toolbar.Top";
-  @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
-  @NonNls private static final String SERVERS_TOOL_WINDOW_TOP_TOOLBAR = "RemoteServersViewToolbar.Top";
-  @NonNls private static final String SERVERS_TOOL_WINDOW_POPUP = "RemoteServersViewPopup";
+
+  public static class ActionGroups {
+    @NotNull private final String myMainToolbarID;
+    @NotNull private final String mySecondaryToolbarID;
+    @NotNull private final String myPopupID;
+
+    public ActionGroups(@NotNull String mainToolbarID, @NotNull String secondaryToolbarID, @NotNull String popupID) {
+      myMainToolbarID = mainToolbarID;
+      mySecondaryToolbarID = secondaryToolbarID;
+      myPopupID = popupID;
+    }
+
+    @NotNull
+    public String getMainToolbarID() {
+      return myMainToolbarID;
+    }
+
+    @NotNull
+    public String getPopupID() {
+      return myPopupID;
+    }
+
+    @NotNull
+    public String getSecondaryToolbarID() {
+      return mySecondaryToolbarID;
+    }
+
+    public static final ActionGroups SHARED_ACTION_GROUPS = new ActionGroups(
+      "RemoteServersViewToolbar", "RemoteServersViewToolbar.Top", "RemoteServersViewPopup");
+  }
 
   private static final String MESSAGE_CARD = "message";
   private static final String EMPTY_SELECTION_MESSAGE = "Select a server or deployment in the tree to view details";
@@ -77,7 +105,20 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
 
+  /**
+   * Left for compatibility with 172 stream, will be removed after 173.
+   * Every remoteServers-like view is now expected to explicitly specify its set if Action Group IDs using
+   * {@link #ServersToolWindowContent(Project, RemoteServersViewContribution, ActionGroups)}
+   *
+   * @deprecated
+   */
+  @Deprecated
   public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
+    this(project, contribution, ActionGroups.SHARED_ACTION_GROUPS);
+  }
+
+  public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution,
+                                  @NotNull ActionGroups actionGroups) {
     super(new BorderLayout());
     myProject = project;
     myContribution = contribution;
@@ -90,9 +131,9 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
 
-    getMainPanel().add(createTopToolbar(), BorderLayout.NORTH);
+    getMainPanel().add(createTopToolbar(actionGroups.getSecondaryToolbarID()), BorderLayout.NORTH);
+    getMainPanel().add(createMainToolbar(actionGroups.getMainToolbarID()), BorderLayout.WEST);
 
-    getMainPanel().add(createToolbar(), BorderLayout.WEST);
     Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
@@ -153,8 +194,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     });
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
-    popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
-    popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_POPUP));
+    popupActionGroup.add(ActionManager.getInstance().getAction(actionGroups.getMainToolbarID()));
+    popupActionGroup.add(ActionManager.getInstance().getAction(actionGroups.getPopupID()));
     PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
@@ -283,17 +324,17 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     }, POLL_DEPLOYMENTS_DELAY, ModalityState.any()));
   }
 
-  private JComponent createTopToolbar() {
+  private JComponent createTopToolbar(@NotNull String actionGroupID) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOP_TOOLBAR));
+    group.add(ActionManager.getInstance().getAction(actionGroupID));
     ActionToolbar topToolbar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR_TOP, group, true);
     topToolbar.setTargetComponent(myTree);
     return topToolbar.getComponent();
   }
 
-  private JComponent createToolbar() {
+  private JComponent createMainToolbar(@NotNull String actionGroupID) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
+    group.add(ActionManager.getInstance().getAction(actionGroupID));
     group.add(new Separator());
     group.add(new ContextHelpAction(myContribution.getContextHelpId()));
 
