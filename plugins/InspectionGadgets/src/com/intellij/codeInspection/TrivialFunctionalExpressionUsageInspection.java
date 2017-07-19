@@ -213,7 +213,6 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
   private static void replaceExpression(PsiMethodCallExpression callExpression, PsiLambdaExpression element) {
     PsiExpression expression;
     final CommentTracker ct = new CommentTracker();
-    LambdaRefactoringUtil.specifyLambdaParameterTypes(element);
     inlineCallArguments(callExpression, element, ct);
     // body could be invalidated after inlining
     expression = LambdaUtil.extractSingleExpressionFromBody(element.getBody());
@@ -228,7 +227,6 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
     PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (callExpression == null) return;
     final CommentTracker ct = new CommentTracker();
-    LambdaRefactoringUtil.specifyLambdaParameterTypes(element);
     inlineCallArguments(callExpression, element, ct);
     body = element.getBody();
     final PsiElement parent = callExpression.getParent();
