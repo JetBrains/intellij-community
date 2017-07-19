@@ -53,15 +53,13 @@ public class InvokeCompletion extends ActionOnRange {
   private final int myItemIndexRaw;
   private LookupElement mySelectedItem;
   private final char myCompletionChar;
-  private final PsiFile myFile;
   private final CompletionPolicy myPolicy;
   private final String myConstructorArgs;
 
   InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
-    super(file.getViewProvider().getDocument(), offset, offset);
+    super(file, offset, offset);
     this.myItemIndexRaw = itemIndexRaw;
     this.myCompletionChar = completionChar;
-    myFile = file;
     myPolicy = policy;
     myConstructorArgs = "_, " + offset + ", " + itemIndexRaw + ", '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "', _";
   }
@@ -69,14 +67,14 @@ public class InvokeCompletion extends ActionOnRange {
   @Override
   public String toString() {
     return "InvokeCompletion(" + myConstructorArgs + ")" +
-           "{" + myFile.getVirtualFile().getPath() + ", offset=" + getStartOffset() + ", selected=" + mySelectedItem + '}';
+           "{" + getVirtualFile().getPath() + ", offset=" + getStartOffset() + ", selected=" + mySelectedItem + '}';
   }
 
   @Override
   public void performAction() {
-    Project project = myFile.getProject();
+    Project project = getProject();
     Editor editor =
-      FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, myFile.getVirtualFile(), 0), true);
+      FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), 0), true);
     assert editor != null;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -89,9 +87,9 @@ public class InvokeCompletion extends ActionOnRange {
       Disposable raiseCompletionLimit = Disposer.newDisposable();
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
-        PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
+        PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
         performCompletion(editor);
-        PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
+        PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);
@@ -102,9 +100,9 @@ public class InvokeCompletion extends ActionOnRange {
   }
 
   private void performCompletion(Editor editor) {
-    String expectedVariant = myPolicy.getExpectedVariant(editor, myFile);
+    String expectedVariant = myPolicy.getExpectedVariant(editor, getFile());
 
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(myFile.getProject(), editor);
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
 
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {

@@ -27,12 +27,9 @@ import slowCheck.IntDistribution;
 import java.util.Objects;
 
 public class DeleteRange extends ActionOnRange {
-  private final PsiFile myFile;
 
   DeleteRange(PsiFile file, int startOffset, int endOffset) {
-    super(file.getViewProvider().getDocument(), startOffset, endOffset);
-    assert myMarker.getDocument().getTextLength() == file.getTextLength() : file + " " + myMarker.getDocument();
-    myFile = file;
+    super(file, startOffset, endOffset);
   }
 
   public static Generator<DeleteRange> psiRangeDeletions(@NotNull PsiFile psiFile) {
@@ -56,14 +53,13 @@ public class DeleteRange extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "DeleteRange: " + myFile.getVirtualFile().getPath() + " " + getCurrentRange();
+    return "DeleteRange: " + getVirtualFile().getPath() + " " + getCurrentRange();
   }
 
   public void performAction() {
     TextRange range = getFinalRange();
     if (range == null) return;
 
-    WriteCommandAction.runWriteCommandAction(myFile.getProject(), () -> myFile.getViewProvider().getDocument()
-      .deleteString(range.getStartOffset(), range.getEndOffset()));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
   }
 }

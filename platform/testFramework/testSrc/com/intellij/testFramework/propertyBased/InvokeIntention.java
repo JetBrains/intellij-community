@@ -22,9 +22,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,15 +37,13 @@ import slowCheck.Generator;
 import java.util.List;
 
 public class InvokeIntention extends ActionOnRange {
-  private final PsiFile myFile;
   private final int myIntentionIndex;
   private final IntentionPolicy myPolicy;
   private final String myConstructorArgs;
   private String myInvocationLog = "not invoked";
 
   InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
-    super(file.getViewProvider().getDocument(), offset, offset);
-    myFile = file;
+    super(file, offset, offset);
     myIntentionIndex = intentionIndex;
     myPolicy = policy;
     myConstructorArgs = "_ , " + offset + ", " + intentionIndex + ", _";
@@ -57,7 +57,7 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeIntention(" + myConstructorArgs + "){" + myFile.getVirtualFile().getPath() + "," + myInvocationLog + "}";
+    return "InvokeIntention(" + myConstructorArgs + "){" + getVirtualFile().getPath() + "," + myInvocationLog + "}";
   }
 
   public void performAction() {
@@ -65,19 +65,21 @@ public class InvokeIntention extends ActionOnRange {
     myInvocationLog = "offset " + offset;
     if (offset < 0) return;
 
-    Editor editor = FileEditorManager.getInstance(myFile.getProject()).openTextEditor(new OpenFileDescriptor(myFile.getProject(), myFile.getVirtualFile(), offset), true);
+    Project project = getProject();
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     
-    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, myFile.getProject());
+    List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
     boolean hasErrors = infos.stream().anyMatch(i -> i.getSeverity() == HighlightSeverity.ERROR);
 
-    IntentionAction intention = getRandomIntention(editor);
+    PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
+    IntentionAction intention = getRandomIntention(editor, file);
     if (intention == null) return;
     myInvocationLog += ", invoke '" + intention.getText() + "'";
 
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
 
-    Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, myFile, editor, intention.getText());
+    Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
     if (changedDocument != null) {
       MadTestingUtil.restrictChangesToDocument(changedDocument, r);
     } else {
@@ -85,26 +87,26 @@ public class InvokeIntention extends ActionOnRange {
     }
 
     if (changedDocument != null && 
-        PsiDocumentManager.getInstance(myFile.getProject()).isDocumentBlockedByPsi(changedDocument)) {
+        PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
       throw new AssertionError("Document is left blocked by PSI");
     }
     if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
       throw new AssertionError("No change was performed in the document");
     }
 
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
+    PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
   }
 
   @Nullable
   private Document getDocumentToBeChanged(IntentionAction intention) {
-    PsiElement changedElement = intention.getElementToMakeWritable(myFile);
+    PsiElement changedElement = intention.getElementToMakeWritable(getFile());
     PsiFile changedFile = changedElement == null ? null : changedElement.getContainingFile();
     return changedFile == null ? null : changedFile.getViewProvider().getDocument();
   }
 
   @Nullable
-  private IntentionAction getRandomIntention(Editor editor) {
-    List<IntentionAction> actions = ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, myFile),
+  private IntentionAction getRandomIntention(Editor editor, PsiFile file) {
+    List<IntentionAction> actions = ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file),
                                                          myPolicy::mayInvokeIntention);
     return actions.isEmpty() ? null : actions.get(myIntentionIndex % actions.size());
   }

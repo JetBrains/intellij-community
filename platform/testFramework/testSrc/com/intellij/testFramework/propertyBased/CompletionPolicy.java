@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -34,6 +35,13 @@ public class CompletionPolicy {
     if (leaf == null) {
       return null;
     }
+    PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
+    return getExpectedVariant(editor, file, leaf, ref);
+
+  }
+
+  @Nullable
+  protected String getExpectedVariant(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement leaf, @Nullable PsiReference ref) {
     String leafText = leaf.getText();
     if (leafText.isEmpty() ||
         !Character.isLetter(leafText.charAt(0)) ||
@@ -44,7 +52,6 @@ public class CompletionPolicy {
 
     if (isDeclarationName(editor, file, leaf)) return null;
 
-    PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
     if (ref != null) {
       PsiElement refTarget = ref.resolve();
       if (refTarget == null || !shouldSuggestReferenceText(ref)) return null;
@@ -56,7 +63,6 @@ public class CompletionPolicy {
       if (!shouldSuggestNonReferenceLeafText(leaf)) return null;
     }
     return leafText;
-
   }
 
   private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf) {

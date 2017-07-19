@@ -16,20 +16,48 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiFileRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 abstract class ActionOnRange implements MadTestingAction {
-  protected final RangeMarker myMarker;
-  private TextRange finalRange;
+  private final SmartPsiFileRange myMarker;
+  private TextRange myFinalRange;
 
-  ActionOnRange(Document document, int start, int end) {
-    myMarker = document.createRangeMarker(start, end);
+  ActionOnRange(PsiFile file, int start, int end) {
+    myMarker = SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, new TextRange(start, end));
+    assert file.getTextLength() == getDocument().getTextLength() : file + " " + getDocument();
+  }
+
+  @NotNull
+  PsiFile getFile() {
+    return PsiManager.getInstance(getProject()).findFile(getVirtualFile());
+  }
+
+  @NotNull
+  Project getProject() {
+    return myMarker.getProject();
+  }
+
+  @NotNull
+  VirtualFile getVirtualFile() {
+    return myMarker.getVirtualFile();
+  }
+
+  @NotNull
+  Document getDocument() {
+    return FileDocumentManager.getInstance().getDocument(getVirtualFile());
   }
 
   int getStartOffset() {
@@ -38,14 +66,15 @@ abstract class ActionOnRange implements MadTestingAction {
   }
 
   Segment getCurrentRange() {
-    return finalRange == null ? myMarker : finalRange;
+    return myFinalRange == null ? myMarker.getRange() : myFinalRange;
   }
 
   @Nullable
   TextRange getFinalRange() {
-    if (finalRange == null) {
-      finalRange = myMarker.isValid() ? new TextRange(myMarker.getStartOffset(), myMarker.getEndOffset()) : null;
+    if (myFinalRange == null) {
+      Segment range = myMarker.getRange();
+      myFinalRange = range != null ? TextRange.create(range) : null;
     }
-    return finalRange;
+    return myFinalRange;
   }
 }

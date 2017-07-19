@@ -21,14 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import slowCheck.Generator;
 
 public class InsertString extends ActionOnRange {
-  private final PsiFile myFile;
   private final String myToInsert;
 
-  private InsertString(PsiFile file, int offset, String toInsert) {
-    super(file.getViewProvider().getDocument(), offset, offset);
+  InsertString(PsiFile file, int offset, String toInsert) {
+    super(file, offset, offset);
     myToInsert = toInsert;
-    assert myMarker.getDocument().getTextLength() == file.getTextLength();
-    myFile = file;
   }
 
   public static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {
@@ -39,14 +36,13 @@ public class InsertString extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InsertString: " + myFile.getVirtualFile().getPath() + " " + getStartOffset() + " '" + myToInsert + "'";
+    return "InsertString: " + getVirtualFile().getPath() + " " + getStartOffset() + " '" + myToInsert + "'";
   }
 
   public void performAction() {
     int offset = getStartOffset();
     if (offset < 0) return;
 
-    WriteCommandAction.runWriteCommandAction(myFile.getProject(), () -> 
-      myFile.getViewProvider().getDocument().insertString(offset, myToInsert));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, myToInsert));
   }
 }
