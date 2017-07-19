@@ -6,6 +6,6 @@ public class Main {
   public void testBitwiseXorLong() {
     nt[] arr = new int[]{1, 2, 3, 4};
     long acc = 12443;
-    acc ^= Arrays.stream(arr).asLongStream().reduce(0, (a, b) -> a ^ b);
+      acc ^= Arrays.stream(arr).asLongStream().reduce(0, (a, b) -> a ^ b);
   }
 }
