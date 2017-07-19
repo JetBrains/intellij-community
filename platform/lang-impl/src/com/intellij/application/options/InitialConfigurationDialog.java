@@ -122,7 +122,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
         }
       }
     });
-    myColorSchemeComboBox.addActionListener(event -> ((MyAbstractTitledSeparatorWithIcon)myColorPreviewPanel).updatePreview());
+    myColorSchemeComboBox.addActionListener(event -> ((MySeparatorPanel)myColorPreviewPanel).updatePreview());
 
     myPreferencesLabel.setText("You can use " + CommonBundle.settingsActionPath() + " to configure any of these settings later.");
 
@@ -149,11 +149,11 @@ public class InitialConfigurationDialog extends DialogWrapper {
     preselectKeyMap(availableKeymaps);
     updateColorScheme(colorSchemes);
 
-    Disposer.register(myDisposable, () -> ((MyAbstractTitledSeparatorWithIcon)myColorPreviewPanel).disposeUIResources());
+    Disposer.register(myDisposable, () -> ((MySeparatorPanel)myColorPreviewPanel).disposeUIResources());
   }
 
   private void createUIComponents() {
-    myColorPreviewPanel = new MyAbstractTitledSeparatorWithIcon();
+    myColorPreviewPanel = new MySeparatorPanel(this);
   }
 
   private void preselectKeyMap(Keymap[] keymaps) {
@@ -261,16 +261,16 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
   }
 
-  private class MyAbstractTitledSeparatorWithIcon extends AbstractTitledSeparatorWithIcon {
+  private static class MySeparatorPanel extends AbstractTitledSeparatorWithIcon {
     private static final String SHOW_TEXT = "Click to preview";
     private static final String HIDE_TEXT = "Click to hide preview";
 
     private final InitialConfigurationDialog myDialog;
     private int myAddedWidth;
 
-    public MyAbstractTitledSeparatorWithIcon() {
+    public MySeparatorPanel(InitialConfigurationDialog dialog) {
       super(AllIcons.General.ComboArrowRight, AllIcons.General.ComboArrowDown, SHOW_TEXT);
-      myDialog = InitialConfigurationDialog.this;
+      myDialog = dialog;
     }
 
     @Override
