@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
 import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -144,22 +145,37 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
 
     JvmCommonIntentionActionsFactory actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(targetClass.getLanguage());
     if (actionsFactory != null && !(actionsFactory instanceof JavaCommonIntentionActionsFactory)) {
-      List<String> modifiers = new ArrayList<>(2);
-      if (shouldBeAbstract) {
-        modifiers.add(PsiModifier.ABSTRACT);
+      List<IntentionAction> actions;
+      if (expression.isConstructor()) {
+        CreateFromUsage.ConstructorInfo constructorInfo = new CreateFromUsage.ConstructorInfo(
+          targetClass,
+          Collections.emptyList(),
+          CreateFromUsageUtils.getParameterInfos(targetClass, argument2Type)
+        );
+
+        actions = actionsFactory.createGenerateConstructorFromUsageActions(constructorInfo);
       }
-      if (shouldBeStatic) {
-        modifiers.add(PsiModifier.STATIC);
+      else {
+        List<String> modifiers = new ArrayList<>(2);
+        if (shouldBeAbstract) {
+          modifiers.add(PsiModifier.ABSTRACT);
+        }
+        if (shouldBeStatic) {
+          modifiers.add(PsiModifier.STATIC);
+        }
+
+        CreateFromUsage.MethodInfo methodInfo = new CreateFromUsage.MethodInfo(
+          targetClass,
+          methodName,
+          modifiers,
+          new CreateFromUsage.TypeInfo(ArraysKt.toList(expectedTypes)),
+          CreateFromUsageUtils.getParameterInfos(targetClass, argument2Type)
+        );
+
+        actions = actionsFactory.createGenerateMethodFromUsageActions(methodInfo);
       }
 
-      CreateFromUsage.MethodInfo methodInfo = new CreateFromUsage.MethodInfo(
-        targetClass,
-        methodName,
-        modifiers,
-        new CreateFromUsage.TypeInfo(ArraysKt.toList(expectedTypes)),
-        CreateFromUsageUtils.getParameterInfos(targetClass, argument2Type)
-      );
-      CreateFromUsageUtils.invokeActionInTargetEditor(targetClass, () -> actionsFactory.createGenerateMethodFromUsageActions(methodInfo));
+      CreateFromUsageUtils.invokeActionInTargetEditor(targetClass, () -> actions);
       return;
     }
 

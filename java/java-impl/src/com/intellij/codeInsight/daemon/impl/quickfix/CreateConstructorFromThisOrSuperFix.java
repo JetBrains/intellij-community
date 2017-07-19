@@ -18,6 +18,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
+import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -28,12 +31,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.Collections;
 import java.util.List;
 
 public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsageBaseFix {
@@ -76,6 +82,19 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
     try {
+      JvmCommonIntentionActionsFactory actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(targetClass.getLanguage());
+      if (actionsFactory != null && !(actionsFactory instanceof JavaCommonIntentionActionsFactory)) {
+        PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();
+        CreateFromUsage.ConstructorInfo constructorInfo = new CreateFromUsage.ConstructorInfo(
+          targetClass,
+          Collections.emptyList(),
+          CreateFromUsageUtils.getParameterInfos(targetClass, ContainerUtil.map2List(arguments, Pair.createFunction(null)))
+        );
+        CreateFromUsageUtils.invokeActionInTargetEditor(targetClass,
+                                                        () -> actionsFactory.createGenerateConstructorFromUsageActions(constructorInfo));
+        return;
+      }
+
       PsiMethod constructor = elementFactory.createConstructor();
       constructor = (PsiMethod)targetClass.add(constructor);
 

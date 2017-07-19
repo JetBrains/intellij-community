@@ -48,6 +48,7 @@ abstract class JvmCommonIntentionActionsFactory {
 
   open fun createGenerateFieldFromUsageActions(info: CreateFromUsage.FieldInfo): List<IntentionAction> = emptyList()
   open fun createGenerateMethodFromUsageActions(info: CreateFromUsage.MethodInfo): List<IntentionAction> = emptyList()
+  open fun createGenerateConstructorFromUsageActions(info: CreateFromUsage.ConstructorInfo): List<IntentionAction> = emptyList()
 
   open fun createAddBeanPropertyActions(psiClass: @JvmCommon PsiClass,
                                         propertyName: String,
@@ -91,27 +92,32 @@ object CreateFromUsage {
 
   abstract class MemberInfo(
       val targetClass: @JvmCommon PsiClass,
-      val name: String,
-      @PsiModifier.ModifierConstant
-      val modifiers: List<String> = emptyList()
+      @PsiModifier.ModifierConstant val modifiers: List<String> = emptyList()
   )
 
   class FieldInfo(
       targetClass: @JvmCommon PsiClass,
-      name: String,
+      val name: String,
       @PsiModifier.ModifierConstant
       modifiers: List<String> = emptyList(),
       val returnType: TypeInfo
-  ) : MemberInfo(targetClass, name, modifiers)
+  ) : MemberInfo(targetClass, modifiers)
 
   class MethodInfo(
       targetClass: @JvmCommon PsiClass,
-      name: String,
+      val name: String,
       @PsiModifier.ModifierConstant
       modifiers: List<String> = emptyList(),
       val returnType: TypeInfo,
       val parameters: List<ParameterInfo>
-  ) : MemberInfo(targetClass, name, modifiers)
+  ) : MemberInfo(targetClass, modifiers)
+
+  class ConstructorInfo(
+      targetClass: @JvmCommon PsiClass,
+      @PsiModifier.ModifierConstant
+      modifiers: List<String> = emptyList(),
+      val parameters: List<ParameterInfo>
+  ) : MemberInfo(targetClass, modifiers)
 }
 
 @ApiStatus.Experimental

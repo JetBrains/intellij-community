@@ -18,6 +18,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.intention.CreateFromUsage;
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
+import com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -25,12 +28,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,6 +59,21 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myConstructorCall.getProject();
+
+    JvmCommonIntentionActionsFactory actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(targetClass.getLanguage());
+    if (actionsFactory != null && !(actionsFactory instanceof JavaCommonIntentionActionsFactory)) {
+      PsiExpressionList argumentList = myConstructorCall.getArgumentList();
+      PsiExpression[] arguments = argumentList != null ? argumentList.getExpressions() : PsiExpression.EMPTY_ARRAY;
+      CreateFromUsage.ConstructorInfo constructorInfo = new CreateFromUsage.ConstructorInfo(
+        targetClass,
+        Collections.emptyList(),
+        CreateFromUsageUtils.getParameterInfos(targetClass, ContainerUtil.map2List(arguments, Pair.createFunction(null)))
+      );
+      CreateFromUsageUtils.invokeActionInTargetEditor(targetClass,
+                                                      () -> actionsFactory.createGenerateConstructorFromUsageActions(constructorInfo));
+      return;
+    }
+
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (elementFactory == null) elementFactory = JavaPsiFacade.getElementFactory(project);
 
