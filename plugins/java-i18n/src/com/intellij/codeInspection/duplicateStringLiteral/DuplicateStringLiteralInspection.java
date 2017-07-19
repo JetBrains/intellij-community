@@ -195,11 +195,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     Collection<LocalQuickFix> fixes = new SmartList<>();
     if (isOnTheFly) {
-      final LocalQuickFix introduceConstFix = createIntroduceConstFix(foundExpr, originalExpression);
-      fixes.add(introduceConstFix);
+      fixes.add(createIntroduceConstFix(foundExpr, originalExpression));
+      fixes.add(new NavigateToOccurrencesFix(originalExpression));
     }
     createReplaceFixes(foundExpr, originalExpression, fixes);
-    fixes.add(new NavigateToOccurrencesFix(originalExpression));
     LocalQuickFix[] array = fixes.toArray(new LocalQuickFix[fixes.size()]);
     holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
   }
