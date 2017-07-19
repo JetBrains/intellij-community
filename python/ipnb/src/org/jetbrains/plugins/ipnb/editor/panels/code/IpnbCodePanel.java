@@ -289,6 +289,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public void updateCellSource() {
     final Document document = myCodeSourcePanel.getEditor().getDocument();
     final String text = document.getText();
+    if (StringUtil.isEmpty(text) && myCell.getSource().isEmpty()) {
+      return;
+    }
     myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(text)));
   }
 
@@ -334,7 +337,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       }
 
       if (replacementContent != null) {
-        myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
+        if (replacementContent.isEmpty() || myCell.getSource().isEmpty()) {
+          myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(replacementContent)));
+        }
         String prompt = IpnbEditorUtil.prompt(null, IpnbEditorUtil.PromptType.In);
         myCell.setPromptNumber(null);
         myPromptLabel.setText(prompt);
