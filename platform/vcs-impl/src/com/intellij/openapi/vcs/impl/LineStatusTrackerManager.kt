@@ -13,466 +13,413 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.impl;
+package com.intellij.openapi.vcs.impl
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
-import com.intellij.openapi.editor.event.EditorFactoryListener;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusListener;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsApplicationSettings;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.*;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.concurrency.QueueProcessorRemovePartner;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.*;
+import com.intellij.lifecycle.PeriodicalTasksCloser
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryAdapter
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.FileStatusListener
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vfs.*
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.concurrency.QueueProcessorRemovePartner
+import com.intellij.util.containers.HashMap
+import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.NonNls
+import java.nio.charset.Charset
 
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+class LineStatusTrackerManager(
+  private val project: Project,
+  private val statusProvider: VcsBaseContentProvider,
+  private val application: Application,
+  @Suppress("UNUSED_PARAMETER") makeSureIndexIsInitializedFirst: DirectoryIndex
+) : ProjectComponent, LineStatusTrackerManagerI {
 
-public class LineStatusTrackerManager implements ProjectComponent, LineStatusTrackerManagerI {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.LineStatusTrackerManager");
+  private val LOCK = Any()
+  private val disposable: Disposable
 
-  @NotNull private final Object myLock = new Object();
+  private val trackers = HashMap<Document, TrackerData>()
 
-  @NotNull private final Project myProject;
-  @NotNull private final VcsBaseContentProvider myStatusProvider;
-  @NotNull private final Application myApplication;
+  private val queue: QueueProcessorRemovePartner<Document, BaseRevisionLoader> = QueueProcessorRemovePartner(project)
+  private var ourLoadCounter: Long = 0
 
-  @NotNull private final Disposable myDisposable;
+  companion object {
+    private val LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.LineStatusTrackerManager")
 
-  @NotNull private final Map<Document, TrackerData> myLineStatusTrackers = new HashMap<>();
-
-  @NotNull private final QueueProcessorRemovePartner<Document, BaseRevisionLoader> myPartner;
-  private long myLoadCounter = 0;
-
-  public static LineStatusTrackerManagerI getInstance(final Project project) {
-    return project.getComponent(LineStatusTrackerManagerI.class);
+    @JvmStatic
+    fun getInstance(project: Project): LineStatusTrackerManagerI {
+      return project.getComponent(LineStatusTrackerManagerI::class.java)
+    }
   }
 
-  public LineStatusTrackerManager(@NotNull final Project project,
-                                  @NotNull final VcsBaseContentProvider statusProvider,
-                                  @NotNull final Application application,
-                                  @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
-    myProject = project;
-    myStatusProvider = statusProvider;
-    myApplication = application;
-
-    myPartner = new QueueProcessorRemovePartner<>(myProject, baseRevisionLoader -> baseRevisionLoader.run());
-
-    MessageBusConnection busConnection = project.getMessageBus().connect();
-    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, new LineStatusTrackerSettingListener() {
-      @Override
-      public void settingsUpdated() {
-        synchronized (myLock) {
-          LineStatusTracker.Mode mode = getMode();
-          for (TrackerData data : myLineStatusTrackers.values()) {
-            data.tracker.setMode(mode);
-          }
+  init {
+    val busConnection = project.messageBus.connect()
+    busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, LineStatusTrackerSettingListener {
+      synchronized(LOCK) {
+        val mode = getTrackerMode()
+        for (data in trackers.values) {
+          data.tracker.mode = mode
         }
       }
-    });
+    })
 
-    myDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-        synchronized (myLock) {
-          for (final TrackerData data : myLineStatusTrackers.values()) {
-            data.tracker.release();
-          }
-
-          myLineStatusTrackers.clear();
-          myPartner.clear();
+    disposable = Disposable {
+      synchronized(LOCK) {
+        for (data in trackers.values) {
+          data.tracker.release()
         }
+
+        trackers.clear()
+        queue.clear()
       }
-    };
-    Disposer.register(myProject, myDisposable);
+    }
+    Disposer.register(project, disposable)
   }
 
-  @Override
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPreStartupActivity(() -> {
-      final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
-      final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
-      final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
+  override fun projectOpened() {
+    StartupManager.getInstance(project).registerPreStartupActivity {
+      val fsManager = FileStatusManager.getInstance(project)
+      fsManager.addFileStatusListener(MyFileStatusListener(), disposable)
 
-      final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
-      fsManager.addFileStatusListener(fileStatusListener, myDisposable);
+      val editorFactory = EditorFactory.getInstance()
+      editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), disposable)
 
-      final EditorFactory editorFactory = EditorFactory.getInstance();
-      editorFactory.addEditorFactoryListener(editorFactoryListener, myDisposable);
-
-      final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-      virtualFileManager.addVirtualFileListener(virtualFileListener, myDisposable);
-    });
+      val virtualFileManager = VirtualFileManager.getInstance()
+      virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), disposable)
+    }
   }
 
-  @Override
   @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "LineStatusTrackerManager";
+  override fun getComponentName(): String {
+    return "LineStatusTrackerManager"
   }
 
-  public boolean isDisabled() {
-    return !myProject.isOpen() || myProject.isDisposed();
-  }
+  private val isDisabled: Boolean get() = !project.isOpen || project.isDisposed
 
-  @Override
-  @Nullable
-  public LineStatusTracker getLineStatusTracker(final Document document) {
-    synchronized (myLock) {
-      if (isDisabled()) return null;
-      TrackerData data = myLineStatusTrackers.get(document);
-      return data != null ? data.tracker : null;
+  override fun getLineStatusTracker(document: Document): LineStatusTracker? {
+    synchronized(LOCK) {
+      if (isDisabled) return null
+      return trackers[document]?.tracker
     }
   }
 
-  private boolean isTrackedEditor(@NotNull Editor editor) {
-    return editor.getProject() == null || editor.getProject() == myProject;
+  private fun isTrackedEditor(editor: Editor): Boolean {
+    return editor.project == null || editor.project === project
   }
 
-  @NotNull
-  private List<Editor> getAllTrackedEditors(@NotNull Document document) {
-    return Arrays.asList(EditorFactory.getInstance().getEditors(document, myProject));
+  private fun getAllTrackedEditors(document: Document): List<Editor> {
+    return EditorFactory.getInstance().getEditors(document, project).asList()
   }
 
-  @NotNull
-  private List<Editor> getAllTrackedEditors() {
-    return ContainerUtil.filter(EditorFactory.getInstance().getAllEditors(), this::isTrackedEditor);
+  private fun getAllTrackedEditors(): List<Editor> {
+    return EditorFactory.getInstance().allEditors.filter { isTrackedEditor(it) }
   }
 
   @CalledInAwt
-  private void onEditorCreated(@NotNull Editor editor) {
+  private fun onEditorCreated(editor: Editor) {
     if (isTrackedEditor(editor)) {
-      installTracker(editor.getDocument());
+      installTracker(editor.document)
     }
   }
 
   @CalledInAwt
-  private void onEditorRemoved(@NotNull Editor editor) {
+  private fun onEditorRemoved(editor: Editor) {
     if (isTrackedEditor(editor)) {
-      List<Editor> editors = getAllTrackedEditors(editor.getDocument());
-      if (editors.size() == 0 ||
-          editors.size() == 1 && editor == editors.get(0)) {
-        doReleaseTracker(editor.getDocument());
+      val editors = getAllTrackedEditors(editor.document)
+      if (editors.isEmpty() || editors.size == 1 && editor === editors[0]) {
+        doReleaseTracker(editor.document)
       }
     }
   }
 
   @CalledInAwt
-  private void onEverythingChanged() {
-    synchronized (myLock) {
-      if (isDisabled()) return;
-      log("onEverythingChanged", null);
+  private fun onEverythingChanged() {
+    synchronized(LOCK) {
+      if (isDisabled) return
+      log("onEverythingChanged", null)
 
-      List<LineStatusTracker> trackers = ContainerUtil.map(myLineStatusTrackers.values(), data -> data.tracker);
-      for (LineStatusTracker tracker : trackers) {
-        resetTracker(tracker.getDocument(), tracker.getVirtualFile(), tracker);
+      val trackers = trackers.values.map { it.tracker }
+      for (tracker in trackers) {
+        resetTracker(tracker.document, tracker.virtualFile, tracker)
       }
 
-      for (Editor editor : getAllTrackedEditors()) {
-        installTracker(editor.getDocument());
+      for (editor in getAllTrackedEditors()) {
+        installTracker(editor.document)
       }
     }
   }
 
   @CalledInAwt
-  private void onFileChanged(@NotNull VirtualFile virtualFile) {
-    final Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    if (document == null) return;
+  private fun onFileChanged(virtualFile: VirtualFile) {
+    val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
 
-    synchronized (myLock) {
-      if (isDisabled()) return;
-      log("onFileChanged", virtualFile);
-      resetTracker(document, virtualFile, getLineStatusTracker(document));
+    synchronized(LOCK) {
+      if (isDisabled) return
+      log("onFileChanged", virtualFile)
+      resetTracker(document, virtualFile, getLineStatusTracker(document))
     }
   }
 
-  private void installTracker(@NotNull Document document) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    log("installTracker", file);
+  private fun installTracker(document: Document) {
+    val file = FileDocumentManager.getInstance().getFile(document)
+    log("installTracker", file)
     if (shouldBeInstalled(file)) {
-      doInstallTracker(file, document);
+      doInstallTracker(file!!, document)
     }
   }
 
-  private void resetTracker(@NotNull Document document, @NotNull VirtualFile virtualFile, @Nullable LineStatusTracker tracker) {
-    boolean isOpened = !getAllTrackedEditors(document).isEmpty();
-    final boolean shouldBeInstalled = isOpened && shouldBeInstalled(virtualFile);
+  private fun resetTracker(document: Document, virtualFile: VirtualFile, tracker: LineStatusTracker?) {
+    val isOpened = !getAllTrackedEditors(document).isEmpty()
+    val shouldBeInstalled = isOpened && shouldBeInstalled(virtualFile)
 
-    log("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + (tracker == null ? "null" : "found"), virtualFile);
+    log("resetTracker: shouldBeInstalled - " + shouldBeInstalled + ", tracker - " + if (tracker == null) "null" else "found", virtualFile)
 
     if (tracker != null && shouldBeInstalled) {
-      doRefreshTracker(tracker);
+      doRefreshTracker(tracker)
     }
     else if (tracker != null) {
-      doReleaseTracker(document);
+      doReleaseTracker(document)
     }
     else if (shouldBeInstalled) {
-      doInstallTracker(virtualFile, document);
+      doInstallTracker(virtualFile, document)
     }
   }
 
-  @Contract("null -> false")
-  private boolean shouldBeInstalled(@Nullable final VirtualFile virtualFile) {
-    if (isDisabled()) return false;
+  private fun shouldBeInstalled(virtualFile: VirtualFile?): Boolean {
+    if (isDisabled) return false
 
-    if (virtualFile == null || virtualFile instanceof LightVirtualFile) return false;
+    if (virtualFile == null || virtualFile is LightVirtualFile) return false
 
-    final FileStatusManager statusManager = FileStatusManager.getInstance(myProject);
-    if (statusManager == null) return false;
+    val statusManager = FileStatusManager.getInstance(project) ?: return false
 
-    if (!myStatusProvider.isSupported(virtualFile)) {
-      log("shouldBeInstalled failed: file not supported", virtualFile);
-      return false;
+    if (!statusProvider.isSupported(virtualFile)) {
+      log("shouldBeInstalled failed: file not supported", virtualFile)
+      return false
     }
 
-    final FileStatus status = statusManager.getStatus(virtualFile);
-    if (status == FileStatus.NOT_CHANGED || status == FileStatus.ADDED || status == FileStatus.UNKNOWN || status == FileStatus.IGNORED) {
-      log("shouldBeInstalled skipped: status=" + status, virtualFile);
-      return false;
+    val status = statusManager.getStatus(virtualFile)
+    if (status === FileStatus.NOT_CHANGED || status === FileStatus.ADDED || status === FileStatus.UNKNOWN || status === FileStatus.IGNORED) {
+      log("shouldBeInstalled skipped: status=" + status, virtualFile)
+      return false
     }
-    return true;
+    return true
   }
 
-  private void doRefreshTracker(@NotNull LineStatusTracker tracker) {
-    synchronized (myLock) {
-      if (isDisabled()) return;
+  private fun doRefreshTracker(tracker: LineStatusTracker) {
+    synchronized(LOCK) {
+      if (isDisabled) return
 
-      log("trackerRefreshed", tracker.getVirtualFile());
-      startAlarm(tracker.getDocument(), tracker.getVirtualFile());
+      log("trackerRefreshed", tracker.virtualFile)
+      startAlarm(tracker.document, tracker.virtualFile)
     }
   }
 
-  private void doReleaseTracker(@NotNull Document document) {
-    synchronized (myLock) {
-      if (isDisabled()) return;
+  private fun doReleaseTracker(document: Document) {
+    synchronized(LOCK) {
+      if (isDisabled) return
 
-      myPartner.remove(document);
-      final TrackerData data = myLineStatusTrackers.remove(document);
+      queue.remove(document)
+      val data = trackers.remove(document)
       if (data != null) {
-        log("trackerReleased", data.tracker.getVirtualFile());
-        data.tracker.release();
+        log("trackerReleased", data.tracker.virtualFile)
+        data.tracker.release()
       }
     }
   }
 
-  private void doInstallTracker(@NotNull VirtualFile virtualFile, @NotNull Document document) {
-    synchronized (myLock) {
-      if (isDisabled()) return;
+  private fun doInstallTracker(virtualFile: VirtualFile, document: Document) {
+    synchronized(LOCK) {
+      if (isDisabled) return
 
-      if (myLineStatusTrackers.containsKey(document)) return;
-      assert !myPartner.containsKey(document);
+      if (trackers.containsKey(document)) return
+      assert(!queue.containsKey(document))
 
-      log("trackerInstalled", virtualFile);
-      final LineStatusTracker tracker = LineStatusTracker.createOn(virtualFile, document, myProject, getMode());
-      myLineStatusTrackers.put(document, new TrackerData(tracker));
+      log("trackerInstalled", virtualFile)
+      val tracker = LineStatusTracker.createOn(virtualFile, document, project, getTrackerMode())
+      trackers.put(document, TrackerData(tracker))
 
-      startAlarm(document, virtualFile);
+      startAlarm(document, virtualFile)
     }
   }
 
-  @NotNull
-  private static LineStatusTracker.Mode getMode() {
-    VcsApplicationSettings vcsApplicationSettings = VcsApplicationSettings.getInstance();
-    if (!vcsApplicationSettings.SHOW_LST_GUTTER_MARKERS) return LineStatusTracker.Mode.SILENT;
-    return vcsApplicationSettings.SHOW_WHITESPACES_IN_LST ? LineStatusTracker.Mode.SMART : LineStatusTracker.Mode.DEFAULT;
+  private fun getTrackerMode(): LineStatusTracker.Mode {
+    val vcsApplicationSettings = VcsApplicationSettings.getInstance()
+    if (!vcsApplicationSettings.SHOW_LST_GUTTER_MARKERS) return LineStatusTracker.Mode.SILENT
+    return if (vcsApplicationSettings.SHOW_WHITESPACES_IN_LST) LineStatusTracker.Mode.SMART else LineStatusTracker.Mode.DEFAULT
   }
 
-  private void startAlarm(@NotNull final Document document, @NotNull final VirtualFile virtualFile) {
-    synchronized (myLock) {
-      myPartner.add(document, new BaseRevisionLoader(document, virtualFile));
+  private fun startAlarm(document: Document, virtualFile: VirtualFile) {
+    synchronized(LOCK) {
+      queue.add(document, BaseRevisionLoader(document, virtualFile))
     }
   }
 
-  private class BaseRevisionLoader implements Runnable {
-    @NotNull private final VirtualFile myVirtualFile;
-    @NotNull private final Document myDocument;
+  private inner class BaseRevisionLoader(private val myDocument: Document,
+                                         private val myVirtualFile: VirtualFile) : Runnable {
 
-    private BaseRevisionLoader(@NotNull final Document document, @NotNull final VirtualFile virtualFile) {
-      myDocument = document;
-      myVirtualFile = virtualFile;
-    }
+    override fun run() {
+      if (isDisabled) return
 
-    @Override
-    public void run() {
-      if (isDisabled()) return;
-
-      if (!myVirtualFile.isValid()) {
-        log("BaseRevisionLoader failed: virtual file not valid", myVirtualFile);
-        reportTrackerBaseLoadFailed();
-        return;
+      if (!myVirtualFile.isValid) {
+        log("BaseRevisionLoader failed: virtual file not valid", myVirtualFile)
+        reportTrackerBaseLoadFailed()
+        return
       }
 
-      VcsBaseContentProvider.BaseContent baseContent = myStatusProvider.getBaseRevision(myVirtualFile);
+      val baseContent = statusProvider.getBaseRevision(myVirtualFile)
       if (baseContent == null) {
-        log("BaseRevisionLoader failed: null returned for base revision", myVirtualFile);
-        reportTrackerBaseLoadFailed();
-        return;
+        log("BaseRevisionLoader failed: null returned for base revision", myVirtualFile)
+        reportTrackerBaseLoadFailed()
+        return
       }
 
       // loads are sequential (in single threaded QueueProcessor);
       // so myLoadCounter can't take less value for greater base revision -> the only thing we want from it
-      final VcsRevisionNumber revisionNumber = baseContent.getRevisionNumber();
-      final Charset charset = myVirtualFile.getCharset();
-      final long loadCounter = myLoadCounter;
-      myLoadCounter++;
+      val revisionNumber = baseContent.revisionNumber
+      val charset = myVirtualFile.charset
+      val loadCounter = ourLoadCounter
+      ourLoadCounter++
 
-      synchronized (myLock) {
-        final TrackerData data = myLineStatusTrackers.get(myDocument);
+      synchronized(LOCK) {
+        val data = trackers[myDocument]
         if (data == null) {
-          log("BaseRevisionLoader canceled: tracker already released", myVirtualFile);
-          return;
+          log("BaseRevisionLoader canceled: tracker already released", myVirtualFile)
+          return
         }
         if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
-          log("BaseRevisionLoader canceled: no need to update", myVirtualFile);
-          return;
+          log("BaseRevisionLoader canceled: no need to update", myVirtualFile)
+          return
         }
       }
 
-      String lastUpToDateContent = baseContent.loadContent();
+      val lastUpToDateContent = baseContent.loadContent()
       if (lastUpToDateContent == null) {
-        log("BaseRevisionLoader failed: can't load up-to-date content", myVirtualFile);
-        reportTrackerBaseLoadFailed();
-        return;
+        log("BaseRevisionLoader failed: can't load up-to-date content", myVirtualFile)
+        reportTrackerBaseLoadFailed()
+        return
       }
 
-      final String converted = StringUtil.convertLineSeparators(lastUpToDateContent);
-      final Runnable runnable = () -> {
-        synchronized (myLock) {
-          final TrackerData data = myLineStatusTrackers.get(myDocument);
+      val converted = StringUtil.convertLineSeparators(lastUpToDateContent)
+      val runnable = Runnable {
+        synchronized(LOCK) {
+          val data = trackers[myDocument]
           if (data == null) {
-            log("BaseRevisionLoader initializing: tracker already released", myVirtualFile);
-            return;
+            log("BaseRevisionLoader initializing: tracker already released", myVirtualFile)
+            return@Runnable
           }
           if (!data.shouldBeUpdated(revisionNumber, charset, loadCounter)) {
-            log("BaseRevisionLoader initializing: no need to update", myVirtualFile);
-            return;
+            log("BaseRevisionLoader initializing: no need to update", myVirtualFile)
+            return@Runnable
           }
 
-          log("BaseRevisionLoader initializing: success", myVirtualFile);
-          myLineStatusTrackers.put(myDocument, new TrackerData(data.tracker, revisionNumber, charset, loadCounter));
-          data.tracker.setBaseRevision(converted);
+          log("BaseRevisionLoader initializing: success", myVirtualFile)
+          trackers.put(myDocument, TrackerData(data.tracker, revisionNumber, charset, loadCounter))
+          data.tracker.setBaseRevision(converted)
         }
-      };
-      nonModalAliveInvokeLater(runnable);
+      }
+      nonModalAliveInvokeLater(runnable)
     }
 
-    private void nonModalAliveInvokeLater(@NotNull Runnable runnable) {
-      myApplication.invokeLater(runnable, ModalityState.NON_MODAL, ignore -> isDisabled());
+    private fun nonModalAliveInvokeLater(runnable: Runnable) {
+      application.invokeLater(runnable, ModalityState.NON_MODAL, Condition<Any> { isDisabled })
     }
 
-    private void reportTrackerBaseLoadFailed() {
-      synchronized (myLock) {
-        doReleaseTracker(myDocument);
+    private fun reportTrackerBaseLoadFailed() {
+      synchronized(LOCK) {
+        doReleaseTracker(myDocument)
       }
     }
   }
 
-  private class MyFileStatusListener implements FileStatusListener {
-    @Override
-    public void fileStatusesChanged() {
-      onEverythingChanged();
+  private inner class MyFileStatusListener : FileStatusListener {
+    override fun fileStatusesChanged() {
+      onEverythingChanged()
     }
 
-    @Override
-    public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
-      onFileChanged(virtualFile);
+    override fun fileStatusChanged(virtualFile: VirtualFile) {
+      onFileChanged(virtualFile)
     }
   }
 
-  private class MyEditorFactoryListener extends EditorFactoryAdapter {
-    @Override
-    public void editorCreated(@NotNull EditorFactoryEvent event) {
-      onEditorCreated(event.getEditor());
+  private inner class MyEditorFactoryListener : EditorFactoryAdapter() {
+    override fun editorCreated(event: EditorFactoryEvent) {
+      onEditorCreated(event.editor)
     }
 
-    @Override
-    public void editorReleased(@NotNull EditorFactoryEvent event) {
-      onEditorRemoved(event.getEditor());
+    override fun editorReleased(event: EditorFactoryEvent) {
+      onEditorRemoved(event.editor)
     }
   }
 
-  private class MyVirtualFileListener implements VirtualFileListener {
-    @Override
-    public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-      if (event.isFromRefresh()) {
-        onFileChanged(event.getFile());
+  private inner class MyVirtualFileListener : VirtualFileListener {
+    override fun beforeContentsChange(event: VirtualFileEvent) {
+      if (event.isFromRefresh) {
+        onFileChanged(event.file)
       }
     }
 
-    @Override
-    public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-      if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
-        onFileChanged(event.getFile());
+    override fun propertyChanged(event: VirtualFilePropertyEvent) {
+      if (VirtualFile.PROP_ENCODING == event.propertyName) {
+        onFileChanged(event.file)
       }
     }
   }
 
-  private static class TrackerData {
-    @NotNull public final LineStatusTracker tracker;
-    @Nullable private final ContentInfo currentContent;
+  private class TrackerData {
+    val tracker: LineStatusTracker
+    private val currentContent: ContentInfo?
 
-    public TrackerData(@NotNull LineStatusTracker tracker) {
-      this.tracker = tracker;
-      currentContent = null;
+    constructor(tracker: LineStatusTracker) {
+      this.tracker = tracker
+      currentContent = null
     }
 
-    public TrackerData(@NotNull LineStatusTracker tracker,
-                       @NotNull VcsRevisionNumber revision,
-                       @NotNull Charset charset,
-                       long loadCounter) {
-      this.tracker = tracker;
-      currentContent = new ContentInfo(revision, charset, loadCounter);
+    constructor(tracker: LineStatusTracker,
+                revision: VcsRevisionNumber,
+                charset: Charset,
+                loadCounter: Long) {
+      this.tracker = tracker
+      currentContent = ContentInfo(revision, charset, loadCounter)
     }
 
-    public boolean shouldBeUpdated(@NotNull VcsRevisionNumber revision, @NotNull Charset charset, long loadCounter) {
-      if (currentContent == null) return true;
-      if (currentContent.revision.equals(revision) && !currentContent.revision.equals(VcsRevisionNumber.NULL)) {
-        return !currentContent.charset.equals(charset);
+    fun shouldBeUpdated(revision: VcsRevisionNumber, charset: Charset, loadCounter: Long): Boolean {
+      if (currentContent == null) return true
+      if (currentContent.revision == revision && currentContent.revision != VcsRevisionNumber.NULL) {
+        return currentContent.charset != charset
       }
-      return currentContent.loadCounter < loadCounter;
+      return currentContent.loadCounter < loadCounter
     }
   }
 
-  private static class ContentInfo {
-    @NotNull public final VcsRevisionNumber revision;
-    @NotNull public final Charset charset;
-    public final long loadCounter;
-
-    public ContentInfo(@NotNull VcsRevisionNumber revision, @NotNull Charset charset, long loadCounter) {
-      this.revision = revision;
-      this.charset = charset;
-      this.loadCounter = loadCounter;
+  private fun log(message: String, file: VirtualFile?) {
+    if (LOG.isDebugEnabled) {
+      if (file != null) {
+        LOG.debug(message + "; file: " + file.path)
+      }
+      else {
+        LOG.debug(message)
+      }
     }
   }
 
-  private static void log(@NotNull String message, @Nullable VirtualFile file) {
-    if (LOG.isDebugEnabled()) {
-      if (file != null) message += "; file: " + file.getPath();
-      LOG.debug(message);
-    }
-  }
+  private class ContentInfo(val revision: VcsRevisionNumber, val charset: Charset, val loadCounter: Long)
 }
