@@ -15,10 +15,10 @@
  */
 package com.intellij.debugger.streams.lib;
 
-import com.intellij.debugger.streams.lib.impl.LibraryManagerImpl;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
@@ -27,4 +27,7 @@ public interface LibraryManager extends ProjectComponent {
   static LibraryManager getInstance(@NotNull Project project) {
     return project.getComponent(LibraryManager.class);
   }
+
+  @Nullable
+  LibrarySupport getLibraryByPackage(@NotNull String packageName);
 }

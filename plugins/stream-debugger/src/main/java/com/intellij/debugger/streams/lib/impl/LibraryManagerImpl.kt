@@ -31,5 +31,5 @@ class LibraryManagerImpl(project: Project) : LibraryManager {
     myLibraries = listOf(std, streamEx)
   }
 
-  fun getLibraryByPackage(packageName: String): LibrarySupport? = myLibraries.find { it.description.packageName == packageName }
+  override fun getLibraryByPackage(packageName: String): LibrarySupport? = myLibraries.find { packageName == it.description.packageName }
 }
