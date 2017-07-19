@@ -67,11 +67,10 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     assert myDocument != null;
     myHints.clear();
-    if (!isEnabled()) return;
 
     Language language = myFile.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
-    if (provider == null) return;
+    if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled()) return;
 
     myTraverser.forEach(element -> process(element, provider));
   }

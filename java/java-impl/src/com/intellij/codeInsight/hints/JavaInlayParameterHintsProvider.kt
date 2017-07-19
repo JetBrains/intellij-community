@@ -46,6 +46,10 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return emptyList()
   }
 
+  override fun canShowHintsWhenDisabled(): Boolean {
+    return true
+  }
+
   fun getMethodInfo(method: PsiMethod): MethodInfo? {
     val containingClass = method.containingClass ?: return null
     val fullMethodName = StringUtil.getQualifiedName(containingClass.qualifiedName, method.name)

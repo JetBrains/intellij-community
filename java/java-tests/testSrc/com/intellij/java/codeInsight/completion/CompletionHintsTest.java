@@ -26,6 +26,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ui.UIUtil;
@@ -421,6 +422,47 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "}");
   }
 
+  public void testCompletionHintsAreShownEvenWhenStaticHintsAreDisabled() throws Exception {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    boolean oldValue = settings.isShowParameterNameHints();
+    try {
+      settings.setShowParameterNameHints(false);
+
+      // check hints appearance on completion
+      configureJava("class C { void m() { Character.for<caret> } }");
+      complete("forDigit");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+
+      // check that hints don't disappear after daemon highlighting passes
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+
+      // test Tab/Shift+Tab navigation
+      next();
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/><caret>) } }");
+      prev();
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+
+      // test hints remain shown while entering parameter values
+      myFixture.type("1");
+      next();
+      myFixture.type("2");
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2<caret>) } }");
+
+      // test hints disappear when caret moves out of parameter list
+      right();
+      right();
+      right();
+
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C { void m() { Character.forDigit(1, 2) }<caret> }");
+    }
+    finally {
+      settings.setShowParameterNameHints(oldValue);
+    }
+  }
+  
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }

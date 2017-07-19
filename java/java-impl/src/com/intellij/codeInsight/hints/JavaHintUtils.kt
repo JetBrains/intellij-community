@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -44,6 +45,8 @@ object JavaInlayHintsProvider {
         InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
       }.toSet()
     }
+    
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints()) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
