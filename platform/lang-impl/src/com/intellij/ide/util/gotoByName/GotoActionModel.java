@@ -138,7 +138,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.menu.actions.found");
+    return IdeBundle.message("label.no.enabled.actions.found");
   }
 
   @Override
