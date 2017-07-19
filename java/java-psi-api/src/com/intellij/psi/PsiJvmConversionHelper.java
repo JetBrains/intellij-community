@@ -28,6 +28,10 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
+import static com.intellij.psi.PsiType.getTypeByName;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 public class PsiJvmConversionHelper {
 
   private static final Logger LOG = Logger.getInstance(PsiJvmConversionHelper.class);
@@ -58,14 +62,41 @@ public class PsiJvmConversionHelper {
 
   @Nullable
   public static JvmClassType getClassSuperType(@NotNull PsiClass psiClass) {
-    // TODO
-    throw new RuntimeException("not implemented");
+    if (psiClass.isInterface()) return null;
+    if (psiClass.isEnum()) return getJvmClassType(CommonClassNames.JAVA_LANG_ENUM, psiClass);
+    if (psiClass instanceof PsiAnonymousClass) {
+      PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
+      PsiClass baseClass = baseClassType.resolve();
+      if (baseClass == null || !baseClass.isInterface()) {
+        return toJvmClassType(baseClassType);
+      }
+      else {
+        return getJvmClassType(CommonClassNames.JAVA_LANG_OBJECT, psiClass);
+      }
+    }
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return null;
+
+    PsiClassType[] extendsTypes = psiClass.getExtendsListTypes();
+    if (extendsTypes.length != 1) return getJvmClassType(CommonClassNames.JAVA_LANG_OBJECT, psiClass);
+    return toJvmClassType(extendsTypes[0]);
   }
 
   @NotNull
   public static Iterable<JvmClassType> getClassInterfaces(@NotNull PsiClass psiClass) {
-    // TODO
-    throw new RuntimeException("not implemented");
+    if (psiClass instanceof PsiAnonymousClass) {
+      PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
+      PsiClass baseClass = baseClassType.resolve();
+      if (baseClass != null && baseClass.isInterface()) {
+        return singletonList(toJvmClassType(baseClassType));
+      }
+      else {
+        return emptyList();
+      }
+    }
+
+    PsiReferenceList referenceList = psiClass.isInterface() ? psiClass.getExtendsList() : psiClass.getImplementsList();
+    if (referenceList == null) return emptyList();
+    return getReferencedClassTypes(referenceList);
   }
 
   @NotNull
@@ -96,6 +127,10 @@ public class PsiJvmConversionHelper {
     return ContainerUtil.map(referenceList.getReferencedTypes(), it -> toJvmReferenceType(it));
   }
 
+  private static Iterable<JvmClassType> getReferencedClassTypes(@NotNull PsiReferenceList referenceList) {
+    return ContainerUtil.map(referenceList.getReferencedTypes(), type -> toJvmClassType(type));
+  }
+
   @NotNull
   public static JvmType toJvmType(@NotNull PsiType type) {
     if (type instanceof PsiPrimitiveType || type instanceof PsiWildcardType || type instanceof PsiArrayType) {
@@ -115,6 +150,11 @@ public class PsiJvmConversionHelper {
   @NotNull
   public static JvmClassType toJvmClassType(@NotNull PsiClassType type) {
     return new PsiJvmClassType(type);
+  }
+
+  @NotNull
+  public static JvmClassType getJvmClassType(@NotNull String fqn, @NotNull PsiElement context) {
+    return toJvmClassType(getTypeByName(fqn, context.getProject(), context.getResolveScope()));
   }
 
   private static class PsiJvmClassType implements JvmClassType {
