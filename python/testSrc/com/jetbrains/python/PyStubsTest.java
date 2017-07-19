@@ -755,11 +755,33 @@ public class PyStubsTest extends PyTestCase {
   public void testVariableAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       final PyFile file = getTestFile();
-      final PyTargetExpression var = file.findTopLevelAttribute("x");
-      final String annotation = var.getAnnotationValue();
-      assertEquals("int", annotation);
+      final PyTargetExpression assignmentTarget = file.findTopLevelAttribute("x");
+      final String assignmentAnnotation = assignmentTarget.getAnnotationValue();
+      assertEquals("int", assignmentAnnotation);
       assertNotParsed(file);
-      assertType("int", var, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertType("int", assignmentTarget, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+
+      final PyTargetExpression typeDecTarget = file.findTopLevelAttribute("y");
+      final String typeDecAnnotation = typeDecTarget.getAnnotationValue();
+      assertEquals("str", typeDecAnnotation);
+      assertNotParsed(file);
+      assertType("str", typeDecTarget, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testAttributeTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyClass pyClass = file.findTopLevelClass("MyClass");
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      final PyTargetExpression classAttr = pyClass.findClassAttribute("foo", false, context);
+      assertType("str", classAttr, context);
+
+      final PyTargetExpression instAttr = pyClass.findInstanceAttribute("bar", false);
+      assertType("int", instAttr, context);
       assertNotParsed(file);
     });
   }
