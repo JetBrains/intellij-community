@@ -92,7 +92,7 @@ private fun PyQualifiedNameOwner.getEmulatedQNameParts(): QualifiedNameParts? {
         result.add(name)
       }
     }
-    element = element.parent
+    element = element.parent ?: return null
   }
   return QualifiedNameParts(QualifiedName.fromComponents(ourFile.virtualFile.nameWithoutExtension),
                             QualifiedName.fromComponents(result.reversed()), ourFile)
