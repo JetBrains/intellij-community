@@ -365,7 +365,7 @@ class ApplyPatchChange {
 
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      LineStatusMarkerRenderer.paintSimpleRange(g, editor, r, myLine1, myLine2, myColor);
+      LineStatusMarkerRenderer.paintSimpleRange(g, editor, myLine1, myLine2, myColor);
     }
 
     @Override

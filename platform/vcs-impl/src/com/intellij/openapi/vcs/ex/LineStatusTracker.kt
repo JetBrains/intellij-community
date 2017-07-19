@@ -37,7 +37,6 @@ import com.intellij.ui.EditorNotificationPanel
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Graphics
 import java.awt.Point
-import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.JPanel
@@ -130,9 +129,9 @@ class LineStatusTracker private constructor(project: Project,
       return super.canDoAction(range, e)
     }
 
-    override fun paint(editor: Editor, range: Range, g: Graphics, r: Rectangle) {
+    override fun paint(editor: Editor, range: Range, g: Graphics) {
       if (tracker.mode == Mode.SILENT) return
-      super.paint(editor, range, g, r)
+      super.paint(editor, range, g)
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {

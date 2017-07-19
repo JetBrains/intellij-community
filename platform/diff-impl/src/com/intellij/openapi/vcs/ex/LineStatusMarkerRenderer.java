@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -110,20 +109,19 @@ public abstract class LineStatusMarkerRenderer {
   // Gutter painting
   //
 
-  protected void paint(@NotNull Editor editor, @NotNull Range range, @NotNull Graphics g, @NotNull Rectangle r) {
-    paintRange(g, editor, r, range, getFramingBorderSize());
+  protected void paint(@NotNull Editor editor, @NotNull Range range, @NotNull Graphics g) {
+    paintRange(g, editor, range, getFramingBorderSize());
   }
 
   public static void paintRange(@NotNull Graphics g,
                                 @NotNull Editor editor,
-                                @NotNull Rectangle r,
                                 @NotNull Range range,
                                 int framingBorder) {
     Color gutterColor = getGutterColor(range, editor);
     Color borderColor = getGutterBorderColor(editor);
     Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
 
-    Rectangle area = getMarkerArea(editor, r, range.getLine1(), range.getLine2());
+    Rectangle area = getMarkerArea(editor, range.getLine1(), range.getLine2());
     final int x = area.x;
     final int endX = area.x + area.width;
     final int y = area.y;
@@ -168,8 +166,8 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
-  public static void paintSimpleRange(Graphics g, Editor editor, Rectangle r, int line1, int line2, @Nullable Color color) {
-    Rectangle area = getMarkerArea(editor, r, line1, line2);
+  public static void paintSimpleRange(Graphics g, Editor editor, int line1, int line2, @Nullable Color color) {
+    Rectangle area = getMarkerArea(editor, line1, line2);
     Color borderColor = getGutterBorderColor(editor);
     if (area.height != 0) {
       paintRect(g, color, borderColor, area.x, area.y, area.x + area.width, area.y + area.height);
@@ -180,9 +178,9 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @NotNull
-  public static Rectangle getMarkerArea(@NotNull Editor editor, @NotNull Rectangle r, int line1, int line2) {
+  public static Rectangle getMarkerArea(@NotNull Editor editor, int line1, int line2) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    int x = r.x + 1; // leave 1px for brace highlighters
+    int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     int endX = gutter.getWhitespaceSeparatorOffset();
     int y = lineToY(editor, line1);
     int endY = lineToY(editor, line2);
@@ -293,7 +291,7 @@ public abstract class LineStatusMarkerRenderer {
 
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      LineStatusMarkerRenderer.this.paint(editor, myRange, g, r);
+      LineStatusMarkerRenderer.this.paint(editor, myRange, g);
     }
 
     @Override

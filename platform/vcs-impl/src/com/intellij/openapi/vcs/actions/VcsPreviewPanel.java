@@ -127,7 +127,7 @@ class VcsPreviewPanel implements PreviewPanel {
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
-        LineStatusMarkerRenderer.paintRange(g, myEditor, r, range, 0);
+        LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0);
       }
 
       @Override
