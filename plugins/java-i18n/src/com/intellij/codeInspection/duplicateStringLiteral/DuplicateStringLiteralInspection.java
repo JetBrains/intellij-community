@@ -62,7 +62,7 @@ import java.util.stream.Stream;
 
 public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   @SuppressWarnings({"WeakerAccess"}) public int MIN_STRING_LENGTH = 5;
-  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS;
   @NonNls private static final String BR = "<br>";
 
   @Override
