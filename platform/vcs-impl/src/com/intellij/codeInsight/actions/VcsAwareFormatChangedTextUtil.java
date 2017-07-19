@@ -17,10 +17,9 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -66,7 +65,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       CharSequence testContent = file.getUserData(TEST_REVISION_CONTENT);
       if (testContent != null) {
-        return calculateContextReformatHelper(document, testContent);
+        return calculateChangedRangesInfo(document, testContent);
       }
     }
 
@@ -80,7 +79,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     }
 
     String contentFromVcs = getRevisionedContentFrom(change);
-    return contentFromVcs != null ? calculateContextReformatHelper(document, contentFromVcs) : null;
+    return contentFromVcs != null ? calculateChangedRangesInfo(document, contentFromVcs) : null;
   }
 
   @Nullable
@@ -112,18 +111,15 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   }
 
   @NotNull
-  protected static ChangedRangesInfo calculateContextReformatHelper(@NotNull Document document,
-                                                                    @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
-  {
+  private static ChangedRangesInfo calculateChangedRangesInfo(@NotNull Document document,
+                                                              @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException {
     return getChangedTextRanges(document, getRanges(document, contentFromVcs));
   }
 
   @NotNull
   private static List<Range> getRanges(@NotNull Document document,
-                                       @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException
-  {
-    Document documentFromVcs = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(contentFromVcs, true, false);
-    return RangesBuilder.createRanges(document, documentFromVcs);
+                                       @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException {
+    return RangesBuilder.createRanges(document.getImmutableCharSequence(), StringUtilRt.convertLineSeparators(contentFromVcs, "\n"));
   }
 
   @Override
@@ -132,30 +128,15 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       List<Range> changedRanges = getRanges(document, contentFromVcs);
       int linesChanges = 0;
       for (Range range : changedRanges) {
-        linesChanges += countLines(range);
+        int inserted = range.getLine2() - range.getLine1();
+        int deleted = range.getVcsLine2() - range.getVcsLine1();
+        linesChanges += Math.max(inserted, deleted);
       }
       return linesChanges;
     } catch (FilesTooBigForDiffException e) {
       LOG.info("File too big, can not calculate changed lines number");
       return -1;
     }
-  }
-
-  private static int countLines(Range range) {
-    byte rangeType = range.getType();
-    if (rangeType == Range.MODIFIED) {
-      int currentChangedLines = range.getLine2() - range.getLine1();
-      int revisionLinesChanged = range.getVcsLine2() - range.getVcsLine1();
-      return Math.max(currentChangedLines, revisionLinesChanged);
-    }
-    else if (rangeType == Range.DELETED) {
-      return range.getVcsLine2() - range.getVcsLine1();
-    }
-    else if (rangeType == Range.INSERTED) {
-      return range.getLine2() - range.getLine1();
-    }
-
-    return 0;
   }
 
   @NotNull
