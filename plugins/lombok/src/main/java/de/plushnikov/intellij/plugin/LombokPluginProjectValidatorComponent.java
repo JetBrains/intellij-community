@@ -52,7 +52,10 @@ public class LombokPluginProjectValidatorComponent extends AbstractProjectCompon
       return;
     }
 
-    NotificationGroup group = new NotificationGroup(Version.PLUGIN_NAME, NotificationDisplayType.BALLOON, true);
+    NotificationGroup group = NotificationGroup.findRegisteredGroup(Version.PLUGIN_NAME);
+    if (group == null) {
+      group = new NotificationGroup(Version.PLUGIN_NAME, NotificationDisplayType.BALLOON, true);
+    }
 
     // Lombok dependency check
     boolean hasLombokLibrary = hasLombokLibrary(project);
