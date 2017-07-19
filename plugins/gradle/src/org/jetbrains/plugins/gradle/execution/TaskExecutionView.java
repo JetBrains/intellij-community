@@ -223,6 +223,9 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
       if (parentEventId == null) {
         if (progressEvent.getDisplayName().equals("Run build")) {
           myRoot.getInfo().setEndTime(executionInfo.getEndTime());
+          String buildStatusResult =
+            executionInfo.isFailed() ? "Build failed" : executionInfo.isSkipped() ? "Build skipped" : "Build succeeded";
+          myRoot.getInfo().setDescriptor(new OperationDescriptorImpl(buildStatusResult, executionInfo.getEndTime()));
           myProgressAnimator.stopMovie();
         }
         else if (progressEvent.getDisplayName().startsWith("Download")) {
