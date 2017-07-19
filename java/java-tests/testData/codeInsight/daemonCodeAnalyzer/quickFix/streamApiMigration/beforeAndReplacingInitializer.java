@@ -3,11 +3,11 @@
 import java.util.*;
 
 public class Main {
-  public void testBitwiseXorLong() {
+  public void testBitwiseAndReplacingInitializer() {
     int[] arr = new int[]{1, 2, 3, 4};
-    long acc = 12443;
+    int acc = -1;
     for <caret> (int i: arr) {
-      acc ^= i;
+      acc &= i;
     }
   }
 }

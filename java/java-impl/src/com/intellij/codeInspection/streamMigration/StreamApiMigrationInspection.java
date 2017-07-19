@@ -51,8 +51,8 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
 
@@ -145,15 +145,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return extractOperand(assignment, JavaTokenType.PLUSEQ);
   }
 
-  @Nullable
-  static PsiExpression extractConjunct(PsiAssignmentExpression assignment) {
-    return extractOperand(assignment, JavaTokenType.ANDEQ);
-  }
-
-  @Nullable
-  static PsiExpression extractMultiplier(PsiAssignmentExpression assignment) {
-    return extractOperand(assignment, JavaTokenType.ASTERISKEQ);
-  }
 
   @Nullable
   static PsiExpression extractOperand(PsiAssignmentExpression assignment, IElementType compoundAssignmentOp) {
@@ -183,15 +174,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return extractAccumulator(assignment, JavaTokenType.PLUSEQ);
   }
 
-  @Nullable
-  static PsiVariable extractConjunctionAccumulator(PsiAssignmentExpression assignment) {
-    return extractAccumulator(assignment, JavaTokenType.ANDEQ);
-  }
-
-  @Nullable
-  static PsiVariable extractMultiplyAccumulator(PsiAssignmentExpression assignment) {
-    return extractAccumulator(assignment, JavaTokenType.ASTERISKEQ);
-  }
 
   @Nullable
   static PsiVariable extractAccumulator(PsiAssignmentExpression assignment, IElementType compoundAssignmentOp) {
@@ -263,21 +245,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   @Nullable
-  private static PsiVariable getAccumulatedVariable(TerminalBlock tb, List<PsiVariable> variables, OperationReductionMigration.OperationContext operationContext) {
-    return getAccumulatedVariable(tb, variables, operationContext.getCompoundAssignmentOp(), operationContext.getAccumulatorRestriction());
-  }
-
-  @Nullable
-  private static PsiVariable getAccumulatedSumVariable(TerminalBlock tb, List<PsiVariable> variables) {
-    return getAccumulatedVariable(tb, variables, JavaTokenType.PLUSEQ, OperationReductionMigration::arithmeticTypeRestriction);
-  }
-
-  @Nullable
   private static PsiVariable getAccumulatedVariable(TerminalBlock tb,
                                                     List<PsiVariable> variables,
-                                                    IElementType compoundAssignmentOp,
-                                                    Predicate<PsiVariable> accumulatorRestriction
-                                                    ) {
+                                                    OperationReductionMigration.ReductionOperation operation) {
+    IElementType compoundAssignmentOp = operation.getCompoundAssignmentOp();
     // have only one non-final variable
     if (variables.size() != 1) return null;
 
@@ -287,7 +258,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     // the referred variable is the same as non-final variable
     if (var == null || !variables.contains(var)) return null;
-    if (!accumulatorRestriction.test(var)) return null;
+    if (!operation.getAccumulatorRestriction().test(var)) return null;
 
     // the referred variable is not used in intermediate operations
     if (tb.isReferencedInOperations(var)) return null;
@@ -519,12 +490,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (nonFinalVariables.isEmpty() && extractArray(tb) != null) {
         return new ToArrayMigration(true);
       }
-      if (getAccumulatedSumVariable(tb, nonFinalVariables) != null) {
+      if (getAccumulatedVariable(tb, nonFinalVariables, SUM_OPERATION) != null) {
         return new SumMigration(true);
       }
-      for (OperationReductionMigration.OperationContext operationContext : OperationReductionMigration.operations) {
-        if(getAccumulatedVariable(tb, nonFinalVariables, operationContext) != null) {
-          return new OperationReductionMigration(true, operationContext);
+      for (OperationReductionMigration.ReductionOperation reductionOperation : OperationReductionMigration.OPERATIONS) {
+        if (getAccumulatedVariable(tb, nonFinalVariables, reductionOperation) != null) {
+          return new OperationReductionMigration(true, reductionOperation);
         }
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);

@@ -31,22 +31,22 @@ import java.util.function.Predicate;
  * Created by Roman Ivanov.
  */
 public class OperationReductionMigration extends BaseStreamApiMigration {
-  private OperationContext myOperationContext;
+  private ReductionOperation myReductionOperation;
 
   protected OperationReductionMigration(boolean shouldWarn,
-                                        OperationContext context) {
+                                        ReductionOperation context) {
     super(shouldWarn, "reduce()");
-    myOperationContext = context;
+    myReductionOperation = context;
   }
 
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return null;
-    PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment, myOperationContext.getCompoundAssignmentOp());
+    PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment, myReductionOperation.getCompoundAssignmentOp());
     if (var == null) return null;
 
-    PsiExpression operand = StreamApiMigrationInspection.extractOperand(assignment, myOperationContext.getCompoundAssignmentOp());
+    PsiExpression operand = StreamApiMigrationInspection.extractOperand(assignment, myReductionOperation.getCompoundAssignmentOp());
     if (operand == null) return null;
     PsiType type = var.getType();
 
@@ -61,29 +61,29 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
 
     String stream = tb.add(new StreamApiMigrationInspection.MapOp(operand, tb.getVariable(), type)).generate()
                     + String.format(Locale.ENGLISH, ".reduce(%s, (%s, %s) -> %s %s %s)",
-                                    myOperationContext.getIdentity(), leftOperand, rightOperand, leftOperand,
-                                    myOperationContext.getOperation(), rightOperand);
-    return replaceWithOperation(tb.getMainLoop(), var, stream, type, myOperationContext);
+                                    myReductionOperation.getIdentity(), leftOperand, rightOperand, leftOperand,
+                                    myReductionOperation.getOperation(), rightOperand);
+    return replaceWithOperation(tb.getMainLoop(), var, stream, type, myReductionOperation);
   }
 
-  public static class OperationContext {
+  static class ReductionOperation {
     private IElementType myCompoundAssignmentOp;
-    private Predicate<PsiExpression> myInitializerInlineCondition;
+    private Predicate<PsiExpression> myInitializerReplaceCondition;
     private Predicate<PsiVariable> myAccumulatorRestriction;
-    private String identity;
-    private String operation;
+    private String myIdentity;
+    private String myOperation;
 
 
-    public OperationContext(IElementType compoundAssignmentOp,
-                            Predicate<PsiExpression> initializerInlineCondition,
-                            Predicate<PsiVariable> accumulatorRestriction,
-                            String identity,
-                            String operation) {
+    public ReductionOperation(IElementType compoundAssignmentOp,
+                              Predicate<PsiExpression> initializerReplaceCondition,
+                              Predicate<PsiVariable> accumulatorRestriction,
+                              String identity,
+                              String operation) {
       myCompoundAssignmentOp = compoundAssignmentOp;
-      myInitializerInlineCondition = initializerInlineCondition;
+      myInitializerReplaceCondition = initializerReplaceCondition;
       myAccumulatorRestriction = accumulatorRestriction;
-      this.identity = identity;
-      this.operation = operation;
+      this.myIdentity = identity;
+      this.myOperation = operation;
     }
 
     public IElementType getCompoundAssignmentOp() {
@@ -91,15 +91,15 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     }
 
     public Predicate<PsiExpression> getInitializerExpressionRestriction() {
-      return myInitializerInlineCondition;
+      return myInitializerReplaceCondition;
     }
 
     public String getIdentity() {
-      return identity;
+      return myIdentity;
     }
 
     public String getOperation() {
-      return operation;
+      return myOperation;
     }
 
     public Predicate<PsiVariable> getAccumulatorRestriction() {
@@ -107,43 +107,51 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     }
   }
 
-  static OperationContext[] operations = {
-    new OperationContext(
+  static final ReductionOperation SUM_OPERATION = new ReductionOperation(
+    JavaTokenType.PLUSEQ,
+    ExpressionUtils::isZero,
+    OperationReductionMigration::arithmeticTypeRestriction,
+    "0",
+    "+"
+  );
+
+  static final ReductionOperation[] OPERATIONS = {
+    new ReductionOperation(
       JavaTokenType.ASTERISKEQ,
       ExpressionUtils::isOne,
       OperationReductionMigration::arithmeticTypeRestriction,
       "1",
       "*"
     ),
-    new OperationContext(
+    new ReductionOperation(
       JavaTokenType.ANDEQ,
-      expression -> expression.getText().equals("true"),
+      expression -> Boolean.TRUE.equals(ExpressionUtils.computeConstantExpression(expression)),
       OperationReductionMigration::booleanTypeRestriction,
       "true",
       "&&"
     ),
-    new OperationContext(
+    new ReductionOperation(
       JavaTokenType.OREQ,
       expression -> expression.getText().equals("false"),
       OperationReductionMigration::booleanTypeRestriction,
       "false",
       "||"
     ),
-    new OperationContext(
+    new ReductionOperation(
       JavaTokenType.OREQ,
       ExpressionUtils::isZero,
       OperationReductionMigration::arithmeticTypeRestriction,
       "0",
       "|"
     ),
-    new OperationContext(
+    new ReductionOperation(
       JavaTokenType.ANDEQ,
-      expression -> expression.getText().equals("-1"),
+      OperationReductionMigration::isMinusOne,
       OperationReductionMigration::bitwiseTypeRestriction,
       "-1",
       "&"
     ),
-    new OperationContext(
+    new ReductionOperation(
       JavaTokenType.XOREQ,
       ExpressionUtils::isZero,
       OperationReductionMigration::bitwiseTypeRestriction,
@@ -152,10 +160,18 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     )
   };
 
+  private static boolean isMinusOne(PsiExpression expression) {
+    Object constant = ExpressionUtils.computeConstantExpression(expression);
+    if(constant == null) {
+      return false;
+    }
+    return (constant instanceof Integer || constant instanceof Long) && constant.equals(-1);
+  }
+
   static boolean bitwiseTypeRestriction(@NotNull PsiVariable variable) {
     return variable.getType() instanceof PsiPrimitiveType
-           && !variable.getType().equalsToText("float")
-           && !variable.getType().equalsToText("double");
+           && (variable.getType().equalsToText("int")
+           || variable.getType().equalsToText("long"));
   }
 
   static boolean arithmeticTypeRestriction(@NotNull PsiVariable variable) {

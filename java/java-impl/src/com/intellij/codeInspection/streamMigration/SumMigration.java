@@ -22,6 +22,8 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
+
 /**
  * @author Tagir Valeev
  */
@@ -49,6 +51,6 @@ class SumMigration extends BaseStreamApiMigration {
         "(" + type.getCanonicalText() + ")" + ParenthesesUtils.getText(addend, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE), addend);
     }
     String stream = tb.add(new MapOp(addend, tb.getVariable(), type)).generate()+".sum()";
-    return replaceWithNumericAddition(tb.getMainLoop(), var, stream, type);
+    return replaceWithOperation(tb.getMainLoop(), var, stream, type, SUM_OPERATION);
   }
 }

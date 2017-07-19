@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
+
 /**
  * @author Tagir Valeev
  */
@@ -39,6 +41,6 @@ class CountMigration extends BaseStreamApiMigration {
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
     if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
-    return replaceWithNumericAddition(tb.getMainLoop(), var, tb.generate() + ".count()", PsiType.LONG);
+    return replaceWithOperation(tb.getMainLoop(), var, tb.generate() + ".count()", PsiType.LONG, SUM_OPERATION);
   }
 }

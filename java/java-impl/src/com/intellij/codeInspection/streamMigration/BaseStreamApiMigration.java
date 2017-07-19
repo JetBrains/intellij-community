@@ -21,10 +21,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Predicate;
 
 /**
  * @author Tagir Valeev
@@ -52,36 +49,21 @@ abstract class BaseStreamApiMigration {
                                          PsiVariable var,
                                          String streamText,
                                          PsiType expressionType,
-                                         OperationReductionMigration.OperationContext operationContext) {
-    return replaceWithOperation(loopStatement, var, streamText, expressionType, operationContext.getOperation(),
-                                operationContext.getInitializerExpressionRestriction());
-  }
-
-  static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
-                                               PsiVariable var,
-                                               String streamText,
-                                               PsiType expressionType) {
-    return replaceWithOperation(loopStatement, var, streamText, expressionType, "+", ExpressionUtils::isZero);
-  }
-
-  static PsiElement replaceWithOperation(PsiLoopStatement loopStatement,
-                                         PsiVariable var,
-                                         String streamText,
-                                         PsiType expressionType,
-                                         String operation,
-                                         Predicate<PsiExpression> initializerRestriction) {
+                                         OperationReductionMigration.ReductionOperation reductionOperation) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
     InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
     if (status != InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
-      if (initializer != null && initializerRestriction.test(initializer)) {
+      if (initializer != null && reductionOperation.getInitializerExpressionRestriction().test(initializer)) {
         PsiType type = var.getType();
         String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
         return replaceInitializer(loopStatement, var, initializer, replacement, status);
       }
     }
-    return loopStatement.replace(elementFactory.createStatementFromText(var.getName() + operation + "=" + streamText + ";", loopStatement));
+    return loopStatement
+      .replace(elementFactory.createStatementFromText(var.getName() + reductionOperation.getOperation() + "=" + streamText + ";",
+                                                      loopStatement));
   }
 
   static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
