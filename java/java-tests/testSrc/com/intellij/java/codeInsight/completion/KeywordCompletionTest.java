@@ -123,6 +123,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testPrimitivesInClassAnnotationValueAttribute() { doTest(2, "true", "int", "boolean"); }
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
+  public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
 
   public void testImportStatic() { doTest(1, "static"); }
   public void testAbstractInInterface() { doTest(1, "abstract"); }

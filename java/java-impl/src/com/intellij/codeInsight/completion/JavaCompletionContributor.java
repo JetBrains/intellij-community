@@ -123,7 +123,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AnnotationTypeFilter();
     }
 
-    if (JavaKeywordCompletion.DECLARATION_START.getValue().accepts(position) ||
+    if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
