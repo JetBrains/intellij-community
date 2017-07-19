@@ -44,5 +44,5 @@ public interface JvmClassType extends JvmReferenceType {
    * @see ParameterizedType#getActualTypeArguments
    */
   @NotNull
-  Iterable<JvmType> getTypeArguments();
+  Iterable<JvmType> typeArguments();
 }

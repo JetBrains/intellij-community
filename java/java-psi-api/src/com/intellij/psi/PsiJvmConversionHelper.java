@@ -185,7 +185,7 @@ public class PsiJvmConversionHelper {
 
     @NotNull
     @Override
-    public Iterable<JvmType> getTypeArguments() {
+    public Iterable<JvmType> typeArguments() {
       return ContainerUtil.map(myPsiClassType.getParameters(), it -> toJvmType(it));
     }
   }
