@@ -18,8 +18,9 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.PathUtilRt
 import org.apache.commons.compress.archivers.zip.UnixStat
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -304,24 +305,23 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       // Fix libjli symlink
+      def entry = zipRoot + "/jre/jdk/Contents/MacOS/libjli.dylib"
       def inFile = new File(tmpTargetPath)
-      def fis = new ZipArchiveInputStream(new FileInputStream(inFile))
+      def zip = new ZipFile(inFile)
       def fos = new ZipArchiveOutputStream(new File(targetPath))
-      ZipArchiveEntry ze;
-      while ((ze = fis.getNextZipEntry()) != null) {
-        if (ze.getName() == zipRoot + "/jre/jdk/Contents/MacOS/libjli.dylib") {
-          def link = new ZipArchiveEntry(ze.getName())
-          link.setUnixMode(UnixStat.DEFAULT_LINK_PERM | UnixStat.LINK_FLAG)
-          fos.putArchiveEntry(link)
-          fos << "../Home/jre/lib/jli/libjli.dylib"
-        } else {
-          fos.putArchiveEntry(ze)
-          fos << fis
-        }
-        fos.closeArchiveEntry()
-      }
+      // Copy the other entries without even decompressing them
+      zip.copyRawEntries(fos, new ZipArchiveEntryPredicate() {
+        boolean test(ZipArchiveEntry ze) { return ze.getName() != entry }
+      })
+
+      // Add the link
+      def link = new ZipArchiveEntry(entry)
+      link.setUnixMode(UnixStat.DEFAULT_LINK_PERM | UnixStat.LINK_FLAG)
+      fos.putArchiveEntry(link)
+      fos << "../Home/jre/lib/jli/libjli.dylib"
+      fos.closeArchiveEntry()
+
       fos.close()
-      fis.close()
       inFile.delete()
 
       return targetPath

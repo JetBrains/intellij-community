@@ -50,18 +50,20 @@ class TestStringMethods(unittest.TestCase):
       if "android-studio/" + req not in files:
         self.fail("Required file not found in distribution: " + req)
 
-  def test_libjli_symlink(self):
+  def test_mac_attributes(self):
     name = os.path.join(dist_dir, "android-studio-" + build + ".mac.zip")
     file = zipfile.ZipFile(name)
     found = False
     for f in file.infolist():
       is_symlink = (f.external_attr & 0x20000000) > 0
-      m = re.search("Android Studio.*\.app/Contents/jre/jdk/Contents/MacOS/libjli.dylib", f.filename)
-      if m:
+      if f.filename.endswith("Contents/jre/jdk/Contents/MacOS/libjli.dylib"):
         found = True
         self.assertTrue(is_symlink, "Contents/jre/jdk/Contents/MacOS/libjli.dylib is not a symlink")
-        break
+      elif f.filename.endswith("Contents/MacOS/studio"):
+        self.assertFalse(f.external_attr == 0x1ED0000, "studio should be \"-rwxr-xr-x\"")
+        self.assertFalse(is_symlink, f.filename + " should not be a symlink")
       else:
+        self.assertFalse(f.external_attr == 0, "Unix attributes are missing from the entry")
         self.assertFalse(is_symlink, f.filename + " should not be a symlink")
     self.assertTrue(found, "Android Studio.*\.app/Contents/jre/jdk/Contents/MacOS/libjli.dylib not found")
 
