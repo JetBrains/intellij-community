@@ -58,10 +58,4 @@ public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
   default Iterable<JvmModifier> modifiers() {
     return getModifiers(this);
   }
-
-  @NotNull
-  @Override
-  default PsiElement getPsiElement() {
-    return this;
-  }
 }
