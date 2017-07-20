@@ -44,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -660,8 +661,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
     public static String getMethodPresentation(PsiMethod method) {
       if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(), 
-                                                        param -> param.getType().accept(createSignatureVisitor()),
+        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(),
+                                                        param -> {
+                                                          PsiType type = TypeConversionUtil.erasure(param.getType());
+                                                          return type != null ? type.accept(createSignatureVisitor()) : "";
+                                                        },
                                                         ",") + ")";
       }
       else {
