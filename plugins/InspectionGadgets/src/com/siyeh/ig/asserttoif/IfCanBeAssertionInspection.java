@@ -78,7 +78,9 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     @Override
     public void visitIfStatement(PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      if (statement.getElseBranch() == null && getThrownNewException(statement.getThenBranch()) != null) {
+      if (statement.getCondition() != null &&
+          statement.getElseBranch() == null &&
+          getThrownNewException(statement.getThenBranch()) != null) {
         registerStatementError(statement);
       }
     }
