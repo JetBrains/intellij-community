@@ -40,6 +40,8 @@ public interface JBTabsPresentation {
 
   JBTabsPresentation setSideComponentOnTabs(boolean onTabs);
 
+  JBTabsPresentation setSideComponentBefore(boolean before);
+
   JBTabsPresentation setSingleRow(boolean singleRow);
 
   boolean isSingleRow();
