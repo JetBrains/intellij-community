@@ -466,6 +466,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
         return new SumMigration(true);
       }
+      if(FindExtremumMigration.extractExtremumTerminal(tb, nonFinalVariables) != null) {
+        //TODO
+      }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
       if (exitPoints == null) return null;
       if (exitPoints.isEmpty() && nonFinalVariables.isEmpty()) {
