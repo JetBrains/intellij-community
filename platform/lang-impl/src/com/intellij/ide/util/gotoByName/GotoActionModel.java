@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -421,6 +423,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   void updateActions(List<ActionWrapper> toUpdate) {
     Semaphore semaphore = new Semaphore(toUpdate.size());
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     for (ActionWrapper wrapper : toUpdate) {
       ApplicationManager.getApplication().invokeLater(() -> {
         try {
@@ -429,7 +432,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         finally {
           semaphore.up();
         }
-      }, myModality);
+      }, myModality, __ -> indicator != null && indicator.isCanceled());
     }
 
     while (!semaphore.waitFor(10)) {
