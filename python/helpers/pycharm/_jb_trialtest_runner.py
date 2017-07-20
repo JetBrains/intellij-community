@@ -8,6 +8,9 @@ import sys
 
 
 if __name__ == '__main__':
+    # This folder should be in sys.path because teamcity twisted plugin is there
+    sys.path.append(os.path.join(os.path.dirname(__file__), "__jb.for_twisted"))
+
     path, targets, additional_args = jb_start_tests()
 
     sys.path.append(os.getcwd()) # Current dir must be in sys.path according to trial docs
