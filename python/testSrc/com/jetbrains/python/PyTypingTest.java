@@ -974,6 +974,17 @@ public class PyTypingTest extends PyTestCase {
            "    expr: Alias = g()");
   }
 
+  // TODO same test for variable type comments
+  // PY-18816
+  public void testLocalTypeAliasInFunctionTypeComment() {
+    doTest("int",
+           "def func():\n" +
+           "    Alias = int\n" +
+           "    def g(x):\n" +
+           "        # type: (Alias) -> None\n" +
+           "        expr = x\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

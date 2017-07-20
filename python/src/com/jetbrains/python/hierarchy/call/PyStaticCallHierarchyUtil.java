@@ -66,9 +66,8 @@ public class PyStaticCallHierarchyUtil {
       public void visitPyCallExpression(PyCallExpression node) {
         super.visitPyCallExpression(node);
 
-        final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), null);
         StreamEx
-          .of(node.multiResolveCalleeFunction(PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)))
+          .of(node.multiResolveCalleeFunction(PyResolveContext.defaultContext()))
           .select(PyFunction.class)
           .forEach(callees::add);
       }

@@ -97,7 +97,8 @@ public class PyCallExpressionHelper {
     if (callee instanceof PyReferenceExpression) {
       // dereference
       PyReferenceExpression ref = (PyReferenceExpression)callee;
-      resolveResult = ref.followAssignmentsChain(PyResolveContext.noImplicits());
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(us.getProject(), us.getContainingFile());
+      resolveResult = ref.followAssignmentsChain(PyResolveContext.noImplicits().withTypeEvalContext(context));
       resolved = resolveResult.getElement();
     }
     else {
