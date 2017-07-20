@@ -182,7 +182,7 @@ def not_in_project_roots(filename, filename_to_not_in_scope_cache={}):
             filename = os.path.abspath(filename)
         filename = os.path.normcase(filename)
         for root in project_roots:
-            if filename.startswith(root):
+            if len(root) > 0 and filename.startswith(root):
                 filename_to_not_in_scope_cache[original_filename] = False
                 break
         else: # for else (only called if the break wasn't reached).

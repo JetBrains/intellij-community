@@ -725,7 +725,7 @@ class PyDB:
         self.writer.add_command(cmd)
 
 
-    def do_wait_suspend(self, thread, frame, event, arg): #@UnusedVariable
+    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace"): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
@@ -734,7 +734,7 @@ class PyDB:
 
         message = thread.additional_info.pydev_message
 
-        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message)
+        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
         self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
@@ -745,7 +745,7 @@ class PyDB:
                 if custom_frame.thread_id == thread.ident:
                     # print >> sys.stderr, 'Frame created: ', frame_id
                     self.writer.add_command(self.cmd_factory.make_custom_frame_created_message(frame_id, custom_frame.name))
-                    self.writer.add_command(self.cmd_factory.make_thread_suspend_message(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, ""))
+                    self.writer.add_command(self.cmd_factory.make_thread_suspend_message(frame_id, custom_frame.frame, CMD_THREAD_SUSPEND, "", suspend_type))
 
                 from_this_thread.append(frame_id)
 
@@ -807,7 +807,7 @@ class PyDB:
                         stop = True
                 if stop:
                     info.pydev_state = STATE_SUSPEND
-                    self.do_wait_suspend(thread, frame, event, arg)
+                    self.do_wait_suspend(thread, frame, event, arg, "trace")
                     return
 
 
@@ -857,7 +857,7 @@ class PyDB:
             try:
                 add_exception_to_frame(frame, exception)
                 self.set_suspend(thread, CMD_ADD_EXCEPTION_BREAK)
-                self.do_wait_suspend(thread, frame, 'exception', None)
+                self.do_wait_suspend(thread, frame, 'exception', None, "trace")
             except:
                 pydev_log.error("We've got an error while stopping in post-mortem: %s\n"%sys.exc_info()[0])
         finally:

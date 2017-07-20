@@ -78,7 +78,7 @@ def _pydev_stop_at_break():
         if breakpoint and handle_breakpoint(frame, t, debugger, breakpoint):
             pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, line))
             debugger.set_suspend(t, CMD_SET_BREAK)
-            debugger.do_wait_suspend(t, frame, 'line', None)
+            debugger.do_wait_suspend(t, frame, 'line', None, "frame_eval")
 
         t.additional_info.is_tracing = False
 
