@@ -1732,6 +1732,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return this;
     }
 
+    public CFGBuilder dereferenceCheck(PsiReferenceExpression referenceExpression) {
+      if (referenceExpression != null) {
+        myAnalyzer.addInstruction(new DupInstruction());
+        myAnalyzer.addInstruction(new FieldReferenceInstruction(referenceExpression, null));
+      }
+      return this;
+    }
+
     public CFGBuilder splice(int count, int... replacement) {
       myAnalyzer.addInstruction(new SpliceInstruction(count, replacement));
       return this;
@@ -1786,6 +1794,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     public CFGBuilder boxUnbox(PsiExpression expression, PsiType expectedType) {
       myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expectedType);
+      return this;
+    }
+
+    public CFGBuilder checkNotNull(PsiExpression expression) {
+      myAnalyzer.addInstruction(new CheckNotNullInstruction(expression));
       return this;
     }
 
@@ -1850,7 +1863,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         return this;
       }
       pushExpression(functionalExpression);
-      pop(); // TODO: handle deference
+      checkNotNull(functionalExpression);
+      pop();
       PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalExpression.getType());
       if (returnType != null) {
         push(getFactory().createTypeValue(returnType, DfaPsiUtil.getTypeNullability(returnType)));

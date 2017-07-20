@@ -34,6 +34,10 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
+  public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    return nextInstruction(instruction, runner, memState);
+  }
+
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }

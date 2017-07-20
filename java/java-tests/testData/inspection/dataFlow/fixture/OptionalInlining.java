@@ -28,11 +28,12 @@ public class OptionalInlining {
 
   void testDeref(Optional<String> opt) {
     if (opt == null) {
-      System.out.println(opt.orElse("qq")); // Must warn
+      System.out.println(<warning descr="Dereference of 'opt' may produce 'java.lang.NullPointerException'">opt</warning>.orElse("qq"));
     }
   }
 
   void testOrElseGet(Optional<String> opt) {
+    opt.orElseGet(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String s = opt.orElseGet(() -> {
       if (Math.random() > 0.5) {
         return "foo";
@@ -45,6 +46,7 @@ public class OptionalInlining {
   }
 
   void testFilter(Optional<String> opt, Optional<Integer> intOpt) {
+    opt.filter(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     Integer integer = intOpt.filter(x -> x > 5).filter(x -> <warning descr="Condition 'x == 5' is always 'false'">x == 5</warning>).orElse(0);
     String s1 = opt.filter(s -> false).filter(s -> s.equals("barr")).orElse("baz");
     if (<warning descr="Condition 's1.equals(\"xz\")' is always 'false'">s1.equals("xz")</warning>) {
@@ -73,6 +75,7 @@ public class OptionalInlining {
   }
 
   void testMap(Optional<String> opt) {
+    opt.map(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String res = opt.<String>map(s -> null).orElse("abc");
     if (<warning descr="Condition '!res.equals(\"abc\")' is always 'false'">!res.equals("abc")</warning>) {
       System.out.println("Never");
@@ -91,6 +94,7 @@ public class OptionalInlining {
   }
 
   void testFlatMap(Optional<String> opt) {
+    opt.flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     String s = opt.flatMap(str -> Optional.of(str.length() > 10 ? "foo" : "bar")).orElse("baz");
     if (<warning descr="Condition 's.equals(\"qux\")' is always 'false'">s.equals("qux")</warning>) {
       System.out.println("Never");
@@ -98,6 +102,7 @@ public class OptionalInlining {
   }
 
   void testIfPresent(Optional<String> opt) {
+    opt.ifPresent(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     opt.map(s -> s.isEmpty() ? 5 : 6).ifPresent(val -> {
       if (val == 7) {
         System.out.println("oops");
@@ -127,5 +132,26 @@ public class OptionalInlining {
         .orElseGet(() -> Integer.parseInt(b.get())); // <-- no more warning for b.get()
       System.out.println(result);
     }
+  }
+
+  static class Holder {
+    int x;
+    String s;
+  }
+
+  void testFilterChain(Optional<Holder> opt) {
+    boolean present = <warning descr="Condition 'opt .filter(h -> h.x < 5) .filter(h -> h.x > 6) .map(h -> h.x).isPresent()' is always 'false'">opt
+        .filter(h -> h.x < 5)
+        .filter(h -> <warning descr="Condition 'h.x > 6' is always 'false'">h.x > 6</warning>)
+        .map(h -> h.x).isPresent()</warning>;
+  }
+
+  void testFilterMap(Optional<Holder> opt) {
+    boolean present = <warning descr="Condition 'opt .filter(h -> h.s == null) .map(h -> h.s) .isPresent()' is always 'false'">opt
+      .filter(h -> h.s == null)
+      .map(h -> h.s)
+      .isPresent()</warning>;
+
+    opt.filter(h -> h.s == null).map(h -> h.s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()).ifPresent(System.out::println);
   }
 }

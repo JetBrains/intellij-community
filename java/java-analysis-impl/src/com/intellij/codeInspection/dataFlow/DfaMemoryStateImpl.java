@@ -1032,7 +1032,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     if (value instanceof DfaVariableValue) {
-      DfaVariableState state = myVariableStates.get((DfaVariableValue)value);
+      DfaVariableState state = findVariableState((DfaVariableValue)value);
       if (state != null) {
         T fact = state.getFact(factType);
         if (fact != null) {
@@ -1073,9 +1073,31 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     myCachedHash = null;
   }
+
+  private DfaVariableState findVariableState(DfaVariableValue var) {
+    DfaVariableState state = myVariableStates.get(var);
+    if (state != null) {
+      return state;
+    }
+    DfaVariableValue qualifier = var.getQualifier();
+    if (qualifier == null) return null;
+    int qualifierIndex = getEqClassIndex(qualifier);
+    if (qualifierIndex == -1) return null;
+    for (DfaValue eqQualifier : myEqClasses.get(qualifierIndex).getMemberValues()) {
+      if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
+        DfaVariableValue eqValue = getFactory().getVarFactory()
+          .createVariableValue(var.getPsiVariable(), var.getVariableType(), var.isNegated(), (DfaVariableValue)eqQualifier);
+        state = myVariableStates.get(eqValue);
+        if (state != null) {
+          return state;
+        }
+      }
+    }
+    return null;
+  }
   
   DfaVariableState getVariableState(DfaVariableValue dfaVar) {
-    DfaVariableState state = myVariableStates.get(dfaVar);
+    DfaVariableState state = findVariableState(dfaVar);
 
     if (state == null) {
       state = myDefaultVariableStates.get(dfaVar);

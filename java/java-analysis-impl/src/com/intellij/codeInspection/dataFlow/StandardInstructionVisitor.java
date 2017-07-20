@@ -613,6 +613,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Override
+  public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    checkNotNullable(memState, memState.peek(), NullabilityProblem.passingNullableToNotNullParameter, instruction.getExpression());
+    return super.visitCheckNotNull(instruction, runner, memState);
+  }
+
+  @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     myReachable.add(instruction);
 

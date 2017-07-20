@@ -78,7 +78,7 @@ public class OptionalChainInliner implements CallInliner {
     BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression> terminalInliner = TERMINAL_MAPPER.mapFirst(call);
     if (terminalInliner != null) {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression))) return false;
+      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call.getMethodExpression())) return false;
       terminalInliner.accept(builder, call);
       return true;
     }
@@ -99,7 +99,8 @@ public class OptionalChainInliner implements CallInliner {
     return PsiUtil.substituteTypeParameter(expression.getType(), JAVA_UTIL_OPTIONAL, 0, false);
   }
 
-  private static boolean pushOptionalValue(ControlFlowAnalyzer.CFGBuilder builder, PsiExpression expression) {
+  private static boolean pushOptionalValue(ControlFlowAnalyzer.CFGBuilder builder, PsiExpression expression,
+                                           PsiReferenceExpression dereferencer) {
     PsiType optionalElementType = getOptionalElementType(expression);
     if (optionalElementType == null) return false;
     if (expression instanceof PsiMethodCallExpression) {
@@ -118,10 +119,10 @@ public class OptionalChainInliner implements CallInliner {
         return true;
       }
     }
-    // TODO: handle dereference
     DfaOptionalValue presentOptional = builder.getFactory().getOptionalFactory().getOptional(true);
     builder
       .pushExpression(expression)
+      .dereferenceCheck(dereferencer)
       .push(presentOptional)
       .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
       .push(builder.getFactory().createTypeValue(optionalElementType, Nullness.NOT_NULL))
@@ -140,7 +141,7 @@ public class OptionalChainInliner implements CallInliner {
     if (!isFilter && !isMap && !isFlatMap && !isOr) return false;
     PsiExpression argument = call.getArgumentList().getExpressions()[0];
     PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-    if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression))) return false;
+    if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call.getMethodExpression())) return false;
     if (isFlatMap) {
       inlineFlatMap(builder, argument);
     }
@@ -165,14 +166,15 @@ public class OptionalChainInliner implements CallInliner {
       PsiExpression lambdaBody = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       if (parameters.length == argCount && lambdaBody != null) {
         StreamEx.ofReversed(parameters).forEach(p -> builder.assignTo(p).pop());
-        if(pushOptionalValue(builder, lambdaBody)) {
+        if(pushOptionalValue(builder, lambdaBody, null)) { // TODO: handle dereference
           return;
         }
       }
     }
     builder
       .pushExpression(function)
-      .pop() // TODO: handle dereference
+      .checkNotNull(function)
+      .pop()
       .pushUnknown();
   }
 
