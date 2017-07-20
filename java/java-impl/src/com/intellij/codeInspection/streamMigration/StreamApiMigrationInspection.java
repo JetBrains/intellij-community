@@ -493,6 +493,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (getAccumulatedVariable(tb, nonFinalVariables, SUM_OPERATION) != null) {
         return new SumMigration(true);
       }
+      FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extract(tb, nonFinalVariables);
+      if(extremumTerminal != null) {
+        return new FindExtremumMigration(true, FindExtremumMigration.getOperation(extremumTerminal.isMax()) + "()");
+      }
       for (OperationReductionMigration.ReductionOperation reductionOperation : OperationReductionMigration.OPERATIONS) {
         if (getAccumulatedVariable(tb, nonFinalVariables, reductionOperation) != null) {
           return new OperationReductionMigration(true, reductionOperation);
