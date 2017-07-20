@@ -15,10 +15,12 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.Expandable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,19 +31,26 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashMap;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI implements Condition {
+  protected final HashMap<String, IconHolder> icons = new HashMap<>();
   protected final JTextField myTextField;
-  private MyMouseMotionAdapter myMyMouseMotionAdapter;
   private MyMouseAdapter myMouseAdapter;
   private FocusAdapter myFocusAdapter;
+  private int cursor;
 
   public TextFieldWithPopupHandlerUI(JTextField textField) {
     myTextField = textField;
     installListeners();
+    if (textField instanceof Expandable) {
+      icons.put("expand", createExpand((Expandable)textField));
+    }
   }
 
   protected boolean hasText() {
@@ -54,20 +63,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   protected abstract void showSearchPopup();
 
   protected void installListeners() {
-    final TextFieldWithPopupHandlerUI ui = this;
     myFocusAdapter = new MyFocusAdapter();
     myTextField.addFocusListener(myFocusAdapter);
-    myMyMouseMotionAdapter = new MyMouseMotionAdapter(ui);
-    myTextField.addMouseMotionListener(myMyMouseMotionAdapter);
-    myMouseAdapter = new MyMouseAdapter(ui);
+    myMouseAdapter = new MyMouseAdapter();
     myTextField.addMouseListener(myMouseAdapter);
+    myTextField.addMouseMotionListener(myMouseAdapter);
   }
 
   @Override
   protected void uninstallListeners() {
     myTextField.removeFocusListener(myFocusAdapter);
-    myTextField.removeMouseMotionListener(myMyMouseMotionAdapter);
     myTextField.removeMouseListener(myMouseAdapter);
+    myTextField.removeMouseMotionListener(myMouseAdapter);
   }
 
   @Override
@@ -102,7 +109,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Nullable
   public static AbstractAction getNewLineAction(Component c) {
-    if ( !isSearchField(c) || !Registry.is("ide.find.show.add.newline.hint")) return null;
+    if (!isSearchField(c) || !Registry.is("ide.find.show.add.newline.hint")) return null;
     Object action = ((JTextField)c).getClientProperty("JTextField.Search.NewLineAction");
     return action instanceof AbstractAction ? (AbstractAction)action : null;
   }
@@ -111,45 +118,37 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     POPUP, CLEAR, NEWLINE
   }
 
-  private class MyMouseMotionAdapter extends MouseMotionAdapter {
-    private final TextFieldWithPopupHandlerUI myUi;
-
-    public MyMouseMotionAdapter(TextFieldWithPopupHandlerUI ui) {myUi = ui;}
-
+  private class MyMouseAdapter extends MouseAdapter {
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (myUi.getComponent() != null && isSearchField(myTextField)) {
-        SearchAction action = myUi.getActionUnder(e.getPoint());
+      if (!icons.isEmpty()) {
+        handleMouse(e, false);
+      }
+      else if (getComponent() != null && isSearchField(myTextField)) {
+        SearchAction action = getActionUnder(e.getPoint());
         if (action == SearchAction.POPUP && !isSearchFieldWithHistoryPopup(myTextField)) {
           action = null;
         }
-        if (action != null) {
-          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        } else {
-          myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-        }
+        setCursor(action != null ? Cursor.HAND_CURSOR : Cursor.TEXT_CURSOR);
       }
     }
-  }
-
-  private class MyMouseAdapter extends MouseAdapter {
-    private final TextFieldWithPopupHandlerUI myUi;
-
-    public MyMouseAdapter(TextFieldWithPopupHandlerUI ui) {myUi = ui;}
 
     @Override
     public void mouseClicked(MouseEvent e) {
-      if (isSearchField(myTextField)) {
-        final SearchAction action = myUi.getActionUnder(e.getPoint());
+      if (!icons.isEmpty()) {
+        handleMouse(e, true);
+      }
+      else if (isSearchField(myTextField)) {
+        final SearchAction action = getActionUnder(e.getPoint());
         if (action != null) {
           switch (action) {
             case POPUP:
-              myUi.showSearchPopup();
+              showSearchPopup();
               break;
             case CLEAR:
               Object listener = myTextField.getClientProperty("JTextField.Search.CancelAction");
               if (listener instanceof ActionListener) {
-                ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+                ((ActionListener)listener).actionPerformed(new ActionEvent(myTextField, ActionEvent.ACTION_PERFORMED, "action"));
               }
               myTextField.setText("");
               break;
@@ -176,6 +175,143 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public void focusLost(FocusEvent e) {
       myTextField.repaint();
+    }
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    Dimension size = super.getMinimumSize(c);
+    if (size != null) updatePreferredSize(size);
+    return size;
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    if (size != null) updatePreferredSize(size);
+    return size;
+  }
+
+  protected void updatePreferredSize(Dimension size) {
+    if (icons.isEmpty()) return;
+    Insets insets = myTextField.getInsets();
+    for (IconHolder holder : icons.values()) {
+      size.width += holder.bounds.width + 2; // gap between text and icons
+      int height = holder.bounds.height;
+      if (insets != null) height += insets.top + insets.bottom;
+      if (height > size.height) size.height = height;
+    }
+  }
+
+  @Override
+  protected Rectangle getVisibleEditorRect() {
+    Rectangle bounds = super.getVisibleEditorRect();
+    if (bounds != null) updateVisibleEditorRect(bounds);
+    return bounds;
+  }
+
+  protected void updateVisibleEditorRect(Rectangle bounds) {
+    if (icons.isEmpty()) return;
+    IconHolder expand = icons.get("expand");
+    if (expand != null && expand.icon != null) {
+      bounds.width -= expand.bounds.width;
+      expand.bounds.x = bounds.x + bounds.width;
+      expand.bounds.y = bounds.y + (bounds.height - expand.bounds.height) / 2;
+      bounds.width -= 2; // gap between text and icons
+    }
+  }
+
+  protected void paintIcons(Graphics g) {
+    if (!icons.isEmpty()) {
+      for (IconHolder holder : icons.values()) {
+        if (holder.icon != null) {
+          holder.icon.paintIcon(myTextField, g, holder.bounds.x, holder.bounds.y);
+        }
+      }
+    }
+  }
+
+  private void handleMouse(MouseEvent event, boolean run) {
+    boolean invalid = false;
+    boolean repaint = false;
+    IconHolder result = null;
+    for (IconHolder holder : icons.values()) {
+      boolean hovered = holder.bounds.contains(event.getX(), event.getY());
+      if (hovered) result = holder;
+      Icon icon = holder.getIcon(hovered);
+      if (holder.icon != icon) {
+        if (holder.setIcon(icon)) invalid = true;
+        repaint = true;
+      }
+    }
+    if (invalid) myTextField.revalidate();
+    if (repaint) myTextField.repaint();
+    if (result == null) {
+      myTextField.setToolTipText(null);
+      setCursor(Cursor.TEXT_CURSOR);
+    }
+    else {
+      Runnable action = result.getAction();
+      myTextField.setToolTipText(result.tooltip);
+      if (action == null) {
+        setCursor(Cursor.TEXT_CURSOR);
+      }
+      else {
+        setCursor(Cursor.HAND_CURSOR);
+        if (run) {
+          action.run();
+          event.consume();
+        }
+      }
+    }
+  }
+
+  private void setCursor(int cursor) {
+    if (this.cursor != cursor) {
+      this.cursor = cursor; // do not update cursor every time
+      myTextField.setCursor(Cursor.getPredefinedCursor(cursor));
+    }
+  }
+
+  private static IconHolder createExpand(Expandable expandable) {
+    String text = getFirstKeyboardShortcutText("ExpandExpandableComponent");
+    return new IconHolder(text.isEmpty() ? "Expand" : "Expand (" + text + ")") {
+      @Override
+      protected Icon getIcon(boolean hovered) {
+        return hovered ? AllIcons.General.ExpandComponentHover : AllIcons.General.ExpandComponent;
+      }
+
+      @Override
+      protected Runnable getAction() {
+        return expandable::expand;
+      }
+    };
+  }
+
+  public static abstract class IconHolder {
+    public final Rectangle bounds = new Rectangle();
+    public Icon icon;
+
+    private final String tooltip;
+
+    public IconHolder(String tooltip) {
+      this.tooltip = tooltip;
+      //noinspection AbstractMethodCallInConstructor
+      setIcon(getIcon(false));
+    }
+
+    protected abstract Runnable getAction();
+
+    protected abstract Icon getIcon(boolean hovered);
+
+    private boolean setIcon(Icon icon) {
+      this.icon = icon;
+      int width = icon == null ? 0 : icon.getIconWidth();
+      int height = icon == null ? 0 : icon.getIconHeight();
+      if (bounds.width == width && bounds.height == height) return false;
+      bounds.width = width;
+      bounds.height = height;
+      return true;
     }
   }
 }
