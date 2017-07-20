@@ -25,6 +25,7 @@ import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Compani
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -175,12 +176,13 @@ object GuiTestLocalLauncher {
   }
 
   private fun createArgsByPath(path: String, port: Int = 0): List<String> {
-    var resultingArgs = listOf<String>()
-      .plus("open")
-      .plus(path) //path to exec
-      .plus("--args")
-      .plus(GuiTestStarter.COMMAND_NAME)
-    if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
+    val resultingArgs = mutableListOf<String>(
+      path,
+      "--args",
+      GuiTestStarter.COMMAND_NAME
+    )
+    if (SystemInfo.isMac()) resultingArgs.add(0, "open")
+    if (port != 0) resultingArgs.add("port=$port")
     LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
   }
@@ -188,26 +190,26 @@ object GuiTestLocalLauncher {
   /**
    * Default VM options to start IntelliJ IDEA (or IDEA-based IDE). To customize options use com.intellij.testGuiFramework.launcher.GuiTestOptions
    */
-  private fun getDefaultVmOptions(ide: Ide) : List<String> {
+  private fun getDefaultVmOptions(ide: Ide): List<String> {
     return listOf<String>()
-        .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
-        .plus("-XX:ReservedCodeCacheSize=150m")
-        .plus("-XX:+UseConcMarkSweepGC")
-        .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
-        .plus("-XX:MaxJavaStackTraceDepth=10000")
-        .plus("-ea")
-        .plus("-Xbootclasspath/p:${GuiTestOptions.getBootClasspath()}")
-        .plus("-Dsun.awt.disablegrab=true")
-        .plus("-Dsun.io.useCanonCaches=false")
-        .plus("-Djava.net.preferIPv4Stack=true")
-        .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar().toString()}")
-        .plus("-Didea.is.internal=${GuiTestOptions.isInternal().toString()}")
-        .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
-        .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
-        .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
-        .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
-        .plus("-Xdebug")
-        .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
+      .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
+      .plus("-XX:ReservedCodeCacheSize=240m")
+      .plus("-XX:+UseConcMarkSweepGC")
+      .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
+      .plus("-XX:MaxJavaStackTraceDepth=10000")
+      .plus("-ea")
+      .plus("-Xbootclasspath/p:${GuiTestOptions.getBootClasspath()}")
+      .plus("-Dsun.awt.disablegrab=true")
+      .plus("-Dsun.io.useCanonCaches=false")
+      .plus("-Djava.net.preferIPv4Stack=true")
+      .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar().toString()}")
+      .plus("-Didea.is.internal=${GuiTestOptions.isInternal().toString()}")
+      .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
+      .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
+      .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
+      .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plus("-Xdebug")
+      .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
   }
 
   private fun getCurrentJavaExec(): String {
@@ -279,8 +281,8 @@ object GuiTestLocalLauncher {
    * @return true if classloader's output path is the same to module's output path (and also same to project)
    */
   private fun needToChangeProjectOutput(project: JpsProject): Boolean =
-      JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ==
-          getOutputRootFromClassloader().path
+    JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ==
+      getOutputRootFromClassloader().path
 
 
   private fun JpsProject.changeOutputIfNeeded() {
