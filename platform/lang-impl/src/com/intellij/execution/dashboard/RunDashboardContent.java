@@ -139,6 +139,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         }
         RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
         layoutUiImpl.setLeftToolbarVisible(false);
+        layoutUiImpl.setContentToolbarBefore(false);
         List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
         myContentActions.put(content, leftToolbarActions);
         updateContentToolbar(content);
