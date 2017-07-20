@@ -22,8 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiJvmConversionHelper.toJvmType;
-
 /**
  * Represents a Java field or enum constant.
  */
@@ -51,6 +49,6 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, Jv
   @NotNull
   @Override
   default JvmType fieldType() {
-    return toJvmType(getType());
+    return getType();
   }
 }

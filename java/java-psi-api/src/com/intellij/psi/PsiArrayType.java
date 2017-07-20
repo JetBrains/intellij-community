@@ -20,8 +20,6 @@ import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.PsiJvmConversionHelper.toJvmType;
-
 /**
  * Represents an array type.
  *
@@ -135,6 +133,6 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   @NotNull
   @Override
   public JvmType componentType() {
-    return toJvmType(getComponentType());
+    return getComponentType();
   }
 }

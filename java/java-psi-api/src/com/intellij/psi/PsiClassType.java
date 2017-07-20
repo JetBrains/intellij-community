@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmTypeDeclaration;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.lang.jvm.types.JvmSubstitutor;
+import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.lang.jvm.types.JvmTypeResolveResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,6 +28,8 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * Represents a class type.
@@ -255,14 +259,30 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
   @Nullable
   @Override
   public JvmTypeResolveResult resolveType() {
-    PsiClass clazz = resolve();
+    ClassResolveResult resolveResult = resolveGenerics();
+    PsiClass clazz = resolveResult.getElement();
     return clazz == null ? null : new JvmTypeResolveResult() {
+
+      private final JvmSubstitutor mySubstitutor = new PsiJvmConversionHelper.PsiJvmSubstitutor(resolveResult.getSubstitutor());
+
       @NotNull
       @Override
       public JvmTypeDeclaration getDeclaration() {
         return clazz;
       }
+
+      @NotNull
+      @Override
+      public JvmSubstitutor getSubstitutor() {
+        return mySubstitutor;
+      }
     };
+  }
+
+  @NotNull
+  @Override
+  public Iterable<JvmType> typeArguments() {
+    return Arrays.asList(getParameters());
   }
 
   /**

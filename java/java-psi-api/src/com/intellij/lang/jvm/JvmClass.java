@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.jvm;
 
-import com.intellij.lang.jvm.types.JvmClassType;
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +30,10 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
   JvmClassKind classKind();
 
   @Nullable
-  JvmClassType superClassType();
+  JvmReferenceType superClassType();
 
   @NotNull
-  Iterable<JvmClassType> interfaceTypes();
+  Iterable<JvmReferenceType> interfaceTypes();
 
   //
 

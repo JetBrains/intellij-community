@@ -17,7 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmClassKind;
-import com.intellij.lang.jvm.types.JvmClassType;
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
@@ -367,13 +367,13 @@ public interface PsiClass
 
   @Nullable
   @Override
-  default JvmClassType superClassType() {
+  default JvmReferenceType superClassType() {
     return getClassSuperType(this);
   }
 
   @NotNull
   @Override
-  default Iterable<JvmClassType> interfaceTypes() {
+  default Iterable<JvmReferenceType> interfaceTypes() {
     return getClassInterfaces(this);
   }
 }

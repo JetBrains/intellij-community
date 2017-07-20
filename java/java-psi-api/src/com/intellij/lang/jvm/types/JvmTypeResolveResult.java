@@ -22,4 +22,7 @@ public interface JvmTypeResolveResult {
 
   @NotNull
   JvmTypeDeclaration getDeclaration();
+
+  @NotNull
+  JvmSubstitutor getSubstitutor();
 }

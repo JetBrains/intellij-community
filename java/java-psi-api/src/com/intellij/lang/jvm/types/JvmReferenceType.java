@@ -20,8 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a type which could be resolved into a class or a type parameter.
- * Such types appear in throws and bounds.
+ * Represents a type which could be resolved into a class or a type parameter and optionally has type arguments.
+ * <p>
+ * Such type appears in throws, bounds, extends, implements.
  */
 public interface JvmReferenceType extends JvmType {
 
@@ -36,4 +37,7 @@ public interface JvmReferenceType extends JvmType {
 
   @Nullable
   JvmTypeResolveResult resolveType();
+
+  @NotNull
+  Iterable<JvmType> typeArguments();
 }

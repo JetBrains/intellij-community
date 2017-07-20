@@ -24,8 +24,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiJvmConversionHelper.toJvmType;
-
 /**
  * Represents a wildcard type, with bounds.
  *
@@ -260,12 +258,12 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   @NotNull
   @Override
   public JvmType upperBound() {
-    return toJvmType(getExtendsBound());
+    return getExtendsBound();
   }
 
   @NotNull
   @Override
   public JvmType lowerBound() {
-    return toJvmType(getSuperBound());
+    return getSuperBound();
   }
 }

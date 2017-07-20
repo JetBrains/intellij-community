@@ -15,10 +15,14 @@
  */
 package com.intellij.psi;
 
-import com.intellij.lang.jvm.*;
-import com.intellij.lang.jvm.types.*;
+import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmParameter;
+import com.intellij.lang.jvm.JvmTypeParameter;
+import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.lang.jvm.types.JvmSubstitutor;
+import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +32,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
+import static com.intellij.psi.PsiType.getJavaLangObject;
 import static com.intellij.psi.PsiType.getTypeByName;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -61,33 +66,33 @@ public class PsiJvmConversionHelper {
   }
 
   @Nullable
-  public static JvmClassType getClassSuperType(@NotNull PsiClass psiClass) {
+  public static JvmReferenceType getClassSuperType(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface()) return null;
-    if (psiClass.isEnum()) return getJvmClassType(CommonClassNames.JAVA_LANG_ENUM, psiClass);
+    if (psiClass.isEnum()) return getTypeByName(CommonClassNames.JAVA_LANG_ENUM, psiClass.getProject(), psiClass.getResolveScope());
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassType.resolve();
       if (baseClass == null || !baseClass.isInterface()) {
-        return toJvmClassType(baseClassType);
+        return baseClassType;
       }
       else {
-        return getJvmClassType(CommonClassNames.JAVA_LANG_OBJECT, psiClass);
+        return getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope());
       }
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return null;
 
     PsiClassType[] extendsTypes = psiClass.getExtendsListTypes();
-    if (extendsTypes.length != 1) return getJvmClassType(CommonClassNames.JAVA_LANG_OBJECT, psiClass);
-    return toJvmClassType(extendsTypes[0]);
+    if (extendsTypes.length != 1) return getJavaLangObject(psiClass.getManager(), psiClass.getResolveScope());
+    return extendsTypes[0];
   }
 
   @NotNull
-  public static Iterable<JvmClassType> getClassInterfaces(@NotNull PsiClass psiClass) {
+  public static Iterable<JvmReferenceType> getClassInterfaces(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassType = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassType.resolve();
       if (baseClass != null && baseClass.isInterface()) {
-        return singletonList(toJvmClassType(baseClassType));
+        return singletonList(baseClassType);
       }
       else {
         return emptyList();
@@ -96,7 +101,7 @@ public class PsiJvmConversionHelper {
 
     PsiReferenceList referenceList = psiClass.isInterface() ? psiClass.getExtendsList() : psiClass.getImplementsList();
     if (referenceList == null) return emptyList();
-    return getReferencedClassTypes(referenceList);
+    return getReferencedTypes(referenceList);
   }
 
   @NotNull
@@ -104,7 +109,7 @@ public class PsiJvmConversionHelper {
     LOG.assertTrue(!method.isConstructor());
     final PsiType type = method.getReturnType();
     LOG.assertTrue(type != null);
-    return toJvmType(type);
+    return type;
   }
 
   @NotNull
@@ -124,97 +129,14 @@ public class PsiJvmConversionHelper {
   }
 
   private static Iterable<JvmReferenceType> getReferencedTypes(@NotNull PsiReferenceList referenceList) {
-    return ContainerUtil.map(referenceList.getReferencedTypes(), it -> toJvmReferenceType(it));
+    return ContainerUtil.map(referenceList.getReferencedTypes(), it -> it);
   }
 
-  private static Iterable<JvmClassType> getReferencedClassTypes(@NotNull PsiReferenceList referenceList) {
-    return ContainerUtil.map(referenceList.getReferencedTypes(), type -> toJvmClassType(type));
-  }
-
-  @NotNull
-  public static JvmType toJvmType(@NotNull PsiType type) {
-    if (type instanceof PsiPrimitiveType || type instanceof PsiWildcardType || type instanceof PsiArrayType) {
-      return ((JvmType)type);
-    }
-    else if (type instanceof PsiClassType) {
-      return toJvmReferenceType(((PsiClassType)type));
-    }
-    throw new IllegalArgumentException("Unsupported type: " + type);
-  }
-
-  @NotNull
-  public static JvmReferenceType toJvmReferenceType(@NotNull PsiClassType type) {
-    return type.hasParameters() ? toJvmClassType(type) : type;
-  }
-
-  @NotNull
-  public static JvmClassType toJvmClassType(@NotNull PsiClassType type) {
-    return new PsiJvmClassType(type);
-  }
-
-  @NotNull
-  public static JvmClassType getJvmClassType(@NotNull String fqn, @NotNull PsiElement context) {
-    return toJvmClassType(getTypeByName(fqn, context.getProject(), context.getResolveScope()));
-  }
-
-  private static class PsiJvmClassType implements JvmClassType {
-
-    private final @NotNull PsiClassType myPsiClassType;
-
-    private PsiJvmClassType(@NotNull PsiClassType type) {
-      myPsiClassType = type;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myPsiClassType.getClassName();
-    }
-
-    @NotNull
-    @Override
-    public JvmAnnotation[] getAnnotations() {
-      return myPsiClassType.getAnnotations();
-    }
-
-    @Nullable
-    @Override
-    public JvmGenericResolveResult resolveType() {
-      final ClassResolveResult classResolveResult = myPsiClassType.resolveGenerics();
-      final PsiClass clazz = classResolveResult.getElement();
-      if (clazz == null || clazz instanceof PsiTypeParameter) return null;
-
-      final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-      return new JvmGenericResolveResult() {
-
-        private final JvmSubstitutor mySubstitutor = new PsiJvmSubstitutor(substitutor);
-
-        @NotNull
-        @Override
-        public JvmClass getDeclaration() {
-          return clazz;
-        }
-
-        @NotNull
-        @Override
-        public JvmSubstitutor getSubstitutor() {
-          return mySubstitutor;
-        }
-      };
-    }
-
-    @NotNull
-    @Override
-    public Iterable<JvmType> typeArguments() {
-      return ContainerUtil.map(myPsiClassType.getParameters(), it -> toJvmType(it));
-    }
-  }
-
-  private static class PsiJvmSubstitutor implements JvmSubstitutor {
+  static class PsiJvmSubstitutor implements JvmSubstitutor {
 
     private final @NotNull PsiSubstitutor mySubstitutor;
 
-    private PsiJvmSubstitutor(@NotNull PsiSubstitutor substitutor) {
+    PsiJvmSubstitutor(@NotNull PsiSubstitutor substitutor) {
       mySubstitutor = substitutor;
     }
 
@@ -223,8 +145,7 @@ public class PsiJvmConversionHelper {
     public JvmType substitute(@NotNull JvmTypeParameter typeParameter) {
       if (!(typeParameter instanceof PsiTypeParameter)) return null;
       PsiTypeParameter psiTypeParameter = ((PsiTypeParameter)typeParameter);
-      PsiType substituted = mySubstitutor.substitute(psiTypeParameter);
-      return substituted == null ? null : toJvmType(substituted);
+      return mySubstitutor.substitute(psiTypeParameter);
     }
   }
 }

@@ -58,7 +58,7 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
   @NotNull
   @Override
   default JvmType parameterType() {
-    return PsiJvmConversionHelper.toJvmType(getType());
+    return getType();
   }
 
   @NotNull
