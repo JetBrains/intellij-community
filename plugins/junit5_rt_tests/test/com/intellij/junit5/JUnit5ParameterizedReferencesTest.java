@@ -34,7 +34,7 @@ public class JUnit5ParameterizedReferencesTest extends JUnit5CodeInsightTest {
                                 "import org.junit.jupiter.params.ParameterizedTest;\n" +
                                 "import org.junit.jupiter.params.provider.MethodSource;\n" +
                                 "class ParameterizedTestsDemo {\n" +
-                                "    @MethodSource(names = {\"cde\", \"ab<caret>c\"})\n" +
+                                "    @MethodSource(value = {\"cde\", \"ab<caret>c\"})\n" +
                                 "    void testWithProvider(String abc) {}\n" +
                                 "     private static void abc() {}\n" +
                                 "    private static void cde() {}\n" +

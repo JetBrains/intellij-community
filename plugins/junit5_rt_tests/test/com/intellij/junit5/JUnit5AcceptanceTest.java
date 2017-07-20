@@ -77,6 +77,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void methodPresentations() {
     doTest(() -> {
+      myFixture.addClass("package a; public class TestInfo {}");
       PsiClass aClass = myFixture.addClass("class MyTest {" +
                                            "  @org.junit.jupiter.api.Test void method() {}" +
                                            "  @org.junit.jupiter.api.Test void method(a.TestInfo info) {}" +
