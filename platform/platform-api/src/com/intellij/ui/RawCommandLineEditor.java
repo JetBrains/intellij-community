@@ -21,6 +21,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,7 @@ import java.util.List;
 public class RawCommandLineEditor extends JPanel implements TextAccessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.RawCommandLineEditor");
 
+  private final JTextField myEditor;
   private final TextFieldWithBrowseButton myTextField;
   private String myDialogCaption = "";
 
@@ -44,27 +47,35 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
 
   public RawCommandLineEditor(final Function<String, List<String>> lineParser, final Function<List<String>, String> lineJoiner) {
     super(new BorderLayout());
-    myTextField = new TextFieldWithBrowseButton(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myDialogCaption == null) {
-          Container parent = getParent();
-          if (parent instanceof LabeledComponent) {
-            parent = parent.getParent();
+    if (Registry.is("raw.command.line.editor.dialog")) {
+      myTextField = new TextFieldWithBrowseButton(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (myDialogCaption == null) {
+            Container parent = getParent();
+            if (parent instanceof LabeledComponent) {
+              parent = parent.getParent();
+            }
+            LOG.error("Did not call RawCommandLineEditor.setDialogCaption() in " + parent);
+            myDialogCaption = "Parameters";
           }
-          LOG.error("Did not call RawCommandLineEditor.setDialogCaption() in " + parent);
-          myDialogCaption = "Parameters";
+          Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow", lineParser, lineJoiner);
         }
-        Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow", lineParser, lineJoiner);
-      }
-    });
-    myTextField.setButtonIcon(AllIcons.Actions.ShowViewer);
-    add(myTextField, BorderLayout.CENTER);
+      });
+      myEditor = myTextField.getTextField();
+      myTextField.setButtonIcon(AllIcons.Actions.ShowViewer);
+      add(myTextField, BorderLayout.CENTER);
+    }
+    else {
+      myTextField = null;
+      myEditor = new ExpandableTextField(lineParser, lineJoiner);
+      add(myEditor, BorderLayout.CENTER);
+    }
     setDescriptor(null);
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {
-    InsertPathAction.addTo(myTextField.getTextField(), descriptor);
+    InsertPathAction.addTo(myEditor, descriptor);
   }
 
   public String getDialogCaption() {
@@ -73,33 +84,37 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
 
   public void setDialogCaption(String dialogCaption) {
     myDialogCaption = dialogCaption != null ? dialogCaption : "";
+    if (myEditor instanceof ExpandableTextField) {
+      ExpandableTextField expandable = (ExpandableTextField)myEditor;
+      expandable.setTitle(myDialogCaption);
+    }
   }
 
   @Override
   public void setText(@Nullable String text) {
-    myTextField.setText(text);
+    myEditor.setText(text);
   }
 
   @Override
   public String getText() {
-    return myTextField.getText();
+    return StringUtil.notNullize(myEditor.getText());
   }
 
   public JTextField getTextField() {
-    return myTextField.getTextField();
+    return myEditor;
   }
 
   public Document getDocument() {
-    return myTextField.getTextField().getDocument();
+    return myEditor.getDocument();
   }
 
   public void attachLabel(JLabel label) {
-    label.setLabelFor(myTextField.getTextField());
+    label.setLabelFor(myEditor);
   }
 
   @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    myTextField.setEnabled(enabled);
+    (myTextField != null ? myTextField : myEditor).setEnabled(enabled);
   }
 }
