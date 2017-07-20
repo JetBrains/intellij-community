@@ -59,7 +59,9 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     String leftOperand = javaStyle.suggestUniqueVariableName("a", body, true);
     String rightOperand = javaStyle.suggestUniqueVariableName("b", body, true);
 
-    if(type.equals(PsiType.BOOLEAN)) type = PsiType.BOOLEAN.getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
+    if(type.equals(PsiType.BOOLEAN)) {
+      type = PsiType.BOOLEAN.getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
+    }
 
     PsiExpression initializer = var.getInitializer();
     String identity = initializer != null && myReductionOperation.getInitializerExpressionRestriction().test(initializer)
@@ -138,7 +140,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     ),
     new ReductionOperation(
       JavaTokenType.OREQ,
-      expression -> expression.getText().equals("false"),
+      expression -> Boolean.FALSE.equals(ExpressionUtils.computeConstantExpression(expression)),
       OperationReductionMigration::booleanTypeRestriction,
       "false",
       "||"
