@@ -42,6 +42,28 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     assertModules("project", "m1");
   }
 
+  public void testFolderNameWithXmlExtension() throws Exception {
+    createProjectSubFile("customName.xml/pom.xml", createPomXml(
+                  "<artifactId>m1</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>project</artifactId>" +
+                  "  <version>1</version>" +
+                  "</parent>"));
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>customName.xml</module>" +
+                  "</modules>");
+
+    assertModules("project", "m1");
+  }
+
   public void testModuleCompletion() throws Exception {
     createProjectSubFile("m1/customPom.xml", createPomXml(
                   "<artifactId>m1</artifactId>" +
