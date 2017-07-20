@@ -19,7 +19,7 @@ public class CoverageExecutor extends Executor {
 
   @Override
   public String getStartActionText(String configurationName) {
-    final String name = configurationName != null ? escapeMnemonicsInConfigurationName(getShortenName(configurationName)) : null;
+    final String name = configurationName != null ? escapeMnemonicsInConfigurationName(shortenNameIfNeed(configurationName)) : null;
     return "Run" + (StringUtil.isEmpty(name) ? "" :  " '" + name + "'") + " with Co_verage";
   }
 

@@ -89,13 +89,13 @@ public abstract class Executor {
   public abstract String getHelpId();
 
   public String getStartActionText(String configurationName) {
-    return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + getShortenName(configurationName) + "'");
+    return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'");
   }
 
   /**
    * Too long names don't fit into UI controls and has to be trimmed
    */
-  public static String getShortenName(@NotNull String name) {
+  public static String shortenNameIfNeed(@NotNull String name) {
     return StringUtil.first(name, Registry.intValue("run.configuration.max.name.length", 40), true);
   }
 }
