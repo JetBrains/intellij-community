@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -40,30 +41,33 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
       @Override
       public void visitXmlAttributeValue(XmlAttributeValue value) {
         PsiElement parent = value.getParent();
-        if (parent instanceof XmlAttribute) {
-          XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-          if (descriptor != null) {
-            String defaultValue = descriptor.getDefaultValue();
-            if (defaultValue != null && defaultValue.equals(value.getValue())) {
-              holder.registerProblem(value, "Redundant default attribute value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                     new LocalQuickFix() {
-                                       @Nls
-                                       @NotNull
-                                       @Override
-                                       public String getFamilyName() {
-                                         return XmlErrorMessages.message("remove.attribute.quickfix.family");
-                                       }
+        if (!(parent instanceof XmlAttribute)) {
+          return;
+        }
+        if (parent.getParent() instanceof HtmlTag && "input".equals(((HtmlTag)parent.getParent()).getName())) return;
+        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+        if (descriptor == null) {
+          return;
+        }
+        String defaultValue = descriptor.getDefaultValue();
+        if (defaultValue != null && defaultValue.equals(value.getValue())) {
+          holder.registerProblem(value, "Redundant default attribute value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                 new LocalQuickFix() {
+                                   @Nls
+                                   @NotNull
+                                   @Override
+                                   public String getFamilyName() {
+                                     return XmlErrorMessages.message("remove.attribute.quickfix.family");
+                                   }
 
-                                       @Override
-                                       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                                         XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
-                                         if (attribute != null) {
-                                           attribute.delete();
-                                         }
-                                       }
-                                     });
-            }
-          }
+                                   @Override
+                                   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+                                     XmlAttribute attribute = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlAttribute.class);
+                                     if (attribute != null) {
+                                       attribute.delete();
+                                     }
+                                   }
+                                 });
         }
       }
     };

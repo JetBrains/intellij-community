@@ -66,8 +66,7 @@ class Java9AccessCanBeTightenedTest : LightCodeInsightFixtureTestCase() {
     val sourceFile = FileUtil.findFirstThatExist("$path/module-info.java")
     val text = String(FileUtil.loadFileText(sourceFile!!))
 
-    val moduleInfo = myFixture.configureByText("module-info.java", text)
-    myFixture.allowTreeAccessForFile(moduleInfo.virtualFile)
+    myFixture.configureByText("module-info.java", text)
   }
 
   private fun createGlobalTool() = VisibilityInspection().apply {

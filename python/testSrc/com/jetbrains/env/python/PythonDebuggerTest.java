@@ -94,6 +94,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     unittests("tests_pydevd_python/test_bytecode_modification.py", Sets.newHashSet("python36"));
   }
 
+  @Test
+  @Staging
+  public void testFrameEvalAndTracing() {
+    unittests("tests_pydevd_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python36"));
+  }
+
   private void unittests(final String script, @Nullable Set<String> tags) {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers/pydev", SdkCreationType.SDK_PACKAGES_ONLY) {
 

@@ -606,7 +606,7 @@ public class PyStubsTest extends PyTestCase {
 
     final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
     doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub);
-    //assertNotParsed(file); remove comment after PY-18816 will be fixed
+    assertNotParsed(file);
 
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);

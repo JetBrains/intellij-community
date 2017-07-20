@@ -41,6 +41,8 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
                         "public @interface BeforeEach {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface RepetitionInfo {}");
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public @interface ParameterizedTest {}");
   }
 
   public void testMalformed() { doTest(); }

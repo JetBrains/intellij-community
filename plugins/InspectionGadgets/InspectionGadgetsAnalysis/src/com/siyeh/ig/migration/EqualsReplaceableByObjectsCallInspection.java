@@ -125,7 +125,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
         return;
       }
-      if (isNotNullLiteralOrConstant(qualifierExpression)) {
+      if (isNotNullExpressionOrConstant(qualifierExpression)) {
         return;
       }
       final PsiElement parentExpression =
@@ -276,7 +276,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
   }
 
-  private static boolean isNotNullLiteralOrConstant(PsiExpression expression) {
+  private static boolean isNotNullExpressionOrConstant(PsiExpression expression) {
     int preventEndlessLoop = 5;
     expression = ParenthesesUtils.stripParentheses(expression);
     while (expression instanceof PsiReferenceExpression) {
@@ -288,11 +288,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
         expression instanceof PsiClassObjectAccessExpression) {
       return true;
     }
-    if (expression instanceof PsiLiteralExpression) {
-      final PsiType type = expression.getType();
-      return type != null && !PsiType.NULL.equals(type);
-    }
-    return false;
+    return PsiUtil.isConstantExpression(expression);
   }
 
   @Nullable

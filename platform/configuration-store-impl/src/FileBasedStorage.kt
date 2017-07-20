@@ -192,7 +192,7 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
   if ((LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) && !FileUtilRt.isTooLarge(result.length)) {
     val content = element.toBufferExposingByteArray(lineSeparator.separatorString)
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
-      throw IllegalStateException("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
+      LOG.error("Content equals, but it must be handled not on this level: file ${result.name}, content\n${content.toByteArray().toString(StandardCharsets.UTF_8)}")
     }
     else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
       DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"

@@ -36,6 +36,11 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <action id="CollapseExpandableComponent" text="Collapse Component" icon="AllIcons.General.CollapseComponentHover"
+            class="com.intellij.ui.ExpandableActions$Collapse"/>
+    <action id="ExpandExpandableComponent" text="Expand Component" icon="AllIcons.General.ExpandComponentHover"
+            class="com.intellij.ui.ExpandableActions$Expand"/>
+
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>

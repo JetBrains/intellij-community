@@ -83,15 +83,15 @@ class JUnit5EventsTest {
     String lineSeparator = MapSerializerUtil.escapeStr(System.getProperty("line.separator"), MapSerializerUtil.STD_ESCAPER);
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "\n" +
-                            "##teamcity[testStarted id='|[engine:engine|]' name='test1()' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.test1']\n" +
+                            "##teamcity[testStarted id='|[engine:engine|]' name='test1()' nodeId='|[engine:engine|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.test1']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='' message='' expected='expected1' actual='actual1']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' nodeId='|[engine:engine|]' parentNodeId='0' details='' message='' expected='expected1' actual='actual1']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='' message='' expected='expected2' actual='actual2']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' nodeId='|[engine:engine|]' parentNodeId='0' details='' message='' expected='expected2' actual='actual2']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='TRACE' message='2 errors (2 failures)" + lineSeparator + "\tmessage1" + lineSeparator + "\tmessage2']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' nodeId='|[engine:engine|]' parentNodeId='0' details='TRACE' message='2 errors (2 failures)|r|n\tmessage1|r|n\tmessage2']\n" +
                             "\n" +
-                            "##teamcity[testFinished id='|[engine:engine|]' name='test1()']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+                            "##teamcity[testFinished id='|[engine:engine|]' name='test1()' nodeId='|[engine:engine|]' parentNodeId='0']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
   @Test
@@ -107,14 +107,14 @@ class JUnit5EventsTest {
 
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "##teamcity[treeEnded]\n" +
-                            "##teamcity[testSuiteStarted id='|[engine:engine1|]' name='brokenStream()']\n" +
+                            "##teamcity[testSuiteStarted id='|[engine:engine1|]' name='brokenStream()' nodeId='|[engine:engine1|]' parentNodeId='0'locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
                             "\n" +
-                            "##teamcity[testStarted name='Class Configuration' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
+                            "##teamcity[testStarted name='Class Configuration' nodeId='Class Configuration' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='Class Configuration' id='Class Configuration' details='TRACE' error='true' message='']\n" +
+                            "##teamcity[testFailed name='Class Configuration' id='Class Configuration' nodeId='Class Configuration' parentNodeId='0' details='TRACE' error='true' message='']\n" +
                             "\n" +
-                            "##teamcity[testFinished name='Class Configuration']\n" +
-                            "##teamcity[testSuiteFinished  id='|[engine:engine1|]' name='brokenStream()']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+                            "##teamcity[testFinished name='Class Configuration' nodeId='Class Configuration' parentNodeId='0' ]\n" +
+                            "##teamcity[testSuiteFinished  id='|[engine:engine1|]' name='brokenStream()' nodeId='|[engine:engine1|]' parentNodeId='0']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
   private static class TestClass {

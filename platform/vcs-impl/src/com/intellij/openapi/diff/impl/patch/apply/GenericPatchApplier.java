@@ -901,6 +901,7 @@ public class GenericPatchApplier {
       final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().length() == 0;
       if (emptyFile) {
         myNotBound.add(splitHunk);
+        processAppliedInfoForUnApplied(splitHunk);
       }
       return emptyFile;
     }

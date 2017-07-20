@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -285,7 +286,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyType> members = new ArrayList<>();
 
-    if (context.maySwitchToAST(this)) {
+    final PsiFile realFile = FileContextUtil.getContextFile(this);
+    if (!(getContainingFile() instanceof PyExpressionCodeFragment) || (realFile != null && context.maySwitchToAST(realFile))) {
       for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
         if (target == this || target == null) {
           continue;

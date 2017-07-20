@@ -30,3 +30,8 @@ class WithRepeatedAndTests {
   @RepeatedTest(1)
   void repeatedTestAndTest() { }
 }
+
+class WithParameterized {
+  @ParameterizedTest
+  void testaccidentalRepetitionInfo(Object s, RepetitionInfo repetitionInfo) { }
+}

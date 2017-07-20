@@ -260,7 +260,7 @@ public class SubstitutorComputer {
     if (closureParameters.length != 1) return null;
 
     PsiSubstitutor substitutor = myHelper.inferTypeArguments(
-      samClassTypeParameters, new PsiType[]{samReturnType}, closureParameters, LanguageLevel.JDK_1_7
+      samClassTypeParameters, new PsiType[]{samReturnType}, closureParameters, LanguageLevel.JDK_1_8
     );
     if (substitutor.getSubstitutionMap().isEmpty()) return null;
 

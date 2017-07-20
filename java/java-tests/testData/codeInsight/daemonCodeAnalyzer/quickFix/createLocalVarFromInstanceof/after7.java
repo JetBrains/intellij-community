@@ -5,7 +5,6 @@ class C {
         if (s instanceof String) {
             String s1 = (String) s;
             <caret>
-
         }
     }
 }

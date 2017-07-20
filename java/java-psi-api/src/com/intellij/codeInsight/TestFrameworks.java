@@ -26,6 +26,9 @@ import com.intellij.testIntegration.TestFramework;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * @author yole
  */
@@ -58,6 +61,29 @@ public abstract class TestFrameworks {
   public static TestFramework detectFramework(@NotNull final PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
       .create(computeFramework(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  @NotNull
+  public static Set<TestFramework> detectApplicableFrameworks(@NotNull final PsiClass psiClass) {
+    return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result
+      .create(computeFrameworks(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  private static Set<TestFramework> computeFrameworks(PsiClass psiClass) {
+    Set<TestFramework> frameworks = new LinkedHashSet<>();
+    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+      if (framework.isTestClass(psiClass)) {
+        frameworks.add(framework);
+      }
+    }
+
+    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+      if (frameworks.contains(framework)) continue;;
+      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
+        frameworks.add(framework);
+      }
+    }
+    return frameworks;
   }
 
   @Nullable

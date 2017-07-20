@@ -38,7 +38,8 @@ import static java.awt.Adjustable.VERTICAL;
  * @author Sergey.Malenkov
  */
 class DefaultScrollBarUI extends ScrollBarUI {
-  static final Key<RegionPainter<Object>> LEADING_AREA = Key.create("PLAIN_SCROLL_BAR_UI_LEADING_AREA");//TODO:support
+  static final Key<Component> LEADING = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT");
+  static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");
 
   private final Listener myListener = new Listener();
   private final Timer myScrollTimer = UIUtil.createNamedTimer("ScrollBarThumbScrollTimer", 60, myListener);
@@ -58,7 +59,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();
-  private final Rectangle myLeadingBounds = new Rectangle();
   private final int myThickness;
   private final int myThicknessMax;
   private final int myThicknessMin;
@@ -230,9 +230,34 @@ class DefaultScrollBarUI extends ScrollBarUI {
   public Dimension getPreferredSize(JComponent c) {
     int thickness = getThickness();
     Alignment alignment = Alignment.get(c);
-    return alignment == Alignment.LEFT || alignment == Alignment.RIGHT
-           ? new Dimension(thickness, thickness * 2)
-           : new Dimension(thickness * 2, thickness);
+    Dimension preferred = new Dimension(thickness, thickness);
+    if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+      preferred.height += preferred.height;
+      addPreferredHeight(preferred, UIUtil.getClientProperty(myScrollBar, LEADING));
+      addPreferredHeight(preferred, UIUtil.getClientProperty(myScrollBar, TRAILING));
+    }
+    else {
+      preferred.width += preferred.width;
+      addPreferredWidth(preferred, UIUtil.getClientProperty(myScrollBar, LEADING));
+      addPreferredWidth(preferred, UIUtil.getClientProperty(myScrollBar, TRAILING));
+    }
+    return preferred;
+  }
+
+  private static void addPreferredWidth(Dimension preferred, Component component) {
+    if (component != null) {
+      Dimension size = component.getPreferredSize();
+      preferred.width += size.width;
+      if (preferred.height < size.height) preferred.height = size.height;
+    }
+  }
+
+  private static void addPreferredHeight(Dimension preferred, Component component) {
+    if (component != null) {
+      Dimension size = component.getPreferredSize();
+      preferred.height += size.height;
+      if (preferred.width < size.width) preferred.width = size.width;
+    }
   }
 
   @Override
@@ -276,25 +301,37 @@ class DefaultScrollBarUI extends ScrollBarUI {
       if (!isOpaque(c) && myTrackAnimator.myValue > 0) {
         paintTrack((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, c);
       }
-      // process a square area before the track
-      RegionPainter<Object> leading = UIUtil.getClientProperty(c, LEADING_AREA);
-      if (leading == null) {
-        myLeadingBounds.setSize(0, 0);
+      // process an area before the track
+      Component leading = UIUtil.getClientProperty(c, LEADING);
+      if (leading != null) {
+        if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+          int size = leading.getPreferredSize().height;
+          leading.setBounds(bounds.x, bounds.y, bounds.width, size);
+          bounds.height -= size;
+          bounds.y += size;
+        }
+        else {
+          int size = leading.getPreferredSize().width;
+          leading.setBounds(bounds.x, bounds.y, size, bounds.height);
+          bounds.width -= size;
+          bounds.x += size;
+        }
       }
-      else if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int size = bounds.width;
-        myLeadingBounds.setBounds(bounds.x, bounds.y, size, size);
-        leading.paint((Graphics2D)g, bounds.x, bounds.y, size, size, null);
-        bounds.height -= size;
-        bounds.y += size;
+      // process an area after the track
+      Component trailing = UIUtil.getClientProperty(c, TRAILING);
+      if (trailing != null) {
+        if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+          int size = trailing.getPreferredSize().height;
+          bounds.height -= size;
+          trailing.setBounds(bounds.x, bounds.y + bounds.height, bounds.width, size);
+        }
+        else {
+          int size = trailing.getPreferredSize().width;
+          bounds.width -= size;
+          trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
+        }
       }
-      else {
-        int size = bounds.height;
-        myLeadingBounds.setBounds(bounds.x, bounds.y, size, size);
-        leading.paint((Graphics2D)g, bounds.x, bounds.y, size, size, null);
-        bounds.width -= size;
-        bounds.x += size;
-      }
+
       myTrackBounds.setBounds(bounds);
       updateThumbBounds();
       // process additional drawing on the track
