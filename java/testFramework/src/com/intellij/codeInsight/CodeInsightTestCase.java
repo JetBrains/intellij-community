@@ -536,7 +536,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   @NotNull
-  private VirtualFile findVirtualFile(@NotNull String filePath) {
+  protected VirtualFile findVirtualFile(@NotNull String filePath) {
     String absolutePath = getTestDataPath() + filePath;
     allowRootAccess(absolutePath);
     return VfsTestUtil.findFileByCaseSensitivePath(absolutePath);
