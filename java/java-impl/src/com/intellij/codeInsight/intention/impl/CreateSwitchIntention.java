@@ -50,6 +50,7 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
     PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
     return expressionStatement != null &&
            expressionStatement.getParent() instanceof PsiCodeBlock &&
+           PsiTreeUtil.findChildOfType(expressionStatement.getExpression(), PsiErrorElement.class) == null &&
            isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
 
