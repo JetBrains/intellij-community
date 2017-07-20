@@ -3,15 +3,12 @@ package ru.adelf.idea.dotenv;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import javafx.util.Pair;
-import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     private final Collection<KeyValuePsiElement> collectedItems = new HashSet<>();

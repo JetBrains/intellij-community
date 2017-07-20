@@ -6,9 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.plugins.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLScalar;
-import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 

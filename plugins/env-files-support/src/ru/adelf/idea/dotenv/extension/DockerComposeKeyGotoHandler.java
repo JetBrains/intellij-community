@@ -10,7 +10,6 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLScalar;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
-import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
