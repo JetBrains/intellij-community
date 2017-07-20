@@ -30,7 +30,7 @@
       </ul>
   ]]></change-notes>
 
-  <idea-version since-build="145.0"/>
+  <idea-version since-build="172.0"/>
 
   <extensionPoints>
     <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
