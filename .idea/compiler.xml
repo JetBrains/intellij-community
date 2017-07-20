@@ -4,7 +4,6 @@
     <option name="BUILD_JARS_ON_MAKE" value="false" />
   </component>
   <component name="CompilerConfiguration">
-    <option name="DEFAULT_COMPILER" value="Javac" />
     <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
     <excludeFromCompile>
       <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager.java" />
@@ -27,14 +26,10 @@
       <entry name="!BUILD.bazel" />
     </wildcardResourcePatterns>
     <annotationProcessing>
-      <profile default="true" name="Default" enabled="false">
-        <processorPath useClasspath="true" />
-      </profile>
-      <profile default="false" name="ChunkIO" enabled="true">
+      <profile name="ChunkIO" enabled="true">
         <sourceOutputDir name="src/main/generated" />
         <outputRelativeToContentRoot value="true" />
         <processor name="com.android.tools.chunkio.ChunkProcessor" />
-        <processorPath useClasspath="true" />
         <module name="pixelprobe" />
       </profile>
       <profile name="blaze" enabled="true">
@@ -42,6 +37,12 @@
           <entry name="$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/bazel/plugin/third_party/auto_value/auto-value-1.3.jar" />
         </processorPath>
         <module name="blaze-base" />
+      </profile>
+      <profile name="sdk-common" enabled="true">
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1/auto-value-1.4.1.jar" />
+        </processorPath>
+        <module name="sdk-common" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -58,8 +59,8 @@
     <option name="DEPRECATION" value="false" />
   </component>
   <component name="JavacSettings">
+    <option name="PREFER_TARGET_JDK_COMPILER" value="false" />
     <option name="DEPRECATION" value="false" />
-    <option name="PREFER_TARGET_JDK_COMPILER" value="false"/>
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
 </project>

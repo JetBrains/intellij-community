@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="auto-value-1.4.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1/auto-value-1.4.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1/auto-value-1.4.1.jar!/" />
+    </SOURCES>
+  </library>
+</component>

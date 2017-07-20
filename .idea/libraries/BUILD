@@ -1135,3 +1135,11 @@ java_library(
     exports = ["//tools/external/gradle:gradle-api-3.4.1"],
     runtime_deps = ["//tools/external/gradle:gradle-api-3.4.1"],
 )
+
+java_library(
+    name = "auto-value-1.4.1",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
+)
