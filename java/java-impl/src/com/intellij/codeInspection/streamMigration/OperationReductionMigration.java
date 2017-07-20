@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  * Created by Roman Ivanov.
  */
 public class OperationReductionMigration extends BaseStreamApiMigration {
-  private ReductionOperation myReductionOperation;
+  private final ReductionOperation myReductionOperation;
 
   protected OperationReductionMigration(boolean shouldWarn,
                                         ReductionOperation context) {
@@ -59,19 +59,25 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     String leftOperand = javaStyle.suggestUniqueVariableName("a", body, true);
     String rightOperand = javaStyle.suggestUniqueVariableName("b", body, true);
 
+    if(type.equals(PsiType.BOOLEAN)) type = PsiType.BOOLEAN.getBoxedType(body); // hack to avoid .map(b -> b) when boxing needed
+
+    PsiExpression initializer = var.getInitializer();
+    String identity = initializer != null && myReductionOperation.getInitializerExpressionRestriction().test(initializer)
+               ? initializer.getText()
+               : myReductionOperation.myIdentity;
     String stream = tb.add(new StreamApiMigrationInspection.MapOp(operand, tb.getVariable(), type)).generate()
                     + String.format(Locale.ENGLISH, ".reduce(%s, (%s, %s) -> %s %s %s)",
-                                    myReductionOperation.getIdentity(), leftOperand, rightOperand, leftOperand,
+                                    identity, leftOperand, rightOperand, leftOperand,
                                     myReductionOperation.getOperation(), rightOperand);
     return replaceWithOperation(tb.getMainLoop(), var, stream, type, myReductionOperation);
   }
 
   static class ReductionOperation {
-    private IElementType myCompoundAssignmentOp;
-    private Predicate<PsiExpression> myInitializerReplaceCondition;
-    private Predicate<PsiVariable> myAccumulatorRestriction;
-    private String myIdentity;
-    private String myOperation;
+    private final IElementType myCompoundAssignmentOp;
+    private final Predicate<PsiExpression> myInitializerReplaceCondition;
+    private final Predicate<PsiVariable> myAccumulatorRestriction;
+    private final String myIdentity;
+    private final String myOperation;
 
 
     public ReductionOperation(IElementType compoundAssignmentOp,
@@ -82,8 +88,8 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
       myCompoundAssignmentOp = compoundAssignmentOp;
       myInitializerReplaceCondition = initializerReplaceCondition;
       myAccumulatorRestriction = accumulatorRestriction;
-      this.myIdentity = identity;
-      this.myOperation = operation;
+      myIdentity = identity;
+      myOperation = operation;
     }
 
     public IElementType getCompoundAssignmentOp() {
@@ -165,17 +171,16 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     if(constant == null) {
       return false;
     }
-    return (constant instanceof Integer || constant instanceof Long) && constant.equals(-1);
+    return (constant instanceof Integer || constant instanceof Long) && ((Number)constant).longValue() == -1;
   }
 
   static boolean bitwiseTypeRestriction(@NotNull PsiVariable variable) {
     return variable.getType() instanceof PsiPrimitiveType
-           && (variable.getType().equalsToText("int")
-           || variable.getType().equalsToText("long"));
+           && (variable.getType().equals(PsiType.INT) || variable.getType().equals(PsiType.LONG));
   }
 
   static boolean arithmeticTypeRestriction(@NotNull PsiVariable variable) {
-    return variable.getType() instanceof PsiPrimitiveType && !variable.getType().equalsToText("float");
+    return variable.getType() instanceof PsiPrimitiveType && !variable.getType().equals(PsiType.FLOAT);
   }
 
   private static boolean booleanTypeRestriction(@NotNull PsiVariable variable) {

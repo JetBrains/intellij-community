@@ -57,7 +57,7 @@ abstract class BaseStreamApiMigration {
       PsiExpression initializer = var.getInitializer();
       if (initializer != null && reductionOperation.getInitializerExpressionRestriction().test(initializer)) {
         PsiType type = var.getType();
-        String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
+        String replacement = (type.isAssignableFrom(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
         return replaceInitializer(loopStatement, var, initializer, replacement, status);
       }
     }
