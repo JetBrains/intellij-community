@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
@@ -56,15 +57,9 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
           PsiElement e = element.getParent();
           while ((e = e.getNextSibling()) != null) {
-            String text = e.getText();
-            if (text == null || !containsOnlyChars(text, " \t\n(),")) return false;
+            if (e instanceof PsiExpression && !(e instanceof PsiEmptyExpressionImpl)) return false;
           }
           return true;
-        }
-
-        @SuppressWarnings("SameParameterValue")
-        private boolean containsOnlyChars(@NotNull CharSequence text, @NotNull String chars) {
-          return StringUtil.findFirst(text, ch -> chars.indexOf(ch) == -1) == -1;
         }
       });
 
