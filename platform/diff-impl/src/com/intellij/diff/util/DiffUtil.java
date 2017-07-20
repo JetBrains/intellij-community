@@ -609,7 +609,13 @@ public class DiffUtil {
 
   public static boolean isFocusedComponent(@Nullable Project project, @Nullable Component component) {
     if (component == null) return false;
-    return IdeFocusManager.getInstance(project).getFocusedDescendantFor(component) != null;
+    Component ideFocusOwner = IdeFocusManager.getInstance(project).getFocusOwner();
+    if (ideFocusOwner != null && SwingUtilities.isDescendingFrom(ideFocusOwner, component)) return true;
+
+    Component jdkFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (jdkFocusOwner != null && SwingUtilities.isDescendingFrom(jdkFocusOwner, component)) return true;
+
+    return false;
   }
 
   public static void requestFocus(@Nullable Project project, @Nullable Component component) {
