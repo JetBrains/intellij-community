@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -30,6 +31,78 @@ import java.util.HashMap;
 public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
 
   private static final Map<String, PersistentMap<byte[], byte[]>> maps = new HashMap<String, PersistentMap<byte[], byte[]>>();
+  //
+  //private static class ByteArrayKeyDescriptor implements KeyDescriptor<byte[]> {
+  //  private final KeyDescriptor<?> delegate;
+  //
+  //  public ByteArrayKeyDescriptor(KeyDescriptor<?> delegate){
+  //    this.delegate = delegate;
+  //  }
+  //
+  //  @Override
+  //  public int getHashCode(byte[] value) {
+  //    return Arrays.hashCode(value);
+  //  }
+  //
+  //  @Override
+  //  public boolean isEqual(byte[] val1, byte[] val2) {
+  //    return Arrays.equals(val1, val2);
+  //  }
+  //
+  //  @Override
+  //  public void save(@NotNull DataOutput out, byte[] value) throws IOException {
+  //    out.write(value);
+  //  }
+  //
+  //  @Override
+  //  public byte[] read(@NotNull DataInput in) throws IOException {
+  //    Object key = delegate.read(in);
+  //    return new byte[0];
+  //  }
+  //}
+  //
+  //private static class ByteArrayDataExternalizer implements DataExternalizer<byte[]> {
+  //
+  //  @Override
+  //  public void save(@NotNull DataOutput out, byte[] value) throws IOException {
+  //    out.write(value);
+  //  }
+  //
+  //  @Override
+  //  public byte[] read(@NotNull DataInput in) throws IOException {
+  //
+  //    return ;
+  //  }
+  //}
+  //
+  //static void registerIndex(String file, String keyDescriptorName) {
+  //  try {
+  //    KeyDescriptor<?> keyDescriptor = (KeyDescriptor<?>)Class.forName(keyDescriptorName).newInstance();
+  //    PersistentMap<?, byte[]> map =
+  //      new PersistentHashMap<?, byte[]>(new File(file), keyDescriptor, new DataExternalizer<byte[]>() {
+  //        @Override
+  //        public void save(@NotNull DataOutput out, byte[] value) throws IOException {
+  //
+  //        }
+  //
+  //        @Override
+  //        public byte[] read(@NotNull DataInput in) throws IOException {
+  //          return new byte[0];
+  //        }
+  //      });
+  //    maps.put(file, map);
+  //  }
+  //  catch (Exception cause) {
+  //    throw new RuntimeException(cause);
+  //  }
+  //}
+  //
+  //static PersistentMap<byte[], byte[]> getMap(String file){
+  //  PersistentMap<byte[], byte[]> result = maps.get(file);
+  //  if (result == null)
+  //    throw new RuntimeException("there is no registered index for file" + file);
+  //  return result;
+  //}
 
   static PersistentMap<byte[], byte[]> getOrCreateMap(String file) {
     synchronized (maps) {
@@ -37,12 +110,16 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
       if (pm != null) {
         return pm;
       } else {
-        PersistentMap<byte[], byte[]> pm1 = null;
+        PersistentMap<byte[], byte[]> pm1;
         try {
           pm1 = new PersistentHashMap<byte[], byte[]>(new File(file), new KeyDescriptor<byte[]>() {
             @Override
             public int getHashCode(byte[] value) {
-              return Arrays.hashCode(value);
+              try{
+                return new DataInputStream(new ByteArrayInputStream(value)).readInt();
+              } catch (IOException cause){
+                throw new RuntimeException(cause);
+              }
             }
 
             @Override
@@ -52,22 +129,30 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
 
             @Override
             public void save(@NotNull DataOutput out, byte[] value) throws IOException {
-              out.write(value);
+              throw new UnsupportedOperationException();
             }
 
             @Override
             public byte[] read(@NotNull DataInput in) throws IOException {
-
+              in.readInt(); //skip hash code
+              int len = in.readInt();
+              byte[] buffer = new byte[len];
+              in.readFully(buffer);
+              return buffer;
             }
+
           }, new DataExternalizer<byte[]>() {
             @Override
             public void save(@NotNull DataOutput out, byte[] value) throws IOException {
-
+              throw new UnsupportedOperationException();
             }
 
             @Override
             public byte[] read(@NotNull DataInput in) throws IOException {
-              return new byte[0];
+              int len = in.readInt();
+              byte[] buffer = new byte[len];
+              in.readFully(buffer);
+              return buffer;
             }
           });
         }
@@ -91,8 +176,9 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
       while (true) {
         final int id = in.readInt();
         String file = in.readUTF();
-        PersistentMap<byte[], byte[]> pm = getOrCreateMap(file);
+
         byte op = in.readByte();
+        PersistentMap<byte[], byte[]> pm = getOrCreateMap(file);
         switch(op) {
           case GET_KEY:
             int keyLen = in.readInt();

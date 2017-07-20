@@ -496,12 +496,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         System.out.println("file: " + myStorageFile.getPath() + " key: " + key + " elapsed:" + elapsed);
         num.incrementAndGet();
         sumTime.addAndGet(elapsed);
-        try {
-          Thread.sleep(1);
-        }
-        catch (InterruptedException e) {
-
-        }
         myBusyReading = false;
       }
     }
