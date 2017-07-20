@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
-  <version>0.3</version>
+  <version>0.4</version>
   <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
 
   <description><![CDATA[
@@ -11,13 +11,20 @@
       <br/>
       <h4>Features</h4>
       <ul>
-        <li>getenv() and env() parameters completion, based on .env file keys(with values hinting)</li>
+        <li>PHP: getenv() and env() parameters completion, based on .env file keys</li>
+        <li>Ruby: ENV[] parameters completion, based on .env file keys</li>
         <li>Dockerfile and docker-compose.yml files support. Requires Docker integration and YAML support plugins</li>
-        <li>Go to declaration(in .env file) and usages(in php files), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
+        <li>Go to declaration(in .env file) and usages(in code), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
       </ul>
     ]]></description>
 
   <change-notes><![CDATA[
+      <h4>0.4</h4>
+      <ul>
+        <li>RubyMine support</li>
+        <li>Fixed bug with new Docker API in IDEA 2017.2</li>
+      </ul>
+
       <h4>0.3</h4>
       <ul>
         <li>Dockerfile and docker-compose.yml files support. Requires Docker integration and YAML support plugins</li>
