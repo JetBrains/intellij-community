@@ -1,0 +1,103 @@
+package ru.adelf.idea.dotenv.ruby;
+
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.ProcessingContext;
+import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.basicTypes.stringLiterals.RStringLiteral;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RArrayIndexing;
+import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RConstant;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
+
+import java.util.Map;
+import java.util.Objects;
+
+public class RubyEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
+    public RubyEnvCompletionProvider() {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
+            @Override
+            protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+
+                PsiElement psiElement = completionParameters.getOriginalPosition();
+                if(psiElement == null || getStringLiteral(psiElement) == null) {
+                    return;
+                }
+
+                for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
+                    LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
+
+                    if(StringUtils.isNotEmpty(entry.getValue())) {
+                        completionResultSet.addElement(lockup.withTailText(" = " + entry.getValue(), true));
+                    } else {
+                        completionResultSet.addElement(lockup);
+                    }
+                }
+            }
+        });
+    }
+
+    @Nullable
+    @Override
+    public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
+
+        if(psiElement == null) {
+            return new PsiElement[0];
+        }
+
+        RStringLiteral stringLiteral = getStringLiteral(psiElement);
+
+        if(stringLiteral == null) {
+            return new PsiElement[0];
+        }
+
+        return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getContent());
+    }
+
+    @Nullable
+    private RStringLiteral getStringLiteral(@NotNull PsiElement psiElement) {
+        PsiElement parent = psiElement.getParent();
+
+        if(!(parent instanceof RStringLiteral)) {
+            return null;
+        }
+
+        if(parent.getParent() == null) {
+            return null;
+        }
+
+        PsiElement array = parent.getParent().getParent();
+
+        if(!(array instanceof RArrayIndexing)) {
+            return null;
+        }
+
+        PsiElement receiver = ((RArrayIndexing) array).getReceiver();
+
+        if(!(receiver instanceof RConstant)) {
+            return null;
+        }
+
+        if(receiver.getFirstChild() == null) {
+            return null;
+        }
+
+        if(!Objects.equals(receiver.getFirstChild().getText(), "ENV")) {
+            return null;
+        }
+
+        return (RStringLiteral) parent;
+    }
+
+    @Nullable
+    @Override
+    public String getActionText(DataContext dataContext) {
+        return null;
+    }
+}

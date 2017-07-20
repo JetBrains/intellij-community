@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="ruby" implementationClass="ru.adelf.idea.dotenv.ruby.RubyEnvCompletionProvider"/>
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.ruby.RubyEnvCompletionProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.ruby.RubyEnvironmentVariablesUsagesProvider"/>
+  </extensions>
+</idea-plugin>

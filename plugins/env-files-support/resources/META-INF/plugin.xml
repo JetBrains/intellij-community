@@ -37,14 +37,15 @@
     <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesUsagesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"/>
   </extensionPoints>
 
-  <depends>com.jetbrains.php</depends>
   <depends>com.intellij.modules.platform</depends>
+
+  <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
+  <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
+
   <depends optional="true" config-file="docker.xml">Docker</depends>
   <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
@@ -57,7 +58,6 @@
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
     <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
-    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.php.PhpEnvironmentVariablesUsagesProvider"/>
   </extensions>
 
   <actions>
