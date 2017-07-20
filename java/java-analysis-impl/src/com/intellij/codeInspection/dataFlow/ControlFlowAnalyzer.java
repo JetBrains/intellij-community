@@ -1865,6 +1865,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiLambdaExpression oldLambda = myAnalyzer.myLambdaExpression;
       myAnalyzer.myLambdaExpression = lambda;
       myAnalyzer.startElement(lambda);
+      // Transfer value is pushed to avoid emptying stack beyond this point
+      push(getFactory().controlTransfer(ReturnTransfer.INSTANCE, myAnalyzer.myTrapStack));
       try {
         PsiElement body = lambda.getBody();
         Objects.requireNonNull(body).accept(myAnalyzer);
@@ -1876,6 +1878,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       finally {
+        // Pop transfer value (which is second value in stack now)
+        splice(2, 0);
         myAnalyzer.finishElement(lambda);
         myAnalyzer.myLambdaExpression = oldLambda;
       }

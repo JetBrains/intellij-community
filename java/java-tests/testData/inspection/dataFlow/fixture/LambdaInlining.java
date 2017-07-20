@@ -12,4 +12,19 @@ public class LambdaInlining {
       System.out.println("oops");
     }
   }
+
+  void testLambdaTryCatch() {
+    int x = ((IntSupplier)(() -> {
+      try {
+        return Math.random() > 0.5 ? 2 : 3;
+      }
+      catch (Exception ex) {
+
+      }
+      return 1;
+    })).getAsInt();
+    if(<warning descr="Condition 'x == 0' is always 'false'">x == 0</warning>) {
+      System.out.println("oops");
+    }
+  }
 }
