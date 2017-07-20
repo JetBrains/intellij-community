@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
@@ -85,6 +86,20 @@ abstract class BaseStreamApiMigration {
       return
         loopStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", loopStatement));
     }
+  }
+
+
+  @Nullable
+  static PsiElement replaceWithFindExtremum(@NotNull PsiLoopStatement loopStatement,
+                                            @NotNull PsiVariable extremumHolder,
+                                            @NotNull String streamText,
+                                            @Nullable PsiVariable keyExtremum) {
+    restoreComments(loopStatement, loopStatement.getBody());
+    if(keyExtremum != null) {
+      keyExtremum.delete();
+    }
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(extremumHolder, loopStatement);
+    return replaceInitializer(loopStatement, extremumHolder, extremumHolder.getInitializer(), streamText, status);
   }
 
   static void restoreComments(PsiLoopStatement loopStatement, PsiStatement body) {

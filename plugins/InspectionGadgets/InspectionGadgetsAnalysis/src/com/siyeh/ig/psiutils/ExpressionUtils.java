@@ -762,6 +762,7 @@ public class ExpressionUtils {
    * @return extracted assignment or null if assignment is not found or assignment is compound
    */
   @Contract("null -> null")
+  @Nullable
   public static PsiAssignmentExpression getAssignment(PsiElement element) {
     if(element instanceof PsiExpressionStatement) {
       element = ((PsiExpressionStatement)element).getExpression();
