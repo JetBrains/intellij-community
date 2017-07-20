@@ -108,12 +108,9 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     }
 
     if (uniqueNameBuilderForShortName != null && uniqueNameBuilderForShortName.contains(file)) {
-      if (file instanceof VirtualFilePathWrapper) {
-        return ((VirtualFilePathWrapper)file).getPresentablePath();
-      }
       return uniqueNameBuilderForShortName.getShortPath(file);
     }
-    return file.getName();
+    return file.getPresentableName();
   }
 
   @Nullable
@@ -145,7 +142,9 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       path = path == null ? "" : FileUtil.toSystemIndependentName(path);
       UniqueNameBuilder<VirtualFile> builder = new UniqueNameBuilder<>(path, File.separator, 25);
       for (VirtualFile virtualFile: filesWithSameName) {
-        builder.addPath(virtualFile, virtualFile.getPath());
+        String presentablePath = virtualFile instanceof VirtualFilePathWrapper ?
+                                 ((VirtualFilePathWrapper)virtualFile).getPresentablePath() : virtualFile.getPath();
+        builder.addPath(virtualFile, presentablePath);
       }
       return builder;
     }
