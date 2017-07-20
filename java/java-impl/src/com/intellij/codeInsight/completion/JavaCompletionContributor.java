@@ -789,6 +789,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       if (context.getCompletionType() == CompletionType.BASIC) {
+        if (PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset() - 1, PsiReferenceParameterList.class, false) != null) {
+          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
+          return;
+        }
+
         if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
           context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
           return;
@@ -818,7 +823,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  public static boolean semicolonNeeded(final Editor editor, PsiFile file,  final int startOffset) {
+  public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {
