@@ -60,6 +60,26 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
     );
   }
 
+  public void testTypeParameters() {
+    doTest(
+      "import java.util.*;" +
+      "class X {" +
+      "  private List<Object[]> rows;" +
+      "    List<Object[]> getRows() {" +
+      "    return rows == null ? /*_Replace with 'java.util.Arrays.asList()'*/Collections.<Object[]>emptyList() : rows;" +
+      "  }" +
+      "}",
+
+      "import java.util.*;" +
+      "class X {" +
+      "  private List<Object[]> rows;" +
+      "    List<Object[]> getRows() {" +
+      "    return rows == null ? Arrays.<Object[]>asList() : rows;" +
+      "  }" +
+      "}"
+    );
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
