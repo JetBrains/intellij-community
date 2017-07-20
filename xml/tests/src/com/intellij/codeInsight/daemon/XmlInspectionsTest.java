@@ -57,4 +57,10 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
                                                      "</html>\n");
     myFixture.checkHighlighting();
   }
+
+  public void testDefaultAttributeInHtml() {
+    myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
+    myFixture.configureByText(HtmlFileType.INSTANCE, "<input type=\"text\"/>");
+    myFixture.checkHighlighting();
+  }
 }
