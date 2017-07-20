@@ -21,9 +21,12 @@ import com.intellij.codeInspection.dataFlow.value.DfaOptionalValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+
+import java.util.function.BiConsumer;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
@@ -45,34 +48,39 @@ public class OptionalChainInliner implements CallInliner {
   static final CallMatcher OPTIONAL_OF = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);
   static final CallMatcher OPTIONAL_EMPTY = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "empty").parameterCount(0);
 
+  static final CallMapper<BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression>> TERMINAL_MAPPER =
+    new CallMapper<BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression>>()
+    .register(OPTIONAL_OR_ELSE, (builder, call) -> {
+      PsiExpression argument = call.getArgumentList().getExpressions()[0];
+      builder.pushExpression(argument) // stack: .. optValue, elseValue
+        .boxUnbox(argument, call.getType())
+        .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue
+        .ifNotNull()
+        .swap() // stack: .. optValue, elseValue
+        .endIf()
+        .pop();
+    })
+    .register(OPTIONAL_OR_ELSE_GET, (builder, call) -> builder.dup()
+      .ifNull()
+      .pop()
+      .invokeFunction(0, call.getArgumentList().getExpressions()[0])
+      .endIf())
+    .register(OPTIONAL_IF_PRESENT, (builder, call) -> builder.dup()
+      .ifNotNull()
+      .invokeFunction(0, call.getArgumentList().getExpressions()[0])
+      .elseBranch()
+      .pop()
+      .pushUnknown()
+      .endIf());
+
   @Override
   public boolean tryInlineCall(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call) {
-    if (OPTIONAL_OR_ELSE.test(call)) {
+    BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression> terminalInliner = TERMINAL_MAPPER.mapFirst(call);
+    if (terminalInliner != null) {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression))) return false;
-      inlineOrElse(builder, call);
+      terminalInliner.accept(builder, call);
       return true;
-    }
-    if (OPTIONAL_OR_ELSE_GET.test(call)) {
-      PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression))) return false;
-      builder.dup()
-        .ifNull()
-        .pop()
-        .invokeFunction(0, call.getArgumentList().getExpressions()[0])
-        .endIf();
-      return true;
-    }
-    if (OPTIONAL_IF_PRESENT.test(call)) {
-      PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression))) return false;
-      builder.dup()
-        .ifNotNull()
-        .invokeFunction(0, call.getArgumentList().getExpressions()[0])
-        .elseBranch()
-        .pop()
-        .pushUnknown()
-        .endIf();
     }
     if (pushIntermediateOperationValue(builder, call)) {
       builder.ifNotNull()
@@ -222,15 +230,5 @@ public class OptionalChainInliner implements CallInliner {
         .pushUnknown()
         .endIf();
     }
-  }
-  private static void inlineOrElse(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call) {
-    PsiExpression argument = call.getArgumentList().getExpressions()[0];
-    builder.pushExpression(argument) // stack: .. optValue, elseValue
-      .boxUnbox(argument, call.getType())
-      .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue
-      .ifNotNull()
-      .swap() // stack: .. optValue, elseValue
-      .endIf()
-      .pop();
   }
 }
