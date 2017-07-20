@@ -50,11 +50,15 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.List;
+
 
 public class SystemHealthMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
@@ -73,11 +77,27 @@ public class SystemHealthMonitor implements ApplicationComponent {
   @Override
   public void initComponent() {
     checkRuntime();
+    checkVMoptions();
     checkIBus();
     checkSignalBlocking();
     checkLauncherScript();
     startDiskSpaceMonitoring();
   }
+
+  private void checkVMoptions() {
+    RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+    List<String> jvmArgs = runtimeMXBean.getInputArguments();
+    int minReservedCodeCacheSize = 240;
+    for (String arg : jvmArgs) {
+      if (arg.contains("-XX:ReservedCodeCacheSize=")) {
+        String vmOption = arg.substring(arg.lastIndexOf("=") + 1);
+        if (Integer.parseInt(vmOption.substring(0, vmOption.length() - 1)) < minReservedCodeCacheSize) {
+          showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), vmOption, minReservedCodeCacheSize);
+        }
+      }
+    }
+  }
+
 
   private void checkRuntime() {
     if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
