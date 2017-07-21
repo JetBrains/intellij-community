@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.lib
+package com.intellij.debugger.streams.trace;
 
-import com.intellij.debugger.streams.trace.IntermediateCallHandler
-import com.intellij.debugger.streams.trace.TerminatorCallHandler
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-interface HandlerFactory {
-  fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler
-  fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler
+public interface IntermediateCallHandler extends TraceHandler<IntermediateStreamCall> {
+  @NotNull
+  List<IntermediateStreamCall> additionalCallsBefore();
+
+  @NotNull
+  List<IntermediateStreamCall> additionalCallsAfter();
 }

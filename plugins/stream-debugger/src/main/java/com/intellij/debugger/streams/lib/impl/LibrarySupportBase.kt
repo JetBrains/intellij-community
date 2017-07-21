@@ -19,7 +19,8 @@ import com.intellij.debugger.streams.diagnostic.ex.OperationNotSupportedExceptio
 import com.intellij.debugger.streams.lib.*
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceResolver
-import com.intellij.debugger.streams.trace.TraceHandler
+import com.intellij.debugger.streams.trace.IntermediateCallHandler
+import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
@@ -27,18 +28,22 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
  * @author Vitaliy.Bibaev
  */
 abstract class LibrarySupportBase(override val description: Library,
-                                  private val compatibleLibrary: LibrarySupport = EmptyLibrarySupport()) : LibrarySupport {
+                                  private val compatibleLibrary: LibrarySupport = LibrarySupportBase.EMPTY) : LibrarySupport {
+  companion object {
+    val EMPTY: LibrarySupport = LibrarySupportBase.EmptyLibrarySupport()
+  }
+
   private val mySupportedIntermediateOperations: MutableMap<String, IntermediateOperation> = mutableMapOf()
   private val mySupportedTerminalOperations: MutableMap<String, TerminalOperation> = mutableMapOf()
 
   final override val handlerFactory: HandlerFactory = object : HandlerFactory {
-    override fun getForIntermediate(number: Int, call: IntermediateStreamCall): TraceHandler {
+    override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
       val operation = mySupportedIntermediateOperations[call.name]
       return operation?.getTraceHandler(number, call)
              ?: compatibleLibrary.handlerFactory.getForIntermediate(number, call)
     }
 
-    override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TraceHandler {
+    override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler {
       val terminalOperation = mySupportedTerminalOperations[call.name]
       return terminalOperation?.getTraceHandler(call, resultExpression)
              ?: compatibleLibrary.handlerFactory.getForTermination(call, resultExpression)
@@ -79,11 +84,11 @@ abstract class LibrarySupportBase(override val description: Library,
       }
 
     override val handlerFactory: HandlerFactory = object : HandlerFactory {
-      override fun getForIntermediate(number: Int, call: IntermediateStreamCall): TraceHandler {
+      override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
         throw OperationNotSupportedException("Intermediate operation ${call.name} is not supported")
       }
 
-      override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TraceHandler {
+      override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler {
         throw OperationNotSupportedException("Terminal operation ${call.name} is not supported")
       }
     }
