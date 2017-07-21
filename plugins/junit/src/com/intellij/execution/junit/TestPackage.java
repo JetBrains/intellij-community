@@ -42,6 +42,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -236,7 +237,7 @@ public class TestPackage extends TestObject {
       return aClass -> {
         //junit 3
         if (testCaseClass.isAssignableFrom(aClass)) {
-          return true;
+          return hasSingleConstructor(aClass);
         }
         else {
           //annotation
@@ -248,7 +249,7 @@ public class TestPackage extends TestObject {
             for (Method method : aClass.getMethods()) {
               if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
                   method.isAnnotationPresent(testClass)) {
-                return true;
+                return hasSingleConstructor(aClass);
               }
             }
           }
@@ -260,5 +261,10 @@ public class TestPackage extends TestObject {
       LOG.error(e);
       return aClass -> false;
     }
+  }
+
+  private static boolean hasSingleConstructor(Class<?> aClass) {
+    Constructor<?>[] constructors = aClass.getConstructors();
+    return constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
   }
 }
