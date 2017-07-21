@@ -156,11 +156,12 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
       if (messageName != null) {
         if (status == TestExecutionResult.Status.FAILED) {
-          String nameAndId =
-            JUnit4TestListener.CLASS_CONFIGURATION + "\' nodeId=\'" + escapeName(JUnit4TestListener.CLASS_CONFIGURATION) + "\' parentNodeId=\'0\' ";
-          myPrintStream.println("\n##teamcity[testStarted name=\'" + nameAndId + getLocationHint(testIdentifier) + "]");
-          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, JUnit4TestListener.CLASS_CONFIGURATION, getParentId(testIdentifier), messageName, throwableOptional, 0, reason, true);
-          myPrintStream.println("\n##teamcity[testFinished name=\'" + nameAndId + "]");
+          String parentId = getParentId(testIdentifier);
+          String nameAndId = " name=\'" + JUnit4TestListener.CLASS_CONFIGURATION +
+                             "\' nodeId=\'" + escapeName(testIdentifier.getUniqueId()) +
+                             "\' parentNodeId=\'" + parentId + "\' ";
+          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, testIdentifier.getUniqueId(), parentId, messageName, throwableOptional, 0, reason, true);
+          myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
         }
 
         final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
