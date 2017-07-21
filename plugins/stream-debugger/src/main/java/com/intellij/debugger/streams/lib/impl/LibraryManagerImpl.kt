@@ -23,13 +23,19 @@ import com.intellij.openapi.project.Project
  * @author Vitaliy.Bibaev
  */
 class LibraryManagerImpl(project: Project) : LibraryManager {
+  private val mySupportedPackages: Set<String>
   private val myLibraries: List<LibrarySupport>
 
   init {
     val std = StandardLibrarySupport(project)
     val streamEx = StreamExLibrarySupport(project)
     myLibraries = listOf(std, streamEx)
+    mySupportedPackages = myLibraries.map { it.description.packageName }.toSet()
   }
 
-  override fun getLibraryByPackage(packageName: String): LibrarySupport? = myLibraries.find { packageName == it.description.packageName }
+  override fun isPackageSupported(packageName: String): Boolean = mySupportedPackages.contains(packageName)
+
+  override fun getLibraryByPackage(packageName: String): LibrarySupport {
+    return myLibraries.find { packageName == it.description.packageName }!!
+  }
 }

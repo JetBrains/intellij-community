@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.lib;
 
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,13 @@ public interface LibraryManager extends ProjectComponent {
     return project.getComponent(LibraryManager.class);
   }
 
-  @Nullable
+  boolean isPackageSupported(@NotNull String packageName);
+
+  @NotNull
   LibrarySupport getLibraryByPackage(@NotNull String packageName);
+
+  @NotNull
+  default LibrarySupport getLibrary(@NotNull StreamCall call) {
+    return getLibraryByPackage(call.getPackageName());
+  }
 }
