@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Represents a package access control statement ({@code exports} or {@code opens}) of a Java module declaration.
+ * Represents a package access control directive ({@code exports} or {@code opens}) of a Java module declaration.
  *
  * @since 2017.1
  */
