@@ -331,7 +331,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     setCompletionMode(methodCall, true);
     ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                                 parameterOwner, handler, false, false);
+                                                                     methodCall.getArgumentList(), handler, false, false);
     Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
     if (Disposer.isDisposed(controller)) {
       Disposer.dispose(hintsDisposal);

@@ -488,6 +488,18 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     }
   }
   
+  public void testLargeNumberOfParameters() throws Exception {
+    configureJava("class C {\n" +
+                  "    void mmm(int a, int b, int c, int d, int e, int f) {}\n" +
+                  "    void m2() { mm<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "    void mmm(int a, int b, int c, int d, int e, int f) {}\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/>, <hint text=\"c:\"/>, <hint text=\"d:\"/>, <hint text=\"e:\"/>, <hint text=\"f:\"/>); }\n" +
+                          "}");
+  }
+  
   private void checkResult(String text) {
     myFixture.checkResult(text);
   }
