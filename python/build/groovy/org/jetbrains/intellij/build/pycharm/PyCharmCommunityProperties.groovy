@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,12 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
+        //snapName = "pycharm-community"
+        //snapDescription =
+        //  "Python IDE for professional developers. Save time while PyCharm takes care of the routine. "
+        //  "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
       }
+
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
         "pycharm-community-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
