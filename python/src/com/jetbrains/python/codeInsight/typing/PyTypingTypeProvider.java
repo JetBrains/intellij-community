@@ -885,41 +885,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static List<PsiElement> tryResolvingOnStubs(@NotNull PyReferenceExpression expression,
                                                       @NotNull TypeEvalContext context) {
     
-    // PyPsiUtils.asQualifiedName() also takes into account subscription and prefix expressions
-    final QualifiedName qualifiedName = turnPlainReferenceExpressionIntoQualifiedName(expression);
+    final QualifiedName qualifiedName = expression.asQualifiedName();
     final PyFile pyFile = as(FileContextUtil.getContextFile(expression), PyFile.class);
 
     if (pyFile != null && qualifiedName != null) {
       return PyResolveUtil.resolveQualifiedNameInFile(qualifiedName, pyFile, context);
     }
     return Collections.singletonList(expression);
-  }
-
-  /**
-   * Return the qualified name containing all names in the given (possibly qualified) reference expression.
-   * If any of the qualifiers is not a reference expression, returns null.
-   * <p>
-   * For instance, for the expression "foo.bar.baz" it returns the qualified name "foo.bar.baz",
-   * but for "foo[0].bar.baz" it will return null.
-   * <p>
-   * If you need to take into account such implicit "magical" names, use {@link PyPsiUtils#asQualifiedName(PyExpression)}
-   * or {@link PyQualifiedExpression#asQualifiedName()}.
-   * @param expression
-   */
-  @Nullable
-  public static QualifiedName turnPlainReferenceExpressionIntoQualifiedName(@NotNull PyReferenceExpression expression) {
-    final List<String> components = new ArrayList<>();
-    PyExpression remaining = expression;
-    while (remaining != null) {
-      final PyReferenceExpression remainingReference = as(remaining, PyReferenceExpression.class);
-      if (remainingReference == null) {
-        return null;
-      }
-      components.add(remainingReference.getReferencedName());
-      remaining = remainingReference.getQualifier();
-    }
-    Collections.reverse(components);
-    return QualifiedName.fromComponents(components);
   }
 
   private static boolean isBuiltinPathLike(@Nullable PsiElement element) {

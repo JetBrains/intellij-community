@@ -219,12 +219,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyTargetExpression(final PyTargetExpression node) {
-    final ReadWriteInstruction.ACCESS access = ReadWriteInstruction.ACCESS.WRITE;
     final QualifiedName qName = node.asQualifiedName();
-    final String targetName = qName == null ? node.getName() : qName.toString();
-    final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, targetName, access);
-    myBuilder.addNode(instruction);
-    myBuilder.checkPending(instruction);
+    if (qName != null) {
+      final ReadWriteInstruction instruction = ReadWriteInstruction.newInstruction(myBuilder, node, qName.toString(),
+                                                                                   ReadWriteInstruction.ACCESS.WRITE);
+      myBuilder.addNode(instruction);
+      myBuilder.checkPending(instruction);
+    }
 
     final PyExpression qualifier = node.getQualifier();
     if (qualifier != null) {
