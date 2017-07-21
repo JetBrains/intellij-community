@@ -19,8 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -31,8 +33,8 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class ExtensionLocator {
   private final PsiClass myPsiClass;
@@ -43,39 +45,64 @@ public class ExtensionLocator {
 
   @NotNull
   public List<ExtensionCandidate> findCandidates() {
+    String name = myPsiClass.getQualifiedName();
+    if (name == null) {
+      return Collections.emptyList();
+    }
+
     List<ExtensionCandidate> result = new SmartList<>();
-    findExtensionDeclarations(myPsiClass, tag -> result.add(new ExtensionCandidate(
-                                SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag))));
+    findExtensionDeclarations(myPsiClass, new ReferenceProcessor(name) {
+      @Override
+      protected boolean handleExtensionTag(XmlTag tag) {
+        result.add(new ExtensionCandidate(
+          SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
+        return true;
+      }
+    });
     return result;
   }
 
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
-    return findExtensionDeclarations(psiClass, null);
+    String name = psiClass.getQualifiedName();
+    //noinspection SimplifiableConditionalExpression
+    return name == null ? false : findExtensionDeclarations(psiClass, new ReferenceProcessor(name));
   }
 
-  private static boolean findExtensionDeclarations(PsiClass psiClass, Consumer<XmlTag> extensionConsumer) {
+  private static boolean findExtensionDeclarations(PsiClass psiClass, PsiNonJavaFileReferenceProcessor referenceProcessor) {
     String name = psiClass.getQualifiedName();
     if (name == null) return false;
 
     Project project = psiClass.getProject();
     GlobalSearchScope scope = LocatorUtils.getCandidatesScope(project);
 
-    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
+    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, referenceProcessor, scope);
+  }
+
+  private static class ReferenceProcessor implements PsiNonJavaFileReferenceProcessor {
+    private final String myExtensionClassName;
+
+    private ReferenceProcessor(String name) {
+      myExtensionClassName = name;
+    }
+
+    @Override
+    public boolean process(PsiFile file, int startOffset, int endOffset) {
       PsiElement element = file.findElementAt(startOffset);
       String tokenText = element instanceof XmlToken ? element.getText() : null;
-      if (!StringUtil.equals(name, tokenText)) return true;
+      if (!StringUtil.equals(myExtensionClassName, tokenText)) return true;
 
       XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
       if (tag == null) return true;
 
       DomElement dom = DomUtil.getDomElement(tag);
       if (dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null) {
-        if (extensionConsumer != null) {
-          extensionConsumer.accept(tag);
-        }
-        return false;
+        return handleExtensionTag(tag);
       }
       return true;
-    }, scope);
+    }
+
+    protected boolean handleExtensionTag(XmlTag tag) {
+      return false; // default implementation
+    }
   }
 }
