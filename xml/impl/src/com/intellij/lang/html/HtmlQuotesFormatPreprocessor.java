@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,7 +34,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
   @NotNull
@@ -66,7 +66,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     private final PsiDocumentManager myDocumentManager;
     private final PostFormatProcessorHelper myPostProcessorHelper;
     private final PsiElement myContext;
-    private final char myQuoteChar;
+    private final String myNewQuote;
 
     public HtmlQuotesConverter(@NotNull CodeStyleSettings.QuoteStyle style,
                                @NotNull PsiElement context,
@@ -80,13 +80,13 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       myDocument = myDocumentManager.getDocument(file);
       switch (style) {
         case Single:
-          myQuoteChar = '\'';
+          myNewQuote = "\'";
           break;
         case Double:
-          myQuoteChar = '"';
+          myNewQuote = "\"";
           break;
         default:
-          myQuoteChar = 0;
+          myNewQuote = String.valueOf(0);
       }
     }
 
@@ -102,54 +102,45 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
         if (child != null &&
             !containsQuoteChars(value) // For now we skip values containing quotes to be inserted/replaced
           ) {
-          String newValue = null;
           if (child.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
             PsiElement lastChild = value.getLastChild();
             if (lastChild != null && lastChild.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
               CharSequence delimiterChars = child.getNode().getChars();
-              if (delimiterChars.length() == 1) {
-                char existingQuote = delimiterChars.charAt(0);
-                if (existingQuote != myQuoteChar) {
-                  newValue = convertQuotes(value);
-                }
+              if (delimiterChars.length() == 1 && !StringUtil.equals(delimiterChars, myNewQuote)) {
+                int startOffset = value.getTextRange().getStartOffset();
+                int endOffset = value.getTextRange().getEndOffset();
+                replaceString(startOffset, startOffset + 1, myNewQuote);
+                replaceString(endOffset - 1, endOffset, myNewQuote);
               }
             }
           }
           else if (child.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
                    && child == value.getLastChild()) {
-            newValue = surroundWithQuotes(value);
-          }
-          if (newValue != null) {
-            TextRange range = myPostProcessorHelper.mapRange(value.getTextRange());
-            myDocument.replaceString(range.getStartOffset(), range.getEndOffset(), newValue);
-            myPostProcessorHelper.updateResultRange(value.getTextLength(), newValue.length());
+            insertString(child.getTextRange().getStartOffset(), myNewQuote);
+            insertString(child.getTextRange().getEndOffset(), myNewQuote);
           }
         }
       }
     }
 
-    @Nullable
-    private String convertQuotes(@NotNull XmlAttributeValue value) {
-      String currValue = value.getNode().getChars().toString();
-      if (currValue.length() >= 2) {
-        return myQuoteChar + currValue.substring(1, currValue.length() - 1) + myQuoteChar;
-      }
-      return null;
+    private void replaceString(int start, int end, String newValue) {
+      final int mappedStart = myPostProcessorHelper.mapOffset(start);
+      final int mappedEnd = myPostProcessorHelper.mapOffset(end);
+      myDocument.replaceString(mappedStart, mappedEnd, newValue);
+      myPostProcessorHelper.updateResultRange(end - start, newValue.length());
     }
 
-    @NotNull
-    private String surroundWithQuotes(@NotNull XmlAttributeValue value) {
-      String currValue = value.getNode().getChars().toString();
-      return myQuoteChar + currValue + myQuoteChar;
+    private void insertString(int offset, String value) {
+      final int mappedOffset = myPostProcessorHelper.mapOffset(offset);
+      myDocument.insertString(mappedOffset, value);
+      myPostProcessorHelper.updateResultRange(0, value.length());
     }
 
     private boolean containsQuoteChars(@NotNull XmlAttributeValue value) {
       for (PsiElement child = value.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (!isDelimiter(child.getNode().getElementType())) {
-          CharSequence valueChars = child.getNode().getChars();
-          for (int i = 0; i < valueChars.length(); i ++) {
-            if (valueChars.charAt(i) == myQuoteChar) return true;
-          }
+        if (!isDelimiter(child.getNode().getElementType()) 
+            && StringUtil.contains(child.getNode().getChars(), myNewQuote)) {
+          return true;
         }
       }
       return false;
