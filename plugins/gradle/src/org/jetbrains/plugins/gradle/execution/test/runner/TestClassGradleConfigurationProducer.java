@@ -23,7 +23,6 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit.PatternConfigurationProducer;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -60,7 +59,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
-    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     PsiClass testClass = getPsiClassForLocation(contextLocation);
@@ -108,7 +107,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
-    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 

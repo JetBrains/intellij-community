@@ -119,6 +119,10 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
     return false;
   }
 
+  public boolean isMultipleElementsSelected(ConfigurationContext context) {
+    return myBaseConfigurationProducer.isMultipleElementsSelected(context);
+  }
+
   private static class GradlePatternBasedConfigurationProducer extends AbstractPatternBasedConfigurationProducer {
     public GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
       super(configurationType);
