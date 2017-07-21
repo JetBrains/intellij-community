@@ -119,7 +119,7 @@ public class InvokeCompletion extends ActionOnRange {
     checkNoDuplicates(items);
 
     LookupElement item = items.get(myItemIndexRaw % items.size());
-    myLog += ", selected '" + item + " with '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "'";
+    myLog += ", selected '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "'";
     ((LookupImpl)lookup).finishLookup(myCompletionChar, item);
   }
 
@@ -127,6 +127,10 @@ public class InvokeCompletion extends ActionOnRange {
     Set<List<?>> presentations = new HashSet<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = LookupElementPresentation.renderElement(item);
+      if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
+        continue;
+      }
+
       List<Object> info = Arrays.asList(p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
                                         p.getTailFragments(),
                                         p.getTypeText(), p.getTypeIcon(), p.isTypeGrayed(),
@@ -135,6 +139,10 @@ public class InvokeCompletion extends ActionOnRange {
         TestCase.fail("Duplicate suggestions: " + p);
       }
     }
+  }
+
+  private static boolean seemsTruncated(String text) {
+    return text != null && text.contains("...");
   }
 
   @NotNull
