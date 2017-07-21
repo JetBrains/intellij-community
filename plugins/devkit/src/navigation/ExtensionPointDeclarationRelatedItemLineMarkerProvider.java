@@ -16,9 +16,6 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
-import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -55,13 +52,8 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
     List<ExtensionPointCandidate> targets =
       ContainerUtil.filter(locator.findDirectCandidates(), candidate -> epName.equals(candidate.epName));
 
-    final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
-      .setTargets(targets)
-      .setPopupTitle("Choose Extension Point")
-      .setTooltipText("Extension Point Declaration")
-      .setAlignment(GutterIconRenderer.Alignment.RIGHT)
-      .createLineMarkerInfo(psiField.getNameIdentifier());
+    RelatedItemLineMarkerInfo<PsiElement> info = LineMarkerInfoHelper.createPluginLineMarkerInfo(
+      targets, psiField.getNameIdentifier(), "Choose Extension Point", "Extension Point Declaration");
     result.add(info);
   }
 

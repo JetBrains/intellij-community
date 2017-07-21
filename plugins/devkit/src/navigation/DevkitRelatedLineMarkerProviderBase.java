@@ -17,28 +17,17 @@ package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
-import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.devkit.util.PointableCandidate;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Do not process when current project is not a Plugin project.
  */
 public abstract class DevkitRelatedLineMarkerProviderBase extends RelatedItemLineMarkerProvider {
-
-  protected static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
-    candidate -> Collections.singleton(candidate.pointer.getElement());
-
-  protected static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
-
 
   @Override
   public void collectNavigationMarkers(List<PsiElement> elements,

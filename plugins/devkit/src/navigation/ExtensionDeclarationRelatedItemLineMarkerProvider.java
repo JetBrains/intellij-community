@@ -16,9 +16,6 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
-import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
@@ -39,8 +36,6 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
   }
 
   private static void process(PsiClass psiClass, Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (!ExtensionLocator.isRegisteredExtension(psiClass)) return;
-
     PsiIdentifier identifier = psiClass.getNameIdentifier();
     if (identifier == null) {
       return;
@@ -48,14 +43,12 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
 
     ExtensionLocator locator = new ExtensionLocator(psiClass);
     List<ExtensionCandidate> targets = locator.findDirectCandidates();
+    if (targets.isEmpty()) {
+      return;
+    }
 
-    RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
-      .setTargets(targets)
-      .setPopupTitle("Choose Extension")
-      .setTooltipText("Extension Declaration")
-      .setAlignment(GutterIconRenderer.Alignment.RIGHT)
-      .createLineMarkerInfo(identifier);
+    RelatedItemLineMarkerInfo<PsiElement> info =
+      LineMarkerInfoHelper.createPluginLineMarkerInfo(targets, identifier, "Choose Extension", "Extension Declaration");
     result.add(info);
   }
 }

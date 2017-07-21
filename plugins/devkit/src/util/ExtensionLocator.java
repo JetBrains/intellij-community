@@ -40,6 +40,7 @@ public class ExtensionLocator extends LocatorBase {
     myPsiClass = aClass;
   }
 
+  @NotNull
   public List<ExtensionCandidate> findDirectCandidates() {
     final List<ExtensionCandidate> candidates = new SmartList<>();
     findExtensionCandidates(myPsiClass, candidates);
