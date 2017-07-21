@@ -29,7 +29,6 @@ import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -275,22 +274,6 @@ class ToggleInlineHintsAction : AnAction() {
     val isHintsShownNow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
     e.presentation.text = if (isHintsShownNow) disableText else enableText
     e.presentation.isEnabledAndVisible = true
-    
-    if (isInMainEditorPopup(e)) {
-      val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-      val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
-      val caretOffset = editor.caretModel.offset
-      e.presentation.isEnabledAndVisible = !isHintsShownNow && isPossibleHintNearOffset(file, caretOffset)
-    }
-  }
-
-  private fun isInMainEditorPopup(e: AnActionEvent): Boolean {
-    if (e.place != ActionPlaces.EDITOR_POPUP) return false
-    
-    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return false
-    val offset = editor.caretModel.offset
-    
-    return !editor.inlayModel.hasInlineElementAt(offset)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -347,21 +330,6 @@ fun PsiElement.isOwnsInlayInEditor(editor: Editor): Boolean {
   if (textRange == null) return false
   val start = if (textRange.isEmpty) textRange.startOffset else textRange.startOffset + 1
   return !editor.inlayModel.getInlineElementsInRange(start, textRange.endOffset).isEmpty()
-}
-
-fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
-  val hintProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return false
-
-  var element = file.findElementAt(offset)
-  for (i in 0..3) {
-    if (element == null) return false
-
-    val hints = hintProvider.getParameterHints(element)
-    if (hints.isNotEmpty()) return true
-    element = element.parent
-  }
-
-  return false
 }
 
 
