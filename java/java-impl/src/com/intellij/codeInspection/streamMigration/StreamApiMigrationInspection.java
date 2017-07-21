@@ -51,6 +51,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.streamMigration.FindExtremumMigration.MAX_REPLACEMENT;
+import static com.intellij.codeInspection.streamMigration.FindExtremumMigration.MIN_REPLACEMENT;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
 
@@ -466,8 +468,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (getAccumulatedVariable(tb, nonFinalVariables) != null) {
         return new SumMigration(true);
       }
-      if(FindExtremumMigration.extractExtremumTerminal(tb, nonFinalVariables) != null) {
-        //TODO
+      FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extractExtremumTerminal(tb, nonFinalVariables);
+      if(extremumTerminal != null) {
+        return new FindExtremumMigration(true, extremumTerminal.isMax()? MAX_REPLACEMENT : MIN_REPLACEMENT, extremumTerminal);
       }
       Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
       if (exitPoints == null) return null;

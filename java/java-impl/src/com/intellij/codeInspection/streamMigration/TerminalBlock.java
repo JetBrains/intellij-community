@@ -117,9 +117,9 @@ class TerminalBlock {
       PsiIfStatement ifStatement = (PsiIfStatement)getSingleStatement();
       if(ifStatement.getElseBranch() == null && ifStatement.getCondition() != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
-        //if(thenBranch != null) {
-        //  return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
-        //}
+        if(thenBranch != null) {
+          return new TerminalBlock(this, new FilterOp(ifStatement.getCondition(), myVariable, false), myVariable, thenBranch);
+        }
       }
     }
     if(myStatements.length >= 1) {
@@ -373,6 +373,14 @@ class TerminalBlock {
   @NotNull
   Operation getLastOperation() {
     return myOperations[myOperations.length-1];
+  }
+
+  @Nullable
+  TerminalBlock withoutLastOperation() {
+    if(myOperations.length == 0) return null;
+    Operation[] operations = new Operation[myOperations.length - 1];
+    System.arraycopy(myOperations, 0, operations, 0, operations.length);
+    return new TerminalBlock(operations, myVariable, myStatements);
   }
 
   @Nullable

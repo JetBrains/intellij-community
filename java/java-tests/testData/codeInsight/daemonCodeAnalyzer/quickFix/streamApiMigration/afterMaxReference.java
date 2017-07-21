@@ -27,15 +27,8 @@ public class Main {
       new Person("James", 25),
       new Person("Kelly", 12)
     );
-    Person maxPerson = null;
-    for <caret>(Person p : personList) {
-      if(p.getAge() > 13) {
-        if (maxPerson == null || maxPerson.getAge() < p.getAge()) {
-          maxPerson = p;
-        }
-      }
-    }
+    Person maxPerson = personList.stream().filter(p -> p.getAge() > 13).max(Comparator.comparingInt(Person::getAge)).orElse(null);
 
-    return maxPerson;
+      return maxPerson;
   }
 }
