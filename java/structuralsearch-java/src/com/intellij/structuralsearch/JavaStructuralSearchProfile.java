@@ -480,6 +480,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     private PsiElement myCurrent;
 
     @Override public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 
       if (nameReferenceElement == null ||

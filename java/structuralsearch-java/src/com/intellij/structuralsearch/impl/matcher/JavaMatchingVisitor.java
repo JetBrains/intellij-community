@@ -301,21 +301,26 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     myMatchingVisitor.setResult(myMatchingVisitor.match(value, elementNameValuePair.getValue()));
     if (myMatchingVisitor.getResult()) {
       final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
-      final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
-      if (nameIdentifier == null) {
-        myMatchingVisitor.setResult(otherIdentifier == null ||
-                                    otherIdentifier.getText().equals(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
-      }
-      else {
+      if (nameIdentifier != null) {
+        final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
         final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(nameIdentifier);
         if (handler instanceof SubstitutionHandler) {
           myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(otherIdentifier, myMatchingVisitor.getMatchContext()));
         }
         else {
-          myMatchingVisitor.setResult(myMatchingVisitor.match(nameIdentifier, otherIdentifier));
+          myMatchingVisitor.setResult(
+            (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(nameIdentifier.getText()) && otherIdentifier == null) ||
+            myMatchingVisitor.match(nameIdentifier, otherIdentifier));
         }
       }
     }
+  }
+
+  @Override
+  public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+    final PsiArrayInitializerMemberValue otherInitializer = (PsiArrayInitializerMemberValue)myMatchingVisitor.getElement();
+    final PsiAnnotationMemberValue[] initializers = initializer.getInitializers();
+    myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(initializers, otherInitializer.getInitializers()));
   }
 
   private boolean checkHierarchy(PsiMember element, PsiMember patternElement) {
