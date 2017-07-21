@@ -123,7 +123,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     myHideTabsCheckbox.setEnabled(myScrollTabLayoutInEditorCheckBox.isSelected());
     myHideTabsCheckbox.setSelected(uiSettings.getHideTabsIfNeed());
     myEditorTabPlacement.setSelectedItem(uiSettings.getEditorTabPlacement());
-    myHideKnownExtensions.setSelected(uiSettings.getHdeKnownExtensionInTabs());
+    myHideKnownExtensions.setSelected(uiSettings.getHideKnownExtensionInTabs());
     myShowDirectoryInTabCheckBox.setSelected(uiSettings.getShowDirectoryForNonUniqueFilenames());
     myEditorTabLimitField.setText(Integer.toString(uiSettings.getEditorTabLimit()));
     myReuseNotModifiedTabsCheckBox.setSelected(uiSettings.getReuseNotModifiedTabs());
@@ -170,8 +170,8 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     uiSettings.setEditorTabPlacement(tabPlacement);
 
     boolean hide = myHideKnownExtensions.isSelected();
-    if (uiSettings.getHdeKnownExtensionInTabs() != hide) uiSettingsChanged = true;
-    uiSettings.setHdeKnownExtensionInTabs(hide);
+    if (uiSettings.getHideKnownExtensionInTabs() != hide) uiSettingsChanged = true;
+    uiSettings.setHideKnownExtensionInTabs(hide);
 
     boolean dir = myShowDirectoryInTabCheckBox.isSelected();
     if (uiSettings.getShowDirectoryForNonUniqueFilenames() != dir) uiSettingsChanged = true;
@@ -204,7 +204,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     isModified |= isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs());
     int tabPlacement = ((Integer)myEditorTabPlacement.getSelectedItem()).intValue();
     isModified |= tabPlacement != uiSettings.getEditorTabPlacement();
-    isModified |= myHideKnownExtensions.isSelected() != uiSettings.getHdeKnownExtensionInTabs();
+    isModified |= myHideKnownExtensions.isSelected() != uiSettings.getHideKnownExtensionInTabs();
     isModified |= myShowDirectoryInTabCheckBox.isSelected() != uiSettings.getShowDirectoryForNonUniqueFilenames();
 
     isModified |= myScrollTabLayoutInEditorCheckBox.isSelected() != uiSettings.getScrollTabLayoutInEditor();
