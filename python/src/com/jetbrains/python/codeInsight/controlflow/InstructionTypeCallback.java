@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface InstructionTypeCallback {
-  /**
-   * @return null if this instruction adds no types to the resulting union, e.g. if the only type was excluded by type assertion
-   */
   @Nullable
   Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor);
 }
