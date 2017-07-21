@@ -32,6 +32,8 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.UIBundle;
@@ -59,6 +61,15 @@ class MemoryDiskConflictResolver {
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document)) return;
+
+    boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+    if (!tooLarge) {
+      CharSequence convertedDiskText = LoadTextUtil.loadText(file);
+      String convertedDocumentText = StringUtil.convertLineSeparators(document.getText());
+      if(convertedDocumentText.equals(convertedDiskText)){
+        return;
+      }
+    }
 
     long documentStamp = document.getModificationStamp();
     long oldFileStamp = event.getOldModificationStamp();
