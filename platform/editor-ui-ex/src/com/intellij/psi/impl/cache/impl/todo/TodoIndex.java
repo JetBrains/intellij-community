@@ -113,7 +113,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = file -> {
+  protected final FileBasedIndex.InputFilter myInputFilter = file -> {
     if (!file.isInLocalFileSystem()) {
       return false; // do not index TODOs in library sources
     }
