@@ -31,5 +31,7 @@ public enum JvmModifier {
   STRICTFP,
   TRANSIENT,
   VOLATILE,
-  TRANSITIVE,
+  TRANSITIVE;
+
+  public static final JvmModifier[] EMPTY_ARRAY = new JvmModifier[0];
 }

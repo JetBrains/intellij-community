@@ -24,5 +24,5 @@ import org.jetbrains.annotations.NotNull;
 public interface JvmParameter extends JvmNamedElement, JvmModifiersOwner {
 
   @NotNull
-  JvmType parameterType();
+  JvmType getType();
 }

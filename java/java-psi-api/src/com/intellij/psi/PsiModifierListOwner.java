@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiJvmConversionHelper.getModifiers;
+import static com.intellij.psi.PsiJvmConversionHelper.getListAnnotations;
+import static com.intellij.psi.PsiJvmConversionHelper.getListModifiers;
 
 /**
  * Represents a PSI element which has a list of modifiers (public/private/protected/etc.)
@@ -49,13 +50,12 @@ public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
   @NotNull
   @Override
   default PsiAnnotation[] getAnnotations() {
-    PsiModifierList list = getModifierList();
-    return list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
+    return getListAnnotations(this);
   }
 
   @NotNull
   @Override
-  default Iterable<JvmModifier> modifiers() {
-    return getModifiers(this);
+  default JvmModifier[] getModifiers() {
+    return getListModifiers(this);
   }
 }

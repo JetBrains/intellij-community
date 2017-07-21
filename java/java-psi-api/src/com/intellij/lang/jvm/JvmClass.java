@@ -27,13 +27,13 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
   String getQualifiedName();
 
   @NotNull
-  JvmClassKind classKind();
+  JvmClassKind getClassKind();
 
   @Nullable
-  JvmReferenceType superClassType();
+  JvmReferenceType getSuperClassType();
 
   @NotNull
-  Iterable<JvmReferenceType> interfaceTypes();
+  JvmReferenceType[] getInterfaceTypes();
 
   //
 

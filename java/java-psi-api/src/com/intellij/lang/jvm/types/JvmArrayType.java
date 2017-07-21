@@ -20,5 +20,5 @@ import org.jetbrains.annotations.NotNull;
 public interface JvmArrayType extends JvmType {
 
   @NotNull
-  JvmType componentType();
+  JvmType getComponentType();
 }

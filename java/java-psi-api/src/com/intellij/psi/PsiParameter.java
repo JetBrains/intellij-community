@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmParameter;
-import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +53,6 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
   @Override
   @Nullable
   PsiTypeElement getTypeElement();
-
-  @NotNull
-  @Override
-  default JvmType parameterType() {
-    return getType();
-  }
 
   @NotNull
   @Override

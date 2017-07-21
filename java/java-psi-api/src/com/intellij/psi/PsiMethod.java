@@ -210,13 +210,13 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull
   @Override
-  default Iterable<JvmParameter> parameters() {
-    return PsiJvmConversionHelper.getMethodParameters(this);
+  default JvmParameter[] getParameters() {
+    return getParameterList().getParameters();
   }
 
   @NotNull
   @Override
-  default Iterable<JvmReferenceType> throwsTypes() {
-    return PsiJvmConversionHelper.getMethodThrowsTypes(this);
+  default JvmReferenceType[] getThrowsTypes() {
+    return getThrowsList().getReferencedTypes();
   }
 }

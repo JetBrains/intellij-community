@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public interface JvmTypeParameter extends JvmTypeDeclaration {
 
   @NotNull
-  Iterable<JvmReferenceType> bounds();
+  JvmReferenceType[] getBounds();
 
   @Nullable
   JvmTypeParametersOwner getOwner();

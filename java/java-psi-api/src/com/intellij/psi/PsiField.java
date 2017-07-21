@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmField;
-import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -45,10 +44,4 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, Jv
 
   @Override
   @NotNull PsiIdentifier getNameIdentifier();
-
-  @NotNull
-  @Override
-  default JvmType fieldType() {
-    return getType();
-  }
 }

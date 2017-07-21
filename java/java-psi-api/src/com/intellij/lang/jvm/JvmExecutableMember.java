@@ -30,10 +30,10 @@ public interface JvmExecutableMember extends JvmTypeParametersOwner {
   String getName();
 
   @NotNull
-  Iterable<JvmParameter> parameters();
+  JvmParameter[] getParameters();
 
   boolean isVarArgs();
 
   @NotNull
-  Iterable<JvmReferenceType> throwsTypes();
+  JvmReferenceType[] getThrowsTypes();
 }

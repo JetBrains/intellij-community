@@ -28,5 +28,5 @@ public interface JvmField extends JvmMember {
   String getName();
 
   @NotNull
-  JvmType fieldType();
+  JvmType getType();
 }

@@ -21,8 +21,6 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.PsiJvmConversionHelper.getTypeParameterBounds;
-
 /**
  * Represents the type parameter of a generic class, interface, method or constructor.
  *
@@ -69,7 +67,7 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeP
 
   @NotNull
   @Override
-  default Iterable<JvmReferenceType> bounds() {
-    return getTypeParameterBounds(this);
+  default JvmReferenceType[] getBounds() {
+    return getExtendsList().getReferencedTypes();
   }
 }

@@ -361,19 +361,19 @@ public interface PsiClass
 
   @NotNull
   @Override
-  default JvmClassKind classKind() {
+  default JvmClassKind getClassKind() {
     return getJvmClassKind(this);
   }
 
   @Nullable
   @Override
-  default JvmReferenceType superClassType() {
+  default JvmReferenceType getSuperClassType() {
     return getClassSuperType(this);
   }
 
   @NotNull
   @Override
-  default Iterable<JvmReferenceType> interfaceTypes() {
+  default JvmReferenceType[] getInterfaceTypes() {
     return getClassInterfaces(this);
   }
 }

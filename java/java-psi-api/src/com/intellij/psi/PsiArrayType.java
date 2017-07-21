@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.types.JvmArrayType;
-import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,6 +113,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
    * @return the component type instance.
    */
   @NotNull
+  @Override
   public PsiType getComponentType() {
     return myComponentType;
   }
@@ -128,11 +128,5 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   @Override
   public int hashCode() {
     return myComponentType.hashCode() * 3;
-  }
-
-  @NotNull
-  @Override
-  public JvmType componentType() {
-    return getComponentType();
   }
 }

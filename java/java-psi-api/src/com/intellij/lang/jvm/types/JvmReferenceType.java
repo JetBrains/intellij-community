@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JvmReferenceType extends JvmType {
 
+  JvmReferenceType[] EMPTY_ARRAY = new JvmReferenceType[0];
+
   @NotNull
   String getName();
 

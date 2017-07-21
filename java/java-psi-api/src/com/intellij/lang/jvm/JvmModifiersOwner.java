@@ -17,14 +17,14 @@ package com.intellij.lang.jvm;
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.util.containers.ContainerUtil.containsIdentity;
+import static com.intellij.util.ArrayUtil.contains;
 
 public interface JvmModifiersOwner extends JvmAnnotatedElement {
 
   @NotNull
-  Iterable<JvmModifier> modifiers();
+  JvmModifier[] getModifiers();
 
   default boolean hasModifier(@NotNull JvmModifier modifier) {
-    return containsIdentity(modifiers(), modifier);
+    return contains(getModifiers(), modifier);
   }
 }
