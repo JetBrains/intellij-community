@@ -98,7 +98,9 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
     StringBuilder parametersString = new StringBuilder();
     for (String parameter : params.getProgramParametersList().getParameters()) {
-      parametersString.append("args '").append(parameter).append("'\n");
+      if (StringUtil.isEmpty(parameter)) continue;
+      String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
+      parametersString.append("args '").append(escaped).append("'\n");
     }
 
     StringBuilder vmParametersString = new StringBuilder();
