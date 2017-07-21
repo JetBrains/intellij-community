@@ -17,26 +17,21 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.Collection;
 
-abstract class LocatorBase {
-  @NotNull
-  protected static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
-    Collection<VirtualFile> candidates = DomService.getInstance()
-      .getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
-    return GlobalSearchScope.filesScope(project, candidates);
+class LocatorUtils {
+  private LocatorUtils() {
   }
 
   @NotNull
-  protected static SmartPsiElementPointer createPointer(XmlTag tag) {
-    return SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag);
+  static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
+    Collection<VirtualFile> candidates = DomService.getInstance()
+      .getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
+    return GlobalSearchScope.filesScope(project, candidates);
   }
 }

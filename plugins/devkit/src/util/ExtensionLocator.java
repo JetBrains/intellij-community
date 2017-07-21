@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +34,7 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ExtensionLocator extends LocatorBase {
+public class ExtensionLocator {
   private final PsiClass myPsiClass;
 
   public ExtensionLocator(PsiClass aClass) {
@@ -41,14 +42,11 @@ public class ExtensionLocator extends LocatorBase {
   }
 
   @NotNull
-  public List<ExtensionCandidate> findDirectCandidates() {
-    final List<ExtensionCandidate> candidates = new SmartList<>();
-    findExtensionCandidates(myPsiClass, candidates);
-    return candidates;
-  }
-
-  private static void findExtensionCandidates(PsiClass psiClass, final List<ExtensionCandidate> result) {
-    findExtensionDeclarations(psiClass, tag -> result.add(new ExtensionCandidate(createPointer(tag))));
+  public List<ExtensionCandidate> findCandidates() {
+    List<ExtensionCandidate> result = new SmartList<>();
+    findExtensionDeclarations(myPsiClass, tag -> result.add(new ExtensionCandidate(
+                                SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag))));
+    return result;
   }
 
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
@@ -60,7 +58,7 @@ public class ExtensionLocator extends LocatorBase {
     if (name == null) return false;
 
     Project project = psiClass.getProject();
-    GlobalSearchScope scope = getCandidatesScope(project);
+    GlobalSearchScope scope = LocatorUtils.getCandidatesScope(project);
 
     return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
       PsiElement element = file.findElementAt(startOffset);

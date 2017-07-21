@@ -42,7 +42,7 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
     }
 
     ExtensionLocator locator = new ExtensionLocator(psiClass);
-    List<ExtensionCandidate> targets = locator.findDirectCandidates();
+    List<ExtensionCandidate> targets = locator.findCandidates();
     if (targets.isEmpty()) {
       return;
     }

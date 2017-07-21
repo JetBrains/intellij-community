@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,7 +33,7 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import java.util.HashSet;
 import java.util.List;
 
-public class ExtensionPointLocator extends LocatorBase {
+public class ExtensionPointLocator {
 
   private final PsiClass myPsiClass;
 
@@ -70,7 +71,7 @@ public class ExtensionPointLocator extends LocatorBase {
     if (name == null) return;
 
     Project project = psiClass.getProject();
-    GlobalSearchScope scope = getCandidatesScope(project);
+    GlobalSearchScope scope = LocatorUtils.getCandidatesScope(project);
     PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
       PsiElement element = file.findElementAt(startOffset);
       processExtensionPointCandidate(element, list);
@@ -84,7 +85,7 @@ public class ExtensionPointLocator extends LocatorBase {
     if ("extensionPoint".equals(tag.getName())) {
       String epName = getEPName(tag);
       if (epName != null) {
-        list.add(new ExtensionPointCandidate(createPointer(tag), epName));
+        list.add(new ExtensionPointCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag), epName));
       }
     }
     else if ("with".equals(tag.getName())) {
@@ -96,7 +97,8 @@ public class ExtensionPointLocator extends LocatorBase {
       String epName = getEPName(extensionPointTag);
       String beanClassName = extensionPointTag.getAttributeValue("beanClass");
       if ((attrName == null && tagName == null) || epName == null) return;
-      list.add(new ExtensionPointCandidate(createPointer(extensionPointTag), epName, attrName, tagName, beanClassName));
+      list.add(new ExtensionPointCandidate(SmartPointerManager.getInstance(extensionPointTag.getProject())
+                                             .createSmartPsiElementPointer(extensionPointTag), epName, attrName, tagName, beanClassName));
     }
   }
 
