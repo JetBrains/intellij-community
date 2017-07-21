@@ -64,7 +64,7 @@ class MemoryDiskConflictResolver {
 
     boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
     if (!tooLarge) {
-      CharSequence convertedDiskText = LoadTextUtil.loadText(file);
+      String convertedDiskText = LoadTextUtil.loadText(file).toString();
       String convertedDocumentText = StringUtil.convertLineSeparators(document.getText());
       if(convertedDocumentText.equals(convertedDiskText)){
         return;
