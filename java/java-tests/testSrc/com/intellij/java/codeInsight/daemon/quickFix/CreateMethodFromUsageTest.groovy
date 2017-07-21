@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
 /**
  * @author ven
@@ -170,6 +172,53 @@ class A {
     }
 }
 """
+
+  }
+
+  void "test use fully qualified names with conflicting imports"() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    def fqClassNames = settings.useFqClassNames
+    try {
+      settings.setUseFqClassNames(true)
+      configureFromFileText "a.java", """
+  import java.awt.List;
+  class A {
+      void m(java.util.List<String> list){
+        fo<caret>o(list);
+      }
+  }
+  """
+      TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+      doAction("Create method 'foo'")
+      def state = TemplateManagerImpl.getTemplateState(getEditor())
+
+      def document = getEditor().getDocument()
+      def offset = getEditor().getCaretModel().getOffset()
+
+      ApplicationManager.application.runWriteAction {
+        def method = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethod.class)
+        method.getModifierList().setModifierProperty(PsiModifier.STATIC, false)
+        PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
+      }
+
+      state.gotoEnd(false)
+
+      checkResultByText """
+  import java.awt.List;
+  class A {
+      void m(java.util.List<String> list){
+        foo(list);
+      }
+
+      private void foo(java.util.List<String> list) {
+          
+      }
+  }
+  """
+    }
+    finally {
+      settings.setUseFqClassNames(fqClassNames)
+    }
 
   }
 
