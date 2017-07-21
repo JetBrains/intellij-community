@@ -142,7 +142,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         return (result = false);
       }
       // local classes
-      else if (type == JavaTokenType.CLASS_KEYWORD && last != JavaTokenType.DOT) {
+      else if (type == JavaTokenType.CLASS_KEYWORD ? last != JavaTokenType.DOT : ElementType.CLASS_KEYWORD_BIT_SET.contains(type)) {
         return (result = false);
       }
 

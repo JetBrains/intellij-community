@@ -221,4 +221,16 @@ class Foo {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test inserting enum keyword"() {
+    String text = "class Foo { void foo() { return; } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    Document document = psiFile.getViewProvider().getDocument()
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      document.insertString(text.indexOf("return"), "enum Foo")
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
 }
