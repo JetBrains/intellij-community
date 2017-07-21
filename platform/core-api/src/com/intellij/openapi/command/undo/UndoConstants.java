@@ -18,6 +18,7 @@ package com.intellij.openapi.command.undo;
 import com.intellij.openapi.util.Key;
 
 public interface UndoConstants {
+  Key<Boolean> FORCE_RECORD_UNDO = Key.create("FORCE_RECORD_UNDO");
   Key<Boolean> DONT_RECORD_UNDO = Key.create("DONT_RECORD_UNDO");
 }
 
