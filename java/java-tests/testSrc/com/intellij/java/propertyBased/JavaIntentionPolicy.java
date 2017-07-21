@@ -25,6 +25,7 @@ public class JavaIntentionPolicy extends IntentionPolicy {
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Flip") ||
+           actionText.startsWith("Generate empty 'private' constructor") || // displays a dialog
            actionText.startsWith("Attach annotations") || // changes project model
            actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801

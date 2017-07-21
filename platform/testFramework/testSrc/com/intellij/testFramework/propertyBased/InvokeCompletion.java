@@ -51,23 +51,20 @@ import java.util.Set;
  */
 public class InvokeCompletion extends ActionOnRange {
   private final int myItemIndexRaw;
-  private LookupElement mySelectedItem;
   private final char myCompletionChar;
   private final CompletionPolicy myPolicy;
-  private final String myConstructorArgs;
+  private String myLog = "not invoked";
 
   InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
     super(file, offset, offset);
-    this.myItemIndexRaw = itemIndexRaw;
-    this.myCompletionChar = completionChar;
+    myItemIndexRaw = itemIndexRaw;
+    myCompletionChar = completionChar;
     myPolicy = policy;
-    myConstructorArgs = "_, " + offset + ", " + itemIndexRaw + ", '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "', _";
   }
 
   @Override
   public String toString() {
-    return "InvokeCompletion(" + myConstructorArgs + ")" +
-           "{" + getVirtualFile().getPath() + ", offset=" + getStartOffset() + ", selected=" + mySelectedItem + '}';
+    return "InvokeCompletion{" + getVirtualFile().getPath() + ", " + myLog + ", raw=" + myInitialStart + "," + myItemIndexRaw + "}";
   }
 
   @Override
@@ -80,6 +77,8 @@ public class InvokeCompletion extends ActionOnRange {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     int offset = getStartOffset();
     if (offset < 0) return;
+    
+    myLog = "offset=" + offset;
 
     editor.getCaretModel().moveToOffset(offset);
     
@@ -106,6 +105,7 @@ public class InvokeCompletion extends ActionOnRange {
 
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
+      myLog += ", no lookup";
       if (expectedVariant == null) return;
       TestCase.fail("No lookup, but expected " + expectedVariant + " among completion variants");
     }
@@ -119,7 +119,7 @@ public class InvokeCompletion extends ActionOnRange {
     checkNoDuplicates(items);
 
     LookupElement item = items.get(myItemIndexRaw % items.size());
-    mySelectedItem = item;
+    myLog += ", selected '" + item + " with '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "'";
     ((LookupImpl)lookup).finishLookup(myCompletionChar, item);
   }
 
