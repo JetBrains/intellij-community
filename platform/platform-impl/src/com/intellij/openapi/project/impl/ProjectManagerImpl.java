@@ -528,7 +528,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   private boolean loadProjectWithProgress(ProjectImpl project) throws IOException {
     try {
-      if (myProgressManager.getProgressIndicator() != null) {
+      if (!ApplicationManager.getApplication().isDispatchThread() &&
+          myProgressManager.getProgressIndicator() != null) {
         initProject(project, null);
         return true;
       }
