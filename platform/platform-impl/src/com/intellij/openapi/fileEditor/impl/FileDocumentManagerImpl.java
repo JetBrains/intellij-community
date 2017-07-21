@@ -678,7 +678,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
 
-    myConflictResolver.beforeContentChange(event);
+    if(ourConflictsSolverEnabled)
+      myConflictResolver.beforeContentChange(event);
   }
 
   public static boolean recomputeFileTypeIfNecessary(@NotNull VirtualFile virtualFile) {
@@ -792,6 +793,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
+
+  //temp setter for Rider 2017.1
+  public static boolean ourConflictsSolverEnabled = true;
+
   // used in Upsource
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);
