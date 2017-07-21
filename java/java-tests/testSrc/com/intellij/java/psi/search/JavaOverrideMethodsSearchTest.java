@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class JavaOverrideMethodsSearchTest extends LightCodeInsightFixtureTestCase {
-  public void testSearchInLocalScope() throws Exception {
+  public void testSearchInLocalScopePerformance() {
     myFixture.addClass("public interface I {void m();}");
     for (int i = 0; i < 1000; i++) {
       final int dirIdx = i % 100;
@@ -37,10 +37,10 @@ public class JavaOverrideMethodsSearchTest extends LightCodeInsightFixtureTestCa
     final PsiMethod method = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethod.class);
     assertNotNull(method);
     final PsiMethod superMethod = method.findDeepestSuperMethods()[0];
-    PlatformTestUtil.startPerformanceTest("search in local scope", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("search in local scope", 500, () -> {
       final Collection<PsiMethod> all = OverridingMethodsSearch.search(superMethod, new LocalSearchScope(getFile()), true).findAll();
       assertTrue(all.size() == 1);
-    }).useLegacyScaling().attempts(1).assertTiming();
+    }).attempts(1).assertTiming();
   }
 
   @NotNull
