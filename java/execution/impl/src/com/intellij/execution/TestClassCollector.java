@@ -48,7 +48,7 @@ public class TestClassCollector {
     List<URL> urls = new ArrayList<>();
 
     PathsList pathsList = (module == null ? OrderEnumerator.orderEntries(configuration.getProject()) : OrderEnumerator.orderEntries(module))
-      .runtimeOnly().withoutSdk().recursively().getPathsList();
+      .runtimeOnly().recursively().getPathsList(); //include jdk to avoid NoClassDefFoundError for classes inside tools.jar
     for (VirtualFile file : pathsList.getVirtualFiles()) {
       try {
         urls.add(VfsUtilCore.virtualToIoFile(file).toURI().toURL());
