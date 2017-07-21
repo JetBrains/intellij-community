@@ -84,7 +84,7 @@ public class MatchHandler extends HandlerBase.Terminator {
     final CallArgument predicate = arguments.get(0);
     final String newPredicate = "allMatch".equals(call.getName()) ? "x -> false" : "x -> true";
     return new TerminatorStreamCallImpl(call.getName(), Collections.singletonList(new CallArgumentImpl(predicate.getType(), newPredicate)),
-                                        call.getTypeBefore(), call.getResultType(), call.getTextRange());
+                                        call.getTypeBefore(), call.getResultType(), call.getTextRange(), myCall.getPackageName());
   }
 
   @NotNull
@@ -105,7 +105,7 @@ public class MatchHandler extends HandlerBase.Terminator {
 
     final CallArgumentImpl argument = new CallArgumentImpl(myCall.getArguments().get(0).getType(), filterPredicate);
     calls.add(new IntermediateStreamCallImpl("filter", Collections.singletonList(argument), myTypeBefore,
-                                             myTypeBefore, TextRange.EMPTY_RANGE));
+                                             myTypeBefore, TextRange.EMPTY_RANGE, myCall.getPackageName()));
     calls.addAll(myAfterFilterPeekInserter.additionalCallsBefore());
 
     return calls;

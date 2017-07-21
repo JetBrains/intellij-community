@@ -31,12 +31,24 @@ public abstract class StreamCallImpl implements StreamCall {
   private final List<CallArgument> myArgs;
   private final StreamCallType myType;
   private final TextRange myTextRange;
+  private final String myPackageName;
 
-  StreamCallImpl(@NotNull String name, @NotNull List<CallArgument> args, @NotNull StreamCallType type, @NotNull TextRange range) {
+  StreamCallImpl(@NotNull String name,
+                 @NotNull List<CallArgument> args,
+                 @NotNull StreamCallType type,
+                 @NotNull TextRange range,
+                 @NotNull String packageName) {
     myName = name;
     myArgs = args;
     myType = type;
     myTextRange = range;
+    myPackageName = packageName;
+  }
+
+  @NotNull
+  @Override
+  public String getPackageName() {
+    return myPackageName;
   }
 
   @NotNull

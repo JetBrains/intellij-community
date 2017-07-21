@@ -33,8 +33,9 @@ public class ProducerStreamCallImpl extends StreamCallImpl implements ProducerSt
   public ProducerStreamCallImpl(@NotNull String name,
                                 @NotNull List<CallArgument> args,
                                 @NotNull GenericType typeAfter,
-                                @NotNull TextRange range) {
-    super(name, args, StreamCallType.PRODUCER, range);
+                                @NotNull TextRange range,
+                                @NotNull String packageName) {
+    super(name, args, StreamCallType.PRODUCER, range, packageName);
     myTypeAfter = typeAfter;
   }
 

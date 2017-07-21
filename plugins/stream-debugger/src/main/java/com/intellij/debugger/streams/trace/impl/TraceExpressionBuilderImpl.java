@@ -127,7 +127,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     final TerminatorStreamCall terminatorCall = chain.getTerminationCall();
     final GenericType typeBefore = terminatorCall.getTypeBefore();
     newIntermediateCalls.add(new IntermediateStreamCallImpl("sequential", Collections.emptyList(),
-                                                            typeBefore, typeBefore, TextRange.EMPTY_RANGE));
+                                                            typeBefore, typeBefore, TextRange.EMPTY_RANGE,
+                                                            terminatorCall.getPackageName()));
 
     return new StreamChainImpl(producerHandler.transformCall(producerCall),
                                newIntermediateCalls,

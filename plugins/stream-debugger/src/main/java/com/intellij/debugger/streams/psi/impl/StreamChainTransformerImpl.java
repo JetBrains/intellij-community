@@ -56,8 +56,10 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
   @NotNull
   private ProducerStreamCall createProducer(@NotNull PsiMethodCallExpression expression) {
     GenericType prevCallType = resolveType(expression);
+    final String packageName = resolvePackageName(expression);
+
     return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType,
-                                      expression.getTextRange());
+                                      expression.getTextRange(), packageName);
   }
 
   @NotNull
@@ -70,7 +72,8 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
       final String name = resolveMethodName(callExpression);
       final List<CallArgument> args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
+      final String packageName = resolvePackageName(callExpression);
+      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange(), packageName));
       typeBefore = type;
     }
 
@@ -82,12 +85,21 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
+    final String packageName = resolvePackageName(expression);
+    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange(), packageName);
   }
 
   @NotNull
   private static String resolveProducerCallName(@NotNull PsiMethodCallExpression methodCall) {
     return methodCall.getChildren()[0].getText();
+  }
+
+  @NotNull
+  private static String resolvePackageName(@NotNull PsiMethodCallExpression expression) {
+    final PsiFile containingFile = expression.getContainingFile();
+    // TODO: need to get a package name for other languages too
+    assert containingFile instanceof PsiJavaFile;
+    return ((PsiJavaFile)containingFile).getPackageName();
   }
 
   @NotNull
