@@ -90,6 +90,7 @@ public class ExtensionPointLocator {
     return GlobalSearchScope.filesScope(project, candidates);
   }
 
+  //TODO move to ExtensionLocator
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     if (name == null) return false;
