@@ -62,7 +62,7 @@ public class ExtensionLocator extends LocatorBase {
     Project project = psiClass.getProject();
     GlobalSearchScope scope = getCandidatesScope(project);
 
-    return PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
+    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
       PsiElement element = file.findElementAt(startOffset);
       String tokenText = element instanceof XmlToken ? element.getText() : null;
       if (!StringUtil.equals(name, tokenText)) return true;
