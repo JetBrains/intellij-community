@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -50,14 +51,11 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.List;
 
 
 public class SystemHealthMonitor implements ApplicationComponent {
@@ -77,27 +75,20 @@ public class SystemHealthMonitor implements ApplicationComponent {
   @Override
   public void initComponent() {
     checkRuntime();
-    checkVMoptions();
+    checkReservedCodeCacheSize();
     checkIBus();
     checkSignalBlocking();
     checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
-  private void checkVMoptions() {
-    RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-    List<String> jvmArgs = runtimeMXBean.getInputArguments();
+  private void checkReservedCodeCacheSize() {
     int minReservedCodeCacheSize = 240;
-    for (String arg : jvmArgs) {
-      if (arg.contains("-XX:ReservedCodeCacheSize=")) {
-        String vmOption = arg.substring(arg.lastIndexOf("=") + 1);
-        if (Integer.parseInt(vmOption.substring(0, vmOption.length() - 1)) < minReservedCodeCacheSize) {
-          showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), vmOption, minReservedCodeCacheSize);
-        }
-      }
+    int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
+    if (reservedCodeCacheSize < minReservedCodeCacheSize) {
+      showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
-
 
   private void checkRuntime() {
     if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
