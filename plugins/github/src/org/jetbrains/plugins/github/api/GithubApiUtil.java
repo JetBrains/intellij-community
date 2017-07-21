@@ -104,6 +104,16 @@ public class GithubApiUtil {
     return fromJson(result, type);
   }
 
+  @NotNull
+  private static <T> T put(@NotNull GithubConnection connection,
+                            @NotNull String path,
+                            @NotNull Object request,
+                            @NotNull Class<? extends T> type,
+                            @NotNull Header... headers) throws IOException {
+    JsonElement result = connection.putRequest(path, gson.toJson(request), headers);
+    return fromJson(result, type);
+  }
+
   /*
    * Operations
    */
@@ -583,6 +593,25 @@ public class GithubApiUtil {
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get pull requests" + user + "/" + repo);
+      throw e;
+    }
+  }
+
+  @NotNull
+  public static GithubMergeRequest mergePullRequest(@NotNull GithubConnection connection,
+                                                   @NotNull String user,
+                                                   @NotNull String repo,
+                                                   @NotNull String id,
+                                                   @NotNull String title,
+                                                   @NotNull String message,
+                                                   @NotNull String sha) throws IOException {
+    try {
+      final String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/merge";
+      final GithubMergeRequest request = new GithubMergeRequest(title, message, sha);
+      return put(connection, path, request, GithubMergeRequest.class, ACCEPT_V3_JSON);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't merge pull request: " + e.getMessage());
       throw e;
     }
   }

@@ -26,6 +26,7 @@ import org.apache.http.client.methods.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -69,7 +70,7 @@ public class GithubConnection {
   }
 
   private enum HttpVerb {
-    GET, POST, DELETE, HEAD, PATCH
+    GET, POST, PUT, DELETE, HEAD, PATCH
   }
 
   @Nullable
@@ -79,10 +80,43 @@ public class GithubConnection {
   }
 
   @Nullable
+  public String getRequestPlain(@NotNull String uri) throws IOException {
+    if (myAborted) throw new GithubOperationCanceledException();
+    if (EventQueue.isDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.warn("Network operation in EDT");
+    }
+
+    // TODO: remove annoying ResponseProcessCookies invalid cookie header
+    final CloseableHttpResponse response = doREST(uri, null, Collections.emptyList(), HttpVerb.GET);
+    if (myAborted) throw new GithubOperationCanceledException();
+    checkStatusCode(response, null);
+
+    HttpEntity entity = response.getEntity();
+    if (entity != null) {
+      final String result = EntityUtils.toString(entity);
+      EntityUtils.consume(entity);
+      myRequest = null;
+      response.close();
+      if (!myReusable) {
+        myClient.close();
+      }
+      return result;
+    }
+    return null;
+  }
+
+  @Nullable
   public JsonElement postRequest(@NotNull String path,
                                  @Nullable String requestBody,
                                  @NotNull Header... headers) throws IOException {
     return request(path, requestBody, Arrays.asList(headers), HttpVerb.POST).getJsonElement();
+  }
+
+  @Nullable
+  public JsonElement putRequest(@NotNull String path,
+                                 @Nullable String requestBody,
+                                 @NotNull Header... headers) throws IOException {
+    return request(path, requestBody, Arrays.asList(headers), HttpVerb.PUT).getJsonElement();
   }
 
   @Nullable
@@ -213,6 +247,12 @@ public class GithubConnection {
         request = new HttpPost(uri);
         if (requestBody != null) {
           ((HttpPost)request).setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
+        }
+        break;
+      case PUT:
+        request = new HttpPut(uri);
+        if (requestBody != null) {
+          ((HttpPut)request).setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
         }
         break;
       case PATCH:

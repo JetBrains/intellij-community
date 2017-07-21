@@ -165,4 +165,19 @@ public class GithubPullRequest {
   public Link getBase() {
     return base;
   }
+
+  public enum State {
+    CLOSED("closed"),
+    OPEN("open");
+
+    private final String myType;
+
+    State(String type) {
+      myType = type;
+    }
+
+    public boolean equalsType(@NotNull final String type) {
+      return myType.equals(type);
+    }
+  }
 }

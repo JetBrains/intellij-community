@@ -26,6 +26,8 @@
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider" />
     <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <changesViewContent tabName="Pull Requests" className="org.jetbrains.plugins.github.pullRequests.GithubPullRequestsViewProvider"
+                        predicateClassName="org.jetbrains.plugins.github.pullRequests.GithubPullRequestsViewProvider$GithubPullRequestsVisibilityPredicate"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -55,6 +57,10 @@
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
+    </action>
+    <action class="org.jetbrains.plugins.github.pullRequests.GithubShowPullRequestsAction"
+            id="Github.Pull.Requests" text="Show Pull Requests">
+      <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
   </actions>
 </idea-plugin>
