@@ -1050,6 +1050,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
       myId2Index.remove(actionId);
+      for (String actionGroupId: myId2GroupId.get(actionId)) {
+        AnAction actionGroup = getAction(actionGroupId);
+        if (actionGroup instanceof DefaultActionGroup) {
+          ((DefaultActionGroup)actionGroup).remove(oldValue);
+        }
+      }
       for (PluginId pluginName : myPlugin2Id.keySet()) {
         final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
         if (pluginActions != null) {
