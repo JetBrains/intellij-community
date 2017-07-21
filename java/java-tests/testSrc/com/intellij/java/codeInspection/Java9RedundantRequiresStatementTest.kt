@@ -18,14 +18,13 @@ package com.intellij.java.codeInspection
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.NonNls
 
 /**
  * @author Pavel.Dolgov
@@ -74,7 +73,6 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires M2; }")
   }
 
-
   fun testRequiresManyModulesAllPackagesImported() {
     mainClass("org.example.m2.*", "org.example.m4.*", "org.example.m6.*", "org.example.m7.*")
     mainModule("module MAIN { requires M2; requires M4; requires M6; requires M7; }")
@@ -100,7 +98,7 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("module MAIN { requires java.base; }")
   }
 
-  private fun mainModule(@Language("JAVA") @NonNls text: String) {
+  private fun mainModule(@Language("JAVA") text: String) {
     addFile("module-info.java", text, ModuleDescriptor.MAIN)
 
     val toolWrapper = GlobalInspectionToolWrapper(Java9RedundantRequiresStatementInspection())
@@ -113,35 +111,28 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     myFixture.checkHighlighting() // make sure the imports work
   }
 
-  private fun add(@NonNls packageName: String,
-                  @NonNls className: String,
-                  module: ModuleDescriptor,
-                  @NonNls body: String = "",
-                  vararg @NonNls imports: String) {
-    val importsText = imports.map { "import ${it};" }.joinToString("\n")
+  private fun add(packageName: String, className: String, module: ModuleDescriptor, body: String = "", vararg imports: String) {
+    val importsText = imports.joinToString("\n") { "import ${it};" }
     addFile("${packageName.replace('.', '/')}/${className}.java", """
-package ${packageName};
-${importsText}
-public class ${className}
-{
-  ${body}
-}""", module = module)
+        package ${packageName};
+        ${importsText}
+        public class ${className} {
+          ${body}
+        }""".trimIndent(), module = module)
   }
 
   private var myMainClassFile: VirtualFile? = null
 
-  private fun mainClass(vararg @NonNls imports: String,
-                        @NonNls staticImports: List<String> = emptyList()) {
-    val importsText = imports.map { "import ${it};" }.joinToString("\n")
-    val staticImportsText = staticImports.map { "import static ${it};" }.joinToString("\n")
+  private fun mainClass(vararg imports: String, staticImports: List<String> = emptyList()) {
+    val importsText = imports.joinToString("\n") { "import ${it};" }
+    val staticImportsText = staticImports.joinToString("\n") { "import static ${it};" }
     myMainClassFile = addFile("org.example.main/Main.java", """
-package org.example.main;
-${importsText}
-${staticImportsText}
-public class Main {
-  void main() {}
-}
-""", module = ModuleDescriptor.MAIN)
+        package org.example.main;
+        ${importsText}
+        ${staticImportsText}
+        public class Main {
+          void main() {}
+        }""".trimIndent(), module = ModuleDescriptor.MAIN)
   }
 
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/redundantRequiresStatement/"
