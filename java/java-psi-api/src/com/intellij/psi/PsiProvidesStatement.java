@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a {@code provides} statement of a Java module declaration.
+ * Represents a {@code provides} directive of a Java module declaration.
  *
  * @since 2016.3
  */

@@ -20,7 +20,7 @@ PsiJavaFile:Requires4.java
         PsiIdentifier:A('A')
       PsiErrorElement:';' expected
         <empty list>
-    PsiErrorElement:Module statement expected
+    PsiErrorElement:Module directive expected
       PsiJavaToken:COMMA(',')
       PsiWhiteSpace(' ')
       PsiIdentifier:B('B')
