@@ -133,12 +133,7 @@ public class EduCoursesPanel extends JPanel {
     myCoursesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        Course selectedCourse = myCoursesList.getSelectedValue();
-        if (selectedCourse == null) {
-          notifyListeners(false);
-          return;
-        }
-        updateCourseInfoPanel(selectedCourse);
+        processSelectionChanged();
       }
     });
     DefaultActionGroup group = new DefaultActionGroup(new AnAction("Import Course", "import local course", AllIcons.ToolbarDecorator.Import) {
@@ -219,7 +214,16 @@ public class EduCoursesPanel extends JPanel {
         }
       }
     });
-    updateCourseInfoPanel(myCoursesList.getSelectedValue());
+
+    processSelectionChanged();
+  }
+
+  private void processSelectionChanged() {
+    Course selectedCourse = myCoursesList.getSelectedValue();
+    notifyListeners(canStartCourse(selectedCourse));
+    if (selectedCourse != null) {
+      updateCourseInfoPanel(selectedCourse);
+    }
   }
 
   private void updateCourseInfoPanel(Course selectedCourse) {
@@ -230,10 +234,6 @@ public class EduCoursesPanel extends JPanel {
       myErrorLabel.setText(
         UIUtil.toHtml("<u><b>Log in</b></u> to Stepik " + (selectedCourse.isAdaptive() ? "to start adaptive course" : "to see more courses")));
       myErrorLabel.setForeground((selectedCourse.isAdaptive() ? MessageType.ERROR : MessageType.WARNING).getTitleForeground());
-      notifyListeners(!selectedCourse.isAdaptive());
-    }
-    else {
-      notifyListeners(true);
     }
   }
 
@@ -424,12 +424,25 @@ public class EduCoursesPanel extends JPanel {
 
   public void addCourseValidationListener(CourseValidationListener listener) {
     myListeners.add(listener);
+    listener.validationStatusChanged(canStartCourse(myCoursesList.getSelectedValue()));
   }
 
   private void notifyListeners(boolean canStartCourse) {
     for (CourseValidationListener listener : myListeners) {
       listener.validationStatusChanged(canStartCourse);
     }
+  }
+
+  private static boolean canStartCourse(Course selectedCourse) {
+    if (selectedCourse == null) {
+      return false;
+    }
+
+    if (isLoggedIn()) {
+      return true;
+    }
+
+    return !selectedCourse.isAdaptive();
   }
 
   public interface CourseValidationListener {
