@@ -45,6 +45,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
   protected final CompletionContributor myContributor;
   private boolean myStopped;
+  private boolean myHasAnyItems = false;
 
   protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<CompletionResult> consumer, CompletionContributor contributor) {
     myPrefixMatcher = prefixMatcher;
@@ -68,6 +69,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   public abstract void addElement(@NotNull final LookupElement element);
 
   public void passResult(@NotNull CompletionResult result) {
+    myHasAnyItems = true;
     myConsumer.consume(result);
   }
 
@@ -172,4 +174,6 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * Request that the completion contributors be run again when the user types something into the editor so that no existing lookup elements match that prefix anymore.
    */
   public abstract void restartCompletionWhenNothingMatches();
+
+  public boolean hasAnyPassedItems() { return myHasAnyItems; }
 }
