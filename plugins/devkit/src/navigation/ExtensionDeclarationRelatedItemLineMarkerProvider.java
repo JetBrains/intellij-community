@@ -53,11 +53,10 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
 
     PsiIdentifier identifier = psiClass.getNameIdentifier();
     if (identifier == null) {
-      return; //TODO review
+      return;
     }
 
     ExtensionLocator locator = new ExtensionLocator(psiClass);
-    //TODO ContainerUtil.filter() by extension impl class?
     List<ExtensionCandidate> targets = locator.findDirectCandidates();
 
     RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
