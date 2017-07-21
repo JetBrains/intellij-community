@@ -112,6 +112,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private boolean myDirty;
   
   private boolean myForceAdditionalColumns;
+  @Deprecated
+  public static boolean myForceUseSoftWrapsForSlashR = false;
 
   SoftWrapModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -140,7 +142,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   private boolean areSoftWrapsEnabledInEditor() {
     return myEditor.getSettings().isUseSoftWraps() && !myEditor.isOneLineMode() &&
-           (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR());
+           (!(myEditor.getDocument() instanceof DocumentImpl) || !((DocumentImpl)myEditor.getDocument()).acceptsSlashR() || myForceUseSoftWrapsForSlashR);
   }
 
   /**
@@ -592,5 +594,10 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(document, softWrapOffset), "Soft wrap inside a surrogate pair");
       lastSoftWrapOffset = softWrapOffset;
     }
+  }
+
+  @Deprecated
+  public static void forceUseSoftWraps() {
+    myForceUseSoftWrapsForSlashR = true;
   }
 }

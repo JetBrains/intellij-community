@@ -224,7 +224,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   }
 
   private void recalculateSoftWraps(@NotNull IncrementalCacheUpdateEvent event) {
-    if (myEditor.getDocument() instanceof DocumentImpl && ((DocumentImpl)myEditor.getDocument()).acceptsSlashR()) {
+    if (myEditor.getDocument() instanceof DocumentImpl && ((DocumentImpl)myEditor.getDocument()).acceptsSlashR() && !SoftWrapModelImpl.myForceUseSoftWrapsForSlashR) {
       LOG.error("Soft wrapping is not supported for documents with non-standard line endings. File: " + myEditor.getVirtualFile());
     }
     if (myInProgress) {

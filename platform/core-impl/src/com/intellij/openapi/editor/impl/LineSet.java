@@ -72,7 +72,7 @@ public class LineSet{
       return createLineSet(replacement, !wholeTextReplaced);
     }
 
-    LineSet result = isSingleLineChange(start, end, replacement)
+    LineSet result = isSingleLineChange(start, end, replacement, prevText)
                      ? updateInsideOneLine(findLineIndex(start), replacement.length() - (end - start))
                      : genericUpdate(prevText, start, end, replacement);
 
@@ -85,11 +85,11 @@ public class LineSet{
     return wholeTextReplaced ? result.clearModificationFlags() : result;
   }
 
-  private boolean isSingleLineChange(int start, int end, @NotNull CharSequence replacement) {
+  private boolean isSingleLineChange(int start, int end, @NotNull CharSequence replacement, CharSequence prevText) {
     if (start == 0 && end == myLength && replacement.length() == 0) return false;
 
     int startLine = findLineIndex(start);
-    return startLine == findLineIndex(end) && !CharArrayUtil.containLineBreaks(replacement) && !isLastEmptyLine(startLine);
+    return startLine == findLineIndex(end) && !CharArrayUtil.containLineBreaks(replacement) && !isLastEmptyLine(startLine) && !CharArrayUtil.containLineBreaks(prevText);
   }
 
   @NotNull
