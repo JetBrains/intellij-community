@@ -24,7 +24,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
-import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
+import com.intellij.codeInsight.intention.impl.config.IntentionsConfigurable;
+import com.intellij.codeInsight.intention.impl.config.IntentionsConfigurableProvider;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
@@ -40,6 +41,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
@@ -620,7 +622,8 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      final IntentionSettingsConfigurable configurable = new IntentionSettingsConfigurable();
+      final IntentionsConfigurable configurable = (IntentionsConfigurable)ConfigurableExtensionPointUtil
+        .createApplicationConfigurableForProvider(IntentionsConfigurableProvider.class);
       ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> SwingUtilities.invokeLater(() -> configurable.selectIntention(myFamilyName)));
     }
   }

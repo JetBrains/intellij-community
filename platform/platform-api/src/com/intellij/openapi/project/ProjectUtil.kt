@@ -144,8 +144,10 @@ private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator
   }
   else {
     // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests)
-    FileUtil.sanitizeFileName(PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), false)
+    PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
   }
+
+  name = FileUtil.sanitizeFileName(name, false)
 
   // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended).
   val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())

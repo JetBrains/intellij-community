@@ -960,6 +960,24 @@ public class PyUtil {
     return context.getReturnType(function);
   }
 
+  /**
+   * Create a new expressions fragment from the given text, setting the specified element as its context,
+   * and return the contained expression of the first expression statement in it.
+   *
+   * @param expressionText text of the expression
+   * @param context        context element used to resolve symbols in the expression
+   * @return instance of {@link PyExpression} as described
+   *
+   * @see PyExpressionCodeFragment
+   */
+  @Nullable
+  public static PyExpression createExpressionFromFragment(@NotNull String expressionText, @NotNull PsiElement context) {
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(context.getProject(), "dummy.py", expressionText, false);
+    codeFragment.setContext(context);
+    final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
+    return statement != null ? statement.getExpression() : null;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static final PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 

@@ -15,7 +15,7 @@
   -->
 <project name="Patches and repackages ASM library" default="package">
   <!-- set this property to the path to a downloaded ASM source .jar file -->
-  <property name="asm.src" value="/home/sher/asm-src.zip"/>
+  <property name="asm.src" value=""/>
 
   <property name="src.dir" value="${basedir}/src"/>
   <property name="out.dir" value="${basedir}/out"/>

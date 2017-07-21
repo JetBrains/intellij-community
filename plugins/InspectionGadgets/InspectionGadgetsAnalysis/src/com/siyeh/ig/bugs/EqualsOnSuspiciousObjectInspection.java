@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -51,15 +52,18 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new BaseEqualsVisitor() {
       @Override
-      void checkTypes(PsiReferenceExpression expression, PsiType type1, PsiType type2) {
-        for (PsiType type : Arrays.asList(type1, type2)) {
-          if (type instanceof PsiClassType) {
-            String text = ((PsiClassType)type).rawType().getCanonicalText();
-            if (myClasses.contains(text)) {
-              PsiElement name = expression.getReferenceNameElement();
-              registerError(name == null ? expression : name, text);
-              break;
-            }
+      void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType type1, @NotNull PsiType type2) {
+        checkType(expression, type1);
+        checkType(expression, type2);
+      }
+
+      private void checkType(PsiReferenceExpression expression, PsiType type) {
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+        if (psiClass != null) {
+          String qualifiedName = psiClass.getQualifiedName();
+          if (myClasses.contains(qualifiedName)) {
+            PsiElement name = expression.getReferenceNameElement();
+            registerError(name == null ? expression : name, qualifiedName);
           }
         }
       }

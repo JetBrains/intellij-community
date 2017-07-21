@@ -339,6 +339,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     });
     if (waitForResult) {
+      // Note: do not wait for result from UI thread
       try {
         myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
       }

@@ -5,9 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.NamedRunnable;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
@@ -100,15 +97,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       super.handleCommitNotFound(commitId, rowGetter);
     }
     else {
-      String message = "Commit " + commitId.toString() + " does not exist or does not match active filters";
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING,
-                                                    new NamedRunnable("Reset filters and search again.") {
-                                                      @Override
-                                                      public void run() {
-                                                        getFilterUi().setFilter(null);
-                                                        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
-                                                      }
-                                                    });
+      showWarningWithLink("Commit " + commitId.toString() + " does not exist or does not match active filters",
+                          "Reset filters and search again.", () -> {
+          getFilterUi().setFilter(null);
+          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
+        });
     }
   }
 

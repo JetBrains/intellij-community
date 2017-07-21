@@ -285,16 +285,18 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyType> members = new ArrayList<>();
 
-    for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
-      if (target == this || target == null) {
-        continue;
-      }
+    if (context.maySwitchToAST(this)) {
+      for (PsiElement target : PyUtil.multiResolveTopPriority(getReference(resolveContext))) {
+        if (target == this || target == null) {
+          continue;
+        }
 
-      if (!target.isValid()) {
-        throw new PsiInvalidElementAccessException(this);
-      }
+        if (!target.isValid()) {
+          throw new PsiInvalidElementAccessException(this);
+        }
 
-      members.add(getTypeFromTarget(target, context, this));
+        members.add(getTypeFromTarget(target, context, this));
+      }
     }
 
     return PyUnionType.union(members);

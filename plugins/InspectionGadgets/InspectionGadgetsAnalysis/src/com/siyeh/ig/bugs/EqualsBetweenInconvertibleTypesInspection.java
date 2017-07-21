@@ -51,7 +51,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BaseEqualsVisitor() {
-      void checkTypes(PsiReferenceExpression expression, PsiType leftType, PsiType rightType) {
+      void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
         if (!TypeUtils.areConvertible(leftType, rightType)) {
           PsiElement name = expression.getReferenceNameElement();
           registerError(name == null ? expression : name, leftType, rightType);

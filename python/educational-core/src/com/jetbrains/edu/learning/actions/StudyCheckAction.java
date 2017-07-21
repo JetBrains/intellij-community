@@ -92,7 +92,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
       if (studyEditor != null) {
         final Task task = studyEditor.getTaskFile().getTask();
         if (task instanceof TheoryTask) {
-          presentation.setText("Get Next Recommendation");
+          presentation.setText(task.getLesson().getCourse().isAdaptive() ? "Get Next Recommendation" : "Mark as read");
         }
         else {
           presentation.setText(TEXT);

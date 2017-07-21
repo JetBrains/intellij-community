@@ -492,9 +492,7 @@ public class CodeCompletionHandlerBase {
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
       AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-        if (phase.checkExpired() ||
-            !initContext.getFile().isValid() || !hostCopy.isValid() ||
-            !CompletionAssertions.isEditorValid(initContext.getEditor())) {
+        if (phase.checkExpired() || isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
           Disposer.dispose(translator);
           return;
         }
@@ -503,9 +501,18 @@ public class CodeCompletionHandlerBase {
     }
     else {
       PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
+      if (isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
+        Disposer.dispose(translator);
+        return;
+      }
 
       doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
     }
+  }
+
+  private boolean isAnythingInvalidatedAfterCommit(CompletionInitializationContext initContext, PsiFile hostCopy) {
+    return !initContext.getFile().isValid() || !hostCopy.isValid() ||
+           !CompletionAssertions.isEditorValid(initContext.getEditor());
   }
 
   private static CompletionContext createCompletionContext(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {

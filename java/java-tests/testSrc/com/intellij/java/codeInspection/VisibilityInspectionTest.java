@@ -153,6 +153,28 @@ public class VisibilityInspectionTest extends InspectionTestCase {
     doTest("visibility/usedFromAnotherPackage", myTool, false, true);
   }
 
+  // IDEA-175921
+  public void testInnerClassMethodUsedInsideOtherInnerClassInheritor() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
+    doTest("visibility/innerClassMethodUsedInsideOtherInnerClassInheritor", myTool, false, true);
+  }
+
+  public void testMethodUsedInInheritorInnerClass() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
+    doTest("visibility/methodUsedInInheritorInnerClass", myTool, false, true);
+  }
+
+  public void testInnerClassMethodUsedInsideInheritor() {
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
+    myTool.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
+    myTool.SUGGEST_PRIVATE_FOR_INNERS = true;
+    doTest("visibility/innerClassMethodUsedInsideInheritor", myTool, false, true);
+  }
+
   public void testEntryPointWithPredefinedVisibility() throws Exception {
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
       @Override

@@ -25,7 +25,7 @@ public class CloseAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(e.isActionToolbar() ? AllIcons.Actions.Cancel : null);
+    e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.Actions.Cancel : null);
 
     CloseTarget closeTarget = e.getData(CloseTarget.KEY);
     e.getPresentation().setEnabled(closeTarget != null);

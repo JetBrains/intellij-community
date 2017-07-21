@@ -191,6 +191,12 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
+  @Nullable
+  @Override
+  public String getAnnotationValue() {
+    return getAnnotationContentFromStubOrPsi(this);
+  }
+
   @Override
   @NotNull
   public Icon getIcon(final int flags) {
@@ -392,7 +398,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         public void visitPyTargetExpression(PyTargetExpression node) {
           if (parameterWasReassigned.get()) return;
 
-          if (node.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
+          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          if (node.getReference(resolveContext).isReferenceTo(PyNamedParameterImpl.this)) {
             parameterWasReassigned.set(true);
           }
           else {
@@ -515,14 +522,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Nullable
   @Override
   public String getTypeCommentAnnotation() {
-    final PyNamedParameterStub stub = getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-    final PsiComment comment = getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
+    return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 }

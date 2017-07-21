@@ -45,7 +45,7 @@ class TestingTasksImpl extends TestingTasks {
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
     def compilationTasks = CompilationTasks.create(context)
     if (options.mainModule != null) {
-      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule])
+      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule, "platform-build-scripts"])
     }
     else {
       compilationTasks.compileAllModulesAndTests()
@@ -167,7 +167,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
     String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
-    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath) {
+    context.ant.junit(fork: true, showoutput: true, logfailedtests: false, tempdir: junitTemp, jvm: jvmExecutablePath, printsummary: (underTeamCity ? "off" : "on")) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {
@@ -183,6 +183,12 @@ class TestingTasksImpl extends TestingTasks {
         }
         formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
         context.messages.info("Added TeamCity's formatter to JUnit task")
+      }
+      if (!underTeamCity) {
+        classpath {
+          pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("platform-build-scripts")))
+        }
+        formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
       }
 
       classpath {
@@ -202,7 +208,7 @@ class TestingTasksImpl extends TestingTasks {
    * @return classpath for TeamCity's JUnit formatter or {@code null} if the formatter shouldn't be added
    */
   private List<String> createTeamCityFormatterClasspath() {
-    if (!isUnderTeamCity()) return null
+    if (!underTeamCity) return null
 
     if (context.ant.project.buildListeners.any { it.class.name.startsWith("jetbrains.buildServer.") }) {
       context.messages.info("TeamCity's BuildListener is registered in the Ant project so its formatter will be added to JUnit task automatically.")

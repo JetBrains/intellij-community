@@ -32,7 +32,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +45,6 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
 
@@ -138,6 +136,11 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
         @Override
         public String getText() {
           return text;
+        }
+
+        @Override
+        public boolean startInWriteAction() {
+          return false;
         }
 
         @Override

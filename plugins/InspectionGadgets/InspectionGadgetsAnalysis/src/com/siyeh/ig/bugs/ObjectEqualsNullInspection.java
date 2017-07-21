@@ -70,7 +70,8 @@ public class ObjectEqualsNullInspection extends BaseInspection {
       if (!MethodCallUtils.isEqualsCall(call)) {
         return;
       }
-      final PsiExpression argument = call.getArgumentList().getExpressions()[0];
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      final PsiExpression argument = args.length > 0 ? args[0] : null;
       if (!ExpressionUtils.isNullLiteral(argument)) {
         return;
       }

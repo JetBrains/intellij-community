@@ -28,6 +28,7 @@ public class JavacNameTable {
   private final SLRUCache<Name, String> myParsedNameCache;
   private final Elements myElements;
   private Name myAsterisk;
+  private Name myInit;
   private TypeElement myStreamElement;
   private TypeElement myIteratorElement;
   private TypeElement myIterableElement;
@@ -50,15 +51,27 @@ public class JavacNameTable {
 
   @NotNull
   public String parseBinaryName(Element element) {
-    return parseName(myElements.getBinaryName((TypeElement)element));
+    try {
+      return parseName(myElements.getBinaryName((TypeElement)element));
+    }
+    catch (ClassCastException e) {
+      System.out.println(123);
+      throw e;
+    }
   }
 
-  @NotNull
-  public Name getAsterisk() {
+  public boolean isAsterisk(Name name) {
     if (myAsterisk == null) {
       myAsterisk = myElements.getName("*");
     }
-    return myAsterisk;
+    return myAsterisk == name;
+  }
+
+  public boolean isInit(Name name) {
+    if (myInit == null) {
+      myInit = myElements.getName("<init>");
+    }
+    return myInit == name;
   }
 
   @Nullable("if the type is not loaded to javac name table")

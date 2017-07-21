@@ -85,5 +85,5 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
     if (leftType != null && rightType != null) checkTypes(expression.getMethodExpression(), leftType, rightType);
   }
 
-  abstract void checkTypes(PsiReferenceExpression expression, PsiType leftType, PsiType rightType);
+  abstract void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType);
 }

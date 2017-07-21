@@ -45,11 +45,25 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
     return true;
   }
 
-  private boolean outOfCodeBlock(@Nullable PsiElement element) {
+  private boolean _outOfCodeBlock(@Nullable PsiElement element) {
     if (element == null || !element.isValid()) return false;
     if (element instanceof PsiDirectory) return false; // handled by PsiModificationTrackerImpl#treeChanged()
     if (element instanceof PsiFileSystemItem) return isOutOfCodeBlock((PsiFileSystemItem)element);
     return isOutOfCodeBlock(element);
+  }
+
+  /**
+   * @param element can be invalid
+   * @return true if the changed element's subtree contains "important" elements (e.g. out-of-code-block ones, or classes)  
+   */
+  protected boolean containsStructuralElements(@NotNull PsiElement element) {
+    return false;
+  }
+
+  private boolean _containsStructuralElements(@Nullable PsiElement element) {
+    if (element == null) return false;
+    if (element instanceof PsiDirectory) return true;
+    return containsStructuralElements(element);
   }
 
   @Override
@@ -81,23 +95,24 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
 
       case BEFORE_CHILDREN_CHANGE:
       case CHILDREN_CHANGED:
-        return !event.isGenericChange() && outOfCodeBlock(event.getParent());
+        return !event.isGenericChange() && (_outOfCodeBlock(event.getParent()) ||
+                                            _containsStructuralElements(event.getParent()));
 
       case CHILD_ADDED:
       case CHILD_REMOVED:
       case CHILD_REPLACED:
-        return outOfCodeBlock(event.getParent()) ||
-               outOfCodeBlock(event.getChild()) ||
-               outOfCodeBlock(event.getOldChild()) ||
-               outOfCodeBlock(event.getNewChild());
+        return _outOfCodeBlock(event.getParent()) ||
+               _containsStructuralElements(event.getChild()) ||
+               _containsStructuralElements(event.getOldChild()) ||
+               _containsStructuralElements(event.getNewChild());
 
       case PROPERTY_CHANGED:
         return true;
 
       case CHILD_MOVED:
-        return outOfCodeBlock(event.getOldParent()) ||
-               outOfCodeBlock(event.getNewParent()) ||
-               outOfCodeBlock(event.getChild());
+        return _outOfCodeBlock(event.getOldParent()) ||
+               _outOfCodeBlock(event.getNewParent()) ||
+               _containsStructuralElements(event.getChild());
 
       default:
         return true;

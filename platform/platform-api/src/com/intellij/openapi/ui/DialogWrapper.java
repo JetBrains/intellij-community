@@ -970,7 +970,7 @@ public abstract class DialogWrapper {
     SwingUtilities.invokeLater(() -> {
       for (WindowListener listener : window.getWindowListeners()) {
         if (listener.getClass().getName().startsWith("com.intellij.")) {
-          LOG.warn("Stale listener: " + listener);
+          //LOG.warn("Stale listener: " + listener);
           window.removeWindowListener(listener);
         }
       }

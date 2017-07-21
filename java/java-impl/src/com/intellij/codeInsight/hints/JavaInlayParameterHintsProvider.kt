@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
@@ -30,7 +31,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   
   override fun getHintInfo(element: PsiElement): MethodInfo? {
     if (element is PsiCallExpression) {
-      val resolvedElement = element.resolveMethodGenerics().element
+      val resolvedElement = CompletionMemory.getChosenMethod(element) ?: element.resolveMethodGenerics ().element
       if (resolvedElement is PsiMethod) {
         return getMethodInfo(resolvedElement)
       }
@@ -43,6 +44,10 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       return JavaInlayHintsProvider.hints(element).toList()
     }
     return emptyList()
+  }
+
+  override fun canShowHintsWhenDisabled(): Boolean {
+    return true
   }
 
   fun getMethodInfo(method: PsiMethod): MethodInfo? {

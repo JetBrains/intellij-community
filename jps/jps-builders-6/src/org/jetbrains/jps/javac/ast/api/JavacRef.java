@@ -153,7 +153,7 @@ public interface JavacRef {
     public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache) {
       if (qualifier != null) {
         TypeMirror type = qualifier.asType();
-        if (type == null || type.getKind() == TypeKind.NONE || type.getKind() == TypeKind.OTHER) {
+        if (!isValidType(type)) {
           return null;
         }
       }
@@ -161,9 +161,11 @@ public interface JavacRef {
         return new JavacElementClassImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof VariableElement) {
+        if (qualifier == null && !checkEnclosingElement(element)) return null;
         return new JavacElementFieldImpl(element, qualifier, nameTableCache);
       }
       else if (element instanceof ExecutableElement) {
+        if (qualifier == null && !checkEnclosingElement(element)) return null;
         return new JavacElementMethodImpl(element, qualifier, nameTableCache);
       }
       else if (element == null || element.getKind() == ElementKind.OTHER || element.getKind() == ElementKind.TYPE_PARAMETER) {
@@ -190,6 +192,20 @@ public interface JavacRef {
         hashCode += myQualifier.hashCode();
       }
       return hashCode;
+    }
+
+    private static boolean checkEnclosingElement(Element element) {
+      Element enclosingElement = element.getEnclosingElement();
+      if (enclosingElement == null) return false;
+      TypeMirror type = enclosingElement.asType();
+      if (!isValidType(type)) {
+        return false;
+      }
+      return true;
+    }
+
+    private static boolean isValidType(TypeMirror type) {
+      return type != null && type.getKind() != TypeKind.NONE && type.getKind() != TypeKind.OTHER;
     }
   }
 

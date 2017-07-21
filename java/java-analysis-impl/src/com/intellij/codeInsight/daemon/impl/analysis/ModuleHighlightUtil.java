@@ -46,14 +46,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.function.Function;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 
 public class ModuleHighlightUtil {
+  private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
+
   @Nullable
   static PsiJavaModule getModuleDescriptor(@NotNull PsiFileSystemItem fsItem) {
     VirtualFile file = fsItem.getVirtualFile();
@@ -66,7 +73,10 @@ public class ModuleHighlightUtil {
     if ((root = index.getClassRootForFile(file)) != null) {
       VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
       if (descriptorFile == null) {
-        descriptorFile = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+        VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+        if (alt != null && isMultiReleaseJar(root)) {
+          descriptorFile = alt;
+        }
       }
       if (descriptorFile != null) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
@@ -101,6 +111,20 @@ public class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  private static boolean isMultiReleaseJar(VirtualFile root) {
+    if (root.getFileSystem() instanceof JarFileSystem) {
+      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifest != null) {
+        try (InputStream stream = manifest.getInputStream()) {
+          return Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(MULTI_RELEASE));
+        }
+        catch (IOException ignored) { }
+      }
+    }
+
+    return false;
   }
 
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {

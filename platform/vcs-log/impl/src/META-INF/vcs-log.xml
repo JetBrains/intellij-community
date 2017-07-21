@@ -9,6 +9,8 @@
     <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
 
+    <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
+
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
@@ -123,7 +125,6 @@
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal.Before"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>
@@ -177,7 +178,6 @@
     <group id="Log.FileHistory.KeymapGroup" popup="false">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Diff.ShowDiff"/>
-      <reference id="Vcs.ShowDiffWithLocal.Before"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <reference id="Vcs.Log.GetVersion"/>

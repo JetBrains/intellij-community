@@ -197,6 +197,7 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.ShortcutsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.ActionsCollector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
                         serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
@@ -308,6 +309,7 @@
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
+    <customFileDropHandler implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
@@ -380,6 +382,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ShortcutsCollector$ShortcutUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ActionsCollector$ActionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>

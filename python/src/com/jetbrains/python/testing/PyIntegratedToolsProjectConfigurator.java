@@ -33,7 +33,6 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -124,13 +123,11 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
       if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (packages != null) {
-          final boolean nose = PyPackageUtil.findPackage(packages, PyNames.NOSE_TEST) != null;
-          final boolean pytest = PyPackageUtil.findPackage(packages, PyNames.PY_TEST) != null;
-          if (nose) {
-            testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-          }
-          else if (pytest) {
-            testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+          for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+            if (PyPackageUtil.findPackage(packages, framework) != null) {
+              testRunner = PyTestFrameworkService.getSdkReadableNameByFramework(framework);
+              break;
+            }
           }
           if (!testRunner.isEmpty()) {
             LOG.debug("Test runner '" + testRunner + "' was detected from SDK " + sdk);
@@ -165,11 +162,10 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
       final PyExpression argumentValue = setupCall.getKeywordArgument(argumentName);
       if (argumentValue instanceof PyStringLiteralExpression) {
         final String stringValue = ((PyStringLiteralExpression)argumentValue).getStringValue();
-        if (stringValue.contains(PyNames.NOSE_TEST)) {
-          return PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-        }
-        if (stringValue.contains(PyNames.PY_TEST)) {
-          return PythonTestConfigurationsModel.PY_TEST_NAME;
+        for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+          if (stringValue.contains(framework)) {
+            return PyTestFrameworkService.getSdkReadableNameByFramework(framework);
+          }
         }
       }
     }
@@ -207,11 +203,10 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
     if (psiFile instanceof PyFile) {
       final List<PyImportElement> importTargets = ((PyFile)psiFile).getImportTargets();
       for (PyImportElement importElement : importTargets) {
-        if (PyNames.NOSE_TEST.equals(importElement.getVisibleName())) {
-          return PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-        }
-        if (PyNames.PY_TEST.equals(importElement.getVisibleName())) {
-          return PythonTestConfigurationsModel.PY_TEST_NAME;
+        for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+          if (framework.equals(importElement.getVisibleName())) {
+            return PyTestFrameworkService.getSdkReadableNameByFramework(framework);
+          }
         }
       }
     }

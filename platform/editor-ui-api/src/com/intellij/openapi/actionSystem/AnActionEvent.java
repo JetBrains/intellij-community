@@ -240,11 +240,11 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myPlace;
   }
 
-  public boolean isActionToolbar() {
+  public boolean isFromActionToolbar() {
     return myIsActionToolbar;
   }
 
-  public boolean isContextMenu() {
+  public boolean isFromContextMenu() {
     return myIsContextMenuAction;
   }
 

@@ -1817,7 +1817,7 @@
                      implementationClass="com.siyeh.ig.numeric.BigDecimalMethodWithoutRoundingCalledInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CachedNumberConstructorCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="cached.number.constructor.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.numeric.CachedNumberConstructorCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NumericCastThatLosesPrecision" shortName="CastThatLosesPrecision"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="cast.that.loses.precision.display.name"

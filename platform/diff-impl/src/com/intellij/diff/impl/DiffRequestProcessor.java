@@ -43,6 +43,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAware;
@@ -297,7 +298,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
     catch (Throwable e) {
       LOG.error(e);
-      myState = new ErrorState(new ErrorDiffRequest("Error: can't show diff"), getFittedTool());
+      myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool());
       myState.init();
     }
 

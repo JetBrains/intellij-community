@@ -21,7 +21,6 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,22 +45,25 @@ abstract class BaseStreamApiMigration {
     return myShouldWarn;
   }
 
-  static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
-                                               PsiVariable var,
-                                               String streamText,
-                                               PsiType expressionType) {
+  static PsiElement replaceWithOperation(PsiLoopStatement loopStatement,
+                                         PsiVariable var,
+                                         String streamText,
+                                         PsiType expressionType,
+                                         OperationReductionMigration.ReductionOperation reductionOperation) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
     InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
-    if (status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
+    if (status != InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
-      if (ExpressionUtils.isZero(initializer)) {
+      if (initializer != null && reductionOperation.getInitializerExpressionRestriction().test(initializer)) {
         PsiType type = var.getType();
-        String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
+        String replacement = (type.isAssignableFrom(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
         return replaceInitializer(loopStatement, var, initializer, replacement, status);
       }
     }
-    return loopStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + streamText + ";", loopStatement));
+    return loopStatement
+      .replace(elementFactory.createStatementFromText(var.getName() + reductionOperation.getOperation() + "=" + streamText + ";",
+                                                      loopStatement));
   }
 
   static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
@@ -71,12 +73,13 @@ abstract class BaseStreamApiMigration {
                                        InitializerUsageStatus status) {
     Project project = loopStatement.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    if(status == ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE) {
+    if (status == ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE) {
       initializer.replace(elementFactory.createExpressionFromText(replacement, loopStatement));
       removeLoop(loopStatement);
       return var;
-    } else {
-      if(status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
+    }
+    else {
+      if (status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
         initializer.delete();
       }
       return

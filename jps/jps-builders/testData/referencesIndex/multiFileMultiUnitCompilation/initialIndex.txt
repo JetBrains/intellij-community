@@ -7,24 +7,23 @@ java.lang.Object -> Foo0
 
 Backward References:
 Bar0 in Bar Boo Foo occurrences = 4
-Bar0.<init>(0) in Bar Boo Foo occurrences = 3
+Bar0.<init>(0) in Foo occurrences = 1
 Bar0.mm(0) in Bar Foo occurrences = 2
 Bar1 in Bar Boo occurrences = 3
-Bar1.<init>(0) in Bar Boo occurrences = 2
+Bar1.<init>(0) in Boo occurrences = 1
 Bar1.mm(0) in Bar Boo occurrences = 2
 Boo0 in Bar Boo Foo occurrences = 4
-Boo0.<init>(0) in Bar Boo Foo occurrences = 3
+Boo0.<init>(0) in Foo occurrences = 1
 Boo0.mm(0) in Boo Foo occurrences = 2
 Boo1 in Bar Boo occurrences = 3
-Boo1.<init>(0) in Bar Boo occurrences = 2
+Boo1.<init>(0) in Bar occurrences = 1
 Boo1.mm(0) in Bar Boo occurrences = 2
 Foo0 in Bar Foo occurrences = 5
-Foo0.<init>(0) in Bar Foo occurrences = 4
+Foo0.<init>(0) in Bar occurrences = 1
 Foo0.mm(0) in Bar Foo occurrences = 2
 Foo1 in Boo Foo occurrences = 4
-Foo1.<init>(0) in Boo Foo occurrences = 3
+Foo1.<init>(0) in Boo occurrences = 1
 Foo1.mm(0) in Boo Foo occurrences = 2
-java.lang.Object.<init>(0) in Foo occurrences = 1
 
 Class Definitions:
 Bar0 in Bar

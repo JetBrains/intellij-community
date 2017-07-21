@@ -138,6 +138,12 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
+  public void setToolbarBefore(boolean before) {
+    for (final GridCellImpl cell : myPlaceInGrid2Cell.values()) {
+      cell.setToolbarBefore(before);
+    }
+  }
+
   @Override
   public GridCellImpl getCellFor(final Content content) {
     // check if the content is already in some cell

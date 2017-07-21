@@ -31,6 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -44,10 +46,9 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -139,7 +140,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.menu.actions.found");
+    return IdeBundle.message("label.no.enabled.actions.found");
   }
 
   @Override
@@ -414,62 +415,28 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  public SortedSet<Object> filterAndSortItems(@NotNull Set<Object> elements, boolean includeDisabled) {
-    List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
-    if (!toUpdate.isEmpty()) {
-      updateActions(toUpdate);
-    }
-
+  public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
-    if (!includeDisabled) {
-      for (Object o : elements) {
-        if (o instanceof MatchedValue) {
-          Comparable v = ((MatchedValue)o).value;
-          if (!(v instanceof ActionWrapper) || ((ActionWrapper)v).isAvailable()) {
-            objects.add(o);
-          }
-        }
-        else {
-          objects.add(o);
-        }
-      }
-    }
-    else {
-      objects.addAll(elements);
-    }
+    objects.addAll(elements);
     return objects;
   }
 
-  @NotNull
-  private static List<ActionWrapper> getActionsToUpdate(@NotNull Set<Object> elements) {
-    List<ActionWrapper> toUpdate = new ArrayList<>();
-    for (Object element : elements) {
-      if (element instanceof MatchedValue) {
-        Comparable value = ((MatchedValue)element).value;
-        if (value instanceof ActionWrapper && !((ActionWrapper)value).hasPresentation()) {
-          toUpdate.add((ActionWrapper)value);
-        }
-      }
-    }
-    return toUpdate;
-  }
-
-  private void updateActions(List<ActionWrapper> toUpdate) {
-    TransferToEDTQueue<ActionWrapper> queue = new TransferToEDTQueue<ActionWrapper>("goto action", aw -> {
-      aw.getPresentation();
-      return true;
-    }, Conditions.FALSE, 50) {
-      @Override
-      protected void schedule(@NotNull Runnable updateRunnable) {
-        ApplicationManager.getApplication().invokeLater(updateRunnable, myModality);
-      }
-    };
+  void updateActions(List<ActionWrapper> toUpdate) {
+    Semaphore semaphore = new Semaphore(toUpdate.size());
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     for (ActionWrapper wrapper : toUpdate) {
-      queue.offer(wrapper);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        try {
+          wrapper.getPresentation();
+        }
+        finally {
+          semaphore.up();
+        }
+      }, myModality, __ -> indicator != null && indicator.isCanceled());
     }
-    while (queue.size() > 0) {
+
+    while (!semaphore.waitFor(10)) {
       ProgressManager.checkCanceled();
-      TimeoutUtil.sleep(50);
     }
   }
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.ConfigurationException;
@@ -88,6 +89,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private boolean myShowsPreviewHighlighters;
   private final CodeStyleSettings myCurrentSettings;
   private final Language myDefaultLanguage;
+  private Document myDocumentBeforeChanges;
   
   protected CodeStyleAbstractPanel(@NotNull CodeStyleSettings settings) {
     this(null, null, settings);
@@ -259,23 +261,31 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
+    CodeStyleSettings clone = mySettings.clone();
+    clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
+    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
+    try {
+      CodeStyleManager.getInstance(project).reformat(psiFile);
+    }
+    finally {
+      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    }
+    return getDocumentBeforeChanges(project, psiFile);
+  }
+
+  private Document getDocumentBeforeChanges(@NotNull Project project, @NotNull PsiFile file) {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     if (documentManager != null) {
-      Document document = documentManager.getDocument(psiFile);
-      if (document != null) {
-        CodeStyleSettings clone = mySettings.clone();
-        clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-        try {
-          CodeStyleManager.getInstance(project).reformat(psiFile);
-        }
-        finally {
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-        }
-        return document;
-      }
+      Document document = documentManager.getDocument(file);
+      if (document != null) return document;
     }
-    return null;
+    if (myDocumentBeforeChanges == null) {
+      myDocumentBeforeChanges = new DocumentImpl(file.getText());
+    }
+    else {
+      myDocumentBeforeChanges.replaceString(0, myDocumentBeforeChanges.getTextLength(), file.getText());
+    }
+    return myDocumentBeforeChanges;
   }
 
   protected void prepareForReformat(PsiFile psiFile) {
@@ -287,7 +297,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected PsiFile createFileFromText(Project project, String text) {
     return PsiFileFactory.getInstance(project).createFileFromText(
-      "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), true
+      "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), false
     );
   }
 

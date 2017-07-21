@@ -23,12 +23,10 @@ import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
@@ -137,24 +135,18 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (!(element instanceof PsiMethod)) return null;
     
     PsiMethod method = (PsiMethod)element;
+    PsiElement parent = expressionList.getParent();
     int currentNumberOfParameters = expressionList.getExpressions().length;
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
     Document document = psiDocumentManager.getCachedDocument(context.getFile());
-    if ((context.getHighlightedParameter() != null || candidates.length == 1) && 
+    if ((context.getHighlightedParameter() != null || candidates.length == 1) && parent != null &&
         document != null && psiDocumentManager.isCommitted(document) && 
         isIncompatibleParameterCount(method, currentNumberOfParameters)) {
-      List<Inlay> hints = expressionList.getUserData(JavaMethodCallElement.COMPLETION_HINTS);
-      if (hints != null) {
-        for (Inlay hint : hints) {
-          if (hint != null) ParameterHintsPresentationManager.getInstance().unpin(hint);
-        }
-        hints.clear();
-      }
+      parent.putUserData(JavaMethodCallElement.COMPLETION_HINTS, null);
     }
     
     String originalMethodName = method.getName();
     PsiQualifiedReference currentMethodReference = null;
-    PsiElement parent = expressionList.getParent();
     if (parent instanceof PsiMethodCallExpression && !method.isConstructor()) {
       currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
     }

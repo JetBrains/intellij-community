@@ -18,6 +18,8 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -58,7 +60,7 @@ public class PsiConcatenationUtil {
             PsiElement element = binaryExpression.getTokenBeforeOperand(op);
             if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
             String text = binaryExpression.getText().substring(0, element.getStartOffsetInParent());
-            PsiExpression subExpression = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
+            PsiExpression subExpression = JavaPsiFacade.getElementFactory(binaryExpression.getProject())
               .createExpressionFromText(text, binaryExpression);
             addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
           }
@@ -82,7 +84,7 @@ public class PsiConcatenationUtil {
     }
   }
 
-  private static void addFormatParameter(PsiExpression expression,
+  private static void addFormatParameter(@NotNull PsiExpression expression,
                                          StringBuilder formatString,
                                          List<PsiExpression> formatParameters, boolean printfFormat) {
     final PsiType type = expression.getType();
@@ -102,9 +104,8 @@ public class PsiConcatenationUtil {
     formatParameters.add(getBoxedArgument(expression));
   }
 
-  private static PsiExpression getBoxedArgument(PsiExpression arg) {
-    arg = unwrapExpression(arg);
-    assert arg != null;
+  private static PsiExpression getBoxedArgument(@NotNull PsiExpression arg) {
+    arg = ObjectUtils.coalesce(unwrapExpression(arg), arg);
     if (PsiUtil.isLanguageLevel5OrHigher(arg)) {
       return arg;
     }
@@ -131,7 +132,7 @@ public class PsiConcatenationUtil {
   }
 
   @Nullable
-  private static PsiExpression unwrapExpression(PsiExpression expression) {
+  private static PsiExpression unwrapExpression(@NotNull PsiExpression expression) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
         expression = ((PsiParenthesizedExpression)expression).getExpression();
@@ -140,11 +141,11 @@ public class PsiConcatenationUtil {
       if (expression instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
         final PsiType castType = typeCastExpression.getType();
+        final PsiExpression operand = typeCastExpression.getOperand();
+        if (operand == null) {
+          return expression;
+        }
         if (TypeConversionUtil.isNumericType(castType)) {
-          final PsiExpression operand = typeCastExpression.getOperand();
-          if (operand == null) {
-            return expression;
-          }
           final PsiType operandType = operand.getType();
           if (operandType == null) {
             return expression;
@@ -155,7 +156,7 @@ public class PsiConcatenationUtil {
             return expression;
           }
         }
-        expression = typeCastExpression.getOperand();
+        expression = operand;
         continue;
       }
       return expression;

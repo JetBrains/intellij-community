@@ -145,6 +145,7 @@ public abstract class GitHandler {
     myCommandLine.setWorkDirectory(myWorkingDirectory);
     if (GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(myVcs.getVersion())) {
       myCommandLine.addParameters("-c", "core.quotepath=false");
+      myCommandLine.addParameters("-c", "log.showSignature=false");
       for (String configParameter : configParameters) {
         myCommandLine.addParameters("-c", configParameter);
       }

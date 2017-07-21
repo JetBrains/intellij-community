@@ -29,6 +29,16 @@ public class IconsGeneratedSourcesTest extends LightCodeInsightFixtureTestCase {
     assertTrue(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
   }
 
+  public void testNewGeneratedFile() {
+    PsiFile file = myFixture.configureByText("MyIcons.java", "package icons;\n" +
+                                                             "/**\n" +
+                                                             " * NOTE THIS FILE IS AUTO-GENERATED\n" +
+                                                             " * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead\n" +
+                                                             " */\n" +
+                                                             "public class RubyIcons {}");
+    assertTrue(new IconsGeneratedSourcesFilter().isGeneratedSource(file.getVirtualFile(), myFixture.getProject()));
+  }
+
   public void testFilterByName() {
     PsiFile file = myFixture.configureByText("MyIconsTest.java", "package icons;\n" +
                                                                  "/**\n" +

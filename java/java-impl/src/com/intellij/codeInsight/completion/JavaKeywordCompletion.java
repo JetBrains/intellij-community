@@ -22,8 +22,10 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -144,9 +146,7 @@ public class JavaKeywordCompletion {
     }
   };
 
-  static final ElementPattern<PsiElement> START_FOR =
-    psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for")).withParents(PsiJavaCodeReferenceElement.class,
-                                                                                    PsiExpressionStatement.class, PsiForStatement.class);
+  static final PsiElementPattern<PsiElement,?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
   private static final ElementPattern<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
 
@@ -162,25 +162,6 @@ public class JavaKeywordCompletion {
     )),
     not(psiElement().afterLeaf("."))
   );
-
-  static final NotNullLazyValue<ElementPattern<PsiElement>> DECLARATION_START = new NotNullLazyValue<ElementPattern<PsiElement>>() {
-    @NotNull
-    @Override
-    protected ElementPattern<PsiElement> compute() {
-      return psiElement().andNot(psiElement().afterLeaf("@", ".")).
-        andOr(
-          psiElement().and(new FilterPattern(CLASS_BODY.getValue())).
-            andOr(
-              new FilterPattern(END_OF_BLOCK.getValue()),
-              psiElement().afterLeaf(or(
-                psiElement().inside(PsiModifierList.class),
-                psiElement().withElementType(JavaTokenType.GT).inside(PsiTypeParameterList.class)
-              ))),
-          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiMember.class),
-          psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClassLevelDeclarationStatement.class)
-        );
-    }
-  };
 
   private final CompletionParameters myParameters;
   private final JavaCompletionSession mySession;
@@ -201,7 +182,7 @@ public class JavaKeywordCompletion {
   }
 
   private static PsiElement prevSignificantLeaf(PsiElement position) {
-    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> e instanceof PsiComment).first();
+    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> PsiTreeUtil.getNonStrictParentOfType(e, PsiComment.class) != null).first();
   }
 
   private void addKeyword(LookupElement element) {
@@ -403,10 +384,7 @@ public class JavaKeywordCompletion {
   }
 
   private void addFinal() {
-    PsiStatement statement = PsiTreeUtil.getParentOfType(myPosition, PsiExpressionStatement.class);
-    if (statement == null) {
-      statement = PsiTreeUtil.getParentOfType(myPosition, PsiDeclarationStatement.class);
-    }
+    PsiStatement statement = PsiTreeUtil.getParentOfType(myPosition, PsiExpressionStatement.class, PsiDeclarationStatement.class);
     if (statement != null && statement.getTextRange().getStartOffset() == myPosition.getTextRange().getStartOffset()) {
       if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).afterLeaf("{").accepts(statement)) {
         PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(myPrevLeaf, PsiTryStatement.class);
@@ -693,7 +671,7 @@ public class JavaKeywordCompletion {
       .accepts(position);
 
     boolean typeFragment = position.getContainingFile() instanceof PsiTypeCodeFragment && PsiTreeUtil.prevVisibleLeaf(position) == null;
-    boolean declaration = DECLARATION_START.getValue().accepts(position);
+    boolean declaration = isDeclarationStart(position);
     boolean expressionPosition = isExpressionPosition(position);
     boolean inGenerics = PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class) != null;
     if (START_FOR.accepts(position) ||
@@ -718,6 +696,28 @@ public class JavaKeywordCompletion {
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
     }
+  }
+
+  static boolean isDeclarationStart(@NotNull PsiElement position) {
+    if (psiElement().afterLeaf("@", ".").accepts(position)) return false;
+
+    if (new FilterPattern(CLASS_BODY.getValue()).accepts(position)) {
+      if (new FilterPattern(END_OF_BLOCK.getValue()).accepts(position)) return true;
+      if (psiElement().afterLeaf(or(
+        psiElement().inside(PsiModifierList.class),
+        psiElement().withElementType(JavaTokenType.GT).inside(PsiTypeParameterList.class)
+      )).accepts(position)) {
+        return true;
+      }
+    }
+
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement) {
+      PsiElement typeHolder = psiApi().parents(parent.getParent()).skipWhile(Conditions.instanceOf(PsiTypeElement.class)).first();
+      return typeHolder instanceof PsiMember || typeHolder instanceof PsiClassLevelDeclarationStatement;
+    }
+
+    return false;
   }
 
   private static boolean expectsClassLiteral(PsiElement position) {
@@ -773,7 +773,7 @@ public class JavaKeywordCompletion {
 
     if (END_OF_BLOCK.getValue().isAcceptable(position, position) &&
         PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, true, PsiMember.class) != null) {
-      return true;
+      return !isForLoopMachinery(position);
     }
 
     if (psiElement().withParents(PsiReferenceExpression.class, PsiExpressionStatement.class, PsiIfStatement.class).andNot(
@@ -786,6 +786,14 @@ public class JavaKeywordCompletion {
     }
 
     return false;
+  }
+
+  private static boolean isForLoopMachinery(PsiElement position) {
+    PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiStatement.class);
+    if (statement == null) return false;
+
+    return statement instanceof PsiForStatement ||
+           statement.getParent() instanceof PsiForStatement && statement != ((PsiForStatement)statement.getParent()).getBody();
   }
 
   private LookupElement createKeyword(String keyword) {

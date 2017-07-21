@@ -651,20 +651,33 @@ public class PluginManagerCore {
     return null;
   }
 
-  @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String fileName,
                                                                 @NotNull JDOMXIncluder.PathResolver pathResolver) {
+    try (LoadingContext context = new LoadingContext()) {
+      return loadDescriptorFromJar(file, fileName, pathResolver, context);
+    }
+  }
+  
+  @Nullable
+  private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file,
+                                                                @NotNull String fileName,
+                                                                @NotNull JDOMXIncluder.PathResolver pathResolver,
+                                                                @NotNull LoadingContext context) {
     try {
       URL jarURL = URLUtil.getJarEntryURL(file, META_INF + '/' + fileName);
 
-      try (ZipFile zipFile = new ZipFile(file)) {
-        ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
-        if (entry != null) {
-          Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
-          IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
-          descriptor.readExternal(document, jarURL, pathResolver);
-          return descriptor;
-        }
+      ZipFile zipFile = context.myOpenedFiles.get(file);
+      if (zipFile == null) {
+        context.myOpenedFiles.put(file, zipFile = new ZipFile(file));
+        //getLogger().info("Looking for " + fileName + " in " + file);
+      }
+      ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
+      if (entry != null) {
+        Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
+        IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(file);
+        descriptor.readExternal(document, jarURL, pathResolver);
+        context.myLastZipFileContainingDescriptor = file;
+        return descriptor;
       }
     }
     catch (XmlSerializationException e) {
@@ -680,6 +693,27 @@ public class PluginManagerCore {
 
   @Nullable
   public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull final File file, @NotNull String fileName) {
+    try (LoadingContext context = new LoadingContext()) {
+      return loadDescriptor(file, fileName, context);
+    }
+  }
+
+  private static class LoadingContext implements AutoCloseable {
+    final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
+    File myLastZipFileContainingDescriptor;
+
+    @Override
+    public void close() {
+      for(ZipFile file:myOpenedFiles.values()) {
+        try {
+          file.close();
+        } catch (IOException ignore) {}
+      }
+    }
+  }
+  
+  @Nullable
+  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull final File file, @NotNull String fileName, @NotNull LoadingContext context) {
     IdeaPluginDescriptorImpl descriptor = null;
 
     final boolean directory = file.isDirectory();
@@ -695,17 +729,13 @@ public class PluginManagerCore {
         if (files == null || files.length == 0) {
           return null;
         }
-        Arrays.sort(files, (o1, o2) -> {
-          if (o2.getName().startsWith(file.getName())) return Integer.MAX_VALUE;
-          if (o1.getName().startsWith(file.getName())) return -Integer.MAX_VALUE;
-          if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
-          if (o1.getName().startsWith("resources")) return Integer.MAX_VALUE;
-          return 0;
-        });
+ 
+        putMoreLikelyPluginJarsFirst(file, files);
+        
         PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
         for (final File f : files) {
           if (FileUtil.isJarOrZip(f)) {
-            descriptor = loadDescriptorFromJar(f, fileName, pathResolver);
+            descriptor = loadDescriptorFromJar(f, fileName, pathResolver, context);
             if (descriptor != null) {
               descriptor.setPath(file);
               break;
@@ -726,12 +756,18 @@ public class PluginManagerCore {
       }
     }
     else if (StringUtil.endsWithIgnoreCase(file.getName(), ".jar") && file.exists()) {
-      descriptor = loadDescriptorFromJar(file, fileName, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+      descriptor = loadDescriptorFromJar(file, fileName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context);
     }
 
     if (descriptor != null) {
       resolveOptionalDescriptors(fileName, descriptor, optionalDescriptorName -> {
-        IdeaPluginDescriptorImpl optionalDescriptor = loadDescriptor(file, optionalDescriptorName);
+        IdeaPluginDescriptorImpl optionalDescriptor = null;
+        if (context.myLastZipFileContainingDescriptor != null) { // try last file that had the descriptor that worked
+          optionalDescriptor = loadDescriptor(context.myLastZipFileContainingDescriptor, optionalDescriptorName, context);
+        }
+        if (optionalDescriptor == null) {
+          optionalDescriptor = loadDescriptor(file, optionalDescriptorName, context);
+        }
         if (optionalDescriptor == null && directory) {
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optionalDescriptorName);
           if (resource != null) {
@@ -743,6 +779,57 @@ public class PluginManagerCore {
     }
 
     return descriptor;
+  }
+
+  /*
+  Sort the files heuristically to load the plugin jar containing plugin descriptors without extra ZipFile accesses
+  File name preference: 
+  a) last order for files with resources in name, like resources_en.jar
+  b) last order for files that have -digit suffix is the name e.g. completion-ranking.jar is before gson-2.8.0.jar or junit-m5.jar
+  c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before allopen-XXX.jar
+  d) shorter name, e.g. android.jar is before android-base-common.jar
+  */
+  private static void putMoreLikelyPluginJarsFirst(File pluginDir, File[] filesInLibUnderPluginDir) {
+    String pluginDirName = pluginDir.getName();
+
+    Arrays.sort(filesInLibUnderPluginDir, (o1, o2) -> {
+      String o2Name = o2.getName();
+      String o1Name = o1.getName();
+
+      boolean o2StartsWithResources = o2Name.startsWith("resources");
+      boolean o1StartsWithResources = o1Name.startsWith("resources");
+      if (o2StartsWithResources != o1StartsWithResources) {
+        return o2StartsWithResources ? -1 : 1;
+      }
+
+      boolean o2IsVersioned = fileNameIsLikeVersionedLibraryName(o2Name);
+      boolean o1IsVersioned = fileNameIsLikeVersionedLibraryName(o1Name);
+      if (o2IsVersioned != o1IsVersioned) {
+        return o2IsVersioned ? -1 : 1;
+      }
+      
+      boolean o2StartsWithNeededName = StringUtil.startsWithIgnoreCase(o2Name, pluginDirName);
+      boolean o1StartsWithNeededName = StringUtil.startsWithIgnoreCase(o1Name, pluginDirName);
+      if (o2StartsWithNeededName != o1StartsWithNeededName) {
+        return o2StartsWithNeededName ? 1 : -1;
+      }
+
+      
+      return o1Name.length() - o2Name.length();
+    });
+  }
+
+  private static boolean fileNameIsLikeVersionedLibraryName(String name) {
+    int i = name.lastIndexOf('-');
+    if (i == -1) return false;
+    if (i + 1 < name.length()) {
+      char c = name.charAt(i + 1);
+      if (Character.isDigit(c)) return true;
+      if ((c == 'm' || c == 'M') && i + 2 < name.length() && Character.isDigit(name.charAt(i + 2))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // used in upsource
@@ -780,6 +867,8 @@ public class PluginManagerCore {
     final File[] files = pluginsHome.listFiles();
     if (files != null) {
       int i = result.size();
+      Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+      
       for (File file : files) {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
@@ -789,7 +878,7 @@ public class PluginManagerCore {
         if (progress != null) {
           progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
         }
-        int oldIndex = result.indexOf(descriptor);
+        int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
         if (oldIndex >= 0) {
           final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
           if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
@@ -913,10 +1002,12 @@ public class PluginManagerCore {
       return;
     }
 
+    Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
+    
     int i = 0;
     for (URL url : urls) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url);
-      if (descriptor != null && !result.contains(descriptor)) {
+      if (descriptor != null && existingResults.add(descriptor)) {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {

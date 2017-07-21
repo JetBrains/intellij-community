@@ -17,6 +17,7 @@ package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -84,7 +85,10 @@ public class UnusedImportInspection extends BaseInspection {
         annotationList.accept(visitor);
       }
       for (PsiImportStatementBase unusedImportStatement : visitor.getUnusedImportStatements()) {
-        registerError(unusedImportStatement);
+        if (unusedImportStatement.getImportReference() != null && 
+            !(PsiTreeUtil.skipWhitespacesForward(unusedImportStatement) instanceof PsiErrorElement)) {
+          registerError(unusedImportStatement);
+        }
       }
     }
   }

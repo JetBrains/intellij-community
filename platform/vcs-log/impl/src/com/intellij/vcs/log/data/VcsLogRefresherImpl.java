@@ -245,7 +245,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
             loadLogAndRefs(roots, currentRefs, commitCount);
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
-            List<GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
+            List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
             if (joinedFullLog == null) {
               commitCount *= 5;
             }
@@ -302,10 +302,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     }
 
     @Nullable
-    private List<GraphCommit<Integer>> join(@NotNull List<? extends GraphCommit<Integer>> recentCommits,
-                                            @NotNull List<GraphCommit<Integer>> fullLog,
-                                            @NotNull Map<VirtualFile, CompressedRefs> previousRefs,
-                                            @NotNull Map<VirtualFile, CompressedRefs> newRefs) {
+    private List<? extends GraphCommit<Integer>> join(@NotNull List<? extends GraphCommit<Integer>> recentCommits,
+                                                      @NotNull List<GraphCommit<Integer>> fullLog,
+                                                      @NotNull Map<VirtualFile, CompressedRefs> previousRefs,
+                                                      @NotNull Map<VirtualFile, CompressedRefs> newRefs) {
+      if (fullLog.isEmpty()) return recentCommits;
+
       StopWatch sw = StopWatch.start("joining new commits");
       Collection<Integer> prevRefIndices =
         previousRefs.values().stream().flatMap(refs -> refs.getCommits().stream()).collect(Collectors.toSet());

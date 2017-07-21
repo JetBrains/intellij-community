@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,25 @@ import com.intellij.lang.LanguageExtension
 
 object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
 
-
+/**
+ * If you are just implementing parameter hints, only three options are relevant to you: text, offset, isShowOnlyIfExistedBefore. The rest
+ * can be used in completion hints.
+ *
+ * @property text hints text to show
+ * @property offset offset in document where hint should be shown
+ * @property isShowOnlyIfExistedBefore defines if hint should be shown only if it was present in editor before update
+ *
+ * @property isFilterByBlacklist allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
+ * @property showAfterCaret todo @batrdmi
+ */
 class InlayInfo(val text: String,
                 val offset: Int,
                 val isShowOnlyIfExistedBefore: Boolean,
-                val isFilterByBlacklist: Boolean) {
+                val isFilterByBlacklist: Boolean,
+                val showAfterCaret: Boolean) {
 
-  constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean) : this(text, offset, isShowOnlyIfExistedBefore, true)
-  constructor(text: String, offset: Int) : this(text, offset, false, true)
+  constructor(text: String, offset: Int, isShowOnlyIfExistedBefore: Boolean) : this(text, offset, isShowOnlyIfExistedBefore, true, false)
+  constructor(text: String, offset: Int) : this(text, offset, false, true, false)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

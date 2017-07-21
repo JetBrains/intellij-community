@@ -73,6 +73,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
     else {
       Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       update(e, content != null && !RunContentManagerImpl.isTerminated(content));
+      e.getPresentation().setEnabled(content != null);
     }
   }
 

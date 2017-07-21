@@ -81,6 +81,12 @@ public class TestsPattern extends TestPackage {
     return super.createSearchingForTestsTask();
   }
 
+  @Override
+  protected boolean acceptClassName(String className) {
+    String pattern = getConfiguration().getPersistentData().getPatternPresentation();
+    return TestClassFilter.getClassNamePredicate(pattern).test(className);
+  }
+
   private PsiClass getTestClass(Project project, String className) {
     SourceScope sourceScope = getSourceScope();
     GlobalSearchScope searchScope = sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);

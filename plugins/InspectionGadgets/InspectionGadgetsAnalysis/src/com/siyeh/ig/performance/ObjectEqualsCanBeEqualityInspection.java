@@ -77,7 +77,11 @@ public class ObjectEqualsCanBeEqualityInspection extends BaseInspection {
       if (qualifier == null) {
         return;
       }
-      final PsiExpression argument = expression.getArgumentList().getExpressions()[0];
+      final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
+      if (expressions.length != 1) {
+        return;
+      }
+      final PsiExpression argument = expressions[0];
       if (!TypeConversionUtil.isBinaryOperatorApplicable(JavaTokenType.EQEQ, qualifier, argument, false)) {
         // replacing with == or != will generate uncompilable code
         return;

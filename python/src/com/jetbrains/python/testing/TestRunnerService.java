@@ -32,8 +32,9 @@ public class TestRunnerService implements PersistentStateComponent<TestRunnerSer
 
   public TestRunnerService() {
     myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME);
-    myConfigurations.add(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME);
-    myConfigurations.add(PythonTestConfigurationsModel.PY_TEST_NAME);
+    for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
+      myConfigurations.add(PyTestFrameworkService.getSdkReadableNameByFramework(framework));
+    }
   }
 
   public List<String> getConfigurations() {

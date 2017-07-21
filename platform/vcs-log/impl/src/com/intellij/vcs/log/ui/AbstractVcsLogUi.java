@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -197,6 +198,16 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
+  }
+
+  protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
+                                                  new NamedRunnable(linkText) {
+                                                    @Override
+                                                    public void run() {
+                                                      onClick.run();
+                                                    }
+                                                  });
   }
 
   @Override

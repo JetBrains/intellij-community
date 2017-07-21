@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -27,7 +28,25 @@ import com.intellij.psi.util.TypeConversionUtil
 object JavaInlayHintsProvider {
 
   fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
-    if (JavaMethodCallElement.hasCompletionHints(callExpression)) return emptySet()
+    if (JavaMethodCallElement.showCompletionHints(callExpression)) {
+      val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
+      
+      val params = method.parameterList.parameters
+      val arguments = callExpression.argumentList?.expressions ?: emptyArray()
+      
+      return  params.mapIndexedNotNull { i, parameter -> 
+        val paramName = parameter.name ?: return@mapIndexedNotNull null
+        val varargHint = parameter.type is PsiEllipsisType && params.size > 1 && 
+                         (arguments.size == params.size - 1 || params.size == 2 && arguments.isEmpty())
+        val paramToShow = (if (varargHint) ", " else "") + paramName
+        val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
+                        else if (varargHint && i <= arguments.size) inlayOffset(arguments[i - 1], true)
+                        else (callExpression.argumentList?.textOffset?:return@mapIndexedNotNull null) + 1
+        InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
+      }.toSet()
+    }
+    
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints()) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
@@ -163,12 +182,14 @@ private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, sh
   return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
 }
 
-fun inlayOffset(callArgument: PsiExpression): Int {
+fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
+
+fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   if (callArgument.textRange.isEmpty) {
     val next = callArgument.nextSibling as? PsiWhiteSpace
     if (next != null) return next.textRange.endOffset
   }
-  return callArgument.textRange.startOffset
+  return if (atEnd) callArgument.textRange.endOffset else callArgument.textRange.startOffset
 }
 
 private fun isUnclearExpression(callArgument: PsiElement): Boolean {

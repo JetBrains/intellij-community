@@ -27,7 +27,7 @@ import java.util.function.Predicate
 abstract class TestingTasks {
   /**
    * @param defaultMainModule main module to be used instead of {@link TestingOptions#mainModule} if it isn't specified
-   * @param excludedSourceDirectory if not {@code null} tests from modules which sources are located under this directory will be skipped
+   * @param rootExcludeCondition if not {@code null} tests from modules which sources are fit this predicate will be skipped
    */
   abstract void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition)
 

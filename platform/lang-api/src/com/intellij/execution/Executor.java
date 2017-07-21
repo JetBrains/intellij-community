@@ -88,6 +88,6 @@ public abstract class Executor {
   public abstract String getHelpId();
 
   public String getStartActionText(String configurationName) {
-    return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + StringUtil.first(configurationName, 30, true) + "'");
+    return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + RunManager.getShortenName(configurationName) + "'");
   }
 }

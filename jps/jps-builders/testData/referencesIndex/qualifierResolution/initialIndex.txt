@@ -4,14 +4,10 @@ java.util.ArrayList -> ArrayListImpl
 
 Backward References:
 ArrayListImpl in Foo occurrences = 2
-ArrayListImpl.<init>(0) in Foo occurrences = 1
 ArrayListImpl.size(0) in Foo occurrences = 1
 Foo in Foo occurrences = 1
-Foo.<init>(0) in Foo occurrences = 1
 Foo.m(1) in Foo occurrences = 1
-java.lang.Object.<init>(0) in Foo occurrences = 1
 java.util.ArrayList in Foo occurrences = 1
-java.util.ArrayList.<init>(0) in Foo occurrences = 1
 
 Class Definitions:
 ArrayListImpl in Foo

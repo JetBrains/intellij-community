@@ -34,7 +34,6 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -812,7 +811,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   void startCompletion(final CompletionInitializationContext initContext) {
     boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
     myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
-    myStrategy.startThread(ProgressWrapper.wrap(this), ()->ReadAction.run(this::scheduleAdvertising));
+    myStrategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
     final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
@@ -830,7 +829,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
-    myStrategy.startThread(this, ()->ReadAction.run(()->new CalculateItems().run()));
+    myStrategy.startThread(this, new CalculateItems());
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {

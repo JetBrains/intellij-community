@@ -16,7 +16,6 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -2005,9 +2004,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   private static void doTest(final String expectedType, final PyExpression expr, final TypeEvalContext context) {
-    PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals(expectedType, actualType);
+    assertType(expectedType, expr, context);
   }
 
   private void doTest(@NotNull final String expectedType, @NotNull final String text) {
@@ -2017,9 +2014,7 @@ public class PyTypeTest extends PyTestCase {
   private static void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
     assertNotNull(expr);
     for (TypeEvalContext context : getTypeEvalContexts(expr)) {
-      final PyType actual = context.getType(expr);
-      final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-      assertEquals("Failed in " + context, expectedType, actualType);
+      assertType(expectedType, expr, context);
     }
   }
 
