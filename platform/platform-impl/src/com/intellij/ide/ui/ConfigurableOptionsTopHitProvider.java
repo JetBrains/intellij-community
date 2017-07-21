@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -140,7 +141,7 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
     return Collections.emptyList();
   }
 
-  private static final class Option extends BooleanOptionDescription {
+  private static final class Option extends BooleanOptionDescription implements Disposable {
     private final Configurable myConfigurable;
     private final JCheckBox myCheckBox;
 
@@ -148,6 +149,11 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
       super(option, ConfigurableVisitor.ByID.getID(configurable));
       myConfigurable = configurable;
       myCheckBox = checkbox;
+    }
+
+    @Override
+    public void dispose() {
+      myConfigurable.disposeUIResources();
     }
 
     @Override
