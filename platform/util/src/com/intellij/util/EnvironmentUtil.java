@@ -22,7 +22,6 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -56,7 +55,9 @@ public class EnvironmentUtil {
   private static final Future<Map<String, String>> ourEnvGetter;
 
   static {
-    if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
+    if (SystemInfo.isMac &&
+        "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
+        SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
