@@ -28,7 +28,7 @@ import com.intellij.psi.util.TypeConversionUtil
 object JavaInlayHintsProvider {
 
   fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
-    if (JavaMethodCallElement.showCompletionHints(callExpression)) {
+    if (JavaMethodCallElement.isCompletionMode(callExpression)) {
       val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
       
       val params = method.parameterList.parameters
@@ -46,7 +46,7 @@ object JavaInlayHintsProvider {
       }.toSet()
     }
     
-    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints()) return emptySet()
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)

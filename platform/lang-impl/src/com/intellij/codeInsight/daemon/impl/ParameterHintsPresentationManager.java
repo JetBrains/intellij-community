@@ -90,6 +90,22 @@ public class ParameterHintsPresentationManager implements Disposable {
     updateRenderer(editor, hint, newText);
   }
 
+  public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.highlighted;
+    if (highlighted != oldValue) {
+      renderer.highlighted = highlighted;
+      hint.repaint();
+    }
+  }
+
+  public boolean isHighlighted(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.highlighted;
+  }
+
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
     renderer.update(editor, newText, true);
@@ -166,6 +182,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int startWidth;
     private int steps;
     private int step;
+    private boolean highlighted;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
       updateState(editor, text, animated);
@@ -215,7 +232,7 @@ public class ParameterHintsPresentationManager implements Disposable {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
-          Color backgroundColor = attributes.getBackgroundColor();
+          Color backgroundColor = getBackgroundColor(attributes);
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
             GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
@@ -224,7 +241,7 @@ public class ParameterHintsPresentationManager implements Disposable {
             g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
             config.restore();
           }
-          Color foregroundColor = attributes.getForegroundColor();
+          Color foregroundColor = getForegroundColor(attributes);
           if (foregroundColor != null) {
             g.setColor(foregroundColor);
             g.setFont(getFont(editor));
@@ -237,6 +254,14 @@ public class ParameterHintsPresentationManager implements Disposable {
           }
         }
       }
+    }
+
+    private Color getForegroundColor(TextAttributes attributes) {
+      return highlighted ? attributes.getBackgroundColor() : attributes.getForegroundColor();
+    }
+
+    private Color getBackgroundColor(TextAttributes attributes) {
+      return highlighted ? attributes.getForegroundColor() : attributes.getBackgroundColor();
     }
   }
 
