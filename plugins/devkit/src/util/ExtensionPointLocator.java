@@ -16,29 +16,23 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class ExtensionPointLocator {
+public class ExtensionPointLocator extends LocatorBase {
 
   private final PsiClass myPsiClass;
 
@@ -84,30 +78,6 @@ public class ExtensionPointLocator {
     }, scope);
   }
 
-  @NotNull
-  private static GlobalSearchScope getCandidatesScope(@NotNull Project project) {
-    Collection<VirtualFile> candidates = DomService.getInstance().getDomFileCandidates(IdeaPlugin.class, project, GlobalSearchScope.allScope(project));
-    return GlobalSearchScope.filesScope(project, candidates);
-  }
-
-  //TODO move to ExtensionLocator
-  public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
-    String name = psiClass.getQualifiedName();
-    if (name == null) return false;
-
-    Project project = psiClass.getProject();
-    GlobalSearchScope scope = getCandidatesScope(project);
-    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
-      PsiElement at = file.findElementAt(startOffset);
-      String tokenText = at instanceof XmlToken ? at.getText() : null;
-      if (!StringUtil.equals(name, tokenText)) return true;
-      XmlTag tag = PsiTreeUtil.getParentOfType(at, XmlTag.class);
-      if (tag == null) return true;
-      DomElement dom = DomUtil.getDomElement(tag);
-      return !(dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null);
-    }, scope);
-  }
-
   private static void processExtensionPointCandidate(PsiElement element, List<ExtensionPointCandidate> list) {
     XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (tag == null) return;
@@ -128,10 +98,6 @@ public class ExtensionPointLocator {
       if ((attrName == null && tagName == null) || epName == null) return;
       list.add(new ExtensionPointCandidate(createPointer(extensionPointTag), epName, attrName, tagName, beanClassName));
     }
-  }
-
-  private static SmartPsiElementPointer createPointer(XmlTag extensionPointTag) {
-    return SmartPointerManager.getInstance(extensionPointTag.getProject()).createSmartPsiElementPointer(extensionPointTag);
   }
 
   @Nullable

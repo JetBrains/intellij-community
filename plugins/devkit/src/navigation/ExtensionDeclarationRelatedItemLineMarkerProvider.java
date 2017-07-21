@@ -27,7 +27,6 @@ import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
-import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +49,7 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
   }
 
   private static void process(PsiClass psiClass, Collection<? super RelatedItemLineMarkerInfo> result) {
-    if (!ExtensionPointLocator.isRegisteredExtension(psiClass)) return;
+    if (!ExtensionLocator.isRegisteredExtension(psiClass)) return;
 
     PsiIdentifier identifier = psiClass.getNameIdentifier();
     if (identifier == null) {
