@@ -15,33 +15,34 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
-import com.intellij.pom.java.LanguageLevel;
-import org.jetbrains.annotations.NotNull;
 
+import com.intellij.java.codeInsight.daemon.quickFix.streams.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-public class StreamApiMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
-  @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
-    StreamApiMigrationInspection inspection = new StreamApiMigrationInspection();
-    inspection.SUGGEST_FOREACH = true;
-    return new LocalInspectionTool[]{
-      inspection
-    };
-  }
+@RunWith(Suite.class)
+@Suite.SuiteClasses({
+  AllMatchStreamApiMigrationTest.class,
+  AnyMatchStreamApiMigrationTest.class,
+  BufferedReaderStreamApiMigrationTest.class,
+  CollectionsStreamApiMigrationTest.class,
+  CollectStreamApiMigrationTest.class,
+  ContinueStreamApiMigrationTest.class,
+  DistinctStreamApiMigrationTest.class,
+  FilterStreamApiMigrationTest.class,
+  FindFirstStreamApiMigrationTest.class,
+  FlatMapFirstStreamApiMigrationTest.class,
+  ForeachFirstStreamApiMigrationTest.class,
+  LimitStreamApiMigrationTest.class,
+  MinMaxStreamApiMigrationTest.class,
+  NoneMatchStreamApiMigrationTest.class,
+  OtherStreamApiMigrationTest.class,
+  ReductionOperationStreamApiMigrationTest.class,
+  SortedOperationStreamApiMigrationTest.class,
+  SumOperationStreamApiMigrationTest.class,
+  TakeWhileOperationStreamApiMigrationTest.class,
+  ToArrayOperationStreamApiMigrationTest.class
+})
+public class StreamApiMigrationInspectionTest {
 
-  @Override
-  protected LanguageLevel getDefaultLanguageLevel() {
-    return LanguageLevel.JDK_1_8;
-  }
-
-  public void test() throws Exception { doAllTests(); }
-
-  @Override
-  protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/streamApiMigration";
-  }
 }

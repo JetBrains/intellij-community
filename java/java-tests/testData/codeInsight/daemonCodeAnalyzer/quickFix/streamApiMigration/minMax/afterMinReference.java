@@ -1,4 +1,6 @@
-// "Replace with max()" "false"
+// "Replace with min()" "true"
+
+import java.util.*;
 
 public class Main {
   static class Person {
@@ -19,14 +21,14 @@ public class Main {
     }
   }
 
-  public Person max() {
+  public Person work() {
     List<Person> personList = Arrays.asList(
       new Person("Roman", 21),
       new Person("James", 25),
       new Person("Kelly", 12)
     );
-    return personList.stream()
-      .max(Comparator.comparingInt(Person::getAge))
-      .orElse(null);
+    Person minPerson = personList.stream().filter(p -> p.getAge() > 13).min(Comparator.comparingInt(Person::getAge)).orElse(null);
+
+      return minPerson;
   }
 }
