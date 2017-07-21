@@ -18,14 +18,11 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +30,9 @@ import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
-
-  private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>> CONVERTER =
-    candidate -> Collections.singleton(candidate.pointer.getElement());
-
-  private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {

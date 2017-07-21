@@ -20,8 +20,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 /**
  * @author yole
  */
-public class ExtensionPointCandidate {
-  public final SmartPsiElementPointer pointer;
+public class ExtensionPointCandidate extends PointableCandidate {
   public final String epName;
   public final String attributeName;
   public final String tagName;
@@ -32,7 +31,7 @@ public class ExtensionPointCandidate {
                                  String attributeName,
                                  String tagName,
                                  String beanClassName) {
-    this.pointer = pointer;
+    super(pointer);
     this.epName = epName;
     this.attributeName = attributeName;
     this.tagName = tagName;
@@ -41,7 +40,7 @@ public class ExtensionPointCandidate {
 
   public ExtensionPointCandidate(SmartPsiElementPointer pointer,
                                  String epName) {
-    this.pointer = pointer;
+    super(pointer);
     this.epName = epName;
     this.attributeName = "implementation";
     this.tagName = null;

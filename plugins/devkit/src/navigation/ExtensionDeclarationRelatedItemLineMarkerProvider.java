@@ -18,28 +18,18 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.icons.AllIcons;
-import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
-
-  private static final NotNullFunction<ExtensionCandidate, Collection<? extends PsiElement>> EXTENSION_CONVERTER =
-    candidate -> Collections.singleton(candidate.pointer.getElement());
-
-  private static final NotNullFunction<ExtensionCandidate, Collection<? extends GotoRelatedItem>> EXTENSION_RELATED_ITEM_PROVIDER =
-    candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
-
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
@@ -60,7 +50,7 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
     List<ExtensionCandidate> targets = locator.findDirectCandidates();
 
     RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
-      .create(AllIcons.Nodes.Plugin, EXTENSION_CONVERTER, EXTENSION_RELATED_ITEM_PROVIDER)
+      .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(targets)
       .setPopupTitle("Choose Extension")
       .setTooltipText("Extension Declaration")

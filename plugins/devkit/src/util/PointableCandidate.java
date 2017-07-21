@@ -17,8 +17,10 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.SmartPsiElementPointer;
 
-public class ExtensionCandidate extends PointableCandidate {
-  public ExtensionCandidate(SmartPsiElementPointer pointer) {
-    super(pointer);
+public abstract class PointableCandidate {
+  public final SmartPsiElementPointer pointer;
+
+  protected PointableCandidate(SmartPsiElementPointer pointer) {
+    this.pointer = pointer;
   }
 }
