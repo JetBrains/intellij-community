@@ -628,7 +628,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
               boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
               CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
               isReloadable[0] = isReloadable(file, document, project);
-              if (isReloadable[0]) {
+              boolean differsOnlyBySeparators = StringUtil.convertLineSeparators(document.getText()).equals(reloaded);
+              if (isReloadable[0] && !differsOnlyBySeparators) {
                 DocumentEx documentEx = (DocumentEx)document;
                 documentEx.replaceText(reloaded, file.getModificationStamp());
               }
