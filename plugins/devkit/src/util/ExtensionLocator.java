@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ExtensionLocator extends LocatorBase {
   private final PsiClass myPsiClass;
@@ -45,43 +46,37 @@ public class ExtensionLocator extends LocatorBase {
     return candidates;
   }
 
-  private static void findExtensionCandidates(PsiClass psiClass, final List<ExtensionCandidate> list) {
-    String name = psiClass.getQualifiedName();
-    if (name == null) return;
-
-    Project project = psiClass.getProject();
-    GlobalSearchScope scope = getCandidatesScope(project);
-
-    //TODO duplicate with ExtensionPointLocator.isRegisteredExtension()  +  don't do it twice
-    PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
-      PsiElement element = file.findElementAt(startOffset);
-      String tokenText = element instanceof XmlToken ? element.getText() : null;
-      if (!StringUtil.equals(name, tokenText)) return true;
-      XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-      if (tag == null) return true;
-      DomElement dom = DomUtil.getDomElement(tag);
-      if (dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null) {
-        list.add(new ExtensionCandidate(createPointer(tag)));
-        return false;
-      }
-      return true;
-    }, scope);
+  private static void findExtensionCandidates(PsiClass psiClass, final List<ExtensionCandidate> result) {
+    findExtensionDeclarations(psiClass, tag -> result.add(new ExtensionCandidate(createPointer(tag))));
   }
 
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
+    return findExtensionDeclarations(psiClass, null);
+  }
+
+  private static boolean findExtensionDeclarations(PsiClass psiClass, Consumer<XmlTag> extensionConsumer) {
     String name = psiClass.getQualifiedName();
     if (name == null) return false;
 
     Project project = psiClass.getProject();
     GlobalSearchScope scope = getCandidatesScope(project);
-    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
-      PsiElement at = file.findElementAt(startOffset);
-      String tokenText = at instanceof XmlToken ? at.getText() : null;
+
+    return PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
+      PsiElement element = file.findElementAt(startOffset);
+      String tokenText = element instanceof XmlToken ? element.getText() : null;
       if (!StringUtil.equals(name, tokenText)) return true;
-      XmlTag tag = PsiTreeUtil.getParentOfType(at, XmlTag.class);
+
+      XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
       if (tag == null) return true;
+
       DomElement dom = DomUtil.getDomElement(tag);
-      return !(dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null);
+      if (dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null) {
+        if (extensionConsumer != null) {
+          extensionConsumer.accept(tag);
+        }
+        return false;
+      }
+      return true;
     }, scope);
   }
 }
