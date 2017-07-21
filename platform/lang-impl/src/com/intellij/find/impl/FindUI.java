@@ -27,8 +27,6 @@ public interface FindUI {
 
   void initByModel();
 
-  void updateReplaceVisibility();
-
   @NotNull
   Disposable getDisposable();
 }

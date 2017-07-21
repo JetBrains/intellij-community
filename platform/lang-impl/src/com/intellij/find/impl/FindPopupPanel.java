@@ -708,7 +708,17 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceComponent.setText(toReplace);
     updateControls();
     updateScopeDetailsPanel();
-    updateReplaceVisibility();
+
+    boolean isReplaceState = myHelper.isReplaceState();
+    myTitleLabel.setText(myHelper.getTitle());
+    myReplaceTextArea.setVisible(isReplaceState);
+    myCbPreserveCase.setVisible(isReplaceState);
+    if (Registry.is("ide.find.enter.as.ok", false) || isReplaceState) {
+      myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER));
+    } else {
+      myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
+    }
+    myOKButton.setText(FindBundle.message(isReplaceState ? "find.popup.replace.button" : "find.popup.find.button"));
   }
 
   private void updateControls() {
@@ -736,19 +746,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myCbCaseSensitive.makeSelectable();
       }
     }
-  }
-
-  public void updateReplaceVisibility() {
-    boolean isReplaceState = myHelper.isReplaceState();
-    myTitleLabel.setText(myHelper.getTitle());
-    myReplaceTextArea.setVisible(isReplaceState);
-    myCbPreserveCase.setVisible(isReplaceState);
-    if (Registry.is("ide.find.enter.as.ok", false) || isReplaceState) {
-      myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER));
-    } else {
-      myOKHintLabel.setText(KeymapUtil.getKeystrokeText(ENTER_WITH_MODIFIERS));
-    }
-    myOKButton.setText(FindBundle.message(isReplaceState ? "find.popup.replace.button" : "find.popup.find.button"));
   }
 
   private void updateScopeDetailsPanel() {

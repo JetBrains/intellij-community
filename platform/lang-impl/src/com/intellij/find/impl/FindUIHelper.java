@@ -44,6 +44,7 @@ public class FindUIHelper implements Disposable {
     myModel = model;
     myOkHandler = okHandler;
     myUI = getOrCreateUI();
+    myUI.initByModel();
   }
 
   protected FindUI getOrCreateUI() {
@@ -72,7 +73,7 @@ public class FindUIHelper implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myModel.setReplaceState(replace);
-        findDialog.updateReplaceVisibility();
+        findDialog.initByModel();
       }
       //@NotNull
       //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
@@ -114,7 +115,6 @@ public class FindUIHelper implements Disposable {
   public void setModel(@NotNull FindModel model) {
     myModel = model;
     myUI.initByModel();
-    myUI.updateReplaceVisibility();
   }
 
   public void setOkHandler(@NotNull Runnable okHandler) {
