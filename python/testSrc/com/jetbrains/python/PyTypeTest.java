@@ -2045,6 +2045,16 @@ public class PyTypeTest extends PyTestCase {
            "        expr = self.attr");
   }
 
+  // PY-21175
+  public void testAssignmentToAttributeOfCallResultWithNameOfLocalVariable() {
+    doTest("int",
+           "def f(g):\n" +
+           "    x = 42\n" +
+           "    if True:\n" +
+           "        g().x = 'foo'\n" +
+           "    expr = x");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

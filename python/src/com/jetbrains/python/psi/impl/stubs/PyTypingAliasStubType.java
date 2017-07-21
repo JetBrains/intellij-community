@@ -21,7 +21,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
@@ -122,7 +121,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
         }
         if (element instanceof PyReferenceExpression) {
           // too complex reference expression, e.g. foo[bar].baz
-          return PyTypingTypeProvider.turnPlainReferenceExpressionIntoQualifiedName((PyReferenceExpression)element) != null;
+          return ((PyReferenceExpression)element).asQualifiedName() != null;
         }
       }
       return true;
