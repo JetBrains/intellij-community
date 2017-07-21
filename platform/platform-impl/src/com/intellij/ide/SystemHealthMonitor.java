@@ -85,7 +85,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   private void checkReservedCodeCacheSize() {
     int minReservedCodeCacheSize = 240;
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    if (reservedCodeCacheSize < minReservedCodeCacheSize) {
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
       showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
