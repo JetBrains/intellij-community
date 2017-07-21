@@ -194,6 +194,8 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
     PsiExpression expression = (PsiExpression)lambdaCandidate;
     if (falseExpression != null && NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) {
+      // falseExpression == null is "consumer" case (to be replaced with ifPresent()),
+      // in this case we don't care about expression nullness
       return ProblemType.INFO;
     }
     return ProblemType.WARNING;
