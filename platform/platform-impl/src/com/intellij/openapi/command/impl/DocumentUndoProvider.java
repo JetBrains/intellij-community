@@ -78,14 +78,14 @@ public class DocumentUndoProvider implements Disposable {
       if (!shouldProcess(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
-      if (undoManager.isActive() && isUndoable(document)) {
+      if (undoManager.isActive()) {
         registerUndoableAction(e);
       }
       else {
         registerNonUndoableAction(document);
       }
     }
-    
+
     private boolean shouldProcess(Document document) {
       if (myProject != null && myProject.isDisposed()) return false;
       return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
@@ -117,7 +117,7 @@ public class DocumentUndoProvider implements Disposable {
       VirtualFile file = ref.getFile();
 
       // Allow undo even from refresh if requested
-      if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
+      if (file != null) {
         return true;
       }
       return !UndoManagerImpl.isRefresh() || getUndoManager().isUndoOrRedoAvailable(ref);

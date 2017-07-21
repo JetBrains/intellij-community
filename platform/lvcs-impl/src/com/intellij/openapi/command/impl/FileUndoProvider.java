@@ -111,6 +111,7 @@ public class FileUndoProvider implements UndoProvider, VirtualFileListener {
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent e) {
     if (!shouldProcess(e)) return;
+    if(ForceUndo.IgnoreVFContentChanges) return;
     if (isUndoable(e)) return;
     registerNonUndoableAction(e);
   }
@@ -150,7 +151,7 @@ public class FileUndoProvider implements UndoProvider, VirtualFileListener {
   }
 
   private static boolean isUndoable(VirtualFileEvent e) {
-    return !e.isFromRefresh() || e.getFile().getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE;
+    return !e.isFromRefresh();
   }
 
   private void registerUndoableAction(VirtualFileEvent e) {

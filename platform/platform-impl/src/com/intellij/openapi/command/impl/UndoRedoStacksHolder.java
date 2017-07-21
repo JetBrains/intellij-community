@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -132,8 +133,8 @@ class UndoRedoStacksHolder {
     }
 
     if (group.isGlobal()) {
-      UndoableGroup last = myGlobalStack.getLast();
-      if (last != group) {
+      UndoableGroup last = myGlobalStack.peekLast();
+      if (last != group && last != null) {
         result.addAll(last.getAffectedDocuments());
       }
     }
@@ -152,7 +153,9 @@ class UndoRedoStacksHolder {
 
     stack.add(group);
     while (stack.size() > limit) {
-      clearStacksFrom(stack.getFirst());
+      UndoableGroup first = stack.getFirst();
+      stack.removeFirst(); //remove from this particular stack anyway, otherwise no guarantee we won't stuck in this loop forever
+      clearStacksFrom(first); //remove in the related stacks
     }
   }
 
@@ -205,17 +208,41 @@ class UndoRedoStacksHolder {
 
   @NotNull
   private List<LinkedList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
-    return getAffectedStacks(group.isGlobal(), group.getAffectedDocuments());
+    Collection<DocumentReference> affectedDocuments = group.getAffectedDocuments();
+    List<LinkedList<UndoableGroup>> affectedStacks = getAffectedStacks(group.isGlobal(), affectedDocuments);
+    List<LinkedList<UndoableGroup>> filtered = new ArrayList<>();
+    affectedStacks.forEach(undoableGroups -> {
+      //do not add irrelevant global changes from other project to the stack - it will break this project's stack
+      if (undoableGroups == myGlobalStack && !group.isUndoable()) {
+        if (hasIntersectingChanges(affectedDocuments, myGlobalStack)) {
+          filtered.add(undoableGroups);
+        }
+      } else{
+        filtered.add(undoableGroups);
+      }
+    });
+    return filtered;
   }
 
   @NotNull
   private List<LinkedList<UndoableGroup>> getAffectedStacks(boolean global, @NotNull Collection<DocumentReference> refs) {
     List<LinkedList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
-    if (global) result.add(myGlobalStack);
+    if (global)
+      result.add(myGlobalStack);
     for (DocumentReference each : refs) {
       result.add(getStack(each));
     }
     return result;
+  }
+
+  private boolean hasIntersectingChanges(Collection<DocumentReference> refs, LinkedList<UndoableGroup> globalStack) {
+    UndoableGroup last = globalStack.peekLast();
+    if (last == null) {
+      return false;
+    }
+
+    Collection<DocumentReference> lastGlobalAffectedDocuments = last.getAffectedDocuments();
+    return ContainerUtil.intersects(lastGlobalAffectedDocuments, refs);
   }
 
   @TestOnly

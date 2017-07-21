@@ -60,6 +60,9 @@ import java.util.List;
 public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
 
+  @TestOnly
+  public static boolean ourNeverAskUser = false;
+
   private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
   private static final int COMMAND_TO_RUN_COMPACT = 20;
   private static final int FREE_QUEUES_LIMIT = 30;
@@ -320,6 +323,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
       VirtualFile file = FileDocumentManager.getInstance().getFile(each);
       if (file != null && !file.isValid()) continue;
 
+      LOG.trace("adding affected document: " + file.getPath());
       refs.add(DocumentReferenceManager.getInstance().create(each));
     }
     myCurrentMerger.addAdditionalAffectedDocuments(refs);

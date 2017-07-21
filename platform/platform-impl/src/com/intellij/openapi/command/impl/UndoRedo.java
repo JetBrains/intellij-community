@@ -103,7 +103,7 @@ abstract class UndoRedo {
     }
 
 
-    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo())) {
+    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
       if (!askUser()) return false;
     }
     else {

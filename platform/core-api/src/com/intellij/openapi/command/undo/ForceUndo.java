@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,15 @@
  */
 package com.intellij.openapi.command.undo;
 
-import com.intellij.openapi.util.Key;
+public class ForceUndo {
+  public static boolean IgnoreVFContentChanges = false;
 
-public interface UndoConstants {
-  Key<Boolean> DONT_RECORD_UNDO = Key.create("DONT_RECORD_UNDO");
+  public static void ignoreVirtualFileContentChanges(Runnable runnable) {
+    try {
+      IgnoreVFContentChanges = true;
+      runnable.run();
+    } finally {
+      IgnoreVFContentChanges = false;
+    }
+  }
 }
-

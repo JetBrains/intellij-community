@@ -109,7 +109,8 @@ public class EditorChangeAction extends BasicUndoableAction {
   }
   
   private void validateDocumentLength(int expectedLength) throws UnexpectedUndoException {
-    if (getDocument().getTextLength() != expectedLength) throw new UnexpectedUndoException("Unexpected document state");
+    if (getDocument().getTextLength() != expectedLength)
+      throw new UnexpectedUndoException("Unexpected document state");
   }
 
   private void refreshFileStatus() {
