@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TerminatorCallHandler extends TraceHandler<TerminatorStreamCall> {
+public interface TerminatorCallHandler extends TraceHandler, CallTransformer<TerminatorStreamCall> {
   @NotNull
   List<IntermediateStreamCall> additionalCallsBefore();
 }

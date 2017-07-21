@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface IntermediateCallHandler extends TraceHandler<IntermediateStreamCall> {
+public interface IntermediateCallHandler extends TraceHandler, CallTransformer<IntermediateStreamCall> {
   @NotNull
   List<IntermediateStreamCall> additionalCallsBefore();
 

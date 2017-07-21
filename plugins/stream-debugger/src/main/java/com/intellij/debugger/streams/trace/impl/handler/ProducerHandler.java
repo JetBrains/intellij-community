@@ -15,8 +15,10 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.CallTransformer;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,10 +26,10 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerHandler extends HandlerBase.Producer {
+public class ProducerHandler extends HandlerBase.Producer implements CallTransformer<ProducerStreamCall> {
   private final PeekTracerHandler myPeekTracerHandler;
 
-  ProducerHandler(@NotNull GenericType afterType) {
+  public ProducerHandler(@NotNull GenericType afterType) {
     myPeekTracerHandler = new PeekTracerHandler(0, "producer", GenericType.OBJECT, afterType);
   }
 

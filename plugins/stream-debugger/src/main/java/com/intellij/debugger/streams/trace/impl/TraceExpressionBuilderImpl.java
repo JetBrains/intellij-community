@@ -15,15 +15,21 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
+import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.impl.LambdaToAnonymousTransformer;
 import com.intellij.debugger.streams.psi.impl.MethodReferenceToLambdaTransformer;
 import com.intellij.debugger.streams.psi.impl.ToObjectInheritorTransformer;
+import com.intellij.debugger.streams.trace.IntermediateCallHandler;
+import com.intellij.debugger.streams.trace.TerminatorCallHandler;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.TraceHandler;
-import com.intellij.debugger.streams.trace.impl.handler.HandlerFactory;
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
+import com.intellij.debugger.streams.trace.impl.handler.ProducerHandler;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,9 +70,12 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   @NotNull
   @Override
   public String createTraceExpression(@NotNull StreamChain chain) {
-    final ProducerCallTraceHandler producerHandler = HandlerFactory.create(chain.getProducerCall());
-    final List<IntermediateCallTraceHandler> intermediateHandlers = getHandlers(chain.getIntermediateCalls());
-    final TerminatorCallTraceHandler terminatorHandler = HandlerFactory.create(chain.getTerminationCall(), "evaluationResult[0]");
+    final LibraryManager libraryManager = LibraryManager.getInstance(myProject);
+    final ProducerHandler producerHandler = new ProducerHandler(chain.getProducerCall().getTypeAfter());
+    final List<IntermediateCallHandler> intermediateHandlers = getHandlers(libraryManager, chain.getIntermediateCalls());
+    final TerminatorStreamCall terminatorCall = chain.getTerminationCall();
+    final TerminatorCallHandler terminatorHandler = libraryManager.getLibrary(terminatorCall).getHandlerFactory()
+      .getForTermination(terminatorCall, "evaluationResult[0]");
 
     final StreamChain traceChain = buildTraceChain(chain, producerHandler, intermediateHandlers, terminatorHandler);
 
@@ -99,9 +108,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
   @NotNull
   private static StreamChain buildTraceChain(@NotNull StreamChain chain,
-                                             @NotNull ProducerCallTraceHandler producerHandler,
-                                             @NotNull List<IntermediateCallTraceHandler> intermediateCallHandlers,
-                                             @NotNull TerminatorCallTraceHandler terminatorHandler) {
+                                             @NotNull ProducerHandler producerHandler,
+                                             @NotNull List<IntermediateCallHandler> intermediateCallHandlers,
+                                             @NotNull TerminatorCallHandler terminatorHandler) {
     final List<IntermediateStreamCall> newIntermediateCalls = new ArrayList<>();
     final ProducerStreamCall producerCall = chain.getProducerCall();
 
@@ -113,7 +122,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
     for (int i = 0, callCount = intermediateCallHandlers.size(); i < callCount; i++) {
       final IntermediateStreamCall call = intermediateCalls.get(i);
-      final IntermediateCallTraceHandler handler = intermediateCallHandlers.get(i);
+      final IntermediateCallHandler handler = intermediateCallHandlers.get(i);
 
       newIntermediateCalls.addAll(handler.additionalCallsBefore());
 
@@ -141,9 +150,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     return new PeekCall("x -> time.incrementAndGet()", elementType);
   }
 
-  private static String buildDeclarations(@NotNull ProducerCallTraceHandler producerHandler,
-                                          @NotNull List<IntermediateCallTraceHandler> intermediateCallsHandlers,
-                                          @NotNull TerminatorCallTraceHandler terminatorHandler) {
+  private static String buildDeclarations(@NotNull ProducerHandler producerHandler,
+                                          @NotNull List<IntermediateCallHandler> intermediateCallsHandlers,
+                                          @NotNull TerminatorCallHandler terminatorHandler) {
     final StringBuilder builder = new StringBuilder();
     builder.append("final long startTime = java.lang.System.nanoTime();" + LINE_SEPARATOR);
     final int resultArraySize = 2 + intermediateCallsHandlers.size();
@@ -191,9 +200,9 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   }
 
   @NotNull
-  private static String buildFillInfo(ProducerCallTraceHandler producerHandler,
-                                      List<IntermediateCallTraceHandler> intermediateCallsHandlers,
-                                      TerminatorCallTraceHandler terminatorHandler) {
+  private static String buildFillInfo(ProducerHandler producerHandler,
+                                      List<IntermediateCallHandler> intermediateCallsHandlers,
+                                      TerminatorCallHandler terminatorHandler) {
     final StringBuilder builder = new StringBuilder();
 
     final Iterator<TraceHandler> iterator =
@@ -216,43 +225,16 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   }
 
   @NotNull
-  private static List<IntermediateCallTraceHandler> getHandlers(@NotNull List<IntermediateStreamCall> intermediateCalls) {
-    final List<IntermediateCallTraceHandler> result = new ArrayList<>();
+  private static List<IntermediateCallHandler> getHandlers(@NotNull LibraryManager libraryManager,
+                                                           @NotNull List<IntermediateStreamCall> intermediateCalls) {
+    final List<IntermediateCallHandler> result = new ArrayList<>();
 
     int i = 1;
     for (final IntermediateStreamCall call : intermediateCalls) {
-      result.add(HandlerFactory.createIntermediate(i, call));
+      result.add(libraryManager.getLibrary(call).getHandlerFactory().getForIntermediate(i, call));
       i++;
     }
 
     return result;
-  }
-
-  private interface BeforeCallsInserter {
-    @NotNull
-    List<IntermediateStreamCall> additionalCallsBefore();
-  }
-
-  private interface AfterCallsInserter {
-    @NotNull
-    List<IntermediateStreamCall> additionalCallsAfter();
-  }
-
-
-  private interface CallTransformer<T extends StreamCall> {
-    @NotNull
-    default T transformCall(@NotNull T call) {
-      return call;
-    }
-  }
-
-  public interface ProducerCallTraceHandler extends TraceHandler, AfterCallsInserter, CallTransformer<ProducerStreamCall> {
-  }
-
-  public interface IntermediateCallTraceHandler
-    extends TraceHandler, BeforeCallsInserter, AfterCallsInserter, CallTransformer<IntermediateStreamCall> {
-  }
-
-  public interface TerminatorCallTraceHandler extends TraceHandler, BeforeCallsInserter, CallTransformer<TerminatorStreamCall> {
   }
 }

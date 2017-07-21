@@ -18,15 +18,16 @@ package com.intellij.debugger.streams.lib.impl
 import com.intellij.debugger.streams.lib.IntermediateOperation
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceResolver
-import com.intellij.debugger.streams.trace.TraceHandler
+import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
  */
 abstract class IntermediateOperationBase(override val name: String,
-                                         private val handlerFactory: (Int, IntermediateStreamCall) -> TraceHandler,
+                                         private val handlerFactory: (Int, IntermediateStreamCall) -> IntermediateCallHandler,
                                          override val traceInterpreter: CallTraceResolver,
                                          override val valuesOrderResolver: ValuesOrderResolver) : IntermediateOperation {
-  override fun getTraceHandler(callOrder: Int, call: IntermediateStreamCall): TraceHandler = handlerFactory.invoke(callOrder, call)
+  override fun getTraceHandler(callOrder: Int, call: IntermediateStreamCall): IntermediateCallHandler = handlerFactory.invoke(callOrder,
+                                                                                                                              call)
 }

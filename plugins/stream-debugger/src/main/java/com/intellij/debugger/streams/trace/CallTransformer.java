@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.lib
+package com.intellij.debugger.streams.trace;
 
-/**
- * @author Vitaliy.Bibaev
- */
-interface LibrarySupport {
-  val description: Library
+import com.intellij.debugger.streams.wrapper.StreamCall;
+import org.jetbrains.annotations.NotNull;
 
-  val handlerFactory: HandlerFactory
-  val interpreterFactory: InterpreterFactory
-  val resolverFactory: ResolverFactory
+public interface CallTransformer<T extends StreamCall> {
+  @NotNull
+  default T transformCall(@NotNull T call) {
+    return call;
+  }
 }
