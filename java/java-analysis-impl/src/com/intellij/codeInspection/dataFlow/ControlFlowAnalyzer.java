@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
+import com.intellij.codeInspection.dataFlow.inliner.CollectionFactoryInliner;
 import com.intellij.codeInspection.dataFlow.inliner.LambdaInliner;
 import com.intellij.codeInspection.dataFlow.inliner.OptionalChainInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
@@ -1683,7 +1684,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitClass(PsiClass aClass) {
   }
 
-  static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner()};
+  static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner()};
 
   /**
    * A facade for building control flow graph used by {@link CallInliner} implementations
