@@ -174,7 +174,6 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   public void updatePackagesCache() {
     final String condaPython = getCondaPython();
     if (condaPython == null) {
-      LOG.warn("Could not find conda python interpreter");
       return;
     }
     final String path = PythonHelpersLocator.getHelperPath("conda_packaging_tool.py");
