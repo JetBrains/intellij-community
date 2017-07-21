@@ -170,7 +170,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final ModuleData mainModuleData = mainModuleNode.getData();
     final String mainModuleConfigPath = mainModuleData.getLinkedExternalProjectPath();
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
-    final String jdkName = gradleModule.getJdkName();
+    final String jdkName = getJdkName(gradleModule);
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
@@ -256,6 +256,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return mainModuleNode;
+  }
+
+  @Nullable
+  private static String getJdkName(@NotNull IdeaModule gradleModule) {
+    try {
+      return gradleModule.getJdkName();
+    }
+    catch (UnsupportedMethodException e) {
+      return null;
+    }
   }
 
   @Override
