@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -733,9 +734,18 @@ public class CodeCompletionHandlerBase {
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;
+      syncAcceptSlashR(file.getViewProvider().getDocument(), document);
       file.putUserData(FILE_COPY_KEY, new SoftReference<>(Pair.create(copy, document)));
     }
     return copy;
+  }
+
+  private static void syncAcceptSlashR(Document originalDocument, Document documentCopy) {
+    if (!(originalDocument instanceof DocumentImpl) || !(documentCopy instanceof DocumentImpl)) {
+      return;
+    }
+
+    ((DocumentImpl) documentCopy).setAcceptSlashR(((DocumentImpl) originalDocument).acceptsSlashR());
   }
 
   private static boolean isAutocompleteOnInvocation(final CompletionType type) {
