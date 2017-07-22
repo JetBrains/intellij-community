@@ -249,15 +249,13 @@ public abstract class MergeRequestProcessor implements Disposable {
       return;
     }
 
-    boolean wasFocused = isFocused();
-
-    destroyViewer();
-    myViewer = newViewer;
-    updateBottomActions();
-    rebuildSouthPanel();
-    initViewer();
-
-    if (wasFocused) requestFocusInternal();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      destroyViewer();
+      myViewer = newViewer;
+      updateBottomActions();
+      rebuildSouthPanel();
+      initViewer();
+    });
   }
 
   //
@@ -328,15 +326,11 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Misc
   //
 
-  public boolean isFocused() {
+  private boolean isFocused() {
     return DiffUtil.isFocusedComponent(myProject, myPanel);
   }
 
-  public void requestFocus() {
-    DiffUtil.requestFocus(myProject, getPreferredFocusedComponent());
-  }
-
-  protected void requestFocusInternal() {
+  private void requestFocusInternal() {
     JComponent component = getPreferredFocusedComponent();
     if (component != null) component.requestFocusInWindow();
   }

@@ -17,10 +17,7 @@ package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffTool;
-import com.intellij.diff.SuppressiveDiffTool;
+import com.intellij.diff.*;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
@@ -623,7 +620,7 @@ public class DiffUtil {
     IdeFocusManager.getInstance(project).requestFocus(component, true);
   }
 
-  public static void runPreservingFocus(@NotNull DiffContext context, @NotNull Runnable task) {
+  public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
     boolean hadFocus = context.isFocused();
     if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
