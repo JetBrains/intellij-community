@@ -22,7 +22,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,12 +124,21 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
         }
       }
       toNotify =
-        doSetActiveTarget(index >= 0 ? suitable.get(index) : ContainerUtil.getFirstItem(suitable, DefaultExecutionTarget.INSTANCE));
+        doSetActiveTarget(index >= 0 ? suitable.get(index) : getDefaultTarget(suitable));
     }
 
     if (toNotify != null) {
       myProject.getMessageBus().syncPublisher(TOPIC).activeTargetChanged(toNotify);
     }
+  }
+
+  private static ExecutionTarget getDefaultTarget(List<ExecutionTarget> suitable){
+      for (ExecutionTarget target: suitable){
+        if (target.isReady()){
+          return target;
+        }
+      }
+    return DefaultExecutionTarget.INSTANCE;
   }
 
   @Nullable
