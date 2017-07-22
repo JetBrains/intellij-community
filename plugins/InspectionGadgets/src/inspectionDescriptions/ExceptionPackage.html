@@ -1,6 +1,8 @@
 <html>
 <body>
 Report packages which contain only classes extending <b>java.lang.Throwable</b>, either directly or indirectly.
+Although exceptions usually don't depend on other classes for their implementation, they are normally not used separately.
+It is often a better design to locate exceptions in the same package as the classes that use them.
 <!-- tooltip end -->
 <p>Because this inspection requires global code analysis it is only available for <em>Analyze|Inspect Code</em> or
 <em>Analyze|Run Inspection by Name</em> and it will not report in the editor.
