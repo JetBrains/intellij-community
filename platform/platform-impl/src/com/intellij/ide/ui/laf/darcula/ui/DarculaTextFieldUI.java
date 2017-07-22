@@ -107,7 +107,6 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     } else {
       super.paintBackground(g);
     }
-    paintIcons(g);
     config.restore();
   }
 
@@ -154,11 +153,5 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       }
       clearIcon.paintIcon(null, g, p.x, p.y);
     }
-  }
-
-  @Override
-  protected void paintSafely(Graphics g) {
-    paintBackground(g);
-    super.paintSafely(g);
   }
 }
