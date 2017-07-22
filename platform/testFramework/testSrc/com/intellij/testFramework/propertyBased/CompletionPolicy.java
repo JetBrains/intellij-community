@@ -28,6 +28,13 @@ import org.jetbrains.annotations.Nullable;
 public class CompletionPolicy {
 
   /**
+   * @return string consisting of characters that can be used to insert the chosen lookup item
+   */
+  public String getPossibleSelectionCharacters() {
+    return "\n\t\r .(";
+  }
+
+  /**
    * @return the lookup string of an element that should be suggested in the given position
    */
   public String getExpectedVariant(Editor editor, PsiFile file) {

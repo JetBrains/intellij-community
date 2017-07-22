@@ -92,7 +92,8 @@ public class InvokeIntention extends ActionOnRange {
         throw new AssertionError("Document is left blocked by PSI");
       }
       if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
-        throw new AssertionError("No change was performed in the document");
+        throw new AssertionError("No change was performed in the document" +
+                                 (intention.startInWriteAction() ? ".\nIf this fix doesn't change source files by design, it should return false from 'startInWriteAction'" : ""));
       }
 
       PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);

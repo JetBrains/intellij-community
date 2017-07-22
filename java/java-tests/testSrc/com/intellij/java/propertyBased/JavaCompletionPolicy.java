@@ -43,6 +43,11 @@ class JavaCompletionPolicy extends CompletionPolicy {
         ref.getTextRange().getStartOffset() < ((PsiClass)target).getLBrace().getTextRange().getStartOffset()) {
       return false;
     }
+    if (target instanceof PsiField &&
+        SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
+      // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
+      return false;
+    }
     return target != null;
   }
 

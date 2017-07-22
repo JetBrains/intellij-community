@@ -102,18 +102,21 @@ public class InvokeCompletion extends ActionOnRange {
     String expectedVariant = myPolicy.getExpectedVariant(editor, getFile());
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
+    
+    String notFound = ". Please either fix completion so that the variant is suggested, " +
+                      "or, if absolutely needed, tweak CompletionPolicy to exclude it.";
 
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
       myLog += ", no lookup";
       if (expectedVariant == null) return;
-      TestCase.fail("No lookup, but expected " + expectedVariant + " among completion variants");
+      TestCase.fail("No lookup, but expected " + expectedVariant + " among completion variants" + notFound);
     }
 
     List<LookupElement> items = lookup.getItems();
     if (expectedVariant != null) {
       LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(expectedVariant));
-      TestCase.assertNotNull("No variant " + expectedVariant + " among " + items, sameItem);
+      TestCase.assertNotNull("No variant " + expectedVariant + " among " + items + notFound, sameItem);
     }
 
     checkNoDuplicates(items);
@@ -152,7 +155,8 @@ public class InvokeCompletion extends ActionOnRange {
       assert document != null;
       int offset = data.drawInt(IntDistribution.uniform(0, document.getTextLength()));
       int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
-      char c = Generator.sampledFrom('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
+      String selectionCharacters = policy.getPossibleSelectionCharacters();
+      char c = selectionCharacters.charAt(data.drawInt(IntDistribution.uniform(0, selectionCharacters.length())));
       return new InvokeCompletion(psiFile, offset, itemIndex, c, policy);
     });
   }
