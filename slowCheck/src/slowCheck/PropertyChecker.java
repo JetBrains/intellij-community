@@ -23,39 +23,42 @@ public class PropertyChecker<T> {
       return ": cannot generate enough sufficiently different values";
     }
   };
-  private Generator<T> generator;
+  private final Generator<T> generator;
   private Predicate<T> property;
   private final Set<Integer> generatedHashes = new HashSet<>();
-  private final long seed;
-  private final Random random;
-  private final StatusNotifier notifier;
+  private long seed = new Random().nextLong();
+  private int iterationCount = 100;
+  private StatusNotifier notifier;
 
-  private PropertyChecker(Generator<T> generator, Predicate<T> property, CheckerSettings settings) {
+  private PropertyChecker(Generator<T> generator) {
     this.generator = generator;
-    this.property = property;
+  }
 
-    Long seed = settings.randomSeed;
-    if (seed == null) {
-      seed = new Random().nextLong();
-    }
+  public static <T> PropertyChecker<T> forAll(Generator<T> generator) {
+    return new PropertyChecker<>(generator);
+  }
+  
+  public PropertyChecker<T> withSeed(long seed) {
     this.seed = seed;
-    random = new Random(seed);
-    notifier = new StatusNotifier(settings.iterationCount, this.seed);
+    return this;
   }
 
-  public static <T> void forAll(Generator<T> gen, Predicate<T> property) {
-    forAll(CheckerSettings.DEFAULT_SETTINGS, gen, property);
+  public PropertyChecker<T> withIterationCount(int iterationCount) {
+    this.iterationCount = iterationCount;
+    return this;
   }
 
-  public static <T> void forAll(CheckerSettings settings, Generator<T> gen, Predicate<T> property) {
-    new PropertyChecker<>(gen, property, settings).forAll(settings.iterationCount);
-  }
-
-  private void forAll(int iterationCount) {
+  public void shouldHold(@NotNull Predicate<T> property) {
+    if (this.property != null) throw new IllegalArgumentException("Property " + property + " already checked");
+    this.property = property;
+    notifier = new StatusNotifier(iterationCount, this.seed);
+    
+    Random random = new Random(seed);
+    
     for (int i = 1; i <= iterationCount; i++) {
       notifier.iterationStarted(i);
 
-      CounterExampleImpl<T> example = findCounterExample(i);
+      CounterExampleImpl<T> example = findCounterExample(i, random);
       if (example != null) {
         notifier.counterExampleFound();
         PropertyFailureImpl failure = new PropertyFailureImpl(example, i);
@@ -65,7 +68,7 @@ public class PropertyChecker<T> {
   }
 
   @Nullable
-  private CounterExampleImpl<T> findCounterExample(int sizeHint) {
+  private CounterExampleImpl<T> findCounterExample(int sizeHint, Random random) {
     for (int i = 0; i < 100; i++) {
       StructureNode node = new StructureNode();
       T value;

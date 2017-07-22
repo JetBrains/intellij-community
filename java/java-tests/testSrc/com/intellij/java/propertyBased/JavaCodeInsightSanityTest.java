@@ -38,7 +38,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
                       InvokeCompletion.completions(file, new JavaCompletionPolicy()),
                       DeleteRange.psiRangeDeletions(file));
-    PropertyChecker.forAll(actionsOnJavaFiles(fileActions), FileWithActions::runActions);
+    PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
   }
 
   @NotNull
@@ -47,6 +47,6 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testReparse() {
-    PropertyChecker.forAll(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks), FileWithActions::runActions);
+    PropertyChecker.forAll(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks)).shouldHold(FileWithActions::runActions);
   }
 }

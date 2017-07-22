@@ -51,8 +51,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testSuccess() {
-    PropertyChecker.forAll(listsOf(integers(-1, 1)),
-                           l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
+    PropertyChecker.forAll(listsOf(integers(-1, 1))).shouldHold(l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
   }
 
   public void testSortedDoublesNonDescending() {
@@ -72,7 +71,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testSuchThat() {
-    PropertyChecker.forAll(integers().suchThat(i -> i < 0), i -> i < 0);
+    PropertyChecker.forAll(integers().suchThat(i -> i < 0)).shouldHold(i -> i < 0);
   }
 
   public void testStringOfStringChecksAllChars() {
@@ -89,24 +88,24 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testNonEmptyList() {
-    PropertyChecker.forAll(nonEmptyLists(integers()), l -> !l.isEmpty());
+    PropertyChecker.forAll(nonEmptyLists(integers())).shouldHold(l -> !l.isEmpty());
   }
 
   public void testNoDuplicateData() {
     Set<List<Integer>> visited = new HashSet<>();
-    PropertyChecker.forAll(listsOf(integers()), l -> visited.add(l));
+    PropertyChecker.forAll(listsOf(integers())).shouldHold(l -> visited.add(l));
   }
 
   public void testOneOf() {
     List<Integer> values = new ArrayList<>();
-    PropertyChecker.forAll(anyOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
+    PropertyChecker.forAll(anyOf(integers(0, 1), integers(10, 1100))).shouldHold(i -> values.add(i));
     assertTrue(values.stream().anyMatch(i -> i < 2));
     assertTrue(values.stream().anyMatch(i -> i > 5));
   }
 
   public void testAsciiIdentifier() {
-    PropertyChecker.forAll(asciiIdentifiers(),
-                           s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
+    PropertyChecker.forAll(asciiIdentifiers())
+      .shouldHold(s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkFalsified(asciiIdentifiers(),
                    s -> !s.contains("_"),
                    1);

@@ -9,7 +9,7 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testFailureReasonUnchanged() {
     try {
-      PropertyChecker.forAll(ourTestSettings, integers(), i -> {
+      forAllStable(integers()).shouldHold(i -> {
         throw new AssertionError("fail");
       });
       fail();
@@ -21,7 +21,7 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testFailureReasonChangedExceptionClass() {
     try {
-      PropertyChecker.forAll(ourTestSettings, integers(), i -> {
+      forAllStable(integers()).shouldHold(i -> {
         throw (i == 0 ? new RuntimeException("fail") : new IllegalArgumentException("fail"));
       });
       fail();
@@ -33,7 +33,7 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testFailureReasonChangedExceptionTrace() {
     try {
-      PropertyChecker.forAll(ourTestSettings, integers(), i -> {
+      forAllStable(integers()).shouldHold(i -> {
         if (i == 0) {
           throw new AssertionError("fail");
         }
@@ -50,9 +50,9 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testExceptionWhileGeneratingValue() {
     try {
-      PropertyChecker.forAll(ourTestSettings, from(data -> {
+      forAllStable(from(data -> {
         throw new AssertionError("fail");
-      }), i -> true);
+      })).shouldHold(i -> true);
       fail();
     }
     catch (GeneratorException ignore) {
@@ -61,10 +61,10 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testExceptionWhileShrinkingValue() {
     try {
-      PropertyChecker.forAll(ourTestSettings, listsOf(integers()).suchThat(l -> {
+      forAllStable(listsOf(integers()).suchThat(l -> {
         if (l.size() == 1 && l.get(0) == 0) throw new RuntimeException("my exception");
         return true;
-      }), l -> l.stream().allMatch(i -> i > 0));
+      })).shouldHold(l -> l.stream().allMatch(i -> i > 0));
       fail();
     }
     catch (PropertyFalsified e) {
@@ -75,7 +75,7 @@ public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testUnsatisfiableSuchThat() {
     try {
-      PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i > 2), i -> i == 0);
+      PropertyChecker.forAll(integers(-1, 1).suchThat(i -> i > 2)).shouldHold(i -> i == 0);
       fail();
     }
     catch (GeneratorException e) {

@@ -8,11 +8,10 @@ import java.util.function.Predicate;
  * @author peter
  */
 abstract class PropertyCheckerTestCase extends TestCase {
-  protected static final CheckerSettings ourTestSettings = CheckerSettings.DEFAULT_SETTINGS.withSeed(0);
 
   protected  <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
     try {
-      PropertyChecker.forAll(ourTestSettings, generator, predicate);
+      forAllStable(generator).shouldHold(predicate);
       throw new AssertionError("Can't falsify " + getName());
     }
     catch (PropertyFalsified e) {
@@ -29,4 +28,7 @@ abstract class PropertyCheckerTestCase extends TestCase {
     }
   }
 
+  protected static <T> PropertyChecker<T> forAllStable(Generator<T> generator) {
+    return PropertyChecker.forAll(generator).withSeed(0);
+  }
 }

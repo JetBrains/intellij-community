@@ -23,7 +23,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import slowCheck.CheckerSettings;
 import slowCheck.Generator;
 import slowCheck.IntDistribution;
 import slowCheck.PropertyChecker;
@@ -47,9 +46,8 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
 
     AtomicLong rebuildStamp = new AtomicLong();
 
-    CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS.withIterationCount(30);
     Generator<InvokeIntention> genIntention = psiJavaFiles().flatMap(file -> InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()));
-    PropertyChecker.forAll(settings, Generator.listsOf(genIntention.noShrink()), list -> {
+    PropertyChecker.forAll(Generator.listsOf(genIntention.noShrink())).withIterationCount(30).shouldHold(list -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
         checkCompiles(myCompilerTester.rebuild());
@@ -67,7 +65,6 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testIntentionsAndModificationsInDifferentFiles() throws Throwable {
-    CheckerSettings settings = CheckerSettings.DEFAULT_SETTINGS.withIterationCount(50);
     Generator<List<MadTestingAction>> genActionGroup = psiJavaFiles().flatMap(
       file -> {
         Generator<MadTestingAction> mutation = Generator.anyOf(DeleteRange.psiRangeDeletions(file),
@@ -81,7 +78,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
         return Generator.listsOf(IntDistribution.uniform(0, 5), allActions.noShrink());
       });
 
-    PropertyChecker.forAll(settings, Generator.listsOf(genActionGroup).map(ContainerUtil::flatten), list -> {
+    PropertyChecker.forAll(Generator.listsOf(genActionGroup).map(ContainerUtil::flatten)).withIterationCount(50).shouldHold(list -> {
       MadTestingUtil.changeAndRevert(myProject, () -> {
         //System.out.println(list);
         MadTestingAction.runActions(list);
