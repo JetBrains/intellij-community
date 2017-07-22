@@ -55,6 +55,8 @@ public abstract class ExecutionTarget {
    */
   public abstract boolean canRun(@NotNull RunnerAndConfigurationSettings configuration);
 
+  public abstract boolean isReady();
+
   @Override
   public boolean equals(Object obj) {
     return obj == this || (getClass().isInstance(obj) && getId().equals(((ExecutionTarget)obj).getId()));
