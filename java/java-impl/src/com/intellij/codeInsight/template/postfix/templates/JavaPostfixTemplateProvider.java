@@ -27,7 +27,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
@@ -65,6 +74,49 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
                                          new StreamPostfixTemplate(),
                                          new OptionalPostfixTemplate(),
                                          new LambdaPostfixTemplate());
+
+    loadTemplatesFromFile();
+    combineTemplatesWithSameName();
+  }
+
+  private void loadTemplatesFromFile() {
+    File postfixTemplateFile = new File(System.getProperty("user.home") + "/.ideaPostfixTemplates");
+
+    if (postfixTemplateFile.exists()) {
+      try (BufferedReader reader = new BufferedReader(new FileReader(postfixTemplateFile))) {
+        String line;
+        while((line = reader.readLine()) != null) {
+          if (!line.trim().isEmpty()) {
+            String[] split = line.split("→");
+            if (split.length == 4) {
+              templates.add(new CustomStringPostfixTemplate(split[0].trim(), split[1].trim(), split[2].trim(), split[3].trim()));
+            }
+          }
+        }
+      }
+      catch (IOException ignored) {
+      }
+    }
+  }
+
+  private void combineTemplatesWithSameName() {
+    // group templates by name
+    Map<String, List<PostfixTemplate>> key2templates = templates.stream().collect(
+      Collectors.groupingBy(
+        PostfixTemplate::getKey, toList()
+      )
+    );
+
+    // combine templates with the same name
+    templates.clear();
+    for (List<PostfixTemplate> theseTemplates : key2templates.values()) {
+      if (theseTemplates.size() == 1) {
+        templates.add(theseTemplates.get(0));
+      } else {
+        String example = templates.stream().distinct().count() > 1 ? theseTemplates.get(0).getExample() : "";
+        templates.add(new CombinedPostfixTemplate(theseTemplates.get(0).getKey(), example, theseTemplates));
+      }
+    }
   }
 
   @NotNull
