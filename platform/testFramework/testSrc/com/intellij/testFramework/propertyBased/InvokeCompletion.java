@@ -156,7 +156,7 @@ public class InvokeCompletion extends ActionOnRange {
       int offset = data.drawInt(IntDistribution.uniform(0, document.getTextLength()));
       int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
       String selectionCharacters = policy.getPossibleSelectionCharacters();
-      char c = selectionCharacters.charAt(data.drawInt(IntDistribution.uniform(0, selectionCharacters.length())));
+      char c = selectionCharacters.charAt(data.drawInt(IntDistribution.uniform(0, selectionCharacters.length() - 1)));
       return new InvokeCompletion(psiFile, offset, itemIndex, c, policy);
     });
   }
