@@ -34,14 +34,14 @@ class GenerativeDataStructure extends AbstractDataStructure {
   public <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
     GenerativeDataStructure data = subStructure();
     data.node.shrinkProhibited = true;
-    return generator.generateUnstructured(data);
+    return generator.getGeneratorFunction().apply(data);
   }
 
   @Override
   public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
     for (int i = 0; i < 100; i++) {
       GenerativeDataStructure structure = new GenerativeDataStructure(random, node.subStructure(), childSizeHint());
-      T value = generator.generateUnstructured(structure);
+      T value = generator.getGeneratorFunction().apply(structure);
       if (condition.test(value)) return value;
       
       node.removeLastChild(structure.node);

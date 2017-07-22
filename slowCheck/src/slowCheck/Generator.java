@@ -30,10 +30,10 @@ public final class Generator<T> {
     return myFunction.apply(data.subStructure());
   }
 
-  public T generateUnstructured(@NotNull DataStructure data) {
-    return myFunction.apply(data);
+  Function<DataStructure, T> getGeneratorFunction() {
+    return myFunction;
   }
-  
+
   public <V> Generator<V> map(@NotNull Function<T,V> fun) {
     return from(data -> fun.apply(myFunction.apply(data)));
   }

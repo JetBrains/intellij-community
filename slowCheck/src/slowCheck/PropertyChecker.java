@@ -73,7 +73,7 @@ public class PropertyChecker<T> {
       StructureNode node = new StructureNode();
       T value;
       try {
-        value = generator.generateUnstructured(new GenerativeDataStructure(random, node, sizeHint));
+        value = generator.getGeneratorFunction().apply(new GenerativeDataStructure(random, node, sizeHint));
       }
       catch (Throwable e) {
         throw new GeneratorException(seed, e);
@@ -142,7 +142,7 @@ public class PropertyChecker<T> {
           notifier.shrinkAttempt(this);
           
           try {
-            T value = generator.generateUnstructured(new ReplayDataStructure(node, sizeHint));
+            T value = generator.getGeneratorFunction().apply(new ReplayDataStructure(node, sizeHint));
             totalSteps++;
             return CounterExampleImpl.checkProperty(property, value, node);
           }
