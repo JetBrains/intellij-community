@@ -188,5 +188,10 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
 
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
   }
 }
