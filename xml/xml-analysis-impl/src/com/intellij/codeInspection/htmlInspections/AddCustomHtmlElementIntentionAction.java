@@ -56,4 +56,9 @@ public class AddCustomHtmlElementIntentionAction implements LocalQuickFix {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     profile.modifyToolSettings(myInspectionKey, element, tool -> tool.addEntry(myName));
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

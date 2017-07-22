@@ -31,10 +31,6 @@ public class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
            actionText.startsWith("Make method default") ||
            actionText.startsWith("Convert to project line separators") || // changes VFS, not document
-           actionText.contains("to custom tags") || // changes only inspection settings
-           actionText.contains("to 'Ignore if annotated by' list") || // changes only inspection settings
-           actionText.startsWith("Allow these suppressions") || // changes only inspection settings
-           actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template)
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
@@ -43,6 +39,7 @@ public class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
            actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
-           actionText.startsWith("Unimplement");
+           actionText.startsWith("Unimplement") ||
+           super.shouldSkipIntention(actionText);
   }
 }

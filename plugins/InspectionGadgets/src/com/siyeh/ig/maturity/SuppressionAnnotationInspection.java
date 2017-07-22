@@ -99,6 +99,11 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     @NotNull
     @Override
     public String getName() {
