@@ -278,31 +278,29 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
 
-    boolean hadFocus = isFocused();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      myState.destroy();
+      myToolbarStatusPanel.setContent(null);
+      myContentPanel.setContent(null);
 
-    myState.destroy();
-    myToolbarStatusPanel.setContent(null);
-    myContentPanel.setContent(null);
+      myToolbarGroup.removeAll();
+      myPopupActionGroup.removeAll();
+      ActionUtil.clearActions(myMainPanel);
 
-    myToolbarGroup.removeAll();
-    myPopupActionGroup.removeAll();
-    ActionUtil.clearActions(myMainPanel);
+      myActiveRequest.onAssigned(false);
+      myActiveRequest = request;
+      myActiveRequest.onAssigned(true);
 
-    myActiveRequest.onAssigned(false);
-    myActiveRequest = request;
-    myActiveRequest.onAssigned(true);
-
-    try {
-      myState = createState();
-      myState.init();
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool());
-      myState.init();
-    }
-
-    if (hadFocus) requestFocusInternal();
+      try {
+        myState = createState();
+        myState.init();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool());
+        myState.init();
+      }
+    });
   }
 
   protected void setWindowTitle(@NotNull String title) {

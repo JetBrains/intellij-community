@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
@@ -25,7 +26,6 @@ import com.intellij.diff.comparison.ComparisonMergeUtil;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.fragments.DiffFragment;
@@ -615,6 +615,12 @@ public class DiffUtil {
   public static void requestFocus(@Nullable Project project, @Nullable Component component) {
     if (component == null) return;
     IdeFocusManager.getInstance(project).requestFocus(component, true);
+  }
+
+  public static void runPreservingFocus(@NotNull DiffContext context, @NotNull Runnable task) {
+    boolean hadFocus = context.isFocused();
+    task.run();
+    if (hadFocus) context.requestFocus();
   }
 
   //
