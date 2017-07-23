@@ -28,9 +28,9 @@
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="python-community-configure" />
     <orderEntry type="module-library">
-      <library>
+      <library name="commons-lang">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../plugins/gradle/lib/commons-lang-2.6.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/commons-lang-2.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
